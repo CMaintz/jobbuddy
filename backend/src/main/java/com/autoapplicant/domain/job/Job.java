@@ -1,0 +1,39 @@
+package com.autoapplicant.domain.job;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+public record Job(
+        UUID id,
+        JobSource source,
+        String sourceJobId,
+        String url,
+        String title,
+        UUID companyId,
+        String companyName,
+        String descriptionRaw,
+        String descriptionClean,
+        EmploymentType employmentType,
+        Seniority seniority,
+        RemoteType remoteType,
+        String location,
+        String municipality,
+        String region,
+        String country,
+        Integer salaryMin,
+        Integer salaryMax,
+        String currency,
+        List<String> technologies,
+        List<String> skills,
+        List<String> languages,
+        Instant postedAt,
+        Instant scrapedAt,
+        String aiSummary,
+        List<String> aiTags,
+        String aiSeniorityEstimate,
+        UUID duplicateGroupId,
+        boolean isActive,
+        Instant createdAt,
+        Instant updatedAt
+) {}

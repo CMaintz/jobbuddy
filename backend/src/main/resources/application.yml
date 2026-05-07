@@ -1,0 +1,54 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/autoapplicant}
+    username: ${DB_USER:autoapplicant}
+    password: ${DB_PASS:autoapplicant}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:changeme-in-production-minimum-32-chars!!}
+    expiration-ms: 86400000
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: gpt-4o
+    embedding-model: text-embedding-3-small
+  typesense:
+    api-key: ${TYPESENSE_API_KEY:local-dev-key}
+    host: ${TYPESENSE_HOST:localhost}
+    port: ${TYPESENSE_PORT:8108}
+    protocol: http
+  crawler:
+    cron: "0 0 */4 * * *"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
