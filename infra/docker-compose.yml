@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: autoapplicant
+      POSTGRES_USER: autoapplicant
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdevpassword}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autoapplicant -d autoapplicant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  typesense:
+    image: typesense/typesense:0.25.2
+    command: --data-dir /data --api-key=${TYPESENSE_API_KEY:-local-dev-key} --enable-cors
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8108/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/autoapplicant
+      SPRING_DATASOURCE_USERNAME: autoapplicant
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-localdevpassword}
+      APP_JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-random-secret-minimum-32-chars}
+      APP_JWT_EXPIRATION_MS: 86400000
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      APP_TYPESENSE_HOST: typesense
+      APP_TYPESENSE_PORT: 8108
+      APP_TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-local-dev-key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      typesense:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  typesense_data:
