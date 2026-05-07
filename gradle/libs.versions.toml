@@ -32,6 +32,8 @@ jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+h2 = { module = "com.h2database:h2" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
