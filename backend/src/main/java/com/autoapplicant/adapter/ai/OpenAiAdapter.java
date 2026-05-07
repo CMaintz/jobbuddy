@@ -4,14 +4,18 @@ import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.openai.client.OpenAIClient;
+import com.openai.models.ChatCompletion;
+import com.openai.models.ChatCompletionCreateParams;
+import com.openai.models.ChatCompletionMessageParam;
+import com.openai.models.ChatCompletionSystemMessageParam;
+import com.openai.models.ChatCompletionUserMessageParam;
 import com.openai.models.ChatModel;
-import com.openai.models.chat.completions.ChatCompletion;
-import com.openai.models.chat.completions.ChatCompletionCreateParams;
-import com.openai.models.embeddings.CreateEmbeddingResponse;
-import com.openai.models.embeddings.EmbeddingCreateParams;
-import com.openai.models.embeddings.EmbeddingModel;
+import com.openai.models.CreateEmbeddingResponse;
+import com.openai.models.EmbeddingCreateParams;
+import com.openai.models.EmbeddingModel;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -27,15 +31,28 @@ public class OpenAiAdapter implements AiProviderPort {
 
     @Override
     public String generate(PromptComposition composition) {
-        ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
-                .model(ChatModel.GPT_4O);
+        List<ChatCompletionMessageParam> messages = new ArrayList<>();
 
         if (composition.systemPrompt() != null && !composition.systemPrompt().isBlank()) {
-            builder.addSystemMessage(composition.systemPrompt());
+            ChatCompletionSystemMessageParam system = ChatCompletionSystemMessageParam.builder()
+                    .content(ChatCompletionSystemMessageParam.Content.ofTextContent(composition.systemPrompt()))
+                    .role(ChatCompletionSystemMessageParam.Role.SYSTEM)
+                    .build();
+            messages.add(ChatCompletionMessageParam.ofChatCompletionSystemMessageParam(system));
         }
-        builder.addUserMessage(composition.resolvedFinalPrompt());
 
-        ChatCompletion completion = client.chat().completions().create(builder.build());
+        ChatCompletionUserMessageParam user = ChatCompletionUserMessageParam.builder()
+                .content(ChatCompletionUserMessageParam.Content.ofTextContent(composition.resolvedFinalPrompt()))
+                .role(ChatCompletionUserMessageParam.Role.USER)
+                .build();
+        messages.add(ChatCompletionMessageParam.ofChatCompletionUserMessageParam(user));
+
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .model(ChatModel.GPT_4O)
+                .messages(messages)
+                .build();
+
+        ChatCompletion completion = client.chat().completions().create(params);
         return completion.choices().get(0).message().content().orElse("");
     }
 
@@ -43,7 +60,7 @@ public class OpenAiAdapter implements AiProviderPort {
     public float[] embed(String text) {
         EmbeddingCreateParams params = EmbeddingCreateParams.builder()
                 .model(EmbeddingModel.TEXT_EMBEDDING_3_SMALL)
-                .input(text)
+                .input(EmbeddingCreateParams.Input.ofString(text))
                 .build();
         CreateEmbeddingResponse response = client.embeddings().create(params);
         List<Double> values = response.data().get(0).embedding();

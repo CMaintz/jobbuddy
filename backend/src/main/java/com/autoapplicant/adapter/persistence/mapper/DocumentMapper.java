@@ -88,4 +88,18 @@ public final class DocumentMapper {
                 e.getVocabularyNotes(), patterns, excerpts,
                 e.getLastAnalyzedAt(), e.getCreatedAt(), e.getUpdatedAt());
     }
+
+    public static WritingProfileEntity toEntity(WritingProfile d) {
+        WritingProfileEntity e = new WritingProfileEntity();
+        e.setId(d.id());
+        e.setUserId(d.userId());
+        e.setTone(d.tone());
+        e.setVocabularyNotes(d.vocabularyNotes());
+        e.setPhrasing_patterns(d.phrasingPatterns() != null
+                ? d.phrasingPatterns().toArray(String[]::new) : new String[0]);
+        e.setExampleExcerpts(d.exampleExcerpts() != null
+                ? d.exampleExcerpts().toArray(String[]::new) : new String[0]);
+        e.setLastAnalyzedAt(d.lastAnalyzedAt());
+        return e;
+    }
 }
