@@ -2,11 +2,14 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.job.JobResponse;
+import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.MatchResult;
+import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.search.JobSearchFilters;
 import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
 import com.autoapplicant.port.in.job.*;
+import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -27,11 +30,13 @@ public class JobController {
     private final GetRecommendationsUseCase getRecommendations;
     private final SaveJobUseCase saveJob;
     private final IgnoreJobUseCase ignoreJob;
+    private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
                          SearchJobsUseCase searchJobs, GetRecommendationsUseCase getRecommendations,
                          SaveJobUseCase saveJob, IgnoreJobUseCase ignoreJob,
+                         SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -39,6 +44,7 @@ public class JobController {
         this.getRecommendations = getRecommendations;
         this.saveJob = saveJob;
         this.ignoreJob = ignoreJob;
+        this.feedbackUseCase = feedbackUseCase;
         this.secCtx = secCtx;
     }
 
@@ -85,5 +91,17 @@ public class JobController {
                                         @RequestParam(required = false) String reason) {
         ignoreJob.ignoreJob(secCtx.getCurrentUserId(), id, reason);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/feedback")
+    public ResponseEntity<RecommendationFeedback> feedback(@PathVariable UUID id,
+                                                            @RequestParam FeedbackType type) {
+        return ResponseEntity.ok(feedbackUseCase.submitFeedback(secCtx.getCurrentUserId(), id, type));
+    }
+
+    @DeleteMapping("/{id}/feedback")
+    public ResponseEntity<Void> removeFeedback(@PathVariable UUID id) {
+        feedbackUseCase.removeFeedback(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.noContent().build();
     }
 }

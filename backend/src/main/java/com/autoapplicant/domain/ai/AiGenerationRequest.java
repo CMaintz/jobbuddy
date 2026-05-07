@@ -10,5 +10,6 @@ public record AiGenerationRequest(
         UUID promptTemplateId,
         UUID userId,
         String customInstructions,
-        DocumentType documentType
+        DocumentType documentType,
+        String targetLanguage
 ) {}

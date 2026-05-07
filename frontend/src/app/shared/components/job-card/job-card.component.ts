@@ -1,7 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Job } from '../../../core/models/job.model';
+import { Job, MatchResult } from '../../../core/models/job.model';
+import { FeedbackType } from '../../../core/models/profile-section.model';
 
 @Component({
   selector: 'app-job-card',
@@ -18,21 +19,53 @@ import { Job } from '../../../core/models/job.model';
           <div class="text-sm text-gray-500 mt-0.5">
             {{ job.companyName }}
             @if (job.location) { &bull; {{ job.location }} }
+            @if (job.remoteType) { &bull; {{ job.remoteType | lowercase }} }
           </div>
           @if (job.technologies?.length) {
             <div class="flex flex-wrap gap-1 mt-2">
-              @for (tech of job.technologies!.slice(0, 4); track tech) {
+              @for (tech of job.technologies!.slice(0, 5); track tech) {
                 <span class="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{{ tech }}</span>
               }
             </div>
           }
+          <!-- Match reasons (shown when part of a recommendation) -->
+          @if (matchResult?.matchReasons?.length) {
+            <div class="mt-2 space-y-0.5">
+              @for (reason of matchResult!.matchReasons; track reason) {
+                <p class="text-xs text-green-700 flex items-center gap-1">
+                  <span class="text-green-500">✓</span> {{ reason }}
+                </p>
+              }
+            </div>
+          }
         </div>
-        <div class="ml-3 flex flex-col items-end gap-1 shrink-0">
+        <div class="ml-3 flex flex-col items-end gap-1.5 shrink-0">
+          <!-- Match label badge -->
+          @if (matchResult) {
+            <span [class]="matchLabelClass(matchResult.matchLabel)"
+                  class="text-xs px-2 py-0.5 rounded-full font-medium">
+              {{ matchResult.totalScore }}%
+            </span>
+          }
           @if (job.salaryMin) {
             <span class="text-xs text-gray-600">{{ job.salaryMin | number:'1.0-0' }}+</span>
           }
           <button (click)="save.emit(job.id)"
                   class="text-xs text-gray-400 hover:text-blue-600">Save</button>
+          <!-- Feedback buttons (recommendations only) -->
+          @if (matchResult) {
+            <div class="flex gap-1">
+              <button (click)="feedback.emit({ jobId: job.id, type: 'LIKE' })"
+                      title="Like this recommendation"
+                      class="text-xs text-gray-400 hover:text-green-600">👍</button>
+              <button (click)="feedback.emit({ jobId: job.id, type: 'DISLIKE' })"
+                      title="Not relevant"
+                      class="text-xs text-gray-400 hover:text-red-500">👎</button>
+              <button (click)="feedback.emit({ jobId: job.id, type: 'HIDE' })"
+                      title="Hide this job"
+                      class="text-xs text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -40,5 +73,17 @@ import { Job } from '../../../core/models/job.model';
 })
 export class JobCardComponent {
   @Input() job!: Job;
+  @Input() matchResult?: MatchResult;
   @Output() save = new EventEmitter<string>();
+  @Output() feedback = new EventEmitter<{ jobId: string; type: FeedbackType }>();
+
+  matchLabelClass(label: string): string {
+    const map: Record<string, string> = {
+      EXCELLENT: 'bg-green-100 text-green-700',
+      STRONG:    'bg-blue-100 text-blue-700',
+      MODERATE:  'bg-yellow-100 text-yellow-700',
+      WEAK:      'bg-gray-100 text-gray-600',
+    };
+    return map[label] ?? 'bg-gray-100 text-gray-600';
+  }
 }

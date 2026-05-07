@@ -3,12 +3,15 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.ai.AnalyzeCvRequest;
 import com.autoapplicant.adapter.web.dto.ai.GenerateRequest;
+import com.autoapplicant.adapter.web.dto.ai.ParseCvRequest;
 import com.autoapplicant.domain.ai.AiAnalysisRequest;
 import com.autoapplicant.domain.ai.AiAnalysisResult;
 import com.autoapplicant.domain.ai.AiGenerationRequest;
 import com.autoapplicant.domain.ai.AiGenerationResult;
+import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
+import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.util.UUID;
@@ -27,15 +30,18 @@ public class AiController {
 
     private final GenerateDocumentUseCase generate;
     private final AnalyzeCvUseCase analyze;
+    private final ParseCvUseCase parseCv;
     private final CvVersionRepositoryPort cvRepo;
     private final JobRepositoryPort jobRepo;
     private final SecurityContextHelper secCtx;
 
     public AiController(GenerateDocumentUseCase generate, AnalyzeCvUseCase analyze,
+                        ParseCvUseCase parseCv,
                         CvVersionRepositoryPort cvRepo, JobRepositoryPort jobRepo,
                         SecurityContextHelper secCtx) {
         this.generate = generate;
         this.analyze = analyze;
+        this.parseCv = parseCv;
         this.cvRepo = cvRepo;
         this.jobRepo = jobRepo;
         this.secCtx = secCtx;
@@ -48,7 +54,7 @@ public class AiController {
         UUID userId = secCtx.getCurrentUserId();
         AiGenerationRequest request = new AiGenerationRequest(
                 req.jobId(), req.cvVersionId(), req.promptTemplateId(),
-                userId, req.customInstructions(), req.documentType());
+                userId, req.customInstructions(), req.documentType(), req.targetLanguage());
         generate.generate(request)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
@@ -56,6 +62,12 @@ public class AiController {
                     return null;
                 });
         return result;
+    }
+
+    @PostMapping("/parse-cv")
+    public ResponseEntity<Profile> parseCv(@RequestBody ParseCvRequest req) {
+        Profile parsed = parseCv.parseCvText(secCtx.getCurrentUserId(), req.rawCvText());
+        return ResponseEntity.ok(parsed);
     }
 
     @PostMapping("/analyze")

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Job, JobSearchResult, MatchResult } from '../models/job.model';
+import { FeedbackType, RecommendationFeedback } from '../models/profile-section.model';
 
 @Injectable({ providedIn: 'root' })
 export class JobsApiService {
@@ -31,5 +32,13 @@ export class JobsApiService {
   ignore(id: string, reason?: string): Observable<void> {
     const params = reason ? { reason } : {};
     return this.http.post<void>(`${this.base}/${id}/ignore`, {}, { params });
+  }
+
+  submitFeedback(id: string, type: FeedbackType): Observable<RecommendationFeedback> {
+    return this.http.post<RecommendationFeedback>(`${this.base}/${id}/feedback`, {}, { params: { type } });
+  }
+
+  removeFeedback(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/feedback`);
   }
 }

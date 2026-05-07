@@ -37,4 +37,5 @@ export interface MatchResult {
   semanticScore: number;
   totalScore: number;
   matchLabel: 'EXCELLENT' | 'STRONG' | 'MODERATE' | 'WEAK';
+  matchReasons: string[];
 }

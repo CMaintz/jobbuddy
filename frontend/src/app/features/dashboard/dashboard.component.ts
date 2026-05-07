@@ -54,15 +54,24 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
             </div>
             <div class="space-y-3">
               @for (match of data.recommendedJobs.slice(0, 5); track match.jobId) {
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <div class="font-medium text-gray-900">{{ match.job?.title }}</div>
-                    <div class="text-sm text-gray-500">{{ match.job?.companyName }} • {{ match.job?.location }}</div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="font-medium text-gray-900">{{ match.job?.title }}</div>
+                      <div class="text-sm text-gray-500">{{ match.job?.companyName }} • {{ match.job?.location }}</div>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-1 rounded-full shrink-0 ml-2"
+                          [class]="matchLabelClass(match.matchLabel)">
+                      {{ match.totalScore }}%
+                    </span>
                   </div>
-                  <span class="text-xs font-medium px-2 py-1 rounded-full"
-                        [class]="matchLabelClass(match.matchLabel)">
-                    {{ match.matchLabel }}
-                  </span>
+                  @if (match.matchReasons?.length) {
+                    <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">
+                      @for (reason of match.matchReasons; track reason) {
+                        <span class="text-xs text-green-700">✓ {{ reason }}</span>
+                      }
+                    </div>
+                  }
                 </div>
               }
             </div>
