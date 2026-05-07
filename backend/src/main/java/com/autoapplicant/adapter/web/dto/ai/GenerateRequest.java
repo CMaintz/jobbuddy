@@ -10,5 +10,6 @@ public record GenerateRequest(
         UUID cvVersionId,
         UUID promptTemplateId,
         @NotNull DocumentType documentType,
-        String customInstructions
+        String customInstructions,
+        String targetLanguage
 ) {}

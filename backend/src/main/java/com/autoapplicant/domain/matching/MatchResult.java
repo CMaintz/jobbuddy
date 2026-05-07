@@ -2,6 +2,7 @@ package com.autoapplicant.domain.matching;
 
 import com.autoapplicant.domain.job.Job;
 
+import java.util.List;
 import java.util.UUID;
 
 public record MatchResult(
@@ -12,5 +13,6 @@ public record MatchResult(
         double semanticScore,
         double behavioralScore,
         int totalScore,
-        MatchLabel matchLabel
+        MatchLabel matchLabel,
+        List<String> matchReasons
 ) {}
