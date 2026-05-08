@@ -10,6 +10,7 @@ import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
+import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ public class JobController {
 
     private final GetJobsUseCase getJobs;
     private final GetJobByIdUseCase getJobById;
+    private final GetSavedJobsUseCase getSavedJobs;
     private final SearchJobsUseCase searchJobs;
     private final GetRecommendationsUseCase getRecommendations;
     private final SaveJobUseCase saveJob;
@@ -34,12 +36,14 @@ public class JobController {
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
+                         GetSavedJobsUseCase getSavedJobs,
                          SearchJobsUseCase searchJobs, GetRecommendationsUseCase getRecommendations,
                          SaveJobUseCase saveJob, IgnoreJobUseCase ignoreJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
+        this.getSavedJobs = getSavedJobs;
         this.searchJobs = searchJobs;
         this.getRecommendations = getRecommendations;
         this.saveJob = saveJob;
@@ -80,10 +84,23 @@ public class JobController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/saved")
+    public ResponseEntity<List<JobResponse>> saved() {
+        UUID userId = secCtx.getCurrentUserId();
+        return ResponseEntity.ok(getSavedJobs.getSavedJobs(userId).stream()
+                .map(JobResponse::from).toList());
+    }
+
     @PostMapping("/{id}/save")
-    public ResponseEntity<Void> save(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, Boolean>> save(@PathVariable UUID id) {
         saveJob.saveJob(secCtx.getCurrentUserId(), id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("saved", true));
+    }
+
+    @DeleteMapping("/{id}/save")
+    public ResponseEntity<Void> unsave(@PathVariable UUID id) {
+        saveJob.unsaveJob(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/ignore")

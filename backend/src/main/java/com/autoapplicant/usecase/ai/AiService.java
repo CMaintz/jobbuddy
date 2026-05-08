@@ -4,7 +4,9 @@ import com.autoapplicant.adapter.ai.PromptCompositionBuilder;
 import com.autoapplicant.domain.ai.*;
 import com.autoapplicant.domain.document.*;
 import com.autoapplicant.domain.job.Job;
-import com.autoapplicant.port.in.ai.*;
+import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
+import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
+import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.document.*;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase {
+public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase, RefineDocumentUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
@@ -59,7 +61,8 @@ public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase {
                 template = defaultTemplate(request.documentType());
             }
 
-            PromptComposition composition = compositionBuilder.compose(template, cv, job, writingProfile);
+            PromptComposition composition = compositionBuilder.compose(
+                    template, cv, job, writingProfile, request.targetLanguage());
 
             // Append custom instructions if provided
             if (request.customInstructions() != null && !request.customInstructions().isBlank()) {
@@ -100,6 +103,35 @@ public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase {
             return CompletableFuture.completedFuture(new AiAnalysisResult(List.of(response), 0, response));
         } catch (Exception e) {
             log.error("CV analysis failed: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    @Override
+    @Async("aiTaskExecutor")
+    public CompletableFuture<RefineDocumentResult> refine(RefineDocumentRequest request) {
+        try {
+            StringBuilder systemPrompt = new StringBuilder(
+                    "You are a professional editor helping refine a job application document. " +
+                    "The user will provide their current draft and a specific refinement request. " +
+                    "Return ONLY the improved document text — no commentary, no explanations.");
+            if (request.targetLanguage() != null && !request.targetLanguage().isBlank()) {
+                systemPrompt.append(" Write in ").append(request.targetLanguage()).append(".");
+            }
+
+            StringBuilder userPrompt = new StringBuilder();
+            userPrompt.append("## Current Document\n").append(request.currentContent()).append("\n\n");
+            if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
+                userPrompt.append("## Job Description Context\n").append(request.jobDescription()).append("\n\n");
+            }
+            userPrompt.append("## Refinement Request\n").append(request.userMessage());
+
+            PromptComposition composition = new PromptComposition(
+                    systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
+            String refined = aiProvider.generate(composition);
+            return CompletableFuture.completedFuture(new RefineDocumentResult(refined, "gpt-4o"));
+        } catch (Exception e) {
+            log.error("Document refinement failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
     }

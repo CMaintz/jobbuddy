@@ -8,7 +8,15 @@ import org.springframework.stereotype.Service;
 public class PromptCompositionBuilder {
 
     public PromptComposition compose(PromptTemplate template, CvVersion cv, Job job, WritingProfile writingProfile) {
-        String systemPrompt = template.systemPrompt() != null ? template.systemPrompt() : defaultSystemPrompt();
+        return compose(template, cv, job, writingProfile, null);
+    }
+
+    public PromptComposition compose(PromptTemplate template, CvVersion cv, Job job,
+                                     WritingProfile writingProfile, String targetLanguage) {
+        String baseSystem = template.systemPrompt() != null ? template.systemPrompt() : defaultSystemPrompt();
+        String systemPrompt = targetLanguage != null && !targetLanguage.isBlank()
+                ? baseSystem + "\nAlways write the output in " + targetLanguage + "."
+                : baseSystem;
         String cvContext = cv != null ? "## CV\n" + cv.content() : "";
         String jobDesc = job != null ? "## Job Description\n" + job.descriptionClean() : "";
         String styleMemory = buildStyleMemory(writingProfile);
