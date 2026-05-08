@@ -6,14 +6,27 @@ export interface GenerateRequest {
   jobId?: string;
   cvVersionId?: string;
   promptTemplateId?: string;
-  documentType: 'COVER_LETTER' | 'APPLICATION_TEXT' | 'RECRUITER_MESSAGE' | 'CV_ANALYSIS_REPORT';
+  documentType: 'COVER_LETTER' | 'APPLICATION_TEXT' | 'RECRUITER_MESSAGE' | 'CV_ANALYSIS_REPORT' | 'CV' | 'FOLLOW_UP_MESSAGE';
   customInstructions?: string;
+  targetLanguage?: string;
 }
 
 export interface GenerateResponse {
   content: string;
   modelUsed: string;
   tokensUsed?: number;
+}
+
+export interface RefineRequest {
+  currentContent: string;
+  userMessage: string;
+  jobDescription?: string;
+  targetLanguage?: string;
+}
+
+export interface RefineResponse {
+  refinedContent: string;
+  modelUsed: string;
 }
 
 export interface AnalysisResponse {
@@ -28,6 +41,10 @@ export class AiApiService {
 
   generate(req: GenerateRequest): Observable<GenerateResponse> {
     return this.http.post<GenerateResponse>('/api/v1/ai/generate', req);
+  }
+
+  refine(req: RefineRequest): Observable<RefineResponse> {
+    return this.http.post<RefineResponse>('/api/v1/ai/refine', req);
   }
 
   analyzeCv(cvVersionId: string, jobId?: string): Observable<AnalysisResponse> {

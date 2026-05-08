@@ -28,6 +28,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent)
       },
       {
+        path: 'jobs/saved',
+        loadComponent: () => import('./features/jobs/saved-jobs/saved-jobs.component').then(m => m.SavedJobsComponent)
+      },
+      {
         path: 'jobs/:id',
         loadComponent: () => import('./features/jobs/job-detail/job-detail.component').then(m => m.JobDetailComponent)
       },

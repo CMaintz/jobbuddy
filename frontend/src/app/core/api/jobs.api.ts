@@ -34,6 +34,14 @@ export class JobsApiService {
     return this.http.post<void>(`${this.base}/${id}/ignore`, {}, { params });
   }
 
+  getSaved(): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.base}/saved`);
+  }
+
+  unsave(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/save`);
+  }
+
   submitFeedback(id: string, type: FeedbackType): Observable<RecommendationFeedback> {
     return this.http.post<RecommendationFeedback>(`${this.base}/${id}/feedback`, {}, { params: { type } });
   }

@@ -16,10 +16,14 @@ import { Router } from '@angular/router';
             <div class="flex justify-between h-16">
               <div class="flex items-center space-x-8">
                 <a routerLink="/dashboard" class="text-xl font-bold text-blue-600">AutoApplicant</a>
-                <a routerLink="/jobs" routerLinkActive="text-blue-600 font-medium"
+                <a routerLink="/jobs/search" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Jobs</a>
+                <a routerLink="/jobs/saved" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors">Saved</a>
                 <a routerLink="/applications" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Applications</a>
+                <a routerLink="/ai/generate" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors">Generate</a>
                 <a routerLink="/ai/cv" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">CV</a>
                 <a routerLink="/prompts" routerLinkActive="text-blue-600 font-medium"
