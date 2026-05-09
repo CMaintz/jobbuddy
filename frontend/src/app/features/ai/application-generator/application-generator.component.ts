@@ -6,8 +6,10 @@ import { AiApiService } from '../../../core/api/ai.api';
 import { DocumentApiService } from '../../../core/api/document.api';
 import { PromptApiService } from '../../../core/api/prompt.api';
 import { JobsApiService } from '../../../core/api/jobs.api';
+import { PdfTemplatesApiService } from '../../../core/api/pdf-templates.api';
 import { CvVersion } from '../../../core/models/cv-version.model';
 import { PromptTemplate } from '../../../core/models/prompt-template.model';
+import { PdfTemplate } from '../../../core/models/pdf-template.model';
 import { Job } from '../../../core/models/job.model';
 
 interface ChatMessage {
@@ -100,10 +102,30 @@ const LANGUAGES = [
             </select>
           </div>
 
+          <div>
+            <label class="label">PDF Template (optional)</label>
+            <select formControlName="pdfTemplateId" class="input">
+              <option value="">— no template —</option>
+              @for (t of pdfTemplates; track t.id) {
+                <option [value]="t.id">{{ t.name }}{{ t.isSystem ? ' (system)' : '' }}</option>
+              }
+            </select>
+          </div>
+
           <div class="md:col-span-2">
             <label class="label">Custom Instructions (optional)</label>
             <textarea formControlName="customInstructions" class="input" rows="2"
                       placeholder="e.g. Keep it under 300 words, emphasise leadership experience..."></textarea>
+          </div>
+
+          <div class="md:col-span-2 flex items-center gap-3">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" formControlName="useStyleFromHistory" class="rounded border-gray-300" />
+              <span class="text-sm text-gray-700">
+                Match style from my past applications
+              </span>
+            </label>
+            <span class="text-xs text-gray-400">Uses your 3 most recent documents of this type as style examples.</span>
           </div>
 
           @if (jobTitle) {
@@ -216,9 +238,11 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
   private docApi = inject(DocumentApiService);
   private promptApi = inject(PromptApiService);
   private jobsApi = inject(JobsApiService);
+  private pdfApi = inject(PdfTemplatesApiService);
 
   cvVersions: CvVersion[] = [];
   promptTemplates: PromptTemplate[] = [];
+  pdfTemplates: PdfTemplate[] = [];
   languages = LANGUAGES;
 
   loading = false;
@@ -244,8 +268,10 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     jobId: [''],
     cvVersionId: [''],
     promptTemplateId: [''],
+    pdfTemplateId: [''],
     customInstructions: [''],
-    targetLanguage: ['Danish']
+    targetLanguage: ['Danish'],
+    useStyleFromHistory: [false]
   });
 
   ngOnInit(): void {
@@ -259,6 +285,7 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     }
     this.docApi.getCvVersions().subscribe(cvs => this.cvVersions = cvs);
     this.promptApi.getAll().subscribe(ts => this.promptTemplates = ts);
+    this.pdfApi.getAll().subscribe(ts => this.pdfTemplates = ts);
   }
 
   ngAfterViewChecked(): void {
@@ -281,7 +308,8 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
       cvVersionId: v.cvVersionId || undefined,
       promptTemplateId: v.promptTemplateId || undefined,
       customInstructions: v.customInstructions || undefined,
-      targetLanguage: v.targetLanguage || 'Danish'
+      targetLanguage: v.targetLanguage || 'Danish',
+      useStyleFromHistory: v.useStyleFromHistory ?? false
     }).subscribe({
       next: r => {
         this.result = r;
@@ -338,7 +366,29 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
   }
 
   printDocument(): void {
-    window.print();
+    const pdfTemplateId = this.form.value.pdfTemplateId;
+    const template = pdfTemplateId ? this.pdfTemplates.find(t => t.id === pdfTemplateId) : null;
+
+    if (template) {
+      const content = this.currentContent
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
+      let html = template.htmlTemplate
+        .replace(/\{\{CONTENT\}\}/g, content)
+        .replace(/\{\{NAME\}\}/g, '')
+        .replace(/\{\{EMAIL\}\}/g, '')
+        .replace(/\{\{PHONE\}\}/g, '')
+        .replace(/\{\{DATE\}\}/g, new Date().toLocaleDateString('da-DK'));
+      const css = template.cssStyles ?? '';
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}</body></html>`);
+        win.document.close();
+        win.print();
+      }
+    } else {
+      window.print();
+    }
   }
 
   private setEditorContent(text: string): void {

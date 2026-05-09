@@ -5,6 +5,7 @@ import com.autoapplicant.domain.job.JobSource;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface JobRepositoryPort {
@@ -12,6 +13,7 @@ public interface JobRepositoryPort {
     List<Job> saveAll(List<Job> jobs);
     Optional<Job> findById(UUID id);
     List<Job> findAll(int page, int size);
+    List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size);
     Optional<Job> findBySourceAndSourceJobId(JobSource source, String sourceJobId);
     List<Job> findByUserId(UUID userId);
     long count();

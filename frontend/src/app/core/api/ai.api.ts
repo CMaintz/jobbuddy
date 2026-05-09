@@ -9,6 +9,7 @@ export interface GenerateRequest {
   documentType: 'COVER_LETTER' | 'APPLICATION_TEXT' | 'RECRUITER_MESSAGE' | 'CV_ANALYSIS_REPORT' | 'CV' | 'FOLLOW_UP_MESSAGE';
   customInstructions?: string;
   targetLanguage?: string;
+  useStyleFromHistory?: boolean;
 }
 
 export interface GenerateResponse {
@@ -49,5 +50,9 @@ export class AiApiService {
 
   analyzeCv(cvVersionId: string, jobId?: string): Observable<AnalysisResponse> {
     return this.http.post<AnalysisResponse>('/api/v1/ai/analyze', { cvVersionId, jobId });
+  }
+
+  getDocuments(): Observable<any[]> {
+    return this.http.get<any[]>('/api/v1/ai/documents');
   }
 }

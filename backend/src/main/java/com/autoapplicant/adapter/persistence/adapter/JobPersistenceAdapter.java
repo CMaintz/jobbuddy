@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,15 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     public List<Job> findAll(int page, int size) {
         return repo.findAll(PageRequest.of(page, size)).stream()
                 .map(JobMapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size) {
+        if (excludedIds == null || excludedIds.isEmpty()) {
+            return findAll(page, size);
+        }
+        return repo.findAllExcluding(excludedIds, PageRequest.of(page, size))
+                .stream().map(JobMapper::toDomain).toList();
     }
 
     @Override

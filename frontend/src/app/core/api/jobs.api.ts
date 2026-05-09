@@ -3,6 +3,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Job, JobSearchResult, MatchResult } from '../models/job.model';
 import { FeedbackType, RecommendationFeedback } from '../models/profile-section.model';
+import { GeneratedDocument } from '../models/generated-document.model';
+
+export interface IgnoredJob {
+  id: string;
+  userId: string;
+  jobId: string;
+  reason?: string;
+  ignoredAt: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class JobsApiService {
@@ -48,5 +57,17 @@ export class JobsApiService {
 
   removeFeedback(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/feedback`);
+  }
+
+  getIgnored(): Observable<IgnoredJob[]> {
+    return this.http.get<IgnoredJob[]>(`${this.base}/ignored`);
+  }
+
+  unignore(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/ignore`);
+  }
+
+  getDocumentsForJob(id: string): Observable<GeneratedDocument[]> {
+    return this.http.get<GeneratedDocument[]>(`${this.base}/${id}/documents`);
   }
 }

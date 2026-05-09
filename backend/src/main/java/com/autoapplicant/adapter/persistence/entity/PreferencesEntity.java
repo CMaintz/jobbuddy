@@ -38,6 +38,24 @@ public class PreferencesEntity {
     @Column(name = "excluded_companies", columnDefinition = "text[]")
     private String[] excludedCompanies;
 
+    @Type(StringArrayType.class)
+    @Column(name = "preferred_remote_types", columnDefinition = "text[]")
+    private String[] preferredRemoteTypes;
+
+    @Type(StringArrayType.class)
+    @Column(name = "preferred_employment_types", columnDefinition = "text[]")
+    private String[] preferredEmploymentTypes;
+
+    @Type(StringArrayType.class)
+    @Column(name = "preferred_seniority", columnDefinition = "text[]")
+    private String[] preferredSeniority;
+
+    @Column(name = "salary_min")
+    private Integer salaryMin;
+
+    @Column(name = "salary_max")
+    private Integer salaryMax;
+
     @Column(name = "notification_enabled")
     private boolean notificationEnabled;
 
@@ -67,6 +85,16 @@ public class PreferencesEntity {
     public void setNegativeSignals(String[] v) { this.negativeSignals = v; }
     public String[] getExcludedCompanies() { return excludedCompanies; }
     public void setExcludedCompanies(String[] v) { this.excludedCompanies = v; }
+    public String[] getPreferredRemoteTypes() { return preferredRemoteTypes; }
+    public void setPreferredRemoteTypes(String[] v) { this.preferredRemoteTypes = v; }
+    public String[] getPreferredEmploymentTypes() { return preferredEmploymentTypes; }
+    public void setPreferredEmploymentTypes(String[] v) { this.preferredEmploymentTypes = v; }
+    public String[] getPreferredSeniority() { return preferredSeniority; }
+    public void setPreferredSeniority(String[] v) { this.preferredSeniority = v; }
+    public Integer getSalaryMin() { return salaryMin; }
+    public void setSalaryMin(Integer v) { this.salaryMin = v; }
+    public Integer getSalaryMax() { return salaryMax; }
+    public void setSalaryMax(Integer v) { this.salaryMax = v; }
     public boolean isNotificationEnabled() { return notificationEnabled; }
     public void setNotificationEnabled(boolean v) { this.notificationEnabled = v; }
     public String getNotificationFrequency() { return notificationFrequency; }

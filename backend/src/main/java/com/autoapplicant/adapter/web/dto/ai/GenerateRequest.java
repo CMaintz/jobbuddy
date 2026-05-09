@@ -11,5 +11,6 @@ public record GenerateRequest(
         UUID promptTemplateId,
         @NotNull DocumentType documentType,
         String customInstructions,
-        String targetLanguage
+        String targetLanguage,
+        boolean useStyleFromHistory
 ) {}

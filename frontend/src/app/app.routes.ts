@@ -32,6 +32,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/jobs/saved-jobs/saved-jobs.component').then(m => m.SavedJobsComponent)
       },
       {
+        path: 'jobs/ignored',
+        loadComponent: () => import('./features/jobs/ignored-jobs/ignored-jobs.component').then(m => m.IgnoredJobsComponent)
+      },
+      {
         path: 'jobs/:id',
         loadComponent: () => import('./features/jobs/job-detail/job-detail.component').then(m => m.JobDetailComponent)
       },
@@ -60,6 +64,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/ai/application-generator/application-generator.component').then(m => m.ApplicationGeneratorComponent)
       },
       {
+        path: 'ai/documents',
+        loadComponent: () => import('./features/ai/documents/documents-history.component').then(m => m.DocumentsHistoryComponent)
+      },
+      {
         path: 'prompts',
         loadComponent: () => import('./features/prompts/prompt-list/prompt-list.component').then(m => m.PromptListComponent)
       },
@@ -74,6 +82,10 @@ export const routes: Routes = [
       {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
+        path: 'profile/writing-style',
+        loadComponent: () => import('./features/profile/writing-style/writing-style.component').then(m => m.WritingStyleComponent)
       }
     ]
   },

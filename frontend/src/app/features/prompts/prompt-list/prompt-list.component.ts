@@ -44,6 +44,7 @@ import { PromptTemplate } from '../../../core/models/prompt-template.model';
                   <p class="text-xs text-gray-400 mt-1 line-clamp-1 font-mono">{{ t.userPrompt }}</p>
                 </div>
                 <div class="flex gap-2 ml-4 shrink-0">
+                  <a [routerLink]="['/prompts', t.id, 'edit']" class="btn-secondary text-xs">Edit</a>
                   <button (click)="duplicate(t)" class="btn-secondary text-xs">Duplicate</button>
                 </div>
               </div>
