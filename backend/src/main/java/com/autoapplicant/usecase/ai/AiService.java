@@ -64,15 +64,29 @@ public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase, Ref
             PromptComposition composition = compositionBuilder.compose(
                     template, cv, job, writingProfile, request.targetLanguage());
 
-            // Append custom instructions if provided
-            if (request.customInstructions() != null && !request.customInstructions().isBlank()) {
-                composition = new PromptComposition(
-                        composition.systemPrompt(), composition.userPromptTemplate(),
-                        composition.cvContext(), composition.jobDescription(),
-                        composition.writingStyleMemory(), composition.outputConstraints(),
-                        composition.resolvedFinalPrompt() + "\n\nAdditional instructions: " + request.customInstructions()
-                );
+            StringBuilder finalPrompt = new StringBuilder(composition.resolvedFinalPrompt());
+
+            if (request.useStyleFromHistory()) {
+                List<GeneratedDocument> pastDocs = docRepo.findRecentByUserIdAndType(
+                        request.userId(), request.documentType().name(), 3);
+                if (!pastDocs.isEmpty()) {
+                    finalPrompt.append("\n\n## Past Writing Examples (match this style)");
+                    for (int i = 0; i < pastDocs.size(); i++) {
+                        finalPrompt.append("\n\n### Example ").append(i + 1).append("\n")
+                                .append(pastDocs.get(i).content());
+                    }
+                }
             }
+
+            if (request.customInstructions() != null && !request.customInstructions().isBlank()) {
+                finalPrompt.append("\n\nAdditional instructions: ").append(request.customInstructions());
+            }
+
+            composition = new PromptComposition(
+                    composition.systemPrompt(), composition.userPromptTemplate(),
+                    composition.cvContext(), composition.jobDescription(),
+                    composition.writingStyleMemory(), composition.outputConstraints(),
+                    finalPrompt.toString());
 
             String content = aiProvider.generate(composition);
 

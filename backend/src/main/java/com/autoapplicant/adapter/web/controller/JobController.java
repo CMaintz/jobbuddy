@@ -8,8 +8,11 @@ import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.search.JobSearchFilters;
 import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
+import com.autoapplicant.domain.document.GeneratedDocument;
+import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
+import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
@@ -28,27 +31,32 @@ public class JobController {
     private final GetJobsUseCase getJobs;
     private final GetJobByIdUseCase getJobById;
     private final GetSavedJobsUseCase getSavedJobs;
+    private final GetIgnoredJobsUseCase getIgnoredJobs;
     private final SearchJobsUseCase searchJobs;
     private final GetRecommendationsUseCase getRecommendations;
     private final SaveJobUseCase saveJob;
     private final IgnoreJobUseCase ignoreJob;
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
+    private final GeneratedDocumentRepositoryPort docRepo;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
-                         GetSavedJobsUseCase getSavedJobs,
+                         GetSavedJobsUseCase getSavedJobs, GetIgnoredJobsUseCase getIgnoredJobs,
                          SearchJobsUseCase searchJobs, GetRecommendationsUseCase getRecommendations,
                          SaveJobUseCase saveJob, IgnoreJobUseCase ignoreJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
+                         GeneratedDocumentRepositoryPort docRepo,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
         this.getSavedJobs = getSavedJobs;
+        this.getIgnoredJobs = getIgnoredJobs;
         this.searchJobs = searchJobs;
         this.getRecommendations = getRecommendations;
         this.saveJob = saveJob;
         this.ignoreJob = ignoreJob;
         this.feedbackUseCase = feedbackUseCase;
+        this.docRepo = docRepo;
         this.secCtx = secCtx;
     }
 
@@ -56,7 +64,8 @@ public class JobController {
     public ResponseEntity<Page<JobResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        JobSearchQuery query = new JobSearchQuery(null, null, page, size, "postedAt");
+        UUID userId = secCtx.getCurrentUserId();
+        JobSearchQuery query = new JobSearchQuery(null, null, page, size, "postedAt", userId);
         return ResponseEntity.ok(getJobs.getJobs(query).map(JobResponse::from));
     }
 
@@ -108,6 +117,22 @@ public class JobController {
                                         @RequestParam(required = false) String reason) {
         ignoreJob.ignoreJob(secCtx.getCurrentUserId(), id, reason);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/ignore")
+    public ResponseEntity<Void> unignore(@PathVariable UUID id) {
+        getIgnoredJobs.unignoreJob(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/ignored")
+    public ResponseEntity<List<IgnoredJob>> ignored() {
+        return ResponseEntity.ok(getIgnoredJobs.getIgnoredJobs(secCtx.getCurrentUserId()));
+    }
+
+    @GetMapping("/{id}/documents")
+    public ResponseEntity<List<GeneratedDocument>> jobDocuments(@PathVariable UUID id) {
+        return ResponseEntity.ok(docRepo.findByJobId(id));
     }
 
     @PostMapping("/{id}/feedback")

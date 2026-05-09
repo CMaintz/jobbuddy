@@ -24,13 +24,20 @@ import { Router } from '@angular/router';
                    class="text-gray-600 hover:text-gray-900 transition-colors">Applications</a>
                 <a routerLink="/ai/generate" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Generate</a>
+                <a routerLink="/ai/documents" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors">Docs</a>
                 <a routerLink="/ai/cv" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">CV</a>
                 <a routerLink="/prompts" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Prompts</a>
               </div>
               <div class="flex items-center space-x-4">
-                <a routerLink="/profile" class="text-gray-600 hover:text-gray-900 transition-colors">Profile</a>
+                <a routerLink="/profile" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors">Profile</a>
+                <a routerLink="/profile/writing-style" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Writing Style</a>
+                <a routerLink="/jobs/ignored" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Hidden</a>
                 <button (click)="logout()" class="btn-secondary text-sm">Logout</button>
               </div>
             </div>

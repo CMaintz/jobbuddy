@@ -4,6 +4,7 @@ import com.autoapplicant.adapter.persistence.mapper.DocumentMapper;
 import com.autoapplicant.adapter.persistence.repository.GeneratedDocumentJpaRepository;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -34,5 +35,17 @@ public class DocumentPersistenceAdapter implements GeneratedDocumentRepositoryPo
     public List<GeneratedDocument> findByUserId(UUID userId) {
         return repo.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(DocumentMapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GeneratedDocument> findByJobId(UUID jobId) {
+        return repo.findByJobIdOrderByCreatedAtDesc(jobId).stream()
+                .map(DocumentMapper::toDomain).toList();
+    }
+
+    @Override
+    public List<GeneratedDocument> findRecentByUserIdAndType(UUID userId, String documentType, int limit) {
+        return repo.findRecentByUserIdAndType(userId, documentType, PageRequest.of(0, limit))
+                .stream().map(DocumentMapper::toDomain).toList();
     }
 }

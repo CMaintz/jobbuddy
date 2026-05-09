@@ -7,6 +7,7 @@ import { ApplicationsApiService } from '../../../core/api/applications.api';
 import { NotesApiService } from '../../../core/api/notes.api';
 import { Job } from '../../../core/models/job.model';
 import { Note } from '../../../core/models/note.model';
+import { GeneratedDocument } from '../../../core/models/generated-document.model';
 
 @Component({
   selector: 'app-job-detail',
@@ -117,6 +118,33 @@ import { Note } from '../../../core/models/note.model';
           </div>
         </div>
 
+        <!-- Generated Documents Section -->
+        @if (generatedDocs.length > 0) {
+          <div class="card space-y-3">
+            <h2 class="text-base font-semibold text-gray-900">Generated Documents</h2>
+            @for (doc of generatedDocs; track doc.id) {
+              <div class="border border-gray-200 rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-medium uppercase tracking-wide text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                    {{ doc.documentType.replace('_', ' ') }}
+                  </span>
+                  <span class="text-xs text-gray-400">{{ doc.createdAt | date:'mediumDate' }}</span>
+                </div>
+                <p class="text-sm text-gray-700 line-clamp-3 whitespace-pre-line">{{ doc.content }}</p>
+                <button (click)="expandedDoc = expandedDoc === doc.id ? null : doc.id"
+                        class="text-xs text-blue-600 hover:underline mt-1">
+                  {{ expandedDoc === doc.id ? 'Collapse' : 'View full' }}
+                </button>
+                @if (expandedDoc === doc.id) {
+                  <div class="mt-2 text-sm text-gray-700 whitespace-pre-line bg-gray-50 rounded p-3">
+                    {{ doc.content }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
         <!-- Notes Section -->
         <div class="card space-y-3">
           <h2 class="text-base font-semibold text-gray-900">Notes</h2>
@@ -163,11 +191,13 @@ export class JobDetailComponent implements OnInit {
 
   job: Job | null = null;
   notes: Note[] = [];
+  generatedDocs: GeneratedDocument[] = [];
   loading = true;
   applying = false;
   applied = false;
   saved = false;
   saveMessage = '';
+  expandedDoc: string | null = null;
 
   newNoteContent = '';
   editingNoteId: string | null = null;
@@ -180,6 +210,7 @@ export class JobDetailComponent implements OnInit {
         this.job = j;
         this.loading = false;
         this.notesApi.getForJob(j.id).subscribe(ns => this.notes = ns);
+        this.jobsApi.getDocumentsForJob(j.id).subscribe(docs => this.generatedDocs = docs);
       },
       error: () => this.loading = false
     });

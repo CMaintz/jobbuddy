@@ -11,5 +11,6 @@ public record AiGenerationRequest(
         UUID userId,
         String customInstructions,
         DocumentType documentType,
-        String targetLanguage
+        String targetLanguage,
+        boolean useStyleFromHistory
 ) {}

@@ -5,20 +5,23 @@ import com.autoapplicant.adapter.web.dto.ai.AnalyzeCvRequest;
 import com.autoapplicant.adapter.web.dto.ai.GenerateRequest;
 import com.autoapplicant.adapter.web.dto.ai.ParseCvRequest;
 import com.autoapplicant.domain.ai.*;
+import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
+import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import java.util.UUID;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -32,11 +35,13 @@ public class AiController {
     private final RefineDocumentUseCase refine;
     private final CvVersionRepositoryPort cvRepo;
     private final JobRepositoryPort jobRepo;
+    private final GeneratedDocumentRepositoryPort docRepo;
     private final SecurityContextHelper secCtx;
 
     public AiController(GenerateDocumentUseCase generate, AnalyzeCvUseCase analyze,
                         ParseCvUseCase parseCv, RefineDocumentUseCase refine,
                         CvVersionRepositoryPort cvRepo, JobRepositoryPort jobRepo,
+                        GeneratedDocumentRepositoryPort docRepo,
                         SecurityContextHelper secCtx) {
         this.generate = generate;
         this.analyze = analyze;
@@ -44,6 +49,7 @@ public class AiController {
         this.refine = refine;
         this.cvRepo = cvRepo;
         this.jobRepo = jobRepo;
+        this.docRepo = docRepo;
         this.secCtx = secCtx;
     }
 
@@ -61,7 +67,8 @@ public class AiController {
         UUID userId = secCtx.getCurrentUserId();
         AiGenerationRequest request = new AiGenerationRequest(
                 req.jobId(), req.cvVersionId(), req.promptTemplateId(),
-                userId, req.customInstructions(), req.documentType(), req.targetLanguage());
+                userId, req.customInstructions(), req.documentType(), req.targetLanguage(),
+                req.useStyleFromHistory());
         generate.generate(request)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
@@ -69,6 +76,11 @@ public class AiController {
                     return null;
                 });
         return result;
+    }
+
+    @GetMapping("/documents")
+    public ResponseEntity<List<GeneratedDocument>> documents() {
+        return ResponseEntity.ok(docRepo.findByUserId(secCtx.getCurrentUserId()));
     }
 
     @PostMapping("/parse-cv")
@@ -111,5 +123,4 @@ public class AiController {
                 });
         return result;
     }
-
 }

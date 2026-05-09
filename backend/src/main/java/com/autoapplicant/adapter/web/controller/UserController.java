@@ -3,7 +3,9 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.UserPreferences;
+import java.util.List;
 import com.autoapplicant.port.in.user.*;
+import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +18,17 @@ public class UserController {
     private final GetUserProfileUseCase getProfile;
     private final UpdateUserProfileUseCase updateProfile;
     private final UpdatePreferencesUseCase updatePreferences;
+    private final PreferencesRepositoryPort prefsRepo;
     private final SecurityContextHelper secCtx;
 
     public UserController(GetUserProfileUseCase getProfile, UpdateUserProfileUseCase updateProfile,
-                          UpdatePreferencesUseCase updatePreferences, SecurityContextHelper secCtx) {
+                          UpdatePreferencesUseCase updatePreferences,
+                          PreferencesRepositoryPort prefsRepo,
+                          SecurityContextHelper secCtx) {
         this.getProfile = getProfile;
         this.updateProfile = updateProfile;
         this.updatePreferences = updatePreferences;
+        this.prefsRepo = prefsRepo;
         this.secCtx = secCtx;
     }
 
@@ -36,6 +42,15 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<Profile> updateProfile(@RequestBody Profile profile) {
         return ResponseEntity.ok(updateProfile.updateProfile(secCtx.getCurrentUserId(), profile));
+    }
+
+    @GetMapping("/preferences")
+    public ResponseEntity<UserPreferences> getPreferences() {
+        return ResponseEntity.ok(prefsRepo.findByUserId(secCtx.getCurrentUserId())
+                .orElse(new UserPreferences(null, secCtx.getCurrentUserId(),
+                        List.of(), List.of(), List.of(), List.of(), List.of(),
+                        List.of(), List.of(), List.of(), null, null,
+                        false, "DAILY", null, null)));
     }
 
     @PutMapping("/preferences")
