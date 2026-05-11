@@ -1,16 +1,21 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ProfileSectionsApiService } from '../../core/api/profile-sections.api';
+import { SkillsApiService } from '../../core/api/skills.api';
 import { WorkExperience, Project, Education, Certification } from '../../core/models/profile-section.model';
+import { ProfileSkill, SkillTaxonomy } from '../../core/models/skill-taxonomy.model';
 
-type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certifications';
+type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="max-w-4xl mx-auto p-6">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Master Career Profile</h1>
@@ -297,6 +302,111 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
         </div>
         <p *ngIf="!certifications.length" class="text-gray-500 text-sm">No certifications added yet.</p>
       </div>
+
+      <!-- Skills Tab -->
+      <div *ngIf="activeTab === 'skills'">
+        <h2 class="text-lg font-semibold mb-4">Skills</h2>
+
+        <!-- Add Skill Form -->
+        <div class="bg-gray-50 rounded p-4 mb-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-3">Add Skill</h3>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <!-- Skill Name with Autocomplete -->
+            <div class="relative">
+              <label class="block text-xs font-medium text-gray-700 mb-1">Skill Name</label>
+              <input
+                [(ngModel)]="newSkill.skillName"
+                (ngModelChange)="onSkillNameChange($event)"
+                (blur)="hideDropdownDelayed()"
+                placeholder="Search for a skill..."
+                class="w-full border rounded px-2 py-1.5 text-sm"/>
+              <div *ngIf="taxonomySuggestions.length > 0 && showDropdown"
+                   class="absolute z-10 top-full left-0 right-0 bg-white border rounded shadow-lg mt-0.5 max-h-48 overflow-y-auto">
+                <button *ngFor="let suggestion of taxonomySuggestions"
+                        type="button"
+                        (mousedown)="selectTaxonomySuggestion(suggestion)"
+                        class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0">
+                  <span class="font-medium">{{ suggestion.name }}</span>
+                  <span class="text-xs text-gray-400 ml-2">{{ suggestion.category }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Proficiency -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Proficiency</label>
+              <select [(ngModel)]="newSkill.proficiencyLevel" class="w-full border rounded px-2 py-1.5 text-sm">
+                <option value="BEGINNER">Beginner</option>
+                <option value="INTERMEDIATE">Intermediate</option>
+                <option value="ADVANCED">Advanced</option>
+                <option value="EXPERT">Expert</option>
+              </select>
+            </div>
+
+            <!-- Years Experience -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Years Experience (optional)</label>
+              <input
+                [(ngModel)]="newSkill.yearsExperience"
+                type="number"
+                min="0"
+                placeholder="e.g. 3"
+                class="w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+
+            <!-- Used in Production -->
+            <div class="flex items-end pb-1.5">
+              <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input [(ngModel)]="newSkill.usedInProduction" type="checkbox" class="rounded"/>
+                Used in production
+              </label>
+            </div>
+          </div>
+
+          <button (click)="addProfileSkill()" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-blue-700">
+            Save Skill
+          </button>
+          <span *ngIf="skillSaveError" class="ml-3 text-red-600 text-sm">{{ skillSaveError }}</span>
+        </div>
+
+        <!-- Skills List -->
+        <div *ngIf="profileSkills.length > 0">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                  <th class="pb-2 pr-4">Skill</th>
+                  <th class="pb-2 pr-4">Proficiency</th>
+                  <th class="pb-2 pr-4">Years</th>
+                  <th class="pb-2 pr-4">In Prod</th>
+                  <th class="pb-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let skill of profileSkills" class="border-b border-gray-100 hover:bg-gray-50">
+                  <td class="py-2.5 pr-4 font-medium text-gray-900">{{ skill.skillName }}</td>
+                  <td class="py-2.5 pr-4">
+                    <span [class]="proficiencyBadgeClass(skill.proficiencyLevel)" class="text-xs px-2 py-0.5 rounded-full font-medium">
+                      {{ skill.proficiencyLevel }}
+                    </span>
+                  </td>
+                  <td class="py-2.5 pr-4 text-gray-600">
+                    <span *ngIf="skill.yearsExperience != null">{{ skill.yearsExperience }}y</span>
+                    <span *ngIf="skill.yearsExperience == null" class="text-gray-300">—</span>
+                  </td>
+                  <td class="py-2.5 pr-4">
+                    <input type="checkbox" [checked]="skill.usedInProduction" disabled class="rounded cursor-not-allowed opacity-70"/>
+                  </td>
+                  <td class="py-2.5">
+                    <button (click)="deleteProfileSkill(skill.id!)" class="text-red-500 text-xs hover:text-red-700">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p *ngIf="!profileSkills.length" class="text-gray-500 text-sm">No skills added yet.</p>
+      </div>
     </div>
   `
 })
@@ -304,6 +414,7 @@ export class ProfileComponent implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private sectionsApi = inject(ProfileSectionsApiService);
+  private skillsApi = inject(SkillsApiService);
 
   activeTab: Tab = 'overview';
   saveSuccess = false;
@@ -318,12 +429,26 @@ export class ProfileComponent implements OnInit {
     { key: 'projects' as Tab, label: 'Projects' },
     { key: 'education' as Tab, label: 'Education' },
     { key: 'certifications' as Tab, label: 'Certifications' },
+    { key: 'skills' as Tab, label: 'Skills' },
   ];
 
   experiences: WorkExperience[] = [];
   projects: Project[] = [];
   educations: Education[] = [];
   certifications: Certification[] = [];
+  profileSkills: ProfileSkill[] = [];
+
+  // Skills tab state
+  newSkill: Partial<ProfileSkill> = {
+    skillName: '',
+    proficiencyLevel: 'INTERMEDIATE',
+    yearsExperience: undefined,
+    usedInProduction: false,
+  };
+  taxonomySuggestions: SkillTaxonomy[] = [];
+  showDropdown = false;
+  skillSaveError = '';
+  private skillSearchSubject = new Subject<string>();
 
   profileForm = this.fb.group({
     fullName: [''],
@@ -384,6 +509,19 @@ export class ProfileComponent implements OnInit {
       error: () => {}
     });
     this.loadSections();
+
+    // Set up debounced skill search
+    this.skillSearchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(q => q.length >= 1 ? this.skillsApi.searchTaxonomy(q) : [])
+    ).subscribe({
+      next: results => {
+        this.taxonomySuggestions = results.slice(0, 8);
+        this.showDropdown = this.taxonomySuggestions.length > 0;
+      },
+      error: () => { this.taxonomySuggestions = []; this.showDropdown = false; }
+    });
   }
 
   private loadSections(): void {
@@ -391,6 +529,67 @@ export class ProfileComponent implements OnInit {
     this.sectionsApi.getProjects().subscribe(d => this.projects = d);
     this.sectionsApi.getEducation().subscribe(d => this.educations = d);
     this.sectionsApi.getCertifications().subscribe(d => this.certifications = d);
+    this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d);
+  }
+
+  onSkillNameChange(value: string): void {
+    this.showDropdown = false;
+    if (value && value.length >= 1) {
+      this.skillSearchSubject.next(value);
+    } else {
+      this.taxonomySuggestions = [];
+    }
+  }
+
+  selectTaxonomySuggestion(suggestion: SkillTaxonomy): void {
+    this.newSkill.skillName = suggestion.name;
+    this.newSkill = { ...this.newSkill, taxonomyId: suggestion.id };
+    this.taxonomySuggestions = [];
+    this.showDropdown = false;
+  }
+
+  hideDropdownDelayed(): void {
+    // Use a short timeout so mousedown on suggestion fires before blur hides it
+    setTimeout(() => { this.showDropdown = false; }, 150);
+  }
+
+  proficiencyBadgeClass(level: string): string {
+    const map: Record<string, string> = {
+      BEGINNER: 'bg-gray-100 text-gray-600',
+      INTERMEDIATE: 'bg-blue-100 text-blue-700',
+      ADVANCED: 'bg-green-100 text-green-700',
+      EXPERT: 'bg-purple-100 text-purple-700',
+    };
+    return map[level] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  addProfileSkill(): void {
+    this.skillSaveError = '';
+    if (!this.newSkill.skillName?.trim()) {
+      this.skillSaveError = 'Skill name is required.';
+      return;
+    }
+    const payload: ProfileSkill = {
+      skillName: this.newSkill.skillName!.trim(),
+      taxonomyId: this.newSkill.taxonomyId,
+      proficiencyLevel: this.newSkill.proficiencyLevel ?? 'INTERMEDIATE',
+      yearsExperience: this.newSkill.yearsExperience ?? undefined,
+      usedInProduction: this.newSkill.usedInProduction ?? false,
+      displayOrder: this.profileSkills.length,
+    };
+    this.skillsApi.addProfileSkill(payload).subscribe({
+      next: () => {
+        this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d);
+        this.newSkill = { skillName: '', proficiencyLevel: 'INTERMEDIATE', yearsExperience: undefined, usedInProduction: false };
+        this.taxonomySuggestions = [];
+      },
+      error: () => { this.skillSaveError = 'Failed to save skill. Please try again.'; }
+    });
+  }
+
+  deleteProfileSkill(id: string): void {
+    this.skillsApi.deleteProfileSkill(id).subscribe(() =>
+      this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d));
   }
 
   saveProfile(): void {

@@ -90,6 +90,10 @@ export const routes: Routes = [
       {
         path: 'pdf-templates',
         loadComponent: () => import('./features/pdf-templates/pdf-templates.component').then(m => m.PdfTemplatesComponent)
+      },
+      {
+        path: 'analytics',
+        loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
       }
     ]
   },
