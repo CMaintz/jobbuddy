@@ -164,9 +164,17 @@ public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase, Ref
 
     private PromptTemplate defaultTemplate(DocumentType documentType) {
         String prompt = switch (documentType) {
+            case CV -> """
+                    Create a focused, tailored CV based on the master CV and job description provided.
+                    Reorder and emphasise sections that are most relevant to the role.
+                    Incorporate keywords from the job description naturally.
+                    Keep achievements quantified where the source CV provides numbers.
+                    Preserve all factual information — do not invent experience or credentials.
+                    Format as clean plain text with clear section headings.""";
             case COVER_LETTER -> "Write a compelling cover letter based on the CV and job description provided. Focus on relevant experience and genuine enthusiasm.";
             case APPLICATION_TEXT -> "Write a professional job application text based on the CV and job description. Be concise and highlight key qualifications.";
-            case RECRUITER_MESSAGE -> "Write a brief, personalized LinkedIn or email message to a recruiter about this position.";
+            case RECRUITER_MESSAGE -> "Write a brief, personalized LinkedIn or email message to a recruiter about this position. Keep it under 150 words.";
+            case FOLLOW_UP_MESSAGE -> "Write a polite follow-up message to send after applying for the job. Reference the role specifically and express continued interest. Keep it under 100 words.";
             default -> "Analyze and provide professional feedback based on the provided context.";
         };
         return new PromptTemplate(null, null, "Default " + documentType.name(), null, null,
