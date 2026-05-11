@@ -86,6 +86,10 @@ export const routes: Routes = [
       {
         path: 'profile/writing-style',
         loadComponent: () => import('./features/profile/writing-style/writing-style.component').then(m => m.WritingStyleComponent)
+      },
+      {
+        path: 'pdf-templates',
+        loadComponent: () => import('./features/pdf-templates/pdf-templates.component').then(m => m.PdfTemplatesComponent)
       }
     ]
   },
