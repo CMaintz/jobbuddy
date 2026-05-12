@@ -2,6 +2,11 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.job.JobResponse;
+import com.autoapplicant.adapter.web.dto.job.ManualJobRequest;
+import com.autoapplicant.domain.job.EmploymentType;
+import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobSource;
+import com.autoapplicant.domain.job.RemoteType;
 import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
@@ -13,6 +18,8 @@ import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Instant;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
@@ -38,6 +45,7 @@ public class JobController {
     private final IgnoreJobUseCase ignoreJob;
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
     private final GeneratedDocumentRepositoryPort docRepo;
+    private final JobRepositoryPort jobRepo;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
@@ -46,6 +54,7 @@ public class JobController {
                          SaveJobUseCase saveJob, IgnoreJobUseCase ignoreJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          GeneratedDocumentRepositoryPort docRepo,
+                         JobRepositoryPort jobRepo,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -57,6 +66,7 @@ public class JobController {
         this.ignoreJob = ignoreJob;
         this.feedbackUseCase = feedbackUseCase;
         this.docRepo = docRepo;
+        this.jobRepo = jobRepo;
         this.secCtx = secCtx;
     }
 
@@ -145,5 +155,27 @@ public class JobController {
     public ResponseEntity<Void> removeFeedback(@PathVariable UUID id) {
         feedbackUseCase.removeFeedback(secCtx.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<JobResponse> lookupByUrl(@RequestParam String url) {
+        return jobRepo.findByUrl(url)
+                .map(job -> ResponseEntity.ok(JobResponse.from(job)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/manual")
+    public ResponseEntity<JobResponse> addManually(@RequestBody ManualJobRequest req) {
+        Job job = new Job(null, JobSource.MANUAL, null, req.url(),
+                req.title(), null, req.companyName(),
+                req.description(), req.description(),
+                req.employmentType() != null ? EmploymentType.valueOf(req.employmentType()) : null,
+                null, req.remoteType() != null ? RemoteType.valueOf(req.remoteType()) : null,
+                req.location(), null, null, null,
+                req.salaryMin(), req.salaryMax(), req.currency() != null ? req.currency() : "DKK",
+                List.of(), List.of(), List.of(),
+                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null);
+        Job saved = jobRepo.save(job);
+        return ResponseEntity.ok(JobResponse.from(saved));
     }
 }

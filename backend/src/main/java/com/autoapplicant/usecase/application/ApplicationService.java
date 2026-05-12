@@ -1,11 +1,14 @@
 package com.autoapplicant.usecase.application;
 
+import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.port.in.application.*;
+import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,9 +19,12 @@ public class ApplicationService implements
         GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
+    private final ResponseMetricRepositoryPort responseMetricRepo;
 
-    public ApplicationService(ApplicationRepositoryPort repo) {
+    public ApplicationService(ApplicationRepositoryPort repo,
+                              ResponseMetricRepositoryPort responseMetricRepo) {
         this.repo = repo;
+        this.responseMetricRepo = responseMetricRepo;
     }
 
     @Override
@@ -47,7 +53,23 @@ public class ApplicationService implements
                 existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
                 notes != null ? notes : existing.notes(),
                 existing.createdAt(), java.time.Instant.now());
-        return repo.save(updated);
+        Application saved = repo.save(updated);
+
+        String eventType = switch (newStatus) {
+            case RECRUITER_CONTACT -> "RECRUITER_CONTACT";
+            case INTERVIEW -> "INTERVIEW_SCHEDULED";
+            case TECHNICAL_TEST -> "TECHNICAL_TEST";
+            case FINAL_ROUND -> "FINAL_ROUND";
+            case OFFER -> "OFFER_RECEIVED";
+            case REJECTED -> "REJECTED";
+            default -> null;
+        };
+        if (eventType != null) {
+            responseMetricRepo.save(new ResponseMetric(null, existing.userId(), existing.jobId(),
+                    applicationId, eventType, Instant.now(), notes));
+        }
+
+        return saved;
     }
 
     @Override

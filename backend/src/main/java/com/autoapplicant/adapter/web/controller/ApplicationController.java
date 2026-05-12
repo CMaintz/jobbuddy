@@ -2,7 +2,11 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.application.*;
+import com.autoapplicant.domain.analytics.ResponseMetric;
+import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.*;
+import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -21,17 +25,23 @@ public class ApplicationController {
     private final UpdateApplicationStatusUseCase updateStatus;
     private final GetApplicationsUseCase getAll;
     private final GetApplicationByIdUseCase getById;
+    private final JobRepositoryPort jobRepo;
+    private final ResponseMetricRepositoryPort responseMetricRepo;
     private final SecurityContextHelper secCtx;
 
     public ApplicationController(CreateApplicationUseCase create,
                                   UpdateApplicationStatusUseCase updateStatus,
                                   GetApplicationsUseCase getAll,
                                   GetApplicationByIdUseCase getById,
+                                  JobRepositoryPort jobRepo,
+                                  ResponseMetricRepositoryPort responseMetricRepo,
                                   SecurityContextHelper secCtx) {
         this.create = create;
         this.updateStatus = updateStatus;
         this.getAll = getAll;
         this.getById = getById;
+        this.jobRepo = jobRepo;
+        this.responseMetricRepo = responseMetricRepo;
         this.secCtx = secCtx;
     }
 
