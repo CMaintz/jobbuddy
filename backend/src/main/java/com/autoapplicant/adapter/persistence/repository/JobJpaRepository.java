@@ -14,6 +14,8 @@ import java.util.UUID;
 public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     Optional<JobEntity> findBySourceAndSourceJobId(String source, String sourceJobId);
 
+    Optional<JobEntity> findByUrl(String url);
+
     @Query("SELECT j FROM JobEntity j WHERE j.isActive = true ORDER BY j.postedAt DESC")
     List<JobEntity> findActiveJobs();
 

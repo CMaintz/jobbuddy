@@ -12,6 +12,8 @@ export interface Application {
   recruiterEmail?: string;
   matchScore?: number;
   notes?: string;
+  jobTitle?: string;
+  jobCompanyName?: string;
   createdAt: string;
   updatedAt: string;
 }

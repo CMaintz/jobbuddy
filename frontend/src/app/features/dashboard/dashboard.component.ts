@@ -16,21 +16,21 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
       } @else if (data) {
         <!-- Stats Row -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-blue-600">{{ data.recommendedJobs?.length ?? 0 }}</div>
-            <div class="text-sm text-gray-500 mt-1">Recommendations</div>
-          </div>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-green-600">{{ data.savedJobs?.length ?? 0 }}</div>
-            <div class="text-sm text-gray-500 mt-1">Saved Jobs</div>
-          </div>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-yellow-600">{{ data.pendingApplications?.length ?? 0 }}</div>
+          <a routerLink="/applications" class="card text-center hover:shadow-md transition-shadow">
+            <div class="text-3xl font-bold text-blue-600">{{ data.appliedThisWeek ?? 0 }}</div>
+            <div class="text-sm text-gray-500 mt-1">Applied This Week</div>
+          </a>
+          <a routerLink="/applications" class="card text-center hover:shadow-md transition-shadow">
+            <div class="text-3xl font-bold text-yellow-600">{{ data.activeApplications ?? 0 }}</div>
             <div class="text-sm text-gray-500 mt-1">Active Applications</div>
-          </div>
+          </a>
           <div class="card text-center">
             <div class="text-3xl font-bold text-purple-600">{{ data.upcomingInterviews?.length ?? 0 }}</div>
             <div class="text-sm text-gray-500 mt-1">Interviews</div>
+          </div>
+          <div class="card text-center">
+            <div class="text-3xl font-bold text-green-600">{{ data.recommendedJobs?.length ?? 0 }}</div>
+            <div class="text-sm text-gray-500 mt-1">Recommendations</div>
           </div>
         </div>
 
@@ -39,6 +39,7 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
           <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div class="flex flex-wrap gap-3">
             <a routerLink="/jobs/search" class="btn-primary">Browse Jobs</a>
+            <a routerLink="/jobs/add" class="btn-secondary">Add Job Manually</a>
             <a routerLink="/ai/generate" class="btn-secondary">Generate Application</a>
             <a routerLink="/ai/cv" class="btn-secondary">Upload CV</a>
             <a routerLink="/prompts" class="btn-secondary">Manage Prompts</a>

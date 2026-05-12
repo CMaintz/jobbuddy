@@ -60,6 +60,11 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public Optional<Job> findByUrl(String url) {
+        return repo.findByUrl(url).map(JobMapper::toDomain);
+    }
+
+    @Override
     public long count() {
         return repo.count();
     }
