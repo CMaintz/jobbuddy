@@ -8,6 +8,8 @@ export interface DashboardData {
   pendingApplications: any[];
   upcomingInterviews: any[];
   weeklyMetrics: any;
+  appliedThisWeek?: number;
+  activeApplications?: number;
 }
 
 @Injectable({ providedIn: 'root' })
