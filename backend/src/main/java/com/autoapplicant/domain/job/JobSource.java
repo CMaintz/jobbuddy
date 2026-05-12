@@ -6,7 +6,6 @@ public enum JobSource {
     IT_JOBBANK,
     COMPUTERWORLD,
     THE_HUB,
-    OFIR,
     JOBNET,
     WORKIN_DENMARK,
     COMPANY_CAREER
