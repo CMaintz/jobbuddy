@@ -8,5 +8,6 @@ public enum JobSource {
     THE_HUB,
     JOBNET,
     WORKIN_DENMARK,
-    COMPANY_CAREER
+    COMPANY_CAREER,
+    MANUAL
 }

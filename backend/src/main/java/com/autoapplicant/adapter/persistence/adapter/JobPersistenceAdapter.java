@@ -60,11 +60,6 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findByUserId(UUID userId) {
-        return List.of();
-    }
-
-    @Override
     public long count() {
         return repo.count();
     }
