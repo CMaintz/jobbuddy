@@ -40,6 +40,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/jobs/ignored-jobs/ignored-jobs.component').then(m => m.IgnoredJobsComponent)
       },
       {
+        path: 'jobs/add',
+        loadComponent: () => import('./features/jobs/job-add/job-add.component').then(m => m.JobAddComponent)
+      },
+      {
         path: 'jobs/:id',
         loadComponent: () => import('./features/jobs/job-detail/job-detail.component').then(m => m.JobDetailComponent)
       },

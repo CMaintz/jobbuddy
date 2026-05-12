@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ApplicationsApiService } from '../../../core/api/applications.api';
 import { Application } from '../../../core/models/application.model';
 
 @Component({
   selector: 'app-application-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -23,6 +24,10 @@ import { Application } from '../../../core/models/application.model';
           <a routerLink="/jobs/search" class="btn-primary mt-4 inline-block">Browse Jobs</a>
         </div>
       } @else {
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="showArchived" [(ngModel)]="showArchived" class="rounded border-gray-300" />
+          <label for="showArchived" class="text-sm text-gray-600 cursor-pointer">Show archived &amp; rejected</label>
+        </div>
         <div class="card overflow-hidden p-0">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
@@ -34,10 +39,10 @@ import { Application } from '../../../core/models/application.model';
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              @for (app of apps; track app.id) {
+              @for (app of visibleApps; track app.id) {
                 <tr class="hover:bg-gray-50">
                   <td class="px-4 py-3">
-                    <span class="font-medium text-gray-900">{{ app.id.slice(0, 8) }}</span>
+                    <span class="font-medium text-gray-900">{{ app.jobTitle ?? app.jobCompanyName ?? ('Application #' + app.id.slice(0, 8)) }}</span>
                     @if (app.notes) {
                       <span class="ml-2 text-gray-400 text-xs">{{ app.notes }}</span>
                     }
@@ -52,8 +57,20 @@ import { Application } from '../../../core/models/application.model';
                     {{ app.appliedAt ? (app.appliedAt | date:'mediumDate') : '—' }}
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <a [routerLink]="['/applications', app.id]"
-                       class="text-blue-600 hover:underline text-xs">View →</a>
+                    <div class="flex items-center justify-end gap-2">
+                      @if (app.status !== 'REJECTED' && app.status !== 'ARCHIVED') {
+                        <button (click)="updateStatus(app, 'REJECTED')"
+                                class="text-xs text-red-600 hover:text-red-800 hover:underline">
+                          Reject
+                        </button>
+                        <button (click)="updateStatus(app, 'ARCHIVED')"
+                                class="text-xs text-gray-500 hover:text-gray-700 hover:underline">
+                          Archive
+                        </button>
+                      }
+                      <a [routerLink]="['/applications', app.id]"
+                         class="text-blue-600 hover:underline text-xs">View →</a>
+                    </div>
                   </td>
                 </tr>
               }
@@ -69,11 +86,28 @@ export class ApplicationListComponent implements OnInit {
 
   apps: Application[] = [];
   loading = true;
+  showArchived = false;
+
+  get visibleApps(): Application[] {
+    if (this.showArchived) return this.apps;
+    return this.apps.filter(a => a.status !== 'REJECTED' && a.status !== 'ARCHIVED');
+  }
 
   ngOnInit(): void {
+    this.loadApps();
+  }
+
+  loadApps(): void {
+    this.loading = true;
     this.api.getAll().subscribe({
       next: a => { this.apps = a; this.loading = false; },
       error: () => this.loading = false
+    });
+  }
+
+  updateStatus(app: Application, status: string): void {
+    this.api.updateStatus(app.id, status as any).subscribe({
+      next: () => this.loadApps()
     });
   }
 
