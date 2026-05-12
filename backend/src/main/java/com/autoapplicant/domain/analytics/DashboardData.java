@@ -11,5 +11,7 @@ public record DashboardData(
         List<Job> savedJobs,
         List<Application> pendingApplications,
         List<Application> upcomingInterviews,
-        ApplicationMetrics weeklyMetrics
+        ApplicationMetrics weeklyMetrics,
+        int appliedThisWeek,
+        int activeApplications
 ) {}
