@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { AuthResponse, User } from '../models/user.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -22,6 +23,28 @@ export class AuthService {
     return this.http.post<AuthResponse>('/api/v1/auth/register', { email, password, fullName }).pipe(
       tap(res => this.storeAuth(res))
     );
+  }
+
+  linkedinCallback(code: string, redirectUri: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>('/api/v1/auth/linkedin', { code, redirectUri }).pipe(
+      tap(res => this.storeAuth(res))
+    );
+  }
+
+  buildLinkedInAuthUrl(redirectUri: string): string {
+    // Configure linkedInClientId in src/environments/environment.ts before using this
+    const clientId = environment.linkedInClientId;
+    const scope = 'openid profile email';
+    const state = Math.random().toString(36).substring(2);
+    sessionStorage.setItem('linkedin_state', state);
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope,
+      state
+    });
+    return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
   }
 
   logout(): void {
