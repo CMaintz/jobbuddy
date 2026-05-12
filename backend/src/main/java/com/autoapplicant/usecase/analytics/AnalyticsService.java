@@ -59,8 +59,24 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
 
         ApplicationMetrics weeklyMetrics = computeWeeklyMetrics(userId, applications);
 
+        Instant sevenDaysAgo = Instant.now().minus(7, ChronoUnit.DAYS);
+        int appliedThisWeek = (int) applications.stream()
+                .filter(a -> a.status() != ApplicationStatus.SAVED)
+                .filter(a -> {
+                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
+                    return ts != null && ts.isAfter(sevenDaysAgo);
+                }).count();
+
+        int activeApplications = (int) applications.stream()
+                .filter(a -> a.status() == ApplicationStatus.APPLIED
+                        || a.status() == ApplicationStatus.RECRUITER_CONTACT
+                        || a.status() == ApplicationStatus.INTERVIEW
+                        || a.status() == ApplicationStatus.TECHNICAL_TEST
+                        || a.status() == ApplicationStatus.FINAL_ROUND)
+                .count();
+
         return new DashboardData(recommendations, savedJobs, pendingApplications,
-                upcomingInterviews, weeklyMetrics);
+                upcomingInterviews, weeklyMetrics, appliedThisWeek, activeApplications);
     }
 
     @Override
