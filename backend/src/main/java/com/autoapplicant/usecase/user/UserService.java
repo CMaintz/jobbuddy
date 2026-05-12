@@ -77,6 +77,8 @@ public class UserService implements RegisterUserUseCase, LoginUserUseCase,
         return prefsRepo.save(new UserPreferences(null, userId,
                 preferences.preferredLocations(), preferences.preferredMunicipalities(),
                 preferences.positiveSignals(), preferences.negativeSignals(), preferences.excludedCompanies(),
+                preferences.preferredRemoteTypes(), preferences.preferredEmploymentTypes(),
+                preferences.preferredSeniority(), preferences.salaryMin(), preferences.salaryMax(),
                 preferences.notificationEnabled(), preferences.notificationFrequency(), null, null));
     }
 }

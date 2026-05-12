@@ -74,7 +74,7 @@ public class MatchingService implements GetRecommendationsUseCase {
                     .limit(limit * 2L)
                     .flatMap(jobId -> jobRepo.findById(jobId).stream())
                     .map(job -> buildMatchResult(job, userId, profileSkills, profileTech, feedbackMap))
-                    .sorted(Comparator.comparingInt(MatchResult::score).reversed())
+                    .sorted(Comparator.comparingInt(MatchResult::totalScore).reversed())
                     .limit(limit)
                     .collect(Collectors.toList());
         } catch (Exception e) {
