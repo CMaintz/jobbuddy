@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -73,11 +73,110 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
             <label class="block text-sm font-medium text-gray-700">Skills (comma-separated)</label>
             <input formControlName="skillsRaw" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
           </div>
+          <!-- LinkedIn PDF Import -->
+          <div class="border-t border-gray-100 pt-4 mt-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Import from LinkedIn PDF</h3>
+            <p class="text-xs text-gray-500 mb-3">
+              Download your profile PDF from LinkedIn (Me → View Profile → More → Save to PDF),
+              then upload it here to auto-fill your profile.
+            </p>
+            <div class="flex items-center gap-3">
+              <input #linkedinFileInput type="file" accept=".pdf" class="hidden"
+                     (change)="onLinkedInPdfSelected($event)" />
+              <button type="button" (click)="linkedinFileInput.click()"
+                      [disabled]="importingLinkedIn"
+                      class="border border-blue-300 text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50">
+                {{ importingLinkedIn ? 'Parsing...' : 'Upload LinkedIn PDF' }}
+              </button>
+              @if (linkedInImportError) {
+                <span class="text-red-600 text-xs">{{ linkedInImportError }}</span>
+              }
+            </div>
+          </div>
+
           <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
             Save Profile
           </button>
           <span *ngIf="saveSuccess" class="ml-3 text-green-600 text-sm">Saved!</span>
         </form>
+
+        <!-- LinkedIn Import Preview Modal -->
+        @if (linkedInPreview) {
+          <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">LinkedIn Profile Preview</h2>
+                <button (click)="linkedInPreview = null" class="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              </div>
+              <p class="text-sm text-gray-500 mb-4">
+                Review the extracted data below. Click "Apply to Profile" to fill your profile fields.
+                You can edit anything after applying.
+              </p>
+
+              <div class="space-y-3 text-sm">
+                @if (linkedInPreview.fullName) {
+                  <div><span class="font-medium text-gray-700">Name:</span> {{ linkedInPreview.fullName }}</div>
+                }
+                @if (linkedInPreview.headline) {
+                  <div><span class="font-medium text-gray-700">Headline:</span> {{ linkedInPreview.headline }}</div>
+                }
+                @if (linkedInPreview.location) {
+                  <div><span class="font-medium text-gray-700">Location:</span> {{ linkedInPreview.location }}</div>
+                }
+                @if (linkedInPreview.summary) {
+                  <div>
+                    <span class="font-medium text-gray-700">Summary:</span>
+                    <p class="text-gray-600 mt-1 text-xs leading-relaxed line-clamp-4">{{ linkedInPreview.summary }}</p>
+                  </div>
+                }
+                @if (linkedInPreview.skills?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Skills ({{ linkedInPreview.skills.length }}):</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (s of linkedInPreview.skills.slice(0, 15); track s) {
+                        <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ s }}</span>
+                      }
+                      @if (linkedInPreview.skills.length > 15) {
+                        <span class="text-xs text-gray-400">+{{ linkedInPreview.skills.length - 15 }} more</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (linkedInPreview.experience?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Experience ({{ linkedInPreview.experience.length }} roles):</span>
+                    <ul class="mt-1 space-y-1 text-xs text-gray-600">
+                      @for (e of linkedInPreview.experience.slice(0, 5); track e.company) {
+                        <li>{{ e.title }} @ {{ e.company }} ({{ e.startDate }} – {{ e.endDate || 'Present' }})</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (linkedInPreview.education?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Education:</span>
+                    <ul class="mt-1 space-y-1 text-xs text-gray-600">
+                      @for (e of linkedInPreview.education; track e.institution) {
+                        <li>{{ e.degree }} in {{ e.fieldOfStudy }} — {{ e.institution }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+
+              <div class="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button (click)="applyLinkedInPreview()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
+                  Apply to Profile
+                </button>
+                <button (click)="linkedInPreview = null"
+                        class="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Work Experience Tab -->
@@ -416,12 +515,18 @@ export class ProfileComponent implements OnInit {
   private sectionsApi = inject(ProfileSectionsApiService);
   private skillsApi = inject(SkillsApiService);
 
+  @ViewChild('linkedinFileInput') linkedinFileInput!: ElementRef<HTMLInputElement>;
+
   activeTab: Tab = 'overview';
   saveSuccess = false;
   showExpForm = false;
   showProjectForm = false;
   showEduForm = false;
   showCertForm = false;
+
+  importingLinkedIn = false;
+  linkedInImportError = '';
+  linkedInPreview: any = null;
 
   tabs = [
     { key: 'overview' as Tab, label: 'Overview' },
@@ -590,6 +695,40 @@ export class ProfileComponent implements OnInit {
   deleteProfileSkill(id: string): void {
     this.skillsApi.deleteProfileSkill(id).subscribe(() =>
       this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d));
+  }
+
+  onLinkedInPdfSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.importingLinkedIn = true;
+    this.linkedInImportError = '';
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<any>('/api/v1/users/me/import/linkedin-pdf', formData).subscribe({
+      next: result => {
+        this.linkedInPreview = result;
+        this.importingLinkedIn = false;
+      },
+      error: () => {
+        this.linkedInImportError = 'Failed to parse PDF. Please try again.';
+        this.importingLinkedIn = false;
+      }
+    });
+  }
+
+  applyLinkedInPreview(): void {
+    if (!this.linkedInPreview) return;
+    const p = this.linkedInPreview;
+    this.profileForm.patchValue({
+      fullName: p.fullName || this.profileForm.value.fullName,
+      headline: p.headline || this.profileForm.value.headline,
+      summary: p.summary || this.profileForm.value.summary,
+      location: p.location || this.profileForm.value.location,
+      skillsRaw: p.skills?.join(', ') || this.profileForm.value.skillsRaw,
+    });
+    this.linkedInPreview = null;
+    // Save automatically
+    this.saveProfile();
   }
 
   saveProfile(): void {
