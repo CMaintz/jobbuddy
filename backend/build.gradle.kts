@@ -36,6 +36,7 @@ dependencies {
 
     // Utilities
     implementation(libs.jsoup)
+    implementation(libs.pdfbox)
 
     // Test
     testImplementation(libs.spring.boot.starter.test)

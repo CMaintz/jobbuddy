@@ -37,6 +37,9 @@ app:
     protocol: http
   crawler:
     cron: "0 0 */4 * * *"
+  linkedin:
+    client-id: ${LINKEDIN_CLIENT_ID:}
+    client-secret: ${LINKEDIN_CLIENT_SECRET:}
 
 management:
   endpoints:
