@@ -49,7 +49,10 @@ public class ApplicationController {
     public ResponseEntity<List<ApplicationResponse>> list() {
         UUID userId = secCtx.getCurrentUserId();
         List<ApplicationResponse> result = getAll.getApplications(userId).stream()
-                .map(ApplicationResponse::from).collect(Collectors.toList());
+                .map(a -> {
+                    Job job = a.jobId() != null ? jobRepo.findById(a.jobId()).orElse(null) : null;
+                    return ApplicationResponse.from(a, job);
+                }).collect(Collectors.toList());
         return ResponseEntity.ok(result);
     }
 
@@ -64,7 +67,10 @@ public class ApplicationController {
     public ResponseEntity<ApplicationResponse> getOne(@PathVariable UUID id) {
         UUID userId = secCtx.getCurrentUserId();
         return getById.getApplicationById(id, userId)
-                .map(a -> ResponseEntity.ok(ApplicationResponse.from(a)))
+                .map(a -> {
+                    Job job = a.jobId() != null ? jobRepo.findById(a.jobId()).orElse(null) : null;
+                    return ResponseEntity.ok(ApplicationResponse.from(a, job));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -75,5 +81,10 @@ public class ApplicationController {
         UUID userId = secCtx.getCurrentUserId();
         var updated = updateStatus.updateStatus(id, userId, req.status(), req.notes());
         return ResponseEntity.ok(ApplicationResponse.from(updated));
+    }
+
+    @GetMapping("/{id}/timeline")
+    public ResponseEntity<List<ResponseMetric>> timeline(@PathVariable UUID id) {
+        return ResponseEntity.ok(responseMetricRepo.findByApplicationId(id));
     }
 }
