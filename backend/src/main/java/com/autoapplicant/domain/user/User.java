@@ -8,6 +8,7 @@ public record User(
         String email,
         String passwordHash,
         String googleId,
+        String linkedinId,
         UserRole role,
         boolean emailVerified,
         Instant createdAt,

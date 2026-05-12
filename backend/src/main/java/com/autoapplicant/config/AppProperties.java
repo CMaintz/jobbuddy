@@ -10,10 +10,12 @@ public class AppProperties {
     private Jwt jwt = new Jwt();
     private Openai openai = new Openai();
     private Typesense typesense = new Typesense();
+    private LinkedIn linkedin = new LinkedIn();
 
     public Jwt getJwt() { return jwt; }
     public Openai getOpenai() { return openai; }
     public Typesense getTypesense() { return typesense; }
+    public LinkedIn getLinkedin() { return linkedin; }
 
     public static class Jwt {
         private String secret;
@@ -49,5 +51,14 @@ public class AppProperties {
         public void setPort(int port) { this.port = port; }
         public String getProtocol() { return protocol; }
         public void setProtocol(String protocol) { this.protocol = protocol; }
+    }
+
+    public static class LinkedIn {
+        private String clientId;
+        private String clientSecret;
+        public String getClientId() { return clientId; }
+        public void setClientId(String clientId) { this.clientId = clientId; }
+        public String getClientSecret() { return clientSecret; }
+        public void setClientSecret(String clientSecret) { this.clientSecret = clientSecret; }
     }
 }

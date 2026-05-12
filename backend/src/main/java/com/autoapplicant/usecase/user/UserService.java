@@ -36,7 +36,7 @@ public class UserService implements RegisterUserUseCase, LoginUserUseCase,
             throw new IllegalArgumentException("Email already registered");
         }
         User user = new User(null, email, passwordEncoder.encode(password),
-                null, UserRole.USER, false, null, null);
+                null, null, UserRole.USER, false, null, null);
         User saved = userRepo.save(user);
         // Create initial profile
         Profile profile = new Profile(null, saved.id(), fullName, null, null,

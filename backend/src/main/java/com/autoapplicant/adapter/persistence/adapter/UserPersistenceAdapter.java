@@ -34,6 +34,11 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public Optional<User> findByLinkedinId(String linkedinId) {
+        return repo.findByLinkedinId(linkedinId).map(UserMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return repo.existsByEmail(email);
     }

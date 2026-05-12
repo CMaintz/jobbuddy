@@ -21,6 +21,9 @@ public class UserEntity {
     @Column(name = "google_id")
     private String googleId;
 
+    @Column(name = "linkedin_id")
+    private String linkedinId;
+
     @Column(nullable = false)
     private String role;
 
@@ -51,6 +54,8 @@ public class UserEntity {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
+    public String getLinkedinId() { return linkedinId; }
+    public void setLinkedinId(String linkedinId) { this.linkedinId = linkedinId; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public boolean isEmailVerified() { return emailVerified; }
