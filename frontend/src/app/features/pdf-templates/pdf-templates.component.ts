@@ -53,11 +53,11 @@ import { PdfTemplate } from '../../core/models/pdf-template.model';
           <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
             <p class="text-xs font-semibold text-blue-700 mb-1">Available Placeholders</p>
             <p class="text-xs text-blue-600 font-mono">
-              &#123;&#123;NAME&#125;&#125;&nbsp;&nbsp;
-              &#123;&#123;EMAIL&#125;&#125;&nbsp;&nbsp;
-              &#123;&#123;PHONE&#125;&#125;&nbsp;&nbsp;
-              &#123;&#123;DATE&#125;&#125;&nbsp;&nbsp;
-              &#123;&#123;CONTENT&#125;&#125;
+              {{ '{{NAME}}' }}&nbsp;&nbsp;
+              {{ '{{EMAIL}}' }}&nbsp;&nbsp;
+              {{ '{{PHONE}}' }}&nbsp;&nbsp;
+              {{ '{{DATE}}' }}&nbsp;&nbsp;
+              {{ '{{CONTENT}}' }}
             </p>
           </div>
 

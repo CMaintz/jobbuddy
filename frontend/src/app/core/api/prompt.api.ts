@@ -27,7 +27,6 @@ export class PromptApiService {
   }
 
   duplicate(id: string, name?: string): Observable<PromptTemplate> {
-    const params = name ? { name } : {};
-    return this.http.post<PromptTemplate>(`${this.base}/${id}/duplicate`, {}, { params });
+    return this.http.post<PromptTemplate>(`${this.base}/${id}/duplicate`, {}, name ? { params: { name } } : undefined);
   }
 }

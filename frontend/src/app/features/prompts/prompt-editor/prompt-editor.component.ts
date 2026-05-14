@@ -61,7 +61,7 @@ import { PromptCategory } from '../../../core/models/prompt-template.model';
             <textarea formControlName="userPrompt" class="input min-h-32 font-mono text-xs"
                       placeholder="Write a cover letter for the following job:&#10;{job_description}&#10;&#10;Using this CV:&#10;{cv_content}"></textarea>
             <p class="text-xs text-gray-400 mt-1">
-              Available variables: {job_description}, {cv_content}, {writing_style}
+              Available variables: {{ '{job_description}, {cv_content}, {writing_style}' }}
             </p>
           </div>
 

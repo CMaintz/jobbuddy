@@ -147,7 +147,7 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
                     <span class="font-medium text-gray-700">Experience ({{ linkedInPreview.experience.length }} roles):</span>
                     <ul class="mt-1 space-y-1 text-xs text-gray-600">
                       @for (e of linkedInPreview.experience.slice(0, 5); track e.company) {
-                        <li>{{ e.title }} @ {{ e.company }} ({{ e.startDate }} – {{ e.endDate || 'Present' }})</li>
+                        <li>{{ e.title }} {{ '@' }} {{ e.company }} ({{ e.startDate }} – {{ e.endDate || 'Present' }})</li>
                       }
                     </ul>
                   </div>

@@ -39,8 +39,7 @@ export class JobsApiService {
   }
 
   ignore(id: string, reason?: string): Observable<void> {
-    const params = reason ? { reason } : {};
-    return this.http.post<void>(`${this.base}/${id}/ignore`, {}, { params });
+    return this.http.post<void>(`${this.base}/${id}/ignore`, {}, reason ? { params: { reason } } : undefined);
   }
 
   getSaved(): Observable<Job[]> {
