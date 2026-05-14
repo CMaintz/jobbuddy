@@ -54,8 +54,8 @@ TYPESENSE_API_KEY=local-dev-key
 This starts PostgreSQL (with pgvector), Typesense, the Spring Boot backend, and the Angular frontend behind nginx.
 
 ```bash
-cd infra
-docker compose up --build
+# Run from the repo root so Docker Compose picks up .env automatically
+docker compose -f infra/docker-compose.yml up --build
 ```
 
 First startup takes 3–5 minutes (Gradle build + npm install inside Docker). Subsequent starts are fast.
@@ -70,19 +70,19 @@ Once all four services are healthy:
 To run in the background:
 
 ```bash
-docker compose up -d --build
+docker compose -f infra/docker-compose.yml up -d --build
 ```
 
 To stop and remove containers (data volumes are preserved):
 
 ```bash
-docker compose down
+docker compose -f infra/docker-compose.yml down
 ```
 
 To wipe all data and start fresh:
 
 ```bash
-docker compose down -v
+docker compose -f infra/docker-compose.yml down -v
 ```
 
 ---
