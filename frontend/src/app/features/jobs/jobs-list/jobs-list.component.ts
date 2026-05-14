@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { JobsApiService } from '../../../core/api/jobs.api';
@@ -327,7 +328,7 @@ export class JobsListComponent implements OnInit {
     this.page = p;
     const q = this.searchCtrl.value ?? '';
     this.loading = true;
-    const obs = q ? this.api.search(q, p, this.pageSize) : this.api.getJobs(p, this.pageSize);
+    const obs: Observable<any> = q ? this.api.search(q, p, this.pageSize) : this.api.getJobs(p, this.pageSize);
     obs.subscribe({
       next: (res: any) => {
         this.jobs = res.jobs ?? res.content ?? [];
