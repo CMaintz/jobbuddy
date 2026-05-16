@@ -69,6 +69,7 @@ public class ParseCvService implements ParseCvUseCase {
                     textOrNull(node, "githubUrl"),
                     textOrNull(node, "websiteUrl"),
                     null,
+                    null,
                     arrayOrEmpty(node, "skills"),
                     arrayOrEmpty(node, "technologies"),
                     arrayOrEmpty(node, "languages"),
@@ -77,7 +78,7 @@ public class ParseCvService implements ParseCvUseCase {
         } catch (Exception e) {
             log.error("CV parsing failed for user {}: {}", userId, e.getMessage());
             return new Profile(null, userId, null, null, null, null, null,
-                    null, null, null, null, List.of(), List.of(), List.of(),
+                    null, null, null, null, null, List.of(), List.of(), List.of(),
                     null, null, "DKK", null, null, null, null);
         }
     }

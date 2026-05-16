@@ -27,6 +27,8 @@ public class SkillController {
         this.secCtx = secCtx;
     }
 
+    public record CreateSkillRequest(String name) {}
+
     @GetMapping("/api/v1/skills")
     public ResponseEntity<List<SkillTaxonomy>> search(@RequestParam(required = false) String q,
                                                        @RequestParam(required = false) String category) {
@@ -34,6 +36,11 @@ public class SkillController {
             return ResponseEntity.ok(taxonomy.getByCategory(category));
         }
         return ResponseEntity.ok(taxonomy.search(q));
+    }
+
+    @PostMapping("/api/v1/skills")
+    public ResponseEntity<SkillTaxonomy> createSkill(@RequestBody CreateSkillRequest req) {
+        return ResponseEntity.ok(taxonomy.createOrGet(req.name()));
     }
 
     @GetMapping("/api/v1/skills/categories")
@@ -51,7 +58,7 @@ public class SkillController {
         UUID userId = secCtx.getCurrentUserId();
         ProfileSkill toSave = new ProfileSkill(null, userId, skill.skillName(), skill.taxonomyId(),
                 skill.proficiencyLevel(), skill.yearsExperience(), skill.usedInProduction(),
-                skill.displayOrder());
+                skill.displayOrder(), null);
         return ResponseEntity.ok(profileSkills.addSkill(toSave));
     }
 
@@ -61,7 +68,7 @@ public class SkillController {
         UUID userId = secCtx.getCurrentUserId();
         ProfileSkill toSave = new ProfileSkill(id, userId, skill.skillName(), skill.taxonomyId(),
                 skill.proficiencyLevel(), skill.yearsExperience(), skill.usedInProduction(),
-                skill.displayOrder());
+                skill.displayOrder(), null);
         return ResponseEntity.ok(profileSkills.updateSkill(toSave));
     }
 

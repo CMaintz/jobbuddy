@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 public class ItJobbankConnector extends AbstractJobSourceConnector {
 
-    private static final String RSS_URL = "https://www.it-jobbank.dk/rss";
+    private static final String RSS_URL = "https://www.it-jobbank.dk/jobsoegning.rss";
     private static final String USER_AGENT =
             "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
 

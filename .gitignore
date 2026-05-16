@@ -27,5 +27,8 @@ frontend/.angular/
 .DS_Store
 Thumbs.db
 
+# Secrets (never commit)
+.secrets/
+
 # Claude Code internal state
 .claude/

@@ -32,7 +32,7 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
 
     @Override
     public List<PromptTemplate> findByUserId(UUID userId) {
-        return repo.findByUserIdOrderByCreatedAtDesc(userId).stream()
+        return repo.findByUserIdOrSystem(userId).stream()
                 .map(DocumentMapper::toDomain).collect(Collectors.toList());
     }
 

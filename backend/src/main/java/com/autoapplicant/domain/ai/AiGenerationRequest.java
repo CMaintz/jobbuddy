@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record AiGenerationRequest(
         UUID jobId,
+        String jobDescription,
         UUID cvVersionId,
         UUID promptTemplateId,
         UUID userId,

@@ -12,7 +12,7 @@ public class PromptTemplateEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private UUID userId;
 
     @Column(nullable = false)
@@ -34,6 +34,9 @@ public class PromptTemplateEntity {
 
     @Column(name = "is_public")
     private boolean isPublic;
+
+    @Column(name = "is_system", nullable = false)
+    private boolean isSystem;
 
     @Column(name = "parent_template_id")
     private UUID parentTemplateId;
@@ -68,6 +71,8 @@ public class PromptTemplateEntity {
     public void setOutputConstraints(String outputConstraints) { this.outputConstraints = outputConstraints; }
     public boolean isPublic() { return isPublic; }
     public void setPublic(boolean aPublic) { isPublic = aPublic; }
+    public boolean isSystem() { return isSystem; }
+    public void setSystem(boolean system) { isSystem = system; }
     public UUID getParentTemplateId() { return parentTemplateId; }
     public void setParentTemplateId(UUID parentTemplateId) { this.parentTemplateId = parentTemplateId; }
     public int getVersionNumber() { return versionNumber; }

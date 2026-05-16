@@ -18,6 +18,7 @@ public record Profile(
         String linkedinUrl,
         String githubUrl,
         String websiteUrl,
+        String phone,
         Integer yearsExperience,
         List<String> skills,
         List<String> technologies,

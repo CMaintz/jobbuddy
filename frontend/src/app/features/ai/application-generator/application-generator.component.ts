@@ -107,7 +107,7 @@ const LANGUAGES = [
             <select formControlName="pdfTemplateId" class="input">
               <option value="">— no template —</option>
               @for (t of pdfTemplates; track t.id) {
-                <option [value]="t.id">{{ t.name }}{{ t.isSystem ? ' (system)' : '' }}</option>
+                <option [value]="t.id">{{ t.name }}{{ t.isSystem ? ' (default)' : '' }}</option>
               }
             </select>
           </div>
@@ -128,12 +128,17 @@ const LANGUAGES = [
             <span class="text-xs text-gray-400">Uses your 3 most recent documents of this type as style examples.</span>
           </div>
 
-          @if (jobTitle) {
-            <div class="md:col-span-2 text-sm text-gray-500 flex items-center gap-2">
-              <span class="text-green-600">✓</span>
-              Generating for: <span class="font-medium text-gray-700">{{ jobTitle }}</span>
-            </div>
-          }
+          <!-- Job posting input -->
+          <div class="md:col-span-2">
+            <label class="label">
+              Indsæt jobopslag
+              @if (jobTitle) {
+                <span class="ml-2 text-xs font-normal text-green-600">✓ {{ jobTitle }}</span>
+              }
+            </label>
+            <textarea formControlName="jobDescription" class="input" rows="5"
+                      placeholder="Indsæt jobopslaget her — eller vælg et job via ?jobId=... parameteret..."></textarea>
+          </div>
 
           <div class="md:col-span-2">
             <button type="submit" [disabled]="form.invalid || loading" class="btn-primary w-full">
@@ -159,8 +164,8 @@ const LANGUAGES = [
                 <button (click)="copyContent()" class="btn-secondary text-xs">
                   {{ copied ? 'Copied!' : 'Copy' }}
                 </button>
-                <button (click)="printDocument()" class="btn-secondary text-xs">
-                  Download PDF
+                <button (click)="downloadPdf()" [disabled]="downloadingPdf" class="btn-secondary text-xs">
+                  {{ downloadingPdf ? 'Generating PDF...' : 'Download PDF' }}
                 </button>
               </div>
             </div>
@@ -247,6 +252,7 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
 
   loading = false;
   refining = false;
+  downloadingPdf = false;
   error = '';
   result: { content: string; modelUsed: string; tokensUsed?: number } | null = null;
 
@@ -266,6 +272,7 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
   form = this.fb.group({
     documentType: ['COVER_LETTER', Validators.required],
     jobId: [''],
+    jobDescription: [''],
     cvVersionId: [''],
     promptTemplateId: [''],
     pdfTemplateId: [''],
@@ -281,6 +288,7 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
       this.jobsApi.getById(jobId).subscribe(j => {
         this.jobTitle = j.title + ' @ ' + j.companyName;
         this.jobDescription = j.descriptionClean ?? '';
+        this.form.patchValue({ jobDescription: this.jobDescription });
       });
     }
     this.docApi.getCvVersions().subscribe(cvs => this.cvVersions = cvs);
@@ -305,6 +313,7 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     this.aiApi.generate({
       documentType: v.documentType as any,
       jobId: v.jobId || undefined,
+      jobDescription: v.jobDescription || undefined,
       cvVersionId: v.cvVersionId || undefined,
       promptTemplateId: v.promptTemplateId || undefined,
       customInstructions: v.customInstructions || undefined,
@@ -342,7 +351,7 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     this.aiApi.refine({
       currentContent: this.currentContent,
       userMessage: userMsg,
-      jobDescription: this.jobDescription || undefined,
+      jobDescription: v.jobDescription || this.jobDescription || undefined,
       targetLanguage: v.targetLanguage || 'Danish'
     }).subscribe({
       next: r => {
@@ -365,30 +374,29 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     });
   }
 
-  printDocument(): void {
+  downloadPdf(): void {
     const pdfTemplateId = this.form.value.pdfTemplateId;
-    const template = pdfTemplateId ? this.pdfTemplates.find(t => t.id === pdfTemplateId) : null;
-
-    if (template) {
-      const content = this.currentContent
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/\n/g, '<br>');
-      let html = template.htmlTemplate
-        .replace(/\{\{CONTENT\}\}/g, content)
-        .replace(/\{\{NAME\}\}/g, '')
-        .replace(/\{\{EMAIL\}\}/g, '')
-        .replace(/\{\{PHONE\}\}/g, '')
-        .replace(/\{\{DATE\}\}/g, new Date().toLocaleDateString('da-DK'));
-      const css = template.cssStyles ?? '';
-      const win = window.open('', '_blank');
-      if (win) {
-        win.document.write(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}</body></html>`);
-        win.document.close();
-        win.print();
-      }
-    } else {
+    if (!pdfTemplateId) {
       window.print();
+      return;
     }
+    this.downloadingPdf = true;
+    this.error = '';
+    this.pdfApi.exportPdf({ content: this.currentContent, pdfTemplateId }).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingPdf = false;
+      },
+      error: () => {
+        this.error = 'PDF generation failed. Please try again.';
+        this.downloadingPdf = false;
+      }
+    });
   }
 
   private setEditorContent(text: string): void {

@@ -11,8 +11,8 @@ public final class UserMapper {
     public static User toDomain(UserEntity e) {
         return new User(
                 e.getId(), e.getEmail(), e.getPasswordHash(), e.getGoogleId(),
-                e.getLinkedinId(), UserRole.valueOf(e.getRole()), e.isEmailVerified(),
-                e.getCreatedAt(), e.getUpdatedAt()
+                e.getLinkedinId(), e.getFirebaseUid(), UserRole.valueOf(e.getRole()),
+                e.isEmailVerified(), e.getCreatedAt(), e.getUpdatedAt()
         );
     }
 
@@ -23,6 +23,7 @@ public final class UserMapper {
         e.setPasswordHash(d.passwordHash());
         e.setGoogleId(d.googleId());
         e.setLinkedinId(d.linkedinId());
+        e.setFirebaseUid(d.firebaseUid());
         e.setRole(d.role().name());
         e.setEmailVerified(d.emailVerified());
         return e;

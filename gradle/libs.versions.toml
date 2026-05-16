@@ -2,7 +2,7 @@
 spring-boot = "3.2.5"
 spring-dependency-management = "1.1.4"
 java = "21"
-jjwt = "0.12.5"
+firebase-admin = "9.2.0"
 openai-java = "0.9.0"
 hypersistence-utils = "3.7.3"
 pgvector = "0.1.6"
@@ -10,7 +10,8 @@ jsoup = "1.17.2"
 springdoc = "2.3.0"
 testcontainers = "1.19.7"
 flyway = "10.10.0"
-pdfbox = "3.0.2"
+pdfbox = "2.0.27"
+openhtmltopdf = "1.0.10"
 
 [libraries]
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
@@ -25,9 +26,7 @@ flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 hypersistence-utils = { module = "io.hypersistence:hypersistence-utils-hibernate-63", version.ref = "hypersistence-utils" }
 pgvector = { module = "com.pgvector:pgvector", version.ref = "pgvector" }
-jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
-jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
-jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebase-admin" }
 openai-java = { module = "com.openai:openai-java", version.ref = "openai-java" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
@@ -36,6 +35,7 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
 h2 = { module = "com.h2database:h2" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+openhtmltopdf-pdfbox = { module = "com.openhtmltopdf:openhtmltopdf-pdfbox", version.ref = "openhtmltopdf" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

@@ -2,7 +2,7 @@ export type PromptCategory = 'COVER_LETTER' | 'APPLICATION' | 'RECRUITER_MESSAGE
 
 export interface PromptTemplate {
   id: string;
-  userId: string;
+  userId?: string;
   name: string;
   category?: PromptCategory;
   description?: string;
@@ -10,6 +10,7 @@ export interface PromptTemplate {
   userPrompt: string;
   outputConstraints?: string;
   isPublic: boolean;
+  isSystem: boolean;
   parentTemplateId?: string;
   versionNumber: number;
   createdAt: string;

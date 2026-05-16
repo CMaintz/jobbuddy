@@ -66,7 +66,7 @@ public class AiController {
         DeferredResult<ResponseEntity<AiGenerationResult>> result = new DeferredResult<>(60_000L);
         UUID userId = secCtx.getCurrentUserId();
         AiGenerationRequest request = new AiGenerationRequest(
-                req.jobId(), req.cvVersionId(), req.promptTemplateId(),
+                req.jobId(), req.jobDescription(), req.cvVersionId(), req.promptTemplateId(),
                 userId, req.customInstructions(), req.documentType(), req.targetLanguage(),
                 req.useStyleFromHistory());
         generate.generate(request)

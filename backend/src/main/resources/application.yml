@@ -23,9 +23,6 @@ server:
   port: 8080
 
 app:
-  jwt:
-    secret: ${JWT_SECRET:changeme-in-production-minimum-32-chars!!}
-    expiration-ms: 86400000
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o
@@ -40,6 +37,30 @@ app:
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}
+  careerjet:
+    affiliate-id: ${CAREERJET_AFFILIATE_ID:}
+  greenhouse:
+    # Verified live boards (200 OK with Danish jobs as of 2025-05):
+    #   trustpilot: 59 total / 17 Danish  |  toogoodtogo: 72 total / 14 Danish
+    #   pleo: board exists, 0 open roles currently (add back when they're hiring)
+    # To add more: check https://boards.greenhouse.io/{token} — if it loads, add it here.
+    companies:
+      - trustpilot
+      - toogoodtogo
+  lever:
+    # Verified: veo (Veo Technologies, Copenhagen) — 27 total / 23 Danish jobs
+    # To add more: curl https://api.lever.co/v0/postings/{slug} — non-empty array = valid
+    companies:
+      - veo
+  teamtailor:
+    # Teamtailor's old teamtailor-jobs.com subdomains are defunct (DNS dead).
+    # Add career page URLs for Danish companies you know use Teamtailor, e.g.:
+    #   - https://careers.lunar.app       (Lunar Bank)
+    #   - https://career.relesys.com      (Relesys)
+    #   - https://careers.goodiebox.com   (Goodiebox)
+    # The connector scrapes JSON-LD from each listing page — works for any career page
+    # that uses schema.org/JobPosting markup (standard for all Teamtailor-hosted pages).
+    career-page-urls: []
 
 management:
   endpoints:

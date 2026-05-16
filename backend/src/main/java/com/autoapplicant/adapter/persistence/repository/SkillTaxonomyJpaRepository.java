@@ -11,6 +11,8 @@ public interface SkillTaxonomyJpaRepository extends JpaRepository<SkillTaxonomyE
     List<SkillTaxonomyEntity> findByNameContainingIgnoreCaseOrNormalizedNameContainingIgnoreCase(
             String name, String normalizedName);
     List<SkillTaxonomyEntity> findByCategoryOrderByName(String category);
+    java.util.Optional<SkillTaxonomyEntity> findByNormalizedName(String normalizedName);
+    java.util.List<SkillTaxonomyEntity> findByIdIn(java.util.Collection<UUID> ids);
 
     @Query("SELECT DISTINCT e.category FROM SkillTaxonomyEntity e WHERE e.category IS NOT NULL ORDER BY e.category")
     List<String> findAllCategories();

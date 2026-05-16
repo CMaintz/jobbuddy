@@ -80,7 +80,7 @@ Store sanitized HTML snapshots for:
 
 - LinkedIn
 - Jobindex
-- Computerworld
+- IT Jobbank
 - The Hub
 
 ---

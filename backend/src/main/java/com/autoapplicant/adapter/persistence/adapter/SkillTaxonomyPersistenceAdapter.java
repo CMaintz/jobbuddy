@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryPort {
@@ -32,6 +33,22 @@ public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryP
     @Override
     public List<String> findAllCategories() {
         return repo.findAllCategories();
+    }
+
+    @Override
+    public SkillTaxonomy save(SkillTaxonomy skill) {
+        SkillTaxonomyEntity entity = new SkillTaxonomyEntity();
+        entity.setName(skill.name());
+        entity.setNormalizedName(skill.normalizedName());
+        entity.setParentId(skill.parentId());
+        entity.setCategory(skill.category());
+        entity.setAliases(skill.aliases() != null ? skill.aliases().toArray(new String[0]) : null);
+        return toDomain(repo.save(entity));
+    }
+
+    @Override
+    public Optional<SkillTaxonomy> findByNormalizedName(String normalizedName) {
+        return repo.findByNormalizedName(normalizedName).map(this::toDomain);
     }
 
     private SkillTaxonomy toDomain(SkillTaxonomyEntity e) {

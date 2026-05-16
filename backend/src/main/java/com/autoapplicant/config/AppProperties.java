@@ -7,24 +7,21 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 
-    private Jwt jwt = new Jwt();
     private Openai openai = new Openai();
     private Typesense typesense = new Typesense();
     private LinkedIn linkedin = new LinkedIn();
+    private Careerjet careerjet = new Careerjet();
+    private Greenhouse greenhouse = new Greenhouse();
+    private Lever lever = new Lever();
+    private Teamtailor teamtailor = new Teamtailor();
 
-    public Jwt getJwt() { return jwt; }
     public Openai getOpenai() { return openai; }
     public Typesense getTypesense() { return typesense; }
     public LinkedIn getLinkedin() { return linkedin; }
-
-    public static class Jwt {
-        private String secret;
-        private long expirationMs;
-        public String getSecret() { return secret; }
-        public void setSecret(String secret) { this.secret = secret; }
-        public long getExpirationMs() { return expirationMs; }
-        public void setExpirationMs(long expirationMs) { this.expirationMs = expirationMs; }
-    }
+    public Careerjet getCareerjet() { return careerjet; }
+    public Greenhouse getGreenhouse() { return greenhouse; }
+    public Lever getLever() { return lever; }
+    public Teamtailor getTeamtailor() { return teamtailor; }
 
     public static class Openai {
         private String apiKey;
@@ -60,5 +57,30 @@ public class AppProperties {
         public void setClientId(String clientId) { this.clientId = clientId; }
         public String getClientSecret() { return clientSecret; }
         public void setClientSecret(String clientSecret) { this.clientSecret = clientSecret; }
+    }
+
+    public static class Careerjet {
+        private String affiliateId = "";
+        public String getAffiliateId() { return affiliateId; }
+        public void setAffiliateId(String affiliateId) { this.affiliateId = affiliateId; }
+    }
+
+    public static class Greenhouse {
+        private java.util.List<String> companies = new java.util.ArrayList<>();
+        public java.util.List<String> getCompanies() { return companies; }
+        public void setCompanies(java.util.List<String> companies) { this.companies = companies; }
+    }
+
+    public static class Lever {
+        private java.util.List<String> companies = new java.util.ArrayList<>();
+        public java.util.List<String> getCompanies() { return companies; }
+        public void setCompanies(java.util.List<String> companies) { this.companies = companies; }
+    }
+
+    public static class Teamtailor {
+        /** List of career-page base URLs, e.g. https://jobs.example.com */
+        private java.util.List<String> careerPageUrls = new java.util.ArrayList<>();
+        public java.util.List<String> getCareerPageUrls() { return careerPageUrls; }
+        public void setCareerPageUrls(java.util.List<String> urls) { this.careerPageUrls = urls; }
     }
 }

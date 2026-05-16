@@ -35,12 +35,13 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "8080:8080"
+    volumes:
+      - ../.secrets/firebase-service-account.json:/app/secrets/firebase-service-account.json:ro
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/autoapplicant
       SPRING_DATASOURCE_USERNAME: autoapplicant
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-localdevpassword}
-      APP_JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-random-secret-minimum-32-chars}
-      APP_JWT_EXPIRATION_MS: 86400000
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       APP_TYPESENSE_HOST: typesense
       APP_TYPESENSE_PORT: 8108

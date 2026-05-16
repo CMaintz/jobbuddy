@@ -23,7 +23,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 export class LinkedInCallbackComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private auth = inject(AuthService);
+  private authService = inject(AuthService);
 
   error = '';
 
@@ -34,7 +34,7 @@ export class LinkedInCallbackComponent implements OnInit {
       return;
     }
     const redirectUri = window.location.origin + '/auth/linkedin/callback';
-    this.auth.linkedinCallback(code, redirectUri).subscribe({
+    this.authService.linkedinCallback(code, redirectUri).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: () => {
         this.error = 'Sign in with LinkedIn failed. Please try again.';

@@ -30,7 +30,7 @@ const COLUMNS: { status: ApplicationStatus; label: string; color: string }[] = [
       } @else {
         <div class="flex gap-3 overflow-x-auto pb-4">
           @for (col of columns; track col.status) {
-            <div class="flex-shrink-0 w-52">
+            <div class="flex-shrink-0 w-72">
               <div class="flex items-center justify-between mb-2 px-1">
                 <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ col.label }}</h3>
                 <span class="text-xs text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">

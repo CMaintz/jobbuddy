@@ -23,7 +23,7 @@ public class PromptTemplateService implements
         PromptTemplate toSave = new PromptTemplate(null, userId, template.name(),
                 template.category(), template.description(), template.systemPrompt(),
                 template.userPrompt(), template.outputConstraints(), template.isPublic(),
-                template.parentTemplateId(), 1, null, null);
+                template.parentTemplateId(), 1, null, null, false);
         return repo.save(toSave);
     }
 
@@ -40,7 +40,7 @@ public class PromptTemplateService implements
                 newName != null ? newName : original.name() + " (copy)",
                 original.category(), original.description(), original.systemPrompt(),
                 original.userPrompt(), original.outputConstraints(), false,
-                original.id(), original.versionNumber() + 1, null, null);
+                original.id(), original.versionNumber() + 1, null, null, false);
         return repo.save(copy);
     }
 }

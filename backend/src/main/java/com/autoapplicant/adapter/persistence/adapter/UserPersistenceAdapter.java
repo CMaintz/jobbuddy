@@ -39,6 +39,11 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public Optional<User> findByFirebaseUid(String firebaseUid) {
+        return repo.findByFirebaseUid(firebaseUid).map(UserMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return repo.existsByEmail(email);
     }

@@ -62,7 +62,7 @@ public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase, Ref
             }
 
             PromptComposition composition = compositionBuilder.compose(
-                    template, cv, job, writingProfile, request.targetLanguage());
+                    template, cv, job, request.jobDescription(), writingProfile, request.targetLanguage());
 
             StringBuilder finalPrompt = new StringBuilder(composition.resolvedFinalPrompt());
 
@@ -178,6 +178,6 @@ public class AiService implements GenerateDocumentUseCase, AnalyzeCvUseCase, Ref
             default -> "Analyze and provide professional feedback based on the provided context.";
         };
         return new PromptTemplate(null, null, "Default " + documentType.name(), null, null,
-                null, prompt, null, false, null, 1, null, null);
+                null, prompt, null, false, null, 1, null, null, false);
     }
 }

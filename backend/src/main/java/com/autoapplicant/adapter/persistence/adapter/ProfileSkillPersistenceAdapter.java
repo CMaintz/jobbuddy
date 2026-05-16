@@ -2,27 +2,45 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.ProfileSkillEntity;
 import com.autoapplicant.adapter.persistence.repository.ProfileSkillJpaRepository;
+import com.autoapplicant.adapter.persistence.repository.SkillTaxonomyJpaRepository;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class ProfileSkillPersistenceAdapter implements ProfileSkillRepositoryPort {
 
     private final ProfileSkillJpaRepository repo;
+    private final SkillTaxonomyJpaRepository taxonomyRepo;
 
-    public ProfileSkillPersistenceAdapter(ProfileSkillJpaRepository repo) {
+    public ProfileSkillPersistenceAdapter(ProfileSkillJpaRepository repo,
+                                           SkillTaxonomyJpaRepository taxonomyRepo) {
         this.repo = repo;
+        this.taxonomyRepo = taxonomyRepo;
     }
 
     @Override
     public List<ProfileSkill> findByUserId(UUID userId) {
-        return repo.findByUserIdOrderByDisplayOrderAscSkillNameAsc(userId).stream()
-                .map(this::toDomain).toList();
+        List<ProfileSkillEntity> entities = repo.findByUserIdOrderByDisplayOrderAscSkillNameAsc(userId);
+
+        // Batch-load taxonomy categories for skills that have a taxonomyId
+        List<UUID> taxonomyIds = entities.stream()
+                .map(ProfileSkillEntity::getTaxonomyId)
+                .filter(id -> id != null)
+                .distinct().toList();
+        Map<UUID, String> categoryById = taxonomyIds.isEmpty() ? Map.of()
+                : taxonomyRepo.findByIdIn(taxonomyIds).stream()
+                    .collect(Collectors.toMap(t -> t.getId(), t -> t.getCategory() != null ? t.getCategory() : "Custom"));
+
+        return entities.stream()
+                .map(e -> toDomainWithCategory(e, categoryById.get(e.getTaxonomyId())))
+                .toList();
     }
 
     @Override
@@ -42,8 +60,13 @@ public class ProfileSkillPersistenceAdapter implements ProfileSkillRepositoryPor
     }
 
     private ProfileSkill toDomain(ProfileSkillEntity e) {
+        return toDomainWithCategory(e, null);
+    }
+
+    private ProfileSkill toDomainWithCategory(ProfileSkillEntity e, String category) {
         return new ProfileSkill(e.getId(), e.getUserId(), e.getSkillName(), e.getTaxonomyId(),
-                e.getProficiencyLevel(), e.getYearsExperience(), e.isUsedInProduction(), e.getDisplayOrder());
+                e.getProficiencyLevel(), e.getYearsExperience(), e.isUsedInProduction(),
+                e.getDisplayOrder(), category);
     }
 
     private ProfileSkillEntity toEntity(ProfileSkill s) {

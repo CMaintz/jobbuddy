@@ -1,60 +1,99 @@
 package com.autoapplicant.usecase.user;
 
-import com.autoapplicant.adapter.security.JwtTokenProvider;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.in.user.*;
 import com.autoapplicant.port.out.user.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UserService implements RegisterUserUseCase, LoginUserUseCase,
-        GetUserProfileUseCase, UpdateUserProfileUseCase, UpdatePreferencesUseCase {
+public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseCase, UpdatePreferencesUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepositoryPort userRepo;
     private final ProfileRepositoryPort profileRepo;
     private final PreferencesRepositoryPort prefsRepo;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final FirebaseAuth firebaseAuth;
 
     public UserService(UserRepositoryPort userRepo, ProfileRepositoryPort profileRepo,
-                       PreferencesRepositoryPort prefsRepo, PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
+                       PreferencesRepositoryPort prefsRepo, FirebaseAuth firebaseAuth) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.prefsRepo = prefsRepo;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.firebaseAuth = firebaseAuth;
     }
 
-    @Override
-    public User register(String email, String password, String fullName) {
-        if (userRepo.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already registered");
+    /**
+     * Called by FirebaseTokenFilter on every authenticated request.
+     * Looks up the user by firebaseUid, creating a new record on first login.
+     * Also sets the Firebase Custom Claim for role so subsequent tokens carry it.
+     */
+    public User findOrCreateUserFromFirebase(String firebaseUid, String email, String name) {
+        Optional<User> existing = userRepo.findByFirebaseUid(firebaseUid);
+        if (existing.isPresent()) {
+            return existing.get();
         }
-        User user = new User(null, email, passwordEncoder.encode(password),
-                null, null, UserRole.USER, false, null, null);
-        User saved = userRepo.save(user);
-        // Create initial profile
+
+        // Link to an existing account that shares the same email
+        Optional<User> byEmail = userRepo.findByEmail(email);
+        if (byEmail.isPresent()) {
+            User user = byEmail.get();
+            User linked = new User(user.id(), user.email(), null, user.googleId(),
+                    user.linkedinId(), firebaseUid, user.role(), true,
+                    user.createdAt(), user.updatedAt());
+            User saved = userRepo.save(linked);
+            setRoleCustomClaim(firebaseUid, saved.role());
+            return saved;
+        }
+
+        // Brand new user — create account and default profile
+        User newUser = new User(null, email, null, null, null, firebaseUid,
+                UserRole.USER, true, null, null);
+        User saved = userRepo.save(newUser);
+
+        String fullName = (name != null && !name.isBlank()) ? name : email;
         Profile profile = new Profile(null, saved.id(), fullName, null, null,
-                null, null, null, null, null, null,
-                java.util.List.of(), java.util.List.of(), java.util.List.of(),
+                null, null, null, null, null, null, null,
+                List.of(), List.of(), List.of(),
                 null, null, "DKK", null, null, null, null);
         profileRepo.save(profile);
+
+        setRoleCustomClaim(firebaseUid, saved.role());
         return saved;
     }
 
-    @Override
-    public String login(String email, String password) {
-        User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-        if (!passwordEncoder.matches(password, user.passwordHash())) {
-            throw new IllegalArgumentException("Invalid credentials");
+    /**
+     * Promotes (or demotes) a user's role in the DB and updates the Firebase Custom Claim
+     * so their next token refresh reflects the change.
+     */
+    public User setUserRole(UUID userId, UserRole newRole) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        User updated = new User(user.id(), user.email(), user.passwordHash(), user.googleId(),
+                user.linkedinId(), user.firebaseUid(), newRole, user.emailVerified(),
+                user.createdAt(), user.updatedAt());
+        User saved = userRepo.save(updated);
+        if (saved.firebaseUid() != null) {
+            setRoleCustomClaim(saved.firebaseUid(), newRole);
         }
-        return jwtTokenProvider.generateToken(user.id(), user.email(), user.role());
+        return saved;
+    }
+
+    private void setRoleCustomClaim(String firebaseUid, UserRole role) {
+        try {
+            firebaseAuth.setCustomUserClaims(firebaseUid, Map.of("role", role.name()));
+        } catch (FirebaseAuthException e) {
+            log.warn("Failed to set custom claim for Firebase UID {}: {}", firebaseUid, e.getMessage());
+        }
     }
 
     @Override
@@ -66,7 +105,7 @@ public class UserService implements RegisterUserUseCase, LoginUserUseCase,
     public Profile updateProfile(UUID userId, Profile profile) {
         return profileRepo.save(new Profile(null, userId, profile.fullName(), profile.headline(),
                 profile.summary(), profile.location(), profile.municipality(),
-                profile.linkedinUrl(), profile.githubUrl(), profile.websiteUrl(),
+                profile.linkedinUrl(), profile.githubUrl(), profile.websiteUrl(), profile.phone(),
                 profile.yearsExperience(), profile.skills(), profile.technologies(), profile.languages(),
                 profile.desiredSalaryMin(), profile.desiredSalaryMax(), profile.desiredCurrency(),
                 profile.remotePreference(), profile.employmentTypePreference(), null, null));
@@ -79,6 +118,7 @@ public class UserService implements RegisterUserUseCase, LoginUserUseCase,
                 preferences.positiveSignals(), preferences.negativeSignals(), preferences.excludedCompanies(),
                 preferences.preferredRemoteTypes(), preferences.preferredEmploymentTypes(),
                 preferences.preferredSeniority(), preferences.salaryMin(), preferences.salaryMax(),
+                preferences.maxCommuteKm(),
                 preferences.notificationEnabled(), preferences.notificationFrequency(), null, null));
     }
 }

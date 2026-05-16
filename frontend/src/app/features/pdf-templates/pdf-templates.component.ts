@@ -56,9 +56,14 @@ import { PdfTemplate } from '../../core/models/pdf-template.model';
               {{ '{{NAME}}' }}&nbsp;&nbsp;
               {{ '{{EMAIL}}' }}&nbsp;&nbsp;
               {{ '{{PHONE}}' }}&nbsp;&nbsp;
+              {{ '{{LOCATION}}' }}&nbsp;&nbsp;
+              {{ '{{LINKEDIN}}' }}&nbsp;&nbsp;
+              {{ '{{GITHUB}}' }}&nbsp;&nbsp;
+              {{ '{{HEADLINE}}' }}&nbsp;&nbsp;
               {{ '{{DATE}}' }}&nbsp;&nbsp;
               {{ '{{CONTENT}}' }}
             </p>
+            <p class="text-xs text-blue-500 mt-1">Also inject CSS: use <span class="font-mono">{{ '{{CSS}}' }}</span> in your HTML template's &lt;style&gt; tag.</p>
           </div>
 
           <div>
@@ -257,16 +262,20 @@ export class PdfTemplatesComponent implements OnInit {
     const html = this.formData.htmlTemplate ?? '';
     const css = this.formData.cssStyles ?? '';
     const rendered = html
+      .replace(/\{\{CSS\}\}/g, css)
       .replace(/\{\{NAME\}\}/g, 'Jane Doe')
       .replace(/\{\{EMAIL\}\}/g, 'jane.doe@example.com')
-      .replace(/\{\{PHONE\}\}/g, '+1 555-0100')
+      .replace(/\{\{PHONE\}\}/g, '+45 12 34 56 78')
+      .replace(/\{\{LOCATION\}\}/g, 'Copenhagen, Denmark')
+      .replace(/\{\{LINKEDIN\}\}/g, 'linkedin.com/in/janedoe')
+      .replace(/\{\{GITHUB\}\}/g, 'github.com/janedoe')
+      .replace(/\{\{HEADLINE\}\}/g, 'Senior Software Engineer')
       .replace(/\{\{DATE\}\}/g, new Date().toLocaleDateString())
       .replace(/\{\{CONTENT\}\}/g, 'This is a sample content paragraph that demonstrates how your document will look when rendered with real data.');
 
-    const doc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${rendered}</body></html>`;
     const win = window.open('', '_blank');
     if (win) {
-      win.document.write(doc);
+      win.document.write(rendered);
       win.document.close();
     }
   }

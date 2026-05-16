@@ -56,6 +56,9 @@ public class PreferencesEntity {
     @Column(name = "salary_max")
     private Integer salaryMax;
 
+    @Column(name = "max_commute_km")
+    private Integer maxCommuteKm;
+
     @Column(name = "notification_enabled")
     private boolean notificationEnabled;
 
@@ -95,6 +98,8 @@ public class PreferencesEntity {
     public void setSalaryMin(Integer v) { this.salaryMin = v; }
     public Integer getSalaryMax() { return salaryMax; }
     public void setSalaryMax(Integer v) { this.salaryMax = v; }
+    public Integer getMaxCommuteKm() { return maxCommuteKm; }
+    public void setMaxCommuteKm(Integer v) { this.maxCommuteKm = v; }
     public boolean isNotificationEnabled() { return notificationEnabled; }
     public void setNotificationEnabled(boolean v) { this.notificationEnabled = v; }
     public String getNotificationFrequency() { return notificationFrequency; }
