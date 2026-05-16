@@ -8,7 +8,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ProfileSectionsApiService } from '../../core/api/profile-sections.api';
 import { SkillsApiService } from '../../core/api/skills.api';
 import { WorkExperience, Project, Education, Certification } from '../../core/models/profile-section.model';
-import { ProfileSkill, SkillTaxonomy } from '../../core/models/skill-taxonomy.model';
+import { ProfileSkill, SkillTaxonomy, TECH_CATEGORIES } from '../../core/models/skill-taxonomy.model';
 
 type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills';
 
@@ -60,38 +60,48 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
               <label class="block text-sm font-medium text-gray-700">GitHub URL</label>
               <input formControlName="githubUrl" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Phone</label>
+              <input formControlName="phone" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="+45 12 34 56 78"/>
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Professional Summary</label>
             <textarea formControlName="summary" rows="4" class="mt-1 w-full border rounded px-3 py-2 text-sm"></textarea>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Technologies (comma-separated)</label>
-            <input formControlName="technologiesRaw" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Skills (comma-separated)</label>
-            <input formControlName="skillsRaw" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
-          </div>
-          <!-- LinkedIn PDF Import -->
+          <!-- CV Import Section -->
           <div class="border-t border-gray-100 pt-4 mt-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-2">Import from LinkedIn PDF</h3>
-            <p class="text-xs text-gray-500 mb-3">
-              Download your profile PDF from LinkedIn (Me → View Profile → More → Save to PDF),
-              then upload it here to auto-fill your profile.
-            </p>
-            <div class="flex items-center gap-3">
-              <input #linkedinFileInput type="file" accept=".pdf" class="hidden"
-                     (change)="onLinkedInPdfSelected($event)" />
-              <button type="button" (click)="linkedinFileInput.click()"
-                      [disabled]="importingLinkedIn"
-                      class="border border-blue-300 text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50">
-                {{ importingLinkedIn ? 'Parsing...' : 'Upload LinkedIn PDF' }}
-              </button>
-              @if (linkedInImportError) {
-                <span class="text-red-600 text-xs">{{ linkedInImportError }}</span>
-              }
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Import CV</h3>
+            <div class="flex flex-wrap gap-3">
+              <!-- Generic CV PDF -->
+              <div>
+                <input #cvPdfFileInput type="file" accept=".pdf" class="hidden"
+                       (change)="onCvPdfSelected($event)" />
+                <button type="button" (click)="cvPdfFileInput.click()"
+                        [disabled]="importingCvPdf"
+                        class="border border-green-300 text-green-700 hover:bg-green-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50">
+                  {{ importingCvPdf ? 'Parsing...' : 'Upload CV (PDF)' }}
+                </button>
+              </div>
+              <!-- LinkedIn PDF -->
+              <div>
+                <input #linkedinFileInput type="file" accept=".pdf" class="hidden"
+                       (change)="onLinkedInPdfSelected($event)" />
+                <button type="button" (click)="linkedinFileInput.click()"
+                        [disabled]="importingLinkedIn"
+                        class="border border-blue-300 text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50">
+                  {{ importingLinkedIn ? 'Parsing...' : 'Upload LinkedIn PDF' }}
+                </button>
+              </div>
+              <!-- Manual hint -->
+              <span class="self-center text-xs text-gray-400">or fill the form manually below</span>
             </div>
+            @if (cvPdfImportError) {
+              <span class="block text-red-600 text-xs mt-1">{{ cvPdfImportError }}</span>
+            }
+            @if (linkedInImportError) {
+              <span class="block text-red-600 text-xs mt-1">{{ linkedInImportError }}</span>
+            }
           </div>
 
           <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
@@ -99,6 +109,68 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
           </button>
           <span *ngIf="saveSuccess" class="ml-3 text-green-600 text-sm">Saved!</span>
         </form>
+
+        <!-- CV PDF Import Preview Modal -->
+        @if (cvPdfPreview) {
+          <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">CV Preview</h2>
+                <button (click)="cvPdfPreview = null" class="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              </div>
+              <p class="text-sm text-gray-500 mb-4">
+                Review the extracted data. Click "Apply to Profile" to fill your profile fields.
+              </p>
+              <div class="space-y-3 text-sm">
+                @if (cvPdfPreview.fullName) {
+                  <div><span class="font-medium text-gray-700">Name:</span> {{ cvPdfPreview.fullName }}</div>
+                }
+                @if (cvPdfPreview.headline) {
+                  <div><span class="font-medium text-gray-700">Headline:</span> {{ cvPdfPreview.headline }}</div>
+                }
+                @if (cvPdfPreview.location) {
+                  <div><span class="font-medium text-gray-700">Location:</span> {{ cvPdfPreview.location }}</div>
+                }
+                @if (cvPdfPreview.summary) {
+                  <div>
+                    <span class="font-medium text-gray-700">Summary:</span>
+                    <p class="text-gray-600 mt-1 text-xs leading-relaxed line-clamp-4">{{ cvPdfPreview.summary }}</p>
+                  </div>
+                }
+                @if (cvPdfPreview.skills?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Skills ({{ cvPdfPreview.skills.length }}):</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (s of cvPdfPreview.skills.slice(0, 20); track s) {
+                        <span class="bg-green-50 text-green-700 text-xs px-2 py-0.5 rounded-full">{{ s }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (cvPdfPreview.technologies?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Technologies:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (t of cvPdfPreview.technologies.slice(0, 20); track t) {
+                        <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ t }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button (click)="applyCvPdfPreview()"
+                        class="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700">
+                  Apply to Profile
+                </button>
+                <button (click)="cvPdfPreview = null"
+                        class="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        }
 
         <!-- LinkedIn Import Preview Modal -->
         @if (linkedInPreview) {
@@ -468,43 +540,102 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
           <span *ngIf="skillSaveError" class="ml-3 text-red-600 text-sm">{{ skillSaveError }}</span>
         </div>
 
-        <!-- Skills List -->
-        <div *ngIf="profileSkills.length > 0">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                  <th class="pb-2 pr-4">Skill</th>
-                  <th class="pb-2 pr-4">Proficiency</th>
-                  <th class="pb-2 pr-4">Years</th>
-                  <th class="pb-2 pr-4">In Prod</th>
-                  <th class="pb-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let skill of profileSkills" class="border-b border-gray-100 hover:bg-gray-50">
-                  <td class="py-2.5 pr-4 font-medium text-gray-900">{{ skill.skillName }}</td>
-                  <td class="py-2.5 pr-4">
-                    <span [class]="proficiencyBadgeClass(skill.proficiencyLevel)" class="text-xs px-2 py-0.5 rounded-full font-medium">
-                      {{ skill.proficiencyLevel }}
-                    </span>
-                  </td>
-                  <td class="py-2.5 pr-4 text-gray-600">
-                    <span *ngIf="skill.yearsExperience != null">{{ skill.yearsExperience }}y</span>
-                    <span *ngIf="skill.yearsExperience == null" class="text-gray-300">—</span>
-                  </td>
-                  <td class="py-2.5 pr-4">
-                    <input type="checkbox" [checked]="skill.usedInProduction" disabled class="rounded cursor-not-allowed opacity-70"/>
-                  </td>
-                  <td class="py-2.5">
-                    <button (click)="deleteProfileSkill(skill.id!)" class="text-red-500 text-xs hover:text-red-700">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <p *ngIf="!profileSkills.length" class="text-gray-500 text-sm">No skills added yet.</p>
+        <!-- Skills chip groups -->
+        @if (profileSkills.length > 0) {
+          <!-- Technologies group -->
+          @if (techSkills.length > 0) {
+            <div class="mb-6">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Technologies</h3>
+              <div class="flex flex-wrap gap-2">
+                @for (skill of techSkills; track skill.id) {
+                  <div class="relative">
+                    <button type="button"
+                            (click)="toggleEditSkill(skill.id!)"
+                            [class]="'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ' + chipClass(skill)">
+                      {{ skill.skillName }}
+                      @if (skill.yearsExperience) {
+                        <span class="text-xs opacity-70">{{ skill.yearsExperience }}y</span>
+                      }
+                    </button>
+                    @if (editingSkillId === skill.id) {
+                      <div class="absolute z-20 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52">
+                        <div class="space-y-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-0.5">Proficiency</label>
+                            <select [(ngModel)]="editingSkill.proficiencyLevel"
+                                    class="w-full border rounded px-2 py-1 text-xs">
+                              <option value="BEGINNER">Beginner</option>
+                              <option value="INTERMEDIATE">Intermediate</option>
+                              <option value="ADVANCED">Advanced</option>
+                              <option value="EXPERT">Expert</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-0.5">Years experience</label>
+                            <input type="number" min="0" [(ngModel)]="editingSkill.yearsExperience"
+                                   class="w-full border rounded px-2 py-1 text-xs" placeholder="e.g. 3"/>
+                          </div>
+                          <div class="flex gap-2 pt-1">
+                            <button (click)="saveEditSkill(skill)" class="flex-1 bg-blue-600 text-white text-xs py-1 rounded hover:bg-blue-700">Save</button>
+                            <button (click)="deleteProfileSkill(skill.id!)" class="text-red-500 text-xs hover:text-red-700 px-2">Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Skills group -->
+          @if (softSkills.length > 0) {
+            <div>
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Skills</h3>
+              <div class="flex flex-wrap gap-2">
+                @for (skill of softSkills; track skill.id) {
+                  <div class="relative">
+                    <button type="button"
+                            (click)="toggleEditSkill(skill.id!)"
+                            [class]="'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ' + chipClass(skill)">
+                      {{ skill.skillName }}
+                      @if (skill.yearsExperience) {
+                        <span class="text-xs opacity-70">{{ skill.yearsExperience }}y</span>
+                      }
+                    </button>
+                    @if (editingSkillId === skill.id) {
+                      <div class="absolute z-20 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52">
+                        <div class="space-y-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-0.5">Proficiency</label>
+                            <select [(ngModel)]="editingSkill.proficiencyLevel"
+                                    class="w-full border rounded px-2 py-1 text-xs">
+                              <option value="BEGINNER">Beginner</option>
+                              <option value="INTERMEDIATE">Intermediate</option>
+                              <option value="ADVANCED">Advanced</option>
+                              <option value="EXPERT">Expert</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-0.5">Years experience</label>
+                            <input type="number" min="0" [(ngModel)]="editingSkill.yearsExperience"
+                                   class="w-full border rounded px-2 py-1 text-xs" placeholder="e.g. 3"/>
+                          </div>
+                          <div class="flex gap-2 pt-1">
+                            <button (click)="saveEditSkill(skill)" class="flex-1 bg-blue-600 text-white text-xs py-1 rounded hover:bg-blue-700">Save</button>
+                            <button (click)="deleteProfileSkill(skill.id!)" class="text-red-500 text-xs hover:text-red-700 px-2">Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          <p class="text-gray-500 text-sm">No skills added yet. Search above to add your first skill.</p>
+        }
       </div>
     </div>
   `
@@ -516,6 +647,7 @@ export class ProfileComponent implements OnInit {
   private skillsApi = inject(SkillsApiService);
 
   @ViewChild('linkedinFileInput') linkedinFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('cvPdfFileInput') cvPdfFileInput!: ElementRef<HTMLInputElement>;
 
   activeTab: Tab = 'overview';
   saveSuccess = false;
@@ -527,6 +659,10 @@ export class ProfileComponent implements OnInit {
   importingLinkedIn = false;
   linkedInImportError = '';
   linkedInPreview: any = null;
+
+  importingCvPdf = false;
+  cvPdfImportError = '';
+  cvPdfPreview: any = null;
 
   tabs = [
     { key: 'overview' as Tab, label: 'Overview' },
@@ -544,6 +680,52 @@ export class ProfileComponent implements OnInit {
   profileSkills: ProfileSkill[] = [];
 
   // Skills tab state
+  readonly TECH_CATEGORIES = TECH_CATEGORIES;
+
+  get techSkills(): ProfileSkill[] {
+    return this.profileSkills.filter(s => s.category && TECH_CATEGORIES.has(s.category));
+  }
+  get softSkills(): ProfileSkill[] {
+    return this.profileSkills.filter(s => !s.category || !TECH_CATEGORIES.has(s.category));
+  }
+
+  editingSkillId: string | null = null;
+  editingSkill: Partial<ProfileSkill> = {};
+
+  toggleEditSkill(id: string): void {
+    if (this.editingSkillId === id) {
+      this.editingSkillId = null;
+      return;
+    }
+    const skill = this.profileSkills.find(s => s.id === id);
+    if (skill) {
+      this.editingSkill = { proficiencyLevel: skill.proficiencyLevel, yearsExperience: skill.yearsExperience };
+    }
+    this.editingSkillId = id;
+  }
+
+  saveEditSkill(original: ProfileSkill): void {
+    const updated: ProfileSkill = {
+      ...original,
+      proficiencyLevel: this.editingSkill.proficiencyLevel ?? original.proficiencyLevel,
+      yearsExperience: this.editingSkill.yearsExperience,
+    };
+    this.skillsApi.updateProfileSkill(original.id!, updated).subscribe({
+      next: () => {
+        this.editingSkillId = null;
+        this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d);
+      }
+    });
+  }
+
+  chipClass(skill: ProfileSkill): string {
+    const level = skill.proficiencyLevel;
+    if (level === 'EXPERT') return 'bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100';
+    if (level === 'ADVANCED') return 'bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100';
+    if (level === 'INTERMEDIATE') return 'bg-green-50 border-green-300 text-green-800 hover:bg-green-100';
+    return 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100';
+  }
+
   newSkill: Partial<ProfileSkill> = {
     skillName: '',
     proficiencyLevel: 'INTERMEDIATE',
@@ -564,6 +746,7 @@ export class ProfileComponent implements OnInit {
     linkedinUrl: [''],
     githubUrl: [''],
     websiteUrl: [''],
+    phone: [''],
     technologiesRaw: [''],
     skillsRaw: [''],
   });
@@ -674,22 +857,34 @@ export class ProfileComponent implements OnInit {
       this.skillSaveError = 'Skill name is required.';
       return;
     }
-    const payload: ProfileSkill = {
-      skillName: this.newSkill.skillName!.trim(),
-      taxonomyId: this.newSkill.taxonomyId,
-      proficiencyLevel: this.newSkill.proficiencyLevel ?? 'INTERMEDIATE',
-      yearsExperience: this.newSkill.yearsExperience ?? undefined,
-      usedInProduction: this.newSkill.usedInProduction ?? false,
-      displayOrder: this.profileSkills.length,
+    const save = (taxonomyId?: string) => {
+      const payload: ProfileSkill = {
+        skillName: this.newSkill.skillName!.trim(),
+        taxonomyId: taxonomyId ?? this.newSkill.taxonomyId,
+        proficiencyLevel: this.newSkill.proficiencyLevel ?? 'INTERMEDIATE',
+        yearsExperience: this.newSkill.yearsExperience ?? undefined,
+        usedInProduction: this.newSkill.usedInProduction ?? false,
+        displayOrder: this.profileSkills.length,
+      };
+      this.skillsApi.addProfileSkill(payload).subscribe({
+        next: () => {
+          this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d);
+          this.newSkill = { skillName: '', proficiencyLevel: 'INTERMEDIATE', yearsExperience: undefined, usedInProduction: false };
+          this.taxonomySuggestions = [];
+        },
+        error: () => { this.skillSaveError = 'Failed to save skill. Please try again.'; }
+      });
     };
-    this.skillsApi.addProfileSkill(payload).subscribe({
-      next: () => {
-        this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d);
-        this.newSkill = { skillName: '', proficiencyLevel: 'INTERMEDIATE', yearsExperience: undefined, usedInProduction: false };
-        this.taxonomySuggestions = [];
-      },
-      error: () => { this.skillSaveError = 'Failed to save skill. Please try again.'; }
-    });
+
+    // If no taxonomy entry selected, auto-create one
+    if (!this.newSkill.taxonomyId) {
+      this.skillsApi.createTaxonomySkill(this.newSkill.skillName!.trim()).subscribe({
+        next: taxonomy => save(taxonomy.id),
+        error: () => save()  // Fall back to saving without taxonomy
+      });
+    } else {
+      save();
+    }
   }
 
   deleteProfileSkill(id: string): void {
@@ -714,6 +909,38 @@ export class ProfileComponent implements OnInit {
         this.importingLinkedIn = false;
       }
     });
+  }
+
+  onCvPdfSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.importingCvPdf = true;
+    this.cvPdfImportError = '';
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<any>('/api/v1/profile/import/cv-pdf', formData).subscribe({
+      next: result => {
+        this.cvPdfPreview = result;
+        this.importingCvPdf = false;
+      },
+      error: () => {
+        this.cvPdfImportError = 'Failed to parse PDF. Please try again.';
+        this.importingCvPdf = false;
+      }
+    });
+  }
+
+  applyCvPdfPreview(): void {
+    if (!this.cvPdfPreview) return;
+    const p = this.cvPdfPreview;
+    this.profileForm.patchValue({
+      fullName: p.fullName || this.profileForm.value.fullName,
+      headline: p.headline || this.profileForm.value.headline,
+      summary: p.summary || this.profileForm.value.summary,
+      location: p.location || this.profileForm.value.location,
+    });
+    this.cvPdfPreview = null;
+    this.saveProfile();
   }
 
   applyLinkedInPreview(): void {

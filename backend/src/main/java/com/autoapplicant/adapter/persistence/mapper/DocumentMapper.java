@@ -38,7 +38,7 @@ public final class DocumentMapper {
         return new PromptTemplate(e.getId(), e.getUserId(), e.getName(), cat,
                 e.getDescription(), e.getSystemPrompt(), e.getUserPrompt(),
                 e.getOutputConstraints(), e.isPublic(), e.getParentTemplateId(),
-                e.getVersionNumber(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getVersionNumber(), e.getCreatedAt(), e.getUpdatedAt(), e.isSystem());
     }
 
     public static PromptTemplateEntity toEntity(PromptTemplate d) {
@@ -52,6 +52,7 @@ public final class DocumentMapper {
         e.setUserPrompt(d.userPrompt());
         e.setOutputConstraints(d.outputConstraints());
         e.setPublic(d.isPublic());
+        e.setSystem(d.isSystem());
         e.setParentTemplateId(d.parentTemplateId());
         e.setVersionNumber(d.versionNumber());
         return e;

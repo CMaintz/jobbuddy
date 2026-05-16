@@ -17,6 +17,7 @@ public record UserPreferences(
         List<String> preferredSeniority,
         Integer salaryMin,
         Integer salaryMax,
+        Integer maxCommuteKm,
         boolean notificationEnabled,
         String notificationFrequency,
         Instant createdAt,

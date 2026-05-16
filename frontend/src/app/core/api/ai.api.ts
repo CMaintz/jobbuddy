@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface GenerateRequest {
   jobId?: string;
+  jobDescription?: string;
   cvVersionId?: string;
   promptTemplateId?: string;
   documentType: 'COVER_LETTER' | 'APPLICATION_TEXT' | 'RECRUITER_MESSAGE' | 'CV_ANALYSIS_REPORT' | 'CV' | 'FOLLOW_UP_MESSAGE';

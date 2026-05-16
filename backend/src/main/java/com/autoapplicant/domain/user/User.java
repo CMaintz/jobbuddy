@@ -9,6 +9,7 @@ public record User(
         String passwordHash,
         String googleId,
         String linkedinId,
+        String firebaseUid,
         UserRole role,
         boolean emailVerified,
         Instant createdAt,

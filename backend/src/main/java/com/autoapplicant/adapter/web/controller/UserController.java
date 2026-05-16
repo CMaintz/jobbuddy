@@ -49,7 +49,7 @@ public class UserController {
         return ResponseEntity.ok(prefsRepo.findByUserId(secCtx.getCurrentUserId())
                 .orElse(new UserPreferences(null, secCtx.getCurrentUserId(),
                         List.of(), List.of(), List.of(), List.of(), List.of(),
-                        List.of(), List.of(), List.of(), null, null,
+                        List.of(), List.of(), List.of(), null, null, null,
                         false, "DAILY", null, null)));
     }
 

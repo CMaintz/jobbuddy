@@ -26,10 +26,8 @@ dependencies {
     implementation(libs.hypersistence.utils)
     implementation(libs.pgvector)
 
-    // JWT
-    implementation(libs.jjwt.api)
-    runtimeOnly(libs.jjwt.impl)
-    runtimeOnly(libs.jjwt.jackson)
+    // Firebase Admin
+    implementation(libs.firebase.admin)
 
     // AI
     implementation(libs.openai.java)
@@ -37,6 +35,7 @@ dependencies {
     // Utilities
     implementation(libs.jsoup)
     implementation(libs.pdfbox)
+    implementation(libs.openhtmltopdf.pdfbox)
 
     // Test
     testImplementation(libs.spring.boot.starter.test)

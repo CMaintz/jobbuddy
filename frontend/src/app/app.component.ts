@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
     <div class="min-h-screen bg-gray-50">
       @if (auth.isAuthenticated()) {
         <nav class="bg-white shadow-sm border-b border-gray-200">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
               <div class="flex items-center space-x-8">
                 <a routerLink="/dashboard" class="text-xl font-bold text-blue-600">AutoApplicant</a>
@@ -48,7 +48,7 @@ import { Router } from '@angular/router';
           </div>
         </nav>
       }
-      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main class="w-full px-4 sm:px-6 lg:px-8 py-8">
         <router-outlet />
       </main>
     </div>

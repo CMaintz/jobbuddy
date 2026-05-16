@@ -35,4 +35,10 @@ public class SkillTaxonomyEntity {
     public UUID getParentId() { return parentId; }
     public String getCategory() { return category; }
     public String[] getAliases() { return aliases; }
+
+    public void setName(String name) { this.name = name; }
+    public void setNormalizedName(String normalizedName) { this.normalizedName = normalizedName; }
+    public void setParentId(UUID parentId) { this.parentId = parentId; }
+    public void setCategory(String category) { this.category = category; }
+    public void setAliases(String[] aliases) { this.aliases = aliases; }
 }

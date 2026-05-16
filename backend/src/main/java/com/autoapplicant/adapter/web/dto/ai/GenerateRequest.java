@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record GenerateRequest(
         UUID jobId,
+        String jobDescription,
         UUID cvVersionId,
         UUID promptTemplateId,
         @NotNull DocumentType documentType,

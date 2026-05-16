@@ -3,6 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PdfTemplate } from '../models/pdf-template.model';
 
+export interface PdfExportRequest {
+  content: string;
+  pdfTemplateId: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PdfTemplatesApiService {
   private http = inject(HttpClient);
@@ -26,5 +31,9 @@ export class PdfTemplatesApiService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  exportPdf(request: PdfExportRequest): Observable<Blob> {
+    return this.http.post('/api/v1/documents/export-pdf', request, { responseType: 'blob' });
   }
 }

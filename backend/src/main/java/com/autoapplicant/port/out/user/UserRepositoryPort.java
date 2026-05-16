@@ -10,5 +10,6 @@ public interface UserRepositoryPort {
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(String email);
     Optional<User> findByLinkedinId(String linkedinId);
+    Optional<User> findByFirebaseUid(String firebaseUid);
     boolean existsByEmail(String email);
 }

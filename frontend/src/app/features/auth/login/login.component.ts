@@ -51,7 +51,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
-  private auth = inject(AuthService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   form = this.fb.group({
@@ -67,14 +67,28 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
     const { email, password } = this.form.value;
-    this.auth.login(email!, password!).subscribe({
+    this.authService.login(email!, password!).subscribe({
       next: () => this.router.navigate(['/dashboard']),
-      error: (e) => { this.error = e.error?.message || 'Login failed'; this.loading = false; }
+      error: (e) => {
+        this.error = this.friendlyError(e?.code);
+        this.loading = false;
+      }
     });
   }
 
   signInWithLinkedIn(): void {
     const redirectUri = window.location.origin + '/auth/linkedin/callback';
-    window.location.href = this.auth.buildLinkedInAuthUrl(redirectUri);
+    window.location.href = this.authService.buildLinkedInAuthUrl(redirectUri);
+  }
+
+  private friendlyError(code: string): string {
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found': return 'Invalid email or password.';
+      case 'auth/user-disabled': return 'This account has been disabled.';
+      case 'auth/too-many-requests': return 'Too many attempts. Please try again later.';
+      default: return 'Sign in failed. Please try again.';
+    }
   }
 }

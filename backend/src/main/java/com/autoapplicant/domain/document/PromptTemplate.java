@@ -16,5 +16,6 @@ public record PromptTemplate(
         UUID parentTemplateId,
         int versionNumber,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        boolean isSystem
 ) {}

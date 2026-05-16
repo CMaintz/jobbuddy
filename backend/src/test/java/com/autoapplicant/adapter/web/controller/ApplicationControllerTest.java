@@ -1,6 +1,5 @@
 package com.autoapplicant.adapter.web.controller;
 
-import com.autoapplicant.adapter.security.JwtTokenProvider;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
@@ -39,7 +38,6 @@ class ApplicationControllerTest {
     @MockBean GetApplicationsUseCase         getAllUseCase;
     @MockBean GetApplicationByIdUseCase      getByIdUseCase;
     @MockBean SecurityContextHelper          secCtx;
-    @MockBean JwtTokenProvider               jwtProvider;
 
     UUID userId = UUID.randomUUID();
     UUID jobId  = UUID.randomUUID();

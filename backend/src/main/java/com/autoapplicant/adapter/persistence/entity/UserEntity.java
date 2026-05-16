@@ -24,6 +24,9 @@ public class UserEntity {
     @Column(name = "linkedin_id")
     private String linkedinId;
 
+    @Column(name = "firebase_uid", unique = true)
+    private String firebaseUid;
+
     @Column(nullable = false)
     private String role;
 
@@ -56,6 +59,8 @@ public class UserEntity {
     public void setGoogleId(String googleId) { this.googleId = googleId; }
     public String getLinkedinId() { return linkedinId; }
     public void setLinkedinId(String linkedinId) { this.linkedinId = linkedinId; }
+    public String getFirebaseUid() { return firebaseUid; }
+    public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public boolean isEmailVerified() { return emailVerified; }

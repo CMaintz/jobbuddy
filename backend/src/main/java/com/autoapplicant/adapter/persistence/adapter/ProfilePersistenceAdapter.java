@@ -34,6 +34,7 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
         e.setLinkedinUrl(profile.linkedinUrl());
         e.setGithubUrl(profile.githubUrl());
         e.setWebsiteUrl(profile.websiteUrl());
+        e.setPhone(profile.phone());
         e.setYearsExperience(profile.yearsExperience());
         e.setSkills(toArray(profile.skills()));
         e.setTechnologies(toArray(profile.technologies()));
@@ -54,7 +55,7 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
     private Profile toDomain(ProfileEntity e) {
         return new Profile(e.getId(), e.getUserId(), e.getFullName(), e.getHeadline(),
                 e.getSummary(), e.getLocation(), e.getMunicipality(),
-                e.getLinkedinUrl(), e.getGithubUrl(), e.getWebsiteUrl(),
+                e.getLinkedinUrl(), e.getGithubUrl(), e.getWebsiteUrl(), e.getPhone(),
                 e.getYearsExperience(),
                 toList(e.getSkills()), toList(e.getTechnologies()), toList(e.getLanguages()),
                 e.getDesiredSalaryMin(), e.getDesiredSalaryMax(), e.getDesiredCurrency(),

@@ -31,4 +31,13 @@ public class SkillTaxonomyService implements GetSkillTaxonomyUseCase {
     public List<String> getCategories() {
         return repo.findAllCategories();
     }
+
+    @Override
+    public SkillTaxonomy createOrGet(String name) {
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("Skill name must not be blank");
+        String trimmed = name.trim();
+        String normalized = trimmed.toLowerCase().replaceAll("[^a-z0-9]+", "-");
+        return repo.findByNormalizedName(normalized)
+                .orElseGet(() -> repo.save(new SkillTaxonomy(null, trimmed, normalized, null, "Custom", List.of())));
+    }
 }

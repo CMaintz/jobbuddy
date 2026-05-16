@@ -15,6 +15,7 @@ export interface Profile {
   linkedinUrl?: string;
   githubUrl?: string;
   websiteUrl?: string;
+  phone?: string;
   yearsExperience?: number;
   skills?: string[];
   technologies?: string[];
@@ -23,11 +24,4 @@ export interface Profile {
   desiredSalaryMax?: number;
   desiredCurrency?: string;
   remotePreference?: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  userId: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
 }

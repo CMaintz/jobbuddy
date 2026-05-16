@@ -40,7 +40,7 @@ public class PromptController {
         UUID userId = secCtx.getCurrentUserId();
         PromptTemplate template = new PromptTemplate(null, userId, req.name(), req.category(),
                 req.description(), req.systemPrompt(), req.userPrompt(), req.outputConstraints(),
-                req.isPublic(), null, 1, null, null);
+                req.isPublic(), null, 1, null, null, false);
         return ResponseEntity.ok(create.createTemplate(userId, template));
     }
 
