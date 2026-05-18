@@ -16,6 +16,7 @@ export interface Profile {
   githubUrl?: string;
   websiteUrl?: string;
   phone?: string;
+  photoUrl?: string;
   yearsExperience?: number;
   skills?: string[];
   technologies?: string[];

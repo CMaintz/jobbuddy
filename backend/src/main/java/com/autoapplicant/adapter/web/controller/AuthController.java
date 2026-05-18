@@ -161,7 +161,7 @@ public class AuthController {
         User savedUser = userRepo.save(newUser);
 
         Profile profile = new Profile(null, savedUser.id(), fullName, null, null,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(),
                 null, null, "DKK", null, null, null, null);
         profileRepo.save(profile);

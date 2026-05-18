@@ -10,4 +10,5 @@ public interface SkillTaxonomyRepositoryPort {
     List<String> findAllCategories();
     SkillTaxonomy save(SkillTaxonomy skill);
     java.util.Optional<SkillTaxonomy> findByNormalizedName(String normalizedName);
+    List<SkillTaxonomy> findByIds(java.util.Collection<java.util.UUID> ids);
 }

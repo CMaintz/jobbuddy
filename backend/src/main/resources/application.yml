@@ -53,14 +53,21 @@ app:
     companies:
       - veo
   teamtailor:
-    # Teamtailor's old teamtailor-jobs.com subdomains are defunct (DNS dead).
-    # Add career page URLs for Danish companies you know use Teamtailor, e.g.:
-    #   - https://careers.lunar.app       (Lunar Bank)
-    #   - https://career.relesys.com      (Relesys)
-    #   - https://careers.goodiebox.com   (Goodiebox)
-    # The connector scrapes JSON-LD from each listing page — works for any career page
-    # that uses schema.org/JobPosting markup (standard for all Teamtailor-hosted pages).
-    career-page-urls: []
+    # Format: {company}.teamtailor.com — all verified live as of 2025-05.
+    # Add more by checking https://{slug}.teamtailor.com/jobs in a browser.
+    career-page-urls:
+      - https://netnordicdenmark.teamtailor.com  # Net Nordic Denmark
+      - https://bankdata.teamtailor.com          # Bankdata (financial IT)
+      - https://lunar.teamtailor.com             # Lunar Bank
+      - https://relesys.teamtailor.com           # Relesys (retail HR software)
+      - https://goodiebox.teamtailor.com         # Goodiebox
+      - https://onomondo.teamtailor.com          # Onomondo (IoT connectivity)
+      - https://normative.teamtailor.com         # Normative (carbon accounting)
+      - https://tdc.teamtailor.com               # TDC (Danish telco)
+      - https://trifork.teamtailor.com           # Trifork (software consultancy)
+      - https://unity.teamtailor.com             # Unity Technologies (DK office)
+      - https://templafy.teamtailor.com          # Templafy (document automation)
+      - https://veo.teamtailor.com               # Veo Technologies (sports cameras)
 
 management:
   endpoints:

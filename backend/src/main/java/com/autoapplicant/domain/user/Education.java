@@ -1,7 +1,10 @@
 package com.autoapplicant.domain.user;
 
+import com.autoapplicant.domain.skill.SkillTaxonomy;
+
 import java.time.LocalDate;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record Education(
@@ -16,5 +19,6 @@ public record Education(
         String grade,
         int displayOrder,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        List<SkillTaxonomy> skills
 ) {}

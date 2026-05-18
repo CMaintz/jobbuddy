@@ -35,6 +35,28 @@ type Tab = 'overview' | 'experience' | 'projects' | 'education' | 'certification
       <!-- Overview Tab -->
       <div *ngIf="activeTab === 'overview'">
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="space-y-4">
+
+          <!-- Photo upload -->
+          <div class="flex items-center gap-4 pb-2 border-b border-gray-100">
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+              @if (photoUrl) {
+                <img [src]="photoUrl" alt="Profile photo" class="w-full h-full object-cover" />
+              } @else {
+                <span class="text-gray-400 text-2xl leading-none">&#128100;</span>
+              }
+            </div>
+            <div>
+              <input #photoInput type="file" accept="image/*" class="hidden" (change)="onPhotoSelected($event)" />
+              <button type="button" (click)="photoInput.click()" [disabled]="uploadingPhoto"
+                      class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50">
+                {{ uploadingPhoto ? 'Uploading...' : (photoUrl ? 'Change Photo' : 'Upload Photo') }}
+              </button>
+              @if (photoError) {
+                <span class="block text-red-600 text-xs mt-1">{{ photoError }}</span>
+              }
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">Full Name</label>
@@ -656,6 +678,18 @@ export class ProfileComponent implements OnInit {
   showEduForm = false;
   showCertForm = false;
 
+  // Section-level skill picker state
+  expEditSkills: SkillTaxonomy[] = [];
+  projectEditSkills: SkillTaxonomy[] = [];
+  educationEditSkills: SkillTaxonomy[] = [];
+  sectionSkillInput = '';
+  sectionSkillSuggestions: SkillTaxonomy[] = [];
+  showSectionSkillDropdown = false;
+  pendingNewSkill: { name: string; section: 'exp' | 'project' | 'edu' } | null = null;
+  pendingNewSkillCategory = '';
+  availableCategories: string[] = [];
+  private sectionSkillSearchSubject = new Subject<string>();
+
   importingLinkedIn = false;
   linkedInImportError = '';
   linkedInPreview: any = null;
@@ -663,6 +697,10 @@ export class ProfileComponent implements OnInit {
   importingCvPdf = false;
   cvPdfImportError = '';
   cvPdfPreview: any = null;
+
+  photoUrl = '';
+  uploadingPhoto = false;
+  photoError = '';
 
   tabs = [
     { key: 'overview' as Tab, label: 'Overview' },
@@ -789,16 +827,19 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.http.get<any>('/api/v1/users/me/profile').subscribe({
-      next: profile => this.profileForm.patchValue({
-        ...profile,
-        technologiesRaw: (profile.technologies || []).join(', '),
-        skillsRaw: (profile.skills || []).join(', '),
-      }),
+      next: profile => {
+        this.profileForm.patchValue({
+          ...profile,
+          technologiesRaw: (profile.technologies || []).join(', '),
+          skillsRaw: (profile.skills || []).join(', '),
+        });
+        if (profile.photoUrl) this.photoUrl = profile.photoUrl;
+      },
       error: () => {}
     });
     this.loadSections();
 
-    // Set up debounced skill search
+    // Set up debounced skill search (profile skills tab)
     this.skillSearchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -810,6 +851,22 @@ export class ProfileComponent implements OnInit {
       },
       error: () => { this.taxonomySuggestions = []; this.showDropdown = false; }
     });
+
+    // Set up debounced skill search for section forms
+    this.sectionSkillSearchSubject.pipe(
+      debounceTime(250),
+      distinctUntilChanged(),
+      switchMap(q => q.length >= 1 ? this.skillsApi.searchTaxonomy(q) : [])
+    ).subscribe({
+      next: results => {
+        this.sectionSkillSuggestions = results.slice(0, 8);
+        this.showSectionSkillDropdown = this.sectionSkillSuggestions.length > 0 || this.sectionSkillInput.trim().length > 0;
+      },
+      error: () => { this.sectionSkillSuggestions = []; this.showSectionSkillDropdown = false; }
+    });
+
+    // Load categories for the "new skill" prompt
+    this.skillsApi.getCategories().subscribe(cats => this.availableCategories = cats);
   }
 
   private loadSections(): void {
@@ -851,6 +908,66 @@ export class ProfileComponent implements OnInit {
     return map[level] ?? 'bg-gray-100 text-gray-600';
   }
 
+  // ── Section skill picker ─────────────────────────────────────────────────
+
+  onSectionSkillInput(value: string): void {
+    this.showSectionSkillDropdown = false;
+    if (value && value.length >= 1) {
+      this.sectionSkillSearchSubject.next(value);
+    } else {
+      this.sectionSkillSuggestions = [];
+    }
+  }
+
+  selectSectionSkill(skill: SkillTaxonomy, section: 'exp' | 'project' | 'edu'): void {
+    const list = this.sectionSkillsFor(section);
+    if (!list.find(s => s.id === skill.id)) list.push(skill);
+    this.sectionSkillInput = '';
+    this.sectionSkillSuggestions = [];
+    this.showSectionSkillDropdown = false;
+  }
+
+  promptCreateSkillForSection(section: 'exp' | 'project' | 'edu'): void {
+    const name = this.sectionSkillInput.trim();
+    if (!name) return;
+    this.pendingNewSkill = { name, section };
+    this.pendingNewSkillCategory = '';
+    this.sectionSkillSuggestions = [];
+    this.showSectionSkillDropdown = false;
+  }
+
+  createSkillForSection(): void {
+    if (!this.pendingNewSkill) return;
+    const { name, section } = this.pendingNewSkill;
+    this.skillsApi.createTaxonomySkill(name, this.pendingNewSkillCategory || undefined).subscribe({
+      next: skill => {
+        const list = this.sectionSkillsFor(section);
+        if (!list.find(s => s.id === skill.id)) list.push(skill);
+        this.sectionSkillInput = '';
+        this.pendingNewSkill = null;
+        this.pendingNewSkillCategory = '';
+      }
+    });
+  }
+
+  removeSkillFromSection(skillId: string, section: 'exp' | 'project' | 'edu'): void {
+    const list = this.sectionSkillsFor(section);
+    const idx = list.findIndex(s => s.id === skillId);
+    if (idx !== -1) list.splice(idx, 1);
+  }
+
+  hideSectionSkillDropdownDelayed(): void {
+    setTimeout(() => { this.showSectionSkillDropdown = false; }, 150);
+  }
+
+  private sectionSkillsFor(section: 'exp' | 'project' | 'edu'): SkillTaxonomy[] {
+    if (section === 'exp') return this.expEditSkills;
+    if (section === 'project') return this.projectEditSkills;
+    return this.educationEditSkills;
+  }
+
+  // ── Profile skills tab ───────────────────────────────────────────────────
+
   addProfileSkill(): void {
     this.skillSaveError = '';
     if (!this.newSkill.skillName?.trim()) {
@@ -890,6 +1007,25 @@ export class ProfileComponent implements OnInit {
   deleteProfileSkill(id: string): void {
     this.skillsApi.deleteProfileSkill(id).subscribe(() =>
       this.skillsApi.getProfileSkills().subscribe(d => this.profileSkills = d));
+  }
+
+  onPhotoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploadingPhoto = true;
+    this.photoError = '';
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<{ url: string }>('/api/v1/users/me/profile/photo', formData).subscribe({
+      next: res => {
+        this.photoUrl = res.url;
+        this.uploadingPhoto = false;
+      },
+      error: () => {
+        this.photoError = 'Failed to upload photo. Please try again.';
+        this.uploadingPhoto = false;
+      }
+    });
   }
 
   onLinkedInPdfSelected(event: Event): void {
@@ -983,10 +1119,12 @@ export class ProfileComponent implements OnInit {
       description: v.description || undefined,
       location: v.location || undefined,
       technologies: (v.technologiesRaw || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+      skills: [...this.expEditSkills],
     };
     this.sectionsApi.addExperience(payload).subscribe(() => {
       this.sectionsApi.getExperience().subscribe(d => this.experiences = d);
       this.expForm.reset({ isCurrent: false });
+      this.expEditSkills = [];
       this.showExpForm = false;
     });
   }
@@ -1007,10 +1145,12 @@ export class ProfileComponent implements OnInit {
       measurableOutcomes: v.measurableOutcomes || undefined,
       isFeatured: v.isFeatured ?? false,
       technologies: (v.technologiesRaw || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+      skills: [...this.projectEditSkills],
     };
     this.sectionsApi.addProject(payload).subscribe(() => {
       this.sectionsApi.getProjects().subscribe(d => this.projects = d);
       this.projectForm.reset({ isFeatured: false });
+      this.projectEditSkills = [];
       this.showProjectForm = false;
     });
   }

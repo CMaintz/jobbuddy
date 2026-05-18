@@ -10,6 +10,8 @@ import { PdfTemplatesApiService } from '../../../core/api/pdf-templates.api';
 import { CvVersion } from '../../../core/models/cv-version.model';
 import { PromptTemplate } from '../../../core/models/prompt-template.model';
 import { PdfTemplate } from '../../../core/models/pdf-template.model';
+import { StructuredDocument, STRUCTURED_DOCUMENT_TEMPLATES } from '../../../core/models/structured-document.model';
+import { StructuredDocumentRendererComponent } from '../../../shared/components/structured-document-renderer/structured-document-renderer.component';
 import { Job } from '../../../core/models/job.model';
 
 interface ChatMessage {
@@ -28,7 +30,7 @@ const LANGUAGES = [
 @Component({
   selector: 'app-application-generator',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, StructuredDocumentRendererComponent],
   styles: [`
     .editor {
       min-height: 300px;
@@ -74,6 +76,15 @@ const LANGUAGES = [
           </div>
 
           <div>
+            <label class="label">Layout Template</label>
+            <select formControlName="structuredTemplateId" class="input">
+              @for (template of availableStructuredTemplates; track template.id) {
+                <option [value]="template.id">{{ template.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
             <label class="label">Language</label>
             <select formControlName="targetLanguage" class="input">
               @for (lang of languages; track lang.code) {
@@ -98,16 +109,6 @@ const LANGUAGES = [
               <option value="">— default prompt —</option>
               @for (t of promptTemplates; track t.id) {
                 <option [value]="t.id">{{ t.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div>
-            <label class="label">PDF Template (optional)</label>
-            <select formControlName="pdfTemplateId" class="input">
-              <option value="">— no template —</option>
-              @for (t of pdfTemplates; track t.id) {
-                <option [value]="t.id">{{ t.name }}{{ t.isSystem ? ' (default)' : '' }}</option>
               }
             </select>
           </div>
@@ -170,14 +171,26 @@ const LANGUAGES = [
               </div>
             </div>
 
-            <!-- contenteditable rich text editor -->
-            <div #editorEl
-                 class="editor border border-gray-200 rounded-lg p-4 text-sm text-gray-800 bg-white"
-                 contenteditable="true"
-                 data-placeholder="Generated content will appear here..."
-                 (input)="onEditorInput($event)"
-                 [innerHTML]="editorHtml">
-            </div>
+            @if (structuredDocument) {
+              <app-structured-document-renderer [document]="structuredDocument"></app-structured-document-renderer>
+            } @else {
+              <div #editorEl
+                   class="editor border border-gray-200 rounded-lg p-4 text-sm text-gray-800 bg-white"
+                   contenteditable="true"
+                   data-placeholder="Generated content will appear here..."
+                   (input)="onEditorInput($event)"
+                   [innerHTML]="editorHtml">
+              </div>
+            }
+
+            @if (structuredDocument && structuredDocument.documentType !== 'CV') {
+              <div>
+                <label class="label">Body Text</label>
+                <textarea class="input text-sm" rows="8" [(ngModel)]="currentContent"
+                          [ngModelOptions]="{standalone: true}"
+                          (ngModelChange)="refreshStructuredApplication()"></textarea>
+              </div>
+            }
 
             @if (result) {
               <div class="text-xs text-gray-400 text-right">
@@ -249,12 +262,14 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
   promptTemplates: PromptTemplate[] = [];
   pdfTemplates: PdfTemplate[] = [];
   languages = LANGUAGES;
+  structuredTemplates = STRUCTURED_DOCUMENT_TEMPLATES;
 
   loading = false;
   refining = false;
   downloadingPdf = false;
   error = '';
   result: { content: string; modelUsed: string; tokensUsed?: number } | null = null;
+  structuredDocument: StructuredDocument | null = null;
 
   editorHtml = '';
   currentContent = '';
@@ -275,13 +290,26 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     jobDescription: [''],
     cvVersionId: [''],
     promptTemplateId: [''],
-    pdfTemplateId: [''],
+    structuredTemplateId: ['application-modern'],
     customInstructions: [''],
     targetLanguage: ['Danish'],
     useStyleFromHistory: [false]
   });
 
+  get availableStructuredTemplates() {
+    const type = this.form.value.documentType as any;
+    return this.structuredTemplates.filter(template => template.documentTypes.includes(type));
+  }
+
   ngOnInit(): void {
+    this.form.controls.documentType.valueChanges.subscribe(() => {
+      const first = this.availableStructuredTemplates[0];
+      if (first) {
+        this.form.patchValue({ structuredTemplateId: first.id }, { emitEvent: false });
+      }
+      this.structuredDocument = null;
+    });
+
     const jobId = this.route.snapshot.queryParamMap.get('jobId');
     if (jobId) {
       this.form.patchValue({ jobId });
@@ -310,19 +338,47 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     this.error = '';
 
     const v = this.form.value;
-    this.aiApi.generate({
-      documentType: v.documentType as any,
+    const selectedTemplate = this.structuredTemplates.find(t => t.id === v.structuredTemplateId);
+
+    if (v.documentType === 'CV') {
+      this.aiApi.generateStructuredCv({
+        jobId: v.jobId || undefined,
+        jobDescription: v.jobDescription || undefined,
+        customInstructions: v.customInstructions || undefined,
+        targetLanguage: v.targetLanguage || 'Danish',
+        templateId: v.structuredTemplateId || selectedTemplate?.id
+      }).subscribe({
+        next: doc => {
+          this.structuredDocument = doc;
+          this.currentContent = this.cvPlainText(doc);
+          this.editorHtml = '';
+          this.result = { content: this.currentContent, modelUsed: 'structured CV engine' };
+          this.showEditor = true;
+          this.chatHistory = [];
+          this.loading = false;
+        },
+        error: e => {
+          this.error = e.error?.message || 'CV generation failed. Please try again.';
+          this.loading = false;
+        }
+      });
+      return;
+    }
+
+    this.aiApi.generateDocument({
+      documentType: v.documentType as string,
       jobId: v.jobId || undefined,
       jobDescription: v.jobDescription || undefined,
-      cvVersionId: v.cvVersionId || undefined,
-      promptTemplateId: v.promptTemplateId || undefined,
+      templateId: v.structuredTemplateId || selectedTemplate?.id || 'application-modern',
       customInstructions: v.customInstructions || undefined,
       targetLanguage: v.targetLanguage || 'Danish',
       useStyleFromHistory: v.useStyleFromHistory ?? false
     }).subscribe({
-      next: r => {
-        this.result = r;
-        this.setEditorContent(r.content);
+      next: doc => {
+        this.structuredDocument = doc;
+        this.currentContent = doc.bodyContent ?? '';
+        this.setEditorContent(this.currentContent);
+        this.result = { content: this.currentContent, modelUsed: 'structured document engine' };
         this.showEditor = true;
         this.chatHistory = [];
         this.loading = false;
@@ -345,6 +401,16 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     this.chatMessage = '';
     this.chatHistory = [...this.chatHistory, { role: 'user', text: userMsg }];
     this.shouldScrollChat = true;
+
+    if (this.structuredDocument?.documentType === 'CV') {
+      this.chatHistory = [...this.chatHistory, {
+        role: 'assistant',
+        text: 'For structured CVs, add this as a custom instruction and regenerate so the backend can validate the JSON against your master profile.'
+      }];
+      this.shouldScrollChat = true;
+      return;
+    }
+
     this.refining = true;
 
     const v = this.form.value;
@@ -356,6 +422,9 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
     }).subscribe({
       next: r => {
         this.setEditorContent(r.refinedContent);
+        if (this.structuredDocument && this.structuredDocument.documentType !== 'CV') {
+          this.structuredDocument = { ...this.structuredDocument, bodyContent: r.refinedContent };
+        }
         this.chatHistory = [...this.chatHistory, { role: 'assistant', text: 'Document updated.' }];
         this.shouldScrollChat = true;
         this.refining = false;
@@ -375,13 +444,40 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
   }
 
   downloadPdf(): void {
-    const pdfTemplateId = this.form.value.pdfTemplateId;
-    if (!pdfTemplateId) {
-      window.print();
-      return;
-    }
     this.downloadingPdf = true;
     this.error = '';
+
+    if (this.structuredDocument) {
+      this.pdfApi.exportStructuredPdf(this.structuredDocument).subscribe({
+        next: blob => this.savePdfBlob(blob),
+        error: () => {
+          this.error = 'PDF generation failed. Please try again.';
+          this.downloadingPdf = false;
+        }
+      });
+      return;
+    }
+
+    window.print();
+    this.downloadingPdf = false;
+  }
+
+  refreshStructuredApplication(): void {
+    if (!this.structuredDocument || this.structuredDocument.documentType === 'CV') return;
+    this.structuredDocument = { ...this.structuredDocument, bodyContent: this.currentContent };
+  }
+
+  private savePdfBlob(blob: Blob): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'document.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+    this.downloadingPdf = false;
+  }
+
+  private legacyDownloadPdf(pdfTemplateId: string): void {
     this.pdfApi.exportPdf({ content: this.currentContent, pdfTemplateId }).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
@@ -407,5 +503,23 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/\n/g, '<br>');
+  }
+
+  private cvPlainText(document: StructuredDocument): string {
+    const lines: string[] = [];
+    for (const section of document.sections ?? []) {
+      lines.push(section.heading);
+      if (section.body) lines.push(section.body);
+      for (const item of section.items ?? []) {
+        if (item.title) lines.push(item.title);
+        if (item.subtitle) lines.push(item.subtitle);
+        if (item.dateRange) lines.push(item.dateRange);
+        if (item.description) lines.push(item.description);
+        for (const bullet of item.bullets ?? []) lines.push(`- ${bullet}`);
+        if ((item.technologies ?? []).length > 0) lines.push((item.technologies ?? []).join(', '));
+      }
+      lines.push('');
+    }
+    return lines.join('\n').trim();
   }
 }

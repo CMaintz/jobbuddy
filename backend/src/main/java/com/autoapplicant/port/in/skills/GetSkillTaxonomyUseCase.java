@@ -9,4 +9,5 @@ public interface GetSkillTaxonomyUseCase {
     List<SkillTaxonomy> getByCategory(String category);
     List<String> getCategories();
     SkillTaxonomy createOrGet(String name);
+    SkillTaxonomy createOrGet(String name, String category);
 }
