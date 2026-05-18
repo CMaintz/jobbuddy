@@ -51,6 +51,12 @@ public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryP
         return repo.findByNormalizedName(normalizedName).map(this::toDomain);
     }
 
+    @Override
+    public List<SkillTaxonomy> findByIds(java.util.Collection<java.util.UUID> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return repo.findByIdIn(ids).stream().map(this::toDomain).toList();
+    }
+
     private SkillTaxonomy toDomain(SkillTaxonomyEntity e) {
         return new SkillTaxonomy(e.getId(), e.getName(), e.getNormalizedName(), e.getParentId(),
                 e.getCategory(), e.getAliases() != null ? Arrays.asList(e.getAliases()) : List.of());

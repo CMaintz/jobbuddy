@@ -19,6 +19,7 @@ public record Profile(
         String githubUrl,
         String websiteUrl,
         String phone,
+        String photoUrl,
         Integer yearsExperience,
         List<String> skills,
         List<String> technologies,

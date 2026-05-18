@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.persistence.mapper;
 import com.autoapplicant.adapter.persistence.entity.*;
 import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.*;
 
 import java.util.Arrays;
@@ -15,10 +16,15 @@ public final class ProfileSectionMapper {
     // ── WorkExperience ────────────────────────────────────────────────────────
 
     public static WorkExperience toDomain(WorkExperienceEntity e) {
+        return toDomain(e, List.of());
+    }
+
+    public static WorkExperience toDomain(WorkExperienceEntity e, List<SkillTaxonomy> skills) {
         return new WorkExperience(e.getId(), e.getUserId(), e.getCompanyName(), e.getTitle(),
                 e.getLocation(), e.getDescription(), e.getStartDate(), e.getEndDate(), e.isCurrent(),
                 toList(e.getTechnologies()), toList(e.getAchievements()),
-                e.getDisplayOrder(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getDisplayOrder(), e.getCreatedAt(), e.getUpdatedAt(),
+                skills != null ? skills : List.of());
     }
 
     public static WorkExperienceEntity toEntity(WorkExperience d) {
@@ -41,11 +47,16 @@ public final class ProfileSectionMapper {
     // ── Project ───────────────────────────────────────────────────────────────
 
     public static Project toDomain(ProjectEntity e) {
+        return toDomain(e, List.of());
+    }
+
+    public static Project toDomain(ProjectEntity e, List<SkillTaxonomy> skills) {
         return new Project(e.getId(), e.getUserId(), e.getName(), e.getDescription(),
                 toList(e.getTechnologies()), e.getGithubUrl(), e.getLiveUrl(),
                 e.getArchitectureNotes(), e.getMeasurableOutcomes(), e.getBusinessImpact(),
                 e.getStartDate(), e.getEndDate(), e.isFeatured(), e.getDisplayOrder(),
-                e.getCreatedAt(), e.getUpdatedAt());
+                e.getCreatedAt(), e.getUpdatedAt(),
+                skills != null ? skills : List.of());
     }
 
     public static ProjectEntity toEntity(Project d) {
@@ -70,9 +81,14 @@ public final class ProfileSectionMapper {
     // ── Education ─────────────────────────────────────────────────────────────
 
     public static Education toDomain(EducationEntity e) {
+        return toDomain(e, List.of());
+    }
+
+    public static Education toDomain(EducationEntity e, List<SkillTaxonomy> skills) {
         return new Education(e.getId(), e.getUserId(), e.getInstitution(), e.getDegree(),
                 e.getFieldOfStudy(), e.getStartDate(), e.getEndDate(), e.getDescription(),
-                e.getGrade(), e.getDisplayOrder(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getGrade(), e.getDisplayOrder(), e.getCreatedAt(), e.getUpdatedAt(),
+                skills != null ? skills : List.of());
     }
 
     public static EducationEntity toEntity(Education d) {

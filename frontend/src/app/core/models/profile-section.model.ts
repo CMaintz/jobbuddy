@@ -1,3 +1,5 @@
+import { SkillTaxonomy } from './skill-taxonomy.model';
+
 export interface WorkExperience {
   id?: string;
   userId?: string;
@@ -11,6 +13,7 @@ export interface WorkExperience {
   technologies?: string[];
   achievements?: string[];
   displayOrder?: number;
+  skills?: SkillTaxonomy[];
 }
 
 export interface Project {
@@ -28,6 +31,7 @@ export interface Project {
   endDate?: string;
   isFeatured?: boolean;
   displayOrder?: number;
+  skills?: SkillTaxonomy[];
 }
 
 export interface Education {
@@ -41,6 +45,7 @@ export interface Education {
   description?: string;
   grade?: string;
   displayOrder?: number;
+  skills?: SkillTaxonomy[];
 }
 
 export interface Certification {

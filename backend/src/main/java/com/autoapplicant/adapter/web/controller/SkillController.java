@@ -27,7 +27,7 @@ public class SkillController {
         this.secCtx = secCtx;
     }
 
-    public record CreateSkillRequest(String name) {}
+    public record CreateSkillRequest(String name, String category) {}
 
     @GetMapping("/api/v1/skills")
     public ResponseEntity<List<SkillTaxonomy>> search(@RequestParam(required = false) String q,
@@ -40,7 +40,7 @@ public class SkillController {
 
     @PostMapping("/api/v1/skills")
     public ResponseEntity<SkillTaxonomy> createSkill(@RequestBody CreateSkillRequest req) {
-        return ResponseEntity.ok(taxonomy.createOrGet(req.name()));
+        return ResponseEntity.ok(taxonomy.createOrGet(req.name(), req.category()));
     }
 
     @GetMapping("/api/v1/skills/categories")

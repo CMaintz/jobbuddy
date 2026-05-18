@@ -102,6 +102,10 @@ export const routes: Routes = [
       {
         path: 'analytics',
         loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
+      },
+      {
+        path: 'cv',
+        loadComponent: () => import('./features/cv/cv-page.component').then(m => m.CvPageComponent)
       }
     ]
   },

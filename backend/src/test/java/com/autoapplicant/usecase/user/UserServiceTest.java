@@ -104,7 +104,7 @@ class UserServiceTest {
     @Test
     void get_profile_delegates_to_profile_repo() {
         Profile profile = new Profile(UUID.randomUUID(), userId, "Alice", null, null,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(),
                 null, null, "DKK", null, null, null, null);
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(profile));
@@ -123,11 +123,11 @@ class UserServiceTest {
     @Test
     void update_profile_saves_with_correct_user_id() {
         Profile incoming = new Profile(null, null, "Updated Name", "Engineer", "Summary",
-                "Copenhagen", null, null, null, null, null, 5,
+                "Copenhagen", null, null, null, null, null, null, 5,
                 List.of("Java"), List.of(), List.of(),
                 60000, 90000, "DKK", RemoteType.HYBRID, null, null, null);
         Profile savedProfile = new Profile(UUID.randomUUID(), userId, "Updated Name", "Engineer",
-                "Summary", "Copenhagen", null, null, null, null, null, 5,
+                "Summary", "Copenhagen", null, null, null, null, null, null, 5,
                 List.of("Java"), List.of(), List.of(),
                 60000, 90000, "DKK", RemoteType.HYBRID, null, null, null);
         when(profileRepo.save(any())).thenReturn(savedProfile);

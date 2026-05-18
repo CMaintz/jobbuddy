@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PdfTemplate } from '../models/pdf-template.model';
+import { StructuredDocument } from '../models/structured-document.model';
 
 export interface PdfExportRequest {
   content: string;
@@ -35,5 +36,17 @@ export class PdfTemplatesApiService {
 
   exportPdf(request: PdfExportRequest): Observable<Blob> {
     return this.http.post('/api/v1/documents/export-pdf', request, { responseType: 'blob' });
+  }
+
+  exportStructuredPdf(document: StructuredDocument): Observable<Blob> {
+    return this.http.post('/api/v1/documents/export-structured-pdf', { document }, { responseType: 'blob' });
+  }
+
+  buildStructuredApplication(documentType: string, content: string, templateId: string): Observable<StructuredDocument> {
+    return this.http.post<StructuredDocument>('/api/v1/documents/structured-application', {
+      documentType,
+      content,
+      templateId
+    });
   }
 }

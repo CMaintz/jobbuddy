@@ -3,12 +3,16 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.pdf.PdfRenderingService;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.pdf.PdfExportRequest;
+import com.autoapplicant.adapter.web.dto.pdf.StructuredApplicationRequest;
+import com.autoapplicant.adapter.web.dto.pdf.StructuredDocumentExportRequest;
+import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.PdfTemplate;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
+import com.autoapplicant.usecase.document.StructuredDocumentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,17 +36,20 @@ public class PdfExportController {
     private final GetUserProfileUseCase getUserProfile;
     private final UserRepositoryPort userRepo;
     private final PdfRenderingService pdfRenderer;
+    private final StructuredDocumentService structuredDocuments;
     private final SecurityContextHelper secCtx;
 
     public PdfExportController(ManagePdfTemplatesUseCase pdfTemplates,
                                GetUserProfileUseCase getUserProfile,
                                UserRepositoryPort userRepo,
                                PdfRenderingService pdfRenderer,
+                               StructuredDocumentService structuredDocuments,
                                SecurityContextHelper secCtx) {
         this.pdfTemplates = pdfTemplates;
         this.getUserProfile = getUserProfile;
         this.userRepo = userRepo;
         this.pdfRenderer = pdfRenderer;
+        this.structuredDocuments = structuredDocuments;
         this.secCtx = secCtx;
     }
 
@@ -80,5 +87,21 @@ public class PdfExportController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document.pdf\"")
                 .body(pdf);
+    }
+
+    @PostMapping("/export-structured-pdf")
+    public ResponseEntity<byte[]> exportStructuredPdf(@RequestBody StructuredDocumentExportRequest req) {
+        byte[] pdf = pdfRenderer.renderStructured(req.document());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document.pdf\"")
+                .body(pdf);
+    }
+
+    @PostMapping("/structured-application")
+    public ResponseEntity<StructuredDocument> structuredApplication(@RequestBody StructuredApplicationRequest req) {
+        return ResponseEntity.ok(structuredDocuments.buildApplicationDocument(
+                secCtx.getCurrentUserId(), req.documentType(), req.content(), req.templateId()));
     }
 }

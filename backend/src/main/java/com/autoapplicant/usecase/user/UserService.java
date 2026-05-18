@@ -62,7 +62,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
 
         String fullName = (name != null && !name.isBlank()) ? name : email;
         Profile profile = new Profile(null, saved.id(), fullName, null, null,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(),
                 null, null, "DKK", null, null, null, null);
         profileRepo.save(profile);
@@ -106,9 +106,10 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
         return profileRepo.save(new Profile(null, userId, profile.fullName(), profile.headline(),
                 profile.summary(), profile.location(), profile.municipality(),
                 profile.linkedinUrl(), profile.githubUrl(), profile.websiteUrl(), profile.phone(),
-                profile.yearsExperience(), profile.skills(), profile.technologies(), profile.languages(),
-                profile.desiredSalaryMin(), profile.desiredSalaryMax(), profile.desiredCurrency(),
-                profile.remotePreference(), profile.employmentTypePreference(), null, null));
+                profile.photoUrl(), profile.yearsExperience(), profile.skills(), profile.technologies(),
+                profile.languages(), profile.desiredSalaryMin(), profile.desiredSalaryMax(),
+                profile.desiredCurrency(), profile.remotePreference(), profile.employmentTypePreference(),
+                null, null));
     }
 
     @Override

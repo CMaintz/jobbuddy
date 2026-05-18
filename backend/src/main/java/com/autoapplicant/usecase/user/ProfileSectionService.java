@@ -38,7 +38,7 @@ public class ProfileSectionService implements
                 experience.title(), experience.location(), experience.description(),
                 experience.startDate(), experience.endDate(), experience.isCurrent(),
                 experience.technologies(), experience.achievements(),
-                experience.displayOrder(), null, null);
+                experience.displayOrder(), null, null, experience.skills());
         return workExpRepo.save(withUser);
     }
 
@@ -48,7 +48,7 @@ public class ProfileSectionService implements
                 experience.title(), experience.location(), experience.description(),
                 experience.startDate(), experience.endDate(), experience.isCurrent(),
                 experience.technologies(), experience.achievements(),
-                experience.displayOrder(), null, null);
+                experience.displayOrder(), null, null, experience.skills());
         return workExpRepo.save(updated);
     }
 
@@ -70,7 +70,7 @@ public class ProfileSectionService implements
                 project.technologies(), project.githubUrl(), project.liveUrl(),
                 project.architectureNotes(), project.measurableOutcomes(), project.businessImpact(),
                 project.startDate(), project.endDate(), project.isFeatured(),
-                project.displayOrder(), null, null);
+                project.displayOrder(), null, null, project.skills());
         return projectRepo.save(withUser);
     }
 
@@ -80,7 +80,7 @@ public class ProfileSectionService implements
                 project.technologies(), project.githubUrl(), project.liveUrl(),
                 project.architectureNotes(), project.measurableOutcomes(), project.businessImpact(),
                 project.startDate(), project.endDate(), project.isFeatured(),
-                project.displayOrder(), null, null);
+                project.displayOrder(), null, null, project.skills());
         return projectRepo.save(updated);
     }
 
@@ -100,7 +100,8 @@ public class ProfileSectionService implements
     public Education addEducation(UUID userId, Education education) {
         Education withUser = new Education(null, userId, education.institution(), education.degree(),
                 education.fieldOfStudy(), education.startDate(), education.endDate(),
-                education.description(), education.grade(), education.displayOrder(), null, null);
+                education.description(), education.grade(), education.displayOrder(), null, null,
+                education.skills());
         return educationRepo.save(withUser);
     }
 
@@ -108,7 +109,8 @@ public class ProfileSectionService implements
     public Education updateEducation(UUID userId, UUID id, Education education) {
         Education updated = new Education(id, userId, education.institution(), education.degree(),
                 education.fieldOfStudy(), education.startDate(), education.endDate(),
-                education.description(), education.grade(), education.displayOrder(), null, null);
+                education.description(), education.grade(), education.displayOrder(), null, null,
+                education.skills());
         return educationRepo.save(updated);
     }
 

@@ -11,8 +11,8 @@ export class SkillsApiService {
     return this.http.get<SkillTaxonomy[]>('/api/v1/skills', { params: { q } });
   }
 
-  createTaxonomySkill(name: string): Observable<SkillTaxonomy> {
-    return this.http.post<SkillTaxonomy>('/api/v1/skills', { name });
+  createTaxonomySkill(name: string, category?: string): Observable<SkillTaxonomy> {
+    return this.http.post<SkillTaxonomy>('/api/v1/skills', { name, category });
   }
 
   getByCategory(category: string): Observable<SkillTaxonomy[]> {

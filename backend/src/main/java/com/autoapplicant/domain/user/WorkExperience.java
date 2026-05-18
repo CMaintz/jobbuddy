@@ -1,5 +1,7 @@
 package com.autoapplicant.domain.user;
 
+import com.autoapplicant.domain.skill.SkillTaxonomy;
+
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.List;
@@ -19,5 +21,6 @@ public record WorkExperience(
         List<String> achievements,
         int displayOrder,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        List<SkillTaxonomy> skills
 ) {}

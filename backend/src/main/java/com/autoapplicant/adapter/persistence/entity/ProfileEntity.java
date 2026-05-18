@@ -38,6 +38,9 @@ public class ProfileEntity {
     @Column(name = "phone")
     private String phone;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @Column(name = "years_experience")
     private Integer yearsExperience;
 
@@ -99,6 +102,8 @@ public class ProfileEntity {
     public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
     public Integer getYearsExperience() { return yearsExperience; }
     public void setYearsExperience(Integer yearsExperience) { this.yearsExperience = yearsExperience; }
     public String[] getSkills() { return skills; }
