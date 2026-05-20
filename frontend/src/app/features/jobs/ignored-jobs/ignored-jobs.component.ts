@@ -2,11 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { JobsApiService, IgnoredJob } from '../../../core/api/jobs.api';
+import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
+import { runAction } from '../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-ignored-jobs',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, EmptyStateComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -20,7 +22,7 @@ import { JobsApiService, IgnoredJob } from '../../../core/api/jobs.api';
       @if (loading) {
         <div class="text-center py-12 text-gray-500">Loading...</div>
       } @else if (items.length === 0) {
-        <div class="text-center py-12 text-gray-400">You haven't hidden any jobs yet.</div>
+        <app-empty-state message="You haven't hidden any jobs yet."></app-empty-state>
       } @else {
         <div class="space-y-2">
           @for (item of items; track item.id) {
@@ -55,9 +57,10 @@ export class IgnoredJobsComponent implements OnInit {
   loading = true;
 
   ngOnInit(): void {
-    this.api.getIgnored().subscribe({
-      next: items => { this.items = items; this.loading = false; },
-      error: () => this.loading = false
+    runAction({
+      action$: this.api.getIgnored(),
+      setLoading: value => this.loading = value,
+      next: items => this.items = items
     });
   }
 

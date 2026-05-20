@@ -3,9 +3,14 @@ package com.autoapplicant.usecase.application;
 import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.CreateApplicationCommand;
+import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
+import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -20,19 +25,79 @@ public class ApplicationService implements
 
     private final ApplicationRepositoryPort repo;
     private final ResponseMetricRepositoryPort responseMetricRepo;
+    private final StructuredGeneratedDocumentService structuredGeneratedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
-                              ResponseMetricRepositoryPort responseMetricRepo) {
+                              ResponseMetricRepositoryPort responseMetricRepo,
+                              StructuredGeneratedDocumentService structuredGeneratedDocuments) {
         this.repo = repo;
         this.responseMetricRepo = responseMetricRepo;
+        this.structuredGeneratedDocuments = structuredGeneratedDocuments;
     }
 
     @Override
     public Application createApplication(UUID userId, UUID jobId, UUID cvVersionId, String notes) {
-        Application app = new Application(null, userId, jobId, ApplicationStatus.SAVED,
-                null, null, null, null, null, null,
-                cvVersionId, null, null, notes, null, null);
-        return repo.save(app);
+        return createApplication(new CreateApplicationCommand(
+                userId, jobId, cvVersionId, null, null, ApplicationStatus.SAVED,
+                null, null, null, null, notes));
+    }
+
+    @Override
+    public Application createApplication(CreateApplicationCommand command) {
+        ApplicationStatus status = command.status() != null ? command.status() : ApplicationStatus.SAVED;
+        Application app = new Application(null, command.userId(), command.jobId(), status,
+                status == ApplicationStatus.APPLIED ? Instant.now() : null,
+                null, null, command.coverLetterText(), command.applicationText(), command.recruiterMessage(),
+                command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null);
+        Application saved = repo.save(app);
+        if (command.generatedDocumentId() != null) {
+            structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
+        }
+        return saved;
+    }
+
+    @Override
+    public Application attachGeneratedDocument(UUID applicationId, UUID userId, UUID generatedDocumentId,
+                                               String generatedContent, ApplicationStatus status, String notes) {
+        Application existing = repo.findByIdAndUserId(applicationId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        GeneratedDocument document = structuredGeneratedDocuments.attachToApplication(userId, generatedDocumentId, applicationId);
+        Application withContent = applyGeneratedContent(existing, document, generatedContent);
+        ApplicationStatus targetStatus = status != null ? status : withContent.status();
+        Application updated = new Application(
+                withContent.id(), withContent.userId(), withContent.jobId(), targetStatus,
+                targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null ? Instant.now() : withContent.appliedAt(),
+                withContent.recruiterName(), withContent.recruiterEmail(),
+                withContent.coverLetterText(), withContent.applicationText(), withContent.recruiterMessage(),
+                withContent.cvVersionId(), withContent.promptTemplateId(), withContent.matchScore(),
+                notes != null ? notes : withContent.notes(),
+                withContent.createdAt(), Instant.now());
+        return repo.save(updated);
+    }
+
+    private Application applyGeneratedContent(Application application, GeneratedDocument document, String generatedContent) {
+        String content = generatedContent != null && !generatedContent.isBlank()
+                ? generatedContent
+                : document.content();
+        String coverLetterText = application.coverLetterText();
+        String applicationText = application.applicationText();
+        String recruiterMessage = application.recruiterMessage();
+
+        switch (document.documentType()) {
+            case COVER_LETTER -> coverLetterText = content;
+            case APPLICATION_TEXT -> applicationText = content;
+            case RECRUITER_MESSAGE, FOLLOW_UP_MESSAGE -> recruiterMessage = content;
+            default -> {
+                // CVs are attached as generated documents; application text fields stay unchanged.
+            }
+        }
+
+        return new Application(
+                application.id(), application.userId(), application.jobId(), application.status(),
+                application.appliedAt(), application.recruiterName(), application.recruiterEmail(),
+                coverLetterText, applicationText, recruiterMessage,
+                application.cvVersionId(), application.promptTemplateId(), application.matchScore(),
+                application.notes(), application.createdAt(), application.updatedAt());
     }
 
     @Override
@@ -75,6 +140,11 @@ public class ApplicationService implements
     @Override
     public List<Application> getApplications(UUID userId) {
         return repo.findByUserId(userId);
+    }
+
+    @Override
+    public Page<Application> getApplications(UUID userId, Pageable pageable) {
+        return repo.findByUserId(userId, pageable);
     }
 
     @Override

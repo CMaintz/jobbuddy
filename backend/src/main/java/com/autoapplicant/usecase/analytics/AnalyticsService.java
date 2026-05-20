@@ -38,7 +38,6 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
     @Override
     public DashboardData getDashboard(UUID userId) {
         List<Application> applications = applicationRepo.findByUserId(userId);
-
         List<MatchResult> recommendations = recommendationsUseCase.getRecommendations(userId, 5);
 
         List<Job> savedJobs = applications.stream()
@@ -59,13 +58,7 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
 
         ApplicationMetrics weeklyMetrics = computeWeeklyMetrics(userId, applications);
 
-        Instant sevenDaysAgo = Instant.now().minus(7, ChronoUnit.DAYS);
-        int appliedThisWeek = (int) applications.stream()
-                .filter(a -> a.status() != ApplicationStatus.SAVED)
-                .filter(a -> {
-                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
-                    return ts != null && ts.isAfter(sevenDaysAgo);
-                }).count();
+        int appliedThisWeek = countAppliedSince(applications, Instant.now().minus(7, ChronoUnit.DAYS));
 
         int activeApplications = (int) applications.stream()
                 .filter(a -> a.status() == ApplicationStatus.APPLIED
@@ -90,43 +83,22 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
         List<Application> applications = applicationRepo.findByUserId(userId);
 
         int total = applications.size();
-        int saved = (int) applications.stream().filter(a -> a.status() == ApplicationStatus.SAVED).count();
-        int applied = (int) applications.stream().filter(a -> a.status() != ApplicationStatus.SAVED).count();
+        int saved = countByStatus(applications, ApplicationStatus.SAVED);
+        int applied = total - saved;
 
-        int pendingResponse = (int) applications.stream()
-                .filter(a -> a.status() == ApplicationStatus.APPLIED).count();
-
-        int activeInterviews = (int) applications.stream()
-                .filter(a -> a.status() == ApplicationStatus.INTERVIEW
-                        || a.status() == ApplicationStatus.TECHNICAL_TEST
-                        || a.status() == ApplicationStatus.FINAL_ROUND).count();
-
-        int offers = (int) applications.stream()
-                .filter(a -> a.status() == ApplicationStatus.OFFER).count();
+        int pendingResponse = countByStatus(applications, ApplicationStatus.APPLIED);
+        int activeInterviews = countByStatuses(applications,
+                ApplicationStatus.INTERVIEW, ApplicationStatus.TECHNICAL_TEST, ApplicationStatus.FINAL_ROUND);
+        int offers = countByStatus(applications, ApplicationStatus.OFFER);
 
         Instant now = Instant.now();
-        Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS);
-        Instant thirtyDaysAgo = now.minus(30, ChronoUnit.DAYS);
-
-        int appliedThisWeek = (int) applications.stream()
-                .filter(a -> a.status() != ApplicationStatus.SAVED)
-                .filter(a -> {
-                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
-                    return ts != null && ts.isAfter(sevenDaysAgo);
-                }).count();
-
-        int appliedThisMonth = (int) applications.stream()
-                .filter(a -> a.status() != ApplicationStatus.SAVED)
-                .filter(a -> {
-                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
-                    return ts != null && ts.isAfter(thirtyDaysAgo);
-                }).count();
+        int appliedThisWeek = countAppliedSince(applications, now.minus(7, ChronoUnit.DAYS));
+        int appliedThisMonth = countAppliedSince(applications, now.minus(30, ChronoUnit.DAYS));
 
         double responseRate = applied > 0 ? (double) (applied - pendingResponse) / applied * 100 : 0;
         double interviewRate = applied > 0 ? (double) activeInterviews / applied * 100 : 0;
         double offerRate = activeInterviews > 0 ? (double) offers / activeInterviews * 100 : 0;
 
-        // Top 5 companies by application count
         List<String> topCompanies = applications.stream()
                 .filter(a -> a.jobId() != null)
                 .map(a -> jobRepo.findById(a.jobId()))
@@ -146,20 +118,39 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
 
     private ApplicationMetrics computeWeeklyMetrics(UUID userId, List<Application> applications) {
         int total = applications.size();
-        int saved = (int) applications.stream().filter(a -> a.status() == ApplicationStatus.SAVED).count();
-        int applied = (int) applications.stream().filter(a -> a.status() != ApplicationStatus.SAVED).count();
-        int interview = (int) applications.stream()
-                .filter(a -> a.status() == ApplicationStatus.INTERVIEW
-                        || a.status() == ApplicationStatus.TECHNICAL_TEST
-                        || a.status() == ApplicationStatus.FINAL_ROUND).count();
-        int offers = (int) applications.stream().filter(a -> a.status() == ApplicationStatus.OFFER).count();
+        int saved = countByStatus(applications, ApplicationStatus.SAVED);
+        int applied = total - saved;
+        int pendingResponse = countByStatus(applications, ApplicationStatus.APPLIED);
+        int interview = countByStatuses(applications,
+                ApplicationStatus.INTERVIEW, ApplicationStatus.TECHNICAL_TEST, ApplicationStatus.FINAL_ROUND);
+        int offers = countByStatus(applications, ApplicationStatus.OFFER);
 
-        double responseRate = applied > 0 ? (double) interview / applied * 100 : 0;
+        double responseRate = applied > 0 ? (double) (applied - pendingResponse) / applied * 100 : 0;
         double interviewRate = applied > 0 ? (double) interview / applied * 100 : 0;
         double offerRate = interview > 0 ? (double) offers / interview * 100 : 0;
 
         return new ApplicationMetrics(null, userId,
                 LocalDate.now().minusDays(7), LocalDate.now(),
                 total, saved, 0, responseRate, interviewRate, offerRate);
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private static int countByStatus(List<Application> applications, ApplicationStatus status) {
+        return (int) applications.stream().filter(a -> a.status() == status).count();
+    }
+
+    private static int countByStatuses(List<Application> applications, ApplicationStatus... statuses) {
+        var set = java.util.Set.of(statuses);
+        return (int) applications.stream().filter(a -> set.contains(a.status())).count();
+    }
+
+    private static int countAppliedSince(List<Application> applications, Instant since) {
+        return (int) applications.stream()
+                .filter(a -> a.status() != ApplicationStatus.SAVED)
+                .filter(a -> {
+                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
+                    return ts != null && ts.isAfter(since);
+                }).count();
     }
 }

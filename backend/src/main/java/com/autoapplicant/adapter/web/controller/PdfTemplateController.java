@@ -3,6 +3,9 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.document.PdfTemplate;
 import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +26,14 @@ public class PdfTemplateController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "List PDF templates")
     @GetMapping
     public ResponseEntity<List<PdfTemplate>> list() {
         return ResponseEntity.ok(service.getTemplates(secCtx.getCurrentUserId()));
     }
 
+    @Operation(summary = "Get PDF template by id")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "Template not found"))
     @GetMapping("/{id}")
     public ResponseEntity<PdfTemplate> getById(@PathVariable UUID id) {
         return service.getById(id)
@@ -35,6 +41,7 @@ public class PdfTemplateController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Create PDF template")
     @PostMapping
     public ResponseEntity<PdfTemplate> create(@RequestBody PdfTemplate template) {
         UUID userId = secCtx.getCurrentUserId();
@@ -44,6 +51,7 @@ public class PdfTemplateController {
         return ResponseEntity.ok(service.create(toCreate));
     }
 
+    @Operation(summary = "Update PDF template")
     @PutMapping("/{id}")
     public ResponseEntity<PdfTemplate> update(@PathVariable UUID id, @RequestBody PdfTemplate template) {
         UUID userId = secCtx.getCurrentUserId();
@@ -53,6 +61,7 @@ public class PdfTemplateController {
         return ResponseEntity.ok(service.update(toUpdate));
     }
 
+    @Operation(summary = "Delete PDF template")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id, secCtx.getCurrentUserId());

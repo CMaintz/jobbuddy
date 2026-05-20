@@ -8,6 +8,7 @@ public record CareerProfileForAi(
         List<String> skills,
         List<String> technologies,
         List<String> languages,
+        List<String> spokenLanguages,
         List<StructuredDocumentItem> experience,
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,

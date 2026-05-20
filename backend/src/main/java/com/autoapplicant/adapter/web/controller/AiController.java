@@ -3,8 +3,8 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.ai.AnalyzeCvRequest;
 import com.autoapplicant.adapter.web.dto.ai.GenerateDocumentRequest;
-import com.autoapplicant.adapter.web.dto.ai.GenerateRequest;
 import com.autoapplicant.adapter.web.dto.ai.ParseCvRequest;
+import com.autoapplicant.adapter.web.dto.ai.SaveStructuredDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.StructuredGenerateRequest;
 import com.autoapplicant.domain.ai.*;
 import com.autoapplicant.domain.document.GeneratedDocument;
@@ -17,8 +17,11 @@ import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import com.autoapplicant.usecase.ai.AiService;
 import com.autoapplicant.usecase.document.StructuredDocumentService;
+import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +37,6 @@ import java.util.concurrent.CompletableFuture;
 @Tag(name = "AI")
 public class AiController {
 
-    private final GenerateDocumentUseCase generate;
     private final AnalyzeCvUseCase analyze;
     private final ParseCvUseCase parseCv;
     private final RefineDocumentUseCase refine;
@@ -42,17 +44,18 @@ public class AiController {
     private final JobRepositoryPort jobRepo;
     private final GeneratedDocumentRepositoryPort docRepo;
     private final StructuredDocumentService structuredDocuments;
-    private final AiService aiService;
+    private final StructuredGeneratedDocumentService structuredGeneratedDocuments;
+    private final GenerateDocumentUseCase generateDocument;
     private final SecurityContextHelper secCtx;
 
-    public AiController(GenerateDocumentUseCase generate, AnalyzeCvUseCase analyze,
+    public AiController(AnalyzeCvUseCase analyze,
                         ParseCvUseCase parseCv, RefineDocumentUseCase refine,
                         CvVersionRepositoryPort cvRepo, JobRepositoryPort jobRepo,
                         GeneratedDocumentRepositoryPort docRepo,
                         StructuredDocumentService structuredDocuments,
-                        AiService aiService,
+                        StructuredGeneratedDocumentService structuredGeneratedDocuments,
+                        GenerateDocumentUseCase generateDocument,
                         SecurityContextHelper secCtx) {
-        this.generate = generate;
         this.analyze = analyze;
         this.parseCv = parseCv;
         this.refine = refine;
@@ -60,7 +63,8 @@ public class AiController {
         this.jobRepo = jobRepo;
         this.docRepo = docRepo;
         this.structuredDocuments = structuredDocuments;
-        this.aiService = aiService;
+        this.structuredGeneratedDocuments = structuredGeneratedDocuments;
+        this.generateDocument = generateDocument;
         this.secCtx = secCtx;
     }
 
@@ -71,31 +75,16 @@ public class AiController {
             String targetLanguage
     ) {}
 
-    @PostMapping("/generate")
-    public DeferredResult<ResponseEntity<AiGenerationResult>> generate(
-            @Valid @RequestBody GenerateRequest req) {
-        DeferredResult<ResponseEntity<AiGenerationResult>> result = new DeferredResult<>(60_000L);
-        UUID userId = secCtx.getCurrentUserId();
-        AiGenerationRequest request = new AiGenerationRequest(
-                req.jobId(), req.jobDescription(), req.cvVersionId(), req.promptTemplateId(),
-                userId, req.customInstructions(), req.documentType(), req.targetLanguage(),
-                req.useStyleFromHistory());
-        generate.generate(request)
-                .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
-                .exceptionally(e -> {
-                    result.setErrorResult(e);
-                    return null;
-                });
-        return result;
-    }
-
+    @Operation(summary = "Get CV render model")
     @GetMapping("/cv/render-model")
     public ResponseEntity<StructuredDocument> cvRenderModel(
             @RequestParam(required = false) String templateId) {
         return ResponseEntity.ok(structuredDocuments.buildCv(
-                secCtx.getCurrentUserId(), templateId));
+                secCtx.getCurrentUserId(), templateId, false));
     }
 
+    @Operation(summary = "Generate tailored CV")
+    @ApiResponses(@ApiResponse(responseCode = "202", description = "CV generation in progress"))
     @PostMapping("/cv/generate-structured")
     public DeferredResult<ResponseEntity<StructuredDocument>> generateStructuredCv(
             @Valid @RequestBody StructuredGenerateRequest req) {
@@ -107,8 +96,11 @@ public class AiController {
                         req.jobDescription(),
                         req.customInstructions(),
                         req.targetLanguage(),
-                        req.templateId()))
-                .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
+                        req.templateId(),
+                        Boolean.TRUE.equals(req.showProfileImage()),
+                        req.theme() != null ? req.theme().toTheme() : null))
+                .thenAccept(r -> result.setResult(ResponseEntity.ok(
+                        structuredGeneratedDocuments.save(userId, req.jobId(), r, "gpt-4o"))))
                 .exceptionally(e -> {
                     result.setErrorResult(e);
                     return null;
@@ -116,19 +108,23 @@ public class AiController {
         return result;
     }
 
+    @Operation(summary = "Generate application document")
+    @ApiResponses(@ApiResponse(responseCode = "202", description = "Document generation in progress"))
     @PostMapping("/generate-document")
     public DeferredResult<ResponseEntity<StructuredDocument>> generateDocument(
-            @RequestBody GenerateDocumentRequest req) {
+            @Valid @RequestBody GenerateDocumentRequest req) {
         DeferredResult<ResponseEntity<StructuredDocument>> result = new DeferredResult<>(60_000L);
         UUID userId = secCtx.getCurrentUserId();
-        aiService.generateDocument(
+        generateDocument.generateDocument(
                         userId,
                         req.documentType(),
                         req.jobId(),
                         req.jobDescription(),
                         req.templateId(),
                         req.customInstructions(),
-                        req.targetLanguage())
+                        req.targetLanguage(),
+                        Boolean.TRUE.equals(req.showProfileImage()),
+                        req.theme() != null ? req.theme().toTheme() : null)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);
@@ -137,17 +133,29 @@ public class AiController {
         return result;
     }
 
+    @Operation(summary = "List generated documents")
     @GetMapping("/documents")
     public ResponseEntity<List<GeneratedDocument>> documents() {
         return ResponseEntity.ok(docRepo.findByUserId(secCtx.getCurrentUserId()));
     }
 
+    @Operation(summary = "Save structured document")
+    @PostMapping("/documents/structured")
+    public ResponseEntity<StructuredDocument> saveStructuredDocument(
+            @Valid @RequestBody SaveStructuredDocumentRequest req) {
+        UUID userId = secCtx.getCurrentUserId();
+        return ResponseEntity.ok(structuredGeneratedDocuments.save(
+                userId, req.jobId(), req.document(), "manual-edit"));
+    }
+
+    @Operation(summary = "Parse CV text into profile")
     @PostMapping("/parse-cv")
-    public ResponseEntity<Profile> parseCv(@RequestBody ParseCvRequest req) {
+    public ResponseEntity<Profile> parseCv(@Valid @RequestBody ParseCvRequest req) {
         Profile parsed = parseCv.parseCvText(secCtx.getCurrentUserId(), req.rawCvText());
         return ResponseEntity.ok(parsed);
     }
 
+    @Operation(summary = "Refine document with AI")
     @PostMapping("/refine")
     public DeferredResult<ResponseEntity<RefineDocumentResult>> refine(
             @Valid @RequestBody RefineRequest req) {
@@ -165,6 +173,7 @@ public class AiController {
         return result;
     }
 
+    @Operation(summary = "Analyze CV against job description")
     @PostMapping("/analyze")
     public DeferredResult<ResponseEntity<AiAnalysisResult>> analyze(
             @Valid @RequestBody AnalyzeCvRequest req) {

@@ -12,6 +12,7 @@ public interface GeneratedDocumentJpaRepository extends JpaRepository<GeneratedD
     List<GeneratedDocumentEntity> findByApplicationId(UUID applicationId);
     List<GeneratedDocumentEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
     List<GeneratedDocumentEntity> findByJobIdOrderByCreatedAtDesc(UUID jobId);
+    java.util.Optional<GeneratedDocumentEntity> findByIdAndUserId(UUID id, UUID userId);
 
     @Query("SELECT e FROM GeneratedDocumentEntity e WHERE e.userId = :userId AND e.documentType = :documentType ORDER BY e.createdAt DESC")
     List<GeneratedDocumentEntity> findRecentByUserIdAndType(UUID userId, String documentType, Pageable pageable);

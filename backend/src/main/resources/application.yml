@@ -2,7 +2,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/autoapplicant}
     username: ${DB_USER:autoapplicant}
-    password: ${DB_PASS:autoapplicant}
+    password: ${DB_PASS:${POSTGRES_PASSWORD:localdevpassword}}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -23,6 +23,8 @@ server:
   port: 8080
 
 app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,http://localhost:80}
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o

@@ -25,6 +25,7 @@ public class ProjectEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    // String[] + StringArrayType maps to PostgreSQL text[] natively (no join table needed).
     @Type(StringArrayType.class)
     @Column(columnDefinition = "text[]")
     private String[] technologies;

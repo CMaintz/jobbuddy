@@ -2,7 +2,9 @@ package com.autoapplicant.usecase.application;
 
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
+import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +27,8 @@ import static org.mockito.Mockito.*;
 class ApplicationServiceTest {
 
     @Mock ApplicationRepositoryPort repo;
+    @Mock ResponseMetricRepositoryPort responseMetricRepo;
+    @Mock StructuredGeneratedDocumentService structuredGeneratedDocuments;
 
     ApplicationService service;
 
@@ -34,7 +38,7 @@ class ApplicationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ApplicationService(repo);
+        service = new ApplicationService(repo, responseMetricRepo, structuredGeneratedDocuments);
     }
 
     // ── createApplication ─────────────────────────────────────────────────────

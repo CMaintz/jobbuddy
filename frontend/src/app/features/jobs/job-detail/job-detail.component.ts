@@ -8,11 +8,14 @@ import { NotesApiService } from '../../../core/api/notes.api';
 import { Job } from '../../../core/models/job.model';
 import { Note } from '../../../core/models/note.model';
 import { GeneratedDocument } from '../../../core/models/generated-document.model';
+import { ConfirmDeleteButtonComponent } from '../../../shared/components/ui/confirm-delete-button.component';
+import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
+import { clearTextAfter, runAction } from '../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-job-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent],
   template: `
     <div class="space-y-6 max-w-3xl mx-auto">
       <a routerLink="/jobs/search" class="text-sm text-blue-600 hover:underline">← Back to jobs</a>
@@ -20,7 +23,7 @@ import { GeneratedDocument } from '../../../core/models/generated-document.model
       @if (loading) {
         <div class="text-center py-12 text-gray-500">Loading...</div>
       } @else if (!job) {
-        <div class="text-center py-12 text-gray-500">Job not found.</div>
+        <app-empty-state message="Job not found."></app-empty-state>
       } @else {
         <div class="card space-y-4">
           <!-- Header -->
@@ -162,7 +165,10 @@ import { GeneratedDocument } from '../../../core/models/generated-document.model
                 <p class="flex-1 text-sm text-gray-700 whitespace-pre-line">{{ note.content }}</p>
                 <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button (click)="startEdit(note)" class="text-xs text-blue-500 hover:text-blue-700">Edit</button>
-                  <button (click)="deleteNote(note.id)" class="text-xs text-red-400 hover:text-red-600">Delete</button>
+                  <app-confirm-delete-button
+                    buttonClass="text-xs text-red-400 hover:text-red-600"
+                    (confirmed)="deleteNote(note.id)">
+                  </app-confirm-delete-button>
                 </div>
               }
             </div>
@@ -205,14 +211,14 @@ export class JobDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
-    this.jobsApi.getById(id).subscribe({
+    runAction({
+      action$: this.jobsApi.getById(id),
+      setLoading: value => this.loading = value,
       next: j => {
         this.job = j;
-        this.loading = false;
         this.notesApi.getForJob(j.id).subscribe(ns => this.notes = ns);
         this.jobsApi.getDocumentsForJob(j.id).subscribe(docs => this.generatedDocs = docs);
-      },
-      error: () => this.loading = false
+      }
     });
   }
 
@@ -227,23 +233,23 @@ export class JobDetailComponent implements OnInit {
       this.jobsApi.unsave(this.job.id).subscribe(() => {
         this.saved = false;
         this.saveMessage = 'Removed from saved jobs.';
-        setTimeout(() => this.saveMessage = '', 2000);
+        clearTextAfter(value => this.saveMessage = value, 2000);
       });
     } else {
       this.jobsApi.save(this.job.id).subscribe(() => {
         this.saved = true;
         this.saveMessage = 'Job saved!';
-        setTimeout(() => this.saveMessage = '', 2000);
+        clearTextAfter(value => this.saveMessage = value, 2000);
       });
     }
   }
 
   apply(): void {
     if (!this.job || this.applying) return;
-    this.applying = true;
-    this.appsApi.create(this.job.id).subscribe({
-      next: () => { this.applying = false; this.applied = true; },
-      error: () => this.applying = false
+    runAction({
+      action$: this.appsApi.create(this.job.id),
+      setLoading: value => this.applying = value,
+      next: () => this.applied = true
     });
   }
 

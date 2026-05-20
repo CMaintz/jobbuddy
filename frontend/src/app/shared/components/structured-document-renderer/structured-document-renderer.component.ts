@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection } from '../../../core/models/structured-document.model';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { StructuredDocument } from '../../../core/models/structured-document.model';
+import { DocumentHeaderComponent } from './document-header.component';
+import { DocumentSectionComponent } from './document-section.component';
 
 @Component({
   selector: 'app-structured-document-renderer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DocumentHeaderComponent, DocumentSectionComponent],
+  encapsulation: ViewEncapsulation.None,
   styles: [`
     :host { display: block; }
     .sheet {
@@ -16,6 +19,8 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
       color: #172033;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
       overflow: hidden;
+      font-family: var(--doc-font-family);
+      font-size: var(--doc-base-size);
     }
     .topbar {
       display: grid;
@@ -23,7 +28,7 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
       gap: 18px;
       align-items: center;
       padding: 34px 42px 28px;
-      background: #18324a;
+      background: var(--doc-primary);
       color: white;
     }
     .avatar {
@@ -34,14 +39,14 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
       display: grid;
       place-items: center;
       background: #eef6ff;
-      color: #18324a;
+      color: var(--doc-primary);
       font-size: 24px;
       font-weight: 800;
       flex: 0 0 auto;
     }
     .avatar img { width: 100%; height: 100%; object-fit: cover; }
     h1, h2, h3, p { margin: 0; }
-    .person h1 { font-size: 32px; line-height: 1.05; font-weight: 800; letter-spacing: 0; }
+    .person h1 { font-size: var(--doc-title-size); line-height: 1.05; font-weight: 800; letter-spacing: 0; }
     .person p { margin-top: 6px; color: #cce0f0; font-size: 14px; }
     .contact {
       display: flex;
@@ -57,8 +62,8 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
       font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 0;
-      color: #18324a;
-      border-bottom: 1px solid #d7e1ea;
+      color: var(--doc-primary);
+      border-bottom: 1px solid var(--doc-accent);
       padding-bottom: 5px;
       margin-bottom: 10px;
     }
@@ -73,7 +78,7 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
     .bullets { margin: 8px 0 0 18px; padding: 0; color: #263246; font-size: 13px; line-height: 1.5; }
     .bullets li { margin-bottom: 3px; }
     .skills { display: flex; flex-wrap: wrap; gap: 7px; list-style: none; margin: 0; padding: 0; }
-    .skills li { border: 1px solid #cbd8e3; background: #f7fafc; border-radius: 4px; padding: 4px 8px; font-size: 12px; }
+    .skills li { border: 1px solid var(--doc-accent); background: #f7fafc; border-radius: 4px; padding: 4px 8px; font-size: 12px; }
     .tech, .links { margin-top: 7px; font-size: 12px; }
     .body p { margin-bottom: 12px; line-height: 1.75; color: #263246; }
 
@@ -145,51 +150,16 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
   `],
   template: `
     @if (document) {
-      <article class="sheet" [ngClass]="sheetClasses">
-        <header class="topbar">
-          <div class="avatar">
-            @if (document.identity.profileImageUrl) {
-              <img [src]="document.identity.profileImageUrl" alt="" />
-            } @else {
-              {{ initials(document.identity.name) }}
-            }
-          </div>
-
-          <div class="person">
-            <h1>{{ document.identity.name }}</h1>
-            @if (document.identity.headline) {
-              <p>{{ document.identity.headline }}</p>
-            }
-          </div>
-
-          <div class="contact">
-            @for (contact of contactLines; track contact) {
-              <span>{{ contact }}</span>
-            }
-          </div>
-        </header>
+      <article class="sheet" [ngClass]="sheetClasses" [ngStyle]="themeStyles">
+        <app-document-header
+          [identity]="document.identity"
+          [showProfileImage]="showProfileImage">
+        </app-document-header>
 
         <main class="content">
           @if (isCv) {
             @for (section of document.sections; track section.id) {
-              <section class="section">
-                <h2>{{ section.heading }}</h2>
-                @if (section.body) {
-                  <p class="section-body">{{ section.body }}</p>
-                }
-
-                @if (section.type === 'skills') {
-                  <ul class="skills">
-                    @for (item of section.items ?? []; track item.title) {
-                      <li>{{ item.title }}</li>
-                    }
-                  </ul>
-                } @else {
-                  @for (item of section.items ?? []; track item.sourceId || item.title) {
-                    <ng-container *ngTemplateOutlet="itemTpl; context: { item: item }"></ng-container>
-                  }
-                }
-              </section>
+              <app-document-section [section]="section"></app-document-section>
             }
           } @else {
             <div class="body">
@@ -201,38 +171,6 @@ import { StructuredDocument, StructuredDocumentItem, StructuredDocumentSection }
         </main>
       </article>
     }
-
-    <ng-template #itemTpl let-item="item">
-      <div class="item">
-        <div class="item-head">
-          <div>
-            <h3>{{ item.title }}</h3>
-            @if (item.subtitle) {
-              <p class="subtitle">{{ item.subtitle }}</p>
-            }
-          </div>
-          @if (item.dateRange) {
-            <p class="dates">{{ item.dateRange }}</p>
-          }
-        </div>
-        @if (item.description) {
-          <p class="description">{{ item.description }}</p>
-        }
-        @if ((item.bullets ?? []).length > 0) {
-          <ul class="bullets">
-            @for (bullet of item.bullets; track bullet) {
-              <li>{{ bullet }}</li>
-            }
-          </ul>
-        }
-        @if ((item.technologies ?? []).length > 0) {
-          <p class="tech">{{ item.technologies?.join(' · ') }}</p>
-        }
-        @if ((item.links ?? []).length > 0) {
-          <p class="links">{{ item.links?.join(' · ') }}</p>
-        }
-      </div>
-    </ng-template>
   `
 })
 export class StructuredDocumentRendererComponent {
@@ -250,17 +188,20 @@ export class StructuredDocumentRendererComponent {
     ];
   }
 
-  get contactLines(): string[] {
-    const identity = this.document?.identity;
-    if (!identity) return [];
-    return [
-      identity.email,
-      identity.phone,
-      identity.location,
-      identity.linkedinUrl,
-      identity.githubUrl,
-      identity.websiteUrl
-    ].filter((value): value is string => !!value);
+  get showProfileImage(): boolean {
+    return !!this.document?.options?.showProfileImage && this.document?.exportMode !== 'ATS';
+  }
+
+  get themeStyles(): Record<string, string> {
+    const theme = this.document?.options?.theme;
+    const scale = theme?.fontScale ?? 'normal';
+    return {
+      '--doc-primary': this.safeColor(theme?.primaryColor, '#18324a'),
+      '--doc-accent': this.safeColor(theme?.accentColor, '#cbd8e3'),
+      '--doc-font-family': this.safeFont(theme?.fontFamily),
+      '--doc-base-size': scale === 'small' ? '13px' : scale === 'large' ? '15px' : '14px',
+      '--doc-title-size': scale === 'small' ? '28px' : scale === 'large' ? '36px' : '32px'
+    };
   }
 
   get bodyParagraphs(): string[] {
@@ -270,12 +211,12 @@ export class StructuredDocumentRendererComponent {
       .filter(Boolean);
   }
 
-  initials(name?: string): string {
-    return (name ?? '')
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(part => part[0].toUpperCase())
-      .join('');
+  private safeColor(value: string | undefined, fallback: string): string {
+    return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+  }
+
+  private safeFont(value: string | undefined): string {
+    const allowed = ['Arial', 'Inter', 'Georgia', 'Calibri', 'Times New Roman'];
+    return allowed.includes(value ?? '') ? `${value}, sans-serif` : 'Arial, sans-serif';
   }
 }

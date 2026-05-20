@@ -65,7 +65,7 @@ class PromptTemplateServiceTest {
     void create_preserves_name_and_user_prompt() {
         PromptTemplate incoming = new PromptTemplate(null, userId, "Cover Letter",
                 PromptCategory.COVER_LETTER, "desc", "system", "Write a cover letter for {job}",
-                "max 300 words", true, null, 1, null, null);
+                "max 300 words", true, null, 1, null, null, false);
         when(repo.save(any())).thenReturn(incoming);
 
         service.createTemplate(userId, incoming);
@@ -138,7 +138,7 @@ class PromptTemplateServiceTest {
     @Test
     void duplicate_sets_is_public_to_false() {
         PromptTemplate original = new PromptTemplate(templateId, userId, "Public T",
-                null, null, null, "prompt", null, true, null, 1, null, null);
+                null, null, null, "prompt", null, true, null, 1, null, null, false);
         when(repo.findById(templateId)).thenReturn(Optional.of(original));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -170,6 +170,6 @@ class PromptTemplateServiceTest {
 
     private PromptTemplate template(UUID id, UUID userId, String name, int version) {
         return new PromptTemplate(id, userId, name, null, null, null,
-                "user prompt text", null, false, null, version, null, null);
+                "user prompt text", null, false, null, version, null, null, false);
     }
 }

@@ -39,6 +39,7 @@ public class WorkExperienceEntity {
     @Column(name = "is_current", nullable = false)
     private boolean isCurrent;
 
+    // String[] + StringArrayType maps to PostgreSQL text[] natively (no join table needed).
     @Type(StringArrayType.class)
     @Column(columnDefinition = "text[]")
     private String[] technologies;

@@ -4,6 +4,7 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.document.CreatePromptTemplateRequest;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.port.in.document.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -30,11 +31,13 @@ public class PromptController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "List prompt templates")
     @GetMapping
     public ResponseEntity<List<PromptTemplate>> list() {
         return ResponseEntity.ok(getAll.getTemplates(secCtx.getCurrentUserId()));
     }
 
+    @Operation(summary = "Create prompt template")
     @PostMapping
     public ResponseEntity<PromptTemplate> create(@Valid @RequestBody CreatePromptTemplateRequest req) {
         UUID userId = secCtx.getCurrentUserId();
@@ -44,6 +47,7 @@ public class PromptController {
         return ResponseEntity.ok(create.createTemplate(userId, template));
     }
 
+    @Operation(summary = "Duplicate a prompt template")
     @PostMapping("/{id}/duplicate")
     public ResponseEntity<PromptTemplate> duplicate(@PathVariable UUID id,
                                                       @RequestParam(required = false) String name) {

@@ -1,6 +1,6 @@
 package com.autoapplicant.adapter.persistence.adapter;
 
-import com.autoapplicant.adapter.persistence.mapper.ProfileSectionMapper;
+import com.autoapplicant.adapter.persistence.mapper.FeedbackMapper;
 import com.autoapplicant.adapter.persistence.repository.RecommendationFeedbackJpaRepository;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
@@ -22,17 +22,17 @@ public class RecommendationFeedbackPersistenceAdapter implements RecommendationF
 
     @Override
     public RecommendationFeedback save(RecommendationFeedback feedback) {
-        return ProfileSectionMapper.toDomain(repo.save(ProfileSectionMapper.toEntity(feedback)));
+        return FeedbackMapper.toDomain(repo.save(FeedbackMapper.toEntity(feedback)));
     }
 
     @Override
     public Optional<RecommendationFeedback> findByUserIdAndJobId(UUID userId, UUID jobId) {
-        return repo.findByUserIdAndJobId(userId, jobId).map(ProfileSectionMapper::toDomain);
+        return repo.findByUserIdAndJobId(userId, jobId).map(FeedbackMapper::toDomain);
     }
 
     @Override
     public List<RecommendationFeedback> findByUserId(UUID userId) {
-        return repo.findByUserId(userId).stream().map(ProfileSectionMapper::toDomain).toList();
+        return repo.findByUserId(userId).stream().map(FeedbackMapper::toDomain).toList();
     }
 
     @Override

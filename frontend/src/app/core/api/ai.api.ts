@@ -1,18 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { StructuredDocument } from '../models/structured-document.model';
-
-export interface GenerateRequest {
-  jobId?: string;
-  jobDescription?: string;
-  cvVersionId?: string;
-  promptTemplateId?: string;
-  documentType: 'COVER_LETTER' | 'APPLICATION_TEXT' | 'RECRUITER_MESSAGE' | 'CV_ANALYSIS_REPORT' | 'CV' | 'FOLLOW_UP_MESSAGE';
-  customInstructions?: string;
-  targetLanguage?: string;
-  useStyleFromHistory?: boolean;
-}
+import { DocumentTheme, StructuredDocument } from '../models/structured-document.model';
 
 export interface StructuredCvGenerateRequest {
   jobId?: string;
@@ -20,6 +9,8 @@ export interface StructuredCvGenerateRequest {
   customInstructions?: string;
   targetLanguage?: string;
   templateId?: string;
+  showProfileImage?: boolean;
+  theme?: DocumentTheme;
 }
 
 export interface GenerateDocumentRequest {
@@ -29,13 +20,8 @@ export interface GenerateDocumentRequest {
   templateId?: string;
   customInstructions?: string;
   targetLanguage?: string;
-  useStyleFromHistory?: boolean;
-}
-
-export interface GenerateResponse {
-  content: string;
-  modelUsed: string;
-  tokensUsed?: number;
+  showProfileImage?: boolean;
+  theme?: DocumentTheme;
 }
 
 export interface RefineRequest {
@@ -60,10 +46,6 @@ export interface AnalysisResponse {
 export class AiApiService {
   private http = inject(HttpClient);
 
-  generate(req: GenerateRequest): Observable<GenerateResponse> {
-    return this.http.post<GenerateResponse>('/api/v1/ai/generate', req);
-  }
-
   getCvRenderModel(templateId?: string): Observable<StructuredDocument> {
     const params: Record<string, string> = {};
     if (templateId) params['templateId'] = templateId;
@@ -76,6 +58,10 @@ export class AiApiService {
 
   generateStructuredCv(req: StructuredCvGenerateRequest): Observable<StructuredDocument> {
     return this.http.post<StructuredDocument>('/api/v1/ai/cv/generate-structured', req);
+  }
+
+  saveStructuredDocument(document: StructuredDocument, jobId?: string): Observable<StructuredDocument> {
+    return this.http.post<StructuredDocument>('/api/v1/ai/documents/structured', { document, jobId });
   }
 
   refine(req: RefineRequest): Observable<RefineResponse> {

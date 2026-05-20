@@ -14,6 +14,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -22,9 +23,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final FirebaseTokenFilter firebaseTokenFilter;
+    private final List<String> allowedOrigins;
 
-    public SecurityConfig(FirebaseTokenFilter firebaseTokenFilter) {
+    public SecurityConfig(FirebaseTokenFilter firebaseTokenFilter,
+                          @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins}") String allowedOriginsRaw) {
         this.firebaseTokenFilter = firebaseTokenFilter;
+        this.allowedOrigins = Arrays.asList(allowedOriginsRaw.split(","));
     }
 
     @Bean
@@ -37,10 +41,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/linkedin",
                                 "/actuator/health",
+                                "/uploads/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/uploads/**"
+                                "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
@@ -52,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:4200", "http://localhost:80", "*"));
+        config.setAllowedOriginPatterns(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

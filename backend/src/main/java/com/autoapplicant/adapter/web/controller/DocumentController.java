@@ -5,6 +5,7 @@ import com.autoapplicant.adapter.web.dto.document.CvUploadRequest;
 import com.autoapplicant.domain.document.CvVersion;
 import com.autoapplicant.port.in.document.GetCvVersionsUseCase;
 import com.autoapplicant.port.in.document.UploadCvUseCase;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +29,13 @@ public class DocumentController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "List CV versions")
     @GetMapping
     public ResponseEntity<List<CvVersion>> list() {
         return ResponseEntity.ok(getVersions.getCvVersions(secCtx.getCurrentUserId()));
     }
 
+    @Operation(summary = "Upload new CV version")
     @PostMapping
     public ResponseEntity<CvVersion> upload(@Valid @RequestBody CvUploadRequest req) {
         CvVersion cv = upload.uploadCv(secCtx.getCurrentUserId(), req.name(), req.content(), req.format());

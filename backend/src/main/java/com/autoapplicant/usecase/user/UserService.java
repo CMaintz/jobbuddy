@@ -47,7 +47,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
         Optional<User> byEmail = userRepo.findByEmail(email);
         if (byEmail.isPresent()) {
             User user = byEmail.get();
-            User linked = new User(user.id(), user.email(), null, user.googleId(),
+            User linked = new User(user.id(), user.email(), user.googleId(),
                     user.linkedinId(), firebaseUid, user.role(), true,
                     user.createdAt(), user.updatedAt());
             User saved = userRepo.save(linked);
@@ -56,7 +56,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
         }
 
         // Brand new user — create account and default profile
-        User newUser = new User(null, email, null, null, null, firebaseUid,
+        User newUser = new User(null, email, null, null, firebaseUid,
                 UserRole.USER, true, null, null);
         User saved = userRepo.save(newUser);
 
@@ -78,7 +78,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
     public User setUserRole(UUID userId, UserRole newRole) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        User updated = new User(user.id(), user.email(), user.passwordHash(), user.googleId(),
+        User updated = new User(user.id(), user.email(), user.googleId(),
                 user.linkedinId(), user.firebaseUid(), newRole, user.emailVerified(),
                 user.createdAt(), user.updatedAt());
         User saved = userRepo.save(updated);

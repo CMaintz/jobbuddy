@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "start": "ng serve --proxy-config proxy.conf.json",
+    "start:local": "ng serve --configuration local --proxy-config proxy.conf.json",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint"

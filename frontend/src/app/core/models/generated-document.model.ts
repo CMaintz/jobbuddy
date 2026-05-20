@@ -5,6 +5,9 @@ export interface GeneratedDocument {
   jobId?: string;
   documentType: string;
   content: string;
+  structuredContent?: string;
+  templateId?: string;
+  exportMode?: string;
   promptTemplateId?: string;
   cvVersionId?: string;
   modelUsed?: string;

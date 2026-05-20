@@ -1,0 +1,62 @@
+<!-- Work Experience Tab -->
+      <div *ngIf="vm.activeTab === 'experience'">
+        <app-section-header title="Work Experience" actionLabel="+ Add Experience" (action)="vm.showExpForm = !vm.showExpForm"></app-section-header>
+
+        <app-inline-form-panel *ngIf="vm.showExpForm">
+        <form [formGroup]="vm.expForm" (ngSubmit)="vm.saveExperience()" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Company</label>
+              <input formControlName="companyName" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Title</label>
+              <input formControlName="title" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Start Date</label>
+              <input formControlName="startDate" type="date" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">End Date</label>
+              <input formControlName="endDate" type="date" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <input formControlName="isCurrent" type="checkbox"/> Current position
+          </label>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Description</label>
+            <textarea formControlName="description" rows="3" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Technologies (comma-separated)</label>
+            <input formControlName="technologiesRaw" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+          </div>
+          <app-skill-picker
+            [selected]="vm.expEditSkills"
+            (selectedChange)="vm.expEditSkills = $event"
+            (createRequested)="vm.promptCreateSkillForSection('exp', $event)">
+          </app-skill-picker>
+          <app-form-actions (cancel)="vm.showExpForm = false"></app-form-actions>
+        </form>
+        </app-inline-form-panel>
+
+        <div *ngFor="let exp of vm.experiences" class="list-item">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-semibold">{{ exp.title }}</p>
+              <p class="text-sm text-gray-600">{{ exp.companyName }} · {{ exp.startDate | slice:0:7 }} – {{ exp.isCurrent ? 'Present' : (exp.endDate | slice:0:7) }}</p>
+              <p *ngIf="exp.description" class="text-sm text-gray-700 mt-1">{{ exp.description }}</p>
+              <div *ngIf="exp.technologies?.length" class="mt-2 flex flex-wrap gap-1">
+                <span *ngFor="let t of exp.technologies" class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ t }}</span>
+              </div>
+              <div *ngIf="exp.skills?.length" class="mt-1 flex flex-wrap gap-1">
+                <span *ngFor="let s of exp.skills" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+              </div>
+            </div>
+            <app-confirm-delete-button (confirmed)="vm.deleteExperience(exp.id!)"></app-confirm-delete-button>
+          </div>
+        </div>
+        <app-empty-state *ngIf="!vm.experiences.length" message="No experience added yet."></app-empty-state>
+      </div>

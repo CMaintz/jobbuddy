@@ -4,6 +4,8 @@ import com.autoapplicant.adapter.persistence.mapper.ApplicationMapper;
 import com.autoapplicant.adapter.persistence.repository.ApplicationJpaRepository;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -34,6 +36,11 @@ public class ApplicationPersistenceAdapter implements ApplicationRepositoryPort 
     public List<Application> findByUserId(UUID userId) {
         return repo.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(ApplicationMapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<Application> findByUserId(UUID userId, Pageable pageable) {
+        return repo.findByUserId(userId, pageable).map(ApplicationMapper::toDomain);
     }
 
     @Override

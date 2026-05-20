@@ -60,6 +60,7 @@ public class JobEntity {
 
     private String currency;
 
+    // String[] + StringArrayType maps to PostgreSQL text[] natively (no join table needed).
     @Type(StringArrayType.class)
     @Column(columnDefinition = "text[]")
     private String[] technologies;
@@ -82,7 +83,7 @@ public class JobEntity {
     private String aiSummary;
 
     @Type(StringArrayType.class)
-    @Column(name = "ai_tags", columnDefinition = "text[]")
+    @Column(name = "ai_tags", columnDefinition = "text[]") // text[] — see comment above
     private String[] aiTags;
 
     @Column(name = "ai_seniority_estimate")

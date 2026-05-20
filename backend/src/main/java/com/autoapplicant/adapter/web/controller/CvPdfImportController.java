@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -24,6 +25,7 @@ public class CvPdfImportController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Import profile from CV PDF")
     @PostMapping(value = "/import/cv-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Profile> importCvPdf(@RequestParam("file") MultipartFile file) {
         String extractedText;

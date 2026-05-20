@@ -36,9 +36,14 @@ Edit `.env`:
 # Required — get yours at https://platform.openai.com/api-keys
 OPENAI_API_KEY=sk-...
 
-# Required — generate a random secret, minimum 32 characters
-# Example: openssl rand -base64 32
-JWT_SECRET=your-very-long-random-secret-here
+# Required — Firebase web app config (Firebase Console → Project Settings → Your apps)
+# These are injected into the frontend at Docker build time and are never committed.
+FIREBASE_API_KEY=your-firebase-web-api-key
+FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+FIREBASE_APP_ID=your-firebase-app-id
 
 # Optional — override only if running services outside Docker
 POSTGRES_PASSWORD=localdevpassword
@@ -46,6 +51,7 @@ TYPESENSE_API_KEY=local-dev-key
 ```
 
 > **Security note:** Never commit `.env` to version control. It is already listed in `.gitignore`.
+> Firebase credentials are **web-app public config** (not the service-account key) — they are safe to share with browsers but should still be kept out of git so you can rotate them without a commit.
 
 ---
 
@@ -113,10 +119,12 @@ The backend starts on **http://localhost:8080**. Flyway migrations run automatic
 
 ### Run the frontend
 
+Create `frontend/src/environments/environment.local.ts` from `environment.local.example.ts` and fill in your Firebase web app values. The local file is gitignored.
+
 ```bash
 cd frontend
 npm install
-npm start
+npm run start:local
 ```
 
 The Angular dev server starts on **http://localhost:4200** and proxies `/api` calls to `localhost:8080`.
@@ -207,11 +215,16 @@ Use the `docker-compose.yml` as a reference for pod specs, environment variables
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `OPENAI_API_KEY` | **Yes** | — | OpenAI secret key |
-| `JWT_SECRET` | **Yes** | — | HS256 signing secret (min 32 chars) |
+| `FIREBASE_API_KEY` | **Yes** | — | Firebase web API key (frontend build) |
+| `FIREBASE_AUTH_DOMAIN` | **Yes** | — | Firebase auth domain (frontend build) |
+| `FIREBASE_PROJECT_ID` | **Yes** | — | Firebase project ID (frontend build) |
+| `FIREBASE_STORAGE_BUCKET` | **Yes** | — | Firebase storage bucket (frontend build) |
+| `FIREBASE_MESSAGING_SENDER_ID` | **Yes** | — | Firebase messaging sender ID (frontend build) |
+| `FIREBASE_APP_ID` | **Yes** | — | Firebase app ID (frontend build) |
 | `POSTGRES_PASSWORD` | No | `localdevpassword` | Database password |
 | `DB_URL` | No | `jdbc:postgresql://localhost:5432/autoapplicant` | JDBC URL (local dev only) |
 | `DB_USER` | No | `autoapplicant` | DB username (local dev only) |
-| `DB_PASS` | No | `autoapplicant` | DB password (local dev only) |
+| `DB_PASS` | No | `POSTGRES_PASSWORD` or `localdevpassword` | DB password (local dev only) |
 | `TYPESENSE_API_KEY` | No | `local-dev-key` | Typesense admin API key |
 | `TYPESENSE_HOST` | No | `localhost` | Typesense hostname (local dev only) |
 | `TYPESENSE_PORT` | No | `8108` | Typesense port (local dev only) |

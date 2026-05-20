@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { WorkExperience, Project, Education, Certification } from '../models/profile-section.model';
+import { WorkExperience, Project, Education, Certification, ProfileLanguage } from '../models/profile-section.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileSectionsApiService {
@@ -59,5 +59,19 @@ export class ProfileSectionsApiService {
   }
   deleteCertification(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/certifications/${id}`);
+  }
+
+  // Spoken Languages
+  getLanguages(): Observable<ProfileLanguage[]> {
+    return this.http.get<ProfileLanguage[]>(`${this.base}/languages`);
+  }
+  addLanguage(lang: ProfileLanguage): Observable<ProfileLanguage> {
+    return this.http.post<ProfileLanguage>(`${this.base}/languages`, lang);
+  }
+  updateLanguage(id: string, lang: ProfileLanguage): Observable<ProfileLanguage> {
+    return this.http.put<ProfileLanguage>(`${this.base}/languages/${id}`, lang);
+  }
+  deleteLanguage(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/languages/${id}`);
   }
 }

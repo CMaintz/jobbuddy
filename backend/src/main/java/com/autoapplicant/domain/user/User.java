@@ -6,7 +6,6 @@ import java.util.UUID;
 public record User(
         UUID id,
         String email,
-        String passwordHash,
         String googleId,
         String linkedinId,
         String firebaseUid,

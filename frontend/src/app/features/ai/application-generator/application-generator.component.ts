@@ -1,275 +1,52 @@
-import { Component, OnInit, inject, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AiApiService } from '../../../core/api/ai.api';
-import { DocumentApiService } from '../../../core/api/document.api';
-import { PromptApiService } from '../../../core/api/prompt.api';
 import { JobsApiService } from '../../../core/api/jobs.api';
 import { PdfTemplatesApiService } from '../../../core/api/pdf-templates.api';
-import { CvVersion } from '../../../core/models/cv-version.model';
-import { PromptTemplate } from '../../../core/models/prompt-template.model';
-import { PdfTemplate } from '../../../core/models/pdf-template.model';
-import { StructuredDocument, STRUCTURED_DOCUMENT_TEMPLATES } from '../../../core/models/structured-document.model';
-import { StructuredDocumentRendererComponent } from '../../../shared/components/structured-document-renderer/structured-document-renderer.component';
-import { Job } from '../../../core/models/job.model';
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  text: string;
-}
-
-const LANGUAGES = [
-  { code: 'Danish', label: 'Danish' },
-  { code: 'English', label: 'English' },
-  { code: 'Swedish', label: 'Swedish' },
-  { code: 'Norwegian', label: 'Norwegian' },
-  { code: 'German', label: 'German' },
-];
+import { StructuredDocumentTemplatesApiService } from '../../../core/api/structured-document-templates.api';
+import { ApplicationsApiService } from '../../../core/api/applications.api';
+import { DocumentTemplateOption, StructuredDocument, STRUCTURED_DOCUMENT_TEMPLATES } from '../../../core/models/structured-document.model';
+import { Application, ApplicationStatus } from '../../../core/models/application.model';
+import { downloadBlob } from '../../../shared/utils/file-download';
+import { GenerationConfigFormComponent } from './generation-config-form.component';
+import { GeneratedDocumentEditorComponent } from './generated-document-editor.component';
+import { DocumentRefinePanelComponent } from './document-refine-panel.component';
+import { ActiveGeneratedDocument, APPLICATION_GENERATOR_LANGUAGES, ChatMessage } from './application-generator.types';
+import { applyRenderOptions, cvPlainText, editorHtml } from './structured-document-content';
+import * as generatorActions from './application-generator.actions';
 
 @Component({
   selector: 'app-application-generator',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, StructuredDocumentRendererComponent],
-  styles: [`
-    .editor {
-      min-height: 300px;
-      outline: none;
-      line-height: 1.75;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .editor:empty:before {
-      content: attr(data-placeholder);
-      color: #9ca3af;
-      pointer-events: none;
-    }
-    @media print {
-      body * { visibility: hidden; }
-      .print-area, .print-area * { visibility: visible; }
-      .print-area {
-        position: fixed; top: 0; left: 0;
-        width: 210mm; padding: 20mm;
-        font-family: Georgia, serif;
-        font-size: 11pt;
-        line-height: 1.6;
-        color: #111;
-      }
-    }
-  `],
-  template: `
-    <div class="space-y-6 max-w-5xl mx-auto">
-      <h1 class="text-3xl font-bold text-gray-900">Generate Application</h1>
-
-      <!-- Configuration panel -->
-      <div class="card">
-        <form [formGroup]="form" (ngSubmit)="generate()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="label">Document Type</label>
-            <select formControlName="documentType" class="input">
-              <option value="COVER_LETTER">Cover Letter</option>
-              <option value="APPLICATION_TEXT">Application Text</option>
-              <option value="RECRUITER_MESSAGE">Recruiter Message</option>
-              <option value="FOLLOW_UP_MESSAGE">Follow-up Message</option>
-              <option value="CV">Angled CV</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="label">Layout Template</label>
-            <select formControlName="structuredTemplateId" class="input">
-              @for (template of availableStructuredTemplates; track template.id) {
-                <option [value]="template.id">{{ template.label }}</option>
-              }
-            </select>
-          </div>
-
-          <div>
-            <label class="label">Language</label>
-            <select formControlName="targetLanguage" class="input">
-              @for (lang of languages; track lang.code) {
-                <option [value]="lang.code">{{ lang.label }}</option>
-              }
-            </select>
-          </div>
-
-          <div>
-            <label class="label">CV Version</label>
-            <select formControlName="cvVersionId" class="input">
-              <option value="">— select a CV —</option>
-              @for (cv of cvVersions; track cv.id) {
-                <option [value]="cv.id">{{ cv.name }} (v{{ cv.versionNumber }})</option>
-              }
-            </select>
-          </div>
-
-          <div>
-            <label class="label">Prompt Template (optional)</label>
-            <select formControlName="promptTemplateId" class="input">
-              <option value="">— default prompt —</option>
-              @for (t of promptTemplates; track t.id) {
-                <option [value]="t.id">{{ t.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="label">Custom Instructions (optional)</label>
-            <textarea formControlName="customInstructions" class="input" rows="2"
-                      placeholder="e.g. Keep it under 300 words, emphasise leadership experience..."></textarea>
-          </div>
-
-          <div class="md:col-span-2 flex items-center gap-3">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" formControlName="useStyleFromHistory" class="rounded border-gray-300" />
-              <span class="text-sm text-gray-700">
-                Match style from my past applications
-              </span>
-            </label>
-            <span class="text-xs text-gray-400">Uses your 3 most recent documents of this type as style examples.</span>
-          </div>
-
-          <!-- Job posting input -->
-          <div class="md:col-span-2">
-            <label class="label">
-              Indsæt jobopslag
-              @if (jobTitle) {
-                <span class="ml-2 text-xs font-normal text-green-600">✓ {{ jobTitle }}</span>
-              }
-            </label>
-            <textarea formControlName="jobDescription" class="input" rows="5"
-                      placeholder="Indsæt jobopslaget her — eller vælg et job via ?jobId=... parameteret..."></textarea>
-          </div>
-
-          <div class="md:col-span-2">
-            <button type="submit" [disabled]="form.invalid || loading" class="btn-primary w-full">
-              {{ loading ? 'Generating...' : 'Generate' }}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      @if (error) {
-        <div class="bg-red-50 text-red-700 rounded-md p-3 text-sm">{{ error }}</div>
-      }
-
-      <!-- Editor + Chat panel (shown after generation) -->
-      @if (showEditor) {
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-          <!-- Rich Text Editor -->
-          <div class="lg:col-span-3 card space-y-3 print-area">
-            <div class="flex items-center justify-between">
-              <h2 class="text-base font-semibold text-gray-900">Document</h2>
-              <div class="flex gap-2">
-                <button (click)="copyContent()" class="btn-secondary text-xs">
-                  {{ copied ? 'Copied!' : 'Copy' }}
-                </button>
-                <button (click)="downloadPdf()" [disabled]="downloadingPdf" class="btn-secondary text-xs">
-                  {{ downloadingPdf ? 'Generating PDF...' : 'Download PDF' }}
-                </button>
-              </div>
-            </div>
-
-            @if (structuredDocument) {
-              <app-structured-document-renderer [document]="structuredDocument"></app-structured-document-renderer>
-            } @else {
-              <div #editorEl
-                   class="editor border border-gray-200 rounded-lg p-4 text-sm text-gray-800 bg-white"
-                   contenteditable="true"
-                   data-placeholder="Generated content will appear here..."
-                   (input)="onEditorInput($event)"
-                   [innerHTML]="editorHtml">
-              </div>
-            }
-
-            @if (structuredDocument && structuredDocument.documentType !== 'CV') {
-              <div>
-                <label class="label">Body Text</label>
-                <textarea class="input text-sm" rows="8" [(ngModel)]="currentContent"
-                          [ngModelOptions]="{standalone: true}"
-                          (ngModelChange)="refreshStructuredApplication()"></textarea>
-              </div>
-            }
-
-            @if (result) {
-              <div class="text-xs text-gray-400 text-right">
-                Model: {{ result.modelUsed }}
-                @if (result.tokensUsed) { &bull; {{ result.tokensUsed }} tokens }
-              </div>
-            }
-          </div>
-
-          <!-- AI Chat Panel -->
-          <div class="lg:col-span-2 card flex flex-col gap-3" style="height: fit-content; max-height: 600px;">
-            <h2 class="text-base font-semibold text-gray-900 shrink-0">Refine with AI</h2>
-            <p class="text-xs text-gray-500 shrink-0">Ask the AI to adjust the document — e.g. "Make it shorter", "Add more emphasis on leadership"</p>
-
-            <!-- Chat history -->
-            <div #chatScroll class="flex-1 space-y-2 overflow-y-auto min-h-0" style="max-height: 300px;">
-              @for (msg of chatHistory; track $index) {
-                <div [class]="msg.role === 'user'
-                  ? 'flex justify-end'
-                  : 'flex justify-start'">
-                  <div [class]="msg.role === 'user'
-                    ? 'bg-blue-600 text-white text-xs rounded-2xl rounded-tr-sm px-3 py-2 max-w-xs'
-                    : 'bg-gray-100 text-gray-700 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-xs'">
-                    {{ msg.text }}
-                  </div>
-                </div>
-              }
-              @if (refining) {
-                <div class="flex justify-start">
-                  <div class="bg-gray-100 text-gray-500 text-xs rounded-2xl rounded-tl-sm px-3 py-2">
-                    Thinking...
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Chat input -->
-            <div class="flex gap-2 shrink-0">
-              <input #chatInput type="text" [(ngModel)]="chatMessage"
-                     (keydown.enter)="sendChat()"
-                     placeholder="Refine the document..."
-                     class="input flex-1 text-sm"
-                     [ngModelOptions]="{standalone: true}" />
-              <button (click)="sendChat()" [disabled]="!chatMessage.trim() || refining"
-                      class="btn-primary text-sm px-3">
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  `
+  imports: [CommonModule, GenerationConfigFormComponent, GeneratedDocumentEditorComponent, DocumentRefinePanelComponent],
+  templateUrl: './application-generator.component.html'
 })
-export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
-  @ViewChild('editorEl') editorEl!: ElementRef<HTMLDivElement>;
-  @ViewChild('chatScroll') chatScrollEl!: ElementRef<HTMLDivElement>;
-  @ViewChild('chatInput') chatInputEl!: ElementRef<HTMLInputElement>;
+export class ApplicationGeneratorComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private aiApi = inject(AiApiService);
-  private docApi = inject(DocumentApiService);
-  private promptApi = inject(PromptApiService);
   private jobsApi = inject(JobsApiService);
   private pdfApi = inject(PdfTemplatesApiService);
+  private structuredTemplateApi = inject(StructuredDocumentTemplatesApiService);
+  private applicationsApi = inject(ApplicationsApiService);
 
-  cvVersions: CvVersion[] = [];
-  promptTemplates: PromptTemplate[] = [];
-  pdfTemplates: PdfTemplate[] = [];
-  languages = LANGUAGES;
-  structuredTemplates = STRUCTURED_DOCUMENT_TEMPLATES;
+  languages = APPLICATION_GENERATOR_LANGUAGES;
+  structuredTemplates: DocumentTemplateOption[] = STRUCTURED_DOCUMENT_TEMPLATES;
 
   loading = false;
   refining = false;
   downloadingPdf = false;
+  savingApplication = false;
   error = '';
-  result: { content: string; modelUsed: string; tokensUsed?: number } | null = null;
+  applicationSaveMessage = '';
+  modelLabel = '';
   structuredDocument: StructuredDocument | null = null;
+  applicationDocument: StructuredDocument | null = null;
+  pairedCvDocument: StructuredDocument | null = null;
+  activeDocument: ActiveGeneratedDocument = 'single';
 
   editorHtml = '';
   currentContent = '';
@@ -281,19 +58,20 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
 
   jobTitle = '';
   jobDescription = '';
-
-  private shouldScrollChat = false;
+  savedApplication: Application | null = null;
 
   form = this.fb.group({
     documentType: ['COVER_LETTER', Validators.required],
     jobId: [''],
     jobDescription: [''],
-    cvVersionId: [''],
-    promptTemplateId: [''],
     structuredTemplateId: ['application-modern'],
+    showProfileImage: [false],
+    primaryColor: ['#18324a'],
+    accentColor: ['#cbd8e3'],
+    fontFamily: ['Arial'],
+    fontScale: ['normal'],
     customInstructions: [''],
-    targetLanguage: ['Danish'],
-    useStyleFromHistory: [false]
+    targetLanguage: ['Danish']
   });
 
   get availableStructuredTemplates() {
@@ -306,8 +84,23 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
       const first = this.availableStructuredTemplates[0];
       if (first) {
         this.form.patchValue({ structuredTemplateId: first.id }, { emitEvent: false });
+        this.applyTemplateDefaults(first.id);
       }
       this.structuredDocument = null;
+      this.applicationDocument = null;
+      this.pairedCvDocument = null;
+      this.activeDocument = 'single';
+    });
+    this.form.controls.structuredTemplateId.valueChanges.subscribe(templateId => {
+      this.applyTemplateDefaults(templateId);
+    });
+    ['showProfileImage', 'primaryColor', 'accentColor', 'fontFamily', 'fontScale'].forEach(controlName => {
+      this.form.get(controlName)?.valueChanges.subscribe(() => {
+        if (this.structuredDocument) {
+          this.structuredDocument = this.withRenderOptions(this.structuredDocument);
+          this.persistActiveDocumentEdits();
+        }
+      });
     });
 
     const jobId = this.route.snapshot.queryParamMap.get('jobId');
@@ -319,207 +112,186 @@ export class ApplicationGeneratorComponent implements OnInit, AfterViewChecked {
         this.form.patchValue({ jobDescription: this.jobDescription });
       });
     }
-    this.docApi.getCvVersions().subscribe(cvs => this.cvVersions = cvs);
-    this.promptApi.getAll().subscribe(ts => this.promptTemplates = ts);
-    this.pdfApi.getAll().subscribe(ts => this.pdfTemplates = ts);
-  }
-
-  ngAfterViewChecked(): void {
-    if (this.shouldScrollChat && this.chatScrollEl) {
-      const el = this.chatScrollEl.nativeElement;
-      el.scrollTop = el.scrollHeight;
-      this.shouldScrollChat = false;
-    }
+    this.structuredTemplateApi.getActive().subscribe({
+      next: templates => {
+        if (templates.length === 0) return;
+        this.structuredTemplates = templates;
+        const selectedTemplateId = this.form.value.structuredTemplateId;
+        if (!this.availableStructuredTemplates.some(t => t.id === selectedTemplateId)) {
+          const first = this.availableStructuredTemplates[0];
+          if (first) {
+            this.form.patchValue({ structuredTemplateId: first.id }, { emitEvent: false });
+            this.applyTemplateDefaults(first.id);
+          }
+        } else {
+          this.applyTemplateDefaults(selectedTemplateId);
+        }
+      },
+      error: () => {
+        this.structuredTemplates = STRUCTURED_DOCUMENT_TEMPLATES;
+      }
+    });
   }
 
   generate(): void {
-    if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
-
-    const v = this.form.value;
-    const selectedTemplate = this.structuredTemplates.find(t => t.id === v.structuredTemplateId);
-
-    if (v.documentType === 'CV') {
-      this.aiApi.generateStructuredCv({
-        jobId: v.jobId || undefined,
-        jobDescription: v.jobDescription || undefined,
-        customInstructions: v.customInstructions || undefined,
-        targetLanguage: v.targetLanguage || 'Danish',
-        templateId: v.structuredTemplateId || selectedTemplate?.id
-      }).subscribe({
-        next: doc => {
-          this.structuredDocument = doc;
-          this.currentContent = this.cvPlainText(doc);
-          this.editorHtml = '';
-          this.result = { content: this.currentContent, modelUsed: 'structured CV engine' };
-          this.showEditor = true;
-          this.chatHistory = [];
-          this.loading = false;
-        },
-        error: e => {
-          this.error = e.error?.message || 'CV generation failed. Please try again.';
-          this.loading = false;
-        }
-      });
-      return;
-    }
-
-    this.aiApi.generateDocument({
-      documentType: v.documentType as string,
-      jobId: v.jobId || undefined,
-      jobDescription: v.jobDescription || undefined,
-      templateId: v.structuredTemplateId || selectedTemplate?.id || 'application-modern',
-      customInstructions: v.customInstructions || undefined,
-      targetLanguage: v.targetLanguage || 'Danish',
-      useStyleFromHistory: v.useStyleFromHistory ?? false
-    }).subscribe({
-      next: doc => {
-        this.structuredDocument = doc;
-        this.currentContent = doc.bodyContent ?? '';
-        this.setEditorContent(this.currentContent);
-        this.result = { content: this.currentContent, modelUsed: 'structured document engine' };
-        this.showEditor = true;
-        this.chatHistory = [];
-        this.loading = false;
-      },
-      error: e => {
-        this.error = e.error?.message || 'Generation failed. Please try again.';
-        this.loading = false;
-      }
-    });
+    generatorActions.generate(this, this.aiApi);
   }
 
-  onEditorInput(event: Event): void {
-    const el = event.target as HTMLDivElement;
-    this.currentContent = el.innerText;
+  generateApplicationSet(): void {
+    generatorActions.generateApplicationSet(this, this.aiApi);
   }
 
   sendChat(): void {
-    if (!this.chatMessage.trim() || this.refining) return;
-    const userMsg = this.chatMessage.trim();
-    this.chatMessage = '';
-    this.chatHistory = [...this.chatHistory, { role: 'user', text: userMsg }];
-    this.shouldScrollChat = true;
-
-    if (this.structuredDocument?.documentType === 'CV') {
-      this.chatHistory = [...this.chatHistory, {
-        role: 'assistant',
-        text: 'For structured CVs, add this as a custom instruction and regenerate so the backend can validate the JSON against your master profile.'
-      }];
-      this.shouldScrollChat = true;
-      return;
-    }
-
-    this.refining = true;
-
-    const v = this.form.value;
-    this.aiApi.refine({
-      currentContent: this.currentContent,
-      userMessage: userMsg,
-      jobDescription: v.jobDescription || this.jobDescription || undefined,
-      targetLanguage: v.targetLanguage || 'Danish'
-    }).subscribe({
-      next: r => {
-        this.setEditorContent(r.refinedContent);
-        if (this.structuredDocument && this.structuredDocument.documentType !== 'CV') {
-          this.structuredDocument = { ...this.structuredDocument, bodyContent: r.refinedContent };
-        }
-        this.chatHistory = [...this.chatHistory, { role: 'assistant', text: 'Document updated.' }];
-        this.shouldScrollChat = true;
-        this.refining = false;
-      },
-      error: () => {
-        this.chatHistory = [...this.chatHistory, { role: 'assistant', text: 'Failed to refine. Please try again.' }];
-        this.refining = false;
-      }
-    });
+    generatorActions.sendChat(this, this.aiApi);
   }
 
   copyContent(): void {
-    navigator.clipboard.writeText(this.currentContent).then(() => {
-      this.copied = true;
-      setTimeout(() => this.copied = false, 2000);
-    });
+    generatorActions.copyContent(this);
   }
 
   downloadPdf(): void {
-    this.downloadingPdf = true;
-    this.error = '';
+    generatorActions.downloadPdf(this, this.pdfApi);
+  }
 
-    if (this.structuredDocument) {
-      this.pdfApi.exportStructuredPdf(this.structuredDocument).subscribe({
-        next: blob => this.savePdfBlob(blob),
-        error: () => {
-          this.error = 'PDF generation failed. Please try again.';
-          this.downloadingPdf = false;
-        }
-      });
-      return;
-    }
-
-    window.print();
-    this.downloadingPdf = false;
+  downloadCvPdf(): void {
+    generatorActions.downloadCvPdf(this, this.pdfApi);
   }
 
   refreshStructuredApplication(): void {
     if (!this.structuredDocument || this.structuredDocument.documentType === 'CV') return;
     this.structuredDocument = { ...this.structuredDocument, bodyContent: this.currentContent };
+    this.persistActiveDocumentEdits();
   }
 
-  private savePdfBlob(blob: Blob): void {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'document.pdf';
-    a.click();
-    URL.revokeObjectURL(url);
+  saveToApplication(status: ApplicationStatus): void {
+    generatorActions.saveToApplication(this, this.aiApi, this.applicationsApi, status);
+  }
+
+  moveSection(index: number, direction: -1 | 1): void {
+    generatorActions.moveSection(this, index, direction);
+  }
+
+  removeSection(index: number): void {
+    generatorActions.removeSection(this, index);
+  }
+
+  addCustomSection(heading: string, body: string): void {
+    generatorActions.addCustomSection(this, heading, body);
+  }
+
+  switchActiveDocument(next: 'application' | 'cv'): void {
+    if (!this.applicationDocument || !this.pairedCvDocument) return;
+    this.persistActiveDocumentEdits();
+    this.activeDocument = next;
+    this.structuredDocument = next === 'application'
+      ? this.applicationDocument
+      : this.pairedCvDocument;
+    this.loadCurrentDocumentIntoEditor();
+  }
+
+  savePdfBlob(blob: Blob, filename = 'document.pdf'): void {
+    downloadBlob(blob, filename);
     this.downloadingPdf = false;
   }
 
-  private legacyDownloadPdf(pdfTemplateId: string): void {
-    this.pdfApi.exportPdf({ content: this.currentContent, pdfTemplateId }).subscribe({
-      next: blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'document.pdf';
-        a.click();
-        URL.revokeObjectURL(url);
-        this.downloadingPdf = false;
-      },
-      error: () => {
-        this.error = 'PDF generation failed. Please try again.';
-        this.downloadingPdf = false;
-      }
-    });
+  private refreshCurrentStructuredDocument(): StructuredDocument {
+    if (!this.structuredDocument) throw new Error('No structured document');
+    if (this.structuredDocument.documentType === 'CV') {
+      this.currentContent = cvPlainText(this.structuredDocument);
+      return this.structuredDocument;
+    }
+    const document = { ...this.structuredDocument, bodyContent: this.currentContent };
+    this.structuredDocument = document;
+    return document;
   }
 
-  private setEditorContent(text: string): void {
+  persistActiveDocumentEdits(): void {
+    if (!this.structuredDocument) return;
+    const document = this.refreshCurrentStructuredDocument();
+    if (this.activeDocument === 'application') {
+      this.applicationDocument = document;
+      return;
+    }
+    if (this.activeDocument === 'cv') {
+      this.pairedCvDocument = document;
+    }
+  }
+
+  loadCurrentDocumentIntoEditor(): void {
+    if (!this.structuredDocument) return;
+    if (this.structuredDocument.documentType === 'CV') {
+      this.currentContent = cvPlainText(this.structuredDocument);
+      this.editorHtml = '';
+      return;
+    }
+    this.setEditorContent(this.structuredDocument.bodyContent ?? '');
+  }
+
+  rememberGeneratedDocument(document: StructuredDocument): void {
+    if (document.documentType === 'CV') {
+      this.pairedCvDocument = document;
+      if (this.activeDocument === 'cv' || !this.applicationDocument) {
+        this.structuredDocument = document;
+      }
+      return;
+    }
+
+    if (this.applicationDocument || this.activeDocument === 'application') {
+      this.applicationDocument = document;
+    }
+    if (this.activeDocument !== 'cv') {
+      this.structuredDocument = document;
+    }
+  }
+
+  withRenderOptions(document: StructuredDocument): StructuredDocument {
+    return applyRenderOptions(document, this.form.value.showProfileImage ?? false, this.currentTheme());
+  }
+
+  currentTheme() {
+    return {
+      primaryColor: this.form.value.primaryColor ?? '#18324a',
+      accentColor: this.form.value.accentColor ?? '#cbd8e3',
+      fontFamily: this.form.value.fontFamily ?? 'Arial',
+      fontScale: this.form.value.fontScale ?? 'normal'
+    };
+  }
+
+  private applyTemplateDefaults(templateId?: string | null): void {
+    const template = this.structuredTemplates.find(t => t.id === templateId);
+    if (!template) return;
+    const theme = template.defaultTheme;
+    this.form.patchValue({
+      showProfileImage: template.supportsProfileImage ? this.form.value.showProfileImage ?? false : false,
+      primaryColor: theme?.primaryColor ?? this.form.value.primaryColor ?? '#18324a',
+      accentColor: theme?.accentColor ?? this.form.value.accentColor ?? '#cbd8e3',
+      fontFamily: theme?.fontFamily ?? this.form.value.fontFamily ?? 'Arial',
+      fontScale: theme?.fontScale ?? this.form.value.fontScale ?? 'normal'
+    }, { emitEvent: false });
+    if (this.structuredDocument) {
+      this.structuredDocument = this.withRenderOptions(this.structuredDocument);
+    }
+  }
+
+  pairedCvTemplateId(applicationTemplate?: DocumentTemplateOption): string {
+    const sameFamily = applicationTemplate?.familyId
+      ? this.structuredTemplates.find(t =>
+          t.familyId === applicationTemplate.familyId && t.documentTypes.includes('CV'))
+      : null;
+    return sameFamily?.id
+      ?? this.structuredTemplates.find(t => t.id === 'cv-modern-professional')?.id
+      ?? this.structuredTemplates.find(t => t.documentTypes.includes('CV'))?.id
+      ?? 'cv-modern-professional';
+  }
+
+  pdfFilename(document: StructuredDocument | null): string {
+    if (!document) return 'document.pdf';
+    return document.documentType === 'CV' ? 'angled-cv.pdf' : 'application.pdf';
+  }
+
+  setEditorContent(text: string): void {
     this.currentContent = text;
     // Use innerHTML with preserved line breaks for the contenteditable div
-    this.editorHtml = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
-  }
-
-  private cvPlainText(document: StructuredDocument): string {
-    const lines: string[] = [];
-    for (const section of document.sections ?? []) {
-      lines.push(section.heading);
-      if (section.body) lines.push(section.body);
-      for (const item of section.items ?? []) {
-        if (item.title) lines.push(item.title);
-        if (item.subtitle) lines.push(item.subtitle);
-        if (item.dateRange) lines.push(item.dateRange);
-        if (item.description) lines.push(item.description);
-        for (const bullet of item.bullets ?? []) lines.push(`- ${bullet}`);
-        if ((item.technologies ?? []).length > 0) lines.push((item.technologies ?? []).join(', '));
-      }
-      lines.push('');
-    }
-    return lines.join('\n').trim();
+    this.editorHtml = editorHtml(text);
   }
 }

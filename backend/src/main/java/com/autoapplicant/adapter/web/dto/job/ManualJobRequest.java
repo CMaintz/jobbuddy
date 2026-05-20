@@ -1,7 +1,9 @@
 package com.autoapplicant.adapter.web.dto.job;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record ManualJobRequest(
-    String title,
+    @NotBlank String title,
     String companyName,
     String description,
     String url,

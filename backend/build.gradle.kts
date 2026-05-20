@@ -40,9 +40,6 @@ dependencies {
     // Test
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.security.test)
-    testImplementation(libs.testcontainers.junit)
-    testImplementation(libs.testcontainers.postgresql)
-    testRuntimeOnly(libs.h2)
 }
 
 tasks.withType<Test> {

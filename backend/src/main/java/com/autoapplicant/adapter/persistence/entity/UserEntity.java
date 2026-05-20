@@ -15,9 +15,6 @@ public class UserEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
-
     @Column(name = "google_id")
     private String googleId;
 
@@ -53,8 +50,6 @@ public class UserEntity {
     public void setId(UUID id) { this.id = id; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
     public String getLinkedinId() { return linkedinId; }

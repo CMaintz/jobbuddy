@@ -25,11 +25,11 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
             <div class="text-sm text-gray-500 mt-1">Active Applications</div>
           </a>
           <div class="card text-center">
-            <div class="text-3xl font-bold text-purple-600">{{ data.upcomingInterviews?.length ?? 0 }}</div>
+            <div class="text-3xl font-bold text-purple-600">{{ data.upcomingInterviews.length }}</div>
             <div class="text-sm text-gray-500 mt-1">Interviews</div>
           </div>
           <div class="card text-center">
-            <div class="text-3xl font-bold text-green-600">{{ data.recommendedJobs?.length ?? 0 }}</div>
+            <div class="text-3xl font-bold text-green-600">{{ data.recommendedJobs.length }}</div>
             <div class="text-sm text-gray-500 mt-1">Recommendations</div>
           </div>
         </div>
@@ -47,7 +47,7 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
         </div>
 
         <!-- Recommended Jobs -->
-        @if (data.recommendedJobs?.length) {
+        @if (data.recommendedJobs.length) {
           <div class="card">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold text-gray-900">Recommended Jobs</h2>
@@ -80,7 +80,7 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
         }
 
         <!-- Active Applications -->
-        @if (data.pendingApplications?.length) {
+        @if (data.pendingApplications.length) {
           <div class="card">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold text-gray-900">Active Applications</h2>

@@ -2,11 +2,11 @@ export const environment = {
   production: false,
   linkedInClientId: '',
   firebase: {
-    apiKey: 'AIzaSyDLO86LKpCjC5W9Hi26iUAPG5DOvTq19QA',
-    authDomain: 'autoapplicant-7ef7b.firebaseapp.com',
-    projectId: 'autoapplicant-7ef7b',
-    storageBucket: 'autoapplicant-7ef7b.firebasestorage.app',
-    messagingSenderId: '790069513091',
-    appId: '1:790069513091:web:0b37fc22db088dbaab04b6'
+    apiKey: 'REPLACE_WITH_FIREBASE_WEB_API_KEY',
+    authDomain: 'REPLACE_WITH_FIREBASE_AUTH_DOMAIN',
+    projectId: 'REPLACE_WITH_FIREBASE_PROJECT_ID',
+    storageBucket: 'REPLACE_WITH_FIREBASE_STORAGE_BUCKET',
+    messagingSenderId: 'REPLACE_WITH_FIREBASE_MESSAGING_SENDER_ID',
+    appId: 'REPLACE_WITH_FIREBASE_APP_ID'
   }
 };

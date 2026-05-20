@@ -6,7 +6,10 @@ import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
+import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,14 +31,18 @@ class MatchingServiceTest {
     @Mock JobEmbeddingRepositoryPort embeddingRepo;
     @Mock JobRepositoryPort          jobRepo;
     @Mock ProfileRepositoryPort      profileRepo;
+    @Mock PreferencesRepositoryPort  prefsRepo;
     @Mock AiProviderPort             aiProvider;
+    @Mock IgnoredJobRepositoryPort   ignoredJobRepo;
+    @Mock RecommendationFeedbackRepositoryPort feedbackRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        service = new MatchingService(embeddingRepo, jobRepo, profileRepo, aiProvider);
+        service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
+                aiProvider, ignoredJobRepo, feedbackRepo);
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────

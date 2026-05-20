@@ -1,6 +1,6 @@
 package com.autoapplicant.adapter.crawler;
 
-import com.autoapplicant.adapter.ai.AiEnrichmentService;
+import com.autoapplicant.usecase.job.JobEnrichmentService;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.job.RawJobData;
@@ -26,12 +26,12 @@ public class IngestionPipeline {
     private final JobSearchPort jobSearch;
     private final JobEmbeddingRepositoryPort embeddingRepo;
     private final AiProviderPort aiProvider;
-    private final AiEnrichmentService enrichmentService;
+    private final JobEnrichmentService enrichmentService;
     private final TextCleaningService textCleaner;
 
     public IngestionPipeline(JobRepositoryPort jobRepo, JobSearchPort jobSearch,
                               JobEmbeddingRepositoryPort embeddingRepo, AiProviderPort aiProvider,
-                              AiEnrichmentService enrichmentService, TextCleaningService textCleaner) {
+                              JobEnrichmentService enrichmentService, TextCleaningService textCleaner) {
         this.jobRepo = jobRepo;
         this.jobSearch = jobSearch;
         this.embeddingRepo = embeddingRepo;

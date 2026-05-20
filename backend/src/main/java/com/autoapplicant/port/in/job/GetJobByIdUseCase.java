@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface GetJobByIdUseCase {
     Optional<Job> getJobById(UUID id);
+    Optional<Job> lookupByUrl(String url);
 }

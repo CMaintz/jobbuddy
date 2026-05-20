@@ -13,6 +13,9 @@ import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import com.autoapplicant.usecase.document.StructuredDocumentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -53,6 +56,8 @@ public class PdfExportController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Export document as PDF")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "PDF template not found"))
     @PostMapping("/export-pdf")
     public ResponseEntity<byte[]> exportPdf(@RequestBody PdfExportRequest req) {
         UUID userId = secCtx.getCurrentUserId();
@@ -89,6 +94,7 @@ public class PdfExportController {
                 .body(pdf);
     }
 
+    @Operation(summary = "Export structured document as PDF")
     @PostMapping("/export-structured-pdf")
     public ResponseEntity<byte[]> exportStructuredPdf(@RequestBody StructuredDocumentExportRequest req) {
         byte[] pdf = pdfRenderer.renderStructured(req.document());
@@ -99,9 +105,12 @@ public class PdfExportController {
                 .body(pdf);
     }
 
+    @Operation(summary = "Build structured application document model")
     @PostMapping("/structured-application")
     public ResponseEntity<StructuredDocument> structuredApplication(@RequestBody StructuredApplicationRequest req) {
         return ResponseEntity.ok(structuredDocuments.buildApplicationDocument(
-                secCtx.getCurrentUserId(), req.documentType(), req.content(), req.templateId()));
+                secCtx.getCurrentUserId(), req.documentType(), req.content(), req.templateId(),
+                Boolean.TRUE.equals(req.showProfileImage()),
+                req.theme() != null ? req.theme().toTheme() : null));
     }
 }

@@ -3,14 +3,12 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.auth.MeResponse;
 import com.autoapplicant.config.AppProperties;
-import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.User;
-import com.autoapplicant.domain.user.UserRole;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import com.autoapplicant.usecase.user.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,9 +19,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -32,22 +28,19 @@ import java.util.UUID;
 public class AuthController {
 
     private final UserRepositoryPort userRepo;
-    private final ProfileRepositoryPort profileRepo;
-    private final UserService userService;
+    private final ResolveLinkedInUserUseCase resolveLinkedInUser;
     private final SecurityContextHelper securityContext;
     private final AppProperties appProperties;
     private final FirebaseAuth firebaseAuth;
     private final RestTemplate restTemplate;
 
     public AuthController(UserRepositoryPort userRepo,
-                          ProfileRepositoryPort profileRepo,
-                          UserService userService,
+                          ResolveLinkedInUserUseCase resolveLinkedInUser,
                           SecurityContextHelper securityContext,
                           AppProperties appProperties,
                           FirebaseAuth firebaseAuth) {
         this.userRepo = userRepo;
-        this.profileRepo = profileRepo;
-        this.userService = userService;
+        this.resolveLinkedInUser = resolveLinkedInUser;
         this.securityContext = securityContext;
         this.appProperties = appProperties;
         this.firebaseAuth = firebaseAuth;
@@ -58,6 +51,7 @@ public class AuthController {
      * Returns the internal user record for the currently authenticated Firebase user.
      * The frontend calls this right after signing in to get the internal userId and role.
      */
+    @Operation(summary = "Get current authenticated user")
     @GetMapping("/me")
     public ResponseEntity<MeResponse> me() {
         UUID userId = securityContext.getCurrentUserId();
@@ -71,6 +65,7 @@ public class AuthController {
      * and returns a Firebase Custom Token. The frontend then calls
      * signInWithCustomToken(auth, customToken) to get a proper Firebase ID token.
      */
+    @Operation(summary = "LinkedIn OAuth callback, returns Firebase token")
     @PostMapping("/linkedin")
     public ResponseEntity<Map<String, String>> linkedInCallback(
             @RequestBody LinkedInCallbackRequest request) {
@@ -84,7 +79,7 @@ public class AuthController {
         String familyName = (String) userInfo.getOrDefault("family_name", "");
         String fullName = (String) userInfo.getOrDefault("name", (givenName + " " + familyName).trim());
 
-        User user = resolveLinkedInUser(sub, email, fullName);
+        User user = resolveLinkedInUser.resolve(sub, email, fullName);
 
         try {
             String customToken = firebaseAuth.createCustomToken(
@@ -132,41 +127,11 @@ public class AuthController {
                 entity,
                 Map.class);
 
-        Map<String, Object> body = response.getBody();
-        if (body == null) {
+        Map<String, Object> responseBody = response.getBody();
+        if (responseBody == null) {
             throw new IllegalStateException("Empty userinfo response from LinkedIn");
         }
-        return body;
-    }
-
-    private User resolveLinkedInUser(String sub, String email, String fullName) {
-        // Try existing LinkedIn user
-        Optional<User> byLinkedinId = userRepo.findByLinkedinId(sub);
-        if (byLinkedinId.isPresent()) {
-            return byLinkedinId.get();
-        }
-
-        // Link to existing email account
-        Optional<User> byEmail = userRepo.findByEmail(email);
-        if (byEmail.isPresent()) {
-            User existing = byEmail.get();
-            User updated = new User(existing.id(), existing.email(), existing.passwordHash(),
-                    existing.googleId(), sub, existing.firebaseUid(), existing.role(),
-                    existing.emailVerified(), existing.createdAt(), existing.updatedAt());
-            return userRepo.save(updated);
-        }
-
-        // New user — create with linkedinId; firebaseUid gets set when they sign in via custom token
-        User newUser = new User(null, email, null, null, sub, null, UserRole.USER, true, null, null);
-        User savedUser = userRepo.save(newUser);
-
-        Profile profile = new Profile(null, savedUser.id(), fullName, null, null,
-                null, null, null, null, null, null, null, null,
-                List.of(), List.of(), List.of(),
-                null, null, "DKK", null, null, null, null);
-        profileRepo.save(profile);
-
-        return savedUser;
+        return responseBody;
     }
 
     record LinkedInCallbackRequest(String code, String redirectUri) {}
