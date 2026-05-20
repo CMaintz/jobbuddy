@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { JobsApiService } from '../../../core/api/jobs.api';
 import { Job } from '../../../core/models/job.model';
+import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
+import { runAction } from '../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-saved-jobs',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, EmptyStateComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -18,8 +20,8 @@ import { Job } from '../../../core/models/job.model';
       @if (loading) {
         <div class="text-center py-12 text-gray-500">Loading saved jobs...</div>
       } @else if (jobs.length === 0) {
-        <div class="card text-center py-12">
-          <p class="text-gray-500 mb-4">No saved jobs yet.</p>
+        <div class="card">
+          <app-empty-state message="No saved jobs yet."></app-empty-state>
           <a routerLink="/jobs/search" class="btn-primary">Browse Jobs</a>
         </div>
       } @else {
@@ -67,9 +69,10 @@ export class SavedJobsComponent implements OnInit {
   loading = true;
 
   ngOnInit(): void {
-    this.jobsApi.getSaved().subscribe({
-      next: jobs => { this.jobs = jobs; this.loading = false; },
-      error: () => this.loading = false
+    runAction({
+      action$: this.jobsApi.getSaved(),
+      setLoading: value => this.loading = value,
+      next: jobs => this.jobs = jobs
     });
   }
 

@@ -1,0 +1,68 @@
+<!-- Projects Tab -->
+      <div *ngIf="vm.activeTab === 'projects'">
+        <app-section-header title="Projects" actionLabel="+ Add Project" (action)="vm.showProjectForm = !vm.showProjectForm"></app-section-header>
+
+        <app-inline-form-panel *ngIf="vm.showProjectForm">
+        <form [formGroup]="vm.projectForm" (ngSubmit)="vm.saveProject()" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Project Name</label>
+            <input formControlName="name" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Description</label>
+            <textarea formControlName="description" rows="3" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-700">GitHub URL</label>
+              <input formControlName="githubUrl" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Live URL</label>
+              <input formControlName="liveUrl" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Technologies (comma-separated)</label>
+            <input formControlName="technologiesRaw" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+          </div>
+          <app-skill-picker
+            [selected]="vm.projectEditSkills"
+            (selectedChange)="vm.projectEditSkills = $event"
+            (createRequested)="vm.promptCreateSkillForSection('project', $event)">
+          </app-skill-picker>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Measurable Outcomes</label>
+            <input formControlName="measurableOutcomes" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <input formControlName="isFeatured" type="checkbox"/> Featured project
+          </label>
+          <app-form-actions (cancel)="vm.showProjectForm = false"></app-form-actions>
+        </form>
+        </app-inline-form-panel>
+
+        <div *ngFor="let p of vm.projects" class="list-item">
+          <div class="flex justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <p class="font-semibold">{{ p.name }}</p>
+                <span *ngIf="p.isFeatured" class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Featured</span>
+              </div>
+              <p *ngIf="p.description" class="text-sm text-gray-700 mt-1">{{ p.description }}</p>
+              <div class="flex gap-3 mt-1">
+                <a *ngIf="p.githubUrl" [href]="p.githubUrl" target="_blank" class="text-xs text-blue-600 hover:underline">GitHub</a>
+                <a *ngIf="p.liveUrl" [href]="p.liveUrl" target="_blank" class="text-xs text-blue-600 hover:underline">Live Demo</a>
+              </div>
+              <div *ngIf="p.technologies?.length" class="mt-2 flex flex-wrap gap-1">
+                <span *ngFor="let t of p.technologies" class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ t }}</span>
+              </div>
+              <div *ngIf="p.skills?.length" class="mt-1 flex flex-wrap gap-1">
+                <span *ngFor="let s of p.skills" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+              </div>
+            </div>
+            <app-confirm-delete-button (confirmed)="vm.deleteProject(p.id!)"></app-confirm-delete-button>
+          </div>
+        </div>
+        <app-empty-state *ngIf="!vm.projects.length" message="No projects added yet."></app-empty-state>
+      </div>

@@ -7,27 +7,25 @@ import com.autoapplicant.adapter.persistence.repository.EducationJpaRepository;
 import com.autoapplicant.adapter.persistence.repository.EducationSkillJpaRepository;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.Education;
-import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class EducationPersistenceAdapter implements EducationRepositoryPort {
 
     private final EducationJpaRepository repo;
     private final EducationSkillJpaRepository skillRepo;
-    private final SkillTaxonomyRepositoryPort taxonomyRepo;
+    private final SectionSkillLoader skillLoader;
 
     public EducationPersistenceAdapter(EducationJpaRepository repo,
                                         EducationSkillJpaRepository skillRepo,
-                                        SkillTaxonomyRepositoryPort taxonomyRepo) {
+                                        SectionSkillLoader skillLoader) {
         this.repo = repo;
         this.skillRepo = skillRepo;
-        this.taxonomyRepo = taxonomyRepo;
+        this.skillLoader = skillLoader;
     }
 
     @Override
@@ -65,19 +63,13 @@ public class EducationPersistenceAdapter implements EducationRepositoryPort {
 
     private List<Education> loadWithSkills(List<EducationEntity> entities) {
         if (entities.isEmpty()) return List.of();
-        Set<UUID> ids = entities.stream().map(EducationEntity::getId).collect(Collectors.toSet());
+        Set<UUID> ids = new HashSet<>();
+        for (var e : entities) ids.add(e.getId());
         List<EducationSkillEntity> links = skillRepo.findByEducationIdIn(ids);
-        Set<UUID> taxIds = links.stream()
-                .map(EducationSkillEntity::getTaxonomyId)
-                .collect(Collectors.toSet());
-        Map<UUID, SkillTaxonomy> taxById = taxonomyRepo.findByIds(taxIds).stream()
-                .collect(Collectors.toMap(SkillTaxonomy::id, s -> s));
-        Map<UUID, List<SkillTaxonomy>> skillsByEduId = links.stream()
-                .collect(Collectors.groupingBy(
-                        EducationSkillEntity::getEducationId,
-                        Collectors.mapping(
-                                l -> taxById.get(l.getTaxonomyId()),
-                                Collectors.filtering(Objects::nonNull, Collectors.toList()))));
+        Map<UUID, List<SkillTaxonomy>> skillsByEduId = skillLoader.resolve(
+                links,
+                EducationSkillEntity::getEducationId,
+                EducationSkillEntity::getTaxonomyId);
         return entities.stream()
                 .map(e -> ProfileSectionMapper.toDomain(e,
                         skillsByEduId.getOrDefault(e.getId(), List.of())))

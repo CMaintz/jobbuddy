@@ -61,6 +61,7 @@ public final class DocumentMapper {
     public static GeneratedDocument toDomain(GeneratedDocumentEntity e) {
         return new GeneratedDocument(e.getId(), e.getUserId(), e.getApplicationId(),
                 e.getJobId(), DocumentType.valueOf(e.getDocumentType()), e.getContent(),
+                e.getStructuredContent(), e.getTemplateId(), e.getExportMode(),
                 e.getPromptTemplateId(), e.getCvVersionId(), e.getModelUsed(),
                 e.getTokensUsed(), e.getCreatedAt());
     }
@@ -73,6 +74,9 @@ public final class DocumentMapper {
         e.setJobId(d.jobId());
         e.setDocumentType(d.documentType().name());
         e.setContent(d.content());
+        e.setStructuredContent(d.structuredContent());
+        e.setTemplateId(d.templateId());
+        e.setExportMode(d.exportMode());
         e.setPromptTemplateId(d.promptTemplateId());
         e.setCvVersionId(d.cvVersionId());
         e.setModelUsed(d.modelUsed());

@@ -1,0 +1,51 @@
+<!-- Education Tab -->
+      <div *ngIf="vm.activeTab === 'education'">
+        <app-section-header title="Education" actionLabel="+ Add Education" (action)="vm.showEduForm = !vm.showEduForm"></app-section-header>
+
+        <app-inline-form-panel *ngIf="vm.showEduForm">
+        <form [formGroup]="vm.eduForm" (ngSubmit)="vm.saveEducation()" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Institution</label>
+            <input formControlName="institution" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Degree</label>
+              <input formControlName="degree" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Field of Study</label>
+              <input formControlName="fieldOfStudy" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Start Date</label>
+              <input formControlName="startDate" type="date" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">End Date</label>
+              <input formControlName="endDate" type="date" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+          </div>
+          <app-skill-picker
+            [selected]="vm.educationEditSkills"
+            (selectedChange)="vm.educationEditSkills = $event"
+            (createRequested)="vm.promptCreateSkillForSection('edu', $event)">
+          </app-skill-picker>
+          <app-form-actions (cancel)="vm.showEduForm = false"></app-form-actions>
+        </form>
+        </app-inline-form-panel>
+
+        <div *ngFor="let e of vm.educations" class="list-item">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-semibold">{{ e.degree }} in {{ e.fieldOfStudy }}</p>
+              <p class="text-sm text-gray-600">{{ e.institution }} · {{ e.startDate | slice:0:4 }} – {{ e.endDate | slice:0:4 }}</p>
+              <div *ngIf="e.skills?.length" class="mt-1 flex flex-wrap gap-1">
+                <span *ngFor="let s of e.skills" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+              </div>
+            </div>
+            <app-confirm-delete-button (confirmed)="vm.deleteEducation(e.id!)"></app-confirm-delete-button>
+          </div>
+        </div>
+        <app-empty-state *ngIf="!vm.educations.length" message="No education added yet."></app-empty-state>
+      </div>

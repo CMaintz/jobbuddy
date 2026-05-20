@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PromptApiService } from '../../../core/api/prompt.api';
 import { PromptTemplate } from '../../../core/models/prompt-template.model';
+import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
+import { runAction } from '../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-prompt-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, EmptyStateComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -18,8 +20,8 @@ import { PromptTemplate } from '../../../core/models/prompt-template.model';
       @if (loading) {
         <div class="text-center py-12 text-gray-500">Loading...</div>
       } @else if (templates.length === 0) {
-        <div class="card text-center py-12">
-          <p class="text-gray-500">No templates yet.</p>
+        <div class="card">
+          <app-empty-state message="No templates yet."></app-empty-state>
           <a routerLink="/prompts/new" class="btn-primary mt-4 inline-block">Create first template</a>
         </div>
       } @else {
@@ -62,9 +64,10 @@ export class PromptListComponent implements OnInit {
   loading = true;
 
   ngOnInit(): void {
-    this.api.getAll().subscribe({
-      next: ts => { this.templates = ts; this.loading = false; },
-      error: () => this.loading = false
+    runAction({
+      action$: this.api.getAll(),
+      setLoading: value => this.loading = value,
+      next: ts => this.templates = ts
     });
   }
 

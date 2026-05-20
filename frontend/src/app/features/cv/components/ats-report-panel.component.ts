@@ -29,7 +29,7 @@ import { AtsReport } from '../../../core/models/structured-document.model';
           </div>
         </div>
 
-        @if ((report.matchedKeywords ?? []).length > 0) {
+        @if (report.matchedKeywords.length > 0) {
           <div>
             <p class="text-xs font-medium text-gray-600 mb-1.5">Matched keywords</p>
             <div class="flex flex-wrap gap-1">
@@ -40,7 +40,7 @@ import { AtsReport } from '../../../core/models/structured-document.model';
           </div>
         }
 
-        @if ((report.missingKeywords ?? []).length > 0) {
+        @if (report.missingKeywords.length > 0) {
           <div>
             <p class="text-xs font-medium text-gray-600 mb-1.5">Missing keywords</p>
             <div class="flex flex-wrap gap-1">
@@ -51,7 +51,7 @@ import { AtsReport } from '../../../core/models/structured-document.model';
           </div>
         }
 
-        @if ((report.checks ?? []).length > 0) {
+        @if (report.checks.length > 0) {
           <div class="space-y-1.5 pt-1 border-t border-gray-100">
             @for (check of report.checks; track check.code) {
               <div class="flex items-start gap-2 text-xs">

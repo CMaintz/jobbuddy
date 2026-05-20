@@ -4,6 +4,8 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.port.in.application.*;
+import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +26,7 @@ import java.util.UUID;
 import static com.autoapplicant.domain.application.ApplicationStatus.*;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -37,6 +42,8 @@ class ApplicationControllerTest {
     @MockBean UpdateApplicationStatusUseCase updateStatusUseCase;
     @MockBean GetApplicationsUseCase         getAllUseCase;
     @MockBean GetApplicationByIdUseCase      getByIdUseCase;
+    @MockBean JobRepositoryPort              jobRepo;
+    @MockBean ResponseMetricRepositoryPort   responseMetricRepo;
     @MockBean SecurityContextHelper          secCtx;
 
     UUID userId = UUID.randomUUID();
@@ -52,7 +59,8 @@ class ApplicationControllerTest {
 
     @Test
     void list_returns_empty_array_when_no_applications() throws Exception {
-        when(getAllUseCase.getApplications(userId)).thenReturn(List.of());
+        when(getAllUseCase.getApplications(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
 
         mvc.perform(get("/api/v1/applications"))
                 .andExpect(status().isOk())
@@ -63,7 +71,8 @@ class ApplicationControllerTest {
     void list_returns_all_user_applications() throws Exception {
         Application a1 = application(appId, userId, jobId, SAVED);
         Application a2 = application(UUID.randomUUID(), userId, jobId, PREPARING);
-        when(getAllUseCase.getApplications(userId)).thenReturn(List.of(a1, a2));
+        when(getAllUseCase.getApplications(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(a1, a2)));
 
         mvc.perform(get("/api/v1/applications"))
                 .andExpect(status().isOk())
@@ -74,8 +83,8 @@ class ApplicationControllerTest {
 
     @Test
     void list_response_includes_job_id() throws Exception {
-        when(getAllUseCase.getApplications(userId))
-                .thenReturn(List.of(application(appId, userId, jobId, SAVED)));
+        when(getAllUseCase.getApplications(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(application(appId, userId, jobId, SAVED))));
 
         mvc.perform(get("/api/v1/applications"))
                 .andExpect(status().isOk())

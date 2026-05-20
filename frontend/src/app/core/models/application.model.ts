@@ -10,6 +10,9 @@ export interface Application {
   appliedAt?: string;
   recruiterName?: string;
   recruiterEmail?: string;
+  coverLetterText?: string;
+  applicationText?: string;
+  recruiterMessage?: string;
   matchScore?: number;
   notes?: string;
   jobTitle?: string;

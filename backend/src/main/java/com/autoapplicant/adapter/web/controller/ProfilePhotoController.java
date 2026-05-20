@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class ProfilePhotoController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Upload profile photo")
     @PostMapping(value = "/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadPhoto(@RequestParam("file") MultipartFile file) throws IOException {
         UUID userId = secCtx.getCurrentUserId();

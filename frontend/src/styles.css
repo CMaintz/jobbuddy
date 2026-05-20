@@ -15,8 +15,17 @@
   .btn-secondary {
     @apply bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors;
   }
+  .btn-danger {
+    @apply text-red-600 hover:text-red-700 transition-colors;
+  }
   .card {
     @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+  .form-panel {
+    @apply bg-gray-50 rounded p-4 mb-4 space-y-3;
+  }
+  .list-item {
+    @apply border rounded p-4 mb-3;
   }
   .input {
     @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;

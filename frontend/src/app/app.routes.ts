@@ -96,9 +96,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/profile/writing-style/writing-style.component').then(m => m.WritingStyleComponent)
       },
       {
-        path: 'pdf-templates',
+        path: 'templates',
         loadComponent: () => import('./features/pdf-templates/pdf-templates.component').then(m => m.PdfTemplatesComponent)
       },
+      { path: 'pdf-templates', redirectTo: 'templates', pathMatch: 'full' },
       {
         path: 'analytics',
         loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)

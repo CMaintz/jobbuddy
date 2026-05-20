@@ -4,6 +4,7 @@ import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.port.in.job.*;
+import com.autoapplicant.port.in.job.CreateManualJobUseCase;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUseCase,
-        IgnoreJobUseCase, GetSavedJobsUseCase, GetIgnoredJobsUseCase {
+        IgnoreJobUseCase, GetSavedJobsUseCase, GetIgnoredJobsUseCase, CreateManualJobUseCase {
 
     private final JobRepositoryPort jobRepo;
     private final SavedJobRepositoryPort savedJobRepo;
@@ -50,6 +51,16 @@ public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUse
     @Override
     public Optional<Job> getJobById(UUID id) {
         return jobRepo.findById(id);
+    }
+
+    @Override
+    public Optional<Job> lookupByUrl(String url) {
+        return jobRepo.findByUrl(url);
+    }
+
+    @Override
+    public Job createManualJob(Job job) {
+        return jobRepo.save(job);
     }
 
     @Override

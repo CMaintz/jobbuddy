@@ -2,12 +2,16 @@ package com.autoapplicant.adapter.pdf;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
+import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -53,13 +57,15 @@ public class PdfRenderingService {
         boolean cv = document.documentType() != null && "CV".equals(document.documentType().name());
         boolean designed = "DESIGNED".equalsIgnoreCase(document.exportMode())
                 || (document.templateId() != null && document.templateId().contains("modern"));
-        String css = designed ? designedCss(cv) : atsCss();
+        DocumentTheme theme = resolveTheme(document.options() != null ? document.options().theme() : null);
+        String css = designed ? designedCss(cv, theme) : atsCss(theme);
         StringBuilder html = new StringBuilder("""
                 <!DOCTYPE html><html><head><meta charset="UTF-8"><style>
                 """);
         html.append(css).append("</style></head><body><article class=\"page ");
         html.append(designed ? "designed" : "ats").append("\">");
-        appendIdentity(html, document.identity(), designed);
+        appendIdentity(html, document.identity(), designed,
+                document.options() != null && document.options().showProfileImage());
         if (cv) {
             appendSections(html, document.sections());
         } else {
@@ -69,11 +75,17 @@ public class PdfRenderingService {
         return html.toString();
     }
 
-    private void appendIdentity(StringBuilder html, DocumentIdentity identity, boolean designed) {
+    private void appendIdentity(StringBuilder html, DocumentIdentity identity, boolean designed, boolean showProfileImage) {
         if (identity == null) return;
         html.append("<header class=\"topbar\">");
-        if (designed) {
-            html.append("<div class=\"avatar\">").append(initials(identity.name())).append("</div>");
+        if (designed && showProfileImage) {
+            html.append("<div class=\"avatar\">");
+            if (identity.profileImageUrl() != null && !identity.profileImageUrl().isBlank()) {
+                html.append("<img src=\"").append(escape(identity.profileImageUrl())).append("\" alt=\"\"/>");
+            } else {
+                html.append(initials(identity.name()));
+            }
+            html.append("</div>");
         }
         html.append("<div class=\"person\"><h1>").append(escape(identity.name())).append("</h1>");
         if (identity.headline() != null && !identity.headline().isBlank()) {
@@ -171,15 +183,85 @@ public class PdfRenderingService {
         return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    private String atsCss() {
-        return """
-                body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111;margin:0}.page{width:210mm;min-height:297mm;padding:18mm;box-sizing:border-box}.topbar{border-bottom:1px solid #222;padding-bottom:8px;margin-bottom:14px}.person h1{font-size:20pt;margin:0 0 3px}.person p{margin:0 0 6px}.contact{font-size:9pt;line-height:1.5}.contact span:after{content:" | "}.contact span:last-child:after{content:""}h2{font-size:11pt;text-transform:uppercase;letter-spacing:0;margin:14px 0 6px;border-bottom:1px solid #ddd}.section{break-inside:avoid}.section-body{line-height:1.5}.item{break-inside:avoid;margin:0 0 10px}.item-head{display:flex;justify-content:space-between;gap:12px}.item h3{font-size:10.5pt;margin:0}.subtitle,.dates{margin:0;color:#333}.dates{white-space:nowrap}.item p{margin:3px 0}.item ul{margin:4px 0 0 18px;padding:0}.skills{display:block;columns:2;margin:0;padding-left:18px}.tech{font-size:9pt;color:#333}
-                """;
+    private String atsCss(DocumentTheme theme) {
+        String template = loadCssTemplate("cv-ats.css");
+        return template
+                .replace("{{FONT}}", cssFont(theme.fontFamily()))
+                .replace("{{BASE_PT}}", baseFontPt(theme.fontScale()))
+                .replace("{{H1_PT}}", h1FontPt(theme.fontScale()));
     }
 
-    private String designedCss(boolean cv) {
-        return """
-                body{font-family:Arial,sans-serif;font-size:10.5pt;color:#172033;margin:0;background:#fff}.page{width:210mm;min-height:297mm;padding:0;box-sizing:border-box}.topbar{display:flex;align-items:center;gap:14px;background:#18324a;color:white;padding:16mm 18mm 12mm}.avatar{width:20mm;height:20mm;border-radius:50%;background:#eef6ff;color:#18324a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16pt;flex:0 0 auto}.person{flex:1}.person h1{font-size:24pt;margin:0 0 3px}.person p{margin:0;color:#cce0f0}.contact{display:flex;flex-direction:column;gap:2px;text-align:right;font-size:8.5pt}.contact span{color:#eef6ff}main,.letter-body{padding:14mm 18mm 18mm}.letter-body p{line-height:1.7;margin:0 0 10px}.section{break-inside:avoid;margin-bottom:12px}.section h2{font-size:11pt;text-transform:uppercase;letter-spacing:0;color:#18324a;border-bottom:1px solid #d7e1ea;padding-bottom:3px;margin:0 0 8px}.section-body{font-size:10.5pt;line-height:1.55;margin:0}.item{break-inside:avoid;margin:0 0 10px}.item-head{display:flex;justify-content:space-between;gap:12px}.item h3{font-size:11pt;margin:0;color:#101827}.subtitle,.dates{margin:1px 0 0;color:#526071}.dates{white-space:nowrap;font-size:9pt}.item p{margin:4px 0}.item ul{margin:5px 0 0 18px;padding:0}.item li{margin-bottom:2px}.skills{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}.skills li{border:1px solid #cbd8e3;background:#f7fafc;border-radius:4px;padding:3px 7px}.tech{font-size:9pt;color:#526071}
-                """;
+    private String designedCss(boolean cv, DocumentTheme theme) {
+        String template = loadCssTemplate("cv-designed.css");
+        return template
+                .replace("{{FONT}}", cssFont(theme.fontFamily()))
+                .replace("{{BASE_PT}}", baseFontPt(theme.fontScale()))
+                .replace("{{H1_PT}}", h1FontPt(theme.fontScale()))
+                .replace("{{PRIMARY}}", cssColor(theme.primaryColor()))
+                .replace("{{ACCENT}}", cssColor(theme.accentColor()));
+    }
+
+    private String loadCssTemplate(String filename) {
+        try (InputStream is = getClass().getResourceAsStream("/pdf/" + filename)) {
+            if (is == null) throw new IllegalStateException("CSS template not found: " + filename);
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load CSS template: " + filename, e);
+        }
+    }
+
+    private DocumentTheme resolveTheme(DocumentTheme theme) {
+        DocumentTheme defaults = DocumentTheme.defaults();
+        if (theme == null) return defaults;
+        return new DocumentTheme(
+                isHexColor(theme.primaryColor()) ? theme.primaryColor() : defaults.primaryColor(),
+                isHexColor(theme.accentColor()) ? theme.accentColor() : defaults.accentColor(),
+                safeFont(theme.fontFamily()),
+                safeFontScale(theme.fontScale()));
+    }
+
+    private boolean isHexColor(String value) {
+        return value != null && value.matches("#[0-9a-fA-F]{6}");
+    }
+
+    private String cssColor(String value) {
+        return isHexColor(value) ? value : "#18324a";
+    }
+
+    private String safeFont(String value) {
+        if (value == null) return "Arial";
+        return switch (value) {
+            case "Arial", "Inter", "Georgia", "Calibri", "Times New Roman" -> value;
+            default -> "Arial";
+        };
+    }
+
+    private String cssFont(String value) {
+        String safe = safeFont(value);
+        return safe.contains(" ") ? "'" + safe + "',serif" : safe + ",sans-serif";
+    }
+
+    private String safeFontScale(String value) {
+        if (value == null) return "normal";
+        return switch (value) {
+            case "small", "normal", "large" -> value;
+            default -> "normal";
+        };
+    }
+
+    private String baseFontPt(String scale) {
+        return switch (safeFontScale(scale)) {
+            case "small" -> "9.8";
+            case "large" -> "11.2";
+            default -> "10.5";
+        };
+    }
+
+    private String h1FontPt(String scale) {
+        return switch (safeFontScale(scale)) {
+            case "small" -> "21";
+            case "large" -> "27";
+            default -> "24";
+        };
     }
 }

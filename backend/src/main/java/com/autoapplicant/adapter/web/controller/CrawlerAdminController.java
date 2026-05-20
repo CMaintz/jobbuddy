@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,7 @@ public class CrawlerAdminController {
         this.triggerCrawl = triggerCrawl;
     }
 
+    @Operation(summary = "Trigger crawl for all sources")
     @PostMapping("/trigger")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> triggerAll() {
@@ -25,6 +27,7 @@ public class CrawlerAdminController {
         return ResponseEntity.ok("Crawl triggered for all sources");
     }
 
+    @Operation(summary = "Trigger crawl for a specific source")
     @PostMapping("/trigger/{source}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> triggerSource(@PathVariable String source) {

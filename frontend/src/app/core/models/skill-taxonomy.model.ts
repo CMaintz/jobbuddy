@@ -20,6 +20,6 @@ export interface ProfileSkill {
 }
 
 export const TECH_CATEGORIES = new Set([
-  'Language', 'Framework', 'Library', 'Database', 'Cloud',
+  'Programming Language', 'Framework', 'Library', 'Database', 'Cloud',
   'DevOps', 'Tool', 'API', 'AI/ML', 'Architecture', 'Testing', 'Security'
 ]);

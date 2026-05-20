@@ -5,6 +5,7 @@ import com.autoapplicant.domain.analytics.ApplicationMetrics;
 import com.autoapplicant.domain.analytics.DetailedMetrics;
 import com.autoapplicant.port.in.analytics.GetApplicationMetricsUseCase;
 import com.autoapplicant.port.in.analytics.GetDetailedMetricsUseCase;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +27,13 @@ public class AnalyticsController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Get application metrics")
     @GetMapping
     public ResponseEntity<ApplicationMetrics> metrics() {
         return ResponseEntity.ok(getMetrics.getMetrics(secCtx.getCurrentUserId()));
     }
 
+    @Operation(summary = "Get detailed analytics metrics")
     @GetMapping("/detailed")
     public ResponseEntity<DetailedMetrics> detailedMetrics() {
         return ResponseEntity.ok(getDetailedMetrics.getDetailedMetrics(secCtx.getCurrentUserId()));

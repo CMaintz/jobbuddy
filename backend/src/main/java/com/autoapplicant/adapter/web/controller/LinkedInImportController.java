@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -25,6 +26,7 @@ public class LinkedInImportController {
         this.securityContextHelper = securityContextHelper;
     }
 
+    @Operation(summary = "Import profile from LinkedIn PDF export")
     @PostMapping(value = "/import/linkedin-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> importLinkedInPdf(@RequestParam("file") MultipartFile file) {
         String extractedText;

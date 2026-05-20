@@ -43,7 +43,7 @@ class AuthControllerTest {
     @Test
     void me_returns_user_info_for_authenticated_user() throws Exception {
         when(secCtx.getCurrentUserId()).thenReturn(userId);
-        User user = new User(userId, "alice@example.com", null, null, null, "firebase-uid",
+        User user = new User(userId, "alice@example.com", null, null, "firebase-uid",
                 UserRole.USER, true, Instant.now(), Instant.now());
         when(userRepo.findById(userId)).thenReturn(Optional.of(user));
 

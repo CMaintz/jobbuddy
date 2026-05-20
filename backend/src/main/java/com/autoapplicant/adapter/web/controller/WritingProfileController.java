@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ public class WritingProfileController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Get writing style profile")
     @GetMapping
     public ResponseEntity<WritingProfile> get() {
         UUID userId = secCtx.getCurrentUserId();
@@ -31,6 +33,7 @@ public class WritingProfileController {
                         null, null, null, null, null, null, null)));
     }
 
+    @Operation(summary = "Update writing style profile")
     @PutMapping
     public ResponseEntity<WritingProfile> update(@RequestBody WritingProfile profile) {
         UUID userId = secCtx.getCurrentUserId();

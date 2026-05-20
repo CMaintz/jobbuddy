@@ -48,6 +48,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "local": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.local.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -56,7 +67,8 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": { "buildTarget": "autoapplicant:build:production" },
-            "development": { "buildTarget": "autoapplicant:build:development" }
+            "development": { "buildTarget": "autoapplicant:build:development" },
+            "local": { "buildTarget": "autoapplicant:build:local" }
           },
           "defaultConfiguration": "development",
           "options": {

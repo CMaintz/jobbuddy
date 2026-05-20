@@ -143,7 +143,7 @@ class UserServiceTest {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private User user(UUID id, String email, String firebaseUid) {
-        return new User(id, email, null, null, null, firebaseUid,
+        return new User(id, email, null, null, firebaseUid,
                 UserRole.USER, true, Instant.now(), Instant.now());
     }
 }

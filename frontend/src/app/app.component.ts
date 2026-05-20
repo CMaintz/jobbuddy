@@ -38,8 +38,8 @@ import { Router } from '@angular/router';
                    class="text-gray-600 hover:text-gray-900 transition-colors">Profile</a>
                 <a routerLink="/profile/writing-style" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Writing Style</a>
-                <a routerLink="/pdf-templates" routerLinkActive="text-blue-600 font-medium"
-                   class="text-gray-600 hover:text-gray-900 transition-colors text-sm">PDF Templates</a>
+                <a routerLink="/templates" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Templates</a>
                 <a routerLink="/jobs/ignored" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Hidden</a>
                 <button (click)="logout()" class="btn-secondary text-sm">Logout</button>

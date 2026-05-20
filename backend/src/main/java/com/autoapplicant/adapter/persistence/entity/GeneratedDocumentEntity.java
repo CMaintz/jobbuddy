@@ -27,6 +27,15 @@ public class GeneratedDocumentEntity {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
+    @Column(name = "structured_content", columnDefinition = "text")
+    private String structuredContent;
+
+    @Column(name = "template_id")
+    private String templateId;
+
+    @Column(name = "export_mode")
+    private String exportMode;
+
     @Column(name = "prompt_template_id")
     private UUID promptTemplateId;
 
@@ -56,6 +65,12 @@ public class GeneratedDocumentEntity {
     public void setDocumentType(String documentType) { this.documentType = documentType; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+    public String getStructuredContent() { return structuredContent; }
+    public void setStructuredContent(String structuredContent) { this.structuredContent = structuredContent; }
+    public String getTemplateId() { return templateId; }
+    public void setTemplateId(String templateId) { this.templateId = templateId; }
+    public String getExportMode() { return exportMode; }
+    public void setExportMode(String exportMode) { this.exportMode = exportMode; }
     public UUID getPromptTemplateId() { return promptTemplateId; }
     public void setPromptTemplateId(UUID promptTemplateId) { this.promptTemplateId = promptTemplateId; }
     public UUID getCvVersionId() { return cvVersionId; }

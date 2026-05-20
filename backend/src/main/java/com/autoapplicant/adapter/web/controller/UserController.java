@@ -6,6 +6,9 @@ import com.autoapplicant.domain.user.UserPreferences;
 import java.util.List;
 import com.autoapplicant.port.in.user.*;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +35,8 @@ public class UserController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Get current user profile")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "Profile not found"))
     @GetMapping("/profile")
     public ResponseEntity<Profile> getProfile() {
         return getProfile.getProfile(secCtx.getCurrentUserId())
@@ -39,11 +44,13 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Update current user profile")
     @PutMapping("/profile")
     public ResponseEntity<Profile> updateProfile(@RequestBody Profile profile) {
         return ResponseEntity.ok(updateProfile.updateProfile(secCtx.getCurrentUserId(), profile));
     }
 
+    @Operation(summary = "Get current user preferences")
     @GetMapping("/preferences")
     public ResponseEntity<UserPreferences> getPreferences() {
         return ResponseEntity.ok(prefsRepo.findByUserId(secCtx.getCurrentUserId())
@@ -53,6 +60,7 @@ public class UserController {
                         false, "DAILY", null, null)));
     }
 
+    @Operation(summary = "Update current user preferences")
     @PutMapping("/preferences")
     public ResponseEntity<UserPreferences> updatePreferences(@RequestBody UserPreferences prefs) {
         return ResponseEntity.ok(updatePreferences.updatePreferences(secCtx.getCurrentUserId(), prefs));

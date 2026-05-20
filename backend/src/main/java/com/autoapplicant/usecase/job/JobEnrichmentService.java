@@ -1,4 +1,4 @@
-package com.autoapplicant.adapter.ai;
+package com.autoapplicant.usecase.job;
 
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.out.ai.AiProviderPort;
@@ -14,13 +14,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class AiEnrichmentService {
+public class JobEnrichmentService {
 
-    private static final Logger log = LoggerFactory.getLogger(AiEnrichmentService.class);
+    private static final Logger log = LoggerFactory.getLogger(JobEnrichmentService.class);
     private final AiProviderPort aiProvider;
     private final ObjectMapper objectMapper;
 
-    public AiEnrichmentService(AiProviderPort aiProvider, ObjectMapper objectMapper) {
+    public JobEnrichmentService(AiProviderPort aiProvider, ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
     }
@@ -29,7 +29,6 @@ public class AiEnrichmentService {
     public CompletableFuture<Job> enrich(Job job) {
         try {
             String prompt = buildEnrichmentPrompt(job);
-            // Build a simple PromptComposition for the enrichment call
             com.autoapplicant.domain.document.PromptComposition composition =
                     new com.autoapplicant.domain.document.PromptComposition(
                             "You are a job data enrichment assistant. Respond only with JSON.",
@@ -92,15 +91,12 @@ public class AiEnrichmentService {
             List<String> technologies = getList(parsed, "technologies");
             List<String> skills = getList(parsed, "skills");
 
-            // Merge: prefer AI-extracted if available, fall back to what was crawled
             List<String> mergedTech = !technologies.isEmpty() ? technologies : job.technologies();
             List<String> mergedSkills = !skills.isEmpty() ? skills : job.skills();
 
-            // Only update location if not already set by the crawler
             String municipality = job.municipality() != null ? job.municipality()
                     : (String) parsed.get("municipality");
 
-            // Parse employment type if crawler didn't populate it
             com.autoapplicant.domain.job.EmploymentType employmentType = job.employmentType();
             if (employmentType == null) {
                 String raw = (String) parsed.get("employmentType");

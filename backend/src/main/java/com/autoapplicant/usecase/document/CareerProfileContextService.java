@@ -26,6 +26,7 @@ public class CareerProfileContextService {
     private final EducationRepositoryPort educationRepo;
     private final CertificationRepositoryPort certRepo;
     private final ProfileSkillRepositoryPort skillRepo;
+    private final ProfileLanguageRepositoryPort languageRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -34,6 +35,7 @@ public class CareerProfileContextService {
                                        EducationRepositoryPort educationRepo,
                                        CertificationRepositoryPort certRepo,
                                        ProfileSkillRepositoryPort skillRepo,
+                                       ProfileLanguageRepositoryPort languageRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;
@@ -41,6 +43,7 @@ public class CareerProfileContextService {
         this.educationRepo = educationRepo;
         this.certRepo = certRepo;
         this.skillRepo = skillRepo;
+        this.languageRepo = languageRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -57,17 +60,33 @@ public class CareerProfileContextService {
                 ? skillNames
                 : listOrEmpty(profile != null ? profile.skills() : null);
 
+        List<String> spokenLanguages = languageRepo.findByUserId(userId).stream()
+                .map(lang -> lang.language() + " (" + formatProficiency(lang.proficiency()) + ")")
+                .toList();
+
         return new CareerProfileForAi(
                 profile != null ? profile.headline() : null,
                 profile != null ? profile.summary() : null,
                 skills,
                 listOrEmpty(profile != null ? profile.technologies() : null),
                 listOrEmpty(profile != null ? profile.languages() : null),
+                spokenLanguages,
                 workExpRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 projectRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 certRepo.findByUserId(userId).stream().map(this::toItem).toList()
         );
+    }
+
+    private static String formatProficiency(LanguageProficiency p) {
+        if (p == null) return "";
+        return switch (p) {
+            case NATIVE -> "Native";
+            case FLUENT -> "Fluent";
+            case PROFESSIONAL -> "Professional working proficiency";
+            case CONVERSATIONAL -> "Conversational";
+            case ELEMENTARY -> "Elementary";
+        };
     }
 
     public String buildJson(UUID userId) {

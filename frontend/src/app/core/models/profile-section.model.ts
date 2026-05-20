@@ -58,6 +58,16 @@ export interface Certification {
   credentialUrl?: string;
 }
 
+export type LanguageProficiency = 'NATIVE' | 'FLUENT' | 'PROFESSIONAL' | 'CONVERSATIONAL' | 'ELEMENTARY';
+
+export interface ProfileLanguage {
+  id?: string;
+  userId?: string;
+  language: string;
+  proficiency: LanguageProficiency;
+  displayOrder: number;
+}
+
 export type FeedbackType = 'LIKE' | 'DISLIKE' | 'HIDE' | 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS';
 
 export interface RecommendationFeedback {

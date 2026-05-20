@@ -3,6 +3,7 @@ package com.autoapplicant.port.out.document;
 import com.autoapplicant.domain.document.GeneratedDocument;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface GeneratedDocumentRepositoryPort {
@@ -10,5 +11,6 @@ public interface GeneratedDocumentRepositoryPort {
     List<GeneratedDocument> findByApplicationId(UUID applicationId);
     List<GeneratedDocument> findByUserId(UUID userId);
     List<GeneratedDocument> findByJobId(UUID jobId);
+    Optional<GeneratedDocument> findByIdAndUserId(UUID id, UUID userId);
     List<GeneratedDocument> findRecentByUserIdAndType(UUID userId, String documentType, int limit);
 }

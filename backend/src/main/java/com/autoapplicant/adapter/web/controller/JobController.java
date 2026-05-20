@@ -18,17 +18,19 @@ import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
-import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Instant;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/jobs")
@@ -43,18 +45,18 @@ public class JobController {
     private final GetRecommendationsUseCase getRecommendations;
     private final SaveJobUseCase saveJob;
     private final IgnoreJobUseCase ignoreJob;
+    private final CreateManualJobUseCase createManualJob;
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
     private final GeneratedDocumentRepositoryPort docRepo;
-    private final JobRepositoryPort jobRepo;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
                          GetSavedJobsUseCase getSavedJobs, GetIgnoredJobsUseCase getIgnoredJobs,
                          SearchJobsUseCase searchJobs, GetRecommendationsUseCase getRecommendations,
                          SaveJobUseCase saveJob, IgnoreJobUseCase ignoreJob,
+                         CreateManualJobUseCase createManualJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          GeneratedDocumentRepositoryPort docRepo,
-                         JobRepositoryPort jobRepo,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -64,12 +66,13 @@ public class JobController {
         this.getRecommendations = getRecommendations;
         this.saveJob = saveJob;
         this.ignoreJob = ignoreJob;
+        this.createManualJob = createManualJob;
         this.feedbackUseCase = feedbackUseCase;
         this.docRepo = docRepo;
-        this.jobRepo = jobRepo;
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "List jobs")
     @GetMapping
     public ResponseEntity<Page<JobResponse>> list(
             @RequestParam(defaultValue = "0") int page,
@@ -79,6 +82,7 @@ public class JobController {
         return ResponseEntity.ok(getJobs.getJobs(query).map(JobResponse::from));
     }
 
+    @Operation(summary = "Search jobs by query")
     @GetMapping("/search")
     public ResponseEntity<JobSearchResult> search(
             @RequestParam(required = false) String q,
@@ -89,6 +93,7 @@ public class JobController {
         return ResponseEntity.ok(searchJobs.searchJobs(query));
     }
 
+    @Operation(summary = "Get personalized job recommendations")
     @GetMapping("/recommendations")
     public ResponseEntity<List<MatchResult>> recommendations(
             @RequestParam(defaultValue = "10") int limit) {
@@ -96,6 +101,8 @@ public class JobController {
         return ResponseEntity.ok(getRecommendations.getRecommendations(userId, limit));
     }
 
+    @Operation(summary = "Get job by id")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "Job not found"))
     @GetMapping("/{id}")
     public ResponseEntity<JobResponse> getById(@PathVariable UUID id) {
         return getJobById.getJobById(id)
@@ -103,6 +110,7 @@ public class JobController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "List saved jobs")
     @GetMapping("/saved")
     public ResponseEntity<List<JobResponse>> saved() {
         UUID userId = secCtx.getCurrentUserId();
@@ -110,18 +118,21 @@ public class JobController {
                 .map(JobResponse::from).toList());
     }
 
+    @Operation(summary = "Save a job")
     @PostMapping("/{id}/save")
     public ResponseEntity<Map<String, Boolean>> save(@PathVariable UUID id) {
         saveJob.saveJob(secCtx.getCurrentUserId(), id);
         return ResponseEntity.ok(Map.of("saved", true));
     }
 
+    @Operation(summary = "Unsave a job")
     @DeleteMapping("/{id}/save")
     public ResponseEntity<Void> unsave(@PathVariable UUID id) {
         saveJob.unsaveJob(secCtx.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Ignore a job")
     @PostMapping("/{id}/ignore")
     public ResponseEntity<Void> ignore(@PathVariable UUID id,
                                         @RequestParam(required = false) String reason) {
@@ -129,43 +140,51 @@ public class JobController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Unignore a job")
     @DeleteMapping("/{id}/ignore")
     public ResponseEntity<Void> unignore(@PathVariable UUID id) {
         getIgnoredJobs.unignoreJob(secCtx.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "List ignored jobs")
     @GetMapping("/ignored")
     public ResponseEntity<List<IgnoredJob>> ignored() {
         return ResponseEntity.ok(getIgnoredJobs.getIgnoredJobs(secCtx.getCurrentUserId()));
     }
 
+    @Operation(summary = "List generated documents for a job")
     @GetMapping("/{id}/documents")
     public ResponseEntity<List<GeneratedDocument>> jobDocuments(@PathVariable UUID id) {
         return ResponseEntity.ok(docRepo.findByJobId(id));
     }
 
+    @Operation(summary = "Submit recommendation feedback for a job")
     @PostMapping("/{id}/feedback")
     public ResponseEntity<RecommendationFeedback> feedback(@PathVariable UUID id,
                                                             @RequestParam FeedbackType type) {
         return ResponseEntity.ok(feedbackUseCase.submitFeedback(secCtx.getCurrentUserId(), id, type));
     }
 
+    @Operation(summary = "Remove recommendation feedback for a job")
     @DeleteMapping("/{id}/feedback")
     public ResponseEntity<Void> removeFeedback(@PathVariable UUID id) {
         feedbackUseCase.removeFeedback(secCtx.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Look up job by URL")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "Job not found"))
     @GetMapping("/lookup")
     public ResponseEntity<JobResponse> lookupByUrl(@RequestParam String url) {
-        return jobRepo.findByUrl(url)
+        return getJobById.lookupByUrl(url)
                 .map(job -> ResponseEntity.ok(JobResponse.from(job)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Add job manually")
     @PostMapping("/manual")
-    public ResponseEntity<JobResponse> addManually(@RequestBody ManualJobRequest req) {
+    public ResponseEntity<JobResponse> addManually(@Valid @RequestBody ManualJobRequest req) {
         Job job = new Job(null, JobSource.MANUAL, null, req.url(),
                 req.title(), null, req.companyName(),
                 req.description(), req.description(),
@@ -175,7 +194,7 @@ public class JobController {
                 req.salaryMin(), req.salaryMax(), req.currency() != null ? req.currency() : "DKK",
                 List.of(), List.of(), List.of(),
                 Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null);
-        Job saved = jobRepo.save(job);
+        Job saved = createManualJob.createManualJob(job);
         return ResponseEntity.ok(JobResponse.from(saved));
     }
 }

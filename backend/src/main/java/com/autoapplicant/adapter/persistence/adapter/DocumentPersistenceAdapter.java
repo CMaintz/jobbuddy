@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,11 @@ public class DocumentPersistenceAdapter implements GeneratedDocumentRepositoryPo
     public List<GeneratedDocument> findByJobId(UUID jobId) {
         return repo.findByJobIdOrderByCreatedAtDesc(jobId).stream()
                 .map(DocumentMapper::toDomain).toList();
+    }
+
+    @Override
+    public Optional<GeneratedDocument> findByIdAndUserId(UUID id, UUID userId) {
+        return repo.findByIdAndUserId(id, userId).map(DocumentMapper::toDomain);
     }
 
     @Override

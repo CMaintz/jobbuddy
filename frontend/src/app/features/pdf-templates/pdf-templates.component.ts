@@ -1,305 +1,201 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { PdfTemplatesApiService } from '../../core/api/pdf-templates.api';
-import { PdfTemplate } from '../../core/models/pdf-template.model';
+import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
+import {
+  DocumentTemplateOption,
+  STRUCTURED_DOCUMENT_TEMPLATES,
+  StructuredDocument,
+  StructuredDocumentType
+} from '../../core/models/structured-document.model';
+import { StructuredDocumentRendererComponent } from '../../shared/components/structured-document-renderer/structured-document-renderer.component';
 
 @Component({
   selector: 'app-pdf-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, StructuredDocumentRendererComponent],
   template: `
-    <div class="space-y-6 max-w-4xl mx-auto">
+    <div class="space-y-6 max-w-6xl mx-auto">
       <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-gray-900">PDF Templates</h1>
-        @if (!showForm) {
-          <button (click)="openCreateForm()" class="btn-primary">Create Template</button>
-        }
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Document Templates</h1>
+          <p class="text-sm text-gray-500 mt-1">Structured CV and application templates, grouped into matching visual families.</p>
+        </div>
       </div>
 
       @if (errorMessage) {
         <div class="bg-red-50 text-red-700 rounded-md p-3 text-sm">{{ errorMessage }}</div>
       }
-      @if (successMessage) {
-        <div class="bg-green-50 text-green-700 rounded-md p-3 text-sm">{{ successMessage }}</div>
-      }
 
-      <!-- Create / Edit Form -->
-      @if (showForm) {
-        <div class="card space-y-5">
-          <h2 class="text-base font-semibold text-gray-900">
-            {{ editingTemplate ? 'Edit Template' : 'Create Template' }}
-          </h2>
-
-          <div>
-            <label class="label">Name <span class="text-red-500">*</span></label>
-            <input type="text" [(ngModel)]="formData.name" class="input" placeholder="e.g. Modern Cover Letter" />
-          </div>
-
-          <div>
-            <label class="label">Description</label>
-            <input type="text" [(ngModel)]="formData.description" class="input" placeholder="Optional description" />
-          </div>
-
-          <div>
-            <label class="label">Document Type</label>
-            <select [(ngModel)]="formData.documentType" class="input">
-              <option value="COVER_LETTER">Cover Letter</option>
-              <option value="APPLICATION_TEXT">Application Text</option>
-              <option value="CV">CV</option>
-            </select>
-          </div>
-
-          <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
-            <p class="text-xs font-semibold text-blue-700 mb-1">Available Placeholders</p>
-            <p class="text-xs text-blue-600 font-mono">
-              {{ '{{NAME}}' }}&nbsp;&nbsp;
-              {{ '{{EMAIL}}' }}&nbsp;&nbsp;
-              {{ '{{PHONE}}' }}&nbsp;&nbsp;
-              {{ '{{LOCATION}}' }}&nbsp;&nbsp;
-              {{ '{{LINKEDIN}}' }}&nbsp;&nbsp;
-              {{ '{{GITHUB}}' }}&nbsp;&nbsp;
-              {{ '{{HEADLINE}}' }}&nbsp;&nbsp;
-              {{ '{{DATE}}' }}&nbsp;&nbsp;
-              {{ '{{CONTENT}}' }}
-            </p>
-            <p class="text-xs text-blue-500 mt-1">Also inject CSS: use <span class="font-mono">{{ '{{CSS}}' }}</span> in your HTML template's &lt;style&gt; tag.</p>
-          </div>
-
-          <div>
-            <label class="label">HTML Template</label>
-            <textarea
-              [(ngModel)]="formData.htmlTemplate"
-              class="input font-mono text-xs"
-              rows="15"
-              placeholder="<html><body>...</body></html>"
-            ></textarea>
-          </div>
-
-          <div>
-            <label class="label">CSS Styles</label>
-            <textarea
-              [(ngModel)]="formData.cssStyles"
-              class="input font-mono text-xs"
-              rows="8"
-              placeholder="body { font-family: Arial, sans-serif; } ..."
-            ></textarea>
-          </div>
-
-          <div class="flex gap-3 flex-wrap">
-            <button (click)="save()" [disabled]="saving || !formData.name" class="btn-primary">
-              {{ saving ? 'Saving...' : 'Save' }}
-            </button>
-            <button (click)="preview()" type="button" class="btn-secondary">Preview</button>
-            <button (click)="cancelForm()" type="button" class="btn-secondary">Cancel</button>
-          </div>
-        </div>
-      }
-
-      <!-- Template List -->
-      @if (!showForm) {
-        @if (loading) {
-          <div class="card text-center py-10 text-gray-400">Loading templates...</div>
-        } @else if (templates.length === 0) {
-          <div class="card text-center py-10">
-            <p class="text-gray-500">No templates yet.</p>
-            <button (click)="openCreateForm()" class="btn-primary mt-4">Create your first template</button>
-          </div>
-        } @else {
-          <div class="grid gap-4 sm:grid-cols-2">
-            @for (tpl of templates; track tpl.id) {
+      @if (loading) {
+        <div class="card text-center py-10 text-gray-400">Loading templates...</div>
+      } @else {
+        <div class="grid gap-6 lg:grid-cols-[330px_1fr]">
+          <div class="space-y-4">
+            @for (family of templateFamilies; track family.familyId) {
               <div class="card space-y-3">
-                <div class="flex items-start justify-between gap-2">
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-900 truncate">{{ tpl.name }}</h3>
-                    @if (tpl.description) {
-                      <p class="text-sm text-gray-500 mt-0.5">{{ tpl.description }}</p>
-                    }
-                  </div>
-                  <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-xs px-2 py-0.5 rounded-full font-medium"
-                          [class]="docTypeBadgeClass(tpl.documentType)">
-                      {{ docTypeLabel(tpl.documentType) }}
-                    </span>
-                    @if (tpl.isSystem) {
-                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">System</span>
-                    }
-                  </div>
+                <div>
+                  <h2 class="text-base font-semibold text-gray-900">{{ family.familyName }}</h2>
+                  <p class="text-xs text-gray-500 mt-1">{{ family.templates.length }} structured templates</p>
                 </div>
-
-                @if (!tpl.isSystem) {
-                  <div class="flex gap-2 pt-1">
-                    <button (click)="openEditForm(tpl)" class="btn-secondary text-xs">Edit</button>
-                    <button (click)="deleteTemplate(tpl)"
-                            [disabled]="deleting === tpl.id"
-                            class="text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
-                      {{ deleting === tpl.id ? 'Deleting...' : 'Delete' }}
+                <div class="space-y-2">
+                  @for (tpl of family.templates; track tpl.id) {
+                    <button
+                      type="button"
+                      (click)="selectTemplate(tpl)"
+                      class="w-full text-left rounded-md border px-3 py-2 transition-colors"
+                      [class.border-blue-500]="selectedTemplate?.id === tpl.id"
+                      [class.bg-blue-50]="selectedTemplate?.id === tpl.id"
+                      [class.border-gray-200]="selectedTemplate?.id !== tpl.id">
+                      <div class="flex items-start justify-between gap-2">
+                        <span class="text-sm font-medium text-gray-900">{{ tpl.label }}</span>
+                        <span class="text-[11px] px-2 py-0.5 rounded-full" [class]="tpl.atsSafe ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'">
+                          {{ tpl.exportMode }}
+                        </span>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-1">{{ docTypeList(tpl.documentTypes) }}</p>
                     </button>
-                  </div>
-                }
+                  }
+                </div>
               </div>
             }
           </div>
-        }
+
+          <div class="space-y-4">
+            @if (selectedTemplate) {
+              <div class="card">
+                <div class="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 class="text-xl font-semibold text-gray-900">{{ selectedTemplate.label }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">{{ selectedTemplate.description }}</p>
+                  </div>
+                  <div class="flex gap-2 shrink-0">
+                    @if (selectedTemplate.supportsProfileImage) {
+                      <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Image-ready</span>
+                    }
+                    @if (selectedTemplate.atsSafe) {
+                      <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">ATS-safe</span>
+                    }
+                  </div>
+                </div>
+                <dl class="grid gap-3 sm:grid-cols-4 mt-5 text-sm">
+                  <div>
+                    <dt class="text-gray-400">Family</dt>
+                    <dd class="font-medium text-gray-800">{{ selectedTemplate.familyName }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-gray-400">Layout</dt>
+                    <dd class="font-medium text-gray-800">{{ selectedTemplate.layoutType }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-gray-400">Font</dt>
+                    <dd class="font-medium text-gray-800">{{ selectedTemplate.defaultTheme?.fontFamily }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-gray-400">Font Size</dt>
+                    <dd class="font-medium text-gray-800">{{ selectedTemplate.defaultTheme?.fontScale }}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <app-structured-document-renderer [document]="previewDocument"></app-structured-document-renderer>
+            }
+          </div>
+        </div>
       }
     </div>
   `
 })
 export class PdfTemplatesComponent implements OnInit {
-  private api = inject(PdfTemplatesApiService);
+  private api = inject(StructuredDocumentTemplatesApiService);
 
-  templates: PdfTemplate[] = [];
+  templates: DocumentTemplateOption[] = [];
+  selectedTemplate: DocumentTemplateOption | null = null;
   loading = true;
-  saving = false;
-  deleting: string | null = null;
-
-  showForm = false;
-  editingTemplate: PdfTemplate | null = null;
 
   errorMessage = '';
-  successMessage = '';
-
-  formData: Partial<PdfTemplate> = this.emptyForm();
 
   ngOnInit(): void {
     this.loadTemplates();
   }
 
-  private emptyForm(): Partial<PdfTemplate> {
-    return {
-      name: '',
-      description: '',
-      documentType: 'COVER_LETTER',
-      htmlTemplate: '',
-      cssStyles: ''
-    };
-  }
-
   loadTemplates(): void {
     this.loading = true;
-    this.api.getAll().subscribe({
-      next: tpls => { this.templates = tpls; this.loading = false; },
-      error: () => { this.loading = false; this.errorMessage = 'Failed to load templates.'; }
-    });
-  }
-
-  openCreateForm(): void {
-    this.editingTemplate = null;
-    this.formData = this.emptyForm();
-    this.clearMessages();
-    this.showForm = true;
-  }
-
-  openEditForm(tpl: PdfTemplate): void {
-    this.editingTemplate = tpl;
-    this.formData = {
-      name: tpl.name,
-      description: tpl.description ?? '',
-      documentType: tpl.documentType,
-      htmlTemplate: tpl.htmlTemplate,
-      cssStyles: tpl.cssStyles ?? ''
-    };
-    this.clearMessages();
-    this.showForm = true;
-  }
-
-  cancelForm(): void {
-    this.showForm = false;
-    this.editingTemplate = null;
-    this.formData = this.emptyForm();
-    this.clearMessages();
-  }
-
-  save(): void {
-    if (!this.formData.name) return;
-    this.saving = true;
-    this.clearMessages();
-
-    const payload = { ...this.formData };
-    const op = this.editingTemplate
-      ? this.api.update(this.editingTemplate.id, payload)
-      : this.api.create(payload);
-
-    op.subscribe({
-      next: saved => {
-        if (this.editingTemplate) {
-          const idx = this.templates.findIndex(t => t.id === saved.id);
-          if (idx >= 0) this.templates[idx] = saved;
-        } else {
-          this.templates.unshift(saved);
-        }
-        this.saving = false;
-        this.showForm = false;
-        this.editingTemplate = null;
-        this.formData = this.emptyForm();
-        this.successMessage = 'Template saved successfully!';
+    this.api.getActive().subscribe({
+      next: tpls => {
+        this.templates = tpls.length > 0 ? tpls : STRUCTURED_DOCUMENT_TEMPLATES;
+        this.selectedTemplate = this.templates[0] ?? null;
+        this.loading = false;
       },
       error: () => {
-        this.saving = false;
-        this.errorMessage = 'Failed to save template.';
+        this.templates = STRUCTURED_DOCUMENT_TEMPLATES;
+        this.selectedTemplate = this.templates[0] ?? null;
+        this.loading = false;
+        this.errorMessage = 'Loaded local template defaults because the backend catalogue was unavailable.';
       }
     });
   }
 
-  deleteTemplate(tpl: PdfTemplate): void {
-    if (!confirm(`Delete template "${tpl.name}"?`)) return;
-    this.deleting = tpl.id;
-    this.clearMessages();
-    this.api.delete(tpl.id).subscribe({
-      next: () => {
-        this.templates = this.templates.filter(t => t.id !== tpl.id);
-        this.deleting = null;
-        this.successMessage = 'Template deleted.';
-      },
-      error: () => {
-        this.deleting = null;
-        this.errorMessage = 'Failed to delete template.';
+  get templateFamilies(): { familyId: string; familyName: string; templates: DocumentTemplateOption[] }[] {
+    const families = new Map<string, { familyId: string; familyName: string; templates: DocumentTemplateOption[] }>();
+    for (const template of this.templates) {
+      const familyId = template.familyId ?? template.id;
+      if (!families.has(familyId)) {
+        families.set(familyId, {
+          familyId,
+          familyName: template.familyName ?? template.label,
+          templates: []
+        });
       }
-    });
-  }
-
-  preview(): void {
-    const html = this.formData.htmlTemplate ?? '';
-    const css = this.formData.cssStyles ?? '';
-    const rendered = html
-      .replace(/\{\{CSS\}\}/g, css)
-      .replace(/\{\{NAME\}\}/g, 'Jane Doe')
-      .replace(/\{\{EMAIL\}\}/g, 'jane.doe@example.com')
-      .replace(/\{\{PHONE\}\}/g, '+45 12 34 56 78')
-      .replace(/\{\{LOCATION\}\}/g, 'Copenhagen, Denmark')
-      .replace(/\{\{LINKEDIN\}\}/g, 'linkedin.com/in/janedoe')
-      .replace(/\{\{GITHUB\}\}/g, 'github.com/janedoe')
-      .replace(/\{\{HEADLINE\}\}/g, 'Senior Software Engineer')
-      .replace(/\{\{DATE\}\}/g, new Date().toLocaleDateString())
-      .replace(/\{\{CONTENT\}\}/g, 'This is a sample content paragraph that demonstrates how your document will look when rendered with real data.');
-
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.write(rendered);
-      win.document.close();
+      families.get(familyId)?.templates.push(template);
     }
+    return [...families.values()];
   }
 
-  docTypeLabel(type: string): string {
-    const map: Record<string, string> = {
-      COVER_LETTER: 'Cover Letter',
-      APPLICATION_TEXT: 'Application',
-      CV: 'CV'
+  selectTemplate(template: DocumentTemplateOption): void {
+    this.selectedTemplate = template;
+  }
+
+  docTypeList(types: StructuredDocumentType[]): string {
+    return types.map(type => type === 'APPLICATION_TEXT' ? 'Application' : type === 'COVER_LETTER' ? 'Cover Letter' : type).join(', ');
+  }
+
+  get previewDocument(): StructuredDocument {
+    const template = this.selectedTemplate ?? STRUCTURED_DOCUMENT_TEMPLATES[0];
+    const isCv = template.documentTypes.includes('CV');
+    return {
+      documentType: isCv ? 'CV' : 'COVER_LETTER',
+      exportMode: template.exportMode ?? 'DESIGNED',
+      templateId: template.id,
+      identity: {
+        name: 'Jane Doe',
+        headline: 'Senior Software Engineer',
+        email: 'jane.doe@example.com',
+        phone: '+45 12 34 56 78',
+        location: 'Copenhagen, Denmark',
+        linkedinUrl: 'linkedin.com/in/janedoe',
+        githubUrl: 'github.com/janedoe'
+      },
+      options: {
+        showProfileImage: !!template.supportsProfileImage,
+        theme: template.defaultTheme
+      },
+      sections: isCv ? [
+        { id: 'profile', type: 'profile', heading: 'Profile', body: 'Backend-focused engineer with strong product sense, pragmatic architecture habits, and experience turning messy business needs into maintainable systems.', items: [] },
+        { id: 'skills', type: 'skills', heading: 'Skills', items: [
+          { title: 'Java' }, { title: 'Spring Boot' }, { title: 'Angular' }, { title: 'PostgreSQL' }, { title: 'Docker' }
+        ] },
+        { id: 'experience', type: 'experience', heading: 'Experience', items: [
+          {
+            title: 'Senior Software Engineer',
+            subtitle: 'Acme Systems',
+            dateRange: '2021 - Present',
+            description: 'Led backend and frontend delivery for customer-facing workflow products.',
+            bullets: ['Reduced manual processing time by 35% through automated document generation.', 'Designed API contracts used across three product teams.'],
+            technologies: ['Java', 'Spring Boot', 'Angular', 'PostgreSQL']
+          }
+        ] }
+      ] : [],
+      bodyContent: isCv ? undefined : 'Dear Hiring Team,\n\nI am excited to apply for this role because it combines product-minded engineering with practical delivery. My recent work has focused on building maintainable systems, improving document workflows, and translating complex requirements into software that teams can rely on.\n\nI would welcome the chance to discuss how that experience can support your team.'
     };
-    return map[type] ?? type;
-  }
-
-  docTypeBadgeClass(type: string): string {
-    const map: Record<string, string> = {
-      COVER_LETTER: 'bg-purple-100 text-purple-700',
-      APPLICATION_TEXT: 'bg-green-100 text-green-700',
-      CV: 'bg-blue-100 text-blue-700'
-    };
-    return map[type] ?? 'bg-gray-100 text-gray-600';
-  }
-
-  private clearMessages(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
   }
 }

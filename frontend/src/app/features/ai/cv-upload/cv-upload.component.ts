@@ -5,11 +5,13 @@ import { RouterLink } from '@angular/router';
 import { DocumentApiService } from '../../../core/api/document.api';
 import { AiApiService } from '../../../core/api/ai.api';
 import { CvVersion } from '../../../core/models/cv-version.model';
+import { FormActionsComponent } from '../../../shared/components/ui/form-actions.component';
+import { runAction } from '../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-cv-upload',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, FormActionsComponent],
   template: `
     <div class="space-y-6 max-w-2xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900">CV Management</h1>
@@ -58,9 +60,11 @@ import { CvVersion } from '../../../core/models/cv-version.model';
             <textarea formControlName="content" class="input min-h-48 font-mono text-xs"
                       placeholder="# Your Name&#10;...paste your CV content here..."></textarea>
           </div>
-          <button type="submit" [disabled]="form.invalid || loading" class="btn-primary">
-            {{ loading ? 'Uploading...' : 'Upload CV' }}
-          </button>
+          <app-form-actions
+            [showCancel]="false"
+            [disabled]="form.invalid || loading"
+            [saveLabel]="loading ? 'Uploading...' : 'Upload CV'">
+          </app-form-actions>
         </form>
       </div>
 
@@ -106,20 +110,17 @@ export class CvUploadComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) return;
-    this.loading = true;
     this.success = false;
-    this.error = '';
     const { name, content } = this.form.value;
-    this.docApi.uploadCv(name!, content!).subscribe({
+    runAction({
+      action$: this.docApi.uploadCv(name!, content!),
+      setLoading: value => this.loading = value,
+      setError: message => this.error = message,
+      errorMessage: error => (error as any)?.error?.message || 'Upload failed',
       next: cv => {
         this.cvVersions.unshift(cv);
         this.form.reset();
-        this.loading = false;
         this.success = true;
-      },
-      error: e => {
-        this.error = e.error?.message || 'Upload failed';
-        this.loading = false;
       }
     });
   }
@@ -127,7 +128,8 @@ export class CvUploadComponent implements OnInit {
   analyze(cv: CvVersion): void {
     this.analyzing = cv.id;
     this.analysisResult = null;
-    this.aiApi.analyzeCv(cv.id).subscribe({
+    runAction({
+      action$: this.aiApi.analyzeCv(cv.id),
       next: r => {
         this.analysisResult = { score: r.score, suggestions: r.suggestions };
         this.analyzing = null;

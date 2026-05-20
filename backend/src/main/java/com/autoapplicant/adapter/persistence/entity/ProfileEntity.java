@@ -44,6 +44,9 @@ public class ProfileEntity {
     @Column(name = "years_experience")
     private Integer yearsExperience;
 
+    // String[] + StringArrayType maps to PostgreSQL text[] natively.
+    // @ElementCollection is avoided because it would generate a separate join table
+    // and require an extra query; text[] is always loaded with the parent row.
     @Type(StringArrayType.class)
     @Column(columnDefinition = "text[]")
     private String[] skills;

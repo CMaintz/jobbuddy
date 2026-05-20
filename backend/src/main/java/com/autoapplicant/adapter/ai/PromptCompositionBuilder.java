@@ -1,52 +1,34 @@
 package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.domain.document.*;
-import com.autoapplicant.domain.job.Job;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PromptCompositionBuilder {
 
-    public PromptComposition compose(PromptTemplate template, CvVersion cv, Job job, WritingProfile writingProfile) {
-        return compose(template, cv, job, null, writingProfile, null);
-    }
-
-    public PromptComposition compose(PromptTemplate template, CvVersion cv, Job job,
-                                     WritingProfile writingProfile, String targetLanguage) {
-        return compose(template, cv, job, null, writingProfile, targetLanguage);
-    }
-
-    public PromptComposition compose(PromptTemplate template, CvVersion cv, Job job,
-                                     String rawJobDescription, WritingProfile writingProfile, String targetLanguage) {
-        String legacyCvContext = cv != null ? "## CV\n" + cv.content() : "";
-        return compose(template, job, rawJobDescription, writingProfile, targetLanguage, legacyCvContext);
-    }
-
-    public PromptComposition compose(PromptTemplate template, Job job,
-                                     String rawJobDescription, WritingProfile writingProfile,
-                                     String targetLanguage, String contactFreeCareerProfileJson) {
-        String baseSystem = template.systemPrompt() != null ? template.systemPrompt() : defaultSystemPrompt();
-        String systemPrompt = targetLanguage != null && !targetLanguage.isBlank()
-                ? baseSystem + "\nAlways write the output in " + targetLanguage + "."
+    public PromptComposition compose(PromptCompositionRequest req) {
+        String baseSystem = req.template().systemPrompt() != null ? req.template().systemPrompt() : defaultSystemPrompt();
+        String systemPrompt = req.targetLanguage() != null && !req.targetLanguage().isBlank()
+                ? baseSystem + "\nAlways write the output in " + req.targetLanguage() + "."
                 : baseSystem;
-        String cvContext = contactFreeCareerProfileJson != null && !contactFreeCareerProfileJson.isBlank()
-                ? "## Contact-Free Master Career Profile JSON\n" + contactFreeCareerProfileJson
+        String cvContext = req.contactFreeCareerProfileJson() != null && !req.contactFreeCareerProfileJson().isBlank()
+                ? "## Contact-Free Master Career Profile JSON\n" + req.contactFreeCareerProfileJson()
                 : "";
-        String jobDescText = job != null ? job.descriptionClean()
-                : (rawJobDescription != null && !rawJobDescription.isBlank() ? rawJobDescription : null);
+        String jobDescText = req.job() != null ? req.job().descriptionClean()
+                : (req.rawJobDescription() != null && !req.rawJobDescription().isBlank() ? req.rawJobDescription() : null);
         String jobDesc = jobDescText != null ? "## Job Description\n" + jobDescText : "";
-        String styleMemory = buildStyleMemory(writingProfile);
-        String outputConstraints = template.outputConstraints() != null ? template.outputConstraints() : "";
+        String styleMemory = buildStyleMemory(req.writingProfile());
+        String outputConstraints = req.template().outputConstraints() != null ? req.template().outputConstraints() : "";
 
         String finalPrompt = String.join("\n\n",
-                template.userPrompt(),
+                req.template().userPrompt(),
                 cvContext,
                 jobDesc,
                 styleMemory,
                 outputConstraints
         ).trim();
 
-        return new PromptComposition(systemPrompt, template.userPrompt(), cvContext,
+        return new PromptComposition(systemPrompt, req.template().userPrompt(), cvContext,
                 jobDesc, styleMemory, outputConstraints, finalPrompt);
     }
 
@@ -81,6 +63,11 @@ public class PromptCompositionBuilder {
                 You are an expert career coach and professional writer specializing in job applications.
                 The career profile context intentionally excludes the user's name, contact information, profile image,
                 LinkedIn URL, GitHub URL, and website URL. Do not ask for, infer, invent, or output those private identity fields.
+
+                When the profile includes `spokenLanguages`, treat them as a dedicated CV section (e.g. "Languages").
+                When the profile includes `skills` tagged as soft skills (Communication, Leadership, etc.),
+                use them as context to enrich descriptions — do not list them in a standalone "Soft Skills" section on the CV.
+                When writing cover letters or application texts, weave soft skills naturally into achievement narratives.
                 Return ONLY valid JSON — no markdown fences, no commentary.
                 """ + languageInstruction;
 

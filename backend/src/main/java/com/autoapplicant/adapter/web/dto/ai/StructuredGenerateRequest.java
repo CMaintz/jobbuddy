@@ -1,5 +1,7 @@
 package com.autoapplicant.adapter.web.dto.ai;
 
+import com.autoapplicant.adapter.web.dto.DocumentThemeRequest;
+
 import java.util.UUID;
 
 public record StructuredGenerateRequest(
@@ -7,5 +9,7 @@ public record StructuredGenerateRequest(
         String jobDescription,
         String customInstructions,
         String targetLanguage,
-        String templateId
+        String templateId,
+        Boolean showProfileImage,
+        DocumentThemeRequest theme
 ) {}

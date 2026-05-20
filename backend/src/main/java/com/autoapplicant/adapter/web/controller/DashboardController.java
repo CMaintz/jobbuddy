@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.analytics.DashboardData;
 import com.autoapplicant.port.in.analytics.GetDashboardUseCase;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class DashboardController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "Get dashboard summary data")
     @GetMapping
     public ResponseEntity<DashboardData> dashboard() {
         return ResponseEntity.ok(getDashboard.getDashboard(secCtx.getCurrentUserId()));

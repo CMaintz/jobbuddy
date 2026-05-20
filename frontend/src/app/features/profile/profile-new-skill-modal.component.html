@@ -1,0 +1,21 @@
+<!-- New Skill Category Prompt Modal -->
+      @if (vm.pendingNewSkill) {
+        <app-modal-shell title="New skill: {{ vm.pendingNewSkill.name }}" (closed)="vm.pendingNewSkill = null">
+            <p class="text-sm text-gray-500 mb-4">This skill isn't in the database yet. What type is it?</p>
+            <select [(ngModel)]="vm.pendingNewSkillCategory" class="input text-sm mb-4">
+              <option value="">Select category...</option>
+              <option *ngFor="let c of vm.availableCategories" [value]="c">{{ c }}</option>
+            </select>
+            <div class="flex gap-3">
+              <button (click)="vm.createSkillForSection()"
+                      [disabled]="!vm.pendingNewSkillCategory"
+                      class="btn-primary flex-1 text-sm disabled:opacity-50">
+                Create &amp; Add
+              </button>
+              <button (click)="vm.pendingNewSkill = null"
+                      class="btn-secondary text-sm">
+                Cancel
+              </button>
+            </div>
+        </app-modal-shell>
+      }

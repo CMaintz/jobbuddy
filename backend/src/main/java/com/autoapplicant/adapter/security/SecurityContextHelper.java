@@ -9,8 +9,13 @@ import java.util.UUID;
 public class SecurityContextHelper {
 
     public UUID getCurrentUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UUID) return (UUID) principal;
-        return UUID.fromString(principal.toString());
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new IllegalStateException("No authenticated user in security context");
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof UUID uuid) return uuid;
+        if (principal instanceof String str) return UUID.fromString(str);
+        throw new IllegalStateException("Unexpected principal type: " + principal.getClass().getName());
     }
 }

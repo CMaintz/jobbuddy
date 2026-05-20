@@ -4,11 +4,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PromptApiService } from '../../../core/api/prompt.api';
 import { PromptCategory } from '../../../core/models/prompt-template.model';
+import { FormActionsComponent } from '../../../shared/components/ui/form-actions.component';
+import { runAction } from '../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-prompt-editor',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, FormActionsComponent],
   template: `
     <div class="space-y-6 max-w-2xl mx-auto">
       <a routerLink="/prompts" class="text-sm text-blue-600 hover:underline">← Back to templates</a>
@@ -71,12 +73,11 @@ import { PromptCategory } from '../../../core/models/prompt-template.model';
                    placeholder="Max 400 words, professional tone..." />
           </div>
 
-          <div class="flex gap-3 pt-2">
-            <button type="submit" [disabled]="form.invalid || loading" class="btn-primary">
-              {{ loading ? 'Saving...' : 'Save Template' }}
-            </button>
-            <a routerLink="/prompts" class="btn-secondary">Cancel</a>
-          </div>
+          <app-form-actions
+            [disabled]="form.invalid || loading"
+            [saveLabel]="loading ? 'Saving...' : 'Save Template'"
+            (cancel)="cancel()">
+          </app-form-actions>
         </form>
       </div>
     </div>
@@ -102,23 +103,25 @@ export class PromptEditorComponent {
 
   submit(): void {
     if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
     const v = this.form.value;
-    this.api.create({
-      name: v.name!,
-      category: (v.category || undefined) as PromptCategory | undefined,
-      description: v.description || undefined,
-      systemPrompt: v.systemPrompt || undefined,
-      userPrompt: v.userPrompt!,
-      outputConstraints: v.outputConstraints || undefined,
-      isPublic: v.isPublic ?? false
-    }).subscribe({
+    runAction({
+      action$: this.api.create({
+        name: v.name!,
+        category: (v.category || undefined) as PromptCategory | undefined,
+        description: v.description || undefined,
+        systemPrompt: v.systemPrompt || undefined,
+        userPrompt: v.userPrompt!,
+        outputConstraints: v.outputConstraints || undefined,
+        isPublic: v.isPublic ?? false
+      }),
+      setLoading: value => this.loading = value,
+      setError: message => this.error = message,
+      errorMessage: error => (error as any)?.error?.message || 'Save failed',
       next: () => this.router.navigate(['/prompts']),
-      error: e => {
-        this.error = e.error?.message || 'Save failed';
-        this.loading = false;
-      }
     });
+  }
+
+  cancel(): void {
+    this.router.navigate(['/prompts']);
   }
 }

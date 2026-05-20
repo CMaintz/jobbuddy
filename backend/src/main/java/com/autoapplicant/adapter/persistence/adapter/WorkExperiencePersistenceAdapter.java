@@ -6,27 +6,25 @@ import com.autoapplicant.adapter.persistence.repository.WorkExperienceJpaReposit
 import com.autoapplicant.adapter.persistence.repository.WorkExperienceSkillJpaRepository;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.WorkExperience;
-import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class WorkExperiencePersistenceAdapter implements WorkExperienceRepositoryPort {
 
     private final WorkExperienceJpaRepository repo;
     private final WorkExperienceSkillJpaRepository skillRepo;
-    private final SkillTaxonomyRepositoryPort taxonomyRepo;
+    private final SectionSkillLoader skillLoader;
 
     public WorkExperiencePersistenceAdapter(WorkExperienceJpaRepository repo,
                                              WorkExperienceSkillJpaRepository skillRepo,
-                                             SkillTaxonomyRepositoryPort taxonomyRepo) {
+                                             SectionSkillLoader skillLoader) {
         this.repo = repo;
         this.skillRepo = skillRepo;
-        this.taxonomyRepo = taxonomyRepo;
+        this.skillLoader = skillLoader;
     }
 
     @Override
@@ -65,21 +63,13 @@ public class WorkExperiencePersistenceAdapter implements WorkExperienceRepositor
     private List<WorkExperience> loadWithSkills(
             List<com.autoapplicant.adapter.persistence.entity.WorkExperienceEntity> entities) {
         if (entities.isEmpty()) return List.of();
-        Set<UUID> ids = entities.stream()
-                .map(com.autoapplicant.adapter.persistence.entity.WorkExperienceEntity::getId)
-                .collect(Collectors.toSet());
+        Set<UUID> ids = new HashSet<>();
+        for (var e : entities) ids.add(e.getId());
         List<WorkExperienceSkillEntity> links = skillRepo.findByWorkExperienceIdIn(ids);
-        Set<UUID> taxIds = links.stream()
-                .map(WorkExperienceSkillEntity::getTaxonomyId)
-                .collect(Collectors.toSet());
-        Map<UUID, SkillTaxonomy> taxById = taxonomyRepo.findByIds(taxIds).stream()
-                .collect(Collectors.toMap(SkillTaxonomy::id, s -> s));
-        Map<UUID, List<SkillTaxonomy>> skillsByWeId = links.stream()
-                .collect(Collectors.groupingBy(
-                        WorkExperienceSkillEntity::getWorkExperienceId,
-                        Collectors.mapping(
-                                l -> taxById.get(l.getTaxonomyId()),
-                                Collectors.filtering(Objects::nonNull, Collectors.toList()))));
+        Map<UUID, List<SkillTaxonomy>> skillsByWeId = skillLoader.resolve(
+                links,
+                WorkExperienceSkillEntity::getWorkExperienceId,
+                WorkExperienceSkillEntity::getTaxonomyId);
         return entities.stream()
                 .map(e -> ProfileSectionMapper.toDomain(e,
                         skillsByWeId.getOrDefault(e.getId(), List.of())))

@@ -7,27 +7,21 @@ import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/o
 import { HttpClient } from '@angular/common/http';
 import { JobsApiService } from '../../../core/api/jobs.api';
 import { Job } from '../../../core/models/job.model';
-
-const FILTERS_KEY = 'aa_job_filters';
-
-interface JobFilters {
-  remoteTypes: string[];
-  employmentTypes: string[];
-  seniorities: string[];
-  salaryMin: number | null;
-  salaryMax: number | null;
-  technologies: string;
-}
-
-const DEFAULT_FILTERS: JobFilters = {
-  remoteTypes: [], employmentTypes: [], seniorities: [],
-  salaryMin: null, salaryMax: null, technologies: ''
-};
+import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
+import { runAction } from '../../../shared/utils/async-ui';
+import {
+  DEFAULT_JOB_FILTERS,
+  EMPLOYMENT_OPTIONS,
+  JobFilters,
+  JOB_FILTERS_KEY,
+  REMOTE_OPTIONS,
+  SENIORITY_OPTIONS
+} from '../job-list.filters';
 
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, FormsModule, EmptyStateComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -135,7 +129,7 @@ const DEFAULT_FILTERS: JobFilters = {
       @if (loading) {
         <div class="text-center py-12 text-gray-500">Loading jobs...</div>
       } @else if (filteredJobs.length === 0) {
-        <div class="text-center py-12 text-gray-500">No jobs found.</div>
+        <app-empty-state message="No jobs found."></app-empty-state>
       } @else {
         <div class="space-y-3">
           @for (job of filteredJobs; track job.id) {
@@ -216,26 +210,10 @@ export class JobsListComponent implements OnInit {
   loading = false;
   showFilters = false;
 
-  filters: JobFilters = { ...DEFAULT_FILTERS };
-
-  remoteOptions = [
-    { value: 'FULLY_REMOTE', label: 'Fully remote' },
-    { value: 'HYBRID', label: 'Hybrid' },
-    { value: 'ON_SITE', label: 'On-site' }
-  ];
-  employmentOptions = [
-    { value: 'FULL_TIME', label: 'Full-time' },
-    { value: 'PART_TIME', label: 'Part-time' },
-    { value: 'CONTRACT', label: 'Contract' },
-    { value: 'FREELANCE', label: 'Freelance' }
-  ];
-  seniorityOptions = [
-    { value: 'JUNIOR', label: 'Junior' },
-    { value: 'MID', label: 'Mid' },
-    { value: 'SENIOR', label: 'Senior' },
-    { value: 'LEAD', label: 'Lead' },
-    { value: 'PRINCIPAL', label: 'Principal' }
-  ];
+  filters: JobFilters = { ...DEFAULT_JOB_FILTERS };
+  remoteOptions = REMOTE_OPTIONS;
+  employmentOptions = EMPLOYMENT_OPTIONS;
+  seniorityOptions = SENIORITY_OPTIONS;
 
   get filteredJobs(): Job[] {
     return this.jobs.filter(j => {
@@ -261,16 +239,16 @@ export class JobsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const saved = localStorage.getItem(FILTERS_KEY);
+    const saved = localStorage.getItem(JOB_FILTERS_KEY);
     if (saved) {
-      try { this.filters = { ...DEFAULT_FILTERS, ...JSON.parse(saved) }; } catch {}
+      try { this.filters = { ...DEFAULT_JOB_FILTERS, ...JSON.parse(saved) }; } catch {}
     } else {
       // Pre-populate from user preferences if no saved filters
       this.http.get<any>('/api/v1/users/me/preferences').subscribe({
         next: prefs => {
-          if (!localStorage.getItem(FILTERS_KEY)) {
+          if (!localStorage.getItem(JOB_FILTERS_KEY)) {
             this.filters = {
-              ...DEFAULT_FILTERS,
+              ...DEFAULT_JOB_FILTERS,
               remoteTypes: prefs.preferredRemoteTypes ?? [],
               employmentTypes: prefs.preferredEmploymentTypes ?? [],
               seniorities: prefs.preferredSeniority ?? [],
@@ -316,26 +294,25 @@ export class JobsListComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.filters = { ...DEFAULT_FILTERS };
-    localStorage.removeItem(FILTERS_KEY);
+    this.filters = { ...DEFAULT_JOB_FILTERS };
+    localStorage.removeItem(JOB_FILTERS_KEY);
   }
 
   private saveFilters(): void {
-    localStorage.setItem(FILTERS_KEY, JSON.stringify(this.filters));
+    localStorage.setItem(JOB_FILTERS_KEY, JSON.stringify(this.filters));
   }
 
   loadPage(p: number): void {
     this.page = p;
     const q = this.searchCtrl.value ?? '';
-    this.loading = true;
     const obs: Observable<any> = q ? this.api.search(q, p, this.pageSize) : this.api.getJobs(p, this.pageSize);
-    obs.subscribe({
+    runAction({
+      action$: obs,
+      setLoading: value => this.loading = value,
       next: (res: any) => {
         this.jobs = res.jobs ?? res.content ?? [];
         this.total = res.total ?? res.totalElements ?? 0;
-        this.loading = false;
-      },
-      error: () => this.loading = false
+      }
     });
   }
 
