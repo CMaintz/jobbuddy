@@ -14,6 +14,7 @@ public record Application(
         String coverLetterText,
         String applicationText,
         String recruiterMessage,
+        String recruiterReply,
         UUID cvVersionId,
         UUID promptTemplateId,
         Integer matchScore,

@@ -1,9 +1,11 @@
 package com.autoapplicant.usecase.auth;
 
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserRole;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
+import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import org.springframework.stereotype.Service;
@@ -16,10 +18,13 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
 
     private final UserRepositoryPort userRepo;
     private final ProfileRepositoryPort profileRepo;
+    private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
 
-    public LinkedInAuthService(UserRepositoryPort userRepo, ProfileRepositoryPort profileRepo) {
+    public LinkedInAuthService(UserRepositoryPort userRepo, ProfileRepositoryPort profileRepo,
+                               ProfilePrivateInfoRepositoryPort privateInfoRepo) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
+        this.privateInfoRepo = privateInfoRepo;
     }
 
     @Override
@@ -44,11 +49,16 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
         User newUser = new User(null, email, null, linkedinSub, null, UserRole.USER, true, null, null);
         User savedUser = userRepo.save(newUser);
 
-        Profile profile = new Profile(null, savedUser.id(), fullName, null, null,
-                null, null, null, null, null, null, null, null,
+        Profile profile = new Profile(null, savedUser.id(), null, null, null,
                 List.of(), List.of(), List.of(),
                 null, null, "DKK", null, null, null, null);
         profileRepo.save(profile);
+
+        if (fullName != null && !fullName.isBlank()) {
+            ProfilePrivateInfo privateInfo = new ProfilePrivateInfo(null, savedUser.id(),
+                    fullName, null, null, null, null, null, null, null);
+            privateInfoRepo.save(privateInfo);
+        }
 
         return savedUser;
     }

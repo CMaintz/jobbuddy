@@ -4,7 +4,9 @@ import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
+import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
+import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class StructuredGeneratedDocumentService {
+public class StructuredGeneratedDocumentService implements PersistGeneratedDocumentUseCase, PersistGeneratedDocumentPort {
 
     private final GeneratedDocumentRepositoryPort documents;
     private final ObjectMapper objectMapper;
@@ -26,6 +28,7 @@ public class StructuredGeneratedDocumentService {
         this.objectMapper = objectMapper;
     }
 
+    @Override
     public StructuredDocument save(UUID userId, UUID jobId, StructuredDocument document, String modelUsed) {
         GeneratedDocument existing = document.generatedDocumentId() != null
                 ? documents.findByIdAndUserId(document.generatedDocumentId(), userId).orElse(null)
@@ -51,6 +54,11 @@ public class StructuredGeneratedDocumentService {
                 existing != null ? existing.createdAt() : Instant.now()));
 
         return withGeneratedDocumentId(document, saved.id());
+    }
+
+    @Override
+    public List<GeneratedDocument> listByUserId(UUID userId) {
+        return documents.findByUserId(userId);
     }
 
     public GeneratedDocument attachToApplication(UUID userId, UUID generatedDocumentId, UUID applicationId) {

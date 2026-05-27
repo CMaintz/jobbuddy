@@ -5,10 +5,13 @@ import com.autoapplicant.adapter.persistence.repository.CompanyJpaRepository;
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanySize;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
@@ -43,6 +46,19 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
                     e.setName(name);
                     return toDomain(repo.save(e));
                 });
+    }
+
+    @Override
+    public List<Company> search(String query, int page, int size) {
+        return repo.findByNameContainingIgnoreCase(query, PageRequest.of(page, size))
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Company> findBySlug(String slug) {
+        return repo.findBySlug(slug).map(this::toDomain);
     }
 
     private Company toDomain(CompanyEntity e) {

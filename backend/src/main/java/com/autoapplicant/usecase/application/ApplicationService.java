@@ -21,7 +21,7 @@ import java.util.UUID;
 @Service
 public class ApplicationService implements
         CreateApplicationUseCase, UpdateApplicationStatusUseCase,
-        GetApplicationsUseCase, GetApplicationByIdUseCase {
+        UpdateRecruiterInfoUseCase, GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
     private final ResponseMetricRepositoryPort responseMetricRepo;
@@ -48,7 +48,7 @@ public class ApplicationService implements
         Application app = new Application(null, command.userId(), command.jobId(), status,
                 status == ApplicationStatus.APPLIED ? Instant.now() : null,
                 null, null, command.coverLetterText(), command.applicationText(), command.recruiterMessage(),
-                command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null);
+                null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null);
         Application saved = repo.save(app);
         if (command.generatedDocumentId() != null) {
             structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
@@ -69,7 +69,7 @@ public class ApplicationService implements
                 targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null ? Instant.now() : withContent.appliedAt(),
                 withContent.recruiterName(), withContent.recruiterEmail(),
                 withContent.coverLetterText(), withContent.applicationText(), withContent.recruiterMessage(),
-                withContent.cvVersionId(), withContent.promptTemplateId(), withContent.matchScore(),
+                withContent.recruiterReply(), withContent.cvVersionId(), withContent.promptTemplateId(), withContent.matchScore(),
                 notes != null ? notes : withContent.notes(),
                 withContent.createdAt(), Instant.now());
         return repo.save(updated);
@@ -96,7 +96,7 @@ public class ApplicationService implements
                 application.id(), application.userId(), application.jobId(), application.status(),
                 application.appliedAt(), application.recruiterName(), application.recruiterEmail(),
                 coverLetterText, applicationText, recruiterMessage,
-                application.cvVersionId(), application.promptTemplateId(), application.matchScore(),
+                application.recruiterReply(), application.cvVersionId(), application.promptTemplateId(), application.matchScore(),
                 application.notes(), application.createdAt(), application.updatedAt());
     }
 
@@ -115,7 +115,7 @@ public class ApplicationService implements
                 newStatus == ApplicationStatus.APPLIED ? java.time.Instant.now() : existing.appliedAt(),
                 existing.recruiterName(), existing.recruiterEmail(),
                 existing.coverLetterText(), existing.applicationText(), existing.recruiterMessage(),
-                existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
+                existing.recruiterReply(), existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
                 notes != null ? notes : existing.notes(),
                 existing.createdAt(), java.time.Instant.now());
         Application saved = repo.save(updated);
@@ -135,6 +135,25 @@ public class ApplicationService implements
         }
 
         return saved;
+    }
+
+    @Override
+    public Application updateRecruiterInfo(UUID applicationId, UUID userId,
+                                           String recruiterName, String recruiterEmail,
+                                           String recruiterMessage, String recruiterReply) {
+        Application existing = repo.findByIdAndUserId(applicationId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        Application updated = new Application(
+                existing.id(), existing.userId(), existing.jobId(), existing.status(),
+                existing.appliedAt(),
+                recruiterName    != null ? recruiterName    : existing.recruiterName(),
+                recruiterEmail   != null ? recruiterEmail   : existing.recruiterEmail(),
+                existing.coverLetterText(), existing.applicationText(),
+                recruiterMessage != null ? recruiterMessage : existing.recruiterMessage(),
+                recruiterReply   != null ? recruiterReply   : existing.recruiterReply(),
+                existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
+                existing.notes(), existing.createdAt(), Instant.now());
+        return repo.save(updated);
     }
 
     @Override

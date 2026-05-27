@@ -17,5 +17,6 @@ public record JobSearchFilters(
         List<String> technologies,
         List<Seniority> seniority,
         List<EmploymentType> employmentTypes,
-        Instant postedAfter
+        Instant postedAfter,
+        List<String> jobCategories
 ) {}

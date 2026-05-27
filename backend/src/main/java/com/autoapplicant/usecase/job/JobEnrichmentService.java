@@ -1,11 +1,14 @@
 package com.autoapplicant.usecase.job;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobCategory;
+import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -14,32 +17,65 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class JobEnrichmentService {
+public class JobEnrichmentService implements EnrichJobUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(JobEnrichmentService.class);
     private final AiProviderPort aiProvider;
     private final ObjectMapper objectMapper;
 
-    public JobEnrichmentService(AiProviderPort aiProvider, ObjectMapper objectMapper) {
+    public JobEnrichmentService(@Qualifier("enrichmentAiProvider") AiProviderPort aiProvider, ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
     }
 
+    private static final int MAX_ENRICHMENT_RETRIES = 3;
+    private static final java.util.regex.Pattern RETRY_DELAY_PATTERN =
+            java.util.regex.Pattern.compile("retry in ([0-9]+(?:\\.[0-9]+)?)s");
+
     @Async("aiTaskExecutor")
     public CompletableFuture<Job> enrich(Job job) {
-        try {
-            String prompt = buildEnrichmentPrompt(job);
-            com.autoapplicant.domain.document.PromptComposition composition =
-                    new com.autoapplicant.domain.document.PromptComposition(
-                            "You are a job data enrichment assistant. Respond only with JSON.",
-                            prompt, "", "", "", "", prompt
-                    );
-            String response = aiProvider.generate(composition);
-            return CompletableFuture.completedFuture(applyEnrichment(job, response));
-        } catch (Exception e) {
-            log.warn("AI enrichment failed for job {}: {}", job.id(), e.getMessage());
-            return CompletableFuture.completedFuture(job);
+        for (int attempt = 0; attempt < MAX_ENRICHMENT_RETRIES; attempt++) {
+            try {
+                String prompt = buildEnrichmentPrompt(job);
+                com.autoapplicant.domain.document.PromptComposition composition =
+                        new com.autoapplicant.domain.document.PromptComposition(
+                                "You are a job data enrichment assistant. Respond only with JSON.",
+                                prompt, "", "", "", "", prompt
+                        );
+                String response = aiProvider.generate(composition);
+                return CompletableFuture.completedFuture(applyEnrichment(job, response));
+            } catch (Exception e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "";
+                long retryMs = parseRetryDelayMs(msg);
+                if (retryMs > 0 && attempt < MAX_ENRICHMENT_RETRIES - 1) {
+                    log.warn("AI enrichment rate-limited for job {} (attempt {}/{}), waiting {}ms",
+                            job.id(), attempt + 1, MAX_ENRICHMENT_RETRIES, retryMs);
+                    try {
+                        Thread.sleep(retryMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    log.warn("AI enrichment failed for job {}: {}", job.id(), msg);
+                    break;
+                }
+            }
         }
+        return CompletableFuture.completedFuture(job);
+    }
+
+    /** Parses the Gemini "Please retry in 46.7s" hint from a 429 error message. */
+    private long parseRetryDelayMs(String errorMessage) {
+        java.util.regex.Matcher m = RETRY_DELAY_PATTERN.matcher(errorMessage);
+        if (m.find()) {
+            return (long) (Double.parseDouble(m.group(1)) * 1000) + 1000; // +1s buffer
+        }
+        if (errorMessage.contains("429") || errorMessage.contains("RESOURCE_EXHAUSTED")
+                || errorMessage.contains("quota")) {
+            return 60_000L; // conservative fallback
+        }
+        return 0;
     }
 
     private String buildEnrichmentPrompt(Job job) {
@@ -56,7 +92,8 @@ public class JobEnrichmentService {
                   "salaryMin": null,
                   "salaryMax": null,
                   "currency": null,
-                  "municipality": "primary Danish municipality name or null"
+                  "municipality": "primary Danish municipality name or null",
+                  "jobCategory": "SOFTWARE_IT|DATA_ANALYTICS|DESIGN_UX|MARKETING|SALES|FINANCE|HR|ENGINEERING|OPERATIONS_LOGISTICS|CUSTOMER_SERVICE|LEGAL|HEALTHCARE|MANAGEMENT|EDUCATION|CREATIVE_MEDIA|OTHER"
                 }
 
                 Rules:
@@ -64,6 +101,7 @@ public class JobEnrichmentService {
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
                 - Only include salary if numbers are explicitly stated in the posting
                 - municipality: match to a known Danish kommune name (e.g. "København", "Aarhus", "Odense")
+                - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits.
 
                 Job title: %s
                 Company: %s
@@ -121,6 +159,16 @@ public class JobEnrichmentService {
                     : parsed.get("salaryMax") instanceof Number n ? n.intValue() : null;
             String currency = job.currency() != null ? job.currency() : (String) parsed.get("currency");
 
+            // AI category fallback: only apply if programmatic classifier returned null or OTHER
+            JobCategory jobCategory = job.jobCategory();
+            if (jobCategory == null || jobCategory == JobCategory.OTHER) {
+                String rawCategory = (String) parsed.get("jobCategory");
+                if (rawCategory != null) {
+                    try { jobCategory = JobCategory.valueOf(rawCategory); }
+                    catch (IllegalArgumentException ignored) {}
+                }
+            }
+
             return new Job(job.id(), job.source(), job.sourceJobId(), job.url(), job.title(),
                     job.companyId(), job.companyName(), job.descriptionRaw(), job.descriptionClean(),
                     employmentType, job.seniority(), remoteType,
@@ -129,7 +177,7 @@ public class JobEnrichmentService {
                     mergedTech, mergedSkills, job.languages(),
                     job.postedAt(), job.scrapedAt(),
                     summary, tags, aiSeniority,
-                    job.duplicateGroupId(), job.isActive(), job.createdAt(), job.updatedAt());
+                    job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt());
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
             return job;

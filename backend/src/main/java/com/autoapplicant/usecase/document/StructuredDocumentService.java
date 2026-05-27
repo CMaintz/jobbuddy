@@ -1,12 +1,22 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfilePrivateInfo;
+import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.domain.user.User;
+import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
+import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
+import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
+import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
+import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +25,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class StructuredDocumentService {
+public class StructuredDocumentService implements GetCvRenderModelUseCase, GenerateTailoredCvUseCase,
+        BuildApplicationDocumentUseCase, BuildApplicationDocumentPort {
+
+    private static final String CV_TAILORING_CATEGORY = "CV_TAILORING";
 
     private final UserRepositoryPort userRepo;
     private final ProfileRepositoryPort profileRepo;
+    private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
+    private final ProfileSocialRepositoryPort socialRepo;
     private final JobRepositoryPort jobRepo;
+    private final PromptTemplateRepositoryPort promptTemplateRepo;
     private final CareerProfileContextService careerProfileContext;
     private final CvDocumentAssembler cvAssembler;
     private final TailoredCvGenerator tailoredCvGenerator;
@@ -27,14 +43,20 @@ public class StructuredDocumentService {
 
     public StructuredDocumentService(UserRepositoryPort userRepo,
                                      ProfileRepositoryPort profileRepo,
+                                     ProfilePrivateInfoRepositoryPort privateInfoRepo,
+                                     ProfileSocialRepositoryPort socialRepo,
                                      JobRepositoryPort jobRepo,
+                                     PromptTemplateRepositoryPort promptTemplateRepo,
                                      CareerProfileContextService careerProfileContext,
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
                                      AtsReportBuilder atsReportBuilder) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
+        this.privateInfoRepo = privateInfoRepo;
+        this.socialRepo = socialRepo;
         this.jobRepo = jobRepo;
+        this.promptTemplateRepo = promptTemplateRepo;
         this.careerProfileContext = careerProfileContext;
         this.cvAssembler = cvAssembler;
         this.tailoredCvGenerator = tailoredCvGenerator;
@@ -49,22 +71,17 @@ public class StructuredDocumentService {
         return buildCv(userId, templateId, showProfileImage, DocumentTheme.defaults());
     }
 
+    @Override
     public StructuredDocument buildCv(UUID userId, String templateId, boolean showProfileImage, DocumentTheme theme) {
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
+        ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
+        List<ProfileSocial> socials = socialRepo.findByUserId(userId);
         User user = userRepo.findById(userId).orElse(null);
         CareerProfileForAi source = careerProfileContext.build(userId);
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
-        return cvAssembler.assemble(user, profile, source, null,
+        return cvAssembler.assemble(user, profile, privateInfo, socials, source, null,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
                 showProfileImage, resolveTheme(theme));
-    }
-
-    /** @deprecated Use {@link #buildCv(UUID, String)} — exportMode is now derived from templateId */
-    @Deprecated
-    public StructuredDocument buildCv(UUID userId, String exportMode, String templateId) {
-        String resolvedTemplate = templateId != null && !templateId.isBlank()
-                ? templateId : defaultCvTemplate(exportMode);
-        return buildCv(userId, resolvedTemplate, false);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
@@ -77,6 +94,7 @@ public class StructuredDocumentService {
         return buildApplicationDocument(userId, type, content, templateId, null, null, null, showProfileImage);
     }
 
+    @Override
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId, boolean showProfileImage,
                                                        DocumentTheme theme) {
@@ -93,6 +111,7 @@ public class StructuredDocumentService {
                 missingKeywords, showProfileImage, DocumentTheme.defaults());
     }
 
+    @Override
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId,
                                                        Integer keywordCoverage,
@@ -106,13 +125,15 @@ public class StructuredDocumentService {
                 ? atsReportBuilder.forCoverage(keywordCoverage, matchedKeywords, missingKeywords, exportMode)
                 : atsReportBuilder.basic(content, exportMode);
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
+        ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
+        List<ProfileSocial> socials = socialRepo.findByUserId(userId);
         User user = userRepo.findById(userId).orElse(null);
         return new StructuredDocument(
                 null,
                 type,
                 exportMode,
                 resolvedTemplate,
-                cvAssembler.buildIdentity(user, profile),
+                cvAssembler.buildIdentity(user, profile, privateInfo, socials),
                 new DocumentRenderOptions(showProfileImage, resolveTheme(theme)),
                 List.of(),
                 content != null ? content : "",
@@ -122,39 +143,43 @@ public class StructuredDocumentService {
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
                                                  String templateId) {
-        return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage, templateId, false);
+        return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage,
+                templateId, null, false, DocumentTheme.defaults());
     }
 
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
                                                  String templateId, boolean showProfileImage) {
         return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage,
-                templateId, showProfileImage, DocumentTheme.defaults());
+                templateId, null, showProfileImage, DocumentTheme.defaults());
     }
 
+    @Override
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
-                                                 String templateId, boolean showProfileImage,
-                                                 DocumentTheme theme) {
+                                                 String templateId, UUID promptTemplateId,
+                                                 boolean showProfileImage, DocumentTheme theme) {
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
+        ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
+        List<ProfileSocial> socials = socialRepo.findByUserId(userId);
         User user = userRepo.findById(userId).orElse(null);
         CareerProfileForAi source = careerProfileContext.build(userId);
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
         String jobDescription = resolveJobDescription(jobId, rawJobDescription);
-        TailoredCvContent tailored = tailoredCvGenerator.generate(source, jobDescription, customInstructions, targetLanguage);
-        return cvAssembler.assemble(user, profile, source, tailored,
+        PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
+        TailoredCvContent tailored = tailoredCvGenerator.generate(
+                source, jobDescription, customInstructions, targetLanguage, promptTemplate);
+        return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
                 showProfileImage, resolveTheme(theme));
     }
 
-    /** @deprecated Use {@link #generateTailoredCv(UUID, UUID, String, String, String, String)} */
-    @Deprecated
-    public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
-                                                 String customInstructions, String targetLanguage,
-                                                 String exportMode, String templateId) {
-        String resolvedTemplate = templateId != null && !templateId.isBlank()
-                ? templateId : defaultCvTemplate(exportMode);
-        return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage, resolvedTemplate, false);
+    /** Loads the prompt template by explicit ID, or falls back to the system default for the category. */
+    private PromptTemplate resolvePromptTemplate(UUID promptTemplateId, String fallbackCategory) {
+        if (promptTemplateId != null) {
+            return promptTemplateRepo.findById(promptTemplateId).orElse(null);
+        }
+        return promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
     }
 
     private String resolveJobDescription(UUID jobId, String rawJobDescription) {
@@ -169,10 +194,6 @@ public class StructuredDocumentService {
 
     private static String resolveTemplate(String templateId, String defaultTemplate) {
         return templateId != null && !templateId.isBlank() ? templateId : defaultTemplate;
-    }
-
-    private static String defaultCvTemplate(String exportMode) {
-        return "DESIGNED".equalsIgnoreCase(exportMode) ? "cv-modern-professional" : "cv-ats-classic";
     }
 
     private static String exportModeFromTemplate(String templateId) {

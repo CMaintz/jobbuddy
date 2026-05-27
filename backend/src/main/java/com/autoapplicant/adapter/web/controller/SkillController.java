@@ -3,13 +3,16 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.port.in.skills.GetSkillGapUseCase;
 import com.autoapplicant.port.in.skills.GetSkillTaxonomyUseCase;
 import com.autoapplicant.port.in.skills.ManageProfileSkillsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,12 +22,14 @@ public class SkillController {
 
     private final GetSkillTaxonomyUseCase taxonomy;
     private final ManageProfileSkillsUseCase profileSkills;
+    private final GetSkillGapUseCase skillGap;
     private final SecurityContextHelper secCtx;
 
     public SkillController(GetSkillTaxonomyUseCase taxonomy, ManageProfileSkillsUseCase profileSkills,
-                           SecurityContextHelper secCtx) {
+                           GetSkillGapUseCase skillGap, SecurityContextHelper secCtx) {
         this.taxonomy = taxonomy;
         this.profileSkills = profileSkills;
+        this.skillGap = skillGap;
         this.secCtx = secCtx;
     }
 
@@ -41,9 +46,11 @@ public class SkillController {
     }
 
     @Operation(summary = "Create or get skill in taxonomy")
+    @ApiResponse(responseCode = "201", description = "Skill created or already existed")
     @PostMapping("/api/v1/skills")
     public ResponseEntity<SkillTaxonomy> createSkill(@RequestBody CreateSkillRequest req) {
-        return ResponseEntity.ok(taxonomy.createOrGet(req.name(), req.category()));
+        SkillTaxonomy saved = taxonomy.createOrGet(req.name(), req.category());
+        return ResponseEntity.created(URI.create("/api/v1/skills/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "List skill categories")
@@ -59,13 +66,15 @@ public class SkillController {
     }
 
     @Operation(summary = "Add skill to profile")
+    @ApiResponse(responseCode = "201", description = "Skill added")
     @PostMapping("/api/v1/profile/skills")
     public ResponseEntity<ProfileSkill> addProfileSkill(@RequestBody ProfileSkill skill) {
         UUID userId = secCtx.getCurrentUserId();
         ProfileSkill toSave = new ProfileSkill(null, userId, skill.skillName(), skill.taxonomyId(),
                 skill.proficiencyLevel(), skill.yearsExperience(), skill.usedInProduction(),
                 skill.displayOrder(), null);
-        return ResponseEntity.ok(profileSkills.addSkill(toSave));
+        ProfileSkill saved = profileSkills.addSkill(toSave);
+        return ResponseEntity.created(URI.create("/api/v1/profile/skills/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Update profile skill")
@@ -84,5 +93,11 @@ public class SkillController {
     public ResponseEntity<Void> deleteProfileSkill(@PathVariable UUID id) {
         profileSkills.deleteSkill(id, secCtx.getCurrentUserId());
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Analyse skill gap between a job and the authenticated user's profile")
+    @GetMapping("/api/v1/jobs/{jobId}/skill-gap")
+    public ResponseEntity<GetSkillGapUseCase.SkillGapResult> getSkillGap(@PathVariable UUID jobId) {
+        return ResponseEntity.ok(skillGap.analyzeSkillGap(jobId, secCtx.getCurrentUserId()));
     }
 }

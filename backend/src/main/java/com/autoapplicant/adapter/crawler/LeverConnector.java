@@ -10,7 +10,6 @@ import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,18 +40,18 @@ public class LeverConnector extends AbstractJobSourceConnector {
     }
 
     @Override
-    public List<RawJobData> fetchJobs(CrawlConfig config) {
+    public void fetchJobs(CrawlConfig config) {
         List<String> companies = appProperties.getLever().getCompanies();
         if (companies.isEmpty()) {
             log.info("Lever: no companies configured (app.lever.companies) — skipping");
-            return List.of();
+            return;
         }
 
-        List<RawJobData> results = new ArrayList<>();
         int targetJobs = config.maxPages() * 20;
+        int count = 0;
 
         for (String company : companies) {
-            if (results.size() >= targetJobs) break;
+            if (count >= targetJobs) break;
             String url = String.format(API_BASE, company);
             try {
                 Thread.sleep(config.delayMs());
@@ -64,9 +63,9 @@ public class LeverConnector extends AbstractJobSourceConnector {
                     continue;
                 }
 
-                int count = 0;
+                int companyCount = 0;
                 for (JsonNode posting : root) {
-                    if (results.size() >= targetJobs) break;
+                    if (count >= targetJobs) break;
 
                     String id         = posting.path("id").asText(null);
                     String title      = posting.path("text").asText("");
@@ -97,7 +96,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
                             descPlain.isBlank() ? Jsoup.parse(descHtml).text() : descPlain,
                             listsText.toString(), hostedUrl);
 
-                    results.add(new RawJobData(
+                    config.onJobFound().accept(new RawJobData(
                             JobSource.LEVER,
                             "lever-" + company + "-" + id,
                             hostedUrl,
@@ -106,20 +105,20 @@ public class LeverConnector extends AbstractJobSourceConnector {
                             Instant.now()
                     ));
                     count++;
+                    companyCount++;
                 }
-                log.info("Lever: {} — {} jobs collected", company, count);
+                log.info("Lever: {} — {} jobs collected", company, companyCount);
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                log.warn("Lever: interrupted, returning {} results so far", results.size());
+                log.warn("Lever: interrupted, returning {} results so far", count);
                 break;
             } catch (Exception e) {
                 log.warn("Lever: failed to fetch company '{}': {}", company, e.getMessage());
             }
         }
 
-        log.info("Lever crawl complete: {} jobs from {} companies", results.size(), companies.size());
-        return results;
+        log.info("Lever crawl complete: {} jobs from {} companies", count, companies.size());
     }
 
     private String buildContent(String title, String company, String location, String team,

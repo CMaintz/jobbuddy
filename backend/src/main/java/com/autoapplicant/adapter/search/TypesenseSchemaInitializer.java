@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@Order(1)
 public class TypesenseSchemaInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(TypesenseSchemaInitializer.class);
@@ -64,7 +66,8 @@ public class TypesenseSchemaInitializer implements ApplicationRunner {
                             Map.of("name", "salary_max", "type", "int32"),
                             Map.of("name", "posted_at", "type", "int64"),
                             Map.of("name", "url", "type", "string"),
-                            Map.of("name", "source", "type", "string", "facet", true)
+                            Map.of("name", "source", "type", "string", "facet", true),
+                            Map.of("name", "job_category", "type", "string", "optional", true, "facet", true)
                     ),
                     "default_sorting_field", "posted_at"
             );

@@ -39,6 +39,9 @@ public class ApplicationEntity {
     @Column(name = "recruiter_message", columnDefinition = "text")
     private String recruiterMessage;
 
+    @Column(name = "recruiter_reply", columnDefinition = "text")
+    private String recruiterReply;
+
     @Column(name = "cv_version_id")
     private UUID cvVersionId;
 
@@ -80,6 +83,8 @@ public class ApplicationEntity {
     public void setApplicationText(String applicationText) { this.applicationText = applicationText; }
     public String getRecruiterMessage() { return recruiterMessage; }
     public void setRecruiterMessage(String recruiterMessage) { this.recruiterMessage = recruiterMessage; }
+    public String getRecruiterReply() { return recruiterReply; }
+    public void setRecruiterReply(String recruiterReply) { this.recruiterReply = recruiterReply; }
     public UUID getCvVersionId() { return cvVersionId; }
     public void setCvVersionId(UUID cvVersionId) { this.cvVersionId = cvVersionId; }
     public UUID getPromptTemplateId() { return promptTemplateId; }

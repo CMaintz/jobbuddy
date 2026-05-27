@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,18 +21,20 @@ public class CrawlerAdminController {
     }
 
     @Operation(summary = "Trigger crawl for all sources")
+    @ApiResponse(responseCode = "202", description = "Crawl accepted and running asynchronously")
     @PostMapping("/trigger")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> triggerAll() {
+    public ResponseEntity<Void> triggerAll() {
         triggerCrawl.triggerAll();
-        return ResponseEntity.ok("Crawl triggered for all sources");
+        return ResponseEntity.accepted().build();
     }
 
     @Operation(summary = "Trigger crawl for a specific source")
+    @ApiResponse(responseCode = "202", description = "Crawl accepted and running asynchronously")
     @PostMapping("/trigger/{source}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> triggerSource(@PathVariable String source) {
+    public ResponseEntity<Void> triggerSource(@PathVariable String source) {
         triggerCrawl.triggerSource(JobSource.valueOf(source.toUpperCase()));
-        return ResponseEntity.ok("Crawl triggered for: " + source);
+        return ResponseEntity.accepted().build();
     }
 }

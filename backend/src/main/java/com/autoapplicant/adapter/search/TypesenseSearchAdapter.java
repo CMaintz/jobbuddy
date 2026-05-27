@@ -83,7 +83,7 @@ public class TypesenseSearchAdapter implements JobSearchPort {
                     + "&query_by=title,description_clean,technologies,company_name"
                     + "&per_page=" + Math.min(query.size(), 250)
                     + "&page=" + (query.page() + 1)
-                    + "&facet_by=technologies,seniority,remote_type,employment_type,municipality"
+                    + "&facet_by=technologies,seniority,remote_type,employment_type,municipality,job_category"
                     + (filterBy.isBlank() ? "" : "&filter_by=" + filterBy);
 
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -124,6 +124,10 @@ public class TypesenseSearchAdapter implements JobSearchPort {
             String vals = filters.seniority().stream().map(Enum::name).collect(Collectors.joining(","));
             parts.add("seniority:[" + vals + "]");
         }
+        if (filters.jobCategories() != null && !filters.jobCategories().isEmpty()) {
+            String vals = String.join(",", filters.jobCategories());
+            parts.add("job_category:[" + vals + "]");
+        }
         return String.join(" && ", parts);
     }
 
@@ -145,12 +149,21 @@ public class TypesenseSearchAdapter implements JobSearchPort {
         doc.put("posted_at", job.postedAt() != null ? job.postedAt().getEpochSecond() : 0L);
         doc.put("url", job.url());
         doc.put("source", job.source() != null ? job.source().name() : "");
+        if (job.jobCategory() != null) {
+            doc.put("job_category", job.jobCategory().name());
+        }
         return doc;
     }
 
     @SuppressWarnings("unchecked")
     private Job fromDocument(Map<String, Object> doc) {
         UUID id = doc.get("id") != null ? UUID.fromString((String) doc.get("id")) : null;
+        String rawCategory = (String) doc.get("job_category");
+        com.autoapplicant.domain.job.JobCategory jobCategory = null;
+        if (rawCategory != null) {
+            try { jobCategory = com.autoapplicant.domain.job.JobCategory.valueOf(rawCategory); }
+            catch (IllegalArgumentException ignored) {}
+        }
         return new Job(id, null, null,
                 (String) doc.getOrDefault("url", ""),
                 (String) doc.getOrDefault("title", ""),
@@ -162,7 +175,7 @@ public class TypesenseSearchAdapter implements JobSearchPort {
                 null, null, null, null, null,
                 (List<String>) doc.getOrDefault("technologies", List.of()),
                 (List<String>) doc.getOrDefault("skills", List.of()),
-                List.of(), null, null, null, List.of(), null, null, true, null, null);
+                List.of(), null, null, null, List.of(), null, null, true, jobCategory, null, null);
     }
 
     private JobSearchResult emptyResult(JobSearchQuery query) {

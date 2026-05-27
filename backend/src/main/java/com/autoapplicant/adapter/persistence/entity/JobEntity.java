@@ -95,6 +95,9 @@ public class JobEntity {
     @Column(name = "is_active")
     private boolean isActive = true;
 
+    @Column(name = "job_category")
+    private String jobCategory;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -165,6 +168,8 @@ public class JobEntity {
     public void setDuplicateGroupId(UUID duplicateGroupId) { this.duplicateGroupId = duplicateGroupId; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    public String getJobCategory() { return jobCategory; }
+    public void setJobCategory(String jobCategory) { this.jobCategory = jobCategory; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

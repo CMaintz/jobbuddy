@@ -5,14 +5,15 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.pdf.PdfExportRequest;
 import com.autoapplicant.adapter.web.dto.pdf.StructuredApplicationRequest;
 import com.autoapplicant.adapter.web.dto.pdf.StructuredDocumentExportRequest;
-import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.PdfTemplate;
+import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.User;
+import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
 import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
-import com.autoapplicant.port.out.user.UserRepositoryPort;
-import com.autoapplicant.usecase.document.StructuredDocumentService;
+import com.autoapplicant.port.in.user.ManageProfilePrivateInfoUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -37,22 +38,22 @@ public class PdfExportController {
 
     private final ManagePdfTemplatesUseCase pdfTemplates;
     private final GetUserProfileUseCase getUserProfile;
-    private final UserRepositoryPort userRepo;
+    private final ManageProfilePrivateInfoUseCase privateInfoUseCase;
     private final PdfRenderingService pdfRenderer;
-    private final StructuredDocumentService structuredDocuments;
+    private final BuildApplicationDocumentUseCase buildAppDocument;
     private final SecurityContextHelper secCtx;
 
     public PdfExportController(ManagePdfTemplatesUseCase pdfTemplates,
                                GetUserProfileUseCase getUserProfile,
-                               UserRepositoryPort userRepo,
+                               ManageProfilePrivateInfoUseCase privateInfoUseCase,
                                PdfRenderingService pdfRenderer,
-                               StructuredDocumentService structuredDocuments,
+                               BuildApplicationDocumentUseCase buildAppDocument,
                                SecurityContextHelper secCtx) {
         this.pdfTemplates = pdfTemplates;
         this.getUserProfile = getUserProfile;
-        this.userRepo = userRepo;
+        this.privateInfoUseCase = privateInfoUseCase;
         this.pdfRenderer = pdfRenderer;
-        this.structuredDocuments = structuredDocuments;
+        this.buildAppDocument = buildAppDocument;
         this.secCtx = secCtx;
     }
 
@@ -66,16 +67,17 @@ public class PdfExportController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PDF template not found"));
 
         Profile profile = getUserProfile.getProfile(userId).orElse(null);
-        User user = userRepo.findById(userId).orElse(null);
+        ProfilePrivateInfo privateInfo = privateInfoUseCase.getPrivateInfo(userId);
+        User user = getUserProfile.getUser(userId).orElse(null);
 
         Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("NAME",     profile != null && profile.fullName()    != null ? profile.fullName()    : "");
-        placeholders.put("EMAIL",    user    != null && user.email()           != null ? user.email()           : "");
-        placeholders.put("PHONE",    profile != null && profile.phone()        != null ? profile.phone()        : "");
-        placeholders.put("LOCATION", profile != null && profile.location()     != null ? profile.location()     : "");
-        placeholders.put("LINKEDIN", profile != null && profile.linkedinUrl()  != null ? profile.linkedinUrl()  : "");
-        placeholders.put("GITHUB",   profile != null && profile.githubUrl()    != null ? profile.githubUrl()    : "");
-        placeholders.put("HEADLINE", profile != null && profile.headline()     != null ? profile.headline()     : "");
+        placeholders.put("NAME",     privateInfo.fullName()    != null ? privateInfo.fullName()    : "");
+        placeholders.put("EMAIL",    user    != null && user.email()  != null ? user.email()        : "");
+        placeholders.put("PHONE",    privateInfo.phone()       != null ? privateInfo.phone()        : "");
+        placeholders.put("LOCATION", privateInfo.location()    != null ? privateInfo.location()     : "");
+        placeholders.put("LINKEDIN", "");
+        placeholders.put("GITHUB",   "");
+        placeholders.put("HEADLINE", profile != null && profile.headline() != null ? profile.headline() : "");
         placeholders.put("DATE",     LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
 
         String rawContent = req.content() != null ? req.content() : "";
@@ -108,7 +110,7 @@ public class PdfExportController {
     @Operation(summary = "Build structured application document model")
     @PostMapping("/structured-application")
     public ResponseEntity<StructuredDocument> structuredApplication(@RequestBody StructuredApplicationRequest req) {
-        return ResponseEntity.ok(structuredDocuments.buildApplicationDocument(
+        return ResponseEntity.ok(buildAppDocument.buildApplicationDocument(
                 secCtx.getCurrentUserId(), req.documentType(), req.content(), req.templateId(),
                 Boolean.TRUE.equals(req.showProfileImage()),
                 req.theme() != null ? req.theme().toTheme() : null));

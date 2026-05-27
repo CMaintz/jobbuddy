@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,13 +43,15 @@ public class PdfTemplateController {
     }
 
     @Operation(summary = "Create PDF template")
+    @ApiResponse(responseCode = "201", description = "Template created")
     @PostMapping
     public ResponseEntity<PdfTemplate> create(@RequestBody PdfTemplate template) {
         UUID userId = secCtx.getCurrentUserId();
         PdfTemplate toCreate = new PdfTemplate(null, userId, template.name(), template.description(),
                 template.documentType(), template.htmlTemplate(), template.cssStyles(),
                 false, true, null);
-        return ResponseEntity.ok(service.create(toCreate));
+        PdfTemplate saved = service.create(toCreate);
+        return ResponseEntity.created(URI.create("/api/v1/pdf-templates/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Update PDF template")

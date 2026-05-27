@@ -11,5 +11,6 @@ public enum JobSource {
     GREENHOUSE,
     LEVER,
     TEAMTAILOR,
+    CORNERSTONE_ONDEMAND,
     MANUAL
 }

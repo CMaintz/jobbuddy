@@ -26,16 +26,8 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
     public Profile save(Profile profile) {
         ProfileEntity e = repo.findByUserId(profile.userId()).orElse(new ProfileEntity());
         e.setUserId(profile.userId());
-        e.setFullName(profile.fullName());
         e.setHeadline(profile.headline());
         e.setSummary(profile.summary());
-        e.setLocation(profile.location());
-        e.setMunicipality(profile.municipality());
-        e.setLinkedinUrl(profile.linkedinUrl());
-        e.setGithubUrl(profile.githubUrl());
-        e.setWebsiteUrl(profile.websiteUrl());
-        e.setPhone(profile.phone());
-        e.setPhotoUrl(profile.photoUrl());
         e.setYearsExperience(profile.yearsExperience());
         e.setSkills(toArray(profile.skills()));
         e.setTechnologies(toArray(profile.technologies()));
@@ -54,10 +46,8 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
     }
 
     private Profile toDomain(ProfileEntity e) {
-        return new Profile(e.getId(), e.getUserId(), e.getFullName(), e.getHeadline(),
-                e.getSummary(), e.getLocation(), e.getMunicipality(),
-                e.getLinkedinUrl(), e.getGithubUrl(), e.getWebsiteUrl(), e.getPhone(),
-                e.getPhotoUrl(), e.getYearsExperience(),
+        return new Profile(e.getId(), e.getUserId(), e.getHeadline(),
+                e.getSummary(), e.getYearsExperience(),
                 toList(e.getSkills()), toList(e.getTechnologies()), toList(e.getLanguages()),
                 e.getDesiredSalaryMin(), e.getDesiredSalaryMax(), e.getDesiredCurrency(),
                 parseEnum(e.getRemotePreference(), RemoteType.class),

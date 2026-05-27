@@ -4,9 +4,12 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.in.user.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,22 +19,63 @@ import java.util.UUID;
 @Tag(name = "Master Career Profile")
 public class ProfileSectionController {
 
+    public record FullProfileResponse(
+            Profile profile,
+            List<WorkExperience> experience,
+            List<Education> education,
+            List<Project> projects,
+            List<Certification> certifications,
+            List<SpokenLanguage> languages,
+            List<ProfileSocial> socials,
+            List<ProfileStrength> strengths
+    ) {}
+
     private final ManageWorkExperienceUseCase workExpUseCase;
     private final ManageProjectsUseCase projectsUseCase;
     private final ManageEducationUseCase educationUseCase;
     private final ManageCertificationsUseCase certUseCase;
+    private final GetUserProfileUseCase profileUseCase;
+    private final ManageProfileSocialUseCase socialUseCase;
+    private final ManageProfileStrengthUseCase strengthUseCase;
+    private final ManageSpokenLanguagesUseCase languageUseCase;
     private final SecurityContextHelper secCtx;
 
     public ProfileSectionController(ManageWorkExperienceUseCase workExpUseCase,
                                     ManageProjectsUseCase projectsUseCase,
                                     ManageEducationUseCase educationUseCase,
                                     ManageCertificationsUseCase certUseCase,
+                                    GetUserProfileUseCase profileUseCase,
+                                    ManageProfileSocialUseCase socialUseCase,
+                                    ManageProfileStrengthUseCase strengthUseCase,
+                                    ManageSpokenLanguagesUseCase languageUseCase,
                                     SecurityContextHelper secCtx) {
         this.workExpUseCase = workExpUseCase;
         this.projectsUseCase = projectsUseCase;
         this.educationUseCase = educationUseCase;
         this.certUseCase = certUseCase;
+        this.profileUseCase = profileUseCase;
+        this.socialUseCase = socialUseCase;
+        this.strengthUseCase = strengthUseCase;
+        this.languageUseCase = languageUseCase;
         this.secCtx = secCtx;
+    }
+
+    // ── Full profile (resume builder prefill) ─────────────────────────────────
+
+    @Operation(summary = "Get all non-PII resume data in one call")
+    @GetMapping("/full")
+    public FullProfileResponse getFullProfile() {
+        UUID userId = secCtx.getCurrentUserId();
+        return new FullProfileResponse(
+                profileUseCase.getProfile(userId).orElse(null),
+                workExpUseCase.getWorkExperience(userId),
+                educationUseCase.getEducation(userId),
+                projectsUseCase.getProjects(userId),
+                certUseCase.getCertifications(userId),
+                languageUseCase.getLanguages(userId),
+                socialUseCase.getSocials(userId),
+                strengthUseCase.getStrengths(userId)
+        );
     }
 
     // ── Work Experience ───────────────────────────────────────────────────────
@@ -43,9 +87,11 @@ public class ProfileSectionController {
     }
 
     @Operation(summary = "Add work experience entry")
+    @ApiResponse(responseCode = "201", description = "Entry created")
     @PostMapping("/experience")
-    public WorkExperience addExperience(@RequestBody WorkExperience experience) {
-        return workExpUseCase.addWorkExperience(secCtx.getCurrentUserId(), experience);
+    public ResponseEntity<WorkExperience> addExperience(@RequestBody WorkExperience experience) {
+        WorkExperience saved = workExpUseCase.addWorkExperience(secCtx.getCurrentUserId(), experience);
+        return ResponseEntity.created(URI.create("/api/v1/profile/experience/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Update work experience entry")
@@ -71,9 +117,11 @@ public class ProfileSectionController {
     }
 
     @Operation(summary = "Add project")
+    @ApiResponse(responseCode = "201", description = "Project created")
     @PostMapping("/projects")
-    public Project addProject(@RequestBody Project project) {
-        return projectsUseCase.addProject(secCtx.getCurrentUserId(), project);
+    public ResponseEntity<Project> addProject(@RequestBody Project project) {
+        Project saved = projectsUseCase.addProject(secCtx.getCurrentUserId(), project);
+        return ResponseEntity.created(URI.create("/api/v1/profile/projects/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Update project")
@@ -98,9 +146,11 @@ public class ProfileSectionController {
     }
 
     @Operation(summary = "Add education entry")
+    @ApiResponse(responseCode = "201", description = "Entry created")
     @PostMapping("/education")
-    public Education addEducation(@RequestBody Education education) {
-        return educationUseCase.addEducation(secCtx.getCurrentUserId(), education);
+    public ResponseEntity<Education> addEducation(@RequestBody Education education) {
+        Education saved = educationUseCase.addEducation(secCtx.getCurrentUserId(), education);
+        return ResponseEntity.created(URI.create("/api/v1/profile/education/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Update education entry")
@@ -125,9 +175,11 @@ public class ProfileSectionController {
     }
 
     @Operation(summary = "Add certification")
+    @ApiResponse(responseCode = "201", description = "Certification created")
     @PostMapping("/certifications")
-    public Certification addCertification(@RequestBody Certification certification) {
-        return certUseCase.addCertification(secCtx.getCurrentUserId(), certification);
+    public ResponseEntity<Certification> addCertification(@RequestBody Certification certification) {
+        Certification saved = certUseCase.addCertification(secCtx.getCurrentUserId(), certification);
+        return ResponseEntity.created(URI.create("/api/v1/profile/certifications/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Delete certification")

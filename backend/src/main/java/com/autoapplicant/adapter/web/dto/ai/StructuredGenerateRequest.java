@@ -10,6 +10,7 @@ public record StructuredGenerateRequest(
         String customInstructions,
         String targetLanguage,
         String templateId,
+        UUID promptTemplateId,
         Boolean showProfileImage,
         DocumentThemeRequest theme
 ) {}

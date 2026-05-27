@@ -5,7 +5,6 @@ import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.UserPreferences;
 import java.util.List;
 import com.autoapplicant.port.in.user.*;
-import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,17 +20,17 @@ public class UserController {
     private final GetUserProfileUseCase getProfile;
     private final UpdateUserProfileUseCase updateProfile;
     private final UpdatePreferencesUseCase updatePreferences;
-    private final PreferencesRepositoryPort prefsRepo;
+    private final DeleteUserAccountUseCase deleteAccount;
     private final SecurityContextHelper secCtx;
 
     public UserController(GetUserProfileUseCase getProfile, UpdateUserProfileUseCase updateProfile,
                           UpdatePreferencesUseCase updatePreferences,
-                          PreferencesRepositoryPort prefsRepo,
+                          DeleteUserAccountUseCase deleteAccount,
                           SecurityContextHelper secCtx) {
         this.getProfile = getProfile;
         this.updateProfile = updateProfile;
         this.updatePreferences = updatePreferences;
-        this.prefsRepo = prefsRepo;
+        this.deleteAccount = deleteAccount;
         this.secCtx = secCtx;
     }
 
@@ -53,10 +52,11 @@ public class UserController {
     @Operation(summary = "Get current user preferences")
     @GetMapping("/preferences")
     public ResponseEntity<UserPreferences> getPreferences() {
-        return ResponseEntity.ok(prefsRepo.findByUserId(secCtx.getCurrentUserId())
-                .orElse(new UserPreferences(null, secCtx.getCurrentUserId(),
+        java.util.UUID userId = secCtx.getCurrentUserId();
+        return ResponseEntity.ok(updatePreferences.getPreferences(userId)
+                .orElse(new UserPreferences(null, userId,
                         List.of(), List.of(), List.of(), List.of(), List.of(),
-                        List.of(), List.of(), List.of(), null, null, null,
+                        List.of(), List.of(), List.of(), List.of(), null, null, null,
                         false, "DAILY", null, null)));
     }
 
@@ -64,5 +64,14 @@ public class UserController {
     @PutMapping("/preferences")
     public ResponseEntity<UserPreferences> updatePreferences(@RequestBody UserPreferences prefs) {
         return ResponseEntity.ok(updatePreferences.updatePreferences(secCtx.getCurrentUserId(), prefs));
+    }
+
+    @Operation(summary = "Delete current user account (GDPR Article 17 — Right to Erasure)",
+               description = "Permanently deletes all data for the authenticated user from the database and from Firebase. This action is irreversible.")
+    @ApiResponses(@ApiResponse(responseCode = "204", description = "Account deleted successfully"))
+    @DeleteMapping
+    public ResponseEntity<Void> deleteAccount() {
+        deleteAccount.deleteAccount(secCtx.getCurrentUserId());
+        return ResponseEntity.noContent().build();
     }
 }

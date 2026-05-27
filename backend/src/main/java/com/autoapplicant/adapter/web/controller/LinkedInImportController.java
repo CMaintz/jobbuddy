@@ -1,8 +1,7 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
-import com.autoapplicant.domain.document.PromptComposition;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.in.user.ParseLinkedInProfileUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -17,12 +16,12 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Profile Import")
 public class LinkedInImportController {
 
-    private final AiProviderPort aiProvider;
+    private final ParseLinkedInProfileUseCase parseLinkedIn;
     private final SecurityContextHelper securityContextHelper;
 
-    public LinkedInImportController(AiProviderPort aiProvider,
+    public LinkedInImportController(ParseLinkedInProfileUseCase parseLinkedIn,
                                     SecurityContextHelper securityContextHelper) {
-        this.aiProvider = aiProvider;
+        this.parseLinkedIn = parseLinkedIn;
         this.securityContextHelper = securityContextHelper;
     }
 
@@ -37,30 +36,7 @@ public class LinkedInImportController {
             throw new IllegalArgumentException("Failed to read PDF file: " + e.getMessage(), e);
         }
 
-        String systemPrompt = "You are a data extraction assistant. Extract structured information from a LinkedIn profile PDF export. Return ONLY valid JSON, no markdown.";
-        String userPrompt = "Extract the following fields from this LinkedIn profile PDF and return as JSON:\n" +
-                "{\n" +
-                "  \"fullName\": \"\",\n" +
-                "  \"headline\": \"\",\n" +
-                "  \"summary\": \"\",\n" +
-                "  \"location\": \"\",\n" +
-                "  \"skills\": [],\n" +
-                "  \"experience\": [{\"title\":\"\",\"company\":\"\",\"startDate\":\"\",\"endDate\":\"\",\"description\":\"\"}],\n" +
-                "  \"education\": [{\"institution\":\"\",\"degree\":\"\",\"fieldOfStudy\":\"\",\"startDate\":\"\",\"endDate\":\"\"}],\n" +
-                "  \"certifications\": [{\"name\":\"\",\"issuer\":\"\",\"issuedAt\":\"\"}]\n" +
-                "}\n\nPDF content:\n" + extractedText;
-
-        PromptComposition composition = new PromptComposition(
-                systemPrompt,
-                userPrompt,
-                "",
-                "",
-                "",
-                "",
-                userPrompt
-        );
-
-        String result = aiProvider.generate(composition);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(parseLinkedIn.parseProfileFromText(
+                securityContextHelper.getCurrentUserId(), extractedText));
     }
 }

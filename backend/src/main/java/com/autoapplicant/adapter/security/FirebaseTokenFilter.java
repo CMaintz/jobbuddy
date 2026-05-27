@@ -1,7 +1,7 @@
 package com.autoapplicant.adapter.security;
 
 import com.autoapplicant.domain.user.User;
-import com.autoapplicant.usecase.user.UserService;
+import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -25,11 +25,11 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseTokenFilter.class);
 
-    private final UserService userService;
+    private final ProvisionFirebaseUserUseCase provisionUser;
     private final FirebaseAuth firebaseAuth;
 
-    public FirebaseTokenFilter(UserService userService, FirebaseAuth firebaseAuth) {
-        this.userService = userService;
+    public FirebaseTokenFilter(ProvisionFirebaseUserUseCase provisionUser, FirebaseAuth firebaseAuth) {
+        this.provisionUser = provisionUser;
         this.firebaseAuth = firebaseAuth;
     }
 
@@ -52,10 +52,10 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             String email = decoded.getEmail();
             String name = decoded.getName();
 
-            User user = userService.findOrCreateUserFromFirebase(firebaseUid, email, name);
+            User user = provisionUser.findOrCreate(firebaseUid, email, name);
 
             // Role is stored as a Firebase Custom Claim after first login.
-            // Fall back to the DB role (already set by findOrCreateUserFromFirebase).
+            // Fall back to the DB role (already set by findOrCreate).
             String role = user.role().name();
             Object roleClaim = decoded.getClaims().get("role");
             if (roleClaim != null) {

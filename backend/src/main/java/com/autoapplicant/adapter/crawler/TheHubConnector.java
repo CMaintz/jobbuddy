@@ -12,9 +12,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,7 +42,7 @@ public class TheHubConnector extends AbstractJobSourceConnector {
     }
 
     @Override
-    public List<RawJobData> fetchJobs(CrawlConfig config) {
+    public void fetchJobs(CrawlConfig config) {
         int targetJobs = config.maxPages() * 15;
 
         // Step 1 — collect job-detail URLs from listing pages
@@ -53,13 +51,17 @@ public class TheHubConnector extends AbstractJobSourceConnector {
 
         if (jobUrls.isEmpty()) {
             log.warn("TheHub: no job URLs found — site structure may have changed");
-            return List.of();
+            return;
         }
 
         // Step 2 — fetch each detail page and extract JSON-LD
-        List<RawJobData> results = new ArrayList<>();
+        int count = 0;
+        int total = jobUrls.size();
         for (String jobUrl : jobUrls) {
-            if (results.size() >= targetJobs) break;
+            if (count >= targetJobs) break;
+            if (count % 25 == 0) {
+                log.info("TheHub: fetching detail pages [{}/{}]...", count, total);
+            }
             try {
                 Thread.sleep(config.delayMs());
                 Document doc = Jsoup.connect(jobUrl)
@@ -70,7 +72,7 @@ public class TheHubConnector extends AbstractJobSourceConnector {
                 String jobId = extractId(jobUrl);
                 String content = extractJobContent(doc, jobUrl);
 
-                results.add(new RawJobData(
+                config.onJobFound().accept(new RawJobData(
                         JobSource.THE_HUB,
                         jobId,
                         jobUrl,
@@ -78,17 +80,17 @@ public class TheHubConnector extends AbstractJobSourceConnector {
                         extractJsonLd(doc),  // raw JSON-LD as structured payload
                         Instant.now()
                 ));
+                count++;
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                log.warn("TheHub: interrupted, returning partial results ({} so far)", results.size());
+                log.warn("TheHub: interrupted, returning partial results ({} so far)", count);
                 break;
             } catch (Exception e) {
                 log.warn("TheHub: failed to fetch job page {}: {}", jobUrl, e.getMessage());
             }
         }
 
-        log.info("TheHub crawl complete: {} jobs collected", results.size());
-        return results;
+        log.info("TheHub crawl complete: {} jobs collected", count);
     }
 
     // ── Step 1: collect URLs from listing pages ───────────────────────────────

@@ -1,9 +1,8 @@
 package com.autoapplicant.adapter.persistence.entity;
 
-import com.pgvector.PGvector;
+import com.autoapplicant.adapter.persistence.type.VectorUserType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Type;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -19,8 +18,8 @@ public class JobEmbeddingEntity {
     @Column(name = "job_id", nullable = false)
     private UUID jobId;
 
-    @Column(columnDefinition = "vector(1536)", nullable = false)
-    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Column(columnDefinition = "vector(3072)", nullable = false)
+    @Type(VectorUserType.class)
     private float[] embedding;
 
     @Column(nullable = false)

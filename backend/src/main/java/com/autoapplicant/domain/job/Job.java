@@ -34,6 +34,7 @@ public record Job(
         String aiSeniorityEstimate,
         UUID duplicateGroupId,
         boolean isActive,
+        JobCategory jobCategory,
         Instant createdAt,
         Instant updatedAt
 ) {}

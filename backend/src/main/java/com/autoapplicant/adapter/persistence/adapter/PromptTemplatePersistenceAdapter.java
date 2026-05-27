@@ -41,4 +41,9 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
         return repo.findByIsPublicTrueOrderByCreatedAtDesc().stream()
                 .map(DocumentMapper::toDomain).collect(Collectors.toList());
     }
+
+    @Override
+    public Optional<PromptTemplate> findSystemDefault(String category) {
+        return repo.findFirstByCategoryAndIsSystemTrue(category).map(DocumentMapper::toDomain);
+    }
 }

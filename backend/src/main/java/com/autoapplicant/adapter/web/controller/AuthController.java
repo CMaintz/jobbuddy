@@ -5,7 +5,7 @@ import com.autoapplicant.adapter.web.dto.auth.MeResponse;
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
-import com.autoapplicant.port.out.user.UserRepositoryPort;
+import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,19 +27,19 @@ import java.util.UUID;
 @Tag(name = "Authentication")
 public class AuthController {
 
-    private final UserRepositoryPort userRepo;
+    private final GetUserProfileUseCase userProfileUseCase;
     private final ResolveLinkedInUserUseCase resolveLinkedInUser;
     private final SecurityContextHelper securityContext;
     private final AppProperties appProperties;
     private final FirebaseAuth firebaseAuth;
     private final RestTemplate restTemplate;
 
-    public AuthController(UserRepositoryPort userRepo,
+    public AuthController(GetUserProfileUseCase userProfileUseCase,
                           ResolveLinkedInUserUseCase resolveLinkedInUser,
                           SecurityContextHelper securityContext,
                           AppProperties appProperties,
                           FirebaseAuth firebaseAuth) {
-        this.userRepo = userRepo;
+        this.userProfileUseCase = userProfileUseCase;
         this.resolveLinkedInUser = resolveLinkedInUser;
         this.securityContext = securityContext;
         this.appProperties = appProperties;
@@ -55,7 +55,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<MeResponse> me() {
         UUID userId = securityContext.getCurrentUserId();
-        User user = userRepo.findById(userId)
+        User user = userProfileUseCase.getUser(userId)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found in DB"));
         return ResponseEntity.ok(new MeResponse(user.id(), user.email(), user.role().name()));
     }

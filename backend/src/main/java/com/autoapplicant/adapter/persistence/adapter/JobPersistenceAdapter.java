@@ -60,8 +60,19 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId) {
+        return repo.existsBySourceAndSourceJobId(source.name(), sourceJobId);
+    }
+
+    @Override
     public Optional<Job> findByUrl(String url) {
         return repo.findByUrl(url).map(JobMapper::toDomain);
+    }
+
+    @Override
+    public List<Job> findUnenriched(int limit) {
+        return repo.findUnenriched(org.springframework.data.domain.PageRequest.of(0, limit))
+                .stream().map(JobMapper::toDomain).collect(java.util.stream.Collectors.toList());
     }
 
     @Override
