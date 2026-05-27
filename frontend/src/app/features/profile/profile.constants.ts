@@ -1,7 +1,7 @@
 import { LanguageProficiency } from '../../core/models/profile-section.model';
 import { ProfileSkill } from '../../core/models/skill-taxonomy.model';
 
-export type ProfileTab = 'overview' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'languages';
+export type ProfileTab = 'overview' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'languages' | 'socials' | 'strengths';
 
 export const PROFILE_TABS: Array<{ key: ProfileTab; label: string }> = [
   { key: 'overview', label: 'Overview' },
@@ -11,6 +11,8 @@ export const PROFILE_TABS: Array<{ key: ProfileTab; label: string }> = [
   { key: 'certifications', label: 'Certifications' },
   { key: 'skills', label: 'Skills' },
   { key: 'languages', label: 'Languages' },
+  { key: 'socials', label: 'Social Links' },
+  { key: 'strengths', label: 'Strengths' },
 ];
 
 export function splitCsv(value?: string | null): string[] {

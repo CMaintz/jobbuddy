@@ -22,8 +22,10 @@ export class JobsApiService {
     return this.http.get<any>(this.base, { params: { page, size } });
   }
 
-  search(q: string, page = 0, size = 20): Observable<JobSearchResult> {
-    return this.http.get<JobSearchResult>(`${this.base}/search`, { params: { q, page, size } });
+  search(q: string, page = 0, size = 20, categories: string[] = []): Observable<JobSearchResult> {
+    let params: Record<string, any> = { q, page, size };
+    if (categories.length) params['categories'] = categories;
+    return this.http.get<JobSearchResult>(`${this.base}/search`, { params });
   }
 
   getById(id: string): Observable<Job> {

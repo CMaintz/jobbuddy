@@ -20,10 +20,14 @@ import { Router } from '@angular/router';
                    class="text-gray-600 hover:text-gray-900 transition-colors">Jobs</a>
                 <a routerLink="/jobs/saved" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Saved</a>
+                <a routerLink="/jobs/add" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors">Paste &amp; Apply</a>
                 <a routerLink="/applications" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Applications</a>
                 <a routerLink="/analytics" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Analytics</a>
+                <a routerLink="/companies" routerLinkActive="text-blue-600 font-medium"
+                   class="text-gray-600 hover:text-gray-900 transition-colors">Companies</a>
                 <a routerLink="/ai/generate" routerLinkActive="text-blue-600 font-medium"
                    class="text-gray-600 hover:text-gray-900 transition-colors">Generate</a>
                 <a routerLink="/ai/documents" routerLinkActive="text-blue-600 font-medium"

@@ -19,6 +19,7 @@ export interface GenerateDocumentRequest {
   documentType: string;
   templateId?: string;
   customInstructions?: string;
+  recruiterContext?: string;    // recruiter reply — included as additional context
   targetLanguage?: string;
   showProfileImage?: boolean;
   theme?: DocumentTheme;

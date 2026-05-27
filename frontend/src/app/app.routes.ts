@@ -105,8 +105,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
       },
       {
+        path: 'companies',
+        loadComponent: () => import('./features/companies/companies-list.component').then(m => m.CompaniesListComponent)
+      },
+      {
         path: 'cv',
         loadComponent: () => import('./features/cv/cv-page.component').then(m => m.CvPageComponent)
+      },
+      {
+        path: 'resume-builder',
+        loadComponent: () => import('./features/resume-builder/resume-builder.component').then(m => m.ResumeBuilderComponent)
+      },
+      {
+        path: 'resume-builder/:draftId',
+        loadComponent: () => import('./features/resume-builder/resume-builder.component').then(m => m.ResumeBuilderComponent)
+      },
+      {
+        path: 'apply/:jobId',
+        loadComponent: () => import('./features/apply/apply-wizard.component').then(m => m.ApplyWizardComponent)
       }
     ]
   },

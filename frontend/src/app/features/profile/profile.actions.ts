@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { ProfileSectionsApiService } from '../../core/api/profile-sections.api';
 import { SkillsApiService } from '../../core/api/skills.api';
-import { Certification, Education, LanguageProficiency, ProfileLanguage, Project, WorkExperience } from '../../core/models/profile-section.model';
+import { Certification, Education, LanguageProficiency, SpokenLanguage, Project, WorkExperience } from '../../core/models/profile-section.model';
 import { resetFlagAfter, runAction } from '../../shared/utils/async-ui';
 import { splitCsv } from './profile.constants';
 import type { ProfileComponent } from './profile.component';
@@ -10,11 +11,23 @@ export function loadProfile(vm: ProfileComponent, http: HttpClient): void {
   http.get<any>('/api/v1/users/me/profile').subscribe({
     next: profile => {
       vm.profileForm.patchValue({
-        ...profile,
+        headline: profile.headline,
+        summary: profile.summary,
+        yearsExperience: profile.yearsExperience,
         technologiesRaw: (profile.technologies || []).join(', '),
         skillsRaw: (profile.skills || []).join(', '),
       });
-      if (profile.photoUrl) vm.photoUrl = profile.photoUrl;
+    },
+    error: () => {}
+  });
+  http.get<any>('/api/v1/profile/private').subscribe({
+    next: info => {
+      vm.profileForm.patchValue({
+        fullName: info.fullName,
+        phone: info.phone,
+        location: info.location,
+      });
+      if (info.photoUrl) vm.photoUrl = info.photoUrl;
     },
     error: () => {}
   });
@@ -34,11 +47,11 @@ export function uploadPhoto(vm: ProfileComponent, http: HttpClient, file: File):
   const formData = new FormData();
   formData.append('file', file);
   runAction({
-    action$: http.post<{ url: string }>('/api/v1/users/me/profile/photo', formData),
+    action$: http.post<any>('/api/v1/profile/private/photo', formData),
     setLoading: value => vm.uploadingPhoto = value,
     setError: message => vm.photoError = message,
     errorMessage: 'Failed to upload photo. Please try again.',
-    next: res => vm.photoUrl = res.url,
+    next: res => vm.photoUrl = res.photoUrl ?? res.url,
   });
 }
 
@@ -97,11 +110,19 @@ export function applyLinkedInPreview(vm: ProfileComponent): void {
 
 export function saveProfile(vm: ProfileComponent, http: HttpClient): void {
   const v = vm.profileForm.value;
-  http.put('/api/v1/users/me/profile', {
-    ...v,
+  const profileSave$ = http.put('/api/v1/users/me/profile', {
+    headline: v.headline,
+    summary: v.summary,
+    yearsExperience: v.yearsExperience,
     technologies: splitCsv(v.technologiesRaw),
     skills: splitCsv(v.skillsRaw),
-  }).subscribe(() => {
+  });
+  const privateSave$ = http.put('/api/v1/profile/private', {
+    fullName: v.fullName,
+    phone: v.phone,
+    location: v.location,
+  });
+  forkJoin([profileSave$, privateSave$]).subscribe(() => {
     vm.saveSuccess = true;
     resetFlagAfter(value => vm.saveSuccess = value);
   });
@@ -187,7 +208,7 @@ export function saveCertification(vm: ProfileComponent, sectionsApi: ProfileSect
 
 export function saveLanguage(vm: ProfileComponent, sectionsApi: ProfileSectionsApiService): void {
   if (!vm.newLang.language?.trim()) return;
-  const payload: ProfileLanguage = {
+  const payload: SpokenLanguage = {
     language: vm.newLang.language.trim(),
     proficiency: vm.newLang.proficiency as LanguageProficiency ?? 'FLUENT',
     displayOrder: vm.spokenLanguages.length,

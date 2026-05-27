@@ -1,7 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { WorkExperience, Project, Education, Certification, ProfileLanguage } from '../models/profile-section.model';
+import { WorkExperience, Project, Education, Certification, SpokenLanguage, ProfileSocial, ProfileStrength } from '../models/profile-section.model';
+import { Profile } from '../models/user.model';
+
+export interface FullProfileResponse {
+  profile: Profile | null;
+  experience: WorkExperience[];
+  education: Education[];
+  projects: Project[];
+  certifications: Certification[];
+  languages: SpokenLanguage[];
+  socials: ProfileSocial[];
+  strengths: ProfileStrength[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProfileSectionsApiService {
@@ -61,15 +73,20 @@ export class ProfileSectionsApiService {
     return this.http.delete<void>(`${this.base}/certifications/${id}`);
   }
 
+  // Full profile for resume builder prefill
+  getFullProfile(): Observable<FullProfileResponse> {
+    return this.http.get<FullProfileResponse>(`${this.base}/full`);
+  }
+
   // Spoken Languages
-  getLanguages(): Observable<ProfileLanguage[]> {
-    return this.http.get<ProfileLanguage[]>(`${this.base}/languages`);
+  getLanguages(): Observable<SpokenLanguage[]> {
+    return this.http.get<SpokenLanguage[]>(`${this.base}/languages`);
   }
-  addLanguage(lang: ProfileLanguage): Observable<ProfileLanguage> {
-    return this.http.post<ProfileLanguage>(`${this.base}/languages`, lang);
+  addLanguage(lang: SpokenLanguage): Observable<SpokenLanguage> {
+    return this.http.post<SpokenLanguage>(`${this.base}/languages`, lang);
   }
-  updateLanguage(id: string, lang: ProfileLanguage): Observable<ProfileLanguage> {
-    return this.http.put<ProfileLanguage>(`${this.base}/languages/${id}`, lang);
+  updateLanguage(id: string, lang: SpokenLanguage): Observable<SpokenLanguage> {
+    return this.http.put<SpokenLanguage>(`${this.base}/languages/${id}`, lang);
   }
   deleteLanguage(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/languages/${id}`);

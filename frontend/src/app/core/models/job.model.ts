@@ -19,6 +19,8 @@ export interface Job {
   postedAt?: string;
   aiSummary?: string;
   aiTags?: string[];
+  duplicateGroupId?: string;
+  jobCategory?: string;
 }
 
 export interface JobSearchResult {

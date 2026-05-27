@@ -14,6 +14,6 @@ import type { ProfileComponent } from './profile.component';
   imports: [CommonModule, FormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
   templateUrl: './profile-languages-tab.component.html'
 })
-export class ProfileLanguagesTabComponent {
+export class SpokenLanguagesTabComponent {
   @Input({ required: true }) vm!: ProfileComponent;
 }

@@ -42,6 +42,13 @@ export class ApplicationsApiService {
     return this.http.patch<Application>(`${this.base}/${id}/status`, { status, notes });
   }
 
+  updateRecruiterInfo(
+    id: string,
+    data: { recruiterName?: string; recruiterEmail?: string; recruiterMessage?: string; recruiterReply?: string }
+  ): Observable<Application> {
+    return this.http.patch<Application>(`${this.base}/${id}/recruiter`, data);
+  }
+
   attachGeneratedDocument(
     applicationId: string,
     generatedDocumentId: string,

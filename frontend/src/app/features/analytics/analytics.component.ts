@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { DailyCount, WeeklyTrend } from '../../core/api/dashboard.api';
 
 interface DetailedMetrics {
   total: number;
@@ -15,6 +16,13 @@ interface DetailedMetrics {
   interviewRate: number;
   offerRate: number;
   topCompanies: string[];
+}
+
+interface SparklineBar {
+  x: number;
+  y: number;
+  height: number;
+  isThisWeek: boolean;
 }
 
 @Component({
@@ -79,6 +87,50 @@ interface DetailedMetrics {
             <div>
               <div class="text-2xl font-bold text-gray-900">{{ metrics.activeInterviews }}</div>
               <div class="text-sm text-gray-500">Active Interviews</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Trend Card -->
+        <div *ngIf="trend" class="card mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Week-over-Week Activity</h2>
+              <p class="text-sm mt-1"
+                 [ngClass]="{
+                   'text-green-600 font-medium': trend.delta > 0,
+                   'text-orange-500': trend.delta < 0,
+                   'text-gray-500': trend.delta === 0
+                 }">{{ trend.message }}</p>
+              <div class="flex items-baseline gap-4 mt-3">
+                <div>
+                  <span class="text-2xl font-bold text-gray-900">{{ trend.thisWeek }}</span>
+                  <span class="text-sm text-gray-500 ml-1">this week</span>
+                </div>
+                <span class="text-gray-300 font-medium">vs</span>
+                <div>
+                  <span class="text-2xl font-bold text-gray-400">{{ trend.lastWeek }}</span>
+                  <span class="text-sm text-gray-500 ml-1">last week</span>
+                </div>
+              </div>
+            </div>
+            <div class="shrink-0">
+              <p class="text-xs text-gray-400 mb-2 sm:text-right">Last 14 days
+                <span class="inline-flex items-center gap-2 ml-3">
+                  <span class="inline-block w-3 h-3 rounded-sm bg-gray-300"></span><span>prev week</span>
+                  <span class="inline-block w-3 h-3 rounded-sm bg-blue-500 ml-1"></span><span>this week</span>
+                </span>
+              </p>
+              <svg viewBox="0 0 280 44" width="280" height="44" xmlns="http://www.w3.org/2000/svg">
+                <rect *ngFor="let bar of trendBars"
+                      [attr.x]="bar.x"
+                      [attr.y]="bar.y"
+                      [attr.width]="16"
+                      [attr.height]="bar.height"
+                      rx="2"
+                      [attr.fill]="bar.isThisWeek ? '#3b82f6' : '#d1d5db'"
+                />
+              </svg>
             </div>
           </div>
         </div>
@@ -171,6 +223,9 @@ export class AnalyticsComponent implements OnInit {
   metrics: DetailedMetrics | null = null;
   loading = true;
 
+  trend: WeeklyTrend | null = null;
+  trendBars: SparklineBar[] = [];
+
   ngOnInit(): void {
     this.http.get<DetailedMetrics>('/api/v1/analytics/detailed').subscribe({
       next: (data) => {
@@ -180,6 +235,24 @@ export class AnalyticsComponent implements OnInit {
       error: () => {
         this.loading = false;
       }
+    });
+
+    this.http.get<WeeklyTrend>('/api/v1/analytics/trend').subscribe({
+      next: (data) => {
+        this.trend = data;
+        this.trendBars = this.computeBars(data.daily);
+      },
+      error: () => {}
+    });
+  }
+
+  private computeBars(daily: DailyCount[]): SparklineBar[] {
+    if (!daily?.length) return [];
+    const maxCount = Math.max(...daily.map(d => d.count), 1);
+    const CHART_H = 40;
+    return daily.map((d, i) => {
+      const h = Math.max(2, Math.round((d.count / maxCount) * CHART_H));
+      return { x: i * 20, y: 44 - h, height: h, isThisWeek: i >= 7 };
     });
   }
 
