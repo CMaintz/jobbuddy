@@ -1,0 +1,14 @@
+-- interview_questions and follow_up_reminders were created without FK constraints.
+-- Adding them here so that deleting a user cascades cleanly (GDPR account deletion).
+
+ALTER TABLE interview_questions
+    ADD CONSTRAINT fk_interview_questions_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_interview_questions_job
+        FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE;
+
+ALTER TABLE follow_up_reminders
+    ADD CONSTRAINT fk_follow_up_reminders_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_follow_up_reminders_application
+        FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE;
