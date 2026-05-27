@@ -14,6 +14,7 @@ public interface GenerateDocumentUseCase {
             UUID jobId,
             String rawJobDescription,
             String templateId,
+            UUID promptTemplateId,
             String customInstructions,
             String targetLanguage,
             boolean showProfileImage,
