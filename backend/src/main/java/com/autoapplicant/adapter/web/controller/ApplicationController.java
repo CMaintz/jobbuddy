@@ -7,8 +7,7 @@ import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.*;
-import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
-import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.port.in.job.GetJobByIdUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -20,6 +19,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,25 +31,28 @@ public class ApplicationController {
 
     private final CreateApplicationUseCase create;
     private final UpdateApplicationStatusUseCase updateStatus;
+    private final UpdateRecruiterInfoUseCase updateRecruiter;
     private final GetApplicationsUseCase getAll;
     private final GetApplicationByIdUseCase getById;
-    private final JobRepositoryPort jobRepo;
-    private final ResponseMetricRepositoryPort responseMetricRepo;
+    private final GetJobByIdUseCase getJobById;
+    private final GetApplicationTimelineUseCase timeline;
     private final SecurityContextHelper secCtx;
 
     public ApplicationController(CreateApplicationUseCase create,
                                   UpdateApplicationStatusUseCase updateStatus,
+                                  UpdateRecruiterInfoUseCase updateRecruiter,
                                   GetApplicationsUseCase getAll,
                                   GetApplicationByIdUseCase getById,
-                                  JobRepositoryPort jobRepo,
-                                  ResponseMetricRepositoryPort responseMetricRepo,
+                                  GetJobByIdUseCase getJobById,
+                                  GetApplicationTimelineUseCase timeline,
                                   SecurityContextHelper secCtx) {
         this.create = create;
         this.updateStatus = updateStatus;
+        this.updateRecruiter = updateRecruiter;
         this.getAll = getAll;
         this.getById = getById;
-        this.jobRepo = jobRepo;
-        this.responseMetricRepo = responseMetricRepo;
+        this.getJobById = getJobById;
+        this.timeline = timeline;
         this.secCtx = secCtx;
     }
 
@@ -60,13 +63,14 @@ public class ApplicationController {
         UUID userId = secCtx.getCurrentUserId();
         List<ApplicationResponse> result = getAll.getApplications(userId, pageable).getContent().stream()
                 .map(a -> {
-                    Job job = a.jobId() != null ? jobRepo.findById(a.jobId()).orElse(null) : null;
+                    Job job = a.jobId() != null ? getJobById.getJobById(a.jobId()).orElse(null) : null;
                     return ApplicationResponse.from(a, job);
                 }).collect(Collectors.toList());
         return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Create application")
+    @ApiResponse(responseCode = "201", description = "Application created")
     @PostMapping
     public ResponseEntity<ApplicationResponse> create(@Valid @RequestBody CreateApplicationRequest req) {
         UUID userId = secCtx.getCurrentUserId();
@@ -82,7 +86,7 @@ public class ApplicationController {
                 req.recruiterMessage(),
                 req.matchScore(),
                 req.notes()));
-        return ResponseEntity.ok(ApplicationResponse.from(app));
+        return ResponseEntity.created(URI.create("/api/v1/applications/" + app.id())).body(ApplicationResponse.from(app));
     }
 
     @Operation(summary = "Attach generated document to application")
@@ -109,7 +113,7 @@ public class ApplicationController {
         UUID userId = secCtx.getCurrentUserId();
         return getById.getApplicationById(id, userId)
                 .map(a -> {
-                    Job job = a.jobId() != null ? jobRepo.findById(a.jobId()).orElse(null) : null;
+                    Job job = a.jobId() != null ? getJobById.getJobById(a.jobId()).orElse(null) : null;
                     return ResponseEntity.ok(ApplicationResponse.from(a, job));
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -125,10 +129,22 @@ public class ApplicationController {
         return ResponseEntity.ok(ApplicationResponse.from(updated));
     }
 
+    @Operation(summary = "Update recruiter contact details and reply")
+    @PatchMapping("/{id}/recruiter")
+    public ResponseEntity<ApplicationResponse> updateRecruiter(
+            @PathVariable UUID id,
+            @RequestBody UpdateRecruiterInfoRequest req) {
+        UUID userId = secCtx.getCurrentUserId();
+        var updated = updateRecruiter.updateRecruiterInfo(id, userId,
+                req.recruiterName(), req.recruiterEmail(),
+                req.recruiterMessage(), req.recruiterReply());
+        return ResponseEntity.ok(ApplicationResponse.from(updated));
+    }
+
     @Operation(summary = "Get application response timeline")
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<List<ResponseMetric>> timeline(@PathVariable UUID id) {
-        return ResponseEntity.ok(responseMetricRepo.findByApplicationId(id));
+    public ResponseEntity<List<ResponseMetric>> getTimeline(@PathVariable UUID id) {
+        return ResponseEntity.ok(timeline.getTimeline(id));
     }
 
     private static ApplicationStatus parseStatus(String value, ApplicationStatus fallback) {

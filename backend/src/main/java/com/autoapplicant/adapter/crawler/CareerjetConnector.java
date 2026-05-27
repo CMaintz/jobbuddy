@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Fetches Danish job listings from the Careerjet public API.
@@ -41,18 +39,18 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
     }
 
     @Override
-    public List<RawJobData> fetchJobs(CrawlConfig config) {
+    public void fetchJobs(CrawlConfig config) {
         String affiliateId = appProperties.getCareerjet().getAffiliateId();
         if (affiliateId == null || affiliateId.isBlank()) {
             log.warn("Careerjet: no affiliate ID configured (app.careerjet.affiliate-id) — skipping crawl");
-            return List.of();
+            return;
         }
 
-        List<RawJobData> results = new ArrayList<>();
         int targetJobs = config.maxPages() * PAGE_SIZE;
         int totalPages = config.maxPages();
+        int count = 0;
 
-        for (int page = 1; page <= totalPages && results.size() < targetJobs; page++) {
+        for (int page = 1; page <= totalPages && count < targetJobs; page++) {
             String url = UriComponentsBuilder.fromHttpUrl(API_BASE)
                     .queryParam("keywords", "")
                     .queryParam("location", "denmark")
@@ -93,7 +91,7 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
                     String content = buildContent(title, company, location, desc, salary, date, jobUrl);
                     String jobId   = extractId(jobUrl);
 
-                    results.add(new RawJobData(
+                    config.onJobFound().accept(new RawJobData(
                             JobSource.CAREERJET,
                             jobId,
                             jobUrl,
@@ -101,9 +99,10 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
                             job.toString(),   // raw JSON as structured payload
                             Instant.now()
                     ));
+                    count++;
                 }
 
-                log.info("Careerjet: page {} — {} jobs (total: {})", page, jobs.size(), results.size());
+                log.info("Careerjet: page {} — {} jobs (total: {})", page, jobs.size(), count);
 
                 // Check if we've seen all available pages
                 int totalPages_ = root.path("pages").asInt(0);
@@ -111,7 +110,7 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                log.warn("Careerjet: interrupted, returning partial results ({} so far)", results.size());
+                log.warn("Careerjet: interrupted, returning partial results ({} so far)", count);
                 break;
             } catch (Exception e) {
                 log.warn("Careerjet: failed on page {}: {}", page, e.getMessage());
@@ -119,8 +118,7 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
             }
         }
 
-        log.info("Careerjet crawl complete: {} jobs collected", results.size());
-        return results;
+        log.info("Careerjet crawl complete: {} jobs collected", count);
     }
 
     private String buildContent(String title, String company, String location,

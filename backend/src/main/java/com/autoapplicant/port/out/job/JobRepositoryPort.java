@@ -15,6 +15,8 @@ public interface JobRepositoryPort {
     List<Job> findAll(int page, int size);
     List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size);
     Optional<Job> findBySourceAndSourceJobId(JobSource source, String sourceJobId);
+    boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
+    List<Job> findUnenriched(int limit);
     long count();
 }

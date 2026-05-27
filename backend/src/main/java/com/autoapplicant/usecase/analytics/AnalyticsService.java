@@ -1,8 +1,6 @@
 package com.autoapplicant.usecase.analytics;
 
-import com.autoapplicant.domain.analytics.ApplicationMetrics;
-import com.autoapplicant.domain.analytics.DashboardData;
-import com.autoapplicant.domain.analytics.DetailedMetrics;
+import com.autoapplicant.domain.analytics.*;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.job.Job;
@@ -15,14 +13,17 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
-public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetricsUseCase, GetDetailedMetricsUseCase {
+public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetricsUseCase,
+        GetDetailedMetricsUseCase, GetWeeklyTrendUseCase {
 
     private final ApplicationRepositoryPort applicationRepo;
     private final JobRepositoryPort jobRepo;
@@ -57,9 +58,7 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
                 .collect(Collectors.toList());
 
         ApplicationMetrics weeklyMetrics = computeWeeklyMetrics(userId, applications);
-
         int appliedThisWeek = countAppliedSince(applications, Instant.now().minus(7, ChronoUnit.DAYS));
-
         int activeApplications = (int) applications.stream()
                 .filter(a -> a.status() == ApplicationStatus.APPLIED
                         || a.status() == ApplicationStatus.RECRUITER_CONTACT
@@ -74,8 +73,7 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
 
     @Override
     public ApplicationMetrics getMetrics(UUID userId) {
-        List<Application> applications = applicationRepo.findByUserId(userId);
-        return computeWeeklyMetrics(userId, applications);
+        return computeWeeklyMetrics(userId, applicationRepo.findByUserId(userId));
     }
 
     @Override
@@ -85,7 +83,6 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
         int total = applications.size();
         int saved = countByStatus(applications, ApplicationStatus.SAVED);
         int applied = total - saved;
-
         int pendingResponse = countByStatus(applications, ApplicationStatus.APPLIED);
         int activeInterviews = countByStatuses(applications,
                 ApplicationStatus.INTERVIEW, ApplicationStatus.TECHNICAL_TEST, ApplicationStatus.FINAL_ROUND);
@@ -102,8 +99,9 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
         List<String> topCompanies = applications.stream()
                 .filter(a -> a.jobId() != null)
                 .map(a -> jobRepo.findById(a.jobId()))
-                .filter(opt -> opt.isPresent())
-                .map(opt -> opt.get().companyName())
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .map(Job::companyName)
                 .filter(name -> name != null && !name.isBlank())
                 .collect(Collectors.groupingBy(name -> name, Collectors.counting()))
                 .entrySet().stream()
@@ -115,6 +113,54 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
         return new DetailedMetrics(total, saved, applied, pendingResponse, activeInterviews, offers,
                 appliedThisWeek, appliedThisMonth, responseRate, interviewRate, offerRate, topCompanies);
     }
+
+    @Override
+    public WeeklyTrend getWeeklyTrend(UUID userId) {
+        List<Application> applications = applicationRepo.findByUserId(userId);
+
+        Instant now = Instant.now();
+        Instant weekAgo = now.minus(7, ChronoUnit.DAYS);
+        Instant twoWeeksAgo = now.minus(14, ChronoUnit.DAYS);
+
+        int thisWeek = countAppliedBetween(applications, weekAgo, now);
+        int lastWeek = countAppliedBetween(applications, twoWeeksAgo, weekAgo);
+        int delta = thisWeek - lastWeek;
+
+        String message;
+        if (delta > 0) {
+            message = "Better than last week! +" + delta + " application" + (delta > 1 ? "s" : "");
+        } else if (delta < 0) {
+            message = "Fewer than last week. Keep at it!";
+        } else if (thisWeek == 0) {
+            message = "No applications yet this week. Time to start!";
+        } else {
+            message = "Same pace as last week.";
+        }
+
+        // Build 14-day daily series (oldest→newest) for the sparkline
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        Map<LocalDate, Long> byDay = applications.stream()
+                .filter(a -> a.status() != ApplicationStatus.SAVED)
+                .filter(a -> {
+                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
+                    return ts != null && ts.isAfter(twoWeeksAgo);
+                })
+                .collect(Collectors.groupingBy(
+                        a -> {
+                            Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
+                            return ts.atZone(ZoneOffset.UTC).toLocalDate();
+                        },
+                        Collectors.counting()));
+
+        List<DailyCount> daily = IntStream.range(0, 14)
+                .mapToObj(i -> today.minusDays(13 - i))
+                .map(date -> new DailyCount(date, byDay.getOrDefault(date, 0L).intValue()))
+                .collect(Collectors.toList());
+
+        return new WeeklyTrend(thisWeek, lastWeek, delta, message, daily);
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private ApplicationMetrics computeWeeklyMetrics(UUID userId, List<Application> applications) {
         int total = applications.size();
@@ -134,8 +180,6 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
                 total, saved, 0, responseRate, interviewRate, offerRate);
     }
 
-    // ── Shared helpers ────────────────────────────────────────────────────────
-
     private static int countByStatus(List<Application> applications, ApplicationStatus status) {
         return (int) applications.stream().filter(a -> a.status() == status).count();
     }
@@ -151,6 +195,15 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
                 .filter(a -> {
                     Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
                     return ts != null && ts.isAfter(since);
+                }).count();
+    }
+
+    private static int countAppliedBetween(List<Application> applications, Instant from, Instant to) {
+        return (int) applications.stream()
+                .filter(a -> a.status() != ApplicationStatus.SAVED)
+                .filter(a -> {
+                    Instant ts = a.appliedAt() != null ? a.appliedAt() : a.createdAt();
+                    return ts != null && ts.isAfter(from) && !ts.isAfter(to);
                 }).count();
     }
 }

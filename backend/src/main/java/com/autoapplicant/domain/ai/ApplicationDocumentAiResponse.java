@@ -6,5 +6,6 @@ public record ApplicationDocumentAiResponse(
         String body,
         Integer keywordCoverage,
         List<String> matchedKeywords,
-        List<String> missingKeywords
+        List<String> missingKeywords,
+        List<String> notes
 ) {}

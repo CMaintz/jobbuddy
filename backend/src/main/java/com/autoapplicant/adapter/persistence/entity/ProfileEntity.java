@@ -18,28 +18,8 @@ public class ProfileEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "full_name")
-    private String fullName;
-
     private String headline;
     private String summary;
-    private String location;
-    private String municipality;
-
-    @Column(name = "linkedin_url")
-    private String linkedinUrl;
-
-    @Column(name = "github_url")
-    private String githubUrl;
-
-    @Column(name = "website_url")
-    private String websiteUrl;
-
-    @Column(name = "phone")
-    private String phone;
-
-    @Column(name = "photo_url")
-    private String photoUrl;
 
     @Column(name = "years_experience")
     private Integer yearsExperience;
@@ -87,26 +67,10 @@ public class ProfileEntity {
     public void setId(UUID id) { this.id = id; }
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
     public String getHeadline() { return headline; }
     public void setHeadline(String headline) { this.headline = headline; }
     public String getSummary() { return summary; }
     public void setSummary(String summary) { this.summary = summary; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public String getMunicipality() { return municipality; }
-    public void setMunicipality(String municipality) { this.municipality = municipality; }
-    public String getLinkedinUrl() { return linkedinUrl; }
-    public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
-    public String getGithubUrl() { return githubUrl; }
-    public void setGithubUrl(String githubUrl) { this.githubUrl = githubUrl; }
-    public String getWebsiteUrl() { return websiteUrl; }
-    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-    public String getPhotoUrl() { return photoUrl; }
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
     public Integer getYearsExperience() { return yearsExperience; }
     public void setYearsExperience(Integer yearsExperience) { this.yearsExperience = yearsExperience; }
     public String[] getSkills() { return skills; }

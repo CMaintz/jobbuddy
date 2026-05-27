@@ -13,11 +13,15 @@ import java.util.UUID;
 
 public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     Optional<JobEntity> findBySourceAndSourceJobId(String source, String sourceJobId);
+    boolean existsBySourceAndSourceJobId(String source, String sourceJobId);
 
     Optional<JobEntity> findByUrl(String url);
 
     @Query("SELECT j FROM JobEntity j WHERE j.isActive = true ORDER BY j.postedAt DESC")
     List<JobEntity> findActiveJobs();
+
+    @Query("SELECT j FROM JobEntity j WHERE j.aiSummary IS NULL ORDER BY j.createdAt ASC")
+    List<JobEntity> findUnenriched(Pageable pageable);
 
     @Query("SELECT j FROM JobEntity j WHERE j.id NOT IN :excludedIds ORDER BY j.postedAt DESC")
     List<JobEntity> findAllExcluding(@Param("excludedIds") Set<UUID> excludedIds, Pageable pageable);

@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "profile_languages")
-public class ProfileLanguageEntity {
+public class SpokenLanguageEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -50,6 +50,10 @@ public class PreferencesEntity {
     @Column(name = "preferred_seniority", columnDefinition = "text[]")
     private String[] preferredSeniority;
 
+    @Type(StringArrayType.class)
+    @Column(name = "preferred_industries", columnDefinition = "text[]")
+    private String[] preferredIndustries;
+
     @Column(name = "salary_min")
     private Integer salaryMin;
 
@@ -94,6 +98,8 @@ public class PreferencesEntity {
     public void setPreferredEmploymentTypes(String[] v) { this.preferredEmploymentTypes = v; }
     public String[] getPreferredSeniority() { return preferredSeniority; }
     public void setPreferredSeniority(String[] v) { this.preferredSeniority = v; }
+    public String[] getPreferredIndustries() { return preferredIndustries; }
+    public void setPreferredIndustries(String[] v) { this.preferredIndustries = v; }
     public Integer getSalaryMin() { return salaryMin; }
     public void setSalaryMin(Integer v) { this.salaryMin = v; }
     public Integer getSalaryMax() { return salaryMax; }

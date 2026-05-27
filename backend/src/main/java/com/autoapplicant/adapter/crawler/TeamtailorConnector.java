@@ -13,7 +13,6 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,24 +50,31 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
     }
 
     @Override
-    public List<RawJobData> fetchJobs(CrawlConfig config) {
+    public void fetchJobs(CrawlConfig config) {
         List<String> careerPageUrls = appProperties.getTeamtailor().getCareerPageUrls();
         if (careerPageUrls.isEmpty()) {
             log.info("Teamtailor: no career page URLs configured (app.teamtailor.career-page-urls) — skipping");
-            return List.of();
+            return;
         }
 
-        List<RawJobData> results = new ArrayList<>();
         int targetJobs = config.maxPages() * 15;
+        int count = 0;
 
         for (String baseUrl : careerPageUrls) {
-            if (results.size() >= targetJobs) break;
+            if (count >= targetJobs) break;
             try {
                 Set<String> jobUrls = collectJobUrls(baseUrl, config);
                 log.info("Teamtailor: {} — found {} job URLs", baseUrl, jobUrls.size());
 
+                int pageTotal = jobUrls.size();
+                int pageIdx = 0;
                 for (String jobUrl : jobUrls) {
-                    if (results.size() >= targetJobs) break;
+                    if (count >= targetJobs) break;
+                    if (pageIdx % 25 == 0) {
+                        log.info("Teamtailor: fetching detail pages [{}/{}] ({} total so far)...",
+                                pageIdx, pageTotal, count);
+                    }
+                    pageIdx++;
                     try {
                         Thread.sleep(config.delayMs());
                         Document doc = Jsoup.connect(jobUrl)
@@ -82,7 +88,7 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
                                 : doc.outerHtml();
                         String jobId    = extractId(baseUrl, jobUrl);
 
-                        results.add(new RawJobData(
+                        config.onJobFound().accept(new RawJobData(
                                 JobSource.TEAMTAILOR,
                                 jobId,
                                 jobUrl,
@@ -90,9 +96,10 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
                                 jsonLd,
                                 Instant.now()
                         ));
+                        count++;
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        return results;
+                        return;
                     } catch (Exception e) {
                         log.warn("Teamtailor: failed to fetch detail page {}: {}", jobUrl, e.getMessage());
                     }
@@ -102,8 +109,7 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
             }
         }
 
-        log.info("Teamtailor crawl complete: {} jobs collected", results.size());
-        return results;
+        log.info("Teamtailor crawl complete: {} jobs collected", count);
     }
 
     // ── Collect job URLs from the listing page ────────────────────────────────

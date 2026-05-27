@@ -26,7 +26,7 @@ public class CareerProfileContextService {
     private final EducationRepositoryPort educationRepo;
     private final CertificationRepositoryPort certRepo;
     private final ProfileSkillRepositoryPort skillRepo;
-    private final ProfileLanguageRepositoryPort languageRepo;
+    private final SpokenLanguageRepositoryPort languageRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -35,7 +35,7 @@ public class CareerProfileContextService {
                                        EducationRepositoryPort educationRepo,
                                        CertificationRepositoryPort certRepo,
                                        ProfileSkillRepositoryPort skillRepo,
-                                       ProfileLanguageRepositoryPort languageRepo,
+                                       SpokenLanguageRepositoryPort languageRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;

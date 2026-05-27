@@ -11,13 +11,11 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 public class JobindexConnector extends AbstractJobSourceConnector {
 
-    private static final String RSS_URL = "https://www.jobindex.dk/jobsoegning.rss";
+    private static final String RSS_BASE = "https://www.jobindex.dk/jobsoegning.rss";
     private static final String USER_AGENT =
             "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
 
@@ -27,75 +25,91 @@ public class JobindexConnector extends AbstractJobSourceConnector {
     }
 
     @Override
-    public List<RawJobData> fetchJobs(CrawlConfig config) {
-        List<RawJobData> results = new ArrayList<>();
+    public void fetchJobs(CrawlConfig config) {
         int maxJobs = config.maxPages() * 20;
+        int count = 0;
+        int consecutiveBlankPages = 0;
+        final int MAX_BLANK_PAGES = 3;
 
-        String rssContent;
-        try {
-            rssContent = Jsoup.connect(RSS_URL)
-                    .userAgent(USER_AGENT)
-                    .timeout(15000)
-                    .execute()
-                    .body();
-        } catch (Exception e) {
-            log.warn("Failed to fetch Jobindex RSS feed from {}: {}", RSS_URL, e.getMessage());
-            return results;
-        }
+        outer:
+        for (int page = 0; page < config.maxPages() && count < maxJobs; page++) {
+            log.info("Jobindex: fetching RSS page {} [{}/{}] ({} jobs so far)",
+                    page, page + 1, config.maxPages(), count);
 
-        Document rssDoc = Jsoup.parse(rssContent, "", Parser.xmlParser());
-        Elements items = rssDoc.select("item");
-
-        for (Element item : items) {
-            if (results.size() >= maxJobs) {
-                break;
-            }
-
-            String link = item.select("link").text();
-            if (link == null || link.isBlank()) {
-                link = item.select("link").first() != null
-                        ? item.select("link").first().html()
-                        : "";
-            }
-            String guid = item.select("guid").text();
-            String description = item.select("description").text();
-
-            if (guid == null || guid.isBlank()) {
-                guid = link;
-            }
-            if (link.isBlank()) {
-                log.warn("Jobindex RSS item has no link, skipping. guid={}", guid);
-                continue;
-            }
-
-            String detailHtml = description;
+            String rssContent;
             try {
-                Thread.sleep(config.delayMs());
-                Document detailDoc = Jsoup.connect(link)
+                rssContent = Jsoup.connect(RSS_BASE + "?p=" + page)
                         .userAgent(USER_AGENT)
                         .timeout(15000)
-                        .get();
-                detailHtml = detailDoc.outerHtml();
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                log.warn("Interrupted while fetching Jobindex detail page, stopping crawl");
-                break;
+                        .execute()
+                        .body();
             } catch (Exception e) {
-                log.warn("Failed to fetch Jobindex detail page {}: {} — using RSS description as fallback",
-                        link, e.getMessage());
+                log.warn("Failed to fetch Jobindex RSS page {}: {}", page, e.getMessage());
+                break;
             }
 
-            results.add(new RawJobData(
-                    JobSource.JOBINDEX,
-                    guid,
-                    link,
-                    detailHtml,
-                    null,
-                    Instant.now()
-            ));
+            Document rssDoc = Jsoup.parse(rssContent, "", Parser.xmlParser());
+            Elements items = rssDoc.select("item");
+            if (items.isEmpty()) {
+                log.info("Jobindex: no items on RSS page {}, stopping", page);
+                break;
+            }
+            log.info("Jobindex: {} items on page {}, fetching detail pages...", items.size(), page);
+
+            int newOnPage = 0;
+            for (Element item : items) {
+                if (count >= maxJobs) break outer;
+
+                String link = item.select("link").text();
+                if (link == null || link.isBlank()) {
+                    link = item.select("link").first() != null
+                            ? item.select("link").first().html()
+                            : "";
+                }
+                String guid = item.select("guid").text();
+                if (guid == null || guid.isBlank()) guid = link;
+                if (link.isBlank()) {
+                    log.warn("Jobindex RSS item has no link, skipping. guid={}", guid);
+                    continue;
+                }
+
+                if (config.isKnownGuid().test(guid)) {
+                    log.debug("Jobindex: skipping known guid on page {}", page);
+                    continue;
+                }
+
+                String detailHtml = item.select("description").text();
+                try {
+                    Thread.sleep(config.delayMs());
+                    detailHtml = Jsoup.connect(link)
+                            .userAgent(USER_AGENT)
+                            .timeout(15000)
+                            .get()
+                            .outerHtml();
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Interrupted while fetching Jobindex detail page, stopping crawl");
+                    break outer;
+                } catch (Exception e) {
+                    log.warn("Failed to fetch Jobindex detail page {}: {} — using RSS description as fallback",
+                            link, e.getMessage());
+                }
+
+                config.onJobFound().accept(new RawJobData(JobSource.JOBINDEX, guid, link, detailHtml, null, Instant.now()));
+                count++;
+                newOnPage++;
+            }
+
+            if (newOnPage == 0) {
+                if (++consecutiveBlankPages >= MAX_BLANK_PAGES) {
+                    log.info("Jobindex: {} consecutive pages with no new jobs — stopping", MAX_BLANK_PAGES);
+                    break;
+                }
+            } else {
+                consecutiveBlankPages = 0;
+            }
         }
 
-        log.info("Jobindex crawl complete: {} jobs collected", results.size());
-        return results;
+        log.info("Jobindex crawl complete: {} jobs collected", count);
     }
 }

@@ -1,30 +1,30 @@
 package com.autoapplicant.adapter.persistence.adapter;
 
-import com.autoapplicant.adapter.persistence.entity.ProfileLanguageEntity;
-import com.autoapplicant.adapter.persistence.repository.ProfileLanguageJpaRepository;
-import com.autoapplicant.domain.user.ProfileLanguage;
-import com.autoapplicant.port.out.user.ProfileLanguageRepositoryPort;
+import com.autoapplicant.adapter.persistence.entity.SpokenLanguageEntity;
+import com.autoapplicant.adapter.persistence.repository.SpokenLanguageJpaRepository;
+import com.autoapplicant.domain.user.SpokenLanguage;
+import com.autoapplicant.port.out.user.SpokenLanguageRepositoryPort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
-public class ProfileLanguagePersistenceAdapter implements ProfileLanguageRepositoryPort {
+public class SpokenLanguagePersistenceAdapter implements SpokenLanguageRepositoryPort {
 
-    private final ProfileLanguageJpaRepository repo;
+    private final SpokenLanguageJpaRepository repo;
 
-    public ProfileLanguagePersistenceAdapter(ProfileLanguageJpaRepository repo) {
+    public SpokenLanguagePersistenceAdapter(SpokenLanguageJpaRepository repo) {
         this.repo = repo;
     }
 
     @Override
-    public ProfileLanguage save(ProfileLanguage language) {
+    public SpokenLanguage save(SpokenLanguage language) {
         return toDomain(repo.save(toEntity(language)));
     }
 
     @Override
-    public List<ProfileLanguage> findByUserId(UUID userId) {
+    public List<SpokenLanguage> findByUserId(UUID userId) {
         return repo.findByUserIdOrderByDisplayOrder(userId).stream().map(this::toDomain).toList();
     }
 
@@ -33,8 +33,8 @@ public class ProfileLanguagePersistenceAdapter implements ProfileLanguageReposit
         repo.deleteByIdAndUserId(id, userId);
     }
 
-    private ProfileLanguageEntity toEntity(ProfileLanguage lang) {
-        ProfileLanguageEntity e = new ProfileLanguageEntity();
+    private SpokenLanguageEntity toEntity(SpokenLanguage lang) {
+        SpokenLanguageEntity e = new SpokenLanguageEntity();
         e.setId(lang.id());
         e.setUserId(lang.userId());
         e.setLanguage(lang.language());
@@ -43,8 +43,8 @@ public class ProfileLanguagePersistenceAdapter implements ProfileLanguageReposit
         return e;
     }
 
-    private ProfileLanguage toDomain(ProfileLanguageEntity e) {
-        return new ProfileLanguage(
+    private SpokenLanguage toDomain(SpokenLanguageEntity e) {
+        return new SpokenLanguage(
                 e.getId(), e.getUserId(), e.getLanguage(),
                 e.getProficiency(), e.getDisplayOrder(),
                 e.getCreatedAt(), e.getUpdatedAt());

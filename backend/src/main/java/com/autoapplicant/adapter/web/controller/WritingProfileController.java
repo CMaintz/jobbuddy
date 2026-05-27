@@ -2,7 +2,7 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.document.WritingProfile;
-import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
+import com.autoapplicant.port.in.document.ManageWritingProfileUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +15,12 @@ import java.util.UUID;
 @Tag(name = "Writing Style")
 public class WritingProfileController {
 
-    private final WritingProfileRepositoryPort repo;
+    private final ManageWritingProfileUseCase writingProfileUseCase;
     private final SecurityContextHelper secCtx;
 
-    public WritingProfileController(WritingProfileRepositoryPort repo, SecurityContextHelper secCtx) {
-        this.repo = repo;
+    public WritingProfileController(ManageWritingProfileUseCase writingProfileUseCase,
+                                    SecurityContextHelper secCtx) {
+        this.writingProfileUseCase = writingProfileUseCase;
         this.secCtx = secCtx;
     }
 
@@ -27,7 +28,7 @@ public class WritingProfileController {
     @GetMapping
     public ResponseEntity<WritingProfile> get() {
         UUID userId = secCtx.getCurrentUserId();
-        return repo.findByUserId(userId)
+        return writingProfileUseCase.get(userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.ok(new WritingProfile(null, userId,
                         null, null, null, null, null, null, null)));
@@ -42,6 +43,6 @@ public class WritingProfileController {
                 profile.tone(), profile.vocabularyNotes(),
                 profile.phrasingPatterns(), profile.exampleExcerpts(),
                 profile.lastAnalyzedAt(), profile.createdAt(), profile.updatedAt());
-        return ResponseEntity.ok(repo.save(toSave));
+        return ResponseEntity.ok(writingProfileUseCase.save(toSave));
     }
 }

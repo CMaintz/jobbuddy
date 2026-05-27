@@ -7,26 +7,53 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 
+    private Ai ai = new Ai();
     private Openai openai = new Openai();
+    private Gemini gemini = new Gemini();
     private Typesense typesense = new Typesense();
     private LinkedIn linkedin = new LinkedIn();
     private Careerjet careerjet = new Careerjet();
     private Greenhouse greenhouse = new Greenhouse();
     private Lever lever = new Lever();
     private Teamtailor teamtailor = new Teamtailor();
+    private CornerstoneOnDemand cornerstoneOnDemand = new CornerstoneOnDemand();
 
+    public Ai getAi() { return ai; }
     public Openai getOpenai() { return openai; }
+    public Gemini getGemini() { return gemini; }
     public Typesense getTypesense() { return typesense; }
     public LinkedIn getLinkedin() { return linkedin; }
     public Careerjet getCareerjet() { return careerjet; }
     public Greenhouse getGreenhouse() { return greenhouse; }
     public Lever getLever() { return lever; }
     public Teamtailor getTeamtailor() { return teamtailor; }
+    public CornerstoneOnDemand getCornerstoneOnDemand() { return cornerstoneOnDemand; }
+
+    public static class Ai {
+        private String enrichmentProvider = "gemini";
+        private String generationProvider = "openai";
+        public String getEnrichmentProvider() { return enrichmentProvider; }
+        public void setEnrichmentProvider(String enrichmentProvider) { this.enrichmentProvider = enrichmentProvider; }
+        public String getGenerationProvider() { return generationProvider; }
+        public void setGenerationProvider(String generationProvider) { this.generationProvider = generationProvider; }
+    }
 
     public static class Openai {
         private String apiKey;
         private String model;
         private String embeddingModel;
+        public String getApiKey() { return apiKey; }
+        public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+        public String getModel() { return model; }
+        public void setModel(String model) { this.model = model; }
+        public String getEmbeddingModel() { return embeddingModel; }
+        public void setEmbeddingModel(String embeddingModel) { this.embeddingModel = embeddingModel; }
+    }
+
+    public static class Gemini {
+        private String apiKey = "";
+        private String model = "gemini-2.5-flash";
+        private String embeddingModel = "gemini-embedding-001";
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
         public String getModel() { return model; }
@@ -82,5 +109,19 @@ public class AppProperties {
         private java.util.List<String> careerPageUrls = new java.util.ArrayList<>();
         public java.util.List<String> getCareerPageUrls() { return careerPageUrls; }
         public void setCareerPageUrls(java.util.List<String> urls) { this.careerPageUrls = urls; }
+    }
+
+    public static class CornerstoneOnDemand {
+        public static class Tenant {
+            private String name;
+            private int siteId;
+            public String getName() { return name; }
+            public void setName(String name) { this.name = name; }
+            public int getSiteId() { return siteId; }
+            public void setSiteId(int siteId) { this.siteId = siteId; }
+        }
+        private java.util.List<Tenant> tenants = new java.util.ArrayList<>();
+        public java.util.List<Tenant> getTenants() { return tenants; }
+        public void setTenants(java.util.List<Tenant> tenants) { this.tenants = tenants; }
     }
 }

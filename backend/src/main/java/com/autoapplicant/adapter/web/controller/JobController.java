@@ -15,9 +15,10 @@ import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.job.IgnoredJob;
+import com.autoapplicant.port.in.document.GetDocumentsForJobUseCase;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
-import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
+import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,7 +48,7 @@ public class JobController {
     private final IgnoreJobUseCase ignoreJob;
     private final CreateManualJobUseCase createManualJob;
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
-    private final GeneratedDocumentRepositoryPort docRepo;
+    private final GetDocumentsForJobUseCase getDocsForJob;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
@@ -56,7 +57,7 @@ public class JobController {
                          SaveJobUseCase saveJob, IgnoreJobUseCase ignoreJob,
                          CreateManualJobUseCase createManualJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
-                         GeneratedDocumentRepositoryPort docRepo,
+                         GetDocumentsForJobUseCase getDocsForJob,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -68,7 +69,7 @@ public class JobController {
         this.ignoreJob = ignoreJob;
         this.createManualJob = createManualJob;
         this.feedbackUseCase = feedbackUseCase;
-        this.docRepo = docRepo;
+        this.getDocsForJob = getDocsForJob;
         this.secCtx = secCtx;
     }
 
@@ -86,10 +87,11 @@ public class JobController {
     @GetMapping("/search")
     public ResponseEntity<JobSearchResult> search(
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) List<String> categories,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         JobSearchQuery query = new JobSearchQuery(q, new JobSearchFilters(null, null, null,
-                null, null, null, null, null, null, null), page, size, "postedAt");
+                null, null, null, null, null, null, null, categories), page, size, "postedAt");
         return ResponseEntity.ok(searchJobs.searchJobs(query));
     }
 
@@ -137,7 +139,7 @@ public class JobController {
     public ResponseEntity<Void> ignore(@PathVariable UUID id,
                                         @RequestParam(required = false) String reason) {
         ignoreJob.ignoreJob(secCtx.getCurrentUserId(), id, reason);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Unignore a job")
@@ -156,7 +158,7 @@ public class JobController {
     @Operation(summary = "List generated documents for a job")
     @GetMapping("/{id}/documents")
     public ResponseEntity<List<GeneratedDocument>> jobDocuments(@PathVariable UUID id) {
-        return ResponseEntity.ok(docRepo.findByJobId(id));
+        return ResponseEntity.ok(getDocsForJob.getDocumentsForJob(id));
     }
 
     @Operation(summary = "Submit recommendation feedback for a job")
@@ -183,6 +185,7 @@ public class JobController {
     }
 
     @Operation(summary = "Add job manually")
+    @ApiResponse(responseCode = "201", description = "Job created")
     @PostMapping("/manual")
     public ResponseEntity<JobResponse> addManually(@Valid @RequestBody ManualJobRequest req) {
         Job job = new Job(null, JobSource.MANUAL, null, req.url(),
@@ -193,8 +196,8 @@ public class JobController {
                 req.location(), null, null, null,
                 req.salaryMin(), req.salaryMax(), req.currency() != null ? req.currency() : "DKK",
                 List.of(), List.of(), List.of(),
-                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null);
+                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null, null);
         Job saved = createManualJob.createManualJob(job);
-        return ResponseEntity.ok(JobResponse.from(saved));
+        return ResponseEntity.created(URI.create("/api/v1/jobs/" + saved.id())).body(JobResponse.from(saved));
     }
 }

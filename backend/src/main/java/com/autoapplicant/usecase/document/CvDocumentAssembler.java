@@ -3,6 +3,8 @@ package com.autoapplicant.usecase.document;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfilePrivateInfo;
+import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.domain.user.User;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +20,8 @@ public class CvDocumentAssembler {
         this.atsReportBuilder = atsReportBuilder;
     }
 
-    public StructuredDocument assemble(User user, Profile profile, CareerProfileForAi source,
+    public StructuredDocument assemble(User user, Profile profile, ProfilePrivateInfo privateInfo,
+                                        List<ProfileSocial> socials, CareerProfileForAi source,
                                         TailoredCvContent tailored, String exportMode, String templateId,
                                         boolean showProfileImage, DocumentTheme theme) {
         List<String> selectedSkills = tailored != null && tailored.selectedSkills() != null && !tailored.selectedSkills().isEmpty()
@@ -63,24 +66,41 @@ public class CvDocumentAssembler {
                 DocumentType.CV,
                 exportMode != null && !exportMode.isBlank() ? exportMode : "ATS",
                 templateId,
-                buildIdentity(user, profile),
+                buildIdentity(user, profile, privateInfo, socials),
                 new DocumentRenderOptions(showProfileImage, theme),
                 sections,
                 null,
                 report);
     }
 
-    public DocumentIdentity buildIdentity(User user, Profile profile) {
+    public DocumentIdentity buildIdentity(User user, Profile profile,
+                                           ProfilePrivateInfo privateInfo, List<ProfileSocial> socials) {
+        String linkedinUrl = socials != null ? socials.stream()
+                .filter(s -> "linkedin".equalsIgnoreCase(s.iconKey())).findFirst()
+                .map(ProfileSocial::url).orElse("") : "";
+        String githubUrl = socials != null ? socials.stream()
+                .filter(s -> "github".equalsIgnoreCase(s.iconKey())).findFirst()
+                .map(ProfileSocial::url).orElse("") : "";
+        String websiteUrl = socials != null ? socials.stream()
+                .filter(s -> "globe".equalsIgnoreCase(s.iconKey())).findFirst()
+                .map(ProfileSocial::url).orElse("") : "";
         return new DocumentIdentity(
-                profile != null ? profile.fullName() : "",
+                privateInfo != null ? privateInfo.fullName() : "",
                 profile != null ? profile.headline() : "",
-                user != null ? user.email() : "",
-                profile != null ? profile.phone() : "",
-                profile != null ? profile.location() : "",
-                profile != null ? profile.linkedinUrl() : "",
-                profile != null ? profile.githubUrl() : "",
-                profile != null ? profile.websiteUrl() : "",
-                profile != null ? profile.photoUrl() : null);
+                privateInfo != null && privateInfo.contactEmail() != null
+                        ? privateInfo.contactEmail()
+                        : (user != null ? user.email() : ""),
+                privateInfo != null ? privateInfo.phone() : "",
+                privateInfo != null ? privateInfo.location() : "",
+                linkedinUrl,
+                githubUrl,
+                websiteUrl,
+                privateInfo != null ? privateInfo.photoUrl() : null);
+    }
+
+    /** Convenience overload for callers that don't have split profile info yet. */
+    public DocumentIdentity buildIdentity(User user, Profile profile) {
+        return buildIdentity(user, profile, null, List.of());
     }
 
     private void addSection(List<StructuredDocumentSection> sections, String id, String type, String heading,

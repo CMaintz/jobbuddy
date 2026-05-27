@@ -41,6 +41,7 @@ public final class JobMapper {
                 e.getAiSeniorityEstimate(),
                 e.getDuplicateGroupId(),
                 e.isActive(),
+                e.getJobCategory() != null ? parseEnum(e.getJobCategory(), JobCategory.class) : null,
                 e.getCreatedAt(),
                 e.getUpdatedAt()
         );
@@ -77,6 +78,7 @@ public final class JobMapper {
         e.setAiSeniorityEstimate(d.aiSeniorityEstimate());
         e.setDuplicateGroupId(d.duplicateGroupId());
         e.setActive(d.isActive());
+        e.setJobCategory(d.jobCategory() != null ? d.jobCategory().name() : null);
         return e;
     }
 

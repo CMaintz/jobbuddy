@@ -2,8 +2,13 @@ package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfilePrivateInfo;
+import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
+import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -38,10 +43,16 @@ public class ParseCvService implements ParseCvUseCase {
 
     private final AiProviderPort aiProvider;
     private final ObjectMapper objectMapper;
+    private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
+    private final ProfileSocialRepositoryPort socialRepo;
 
-    public ParseCvService(AiProviderPort aiProvider, ObjectMapper objectMapper) {
+    public ParseCvService(@Qualifier("generationAiProvider") AiProviderPort aiProvider, ObjectMapper objectMapper,
+                          ProfilePrivateInfoRepositoryPort privateInfoRepo,
+                          ProfileSocialRepositoryPort socialRepo) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
+        this.privateInfoRepo = privateInfoRepo;
+        this.socialRepo = socialRepo;
     }
 
     @Override
@@ -58,17 +69,35 @@ public class ParseCvService implements ParseCvUseCase {
             }
 
             JsonNode node = objectMapper.readTree(cleaned);
+
+            // Save PII separately
+            String fullName = textOrNull(node, "fullName");
+            String location  = textOrNull(node, "location");
+            if (fullName != null || location != null) {
+                ProfilePrivateInfo existing = privateInfoRepo.findByUserId(userId).orElse(null);
+                if (existing == null) {
+                    privateInfoRepo.save(new ProfilePrivateInfo(null, userId,
+                            fullName, null, null, location, null, null, null, null));
+                } else {
+                    privateInfoRepo.save(new ProfilePrivateInfo(existing.id(), userId,
+                            fullName != null ? fullName : existing.fullName(),
+                            existing.phone(), existing.photoUrl(),
+                            location != null ? location : existing.location(),
+                            existing.municipality(), existing.contactEmail(),
+                            existing.createdAt(), null));
+                }
+            }
+
+            // Save social links separately
+            int order = socialRepo.findByUserId(userId).size();
+            saveSocialIfPresent(userId, node, "linkedinUrl", "LinkedIn", "linkedin", order);
+            saveSocialIfPresent(userId, node, "githubUrl",   "GitHub",   "github",   order + 1);
+            saveSocialIfPresent(userId, node, "websiteUrl",  "Website",  "globe",    order + 2);
+
             return new Profile(
                     null, userId,
-                    textOrNull(node, "fullName"),
                     textOrNull(node, "headline"),
                     textOrNull(node, "summary"),
-                    textOrNull(node, "location"),
-                    null,
-                    textOrNull(node, "linkedinUrl"),
-                    textOrNull(node, "githubUrl"),
-                    textOrNull(node, "websiteUrl"),
-                    null, null,
                     null,
                     arrayOrEmpty(node, "skills"),
                     arrayOrEmpty(node, "technologies"),
@@ -77,9 +106,21 @@ public class ParseCvService implements ParseCvUseCase {
             );
         } catch (Exception e) {
             log.error("CV parsing failed for user {}: {}", userId, e.getMessage());
-            return new Profile(null, userId, null, null, null, null, null,
-                    null, null, null, null, null, null, List.of(), List.of(), List.of(),
+            return new Profile(null, userId, null, null, null, List.of(), List.of(), List.of(),
                     null, null, "DKK", null, null, null, null);
+        }
+    }
+
+    private void saveSocialIfPresent(UUID userId, JsonNode node, String field,
+                                      String platform, String iconKey, int displayOrder) {
+        String url = textOrNull(node, field);
+        if (url == null || url.isBlank()) return;
+        List<ProfileSocial> existing = socialRepo.findByUserId(userId);
+        boolean alreadyExists = existing.stream()
+                .anyMatch(s -> iconKey.equalsIgnoreCase(s.iconKey()));
+        if (!alreadyExists) {
+            socialRepo.save(new ProfileSocial(null, userId, platform, url, null,
+                    iconKey, displayOrder, null, null));
         }
     }
 

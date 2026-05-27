@@ -41,18 +41,18 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
     }
 
     @Override
-    public List<RawJobData> fetchJobs(CrawlConfig config) {
+    public void fetchJobs(CrawlConfig config) {
         List<String> companies = appProperties.getGreenhouse().getCompanies();
         if (companies.isEmpty()) {
             log.info("Greenhouse: no companies configured (app.greenhouse.companies) — skipping");
-            return List.of();
+            return;
         }
 
-        List<RawJobData> results = new ArrayList<>();
         int targetJobs = config.maxPages() * 20;
+        int count = 0;
 
         for (String company : companies) {
-            if (results.size() >= targetJobs) break;
+            if (count >= targetJobs) break;
             String url = String.format(API_BASE, company);
             try {
                 Thread.sleep(config.delayMs());
@@ -65,9 +65,9 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
                     continue;
                 }
 
-                int count = 0;
+                int companyCount = 0;
                 for (JsonNode job : jobs) {
-                    if (results.size() >= targetJobs) break;
+                    if (count >= targetJobs) break;
 
                     String jobId    = job.path("id").asText(null);
                     String title    = job.path("title").asText("");
@@ -87,7 +87,7 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
 
                     String content = buildContent(title, company, location, rawHtml, depts, updated, jobUrl);
 
-                    results.add(new RawJobData(
+                    config.onJobFound().accept(new RawJobData(
                             JobSource.GREENHOUSE,
                             "gh-" + company + "-" + jobId,
                             jobUrl,
@@ -96,20 +96,20 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
                             Instant.now()
                     ));
                     count++;
+                    companyCount++;
                 }
-                log.info("Greenhouse: {} — {} jobs collected", company, count);
+                log.info("Greenhouse: {} — {} jobs collected", company, companyCount);
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                log.warn("Greenhouse: interrupted, returning {} results so far", results.size());
+                log.warn("Greenhouse: interrupted, returning {} results so far", count);
                 break;
             } catch (Exception e) {
                 log.warn("Greenhouse: failed to fetch company '{}': {}", company, e.getMessage());
             }
         }
 
-        log.info("Greenhouse crawl complete: {} jobs from {} companies", results.size(), companies.size());
-        return results;
+        log.info("Greenhouse crawl complete: {} jobs from {} companies", count, companies.size());
     }
 
     private String buildContent(String title, String company, String location,

@@ -14,7 +14,7 @@ public final class ApplicationMapper {
                 ApplicationStatus.valueOf(e.getStatus()),
                 e.getAppliedAt(), e.getRecruiterName(), e.getRecruiterEmail(),
                 e.getCoverLetterText(), e.getApplicationText(), e.getRecruiterMessage(),
-                e.getCvVersionId(), e.getPromptTemplateId(), e.getMatchScore(),
+                e.getRecruiterReply(), e.getCvVersionId(), e.getPromptTemplateId(), e.getMatchScore(),
                 e.getNotes(), e.getCreatedAt(), e.getUpdatedAt()
         );
     }
@@ -31,6 +31,7 @@ public final class ApplicationMapper {
         e.setCoverLetterText(d.coverLetterText());
         e.setApplicationText(d.applicationText());
         e.setRecruiterMessage(d.recruiterMessage());
+        e.setRecruiterReply(d.recruiterReply());
         e.setCvVersionId(d.cvVersionId());
         e.setPromptTemplateId(d.promptTemplateId());
         e.setMatchScore(d.matchScore());

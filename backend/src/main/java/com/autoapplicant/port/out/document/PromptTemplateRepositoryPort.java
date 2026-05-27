@@ -11,4 +11,6 @@ public interface PromptTemplateRepositoryPort {
     Optional<PromptTemplate> findById(UUID id);
     List<PromptTemplate> findByUserId(UUID userId);
     List<PromptTemplate> findPublic();
+    /** Returns the first system-default template for a given category, e.g. CV_TAILORING. */
+    Optional<PromptTemplate> findSystemDefault(String category);
 }

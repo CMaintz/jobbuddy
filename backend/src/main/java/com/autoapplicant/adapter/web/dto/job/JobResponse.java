@@ -26,7 +26,8 @@ public record JobResponse(
         List<String> languages,
         Instant postedAt,
         String aiSummary,
-        List<String> aiTags
+        List<String> aiTags,
+        String jobCategory
 ) {
     public static JobResponse from(Job job) {
         return new JobResponse(
@@ -39,7 +40,8 @@ public record JobResponse(
                 job.location(), job.municipality(),
                 job.salaryMin(), job.salaryMax(), job.currency(),
                 job.technologies(), job.skills(), job.languages(),
-                job.postedAt(), job.aiSummary(), job.aiTags()
+                job.postedAt(), job.aiSummary(), job.aiTags(),
+                job.jobCategory() != null ? job.jobCategory().name() : null
         );
     }
 }

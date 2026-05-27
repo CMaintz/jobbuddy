@@ -15,6 +15,7 @@ public record UserPreferences(
         List<String> preferredRemoteTypes,
         List<String> preferredEmploymentTypes,
         List<String> preferredSeniority,
+        List<String> preferredIndustries,
         Integer salaryMin,
         Integer salaryMax,
         Integer maxCommuteKm,

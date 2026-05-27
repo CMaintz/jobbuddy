@@ -6,11 +6,13 @@ import com.autoapplicant.domain.document.CvVersion;
 import com.autoapplicant.port.in.document.GetCvVersionsUseCase;
 import com.autoapplicant.port.in.document.UploadCvUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -36,9 +38,10 @@ public class DocumentController {
     }
 
     @Operation(summary = "Upload new CV version")
+    @ApiResponse(responseCode = "201", description = "CV version created")
     @PostMapping
     public ResponseEntity<CvVersion> upload(@Valid @RequestBody CvUploadRequest req) {
         CvVersion cv = upload.uploadCv(secCtx.getCurrentUserId(), req.name(), req.content(), req.format());
-        return ResponseEntity.ok(cv);
+        return ResponseEntity.created(URI.create("/api/v1/cv/" + cv.id())).body(cv);
     }
 }

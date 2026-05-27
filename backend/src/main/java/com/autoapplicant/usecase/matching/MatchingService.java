@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.matching;
 
 import com.autoapplicant.domain.job.DanishMunicipalityCoordinates;
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.RemoteType;
 import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.MatchLabel;
@@ -11,6 +12,7 @@ import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -55,7 +57,7 @@ public class MatchingService implements GetRecommendationsUseCase {
                            JobRepositoryPort jobRepo,
                            ProfileRepositoryPort profileRepo,
                            PreferencesRepositoryPort prefsRepo,
-                           AiProviderPort aiProvider,
+                           @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                            IgnoredJobRepositoryPort ignoredJobRepo,
                            RecommendationFeedbackRepositoryPort feedbackRepo) {
         this.embeddingRepo = embeddingRepo;
@@ -146,6 +148,13 @@ public class MatchingService implements GetRecommendationsUseCase {
             if (!prefs.preferredSeniority().contains(job.seniority().name())) {
                 return false;
             }
+        }
+
+        // Industry hard constraint — jobs with null/OTHER category are never filtered out
+        if (notEmpty(prefs.preferredIndustries())
+                && job.jobCategory() != null
+                && job.jobCategory() != JobCategory.OTHER) {
+            if (!prefs.preferredIndustries().contains(job.jobCategory().name())) return false;
         }
 
         // Commute distance — only applies when maxCommuteKm is set, job has a municipality,

@@ -10,6 +10,7 @@ public record GenerateDocumentRequest(
         String jobDescription,
         @NotBlank String documentType,
         String templateId,
+        UUID promptTemplateId,
         String customInstructions,
         String targetLanguage,
         Boolean showProfileImage,

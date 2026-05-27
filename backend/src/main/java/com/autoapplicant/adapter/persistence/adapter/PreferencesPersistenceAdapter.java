@@ -32,6 +32,7 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         e.setPreferredRemoteTypes(toArray(prefs.preferredRemoteTypes()));
         e.setPreferredEmploymentTypes(toArray(prefs.preferredEmploymentTypes()));
         e.setPreferredSeniority(toArray(prefs.preferredSeniority()));
+        e.setPreferredIndustries(toArray(prefs.preferredIndustries()));
         e.setSalaryMin(prefs.salaryMin());
         e.setSalaryMax(prefs.salaryMax());
         e.setMaxCommuteKm(prefs.maxCommuteKm());
@@ -51,7 +52,7 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
                 toList(e.getPositiveSignals()), toList(e.getNegativeSignals()),
                 toList(e.getExcludedCompanies()),
                 toList(e.getPreferredRemoteTypes()), toList(e.getPreferredEmploymentTypes()),
-                toList(e.getPreferredSeniority()),
+                toList(e.getPreferredSeniority()), toList(e.getPreferredIndustries()),
                 e.getSalaryMin(), e.getSalaryMax(), e.getMaxCommuteKm(),
                 e.isNotificationEnabled(), e.getNotificationFrequency(),
                 e.getCreatedAt(), e.getUpdatedAt());

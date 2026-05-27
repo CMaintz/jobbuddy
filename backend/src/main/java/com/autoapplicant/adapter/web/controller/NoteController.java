@@ -4,7 +4,10 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.user.Note;
 import com.autoapplicant.port.in.notes.ManageNotesUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.net.URI;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +38,12 @@ public class NoteController {
     }
 
     @Operation(summary = "Create note for a job")
+    @ApiResponse(responseCode = "201", description = "Note created")
     @PostMapping
     public ResponseEntity<Note> create(@PathVariable UUID jobId,
                                        @Valid @RequestBody NoteRequest req) {
-        return ResponseEntity.ok(notes.createNote(secCtx.getCurrentUserId(), jobId, req.content()));
+        Note saved = notes.createNote(secCtx.getCurrentUserId(), jobId, req.content());
+        return ResponseEntity.created(URI.create("/api/v1/jobs/" + jobId + "/notes/" + saved.id())).body(saved);
     }
 
     @Operation(summary = "Update a note")
