@@ -60,7 +60,7 @@ export interface Certification {
 
 export type LanguageProficiency = 'NATIVE' | 'FLUENT' | 'PROFESSIONAL' | 'CONVERSATIONAL' | 'ELEMENTARY';
 
-export interface ProfileLanguage {
+export interface SpokenLanguage {
   id?: string;
   userId?: string;
   language: string;
@@ -75,4 +75,23 @@ export interface RecommendationFeedback {
   userId?: string;
   jobId: string;
   feedbackType: FeedbackType;
+}
+
+export interface ProfileSocial {
+  id?: string;
+  userId?: string;
+  platform: string;
+  url: string;
+  username?: string;
+  iconKey: string;
+  displayOrder: number;
+}
+
+export interface ProfileStrength {
+  id?: string;
+  userId?: string;
+  title: string;
+  description?: string;
+  iconKey: string;
+  displayOrder: number;
 }

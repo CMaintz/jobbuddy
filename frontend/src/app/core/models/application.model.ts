@@ -13,6 +13,7 @@ export interface Application {
   coverLetterText?: string;
   applicationText?: string;
   recruiterMessage?: string;
+  recruiterReply?: string;
   matchScore?: number;
   notes?: string;
   jobTitle?: string;

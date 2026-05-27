@@ -1,0 +1,97 @@
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
+import { ResumeStateService } from '../../services/resume-state.service';
+import { SkillChipListComponent } from '../../shared/skill-chip-list.component';
+import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
+
+@Component({
+  selector: 'app-executive-layout',
+  standalone: true,
+  imports: [CommonModule, LucideAngularModule, SkillChipListComponent],
+  template: `
+    <div class="p-10 flex flex-col gap-6 bg-white">
+      <!-- Executive header with full-width color band -->
+      <div class="p-8 text-white -m-10 mb-0" [style.background-color]="themeColor">
+        <div class="flex justify-between items-end">
+          <div>
+            <h1 class="text-3xl font-semibold tracking-wide">{{ pi.fullName }}</h1>
+            <p class="text-base opacity-80 mt-1">{{ pi.title }}</p>
+          </div>
+          @if (pi.photoUrl) {
+            <img [src]="pi.photoUrl" alt="Photo" class="w-20 h-20 object-cover border-2 border-white/30"
+              [class.rounded-full]="photoStyle === 'circle'"
+              [class.rounded-xl]="photoStyle === 'rounded'" />
+          }
+        </div>
+        <div class="flex flex-wrap gap-5 mt-4 text-xs opacity-75">
+          @if (pi.email) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0 fill-white" viewBox="0 0 24 24"><path [attr.d]="contactIcons.email"/></svg>{{ pi.email }}</span> }
+          @if (pi.phone) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0 fill-white" viewBox="0 0 24 24"><path [attr.d]="contactIcons.phone"/></svg>{{ pi.phone }}</span> }
+          @if (pi.location) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0 fill-white" viewBox="0 0 24 24"><path [attr.d]="contactIcons.location"/></svg>{{ pi.location }}</span> }
+          @for (s of socials; track s.id) {
+            <span class="flex items-center gap-1">
+              <lucide-icon [img]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" color="rgba(255,255,255,0.75)"></lucide-icon>
+              {{ s.username || s.url }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-col gap-6">
+        @if (pi.summary) {
+          <p class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor">{{ pi.summary }}</p>
+        }
+        @if (experience.length > 0) {
+          <section>
+            <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">Professional Experience</h2>
+            <div class="flex flex-col gap-5">
+              @for (exp of experience; track exp.id) {
+                <div>
+                  <div class="flex justify-between items-start">
+                    <div><h3 class="font-semibold text-sm">{{ exp.title }}</h3><p class="text-xs text-gray-500">{{ exp.company }}@if (exp.location) { · {{ exp.location }} }</p></div>
+                    <span class="text-xs text-gray-400">{{ exp.startDate }} – {{ exp.current ? 'Present' : exp.endDate }}</span>
+                  </div>
+                  @if (exp.description) { <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">{{ exp.description }}</p> }
+                  <app-skill-chip-list [skills]="exp.skills ?? []" />
+                </div>
+              }
+            </div>
+          </section>
+        }
+        <div class="grid grid-cols-2 gap-6">
+          @if (education.length > 0) {
+            <section>
+              <h2 class="font-semibold text-sm tracking-widest uppercase mb-3 pb-2 border-b" [style.color]="themeColor" [style.border-color]="themeColor">Education</h2>
+              @for (edu of education; track edu.id) {
+                <div class="mb-2"><p class="font-medium text-sm">{{ edu.degree }}</p><p class="text-xs text-gray-500">{{ edu.school }}</p></div>
+              }
+            </section>
+          }
+          @if (skills.length > 0) {
+            <section>
+              <h2 class="font-semibold text-sm tracking-widest uppercase mb-3 pb-2 border-b" [style.color]="themeColor" [style.border-color]="themeColor">Core Skills</h2>
+              <div class="flex flex-wrap gap-1.5">
+                @for (s of skills; track s.id) {
+                  <span class="text-xs px-2 py-0.5 rounded border" [style.border-color]="themeColor" [style.color]="themeColor">{{ s.name }}</span>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      </div>
+    </div>
+  `,
+})
+export class ExecutiveLayoutComponent {
+  private svc = inject(ResumeStateService);
+  get pi() { return this.svc.personalInfo(); }
+  get experience() { return this.svc.experience(); }
+  get education() { return this.svc.education(); }
+  get skills() { return this.svc.skills(); }
+  get socials() { return this.svc.socials(); }
+  get themeColor() { return this.svc.settings().themeColor; }
+  get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }
+  readonly contactIcons = CONTACT_ICONS;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSocialIcon(key: string): any { return getSocialIcon(key); }
+}

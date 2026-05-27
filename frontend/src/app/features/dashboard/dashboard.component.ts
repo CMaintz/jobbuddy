@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api';
+import { RemindersApiService, FollowUpReminder } from '../../core/api/reminders.api';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +34,40 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
             <div class="text-sm text-gray-500 mt-1">Recommendations</div>
           </div>
         </div>
+
+        <!-- Due Reminders -->
+        @if (dueReminders.length) {
+          <div class="card border-l-4"
+               [class.border-red-400]="overdueReminders > 0"
+               [class.border-yellow-400]="overdueReminders === 0">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-base font-semibold text-gray-900">Follow-up Reminders</h2>
+              @if (overdueReminders > 0) {
+                <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                  {{ overdueReminders }} overdue
+                </span>
+              }
+            </div>
+            <div class="space-y-2">
+              @for (r of dueReminders; track r.id) {
+                <div class="flex items-center justify-between p-2.5 rounded-lg"
+                     [class.bg-red-50]="isOverdue(r)"
+                     [class.bg-yellow-50]="!isOverdue(r)">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ r.note || 'Follow up' }}</p>
+                    <p class="text-xs" [class.text-red-600]="isOverdue(r)" [class.text-yellow-700]="!isOverdue(r)">
+                      {{ reminderDueLabel(r) }}
+                    </p>
+                  </div>
+                  <button (click)="completeReminder(r)"
+                          class="text-xs text-green-600 hover:text-green-700 font-medium shrink-0 ml-4">
+                    Mark done
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
 
         <!-- Quick Actions -->
         <div class="card">
@@ -104,14 +139,47 @@ import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api
 })
 export class DashboardComponent implements OnInit {
   private api = inject(DashboardApiService);
+  private remindersApi = inject(RemindersApiService);
+
   data: DashboardData | null = null;
   loading = true;
+  dueReminders: FollowUpReminder[] = [];
+
+  get overdueReminders(): number {
+    const now = new Date();
+    return this.dueReminders.filter(r => new Date(r.dueAt) < now).length;
+  }
 
   ngOnInit(): void {
     this.api.getDashboard().subscribe({
       next: (d) => { this.data = d; this.loading = false; },
       error: () => this.loading = false
     });
+    this.remindersApi.getDueReminders().subscribe({
+      next: rs => this.dueReminders = rs,
+      error: () => {}
+    });
+  }
+
+  completeReminder(r: FollowUpReminder): void {
+    this.remindersApi.complete(r.id).subscribe(() => {
+      this.dueReminders = this.dueReminders.filter(item => item.id !== r.id);
+    });
+  }
+
+  isOverdue(r: FollowUpReminder): boolean {
+    return new Date(r.dueAt) < new Date();
+  }
+
+  reminderDueLabel(r: FollowUpReminder): string {
+    const due = new Date(r.dueAt);
+    const now = new Date();
+    const diffMs = due.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    return `Due in ${diffDays} days`;
   }
 
   matchLabelClass(label: string): string {

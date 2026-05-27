@@ -4,10 +4,13 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { ProfileSocialApiService } from '../../core/api/profile-social.api';
+import { ProfileStrengthApiService } from '../../core/api/profile-strength.api';
 import { SkillsApiService } from '../../core/api/skills.api';
-import { WorkExperience, Project, Education, Certification, ProfileLanguage, LanguageProficiency } from '../../core/models/profile-section.model';
+import { ProfileSocial, ProfileStrength, WorkExperience, Project, Education, Certification, SpokenLanguage, LanguageProficiency } from '../../core/models/profile-section.model';
 import { ProfileSkill, SkillTaxonomy, TECH_CATEGORIES } from '../../core/models/skill-taxonomy.model';
 import { TabNavComponent } from '../../shared/components/ui/tab-nav.component';
+import { SOCIAL_PLATFORMS, SocialPlatform, getSocialPlatformIcon } from '../resume-builder/data/social-platforms';
 import {
   languageProficiencyLabel,
   PROFILE_TABS,
@@ -28,11 +31,13 @@ import { ProfileSkillsFacade } from './profile-skills.facade';
 import { ProfileCertificationsTabComponent } from './profile-certifications-tab.component';
 import { ProfileEducationTabComponent } from './profile-education-tab.component';
 import { ProfileExperienceTabComponent } from './profile-experience-tab.component';
-import { ProfileLanguagesTabComponent } from './profile-languages-tab.component';
+import { SpokenLanguagesTabComponent } from './profile-languages-tab.component';
 import { ProfileNewSkillModalComponent } from './profile-new-skill-modal.component';
 import { ProfileOverviewTabComponent } from './profile-overview-tab.component';
 import { ProfileProjectsTabComponent } from './profile-projects-tab.component';
 import { ProfileSkillsTabComponent } from './profile-skills-tab.component';
+import { ProfileSocialsTabComponent } from './profile-socials-tab.component';
+import { ProfileStrengthsTabComponent } from './profile-strengths-tab.component';
 
 @Component({
   selector: 'app-profile',
@@ -46,9 +51,11 @@ import { ProfileSkillsTabComponent } from './profile-skills-tab.component';
     ProfileProjectsTabComponent,
     ProfileEducationTabComponent,
     ProfileCertificationsTabComponent,
-    ProfileLanguagesTabComponent,
+    SpokenLanguagesTabComponent,
     ProfileNewSkillModalComponent,
     ProfileSkillsTabComponent,
+    ProfileSocialsTabComponent,
+    ProfileStrengthsTabComponent,
     TabNavComponent
   ],
   templateUrl: './profile.component.html'
@@ -56,6 +63,8 @@ import { ProfileSkillsTabComponent } from './profile-skills-tab.component';
 export class ProfileComponent implements OnInit {
   private fb = inject(FormBuilder);
   private skillsApi = inject(SkillsApiService);
+  private socialsApi = inject(ProfileSocialApiService);
+  private strengthsApi = inject(ProfileStrengthApiService);
   private overviewFacade = inject(ProfileOverviewFacade);
   private sectionsFacade = inject(ProfileSectionsFacade);
   private skillsFacade = inject(ProfileSkillsFacade);
@@ -95,11 +104,22 @@ export class ProfileComponent implements OnInit {
   educations: Education[] = [];
   certifications: Certification[] = [];
   profileSkills: ProfileSkill[] = [];
-  spokenLanguages: ProfileLanguage[] = [];
+  spokenLanguages: SpokenLanguage[] = [];
 
   // Languages tab state
   showLangForm = false;
-  newLang: Partial<ProfileLanguage> = { language: '', proficiency: 'FLUENT', displayOrder: 0 };
+  newLang: Partial<SpokenLanguage> = { language: '', proficiency: 'FLUENT', displayOrder: 0 };
+
+  // Socials tab state
+  socials: ProfileSocial[] = [];
+  showSocialForm = false;
+  socialPlatforms: SocialPlatform[] = SOCIAL_PLATFORMS;
+  newSocial: Partial<ProfileSocial> = { platform: 'LinkedIn', url: '', username: '', iconKey: 'linkedin', displayOrder: 0 };
+
+  // Strengths tab state
+  strengths: ProfileStrength[] = [];
+  showStrengthForm = false;
+  newStrength: Partial<ProfileStrength> = { title: '', description: '', iconKey: 'star', displayOrder: 0 };
 
   // Skills tab state
   readonly TECH_CATEGORIES = TECH_CATEGORIES;
@@ -154,6 +174,8 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.overviewFacade.load(this);
     this.sectionsFacade.load(this);
+    this.socialsApi.getSocials().subscribe(d => this.socials = d);
+    this.strengthsApi.getStrengths().subscribe(d => this.strengths = d);
 
     // Set up debounced skill search (profile skills tab)
     this.skillSearchSubject.pipe(
@@ -286,5 +308,61 @@ export class ProfileComponent implements OnInit {
 
   proficiencyLabel(p: LanguageProficiency): string {
     return languageProficiencyLabel(p);
+  }
+
+  // ── Social Links ─────────────────────────────────────────────────────────
+
+  onSocialPlatformChange(): void {
+    const platform = SOCIAL_PLATFORMS.find(p => p.platform === this.newSocial.platform);
+    if (platform) this.newSocial.iconKey = platform.iconKey;
+  }
+
+  saveSocial(): void {
+    if (!this.newSocial.url?.trim()) return;
+    const payload: Omit<ProfileSocial, 'id' | 'userId'> = {
+      platform: this.newSocial.platform!,
+      url: this.newSocial.url!.trim(),
+      username: this.newSocial.username?.trim() || undefined,
+      iconKey: this.newSocial.iconKey!,
+      displayOrder: this.socials.length,
+    };
+    this.socialsApi.createSocial(payload).subscribe(() => {
+      this.socialsApi.getSocials().subscribe(d => this.socials = d);
+      this.newSocial = { platform: 'LinkedIn', url: '', username: '', iconKey: 'linkedin', displayOrder: 0 };
+      this.showSocialForm = false;
+    });
+  }
+
+  deleteSocial(id: string): void {
+    this.socialsApi.deleteSocial(id).subscribe(() => {
+      this.socialsApi.getSocials().subscribe(d => this.socials = d);
+    });
+  }
+
+  getSocialIcon(iconKey: string): string {
+    return getSocialPlatformIcon(iconKey);
+  }
+
+  // ── Strengths ─────────────────────────────────────────────────────────────
+
+  saveStrength(): void {
+    if (!this.newStrength.title?.trim()) return;
+    const payload: Omit<ProfileStrength, 'id' | 'userId'> = {
+      title: this.newStrength.title!.trim(),
+      description: this.newStrength.description?.trim() || undefined,
+      iconKey: this.newStrength.iconKey ?? 'star',
+      displayOrder: this.strengths.length,
+    };
+    this.strengthsApi.createStrength(payload).subscribe(() => {
+      this.strengthsApi.getStrengths().subscribe(d => this.strengths = d);
+      this.newStrength = { title: '', description: '', iconKey: 'star', displayOrder: 0 };
+      this.showStrengthForm = false;
+    });
+  }
+
+  deleteStrength(id: string): void {
+    this.strengthsApi.deleteStrength(id).subscribe(() => {
+      this.strengthsApi.getStrengths().subscribe(d => this.strengths = d);
+    });
   }
 }

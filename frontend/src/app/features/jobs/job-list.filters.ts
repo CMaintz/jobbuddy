@@ -4,18 +4,22 @@ export interface JobFilters {
   remoteTypes: string[];
   employmentTypes: string[];
   seniorities: string[];
+  industries: string[];
   salaryMin: number | null;
   salaryMax: number | null;
   technologies: string;
+  hideApplied: boolean;
 }
 
 export const DEFAULT_JOB_FILTERS: JobFilters = {
   remoteTypes: [],
   employmentTypes: [],
   seniorities: [],
+  industries: [],
   salaryMin: null,
   salaryMax: null,
-  technologies: ''
+  technologies: '',
+  hideApplied: false,
 };
 
 export const REMOTE_OPTIONS = [
@@ -37,4 +41,22 @@ export const SENIORITY_OPTIONS = [
   { value: 'SENIOR', label: 'Senior' },
   { value: 'LEAD', label: 'Lead' },
   { value: 'PRINCIPAL', label: 'Principal' }
+];
+
+export const INDUSTRY_OPTIONS = [
+  { value: 'SOFTWARE_IT', label: 'Software / IT' },
+  { value: 'DATA_ANALYTICS', label: 'Data & Analytics' },
+  { value: 'DESIGN_UX', label: 'Design / UX' },
+  { value: 'MARKETING', label: 'Marketing' },
+  { value: 'SALES', label: 'Sales' },
+  { value: 'FINANCE', label: 'Finance' },
+  { value: 'HR', label: 'HR' },
+  { value: 'ENGINEERING', label: 'Engineering' },
+  { value: 'OPERATIONS_LOGISTICS', label: 'Operations / Logistics' },
+  { value: 'CUSTOMER_SERVICE', label: 'Customer Service' },
+  { value: 'LEGAL', label: 'Legal' },
+  { value: 'HEALTHCARE', label: 'Healthcare' },
+  { value: 'MANAGEMENT', label: 'Management' },
+  { value: 'EDUCATION', label: 'Education' },
+  { value: 'CREATIVE_MEDIA', label: 'Creative / Media' },
 ];

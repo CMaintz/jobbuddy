@@ -7,16 +7,8 @@ export interface User {
 export interface Profile {
   id?: string;
   userId?: string;
-  fullName?: string;
   headline?: string;
   summary?: string;
-  location?: string;
-  municipality?: string;
-  linkedinUrl?: string;
-  githubUrl?: string;
-  websiteUrl?: string;
-  phone?: string;
-  photoUrl?: string;
   yearsExperience?: number;
   skills?: string[];
   technologies?: string[];
@@ -25,4 +17,32 @@ export interface Profile {
   desiredSalaryMax?: number;
   desiredCurrency?: string;
   remotePreference?: string;
+}
+
+export interface UserPreferences {
+  preferredLocations: string[];
+  preferredMunicipalities: string[];
+  positiveSignals: string[];
+  negativeSignals: string[];
+  excludedCompanies: string[];
+  preferredRemoteTypes: string[];
+  preferredEmploymentTypes: string[];
+  preferredSeniority: string[];
+  preferredIndustries: string[];
+  salaryMin: number | null;
+  salaryMax: number | null;
+  maxCommuteKm: number | null;
+  notificationEnabled: boolean;
+  notificationFrequency: string | null;
+}
+
+export interface ProfilePrivateInfo {
+  id?: string;
+  userId?: string;
+  fullName?: string;
+  phone?: string;
+  photoUrl?: string;
+  location?: string;
+  municipality?: string;
+  contactEmail?: string;
 }

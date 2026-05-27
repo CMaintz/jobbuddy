@@ -21,6 +21,12 @@
   @if (activeTab === 'languages') {
     <app-profile-languages-tab [vm]="vm"></app-profile-languages-tab>
   }
+  @if (activeTab === 'socials') {
+    <app-profile-socials-tab [vm]="vm"></app-profile-socials-tab>
+  }
+  @if (activeTab === 'strengths') {
+    <app-profile-strengths-tab [vm]="vm"></app-profile-strengths-tab>
+  }
   @if (pendingNewSkill) {
     <app-profile-new-skill-modal [vm]="vm"></app-profile-new-skill-modal>
   }
