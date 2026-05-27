@@ -26,13 +26,13 @@ Copy-Item .env.example .env
 ### Full stack (Docker)
 ```powershell
 Copy-Item .env.example .env   # first time only — then fill in secrets
-docker compose -f infra/docker-compose.yml up --build
+docker compose --env-file .env -f infra/docker-compose.yml up --build
 ```
 
 ### Local development (backend)
 ```powershell
 # Start dependencies only
-docker compose -f infra/docker-compose.yml up postgres typesense -d
+docker compose --env-file .env -f infra/docker-compose.yml up postgres typesense -d
 
 # Run backend (from repo root)
 ./gradlew :backend:bootRun
