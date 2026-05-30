@@ -61,6 +61,21 @@ import { CONTACT_ICONS } from '../../data/social-platforms';
           </div>
         </section>
       }
+
+      <!-- Custom Sections -->
+      @for (cs of customSections; track cs.id) {
+        <section>
+          <h2 class="text-xs uppercase tracking-[0.15em] text-gray-400 mb-3">{{ cs.heading }}</h2>
+          @if (cs.body) { <p class="text-sm text-gray-600 leading-relaxed font-light">{{ cs.body }}</p> }
+          @if (cs.items && cs.items.length > 0) {
+            <ul class="list-disc list-inside flex flex-col gap-0.5">
+              @for (item of cs.items; track item.id) {
+                <li class="text-xs text-gray-600">{{ item.text }}</li>
+              }
+            </ul>
+          }
+        </section>
+      }
     </div>
   `,
 })
@@ -70,6 +85,7 @@ export class MinimalLayoutComponent {
   get experience() { return this.svc.experience(); }
   get education() { return this.svc.education(); }
   get skills() { return this.svc.skills(); }
+  get customSections() { return this.svc.customSections(); }
   get themeColor() { return this.svc.settings().themeColor; }
   readonly contactIcons = CONTACT_ICONS;
 }

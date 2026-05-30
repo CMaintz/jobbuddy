@@ -11,6 +11,7 @@ import { StrengthsFormComponent } from './forms/strengths-form.component';
 import { SocialsFormComponent } from './forms/socials-form.component';
 import { SettingsFormComponent } from './forms/settings-form.component';
 import { LayoutFormComponent } from './forms/layout-form.component';
+import { CustomSectionsFormComponent } from './forms/custom-sections-form.component';
 
 interface EditorSection {
   id: string;
@@ -35,6 +36,7 @@ interface EditorSection {
     SocialsFormComponent,
     SettingsFormComponent,
     LayoutFormComponent,
+    CustomSectionsFormComponent,
   ],
   template: `
     <div class="divide-y divide-gray-100">
@@ -70,6 +72,7 @@ interface EditorSection {
                 @case ('socials') { <app-socials-form /> }
                 @case ('settings') { <app-settings-form /> }
                 @case ('layout') { <app-layout-form /> }
+                @case ('custom') { <app-custom-sections-form /> }
               }
             </div>
           }
@@ -91,5 +94,6 @@ export class ResumeEditorComponent {
     { id: 'socials', label: 'Social Links', icon: '🔗', open: false },
     { id: 'settings', label: 'Settings', icon: '⚙️', open: false },
     { id: 'layout', label: 'Layout & Template', icon: '🎨', open: false },
+    { id: 'custom', label: 'Custom Sections', icon: '✏️', open: false },
   ];
 }

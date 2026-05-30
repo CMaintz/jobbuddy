@@ -14,6 +14,7 @@ import {
   ResumeSkill,
   ResumeStrength,
   ResumeSocial,
+  ResumeCustomSection,
   SectionConfig,
 } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
@@ -58,6 +59,7 @@ export class ResumeStateService {
   readonly certifications = computed(() => this._resumeData().certifications);
   readonly strengths = computed(() => this._resumeData().strengths);
   readonly socials = computed(() => this._resumeData().socials);
+  readonly customSections = computed(() => this._resumeData().customSections ?? []);
 
   private saveSubject = new Subject<void>();
 
@@ -396,6 +398,31 @@ export class ResumeStateService {
 
   removeSocial(id: string): void {
     this._resumeData.update(d => ({ ...d, socials: d.socials.filter(s => s.id !== id) }));
+    this._isDirty.set(true);
+  }
+
+  // ── Custom Sections ────────────────────────────────────────────────────────
+  addCustomSection(section: Omit<ResumeCustomSection, 'id'>): void {
+    this._resumeData.update(d => ({
+      ...d,
+      customSections: [...(d.customSections ?? []), { ...section, id: crypto.randomUUID() }],
+    }));
+    this._isDirty.set(true);
+  }
+
+  updateCustomSection(id: string, patch: Partial<ResumeCustomSection>): void {
+    this._resumeData.update(d => ({
+      ...d,
+      customSections: (d.customSections ?? []).map(s => (s.id === id ? { ...s, ...patch } : s)),
+    }));
+    this._isDirty.set(true);
+  }
+
+  removeCustomSection(id: string): void {
+    this._resumeData.update(d => ({
+      ...d,
+      customSections: (d.customSections ?? []).filter(s => s.id !== id),
+    }));
     this._isDirty.set(true);
   }
 

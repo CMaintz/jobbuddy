@@ -102,6 +102,21 @@ import { getStrengthIcon } from '../../data/strength-icons';
             </div>
           </section>
         }
+
+        <!-- Custom Sections -->
+        @for (cs of customSections; track cs.id) {
+          <section>
+            <h2 class="section-heading" [style.color]="themeColor">{{ cs.heading }}</h2>
+            @if (cs.body) { <p class="text-sm leading-relaxed text-gray-700">{{ cs.body }}</p> }
+            @if (cs.items && cs.items.length > 0) {
+              <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
+                @for (item of cs.items; track item.id) {
+                  <li class="text-xs text-gray-700">{{ item.text }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
       </div>
 
       <!-- Right sidebar (35%) -->
@@ -240,6 +255,7 @@ export class ClassicLayoutComponent {
   get certifications() { return this.stateService.certifications(); }
   get strengths() { return this.stateService.strengths(); }
   get socials() { return this.stateService.socials(); }
+  get customSections() { return this.stateService.customSections(); }
   get themeColor() { return this.stateService.settings().themeColor; }
   get photoStyle() { return this.stateService.settings().photoStyle ?? 'circle'; }
   get showSkillLevel() { return this.stateService.settings().showSkillLevel; }
