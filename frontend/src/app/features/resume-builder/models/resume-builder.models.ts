@@ -81,6 +81,18 @@ export interface ResumeSocial {
   iconKey: string;
 }
 
+export interface ResumeCustomSectionItem {
+  id: string;
+  text: string;
+}
+
+export interface ResumeCustomSection {
+  id: string;
+  heading: string;
+  body?: string;
+  items?: ResumeCustomSectionItem[];
+}
+
 export interface ResumeData {
   personalInfo: PersonalInfo;
   experience: ResumeExperience[];
@@ -91,6 +103,7 @@ export interface ResumeData {
   certifications: ResumeCertification[];
   strengths: ResumeStrength[];
   socials: ResumeSocial[];
+  customSections?: ResumeCustomSection[];
 }
 
 export type TemplateType = 'classic' | 'modern' | 'modern-2col' | 'minimal' | 'executive' | 'creative';
@@ -169,6 +182,7 @@ export const INITIAL_RESUME_DATA: ResumeData = {
   certifications: [],
   strengths: [],
   socials: [],
+  customSections: [],
 };
 
 export const INITIAL_SETTINGS: ResumeSettings = {

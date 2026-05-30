@@ -78,6 +78,21 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
             </section>
           }
         </div>
+
+        <!-- Custom Sections -->
+        @for (cs of customSections; track cs.id) {
+          <section>
+            <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">{{ cs.heading }}</h2>
+            @if (cs.body) { <p class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor">{{ cs.body }}</p> }
+            @if (cs.items && cs.items.length > 0) {
+              <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
+                @for (item of cs.items; track item.id) {
+                  <li class="text-xs text-gray-600">{{ item.text }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
       </div>
     </div>
   `,
@@ -89,6 +104,7 @@ export class ExecutiveLayoutComponent {
   get education() { return this.svc.education(); }
   get skills() { return this.svc.skills(); }
   get socials() { return this.svc.socials(); }
+  get customSections() { return this.svc.customSections(); }
   get themeColor() { return this.svc.settings().themeColor; }
   get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }
   readonly contactIcons = CONTACT_ICONS;

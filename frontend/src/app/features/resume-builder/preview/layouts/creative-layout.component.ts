@@ -118,6 +118,21 @@ import { getStrengthIcon } from '../../data/strength-icons';
             </div>
           </section>
         }
+
+        <!-- Custom Sections -->
+        @for (cs of customSections; track cs.id) {
+          <section>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">{{ cs.heading }}</h2>
+            @if (cs.body) { <p class="text-sm text-gray-600 leading-relaxed">{{ cs.body }}</p> }
+            @if (cs.items && cs.items.length > 0) {
+              <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
+                @for (item of cs.items; track item.id) {
+                  <li class="text-xs text-gray-500">{{ item.text }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
       </div>
     </div>
   `,
@@ -132,6 +147,7 @@ export class CreativeLayoutComponent {
   get languages() { return this.svc.languages(); }
   get strengths() { return this.svc.strengths(); }
   get socials() { return this.svc.socials(); }
+  get customSections() { return this.svc.customSections(); }
   get themeColor() { return this.svc.settings().themeColor; }
   get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }
   get showSkillLevel() { return this.svc.settings().showSkillLevel; }
