@@ -1,5 +1,7 @@
 # PostgreSQL Cheatsheet
 
+> To run the backend w/o building frontend etc, use `aac up postgres typesense -d`
+
 > **After wiping volumes (`aac down -v`), the database is completely empty until the backend
 > runs Flyway migrations on startup. Run `aac-backend` or `aac up -d` at least once before
 > trying to query anything — otherwise `\dt` will return "did not find any relations".
