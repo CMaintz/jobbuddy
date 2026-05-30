@@ -201,7 +201,7 @@ class ApplicationServiceTest {
                                     ApplicationStatus status, Instant appliedAt) {
         return new Application(id, userId, jobId, status, appliedAt,
                 null, null, null, null, null,
-                null, null, null, null,
+                null, null, null, null, null,
                 Instant.now(), Instant.now());
     }
 
@@ -209,7 +209,7 @@ class ApplicationServiceTest {
                                              ApplicationStatus status, String notes) {
         return new Application(id, userId, jobId, status, null,
                 null, null, null, null, null,
-                null, null, null, notes,
+                null, null, null, null, notes,
                 Instant.now(), Instant.now());
     }
 }

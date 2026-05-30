@@ -5,9 +5,9 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserRole;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
-import com.autoapplicant.port.out.user.UserRepositoryPort;
-import com.autoapplicant.usecase.user.UserService;
+import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
+import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
+import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +30,13 @@ class AuthControllerTest {
 
     @Autowired MockMvc mvc;
 
-    @MockBean UserRepositoryPort    userRepo;
-    @MockBean ProfileRepositoryPort profileRepo;
-    @MockBean UserService           userService;
-    @MockBean SecurityContextHelper secCtx;
-    @MockBean AppProperties         appProperties;
-    @MockBean FirebaseAuth          firebaseAuth;
-    @MockBean FirebaseTokenFilter   firebaseTokenFilter;
+    @MockBean GetUserProfileUseCase      getUserProfileUseCase;
+    @MockBean ResolveLinkedInUserUseCase resolveLinkedInUser;
+    @MockBean ProvisionFirebaseUserUseCase provisionUser;
+    @MockBean SecurityContextHelper      secCtx;
+    @MockBean AppProperties              appProperties;
+    @MockBean FirebaseAuth               firebaseAuth;
+    @MockBean FirebaseTokenFilter        firebaseTokenFilter;
 
     UUID userId = UUID.randomUUID();
 
@@ -45,7 +45,7 @@ class AuthControllerTest {
         when(secCtx.getCurrentUserId()).thenReturn(userId);
         User user = new User(userId, "alice@example.com", null, null, "firebase-uid",
                 UserRole.USER, true, Instant.now(), Instant.now());
-        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
+        when(getUserProfileUseCase.getUser(userId)).thenReturn(Optional.of(user));
 
         mvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isOk())
@@ -57,9 +57,9 @@ class AuthControllerTest {
     @Test
     void me_returns_500_when_user_not_in_db() throws Exception {
         when(secCtx.getCurrentUserId()).thenReturn(userId);
-        when(userRepo.findById(userId)).thenReturn(Optional.empty());
+        when(getUserProfileUseCase.getUser(userId)).thenReturn(Optional.empty());
 
         mvc.perform(get("/api/v1/auth/me"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isConflict());
     }
 }

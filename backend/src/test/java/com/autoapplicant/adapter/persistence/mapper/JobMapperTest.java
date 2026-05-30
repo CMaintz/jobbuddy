@@ -122,7 +122,7 @@ class JobMapperTest {
                 List.of("Python", "Django"), List.of("Problem Solving"), List.of("Danish"),
                 Instant.now(), Instant.now(), "AI summary",
                 List.of("ml", "nlp"), "SENIOR",
-                null, true, Instant.now(), Instant.now());
+                null, true, null, Instant.now(), Instant.now(), null);
 
         Job roundTripped = JobMapper.toDomain(JobMapper.toEntity(job));
 
@@ -144,7 +144,7 @@ class JobMapperTest {
                 null, null, null, null, null, null, null,
                 null, null, null,
                 null, null, null,
-                null, Instant.now(), null, null, null, null, false, Instant.now(), Instant.now());
+                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null);
 
         JobEntity entity = JobMapper.toEntity(job);
 
