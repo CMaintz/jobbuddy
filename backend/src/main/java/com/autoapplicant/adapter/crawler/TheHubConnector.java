@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -28,8 +29,6 @@ public class TheHubConnector extends AbstractJobSourceConnector {
 
     private static final String JOBS_URL  = "https://thehub.io/jobs";
     private static final String BASE_URL  = "https://thehub.io";
-    private static final String USER_AGENT =
-            "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
 
     private static final int CONNECT_TIMEOUT_MS = 20_000;
     private static final int MAX_PAGES          = 25;
@@ -78,7 +77,9 @@ public class TheHubConnector extends AbstractJobSourceConnector {
                         jobUrl,
                         content,
                         extractJsonLd(doc),  // raw JSON-LD as structured payload
-                        Instant.now()
+                        Instant.now(),
+                        List.of(),
+                        null
                 ));
                 count++;
             } catch (InterruptedException ie) {

@@ -51,15 +51,24 @@ public class CrawlerOrchestrator {
     }
 
     public void runConnector(JobSourceConnectorPort connector) {
+        runConnectorInternal(connector, false);
+    }
+
+    public void runConnectorForce(JobSourceConnectorPort connector) {
+        runConnectorInternal(connector, true);
+    }
+
+    private void runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
         try {
-            log.info("Crawling source: {}", connector.getSource());
+            log.info("Crawling source: {} (force={})", connector.getSource(), force);
             CrawlConfig config = new CrawlConfig(
                     connector.getSource(),
                     PAGES_PER_RUN,
                     300L,
                     List.of(),
                     guid -> jobRepository.existsBySourceAndSourceJobId(connector.getSource(), guid),
-                    ingestionPipeline::ingest
+                    ingestionPipeline::ingest,
+                    force
             );
             connector.fetchJobs(config);
             log.info("Finished crawling: {}", connector.getSource());
@@ -76,6 +85,20 @@ public class CrawlerOrchestrator {
                         () -> runConnector(connector), crawlerTaskExecutor));
     }
 
+    public void runSourceForce(JobSource source) {
+        connectors.stream()
+                .filter(c -> c.getSource() == source)
+                .findFirst()
+                .ifPresent(connector -> CompletableFuture.runAsync(
+                        () -> runConnectorForce(connector), crawlerTaskExecutor));
+    }
+
+    public void runAllForce() {
+        log.info("Starting force crawl for {} sources", connectors.size());
+        connectors.forEach(connector ->
+                CompletableFuture.runAsync(() -> runConnectorForce(connector), crawlerTaskExecutor));
+    }
+
     /** Synchronous variants used by the CLI runner — blocks until all connectors finish. */
     public void runAllSync() {
         log.info("Starting synchronous crawl for {} sources", connectors.size());
@@ -89,6 +112,21 @@ public class CrawlerOrchestrator {
                 .findFirst()
                 .ifPresentOrElse(
                         this::runConnector,
+                        () -> log.warn("No connector found for source: {}", source));
+    }
+
+    public void runAllSyncForce() {
+        log.info("Starting synchronous force crawl for {} sources", connectors.size());
+        connectors.forEach(this::runConnectorForce);
+        log.info("All sources finished (force mode).");
+    }
+
+    public void runSourceSyncForce(JobSource source) {
+        connectors.stream()
+                .filter(c -> c.getSource() == source)
+                .findFirst()
+                .ifPresentOrElse(
+                        this::runConnectorForce,
                         () -> log.warn("No connector found for source: {}", source));
     }
 }

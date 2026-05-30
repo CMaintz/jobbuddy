@@ -11,69 +11,75 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public class ItJobbankConnector extends AbstractJobSourceConnector {
 
     private static final String RSS_BASE = "https://www.it-jobbank.dk/jobsoegning.rss";
-    private static final String USER_AGENT =
-            "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
 
     @Override
     public JobSource getSource() {
         return JobSource.IT_JOBBANK;
     }
 
+    /** Incremental mode stops after this many consecutive all-known pages. */
+    private static final int CONSECUTIVE_KNOWN_THRESHOLD = 2;
+
     @Override
     public void fetchJobs(CrawlConfig config) {
-        int maxJobs = config.maxPages() * 20;
-        int count = 0;
-        int consecutiveBlankPages = 0;
-        final int MAX_BLANK_PAGES = 3;
+        int totalCount = 0;
+        Set<String> seenInRun = new HashSet<>();
+        int consecutiveKnownPages = 0;
 
-        outer:
-        for (int page = 0; page < config.maxPages() && count < maxJobs; page++) {
-            log.info("IT-Jobbank: fetching RSS page {} [{}/{}] ({} jobs so far)",
-                    page, page + 1, config.maxPages(), count);
+        for (int page = 1; ; page++) {
+            String url = RSS_BASE + "?page=" + page;
+            log.info("IT-Jobbank: fetching page {} ({} jobs so far)", page, totalCount);
 
             String rssContent;
             try {
-                rssContent = Jsoup.connect(RSS_BASE + "?p=" + page)
+                rssContent = Jsoup.connect(url)
                         .userAgent(USER_AGENT)
                         .timeout(15000)
                         .execute()
                         .body();
             } catch (Exception e) {
-                log.warn("Failed to fetch IT-Jobbank RSS page {}: {}", page, e.getMessage());
+                log.warn("Failed to fetch IT-Jobbank RSS page {}: {}", url, e.getMessage());
                 break;
             }
 
             Document rssDoc = Jsoup.parse(rssContent, "", Parser.xmlParser());
             Elements items = rssDoc.select("item");
             if (items.isEmpty()) {
-                log.info("IT-Jobbank: no items on RSS page {}, stopping", page);
+                log.info("IT-Jobbank: empty page {} — feed exhausted", page);
                 break;
             }
-            log.info("IT-Jobbank: {} items on page {}, fetching detail pages...", items.size(), page);
 
             int newOnPage = 0;
-            for (Element item : items) {
-                if (count >= maxJobs) break outer;
 
-                String link = item.select("link").first() != null
-                        ? item.select("link").first().html().trim()
-                        : item.select("link").text().trim();
-                String guid = item.select("guid").text();
-                if (guid == null || guid.isBlank()) guid = link;
+            for (Element item : items) {
+                String link = extractRssLink(item);
+                String guid = item.select("guid").text().trim();
+                if (guid.isBlank()) guid = link;
+
                 if (link.isBlank()) {
                     log.warn("IT-Jobbank RSS item has no link, skipping. guid={}", guid);
                     continue;
                 }
 
+                if (seenInRun.contains(guid)) continue;
+
                 if (config.isKnownGuid().test(guid)) {
-                    log.debug("IT-Jobbank: skipping known guid on page {}", page);
+                    log.debug("IT-Jobbank: skipping known guid {}", guid);
                     continue;
                 }
+
+                seenInRun.add(guid);
+
+                // Extract short description from RSS <description> <p> tags
+                String shortDescription = extractShortDescription(item);
 
                 String detailHtml = item.select("description").text();
                 try {
@@ -81,31 +87,63 @@ public class ItJobbankConnector extends AbstractJobSourceConnector {
                     detailHtml = Jsoup.connect(link)
                             .userAgent(USER_AGENT)
                             .timeout(15000)
+                            .followRedirects(true)
                             .get()
                             .outerHtml();
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     log.warn("Interrupted fetching IT-Jobbank detail page, stopping crawl");
-                    break outer;
+                    return;
                 } catch (Exception e) {
-                    log.warn("Failed to fetch IT-Jobbank detail page {}: {} — using RSS description", link, e.getMessage());
+                    log.warn("Failed to fetch IT-Jobbank detail page {}: {} — using RSS description",
+                            link, e.getMessage());
                 }
 
-                config.onJobFound().accept(new RawJobData(JobSource.IT_JOBBANK, guid, link, detailHtml, null, Instant.now()));
-                count++;
+                List<String> rssCategories = item.select("category").eachText();
+                config.onJobFound().accept(new RawJobData(JobSource.IT_JOBBANK, guid, link, detailHtml, null, Instant.now(), rssCategories, shortDescription));
+                totalCount++;
                 newOnPage++;
             }
 
-            if (newOnPage == 0) {
-                if (++consecutiveBlankPages >= MAX_BLANK_PAGES) {
-                    log.info("IT-Jobbank: {} consecutive pages with no new jobs — stopping", MAX_BLANK_PAGES);
-                    break;
+            if (!config.force()) {
+                if (newOnPage == 0) {
+                    consecutiveKnownPages++;
+                    log.info("IT-Jobbank: page {} all-known ({}/{} consecutive)",
+                            page, consecutiveKnownPages, CONSECUTIVE_KNOWN_THRESHOLD);
+                    if (consecutiveKnownPages >= CONSECUTIVE_KNOWN_THRESHOLD) {
+                        log.info("IT-Jobbank: caught up — stopping");
+                        break;
+                    }
+                } else {
+                    consecutiveKnownPages = 0;
                 }
-            } else {
-                consecutiveBlankPages = 0;
             }
         }
 
-        log.info("IT-Jobbank crawl complete: {} jobs collected", count);
+        log.info("IT-Jobbank crawl complete: {} jobs collected", totalCount);
     }
+
+    /**
+     * Extracts a short teaser from the RSS {@code <description>} element.
+     * IT-Jobbank wraps the description in HTML with {@code <p>} tags.
+     */
+    private String extractShortDescription(Element item) {
+        String rawDesc = item.select("description").text();
+        if (rawDesc.isBlank()) return null;
+        org.jsoup.nodes.Document descDoc = Jsoup.parse(rawDesc);
+        org.jsoup.select.Elements paragraphs = descDoc.select("p");
+        if (paragraphs.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (org.jsoup.nodes.Element p : paragraphs) {
+            String text = p.text().trim();
+            if (!text.isBlank()) {
+                if (sb.length() > 0) sb.append(' ');
+                sb.append(text);
+                if (sb.length() >= 300) break;
+            }
+        }
+        String result = sb.toString().trim();
+        return result.isBlank() ? null : (result.length() > 400 ? result.substring(0, 400) + "…" : result);
+    }
+
 }

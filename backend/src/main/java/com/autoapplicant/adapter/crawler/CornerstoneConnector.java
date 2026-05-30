@@ -41,8 +41,6 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
             "(?:\"token\"|\"bearerToken\"|\"access_token\")\\s*:\\s*\"(eyJ[^\"]+)\"");
     private static final Pattern API_HOST_PATTERN = Pattern.compile(
             "\"cloud\"\\s*:\\s*\"(https://[^\"]+api\\.csod\\.com/)\"");
-    private static final String USER_AGENT =
-            "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
 
     private final AppProperties appProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -186,7 +184,9 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
                         jobUrl,
                         content,
                         req.toString(),
-                        Instant.now()
+                        Instant.now(),
+                        List.of(),
+                        null
                 ));
                 newOnPage++;
             }

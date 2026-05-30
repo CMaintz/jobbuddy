@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Fetches Danish job listings from the Careerjet public API.
@@ -97,7 +98,9 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
                             jobUrl,
                             content,
                             job.toString(),   // raw JSON as structured payload
-                            Instant.now()
+                            Instant.now(),
+                            List.of(),
+                            null
                     ));
                     count++;
                 }

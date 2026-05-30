@@ -102,7 +102,9 @@ public class LeverConnector extends AbstractJobSourceConnector {
                             hostedUrl,
                             content,
                             posting.toString(),
-                            Instant.now()
+                            Instant.now(),
+                            List.of(),
+                            null
                     ));
                     count++;
                     companyCount++;
