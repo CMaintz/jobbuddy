@@ -16,6 +16,7 @@ public interface GenerateDocumentUseCase {
             String templateId,
             UUID promptTemplateId,
             String customInstructions,
+            String motivationText,
             String targetLanguage,
             boolean showProfileImage,
             DocumentTheme theme);
