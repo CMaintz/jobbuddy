@@ -18,7 +18,7 @@ public class JobEmbeddingEntity {
     @Column(name = "job_id", nullable = false)
     private UUID jobId;
 
-    @Column(columnDefinition = "vector(3072)", nullable = false)
+    @Column(columnDefinition = "vector(1536)", nullable = false)
     @Type(VectorUserType.class)
     private float[] embedding;
 

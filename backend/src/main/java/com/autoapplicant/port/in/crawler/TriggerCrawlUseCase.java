@@ -7,7 +7,16 @@ public interface TriggerCrawlUseCase {
     void triggerAll();
     void triggerSource(JobSource source);
 
+    /**
+     * Force variants — never stop early due to already-known pages.
+     * Use for first-time backfills or forced re-crawls during development.
+     */
+    void triggerAllForce();
+    void triggerSourceForce(JobSource source);
+
     /** Blocking — used by the CLI runner so the process doesn't exit before crawling finishes. */
     void triggerAllSync();
+    void triggerAllSyncForce();
     void triggerSourceSync(JobSource source);
+    void triggerSourceSyncForce(JobSource source);
 }

@@ -45,3 +45,15 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// Run the crawler as a one-shot CLI command (no HTTP server starts):
+//   ./gradlew :backend:crawl
+//   ./gradlew :backend:crawl --args="--crawler.source=JOBINDEX"
+tasks.register<org.springframework.boot.gradle.tasks.run.BootRun>("crawl") {
+    group = "application"
+    description = "Trigger job crawl via CLI (uses crawler Spring profile, no web server)"
+    val bootRun = tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun").get()
+    classpath = bootRun.classpath
+    mainClass.set(bootRun.mainClass)
+    args("--spring.profiles.active=crawler")
+}
