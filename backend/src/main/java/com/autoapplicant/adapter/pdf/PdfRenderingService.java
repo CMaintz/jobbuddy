@@ -130,7 +130,7 @@ public class PdfRenderingService {
                 html.append("<p class=\"section-body\">").append(escape(section.body())).append("</p>");
             }
             if (section.items() != null && !section.items().isEmpty()) {
-                if ("skills".equals(section.type())) {
+                if ("skills".equals(section.type()) || "custom".equals(section.type())) {
                     html.append("<ul class=\"skills\">");
                     for (StructuredDocumentItem item : section.items()) {
                         html.append("<li>").append(escape(item.title())).append("</li>");
