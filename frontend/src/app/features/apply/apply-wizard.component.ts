@@ -150,6 +150,37 @@ import { ResumeData, INITIAL_SETTINGS } from '../resume-builder/models/resume-bu
                     </button>
                   }
                 </div>
+
+                <!-- Motivation toggle -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    class="w-full flex items-center justify-between px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors"
+                    (click)="motivationOpen.set(!motivationOpen())"
+                  >
+                    <span class="font-medium text-gray-700">Add personal motivation <span class="text-gray-400 font-normal">(optional)</span></span>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="motivationOpen()"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  @if (motivationOpen()) {
+                    <div class="px-4 pb-4 flex flex-col gap-2 border-t border-gray-100">
+                      <p class="text-xs text-gray-500 mt-3">Tell the AI why you want this role. This is sent to the AI only and not included verbatim.</p>
+                      <textarea
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows="4"
+                        placeholder="e.g. I've admired this company's approach to sustainability for years and see this role as a chance to apply my background in product development to a mission I genuinely care about."
+                        [(ngModel)]="motivationText"
+                      ></textarea>
+                      <button
+                        class="btn-secondary text-xs self-start"
+                        [disabled]="generatingMotivation()"
+                        (click)="generateMotivationText()"
+                      >{{ generatingMotivation() ? 'Generating...' : 'Generate for me' }}</button>
+                    </div>
+                  }
+                </div>
+
                 <button class="btn-primary" (click)="generateAppDocument()">
                   Generate {{ docTypeLabel }}
                 </button>
@@ -278,6 +309,9 @@ export class ApplyWizardComponent implements OnInit, OnDestroy {
   coverLetterEditable = '';
   loadingMsgIdx  = signal(0);
   selectedDocType: 'COVER_LETTER' | 'APPLICATION_TEXT' = 'COVER_LETTER';
+  motivationOpen = signal(false);
+  motivationText = '';
+  generatingMotivation = signal(false);
 
   // Recruiter reply loaded from an existing SAVED application (cold outreach)
   private recruiterReply = '';
@@ -385,12 +419,28 @@ export class ApplyWizardComponent implements OnInit, OnDestroy {
     if (step === 4) this.publishDraftSilently();
   }
 
+  generateMotivationText(): void {
+    this.generatingMotivation.set(true);
+    this.aiApi.refine({
+      currentContent: '',
+      userMessage: 'Draft a short personal motivation statement (2-3 sentences) for why I want this role based on the job description.',
+      jobDescription: this.wiz().jobTitle ? `Job: ${this.wiz().jobTitle}` : undefined,
+    }).subscribe({
+      next: r => {
+        this.motivationText = r.refinedContent;
+        this.generatingMotivation.set(false);
+      },
+      error: () => this.generatingMotivation.set(false),
+    });
+  }
+
   generateAppDocument(): void {
     this.generatingCl.set(true);
     this.aiApi.generateDocument({
       jobId: this.wiz().jobId,
       documentType: this.selectedDocType,
       recruiterContext: this.recruiterReply || undefined,
+      motivationText: this.motivationText || undefined,
     }).subscribe({
       next: doc => {
         const text = doc.bodyContent ?? '';

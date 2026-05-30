@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { DocumentTemplateOption } from '../../../core/models/structured-document.model';
 import { LanguageOption } from './application-generator.types';
+import { AiApiService } from '../../../core/api/ai.api';
 
 @Component({
   selector: 'app-generation-config-form',
@@ -84,6 +85,31 @@ import { LanguageOption } from './application-generator.types';
                     placeholder="e.g. Keep it under 300 words, emphasise leadership experience..."></textarea>
         </div>
 
+        <!-- Personal motivation collapsible panel -->
+        <div class="md:col-span-2 border border-gray-200 rounded-lg overflow-hidden">
+          <button type="button"
+                  class="w-full flex items-center justify-between px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors"
+                  (click)="motivationOpen.set(!motivationOpen())">
+            <span class="font-medium text-gray-700">Add personal motivation <span class="text-gray-400 font-normal">(optional)</span></span>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="motivationOpen()"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (motivationOpen()) {
+            <div class="px-4 pb-4 flex flex-col gap-2 border-t border-gray-100">
+              <p class="text-xs text-gray-500 mt-3">A personal motivation statement helps the AI tailor the tone. Sent to AI only.</p>
+              <textarea formControlName="motivationText" class="input" rows="3"
+                        placeholder="e.g. I've followed this company's work for years and see this role as the perfect opportunity to apply my expertise in…"></textarea>
+              <button type="button" class="btn-secondary text-xs self-start"
+                      [disabled]="generatingMotivation()"
+                      (click)="generateMotivation()">
+                {{ generatingMotivation() ? 'Generating...' : 'Generate for me' }}
+              </button>
+            </div>
+          }
+        </div>
+
         <div class="md:col-span-2">
           <label class="label">
             Indsæt jobopslag
@@ -111,6 +137,8 @@ import { LanguageOption } from './application-generator.types';
   `
 })
 export class GenerationConfigFormComponent {
+  private aiApi = inject(AiApiService);
+
   @Input({ required: true }) form!: FormGroup;
   @Input() availableStructuredTemplates: DocumentTemplateOption[] = [];
   @Input() languages: LanguageOption[] = [];
@@ -119,4 +147,23 @@ export class GenerationConfigFormComponent {
 
   @Output() generate = new EventEmitter<void>();
   @Output() generateApplicationSet = new EventEmitter<void>();
+
+  motivationOpen = signal(false);
+  generatingMotivation = signal(false);
+
+  generateMotivation(): void {
+    this.generatingMotivation.set(true);
+    const jobDescription = this.form.value.jobDescription || undefined;
+    this.aiApi.refine({
+      currentContent: '',
+      userMessage: 'Draft a short personal motivation statement (2-3 sentences) for why I want this role based on the job description.',
+      jobDescription,
+    }).subscribe({
+      next: r => {
+        this.form.patchValue({ motivationText: r.refinedContent });
+        this.generatingMotivation.set(false);
+      },
+      error: () => this.generatingMotivation.set(false),
+    });
+  }
 }

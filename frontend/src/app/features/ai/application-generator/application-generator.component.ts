@@ -71,6 +71,7 @@ export class ApplicationGeneratorComponent implements OnInit {
     fontFamily: ['Arial'],
     fontScale: ['normal'],
     customInstructions: [''],
+    motivationText: [''],
     targetLanguage: ['Danish']
   });
 
