@@ -80,8 +80,13 @@ public class JobEnrichmentService implements EnrichJobUseCase {
 
     private String buildEnrichmentPrompt(Job job) {
         return """
-                Analyze this job posting and return JSON with exactly these fields:
+                You are given the text content of a job posting page. The content may include page chrome \
+                (company boilerplate, cookie notices, navigation links) mixed in with the actual job description.
+
+                Return JSON with exactly these fields:
                 {
+                  "descriptionClean": "full job description extracted from the content — keep all requirements, responsibilities, qualifications, and contact details; remove navigation, cookie banners, company branding boilerplate, and legal footer text",
+                  "shortDescription": "1-2 sentence teaser capturing the role and its key appeal, for use in job card previews",
                   "aiSummary": "2-3 sentence human-friendly summary",
                   "aiTags": ["tag1", "tag2", "tag3"],
                   "aiSeniorityEstimate": "JUNIOR|MID|SENIOR|LEAD|PRINCIPAL|EXECUTIVE",
@@ -97,6 +102,8 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 }
 
                 Rules:
+                - descriptionClean: extract the actual job posting content; preserve contact names, email addresses, phone numbers, and application instructions
+                - shortDescription: ignore any navigation text, cookie banners, or other page chrome
                 - technologies: specific tools, languages, frameworks, libraries, platforms, cloud services
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
                 - Only include salary if numbers are explicitly stated in the posting
@@ -105,11 +112,11 @@ public class JobEnrichmentService implements EnrichJobUseCase {
 
                 Job title: %s
                 Company: %s
-                Description: %s
+                Content: %s
                 """.formatted(
                 job.title(),
                 job.companyName() != null ? job.companyName() : "Unknown",
-                job.descriptionClean() != null ? job.descriptionClean().substring(0, Math.min(3000, job.descriptionClean().length())) : ""
+                job.descriptionClean() != null ? job.descriptionClean().substring(0, Math.min(5000, job.descriptionClean().length())) : ""
         );
     }
 
@@ -121,6 +128,14 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 cleaned = cleaned.replaceFirst("```json", "").replaceFirst("```", "").trim();
             }
             Map<String, Object> parsed = objectMapper.readValue(cleaned, new TypeReference<>() {});
+
+            // AI-extracted clean description (replaces the raw page-text version from TextCleaningService)
+            String aiDescClean = (String) parsed.get("descriptionClean");
+            String descriptionClean = (aiDescClean != null && !aiDescClean.isBlank())
+                    ? aiDescClean : job.descriptionClean();
+
+            String shortDescription = job.shortDescription() != null ? job.shortDescription()
+                    : (String) parsed.get("shortDescription");
 
             String summary = (String) parsed.get("aiSummary");
             List<String> tags = getList(parsed, "aiTags");
@@ -170,14 +185,15 @@ public class JobEnrichmentService implements EnrichJobUseCase {
             }
 
             return new Job(job.id(), job.source(), job.sourceJobId(), job.url(), job.title(),
-                    job.companyId(), job.companyName(), job.descriptionRaw(), job.descriptionClean(),
+                    job.companyId(), job.companyName(), job.descriptionRaw(), descriptionClean,
                     employmentType, job.seniority(), remoteType,
                     job.location(), municipality, job.region(), job.country(),
                     salaryMin, salaryMax, currency,
                     mergedTech, mergedSkills, job.languages(),
                     job.postedAt(), job.scrapedAt(),
                     summary, tags, aiSeniority,
-                    job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt());
+                    job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt(),
+                    shortDescription);
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
             return job;

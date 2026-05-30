@@ -55,6 +55,7 @@ public class PromptCompositionBuilder {
             String careerProfileJson,
             String jobDescription,
             String customInstructions,
+            String motivationText,
             String targetLanguage,
             PromptTemplate styleTemplate) {
 
@@ -105,7 +106,9 @@ public class PromptCompositionBuilder {
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
                 + (customInstructions != null && !customInstructions.isBlank()
-                    ? "\n\n## Additional Instructions\n" + customInstructions : "");
+                    ? "\n\n## Additional Instructions\n" + customInstructions : "")
+                + (motivationText != null && !motivationText.isBlank()
+                    ? "\n\n## Applicant's Personal Motivation\n" + motivationText : "");
 
         return new PromptComposition(systemPrompt, userPrompt, "", "", "", "", userPrompt);
     }
