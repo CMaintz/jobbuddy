@@ -43,7 +43,8 @@ public final class JobMapper {
                 e.isActive(),
                 e.getJobCategory() != null ? parseEnum(e.getJobCategory(), JobCategory.class) : null,
                 e.getCreatedAt(),
-                e.getUpdatedAt()
+                e.getUpdatedAt(),
+                e.getShortDescription()
         );
     }
 
@@ -79,6 +80,7 @@ public final class JobMapper {
         e.setDuplicateGroupId(d.duplicateGroupId());
         e.setActive(d.isActive());
         e.setJobCategory(d.jobCategory() != null ? d.jobCategory().name() : null);
+        e.setShortDescription(d.shortDescription());
         return e;
     }
 
