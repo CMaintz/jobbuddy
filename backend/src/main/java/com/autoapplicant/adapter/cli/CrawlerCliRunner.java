@@ -18,6 +18,10 @@ import org.springframework.stereotype.Component;
  *
  * To crawl a specific source (LINKEDIN, JOBINDEX, etc.):
  *   ./gradlew :backend:bootRun --args="--spring.profiles.active=crawler --crawler.source=JOBINDEX"
+ *
+ * To force a full re-crawl (never stops early on already-known pages):
+ *   ./gradlew :backend:bootRun --args="--spring.profiles.active=crawler --crawler.force"
+ *   ./gradlew :backend:bootRun --args="--spring.profiles.active=crawler --crawler.source=JOBINDEX --crawler.force"
  */
 @Component
 @Profile("crawler")
@@ -37,13 +41,24 @@ public class CrawlerCliRunner implements ApplicationRunner {
         String source = args.containsOption("crawler.source")
                 ? args.getOptionValues("crawler.source").get(0)
                 : null;
+        boolean force = args.containsOption("crawler.force");
 
         if (source != null) {
-            log.info("Starting targeted crawl for source: {}", source);
-            triggerCrawl.triggerSourceSync(com.autoapplicant.domain.job.JobSource.valueOf(source.toUpperCase()));
+            log.info("Starting targeted crawl for source: {} (force={})", source, force);
+            com.autoapplicant.domain.job.JobSource jobSource =
+                    com.autoapplicant.domain.job.JobSource.valueOf(source.toUpperCase());
+            if (force) {
+                triggerCrawl.triggerSourceSyncForce(jobSource);
+            } else {
+                triggerCrawl.triggerSourceSync(jobSource);
+            }
         } else {
-            log.info("Starting full crawl for all sources");
-            triggerCrawl.triggerAllSync();
+            log.info("Starting full crawl for all sources (force={})", force);
+            if (force) {
+                triggerCrawl.triggerAllSyncForce();
+            } else {
+                triggerCrawl.triggerAllSync();
+            }
         }
 
         log.info("Crawl finished — waiting for AI enrichment queue to drain before exit...");

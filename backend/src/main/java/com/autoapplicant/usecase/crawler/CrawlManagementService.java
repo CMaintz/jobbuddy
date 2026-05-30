@@ -25,12 +25,32 @@ public class CrawlManagementService implements TriggerCrawlUseCase {
     }
 
     @Override
+    public void triggerAllForce() {
+        orchestrator.runAllForce();
+    }
+
+    @Override
+    public void triggerSourceForce(JobSource source) {
+        orchestrator.runSourceForce(source);
+    }
+
+    @Override
     public void triggerAllSync() {
         orchestrator.runAllSync();
     }
 
     @Override
+    public void triggerAllSyncForce() {
+        orchestrator.runAllSyncForce();
+    }
+
+    @Override
     public void triggerSourceSync(JobSource source) {
         orchestrator.runSourceSync(source);
+    }
+
+    @Override
+    public void triggerSourceSyncForce(JobSource source) {
+        orchestrator.runSourceSyncForce(source);
     }
 }
