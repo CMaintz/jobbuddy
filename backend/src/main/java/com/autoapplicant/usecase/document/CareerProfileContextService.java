@@ -27,6 +27,7 @@ public class CareerProfileContextService {
     private final CertificationRepositoryPort certRepo;
     private final ProfileSkillRepositoryPort skillRepo;
     private final SpokenLanguageRepositoryPort languageRepo;
+    private final ProfileStrengthRepositoryPort strengthRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -36,6 +37,7 @@ public class CareerProfileContextService {
                                        CertificationRepositoryPort certRepo,
                                        ProfileSkillRepositoryPort skillRepo,
                                        SpokenLanguageRepositoryPort languageRepo,
+                                       ProfileStrengthRepositoryPort strengthRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;
@@ -44,6 +46,7 @@ public class CareerProfileContextService {
         this.certRepo = certRepo;
         this.skillRepo = skillRepo;
         this.languageRepo = languageRepo;
+        this.strengthRepo = strengthRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -64,6 +67,13 @@ public class CareerProfileContextService {
                 .map(lang -> lang.language() + " (" + formatProficiency(lang.proficiency()) + ")")
                 .toList();
 
+        List<String> strengths = strengthRepo.findByUserId(userId).stream()
+                .filter(s -> s.title() != null && !s.title().isBlank())
+                .map(s -> s.description() != null && !s.description().isBlank()
+                        ? s.title() + ": " + s.description()
+                        : s.title())
+                .toList();
+
         return new CareerProfileForAi(
                 profile != null ? profile.headline() : null,
                 profile != null ? profile.summary() : null,
@@ -74,7 +84,8 @@ public class CareerProfileContextService {
                 workExpRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 projectRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),
-                certRepo.findByUserId(userId).stream().map(this::toItem).toList()
+                certRepo.findByUserId(userId).stream().map(this::toItem).toList(),
+                strengths
         );
     }
 

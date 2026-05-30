@@ -116,7 +116,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
     public CompletableFuture<StructuredDocument> generateDocument(
             UUID userId, String documentType, UUID jobId, String rawJobDescription,
             String templateId, UUID promptTemplateId, String customInstructions,
-            String targetLanguage, boolean showProfileImage, DocumentTheme theme) {
+            String motivationText, String targetLanguage, boolean showProfileImage, DocumentTheme theme) {
         try {
             String jobDescription = jobId != null
                     ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse(rawJobDescription)
@@ -129,7 +129,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
 
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                     documentType, contactFreeJson, jobDescription,
-                    customInstructions, targetLanguage, styleTemplate);
+                    customInstructions, motivationText, targetLanguage, styleTemplate);
 
             String json = AiResponseParser.extractJsonObject(
                     aiProvider.generateJson(composition).trim());
