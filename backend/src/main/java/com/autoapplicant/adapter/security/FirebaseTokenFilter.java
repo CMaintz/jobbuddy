@@ -48,6 +48,14 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         String idToken = header.substring(7);
         try {
             FirebaseToken decoded = firebaseAuth.verifyIdToken(idToken);
+
+            if (!decoded.isEmailVerified()) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"EMAIL_NOT_VERIFIED\"}");
+                return;
+            }
+
             String firebaseUid = decoded.getUid();
             String email = decoded.getEmail();
             String name = decoded.getName();
