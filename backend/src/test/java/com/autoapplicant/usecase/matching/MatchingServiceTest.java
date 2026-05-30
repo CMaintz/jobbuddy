@@ -76,12 +76,12 @@ class MatchingServiceTest {
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
         float[] embedding = new float[]{0.1f, 0.2f, 0.3f};
         when(aiProvider.embed(anyString())).thenReturn(embedding);
-        when(embeddingRepo.findNearestNeighborJobIds(embedding, 20)).thenReturn(List.of());
+        when(embeddingRepo.findNearestNeighborJobIds(embedding, 50)).thenReturn(List.of());
 
         service.getRecommendations(userId, 10);
 
         verify(aiProvider).embed(anyString());
-        verify(embeddingRepo).findNearestNeighborJobIds(embedding, 20);
+        verify(embeddingRepo).findNearestNeighborJobIds(embedding, 50);
     }
 
     @Test
@@ -94,7 +94,7 @@ class MatchingServiceTest {
 
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
         when(aiProvider.embed(anyString())).thenReturn(new float[]{0.5f});
-        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(20))).thenReturn(List.of(jobId1, jobId2));
+        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(50))).thenReturn(List.of(jobId1, jobId2));
         when(jobRepo.findById(jobId1)).thenReturn(Optional.of(job1));
         when(jobRepo.findById(jobId2)).thenReturn(Optional.of(job2));
 
@@ -180,10 +180,10 @@ class MatchingServiceTest {
 
     private Profile profile(UUID userId, String headline, String summary,
                             List<String> skills, List<String> technologies) {
-        return new Profile(UUID.randomUUID(), userId, "Test User", headline, summary,
-                null, null, null, null, null, null, null, null,
-                skills, technologies, List.of(),
-                null, null, "DKK", null, null, null, null);
+        return new Profile(UUID.randomUUID(), userId, headline, summary,
+                null, skills, technologies, List.of(),
+                null, null, null, null, null,
+                null, null);
     }
 
     private Job minimalJob(UUID id) {
@@ -193,6 +193,6 @@ class MatchingServiceTest {
                 null, null, null,
                 List.of(), List.of(), List.of(),
                 null, null, null, null, null, null, true,
-                null, null);
+                null, null, null, null);
     }
 }

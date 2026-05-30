@@ -3,10 +3,15 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.port.in.application.*;
+import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
+import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
+import com.autoapplicant.port.in.job.GetJobByIdUseCase;
 import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.auth.FirebaseAuth;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,13 +43,19 @@ class ApplicationControllerTest {
     @Autowired MockMvc      mvc;
     @Autowired ObjectMapper mapper;
 
-    @MockBean CreateApplicationUseCase      createUseCase;
-    @MockBean UpdateApplicationStatusUseCase updateStatusUseCase;
-    @MockBean GetApplicationsUseCase         getAllUseCase;
-    @MockBean GetApplicationByIdUseCase      getByIdUseCase;
-    @MockBean JobRepositoryPort              jobRepo;
-    @MockBean ResponseMetricRepositoryPort   responseMetricRepo;
-    @MockBean SecurityContextHelper          secCtx;
+    @MockBean CreateApplicationUseCase        createUseCase;
+    @MockBean UpdateApplicationStatusUseCase  updateStatusUseCase;
+    @MockBean UpdateRecruiterInfoUseCase      updateRecruiterUseCase;
+    @MockBean GetApplicationsUseCase          getAllUseCase;
+    @MockBean GetApplicationByIdUseCase       getByIdUseCase;
+    @MockBean GetApplicationTimelineUseCase   timelineUseCase;
+    @MockBean GetJobByIdUseCase               getJobByIdUseCase;
+    @MockBean JobRepositoryPort               jobRepo;
+    @MockBean ResponseMetricRepositoryPort    responseMetricRepo;
+    @MockBean SecurityContextHelper           secCtx;
+    @MockBean ProvisionFirebaseUserUseCase    provisionUser;
+    @MockBean ResolveLinkedInUserUseCase      resolveLinkedInUser;
+    @MockBean FirebaseAuth                    firebaseAuth;
 
     UUID userId = UUID.randomUUID();
     UUID jobId  = UUID.randomUUID();
@@ -96,7 +107,7 @@ class ApplicationControllerTest {
     @Test
     void create_returns_200_with_saved_status() throws Exception {
         Application saved = application(appId, userId, jobId, SAVED);
-        when(createUseCase.createApplication(eq(userId), eq(jobId), isNull(), isNull()))
+        when(createUseCase.createApplication(any(CreateApplicationCommand.class)))
                 .thenReturn(saved);
 
         mvc.perform(post("/api/v1/applications")
@@ -104,7 +115,7 @@ class ApplicationControllerTest {
                         .content("""
                                 {"jobId":"%s"}
                                 """.formatted(jobId)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(appId.toString()))
                 .andExpect(jsonPath("$.status").value("SAVED"));
     }
@@ -122,7 +133,7 @@ class ApplicationControllerTest {
     @Test
     void create_passes_optional_cv_version_id_and_notes() throws Exception {
         UUID cvId = UUID.randomUUID();
-        when(createUseCase.createApplication(eq(userId), eq(jobId), eq(cvId), eq("my notes")))
+        when(createUseCase.createApplication(any(CreateApplicationCommand.class)))
                 .thenReturn(application(appId, userId, jobId, SAVED));
 
         mvc.perform(post("/api/v1/applications")
@@ -130,9 +141,9 @@ class ApplicationControllerTest {
                         .content("""
                                 {"jobId":"%s","cvVersionId":"%s","notes":"my notes"}
                                 """.formatted(jobId, cvId)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
-        verify(createUseCase).createApplication(userId, jobId, cvId, "my notes");
+        verify(createUseCase).createApplication(any(CreateApplicationCommand.class));
     }
 
     // ── GET /api/v1/applications/{id} ─────────────────────────────────────────
@@ -211,7 +222,7 @@ class ApplicationControllerTest {
     private Application application(UUID id, UUID userId, UUID jobId, ApplicationStatus status) {
         return new Application(id, userId, jobId, status, null,
                 null, null, null, null, null,
-                null, null, null, null,
+                null, null, null, null, null,
                 Instant.now(), Instant.now());
     }
 }
