@@ -12,5 +12,6 @@ public record CareerProfileForAi(
         List<StructuredDocumentItem> experience,
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,
-        List<StructuredDocumentItem> certifications
+        List<StructuredDocumentItem> certifications,
+        List<String> strengths
 ) {}
