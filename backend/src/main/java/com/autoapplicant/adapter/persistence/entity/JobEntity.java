@@ -104,6 +104,9 @@ public class JobEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "short_description", columnDefinition = "text")
+    private String shortDescription;
+
     @PrePersist void prePersist() {
         if (scrapedAt == null) scrapedAt = Instant.now();
         createdAt = updatedAt = Instant.now();
@@ -172,4 +175,6 @@ public class JobEntity {
     public void setJobCategory(String jobCategory) { this.jobCategory = jobCategory; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public String getShortDescription() { return shortDescription; }
+    public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
 }

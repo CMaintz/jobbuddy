@@ -13,5 +13,11 @@ public record CrawlConfig(
         long delayMs,
         List<String> keywords,
         Predicate<String> isKnownGuid,
-        Consumer<RawJobData> onJobFound
+        Consumer<RawJobData> onJobFound,
+        /**
+         * When true, the connector will never stop early due to already-known pages.
+         * It only stops when the feed returns an empty page or the maxPages ceiling is hit.
+         * Use this for first-time backfills or forced re-crawls during development.
+         */
+        boolean force
 ) {}

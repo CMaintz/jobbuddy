@@ -37,4 +37,22 @@ public class CrawlerAdminController {
         triggerCrawl.triggerSource(JobSource.valueOf(source.toUpperCase()));
         return ResponseEntity.accepted().build();
     }
+
+    @Operation(summary = "Force-crawl all sources (ignores already-known pages, use for backfills)")
+    @ApiResponse(responseCode = "202", description = "Crawl accepted and running asynchronously")
+    @PostMapping("/force-trigger")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> forceTriggerAll() {
+        triggerCrawl.triggerAllForce();
+        return ResponseEntity.accepted().build();
+    }
+
+    @Operation(summary = "Force-crawl a specific source (ignores already-known pages)")
+    @ApiResponse(responseCode = "202", description = "Crawl accepted and running asynchronously")
+    @PostMapping("/force-trigger/{source}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> forceTriggerSource(@PathVariable String source) {
+        triggerCrawl.triggerSourceForce(JobSource.valueOf(source.toUpperCase()));
+        return ResponseEntity.accepted().build();
+    }
 }
