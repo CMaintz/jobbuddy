@@ -53,6 +53,7 @@ export function generate(vm: ApplicationGeneratorComponent, aiApi: AiApiService)
     jobDescription: v.jobDescription || undefined,
     templateId: v.structuredTemplateId || selectedTemplate?.id || 'application-modern',
     customInstructions: v.customInstructions || undefined,
+    motivationText: v.motivationText || undefined,
     targetLanguage: v.targetLanguage || 'Danish',
     showProfileImage: v.showProfileImage ?? false,
     theme: vm.currentTheme()
@@ -82,6 +83,7 @@ export function generateApplicationSet(vm: ApplicationGeneratorComponent, aiApi:
     jobId: v.jobId || undefined,
     jobDescription: v.jobDescription || undefined,
     customInstructions: v.customInstructions || undefined,
+    motivationText: v.motivationText || undefined,
     targetLanguage: v.targetLanguage || 'Danish',
     showProfileImage: v.showProfileImage ?? false,
     theme: vm.currentTheme()
