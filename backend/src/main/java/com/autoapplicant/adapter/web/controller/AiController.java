@@ -114,6 +114,7 @@ public class AiController {
                         req.templateId(),
                         req.promptTemplateId(),
                         req.customInstructions(),
+                        req.motivationText(),
                         req.targetLanguage(),
                         Boolean.TRUE.equals(req.showProfileImage()),
                         req.theme() != null ? req.theme().toTheme() : null)

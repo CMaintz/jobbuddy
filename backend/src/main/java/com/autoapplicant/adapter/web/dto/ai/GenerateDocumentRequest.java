@@ -12,6 +12,7 @@ public record GenerateDocumentRequest(
         String templateId,
         UUID promptTemplateId,
         String customInstructions,
+        String motivationText,
         String targetLanguage,
         Boolean showProfileImage,
         DocumentThemeRequest theme
