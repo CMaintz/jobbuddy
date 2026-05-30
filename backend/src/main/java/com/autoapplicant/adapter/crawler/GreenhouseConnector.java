@@ -93,7 +93,9 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
                             jobUrl,
                             content,
                             job.toString(),
-                            Instant.now()
+                            Instant.now(),
+                            List.of(),
+                            null
                     ));
                     count++;
                     companyCount++;

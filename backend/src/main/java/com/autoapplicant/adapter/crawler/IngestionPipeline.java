@@ -61,14 +61,14 @@ public class IngestionPipeline {
 
             String cleanText = textCleaner.clean(raw.rawHtml());
             String title = textCleaner.extractTitle(raw.rawHtml());
-            JobCategory category = categoryClassifier.classify(title, cleanText);
+            JobCategory category = categoryClassifier.classify(raw.rawCategories(), title, cleanText);
 
             Job draft = new Job(null, raw.source(), raw.sourceJobId(), raw.url(),
                     title, null, null, raw.rawHtml(), cleanText,
                     null, null, null, null, null, null, "DK",
                     null, null, "DKK", List.of(), List.of(), List.of(),
                     null, raw.scrapedAt(), null, List.of(), null, null,
-                    true, category, null, null);
+                    true, category, null, null, raw.shortDescription());
 
             Job saved = jobRepo.save(draft);
 
@@ -81,6 +81,9 @@ public class IngestionPipeline {
                 if (n % 50 == 0) {
                     log.info("Enrichment progress: {} jobs enriched so far", n);
                 }
+            }).exceptionally(ex -> {
+                log.error("Enrichment failed for job {} ({}): {}", saved.id(), saved.sourceJobId(), ex.getMessage());
+                return null;
             });
 
         } catch (Exception e) {

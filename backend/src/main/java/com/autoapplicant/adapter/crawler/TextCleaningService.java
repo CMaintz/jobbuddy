@@ -13,7 +13,11 @@ public class TextCleaningService {
 
     public String clean(String rawHtml) {
         if (rawHtml == null) return null;
-        String text = Jsoup.parse(rawHtml).text();
+        Document doc = Jsoup.parse(rawHtml);
+        // Strip page chrome so that full company job pages yield only relevant content
+        doc.select("nav, header, footer, aside, script, style, noscript, iframe, " +
+                   "[role=navigation], [role=banner], [role=contentinfo]").remove();
+        String text = doc.text();
         text = text.replaceAll("\\s+", " ").trim();
         return text.length() > MAX_CHARS ? text.substring(0, MAX_CHARS) : text;
     }

@@ -4,41 +4,39 @@ import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Fetches job listings from Teamtailor career pages.
+ * Fetches job listings from Teamtailor career pages via RSS.
  *
- * Strategy: two-phase JSON-LD scrape (same as TheHubConnector).
- *  1. Fetch the jobs listing page for each configured career page URL.
- *     Extract links to individual job detail pages.
- *  2. Fetch each detail page and extract schema.org/JobPosting JSON-LD.
+ * <p>Each configured career page URL exposes a per-company RSS feed at
+ * {@code {baseUrl}/jobs.rss} (no auth required, updated ~3×/day). The feed
+ * is paginated via {@code ?offset=N&per_page=100}.
  *
- * Career page URLs are configured via app.teamtailor.career-page-urls.
- * Common Teamtailor URL formats:
- *   https://{company}.teamtailor-jobs.com
- *   https://jobs.{company}.com  (custom domain — add full URL)
+ * <p>RSS {@code <description>} contains the full job description as HTML.
+ * Teamtailor-specific fields are exposed under the {@code tt:} namespace:
+ * {@code tt:locations}, {@code tt:department}, {@code tt:role}. Remote status
+ * is available as {@code <remoteStatus>}. No detail page fetch needed.
+ *
+ * <p>Career page URLs are configured via {@code app.teamtailor.career-page-urls}.
  */
 @Component
 public class TeamtailorConnector extends AbstractJobSourceConnector {
 
-    private static final String USER_AGENT =
-            "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
-    private static final int    CONNECT_TIMEOUT_MS = 20_000;
+    private static final int CONNECT_TIMEOUT_MS = 20_000;
+    private static final int RSS_PAGE_SIZE      = 100;
 
     private final AppProperties appProperties;
-    private final ObjectMapper  objectMapper = new ObjectMapper();
 
     public TeamtailorConnector(AppProperties appProperties) {
         this.appProperties = appProperties;
@@ -57,208 +55,115 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
             return;
         }
 
-        int targetJobs = config.maxPages() * 15;
-        int count = 0;
+        Set<String> seenInRun = new HashSet<>();
+        int totalCount = 0;
 
         for (String baseUrl : careerPageUrls) {
-            if (count >= targetJobs) break;
-            try {
-                Set<String> jobUrls = collectJobUrls(baseUrl, config);
-                log.info("Teamtailor: {} — found {} job URLs", baseUrl, jobUrls.size());
-
-                int pageTotal = jobUrls.size();
-                int pageIdx = 0;
-                for (String jobUrl : jobUrls) {
-                    if (count >= targetJobs) break;
-                    if (pageIdx % 25 == 0) {
-                        log.info("Teamtailor: fetching detail pages [{}/{}] ({} total so far)...",
-                                pageIdx, pageTotal, count);
-                    }
-                    pageIdx++;
-                    try {
-                        Thread.sleep(config.delayMs());
-                        Document doc = Jsoup.connect(jobUrl)
-                                .userAgent(USER_AGENT)
-                                .timeout(CONNECT_TIMEOUT_MS)
-                                .get();
-
-                        String jsonLd   = extractJsonLd(doc);
-                        String content  = jsonLd != null
-                                ? buildContentFromJsonLd(jsonLd, jobUrl)
-                                : doc.outerHtml();
-                        String jobId    = extractId(baseUrl, jobUrl);
-
-                        config.onJobFound().accept(new RawJobData(
-                                JobSource.TEAMTAILOR,
-                                jobId,
-                                jobUrl,
-                                content,
-                                jsonLd,
-                                Instant.now()
-                        ));
-                        count++;
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    } catch (Exception e) {
-                        log.warn("Teamtailor: failed to fetch detail page {}: {}", jobUrl, e.getMessage());
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Teamtailor: failed to collect URLs from {}: {}", baseUrl, e.getMessage());
-            }
+            totalCount += crawlCompanyRss(baseUrl.replaceAll("/$", ""), config, seenInRun);
         }
 
-        log.info("Teamtailor crawl complete: {} jobs collected", count);
+        log.info("Teamtailor crawl complete: {} jobs collected", totalCount);
     }
 
-    // ── Collect job URLs from the listing page ────────────────────────────────
+    private int crawlCompanyRss(String baseUrl, CrawlConfig config, Set<String> seenInRun) {
+        int count = 0;
 
-    private Set<String> collectJobUrls(String baseUrl, CrawlConfig config) {
-        Set<String> urls = new LinkedHashSet<>();
-        String normalBase = baseUrl.replaceAll("/$", "");
+        for (int offset = 0; ; offset += RSS_PAGE_SIZE) {
+            String rssUrl = baseUrl + "/jobs.rss?offset=" + offset + "&per_page=" + RSS_PAGE_SIZE;
 
-        for (int page = 1; page <= config.maxPages(); page++) {
-            // Teamtailor listing pages are typically paginated via ?page=N
-            String listUrl = page == 1 ? normalBase + "/jobs" : normalBase + "/jobs?page=" + page;
+            String rssBody;
             try {
-                Document doc = Jsoup.connect(listUrl)
+                rssBody = Jsoup.connect(rssUrl)
                         .userAgent(USER_AGENT)
                         .timeout(CONNECT_TIMEOUT_MS)
-                        .get();
-
-                Set<String> found = extractJobLinks(doc, normalBase);
-                if (found.isEmpty()) {
-                    log.debug("Teamtailor: no links found on page {} for {}", page, baseUrl);
-                    break;
-                }
-                urls.addAll(found);
-                Thread.sleep(config.delayMs());
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                break;
+                        .execute()
+                        .body();
             } catch (Exception e) {
-                // Many Teamtailor sites don't have a /jobs sub-path — try root listing
-                if (page == 1) {
-                    try {
-                        Document doc = Jsoup.connect(normalBase)
-                                .userAgent(USER_AGENT)
-                                .timeout(CONNECT_TIMEOUT_MS)
-                                .get();
-                        urls.addAll(extractJobLinks(doc, normalBase));
-                    } catch (Exception ex) {
-                        log.warn("Teamtailor: failed to load listing for {}: {}", baseUrl, ex.getMessage());
-                    }
+                log.warn("Teamtailor: failed to fetch RSS {}: {}", rssUrl, e.getMessage());
+                break;
+            }
+
+            Document rssDoc = Jsoup.parse(rssBody, "", Parser.xmlParser());
+            Elements items  = rssDoc.select("item");
+
+            log.info("Teamtailor: RSS page offset={} returned {} items for {}", offset, items.size(), baseUrl);
+
+            if (items.isEmpty()) {
+                break;
+            }
+
+            int newOnPage = 0;
+
+            for (Element item : items) {
+                String link = extractRssLink(item);
+                String guid = item.select("guid").text().trim();
+                if (guid.isBlank()) guid = link;
+                if (link.isBlank()) link = guid;
+
+                if (link.isBlank()) {
+                    log.warn("Teamtailor: RSS item has no link or guid — title={}", item.select("title").text());
+                    continue;
                 }
+
+                if (seenInRun.contains(guid)) continue;
+
+                if (config.isKnownGuid().test(guid)) {
+                    log.debug("Teamtailor: skipping known guid {}", guid);
+                    continue;
+                }
+
+                seenInRun.add(guid);
+
+                // Teamtailor uses tt:department rather than the standard <category> element
+                List<String> categories = item.getElementsByTag("tt:department").eachText();
+
+                config.onJobFound().accept(new RawJobData(
+                        JobSource.TEAMTAILOR,
+                        guid,
+                        link,
+                        buildContent(item, link),
+                        null,
+                        Instant.now(),
+                        categories,
+                        null
+                ));
+                count++;
+                newOnPage++;
+
+                try {
+                    Thread.sleep(config.delayMs());
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return count;
+                }
+            }
+
+            if (!config.force() && newOnPage == 0) {
+                log.info("Teamtailor: all items on page (offset={}) were known — stopping for {}", offset, baseUrl);
                 break;
             }
         }
-        return urls;
+
+        return count;
     }
 
-    private Set<String> extractJobLinks(Document doc, String baseUrl) {
-        Set<String> urls = new LinkedHashSet<>();
-        Elements links = doc.select("a[href]");
-        for (Element link : links) {
-            String href = link.attr("abs:href");  // Jsoup resolves relative URLs
-            if (href.isBlank()) {
-                href = link.attr("href");
-                if (href.startsWith("/")) href = baseUrl + href;
-            }
-            // Keep only links that look like individual job postings (contain /jobs/ with a slug)
-            if (href.startsWith(baseUrl) && href.contains("/jobs/") && href.length() > baseUrl.length() + "/jobs/".length()) {
-                int q = href.indexOf('?');
-                urls.add(q > 0 ? href.substring(0, q) : href);
-            }
-        }
-        return urls;
-    }
+    private String buildContent(Element item, String link) {
+        String title      = item.select("title").text().trim();
+        String rawDesc    = item.select("description").text().trim();
+        String desc       = rawDesc.isBlank() ? "" : Jsoup.parse(rawDesc).text();
+        String locations  = item.getElementsByTag("tt:locations").text().trim();
+        String department = item.getElementsByTag("tt:department").text().trim();
+        String role       = item.getElementsByTag("tt:role").text().trim();
+        String remote     = item.select("remoteStatus").text().trim();
 
-    // ── JSON-LD extraction (shared logic with TheHubConnector) ────────────────
-
-    private String extractJsonLd(Document doc) {
-        Elements scripts = doc.select("script[type=application/ld+json]");
-        for (Element script : scripts) {
-            String json = script.html().trim();
-            try {
-                JsonNode node = objectMapper.readTree(json);
-                if (node.isArray()) {
-                    for (JsonNode item : node) {
-                        if (isJobPosting(item)) return item.toString();
-                    }
-                } else if (node.has("@graph")) {
-                    for (JsonNode item : node.get("@graph")) {
-                        if (isJobPosting(item)) return item.toString();
-                    }
-                } else if (isJobPosting(node)) {
-                    return json;
-                }
-            } catch (Exception ignored) {}
-        }
-        return null;
-    }
-
-    private boolean isJobPosting(JsonNode node) {
-        if (node == null || !node.isObject()) return false;
-        JsonNode type = node.path("@type");
-        if (type.isTextual()) return "JobPosting".equals(type.asText());
-        if (type.isArray()) {
-            for (JsonNode t : type) {
-                if ("JobPosting".equals(t.asText())) return true;
-            }
-        }
-        return false;
-    }
-
-    private String buildContentFromJsonLd(String jsonLd, String jobUrl) {
-        try {
-            JsonNode job = objectMapper.readTree(jsonLd);
-            StringBuilder sb = new StringBuilder();
-            appendField(sb, "Title",           job, "title");
-            appendField(sb, "Description",     job, "description");
-            appendField(sb, "Employment Type", job, "employmentType");
-            appendField(sb, "Date Posted",     job, "datePosted");
-            appendField(sb, "URL",             job, "url");
-            if (!sb.toString().contains("URL:")) sb.append("URL: ").append(jobUrl).append('\n');
-
-            JsonNode org = job.path("hiringOrganization");
-            if (!org.isMissingNode()) {
-                String name = org.path("name").asText(null);
-                if (name != null) sb.append("Company: ").append(name).append('\n');
-            }
-            JsonNode loc = job.path("jobLocation");
-            if (!loc.isMissingNode()) {
-                JsonNode addr = loc.path("address");
-                String city    = addr.path("addressLocality").asText(null);
-                String country = addr.path("addressCountry").asText(null);
-                if (city != null || country != null) {
-                    sb.append("Location: ");
-                    if (city != null) sb.append(city);
-                    if (city != null && country != null) sb.append(", ");
-                    if (country != null) sb.append(country);
-                    sb.append('\n');
-                }
-            }
-            return sb.length() > 0 ? sb.toString() : jsonLd;
-        } catch (Exception e) {
-            return jsonLd;
-        }
-    }
-
-    private void appendField(StringBuilder sb, String label, JsonNode node, String key) {
-        JsonNode val = node.path(key);
-        if (!val.isMissingNode() && !val.isNull()) {
-            String text = val.isTextual()
-                    ? (key.equals("description") ? Jsoup.parse(val.asText()).text() : val.asText())
-                    : val.toString();
-            if (!text.isBlank()) sb.append(label).append(": ").append(text).append('\n');
-        }
-    }
-
-    private String extractId(String baseUrl, String jobUrl) {
-        // Strip the base URL prefix, then take remaining path as ID
-        String suffix = jobUrl.startsWith(baseUrl) ? jobUrl.substring(baseUrl.length()) : jobUrl;
-        suffix = suffix.replaceAll("^/+", "").replaceAll("/+$", "").replace('/', '-');
-        return suffix.isBlank() ? jobUrl : suffix;
+        StringBuilder sb = new StringBuilder();
+        if (!title.isBlank())      sb.append("Title: ").append(title).append('\n');
+        if (!link.isBlank())       sb.append("URL: ").append(link).append('\n');
+        if (!department.isBlank()) sb.append("Department: ").append(department).append('\n');
+        if (!role.isBlank())       sb.append("Role: ").append(role).append('\n');
+        if (!locations.isBlank())  sb.append("Location: ").append(locations).append('\n');
+        if (!remote.isBlank())     sb.append("Remote status: ").append(remote).append('\n');
+        if (!desc.isBlank())       sb.append("Description: ").append(desc).append('\n');
+        return sb.length() > 0 ? sb.toString() : desc;
     }
 }
