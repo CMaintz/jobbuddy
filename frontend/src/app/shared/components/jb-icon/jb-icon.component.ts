@@ -1,0 +1,340 @@
+import { Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+/**
+ * Jobbuddy icon set — stroked 16×16 viewBox SVG icons.
+ * Usage: <jb-icon name="dashboard" [size]="14" />
+ */
+@Component({
+  selector: 'jb-icon',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <svg
+      [attr.width]="size"
+      [attr.height]="size"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      [attr.stroke-width]="strokeWidth"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      [style.display]="'inline-block'"
+      [style.flex-shrink]="'0'"
+      [style.vertical-align]="'middle'"
+    >
+      <ng-container [ngSwitch]="name">
+        <!-- Dashboard -->
+        <ng-container *ngSwitchCase="'dashboard'">
+          <rect x="2" y="2" width="5" height="5" rx="1"/>
+          <rect x="9" y="2" width="5" height="5" rx="1"/>
+          <rect x="2" y="9" width="5" height="5" rx="1"/>
+          <rect x="9" y="9" width="5" height="5" rx="1"/>
+        </ng-container>
+
+        <!-- Pipeline -->
+        <ng-container *ngSwitchCase="'pipeline'">
+          <path d="M2 4h12"/><path d="M2 8h9"/><path d="M2 12h6"/>
+          <circle cx="14" cy="8" r="1.2"/><circle cx="11" cy="12" r="1.2"/>
+        </ng-container>
+
+        <!-- Plus -->
+        <ng-container *ngSwitchCase="'plus'">
+          <path d="M8 3v10M3 8h10"/>
+        </ng-container>
+
+        <!-- Doc -->
+        <ng-container *ngSwitchCase="'doc'">
+          <path d="M3.5 1.5h6L13 5v9a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V2.5a1 1 0 0 1 1-1z"/>
+          <path d="M9.5 1.5V5h3.5"/><path d="M5 8.5h6M5 11h4"/>
+        </ng-container>
+
+        <!-- User -->
+        <ng-container *ngSwitchCase="'user'">
+          <circle cx="8" cy="6" r="2.5"/>
+          <path d="M3 14c.5-2.6 2.5-4 5-4s4.5 1.4 5 4"/>
+        </ng-container>
+
+        <!-- Bookmark -->
+        <ng-container *ngSwitchCase="'bookmark'">
+          <path d="M4 2h8v12l-4-2.5L4 14V2z"/>
+        </ng-container>
+
+        <!-- Search -->
+        <ng-container *ngSwitchCase="'search'">
+          <circle cx="7" cy="7" r="4"/><path d="M10 10l3.5 3.5"/>
+        </ng-container>
+
+        <!-- Arrow Right -->
+        <ng-container *ngSwitchCase="'arrow-right'">
+          <path d="M3 8h10M9 4l4 4-4 4"/>
+        </ng-container>
+
+        <!-- Arrow Up -->
+        <ng-container *ngSwitchCase="'arrow-up'">
+          <path d="M8 13V3M4 7l4-4 4 4"/>
+        </ng-container>
+
+        <!-- Arrow Down -->
+        <ng-container *ngSwitchCase="'arrow-down'">
+          <path d="M8 3v10M4 9l4 4 4-4"/>
+        </ng-container>
+
+        <!-- Arrow Left -->
+        <ng-container *ngSwitchCase="'arrow-left'">
+          <path d="M13 8H3M7 4 3 8l4 4"/>
+        </ng-container>
+
+        <!-- Check -->
+        <ng-container *ngSwitchCase="'check'">
+          <path d="M3 8.5L6.5 12 13 4.5"/>
+        </ng-container>
+
+        <!-- X -->
+        <ng-container *ngSwitchCase="'x'">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </ng-container>
+
+        <!-- Sparkle -->
+        <ng-container *ngSwitchCase="'sparkle'">
+          <path d="M8 2v3M8 11v3M2 8h3M11 8h3M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"/>
+        </ng-container>
+
+        <!-- Bolt -->
+        <ng-container *ngSwitchCase="'bolt'">
+          <path d="M9 1.5L3.5 9h4L7 14.5 12.5 7h-4l.5-5.5z"/>
+        </ng-container>
+
+        <!-- Flame -->
+        <ng-container *ngSwitchCase="'flame'">
+          <path d="M8 1.5C7 3.5 5 4.5 5 7c0 1.5 1.5 2.5 1.5 2.5S5.5 8 6.5 6.5C7 8 10 8.5 10 11c0 1.6-.9 3-2 3-1.1 0-2-.9-2-2 0-.7.3-1 .8-1.5C5 11 3 9.5 3 7c0-2.7 2.5-4 5-5.5z"/>
+        </ng-container>
+
+        <!-- Clock -->
+        <ng-container *ngSwitchCase="'clock'">
+          <circle cx="8" cy="8" r="6"/><path d="M8 5v3.2L10 10"/>
+        </ng-container>
+
+        <!-- Calendar -->
+        <ng-container *ngSwitchCase="'calendar'">
+          <rect x="2" y="3" width="12" height="11" rx="1.5"/>
+          <path d="M2 6h12M5 2v3M11 2v3"/>
+        </ng-container>
+
+        <!-- Link -->
+        <ng-container *ngSwitchCase="'link'">
+          <path d="M7 9a3 3 0 0 0 4.2.2l1.6-1.6a3 3 0 0 0-4.2-4.2L7.6 4.4"/>
+          <path d="M9 7a3 3 0 0 0-4.2-.2L3.2 8.4a3 3 0 0 0 4.2 4.2L8.4 11.6"/>
+        </ng-container>
+
+        <!-- Chevron Down -->
+        <ng-container *ngSwitchCase="'chev-down'">
+          <path d="M4 6l4 4 4-4"/>
+        </ng-container>
+
+        <!-- Chevron Right -->
+        <ng-container *ngSwitchCase="'chev-right'">
+          <path d="M6 4l4 4-4 4"/>
+        </ng-container>
+
+        <!-- Grid -->
+        <ng-container *ngSwitchCase="'grid'">
+          <rect x="2" y="2" width="5" height="5"/><rect x="9" y="2" width="5" height="5"/>
+          <rect x="2" y="9" width="5" height="5"/><rect x="9" y="9" width="5" height="5"/>
+        </ng-container>
+
+        <!-- List -->
+        <ng-container *ngSwitchCase="'list'">
+          <path d="M2 4h12M2 8h12M2 12h12"/>
+        </ng-container>
+
+        <!-- Kanban -->
+        <ng-container *ngSwitchCase="'kanban'">
+          <rect x="2" y="2" width="4" height="12" rx="0.5"/>
+          <rect x="7" y="2" width="4" height="8" rx="0.5"/>
+          <rect x="12" y="2" width="2.5" height="6" rx="0.5"/>
+        </ng-container>
+
+        <!-- Upload -->
+        <ng-container *ngSwitchCase="'upload'">
+          <path d="M8 11V3M5 6l3-3 3 3"/>
+          <path d="M2 12v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V12"/>
+        </ng-container>
+
+        <!-- Download -->
+        <ng-container *ngSwitchCase="'download'">
+          <path d="M8 3v8M5 8l3 3 3-3"/>
+          <path d="M2 12v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V12"/>
+        </ng-container>
+
+        <!-- Copy -->
+        <ng-container *ngSwitchCase="'copy'">
+          <rect x="5" y="5" width="9" height="9" rx="1"/>
+          <path d="M3 11V3a1 1 0 0 1 1-1h7"/>
+        </ng-container>
+
+        <!-- Edit -->
+        <ng-container *ngSwitchCase="'edit'">
+          <path d="M11 2.5l2.5 2.5L6 12.5l-3 .5.5-3 7.5-7.5z"/>
+        </ng-container>
+
+        <!-- Settings -->
+        <ng-container *ngSwitchCase="'settings'">
+          <circle cx="8" cy="8" r="2"/>
+          <path d="M13.5 8a5.5 5.5 0 0 0-.1-1l1.4-1.1-1.5-2.6-1.7.5a5.5 5.5 0 0 0-1.7-1L9.5 1h-3l-.4 1.8a5.5 5.5 0 0 0-1.7 1l-1.7-.5L1.2 5.9 2.6 7a5.5 5.5 0 0 0 0 2L1.2 10.1l1.5 2.6 1.7-.5a5.5 5.5 0 0 0 1.7 1L6.5 15h3l.4-1.8a5.5 5.5 0 0 0 1.7-1l1.7.5 1.5-2.6L13.4 9c.07-.32.1-.65.1-1z"/>
+        </ng-container>
+
+        <!-- Building -->
+        <ng-container *ngSwitchCase="'building'">
+          <rect x="2.5" y="3" width="11" height="11" rx="0.5"/>
+          <path d="M5 6h2M5 9h2M5 12h2M9 6h2M9 9h2M9 12h2"/>
+        </ng-container>
+
+        <!-- External -->
+        <ng-container *ngSwitchCase="'external'">
+          <path d="M10 3h3v3M13 3l-5 5"/>
+          <path d="M11 9v3.5a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5H7"/>
+        </ng-container>
+
+        <!-- Filter -->
+        <ng-container *ngSwitchCase="'filter'">
+          <path d="M2 3h12l-4.5 6v4l-3 1.5V9L2 3z"/>
+        </ng-container>
+
+        <!-- More (horizontal dots) -->
+        <ng-container *ngSwitchCase="'more'">
+          <circle cx="3" cy="8" r="1"/><circle cx="8" cy="8" r="1"/><circle cx="13" cy="8" r="1"/>
+        </ng-container>
+
+        <!-- Git Branch -->
+        <ng-container *ngSwitchCase="'git-branch'">
+          <circle cx="4" cy="3" r="1.5"/><circle cx="4" cy="13" r="1.5"/><circle cx="12" cy="6" r="1.5"/>
+          <path d="M4 4.5v7M4 9c0-3 8-3 8-5.5"/>
+        </ng-container>
+
+        <!-- Target -->
+        <ng-container *ngSwitchCase="'target'">
+          <circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="3"/>
+          <circle cx="8" cy="8" r="0.7" fill="currentColor"/>
+        </ng-container>
+
+        <!-- Compass -->
+        <ng-container *ngSwitchCase="'compass'">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="m10.5 5.5-3.5 1.5-1.5 3.5 3.5-1.5z"/>
+        </ng-container>
+
+        <!-- Layers -->
+        <ng-container *ngSwitchCase="'layers'">
+          <path d="M8 2l6 3-6 3-6-3z"/><path d="M2 8l6 3 6-3"/><path d="M2 11l6 3 6-3"/>
+        </ng-container>
+
+        <!-- Star -->
+        <ng-container *ngSwitchCase="'star'">
+          <path d="M8 1.5l2 4.5 4.5.5-3.5 3 1 4.5L8 11.5 3.5 14l1-4.5L1 6.5l4.5-.5z"/>
+        </ng-container>
+
+        <!-- Check Circle -->
+        <ng-container *ngSwitchCase="'check-circle'">
+          <circle cx="8" cy="8" r="6"/><path d="m5 8 2 2 4-4"/>
+        </ng-container>
+
+        <!-- X Circle -->
+        <ng-container *ngSwitchCase="'x-circle'">
+          <circle cx="8" cy="8" r="6"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/>
+        </ng-container>
+
+        <!-- Mail -->
+        <ng-container *ngSwitchCase="'mail'">
+          <rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="m2 5 6 4 6-4"/>
+        </ng-container>
+
+        <!-- Chat -->
+        <ng-container *ngSwitchCase="'chat'">
+          <path d="M2 4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H6l-3 2v-2H3a1 1 0 0 1-1-1z"/>
+        </ng-container>
+
+        <!-- Lightbulb -->
+        <ng-container *ngSwitchCase="'lightbulb'">
+          <path d="M5 7a3 3 0 1 1 6 0c0 1.5-1 2-1.5 3.5h-3C6 9 5 8.5 5 7z"/>
+          <path d="M6.5 12h3M7 14h2"/>
+        </ng-container>
+
+        <!-- Clipboard -->
+        <ng-container *ngSwitchCase="'clipboard'">
+          <rect x="3.5" y="3" width="9" height="11.5" rx="1.5"/>
+          <path d="M6 3V2h4v1"/><path d="M5.5 7h5M5.5 10h3.5"/>
+        </ng-container>
+
+        <!-- Phone -->
+        <ng-container *ngSwitchCase="'phone'">
+          <path d="M3 4c0 5 4 9 9 9 .6 0 1-.5 1-1v-1.6a1 1 0 0 0-.8-1l-2-.4a1 1 0 0 0-1 .4l-.5.7A7 7 0 0 1 5.5 6.3l.7-.5a1 1 0 0 0 .4-1l-.4-2a1 1 0 0 0-1-.8H3.5C3 2 3 2.4 3 4z"/>
+        </ng-container>
+
+        <!-- Pin -->
+        <ng-container *ngSwitchCase="'pin'">
+          <path d="M8 14s5-4 5-8A5 5 0 0 0 3 6c0 4 5 8 5 8z"/>
+          <circle cx="8" cy="6" r="1.8"/>
+        </ng-container>
+
+        <!-- Briefcase -->
+        <ng-container *ngSwitchCase="'briefcase'">
+          <rect x="2" y="5" width="12" height="8" rx="1.5"/>
+          <path d="M6 5V3.5h4V5M2 9h12"/>
+        </ng-container>
+
+        <!-- Bell -->
+        <ng-container *ngSwitchCase="'bell'">
+          <path d="M4.5 7a3.5 3.5 0 0 1 7 0c0 3 1 4 1 4H3.5s1-1 1-4z"/>
+          <path d="M6.5 13a1.5 1.5 0 0 0 3 0"/>
+        </ng-container>
+
+        <!-- Chart Up -->
+        <ng-container *ngSwitchCase="'chart-up'">
+          <path d="M2 13h12M4 10l3-3 2 2 4-5"/>
+        </ng-container>
+
+        <!-- Wand -->
+        <ng-container *ngSwitchCase="'wand'">
+          <path d="M3 13l7-7M11 3l.5 1.5L13 5l-1.5.5L11 7l-.5-1.5L9 5l1.5-.5z"/>
+        </ng-container>
+
+        <!-- Key -->
+        <ng-container *ngSwitchCase="'key'">
+          <circle cx="6" cy="6" r="3"/>
+          <path d="M8 8l5 5M11 11l1.5-1.5M9.5 9.5L11 8"/>
+        </ng-container>
+
+        <!-- Globe -->
+        <ng-container *ngSwitchCase="'globe'">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M2 8h12M8 2c1.8 2 1.8 10 0 12M8 2c-1.8 2-1.8 10 0 12"/>
+        </ng-container>
+
+        <!-- Sun (for theme toggle) -->
+        <ng-container *ngSwitchCase="'sun'">
+          <circle cx="8" cy="8" r="3"/>
+          <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4"/>
+        </ng-container>
+
+        <!-- Moon (for theme toggle) -->
+        <ng-container *ngSwitchCase="'moon'">
+          <path d="M13.5 8a5.5 5.5 0 0 1-7.5 5.1A5.5 5.5 0 0 1 9.1 2.5 4 4 0 0 0 13.5 8z"/>
+        </ng-container>
+
+        <!-- Fallback: question mark -->
+        <ng-container *ngSwitchDefault>
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M6 6.5a2 2 0 0 1 3.5 1.5c0 1-1.5 1.5-1.5 1.5"/>
+          <circle cx="8" cy="12" r="0.5" fill="currentColor"/>
+        </ng-container>
+      </ng-container>
+    </svg>
+  `,
+  styles: [`:host { display: inline-flex; align-items: center; }`],
+})
+export class JbIconComponent {
+  @Input() name: string = '';
+  @Input() size: number = 14;
+  @Input() strokeWidth: number = 1.5;
+}
