@@ -11,38 +11,38 @@ module.exports = {
       colors: {
         /* ── Surfaces ─────────────────────────────────── */
         jb: {
-          bg:           { DEFAULT: '#f8f9fa', dark: '#0a0c0f' },
-          surface:      { DEFAULT: '#ffffff', dark: '#14171c' },
-          'surface-2':  { DEFAULT: '#f1f3f5', dark: '#1a1e24' },
-          'surface-3':  { DEFAULT: '#e9ecef', dark: '#21262d' },
-          hover:        { DEFAULT: '#f1f3f5', dark: '#1f242b' },
+          bg:             'var(--jb-bg)',
+          surface:        'var(--jb-surface)',
+          'surface-2':    'var(--jb-surface-2)',
+          'surface-3':    'var(--jb-surface-3)',
+          hover:          'var(--jb-hover)',
 
           /* ── Borders ─────────────────────────────────── */
-          border:       { DEFAULT: '#dee2e6', dark: '#262b32' },
-          'border-strong': { DEFAULT: '#ced4da', dark: '#353b44' },
-          'border-faint':  { DEFAULT: '#e9ecef', dark: '#1e2228' },
+          border:         'var(--jb-border)',
+          'border-strong': 'var(--jb-border-strong)',
+          'border-faint':  'var(--jb-border-faint)',
 
           /* ── Text ────────────────────────────────────── */
-          text:         { DEFAULT: '#1a1d21', dark: '#e6e8ec' },
-          'text-mid':   { DEFAULT: '#495057', dark: '#a8acb3' },
-          'text-dim':   { DEFAULT: '#868e96', dark: '#6b7079' },
-          'text-faint': { DEFAULT: '#adb5bd', dark: '#464a52' },
+          text:           'var(--jb-text)',
+          'text-mid':     'var(--jb-text-mid)',
+          'text-dim':     'var(--jb-text-dim)',
+          'text-faint':   'var(--jb-text-faint)',
 
           /* ── Accent (amber/gold) ─────────────────────── */
-          accent:       { DEFAULT: '#e09000', dark: '#f5a623' },
-          'accent-2':   { DEFAULT: '#d4850a', dark: '#ffc15c' },
-          'accent-soft': { DEFAULT: 'rgba(224, 144, 0, 0.10)', dark: 'rgba(245, 166, 35, 0.14)' },
-          'accent-border': { DEFAULT: 'rgba(224, 144, 0, 0.28)', dark: 'rgba(245, 166, 35, 0.32)' },
+          accent:         'var(--jb-accent)',
+          'accent-2':     'var(--jb-accent-2)',
+          'accent-soft':  'var(--jb-accent-soft)',
+          'accent-border': 'var(--jb-accent-border)',
 
           /* ── Semantic ────────────────────────────────── */
-          success:      { DEFAULT: '#37b24d', dark: '#4ade80' },
-          'success-soft': { DEFAULT: 'rgba(55, 178, 77, 0.10)', dark: 'rgba(74, 222, 128, 0.12)' },
-          info:         { DEFAULT: '#4c6ef5', dark: '#7aa2f7' },
-          'info-soft':  { DEFAULT: 'rgba(76, 110, 245, 0.10)', dark: 'rgba(122, 162, 247, 0.13)' },
-          danger:       { DEFAULT: '#e03131', dark: '#f87171' },
-          'danger-soft': { DEFAULT: 'rgba(224, 49, 49, 0.10)', dark: 'rgba(248, 113, 113, 0.12)' },
-          violet:       { DEFAULT: '#7950f2', dark: '#b48ce8' },
-          'violet-soft': { DEFAULT: 'rgba(121, 80, 242, 0.10)', dark: 'rgba(180, 140, 232, 0.13)' },
+          success:        'var(--jb-success)',
+          'success-soft': 'var(--jb-success-soft)',
+          info:           'var(--jb-info)',
+          'info-soft':    'var(--jb-info-soft)',
+          danger:         'var(--jb-danger)',
+          'danger-soft':  'var(--jb-danger-soft)',
+          violet:         'var(--jb-violet)',
+          'violet-soft':  'var(--jb-violet-soft)',
         },
       },
       fontSize: {
