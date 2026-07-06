@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
-import { ProfileSectionsApiService } from '../../core/api/profile-sections.api';
-import { SkillsApiService } from '../../core/api/skills.api';
-import { Certification, Education, LanguageProficiency, SpokenLanguage, Project, WorkExperience } from '../../core/models/profile-section.model';
-import { resetFlagAfter, runAction } from '../../shared/utils/async-ui';
+import { ProfileSectionsApiService } from '../../../core/api/profile-sections.api';
+import { SkillsApiService } from '../../../core/api/skills.api';
+import { Certification, Education, LanguageProficiency, SpokenLanguage, Project, WorkExperience } from '../../../core/models/profile-section.model';
+import { resetFlagAfter, runAction } from '../../../shared/utils/async-ui';
 import { splitCsv } from './profile.constants';
 import type { ProfileComponent } from './profile.component';
 

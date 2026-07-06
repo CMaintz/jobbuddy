@@ -1,0 +1,20 @@
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      @for (cert of certifications; track cert.id) {
+        <div class="rb-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:500;color:var(--jb-text);">{{ cert.name || 'New Certification' }}</span>
+            <button class="rb-remove" (click)="remove(cert.id)">Remove</button>
+          </div>
+          <label class="rb-label">Name</label>
+          <input class="rb-input" [value]="cert.name" (input)="update(cert.id, 'name', $any($event.target).value)" placeholder="AWS Certified Developer" />
+          <label class="rb-label">Issuer</label>
+          <input class="rb-input" [value]="cert.issuer" (input)="update(cert.id, 'issuer', $any($event.target).value)" placeholder="Amazon Web Services" />
+          <label class="rb-label">Date</label>
+          <input class="rb-input" [value]="cert.date" (input)="update(cert.id, 'date', $any($event.target).value)" placeholder="2024-06" />
+          <label class="rb-label">Credential URL</label>
+          <input class="rb-input" [value]="cert.link ?? ''" (input)="update(cert.id, 'link', $any($event.target).value)" placeholder="https://credly.com/..." />
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Certification</button>
+    </div>

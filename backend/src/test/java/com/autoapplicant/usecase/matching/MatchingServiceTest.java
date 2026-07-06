@@ -10,6 +10,7 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
+import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ class MatchingServiceTest {
     @Mock AiProviderPort             aiProvider;
     @Mock IgnoredJobRepositoryPort   ignoredJobRepo;
     @Mock RecommendationFeedbackRepositoryPort feedbackRepo;
+    @Mock ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
@@ -42,7 +44,7 @@ class MatchingServiceTest {
     @BeforeEach
     void setUp() {
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
-                aiProvider, ignoredJobRepo, feedbackRepo);
+                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo);
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────
@@ -77,6 +79,7 @@ class MatchingServiceTest {
         float[] embedding = new float[]{0.1f, 0.2f, 0.3f};
         when(aiProvider.embed(anyString())).thenReturn(embedding);
         when(embeddingRepo.findNearestNeighborJobIds(embedding, 50)).thenReturn(List.of());
+        when(jobRepo.findByIds(any())).thenReturn(List.of());
 
         service.getRecommendations(userId, 10);
 
@@ -95,8 +98,7 @@ class MatchingServiceTest {
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
         when(aiProvider.embed(anyString())).thenReturn(new float[]{0.5f});
         when(embeddingRepo.findNearestNeighborJobIds(any(), eq(50))).thenReturn(List.of(jobId1, jobId2));
-        when(jobRepo.findById(jobId1)).thenReturn(Optional.of(job1));
-        when(jobRepo.findById(jobId2)).thenReturn(Optional.of(job2));
+        when(jobRepo.findByIds(any())).thenReturn(List.of(job1, job2));
 
         List<MatchResult> results = service.getRecommendations(userId, 10);
 
@@ -111,7 +113,7 @@ class MatchingServiceTest {
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
         when(aiProvider.embed(anyString())).thenReturn(new float[]{0.5f});
         when(embeddingRepo.findNearestNeighborJobIds(any(), anyInt())).thenReturn(List.of(jobId));
-        when(jobRepo.findById(jobId)).thenReturn(Optional.of(minimalJob(jobId)));
+        when(jobRepo.findByIds(any())).thenReturn(List.of(minimalJob(jobId)));
 
         List<MatchResult> results = service.getRecommendations(userId, 10);
         assertThat(results.get(0).userId()).isEqualTo(userId);
@@ -124,7 +126,7 @@ class MatchingServiceTest {
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
         when(aiProvider.embed(anyString())).thenReturn(new float[]{0.5f});
         when(embeddingRepo.findNearestNeighborJobIds(any(), anyInt())).thenReturn(List.of(jobId));
-        when(jobRepo.findById(jobId)).thenReturn(Optional.of(minimalJob(jobId)));
+        when(jobRepo.findByIds(any())).thenReturn(List.of(minimalJob(jobId)));
 
         List<MatchResult> results = service.getRecommendations(userId, 10);
         assertThat(results.get(0).matchLabel()).isNotNull();
@@ -137,10 +139,9 @@ class MatchingServiceTest {
         UUID id2 = UUID.randomUUID();
         when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
         when(aiProvider.embed(anyString())).thenReturn(new float[]{0.5f});
-        // limit=2 → service fetches limit*2=4 neighbors; return 2 so no over-stubbing
-        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(4))).thenReturn(List.of(id1, id2));
-        when(jobRepo.findById(id1)).thenReturn(Optional.of(minimalJob(id1)));
-        when(jobRepo.findById(id2)).thenReturn(Optional.of(minimalJob(id2)));
+        // limit=2 → service fetches limit*5=10 neighbors
+        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(10))).thenReturn(List.of(id1, id2));
+        when(jobRepo.findByIds(any())).thenReturn(List.of(minimalJob(id1), minimalJob(id2)));
 
         List<MatchResult> results = service.getRecommendations(userId, 2);
         assertThat(results).hasSizeLessThanOrEqualTo(2);
@@ -168,8 +169,8 @@ class MatchingServiceTest {
         when(aiProvider.embed(anyString())).thenReturn(new float[]{0.5f});
         when(embeddingRepo.findNearestNeighborJobIds(any(), anyInt()))
                 .thenReturn(List.of(existingJobId, missingJobId));
-        when(jobRepo.findById(existingJobId)).thenReturn(Optional.of(minimalJob(existingJobId)));
-        when(jobRepo.findById(missingJobId)).thenReturn(Optional.empty());
+        // Batch fetch returns only the existing job
+        when(jobRepo.findByIds(any())).thenReturn(List.of(minimalJob(existingJobId)));
 
         List<MatchResult> results = service.getRecommendations(userId, 10);
         assertThat(results).hasSize(1);
@@ -193,6 +194,6 @@ class MatchingServiceTest {
                 null, null, null,
                 List.of(), List.of(), List.of(),
                 null, null, null, null, null, null, true,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 }

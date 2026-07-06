@@ -3,16 +3,8 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 @Component({
   selector: 'jb-toggle',
   standalone: true,
-  template: `
-    <button (click)="toggled.emit(!on)" [style.background]="on ? 'var(--jb-accent)' : 'var(--jb-surface-3)'"
-      [style.border-color]="on ? 'var(--jb-accent)' : 'var(--jb-border-strong)'"
-      style="width:32px;height:18px;border-radius:999px;flex-shrink:0;padding:0;position:relative;cursor:pointer;border:1px solid;">
-      <span [style.left.px]="on ? 15 : 1"
-        [style.background]="on ? '#1c1004' : 'var(--jb-text-dim)'"
-        style="position:absolute;top:1px;width:14px;height:14px;border-radius:50%;transition:left .15s;"></span>
-    </button>
-  `,
-  styles: [`:host { display: inline-flex; }`]
+  templateUrl: './jb-toggle.component.html',
+  styleUrls: ['./jb-toggle.component.css']
 })
 export class JbToggleComponent {
   @Input() on = false;

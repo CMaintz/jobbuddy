@@ -1,0 +1,5 @@
+    <input #fileInput type="file" [accept]="accept" class="hidden" (change)="onFileSelected($event)" />
+    <button type="button" (click)="fileInput.click()" [disabled]="loading"
+            [class]="buttonClass">
+      {{ loading ? loadingLabel : label }}
+    </button>

@@ -1,0 +1,24 @@
+    <header class="topbar">
+      @if (showProfileImage) {
+        <div class="avatar">
+          @if (identity.profileImageUrl) {
+            <img [src]="identity.profileImageUrl" alt="" />
+          } @else {
+            {{ initials(identity.name) }}
+          }
+        </div>
+      }
+
+      <div class="person">
+        <h1>{{ identity.name }}</h1>
+        @if (identity.headline) {
+          <p>{{ identity.headline }}</p>
+        }
+      </div>
+
+      <div class="contact">
+        @for (contact of contactLines; track contact) {
+          <span>{{ contact }}</span>
+        }
+      </div>
+    </header>

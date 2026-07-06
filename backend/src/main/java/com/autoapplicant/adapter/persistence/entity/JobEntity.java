@@ -107,6 +107,9 @@ public class JobEntity {
     @Column(name = "short_description", columnDefinition = "text")
     private String shortDescription;
 
+    @Column(name = "last_seen_at")
+    private Instant lastSeenAt;
+
     @PrePersist void prePersist() {
         if (scrapedAt == null) scrapedAt = Instant.now();
         createdAt = updatedAt = Instant.now();
@@ -177,4 +180,6 @@ public class JobEntity {
     public Instant getUpdatedAt() { return updatedAt; }
     public String getShortDescription() { return shortDescription; }
     public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
+    public Instant getLastSeenAt() { return lastSeenAt; }
+    public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
 }

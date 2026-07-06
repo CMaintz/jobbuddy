@@ -5,13 +5,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   selector: 'app-file-upload-button',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <input #fileInput type="file" [accept]="accept" class="hidden" (change)="onFileSelected($event)" />
-    <button type="button" (click)="fileInput.click()" [disabled]="loading"
-            [class]="buttonClass">
-      {{ loading ? loadingLabel : label }}
-    </button>
-  `
+  templateUrl: './file-upload-button.component.html'
 })
 export class FileUploadButtonComponent {
   @Input() accept = '';

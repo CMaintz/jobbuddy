@@ -1,0 +1,4 @@
+
+    .rb-icon-btn { display:flex;align-items:center;justify-content:center;height:32px;width:32px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--jb-text-dim);cursor:pointer;transition:all 0.12s; }
+    .rb-icon-btn:hover { background:var(--jb-surface-2); }
+    .rb-icon-btn.active { border-color:var(--jb-accent);background:rgba(245,166,35,0.1);color:var(--jb-accent); }

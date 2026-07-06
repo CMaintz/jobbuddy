@@ -1,0 +1,126 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-shrink-0 gap-3">
+      <div class="font-medium text-md">Pipeline</div>
+
+      <!-- View toggle -->
+      <div class="flex gap-0.5 ml-2 p-0.5 bg-jb-surface-2 border border-jb-border rounded-[5px]">
+        <button (click)="view.set('table')"
+          [style.background]="view() === 'table' ? 'var(--jb-surface)' : 'transparent'"
+          [style.color]="view() === 'table' ? 'var(--jb-text)' : 'var(--jb-text-dim)'"
+          class="py-[3px] px-1.5 border-none rounded-[3px] cursor-pointer flex">
+          <jb-icon name="list" [size]="12" />
+        </button>
+        <button (click)="view.set('kanban')"
+          [style.background]="view() === 'kanban' ? 'var(--jb-surface)' : 'transparent'"
+          [style.color]="view() === 'kanban' ? 'var(--jb-text)' : 'var(--jb-text-dim)'"
+          class="py-[3px] px-1.5 border-none rounded-[3px] cursor-pointer flex">
+          <jb-icon name="kanban" [size]="12" />
+        </button>
+      </div>
+
+      <!-- Stage filter chips -->
+      <div class="hidden sm:flex gap-1 ml-3 overflow-x-auto">
+        @for (stage of stages; track stage.key) {
+          <button (click)="toggleStageFilter(stage.key)"
+            [class]="'pill pill-' + (activeFilters().has(stage.key) ? stage.tone : 'neutral')"
+            class="cursor-pointer">
+            {{ stage.label }}
+            <span class="mono text-[9.5px]">{{ countByStage(stage.key) }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="ml-auto flex gap-2 items-center">
+        <jb-button small icon="filter">Filter</jb-button>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto jb-scroll">
+      @if (loading) {
+        <div class="p-12 text-center text-jb-text-dim">Loading pipeline...</div>
+      } @else if (view() === 'table') {
+        <!-- ═══ TABLE VIEW ═══ -->
+        <div class="py-3 px-4 overflow-x-auto min-w-0">
+          <div class="min-w-[600px]">
+          <!-- Column headers -->
+          <div class="grid gap-3 py-2 px-3 text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint" style="grid-template-columns:1fr 100px 90px 60px 70px;">
+            <span>Role & company</span>
+            <span>Stage</span>
+            <span>Fit</span>
+            <span>Age</span>
+            <span></span>
+          </div>
+
+          <!-- Rows -->
+          @for (app of filteredApplications(); track app.id) {
+            <a [routerLink]="['/applications', app.id]"
+              class="jb-row grid gap-3 py-2.5 px-3 items-center border-b border-jb-border-faint cursor-pointer no-underline text-inherit"
+              style="grid-template-columns:1fr 100px 90px 60px 70px;">
+              <!-- Role + company -->
+              <div class="flex items-center gap-2.5 min-w-0">
+                <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="28" />
+                <div class="min-w-0">
+                  <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ app.jobTitle || 'Untitled role' }}</div>
+                  <div class="text-xs text-jb-text-dim">{{ app.jobCompanyName || 'Unknown' }}</div>
+                </div>
+              </div>
+
+              <!-- Stage -->
+              <jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) }}</jb-pill>
+
+              <!-- Fit -->
+              <jb-fit-bar [value]="app.matchScore ?? 0" />
+
+              <!-- Age -->
+              <span class="mono text-xs text-jb-text-dim">{{ ageLabel(app.createdAt) }}</span>
+
+              <!-- Actions -->
+              <div class="flex gap-1">
+                <jb-icon name="more" [size]="14" class="text-jb-text-dim cursor-pointer" />
+              </div>
+            </a>
+          }
+
+          @if (filteredApplications().length === 0) {
+            <div class="p-12 text-center text-jb-text-dim text-base">
+              No applications in this stage.
+            </div>
+          }
+          </div>
+        </div>
+      } @else {
+        <!-- ═══ KANBAN VIEW ═══ -->
+        <div class="flex gap-2.5 p-4 h-full items-start overflow-x-auto jb-scroll">
+          @for (stage of kanbanStages; track stage.key) {
+            <div class="min-w-[240px] w-[240px] flex flex-col gap-2">
+              <!-- Column header -->
+              <div class="flex items-center gap-2 py-2 px-2.5">
+                <jb-pill [tone]="stage.tone">{{ stage.label }}</jb-pill>
+                <span class="mono text-2xs text-jb-text-dim">{{ appsForStage(stage.key).length }}</span>
+              </div>
+
+              <!-- Cards -->
+              @for (app of appsForStage(stage.key); track app.id) {
+                <a [routerLink]="['/applications', app.id]"
+                  class="card jb-liftcard p-3 cursor-pointer no-underline text-inherit">
+                  <div class="flex items-center gap-2 mb-2">
+                    <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="22" />
+                    <div class="text-xs text-jb-text-dim min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                      {{ app.jobCompanyName || 'Unknown' }}
+                    </div>
+                  </div>
+                  <div class="text-base font-medium mb-1.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {{ app.jobTitle || 'Untitled role' }}
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <jb-fit-bar [value]="app.matchScore ?? 0" />
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>

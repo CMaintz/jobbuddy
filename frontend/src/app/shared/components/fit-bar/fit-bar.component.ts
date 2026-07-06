@@ -3,18 +3,8 @@ import { Component, Input } from '@angular/core';
 @Component({
   selector: 'jb-fit-bar',
   standalone: true,
-  template: `
-    <div class="flex items-center gap-2">
-      <div class="bar flex-1 min-w-[48px]">
-        <i [style.width.%]="value"></i>
-      </div>
-      <span class="mono text-2xs min-w-[22px] text-right"
-        [style.color]="value >= 80 ? 'var(--jb-success)' : value >= 60 ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
-        {{ value }}
-      </span>
-    </div>
-  `,
-  styles: [`:host { @apply flex flex-1 min-w-0; }`]
+  templateUrl: './fit-bar.component.html',
+  styleUrls: ['./fit-bar.component.css']
 })
 export class FitBarComponent {
   @Input() value = 0;

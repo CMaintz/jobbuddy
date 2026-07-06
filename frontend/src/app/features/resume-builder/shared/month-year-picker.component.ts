@@ -6,30 +6,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-month-year-picker',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  template: `
-    <div class="flex gap-2">
-      <select
-        class="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        [(ngModel)]="selectedMonth"
-        (ngModelChange)="emitChange()"
-      >
-        <option value="">Month</option>
-        @for (m of months; track m.value) {
-          <option [value]="m.value">{{ m.label }}</option>
-        }
-      </select>
-      <select
-        class="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        [(ngModel)]="selectedYear"
-        (ngModelChange)="emitChange()"
-      >
-        <option value="">Year</option>
-        @for (y of years; track y) {
-          <option [value]="y">{{ y }}</option>
-        }
-      </select>
-    </div>
-  `,
+  templateUrl: './month-year-picker.component.html',
+  styleUrls: ['./month-year-picker.component.css'],
 })
 export class MonthYearPickerComponent implements OnInit {
   @Input() value = ''; // YYYY-MM format

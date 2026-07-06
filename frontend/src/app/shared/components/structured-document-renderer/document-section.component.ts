@@ -7,26 +7,7 @@ import { DocumentItemComponent } from './document-item.component';
   selector: 'app-document-section',
   standalone: true,
   imports: [CommonModule, DocumentItemComponent],
-  template: `
-    <section class="section">
-      <h2>{{ section.heading }}</h2>
-      @if (section.body) {
-        <p class="section-body">{{ section.body }}</p>
-      }
-
-      @if (section.type === 'skills') {
-        <ul class="skills">
-          @for (item of section.items ?? []; track item.title) {
-            <li>{{ item.title }}</li>
-          }
-        </ul>
-      } @else {
-        @for (item of section.items ?? []; track item.sourceId || item.title) {
-          <app-document-item [item]="item"></app-document-item>
-        }
-      }
-    </section>
-  `
+  templateUrl: './document-section.component.html'
 })
 export class DocumentSectionComponent {
   @Input({ required: true }) section!: StructuredDocumentSection;

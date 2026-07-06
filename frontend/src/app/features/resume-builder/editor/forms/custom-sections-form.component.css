@@ -1,0 +1,8 @@
+
+    .rb-input { width:100%;border-radius:6px;border:1px solid var(--jb-border);background:var(--jb-surface-2);color:var(--jb-text);padding:6px 10px;font-size:13px;outline:none;transition:border-color 0.15s; }
+    .rb-input:focus { border-color:var(--jb-accent); }
+    .rb-input::placeholder { color:var(--jb-text-faint); }
+    .rb-chip { font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--jb-border);background:transparent;color:var(--jb-text-dim);cursor:pointer;transition:all 0.15s; }
+    .rb-chip.active { border-color:var(--jb-accent);background:var(--jb-accent);color:#1c1004; }
+    .rb-add { width:100%;padding:10px;font-size:13px;color:var(--jb-accent);border:2px dashed var(--jb-border);border-radius:8px;background:transparent;cursor:pointer;transition:border-color 0.15s; }
+    .rb-add:hover { border-color:var(--jb-accent); }

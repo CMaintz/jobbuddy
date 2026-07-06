@@ -5,19 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'jb-funnel',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div *ngFor="let stage of stages" style="display:flex;align-items:center;gap:12px;">
-        <span style="width:70px;font-size:11px;color:var(--jb-text-mid);text-align:right;">{{ stage.label }}</span>
-        <div style="flex:1;height:18px;border-radius:4px;overflow:hidden;background:var(--jb-surface-3);">
-          <div [style.width.%]="(stage.value / maxVal) * 100" [style.height.px]="18"
-            [style.background]="stage.color" style="border-radius:4px;transition:width .3s;"></div>
-        </div>
-        <span class="mono" style="font-size:11px;min-width:24px;color:var(--jb-text-mid);">{{ stage.value }}</span>
-      </div>
-    </div>
-  `,
-  styles: [`:host { display: block; }`]
+  templateUrl: './funnel.component.html',
+  styleUrls: ['./funnel.component.css']
 })
 export class FunnelComponent {
   @Input() stages: { label: string; value: number; color: string }[] = [

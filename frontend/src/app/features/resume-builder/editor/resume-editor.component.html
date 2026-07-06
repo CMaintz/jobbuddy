@@ -1,0 +1,42 @@
+
+    <div>
+      @for (section of sections; track section.id) {
+        <div style="border-bottom:1px solid var(--jb-border-faint);">
+          <button
+            style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;text-align:left;background:transparent;border:none;cursor:pointer;transition:background 0.12s;"
+            class="jb-row"
+            (click)="section.open = !section.open"
+          >
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;">{{ section.icon }}</span>
+              <span style="font-size:12.5px;font-weight:500;color:var(--jb-text);">{{ section.label }}</span>
+            </div>
+            <svg
+              style="width:14px;height:14px;color:var(--jb-text-dim);transition:transform 0.15s;"
+              [style.transform]="section.open ? 'rotate(180deg)' : 'none'"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (section.open) {
+            <div style="padding:4px 16px 16px;">
+              @switch (section.id) {
+                @case ('personal') { <app-personal-info-form /> }
+                @case ('experience') { <app-experience-form /> }
+                @case ('education') { <app-education-form /> }
+                @case ('skills') { <app-skills-form /> }
+                @case ('projects') { <app-projects-form /> }
+                @case ('languages') { <app-languages-form /> }
+                @case ('certifications') { <app-certifications-form /> }
+                @case ('strengths') { <app-strengths-form /> }
+                @case ('socials') { <app-socials-form /> }
+                @case ('settings') { <app-settings-form /> }
+                @case ('layout') { <app-layout-form /> }
+                @case ('custom') { <app-custom-sections-form /> }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>

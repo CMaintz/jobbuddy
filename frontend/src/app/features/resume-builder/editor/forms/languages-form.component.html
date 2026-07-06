@@ -1,0 +1,16 @@
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      @for (lang of languages; track lang.id) {
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input class="rb-input" style="flex:1;" [value]="lang.name" (input)="update(lang.id, 'name', $any($event.target).value)" placeholder="English" />
+          <select class="rb-select"
+            [value]="lang.proficiency" (change)="update(lang.id, 'proficiency', $any($event.target).value)">
+            @for (p of proficiencies; track p) {
+              <option [value]="p">{{ p }}</option>
+            }
+          </select>
+          <button class="rb-remove" (click)="remove(lang.id)">✕</button>
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Language</button>
+    </div>

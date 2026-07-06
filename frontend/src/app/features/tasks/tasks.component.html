@@ -1,0 +1,81 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
+      <div class="font-medium text-md">Tasks</div>
+      <div class="ml-auto flex gap-2 items-center">
+        <jb-button small icon="plus">Add task</jb-button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto p-[16px_20px] jb-scroll">
+      <div class="max-w-[800px]">
+        <!-- Summary strip -->
+        <div class="flex gap-4 mb-4">
+          <div class="flex items-center gap-1.5 text-sm">
+            <span class="text-jb-danger font-semibold">{{ overdueCount }}</span>
+            <span class="text-jb-text-dim">Overdue</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-sm">
+            <span class="text-jb-accent-2 font-semibold">{{ todayCount }}</span>
+            <span class="text-jb-text-dim">Due today</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-sm">
+            <span class="font-semibold">{{ weekCount }}</span>
+            <span class="text-jb-text-dim">This week</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-sm">
+            <span class="text-jb-success font-semibold">{{ doneCount }}</span>
+            <span class="text-jb-text-dim">Done today</span>
+          </div>
+        </div>
+
+        <!-- Filter chips -->
+        <div class="flex gap-1 mb-4">
+          @for (f of filters; track f) {
+            <button (click)="activeFilter.set(f)"
+              [class]="'pill pill-' + (activeFilter() === f ? 'accent' : 'neutral')"
+              class="cursor-pointer">{{ f }}</button>
+          }
+        </div>
+
+        <!-- Grouped tasks -->
+        @for (group of groups; track group.key) {
+          @if (tasksForGroup(group.key).length > 0) {
+            <div class="mb-5">
+              <div class="text-xs font-medium uppercase tracking-widest py-[6px] mb-[4px]"
+                [style.color]="group.key === 'overdue' ? 'var(--jb-danger)' : 'var(--jb-text-dim)'">
+                {{ group.label }}
+              </div>
+              @for (task of tasksForGroup(group.key); track task.id) {
+                <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint" style="grid-template-columns:24px 28px 1fr auto auto;"
+                  [style.opacity]="done.has(task.id) ? '0.4' : '1'"
+                  [style.text-decoration]="done.has(task.id) ? 'line-through' : 'none'">
+                  <!-- Checkbox -->
+                  <button (click)="toggleDone(task.id)"
+                    class="w-4 h-4 rounded flex items-center justify-center bg-transparent cursor-pointer" style="border:1.5px solid var(--jb-border-strong);"
+                    [style.background]="done.has(task.id) ? 'var(--jb-accent)' : 'transparent'"
+                    [style.border-color]="done.has(task.id) ? 'var(--jb-accent)' : 'var(--jb-border-strong)'">
+                    @if (done.has(task.id)) { <jb-icon name="check" [size]="9" [strokeWidth]="3" style="color:#1c1004;" /> }
+                  </button>
+
+                  <!-- Company mark -->
+                  <jb-company-mark [name]="task.company" [size]="22" />
+
+                  <!-- Content -->
+                  <div class="min-w-0">
+                    <div class="text-base font-medium">{{ task.what }}</div>
+                    <div class="text-xs text-jb-text-dim">{{ task.company }} · {{ task.detail }}</div>
+                  </div>
+
+                  <!-- Kind pill -->
+                  <jb-pill [tone]="task.tone">{{ task.kind }}</jb-pill>
+
+                  <!-- Action button -->
+                  <jb-button small>{{ task.action }}</jb-button>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>

@@ -5,9 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-status-chip',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <span [class]="chipClass" class="text-xs font-medium px-2 py-0.5 rounded-full">{{ status }}</span>
-  `
+  templateUrl: './status-chip.component.html'
 })
 export class StatusChipComponent {
   @Input() status = '';

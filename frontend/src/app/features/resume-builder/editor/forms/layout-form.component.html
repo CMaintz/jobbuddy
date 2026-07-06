@@ -1,0 +1,55 @@
+
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <!-- Template picker -->
+      <div>
+        <label class="rb-label">Template</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          @for (tpl of templates; track tpl.type) {
+            <button
+              class="rb-tpl-card"
+              [class.active]="settings.template === tpl.type"
+              (click)="selectTemplate(tpl.type)"
+            >
+              <p style="font-size:12px;font-weight:600;color:var(--jb-text);">{{ tpl.label }}</p>
+              <p style="font-size:11px;color:var(--jb-text-faint);margin-top:2px;">{{ tpl.description }}</p>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Left column sections -->
+      <div>
+        <label class="rb-label">Left Column Sections</label>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          @for (section of leftColumn; track section.id; let i = $index) {
+            <div class="rb-section-row">
+              <span style="color:var(--jb-text-faint);cursor:move;font-size:11px;">⠿</span>
+              <span style="flex:1;font-size:11px;color:var(--jb-text);">{{ section.name }}</span>
+              <button
+                style="font-size:11px;padding:2px 8px;border-radius:4px;border:none;cursor:pointer;background:none;"
+                [style.color]="section.visible ? 'var(--jb-success)' : 'var(--jb-text-faint)'"
+                (click)="toggleSection('leftColumn', i)"
+              >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Right column sections -->
+      <div>
+        <label class="rb-label">Right Column Sections</label>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          @for (section of rightColumn; track section.id; let i = $index) {
+            <div class="rb-section-row">
+              <span style="color:var(--jb-text-faint);cursor:move;font-size:11px;">⠿</span>
+              <span style="flex:1;font-size:11px;color:var(--jb-text);">{{ section.name }}</span>
+              <button
+                style="font-size:11px;padding:2px 8px;border-radius:4px;border:none;cursor:pointer;background:none;"
+                [style.color]="section.visible ? 'var(--jb-success)' : 'var(--jb-text-faint)'"
+                (click)="toggleSection('rightColumn', i)"
+              >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>

@@ -1,13 +1,29 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
+import { JobsApiService } from '../../core/api/jobs.api';
+import { Job } from '../../core/models/job.model';
 
 @Component({
   selector: 'app-saved-roles',
   standalone: true,
-  template: `
-    <div style="padding: 24px;">
-      <h1 style="font-size: 19px; font-weight: 500; letter-spacing: -0.015em;">Saved Roles</h1>
-      <p style="font-size: 12.5px; color: var(--jb-text-dim); margin-top: 4px;">Coming soon — this screen is being built.</p>
-    </div>
-  `
+  imports: [CommonModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent],
+  templateUrl: './saved-roles.component.html'
 })
-export class SavedRolesComponent {}
+export class SavedRolesComponent implements OnInit {
+  private jobsApi = inject(JobsApiService);
+
+  savedJobs: Job[] = [];
+  loading = true;
+
+  ngOnInit(): void {
+    this.jobsApi.getSaved().subscribe({
+      next: (jobs) => { this.savedJobs = jobs; this.loading = false; },
+      error: () => this.loading = false
+    });
+  }
+}

@@ -1,0 +1,8 @@
+
+    <textarea
+      style="width:100%;border-radius:6px;border:1px solid var(--jb-border);background:var(--jb-surface-2);color:var(--jb-text);padding:8px 10px;font-size:13px;outline:none;resize:none;transition:border-color 0.15s;"
+      [rows]="rows"
+      [placeholder]="placeholder"
+      [(ngModel)]="localValue"
+      (ngModelChange)="onValueChange($event)"
+    ></textarea>
