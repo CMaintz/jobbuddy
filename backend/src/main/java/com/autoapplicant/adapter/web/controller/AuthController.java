@@ -5,6 +5,7 @@ import com.autoapplicant.adapter.web.dto.auth.MeResponse;
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
+import com.autoapplicant.port.in.user.CompleteOnboardingUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -29,6 +30,7 @@ public class AuthController {
 
     private final GetUserProfileUseCase userProfileUseCase;
     private final ResolveLinkedInUserUseCase resolveLinkedInUser;
+    private final CompleteOnboardingUseCase completeOnboardingUseCase;
     private final SecurityContextHelper securityContext;
     private final AppProperties appProperties;
     private final FirebaseAuth firebaseAuth;
@@ -36,11 +38,13 @@ public class AuthController {
 
     public AuthController(GetUserProfileUseCase userProfileUseCase,
                           ResolveLinkedInUserUseCase resolveLinkedInUser,
+                          CompleteOnboardingUseCase completeOnboardingUseCase,
                           SecurityContextHelper securityContext,
                           AppProperties appProperties,
                           FirebaseAuth firebaseAuth) {
         this.userProfileUseCase = userProfileUseCase;
         this.resolveLinkedInUser = resolveLinkedInUser;
+        this.completeOnboardingUseCase = completeOnboardingUseCase;
         this.securityContext = securityContext;
         this.appProperties = appProperties;
         this.firebaseAuth = firebaseAuth;
@@ -57,7 +61,14 @@ public class AuthController {
         UUID userId = securityContext.getCurrentUserId();
         User user = userProfileUseCase.getUser(userId)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found in DB"));
-        return ResponseEntity.ok(new MeResponse(user.id(), user.email(), user.role().name()));
+        return ResponseEntity.ok(new MeResponse(user.id(), user.email(), user.role().name(), user.onboardingComplete()));
+    }
+
+    @Operation(summary = "Mark onboarding as complete")
+    @PostMapping("/complete-onboarding")
+    public ResponseEntity<Void> completeOnboarding() {
+        completeOnboardingUseCase.completeOnboarding(securityContext.getCurrentUserId());
+        return ResponseEntity.noContent().build();
     }
 
     /**

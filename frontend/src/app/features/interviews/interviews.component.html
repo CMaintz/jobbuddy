@@ -1,0 +1,104 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-none gap-3">
+      <div class="font-medium text-md">Interviews</div>
+      <div class="ml-auto flex gap-2 items-center">
+        <jb-button small icon="calendar">Sync calendar</jb-button>
+        <jb-button [primary]="true" icon="plus">Log interview</jb-button>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="p-3.5 px-[22px] grid gap-3 border-b border-jb-border grid-cols-2 md:grid-cols-4">
+      @for (s of summaryCards; track s.label) {
+        <div class="card p-3 px-3.5 flex items-center gap-3">
+          <div class="text-[24px] font-medium tracking-tight" style="font-variant-numeric:tabular-nums;"
+            [style.color]="s.color">{{ s.value }}</div>
+          <div class="text-xs text-jb-text-dim">{{ s.label }}</div>
+        </div>
+      }
+    </div>
+
+    <!-- Tabs -->
+    <div class="p-3 px-[22px] flex items-center gap-1.5 border-b border-jb-border">
+      @for (t of tabs; track t.key) {
+        <button (click)="activeTab.set(t.key)"
+          class="py-[5px] px-2.5 rounded-full cursor-pointer text-sm font-medium inline-flex items-center gap-1.5"
+          [style.background]="activeTab() === t.key ? 'var(--jb-surface-3)' : 'transparent'"
+          [style.border]="'1px solid ' + (activeTab() === t.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+          [style.color]="activeTab() === t.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+          {{ t.label }}
+          <span class="mono text-xs text-jb-text-dim">{{ t.count }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Interview cards -->
+    <div class="flex-1 overflow-auto p-[22px] jb-scroll">
+      <div class="grid gap-3.5 grid-cols-1 md:grid-cols-2">
+        @for (iv of shownInterviews(); track iv.id) {
+          <div class="card p-4 flex flex-col gap-3">
+            <!-- Header -->
+            <div class="flex items-start gap-3">
+              <jb-company-mark [name]="iv.company" [size]="34" />
+              <div class="flex-1 min-w-0">
+                <div class="text-[13.5px] font-medium">{{ iv.role }}</div>
+                <div class="text-xs text-jb-text-dim">{{ iv.company }} · Round {{ iv.round }}</div>
+              </div>
+              @if (iv.status === 'upcoming') {
+                <jb-pill tone="accent">{{ iv.when }}</jb-pill>
+              } @else if (iv.outcome) {
+                <jb-pill [tone]="outcomeConfig(iv.outcome).tone">{{ outcomeConfig(iv.outcome).label }}</jb-pill>
+              }
+            </div>
+
+            <!-- Info -->
+            <div class="flex flex-wrap gap-2 text-xs text-jb-text-mid">
+              <span class="inline-flex items-center gap-[5px]">
+                <jb-icon name="briefcase" [size]="11" class="text-jb-text-dim" /> {{ iv.type }}
+              </span>
+              <span class="text-jb-text-faint">·</span>
+              <span class="inline-flex items-center gap-[5px]">
+                <jb-icon name="clock" [size]="11" class="text-jb-text-dim" /> {{ iv.format }}
+              </span>
+            </div>
+
+            <div class="text-xs text-jb-text-dim">
+              {{ iv.people.join(' · ') }}
+            </div>
+
+            @if (iv.status === 'upcoming' && iv.prep) {
+              <!-- Prep checklist -->
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-jb-text-dim">Prep · {{ doneCount(iv.prep) }}/{{ iv.prep.length }}</span>
+                  <div class="bar w-[120px]"><i [style.width]="(doneCount(iv.prep) / iv.prep.length * 100) + '%'"></i></div>
+                </div>
+                <div class="flex flex-col gap-1">
+                  @for (p of iv.prep; track p.text) {
+                    <div class="flex items-center gap-[7px] text-xs"
+                      [style.color]="p.done ? 'var(--jb-text-dim)' : 'var(--jb-text)'">
+                      <span class="w-[13px] h-[13px] rounded-[4px] shrink-0 flex items-center justify-center"
+                        [style.background]="p.done ? 'var(--jb-success)' : 'transparent'"
+                        [style.border]="'1px solid ' + (p.done ? 'var(--jb-success)' : 'var(--jb-border-strong)')">
+                        @if (p.done) { <jb-icon name="check" [size]="8" [strokeWidth]="3" style="color:#0a1810;" /> }
+                      </span>
+                      <span [style.text-decoration]="p.done ? 'line-through' : 'none'">{{ p.text }}</span>
+                    </div>
+                  }
+                </div>
+                <div class="flex gap-1.5 mt-1">
+                  <jb-button small icon="sparkle">Prep notes</jb-button>
+                  <jb-button small ghost icon="calendar">Reschedule</jb-button>
+                </div>
+              </div>
+            } @else if (iv.debrief) {
+              <!-- Debrief -->
+              <div class="bg-jb-surface-2 border border-jb-border rounded-md p-2.5">
+                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1">Debrief</div>
+                <div class="text-sm text-jb-text-mid" style="line-height:1.55;">{{ iv.debrief }}</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>

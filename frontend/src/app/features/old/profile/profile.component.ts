@@ -4,13 +4,13 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { ProfileSocialApiService } from '../../core/api/profile-social.api';
-import { ProfileStrengthApiService } from '../../core/api/profile-strength.api';
-import { SkillsApiService } from '../../core/api/skills.api';
-import { ProfileSocial, ProfileStrength, WorkExperience, Project, Education, Certification, SpokenLanguage, LanguageProficiency } from '../../core/models/profile-section.model';
-import { ProfileSkill, SkillTaxonomy, TECH_CATEGORIES } from '../../core/models/skill-taxonomy.model';
-import { TabNavComponent } from '../../shared/components/ui/tab-nav.component';
-import { SOCIAL_PLATFORMS, SocialPlatform, getSocialPlatformIcon } from '../resume-builder/data/social-platforms';
+import { ProfileSocialApiService } from '../../../core/api/profile-social.api';
+import { ProfileStrengthApiService } from '../../../core/api/profile-strength.api';
+import { SkillsApiService } from '../../../core/api/skills.api';
+import { ProfileSocial, ProfileStrength, WorkExperience, Project, Education, Certification, SpokenLanguage, LanguageProficiency } from '../../../core/models/profile-section.model';
+import { ProfileSkill, SkillTaxonomy, TECH_CATEGORIES } from '../../../core/models/skill-taxonomy.model';
+import { TabNavComponent } from '../../../shared/components/ui/tab-nav.component';
+import { SOCIAL_PLATFORMS, SocialPlatform, getSocialPlatformIcon } from '../../resume-builder/data/social-platforms';
 import {
   languageProficiencyLabel,
   PROFILE_TABS,

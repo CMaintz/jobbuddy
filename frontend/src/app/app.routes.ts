@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { onboardingGuard } from './core/auth/onboarding.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -26,6 +27,7 @@ export const routes: Routes = [
       // Onboarding
       {
         path: 'onboarding',
+        canActivate: [onboardingGuard],
         loadComponent: () => import('./features/onboarding/onboarding.component').then(m => m.OnboardingComponent)
       },
 
@@ -52,15 +54,27 @@ export const routes: Routes = [
       },
       {
         path: 'apply',
-        loadComponent: () => import('./features/apply-new/apply-new.component').then(m => m.ApplyNewComponent)
+        loadComponent: () => import('./features/apply/apply.component').then(m => m.ApplyComponent)
       },
       {
         path: 'applications',
-        loadComponent: () => import('./features/applications-new/applications-list.component').then(m => m.ApplicationsListNewComponent)
+        loadComponent: () => import('./features/applications/applications-list.component').then(m => m.ApplicationsListComponent)
       },
       {
         path: 'applications/:id',
-        loadComponent: () => import('./features/application-detail-new/application-detail.component').then(m => m.ApplicationDetailNewComponent)
+        loadComponent: () => import('./features/application-detail/application-detail.component').then(m => m.ApplicationDetailComponent)
+      },
+      {
+        path: 'applications/:id/output',
+        loadComponent: () => import('./features/output/application-output.component').then(m => m.ApplicationOutputComponent)
+      },
+      {
+        path: 'applications/:id/cv',
+        loadComponent: () => import('./features/output/angled-cv.component').then(m => m.AngledCvComponent)
+      },
+      {
+        path: 'applications/:id/doc/:kind',
+        loadComponent: () => import('./features/output/document-view.component').then(m => m.DocumentViewComponent)
       },
 
       // Master CV
@@ -75,8 +89,8 @@ export const routes: Routes = [
 
       // Prompts
       {
-        path: 'prompts-new',
-        loadComponent: () => import('./features/prompts-new/prompts-library.component').then(m => m.PromptsLibraryComponent)
+        path: 'prompts',
+        loadComponent: () => import('./features/prompts/prompts-library.component').then(m => m.PromptsLibraryComponent)
       },
 
       // Track
@@ -96,7 +110,7 @@ export const routes: Routes = [
       // Settings
       {
         path: 'settings',
-        loadComponent: () => import('./features/settings-new/settings.component').then(m => m.SettingsNewComponent)
+        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       },
 
       // Resume Builder (kept intact)
@@ -112,94 +126,93 @@ export const routes: Routes = [
       // ── Old frontend (kept for reference) ───────────
       {
         path: 'old/jobs',
-        loadComponent: () => import('./features/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent)
+        loadComponent: () => import('./features/old/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent)
       },
       {
         path: 'old/jobs/add',
-        loadComponent: () => import('./features/jobs/job-add/job-add.component').then(m => m.JobAddComponent)
+        loadComponent: () => import('./features/old/jobs/job-add/job-add.component').then(m => m.JobAddComponent)
       },
       {
         path: 'old/jobs/ignored',
-        loadComponent: () => import('./features/jobs/ignored-jobs/ignored-jobs.component').then(m => m.IgnoredJobsComponent)
+        loadComponent: () => import('./features/old/jobs/ignored-jobs/ignored-jobs.component').then(m => m.IgnoredJobsComponent)
       },
       {
         path: 'old/jobs/:id',
-        loadComponent: () => import('./features/jobs/job-detail/job-detail.component').then(m => m.JobDetailComponent)
+        loadComponent: () => import('./features/old/jobs/job-detail/job-detail.component').then(m => m.JobDetailComponent)
       },
       {
         path: 'old/applications',
-        loadComponent: () => import('./features/applications/application-list/application-list.component').then(m => m.ApplicationListComponent)
+        loadComponent: () => import('./features/old/applications/application-list/application-list.component').then(m => m.ApplicationListComponent)
       },
       {
         path: 'old/applications/pipeline',
-        loadComponent: () => import('./features/applications/application-pipeline/application-pipeline.component').then(m => m.ApplicationPipelineComponent)
+        loadComponent: () => import('./features/old/applications/application-pipeline/application-pipeline.component').then(m => m.ApplicationPipelineComponent)
       },
       {
         path: 'old/applications/:id',
-        loadComponent: () => import('./features/applications/application-detail/application-detail.component').then(m => m.ApplicationDetailComponent)
+        loadComponent: () => import('./features/old/applications/application-detail/application-detail.component').then(m => m.ApplicationDetailComponent)
       },
       {
         path: 'old/profile',
-        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+        loadComponent: () => import('./features/old/profile/profile.component').then(m => m.ProfileComponent)
       },
       {
         path: 'old/profile/writing-style',
-        loadComponent: () => import('./features/profile/writing-style/writing-style.component').then(m => m.WritingStyleComponent)
+        loadComponent: () => import('./features/old/profile/writing-style/writing-style.component').then(m => m.WritingStyleComponent)
       },
       {
         path: 'old/ai/cv',
-        loadComponent: () => import('./features/ai/cv-upload/cv-upload.component').then(m => m.CvUploadComponent)
+        loadComponent: () => import('./features/old/ai/cv-upload/cv-upload.component').then(m => m.CvUploadComponent)
       },
       {
         path: 'old/ai/analyze',
-        loadComponent: () => import('./features/ai/cv-analysis/cv-analysis.component').then(m => m.CvAnalysisComponent)
+        loadComponent: () => import('./features/old/ai/cv-analysis/cv-analysis.component').then(m => m.CvAnalysisComponent)
       },
       {
         path: 'old/ai/generate',
-        loadComponent: () => import('./features/ai/application-generator/application-generator.component').then(m => m.ApplicationGeneratorComponent)
+        loadComponent: () => import('./features/old/ai/application-generator/application-generator.component').then(m => m.ApplicationGeneratorComponent)
       },
       {
         path: 'old/ai/documents',
-        loadComponent: () => import('./features/ai/documents/documents-history.component').then(m => m.DocumentsHistoryComponent)
+        loadComponent: () => import('./features/old/ai/documents/documents-history.component').then(m => m.DocumentsHistoryComponent)
       },
       {
         path: 'old/analytics',
-        loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
+        loadComponent: () => import('./features/old/analytics/analytics.component').then(m => m.AnalyticsComponent)
       },
       {
         path: 'old/companies',
-        loadComponent: () => import('./features/companies/companies-list.component').then(m => m.CompaniesListComponent)
+        loadComponent: () => import('./features/old/companies/companies-list.component').then(m => m.CompaniesListComponent)
       },
       {
         path: 'old/templates',
-        loadComponent: () => import('./features/pdf-templates/pdf-templates.component').then(m => m.PdfTemplatesComponent)
+        loadComponent: () => import('./features/old/pdf-templates/pdf-templates.component').then(m => m.PdfTemplatesComponent)
       },
       {
         path: 'old/prompts',
-        loadComponent: () => import('./features/prompts/prompt-list/prompt-list.component').then(m => m.PromptListComponent)
+        loadComponent: () => import('./features/old/prompts/prompt-list/prompt-list.component').then(m => m.PromptListComponent)
       },
       {
         path: 'old/prompts/new',
-        loadComponent: () => import('./features/prompts/prompt-editor/prompt-editor.component').then(m => m.PromptEditorComponent)
+        loadComponent: () => import('./features/old/prompts/prompt-editor/prompt-editor.component').then(m => m.PromptEditorComponent)
       },
       {
         path: 'old/prompts/:id/edit',
-        loadComponent: () => import('./features/prompts/prompt-editor/prompt-editor.component').then(m => m.PromptEditorComponent)
+        loadComponent: () => import('./features/old/prompts/prompt-editor/prompt-editor.component').then(m => m.PromptEditorComponent)
       },
       {
         path: 'old/apply/:jobId',
-        loadComponent: () => import('./features/apply/apply-wizard.component').then(m => m.ApplyWizardComponent)
+        loadComponent: () => import('./features/old/apply/apply-wizard.component').then(m => m.ApplyWizardComponent)
       },
       {
         path: 'old/cv',
-        loadComponent: () => import('./features/cv/cv-page.component').then(m => m.CvPageComponent)
+        loadComponent: () => import('./features/old/cv/cv-page.component').then(m => m.CvPageComponent)
       },
 
       // Redirects for old paths
       { path: 'jobs/search', redirectTo: 'jobs/feed', pathMatch: 'full' },
       { path: 'applications/pipeline', redirectTo: 'pipeline', pathMatch: 'full' },
-      { path: 'prompts', redirectTo: 'prompts-new', pathMatch: 'full' },
-      { path: 'templates', redirectTo: 'old/templates', pathMatch: 'full' },
+{ path: 'templates', redirectTo: 'old/templates', pathMatch: 'full' },
       { path: 'analytics', redirectTo: 'old/analytics', pathMatch: 'full' },
       { path: 'companies', redirectTo: 'old/companies', pathMatch: 'full' },
       { path: 'profile', redirectTo: 'old/profile', pathMatch: 'full' },

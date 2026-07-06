@@ -1,0 +1,86 @@
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <!-- PDF controls -->
+      <div style="display:flex;gap:8px;width:100%;max-width:794px;">
+        <button
+          style="display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;background:var(--jb-accent);color:#1c1004;border:1px solid #c8881c;border-radius:6px;cursor:pointer;"
+          (click)="downloadPdf()"
+        >
+          <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Download PDF
+        </button>
+        <button
+          style="display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;background:var(--jb-surface-2);color:var(--jb-text);border:1px solid var(--jb-border);border-radius:6px;cursor:pointer;"
+          (click)="printResume()"
+        >
+          <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Print
+        </button>
+      </div>
+
+      <!-- Preview container -->
+      <div
+        #previewContainer
+        id="previewContainer"
+        style="background:#fff;box-shadow:0 18px 60px rgba(0,0,0,0.45);overflow:hidden;"
+        [style.width.px]="docWidth"
+        [style.min-height.px]="docHeight"
+        [style.font-family]="state.settings().fontFamily"
+      >
+        @switch (state.settings().template) {
+          @case ('classic') {
+            @defer (on idle) {
+              <app-classic-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('modern') {
+            @defer (on idle) {
+              <app-modern-1col-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('modern-2col') {
+            @defer (on idle) {
+              <app-modern-2col-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('minimal') {
+            @defer (on idle) {
+              <app-minimal-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('executive') {
+            @defer (on idle) {
+              <app-executive-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('creative') {
+            @defer (on idle) {
+              <app-creative-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @default {
+            @defer (on idle) {
+              <app-classic-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+        }
+      </div>
+    </div>

@@ -17,6 +17,8 @@ public interface JobRepositoryPort {
     Optional<Job> findBySourceAndSourceJobId(JobSource source, String sourceJobId);
     boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
+    List<Job> findByIds(List<UUID> ids);
     List<Job> findUnenriched(int limit);
+    int deactivateStaleJobs(java.time.Instant cutoff);
     long count();
 }

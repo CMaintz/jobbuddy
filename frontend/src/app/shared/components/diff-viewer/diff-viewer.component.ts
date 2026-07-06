@@ -10,72 +10,7 @@ interface DiffSegment {
   selector: 'jb-diff-viewer',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="flex flex-col gap-3">
-      <!-- Mode toggle -->
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-0.5 p-0.5 bg-jb-surface-2 border border-jb-border rounded-lg">
-          <button
-            class="px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer border-none"
-            [class.bg-jb-surface]="mode() === 'diff'"
-            [class.text-jb-text]="mode() === 'diff'"
-            [class.text-jb-text-mid]="mode() !== 'diff'"
-            [style.background]="mode() !== 'diff' ? 'transparent' : ''"
-            [style.box-shadow]="mode() === 'diff' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
-            (click)="mode.set('diff')">
-            Diff
-          </button>
-          <button
-            class="px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer border-none"
-            [class.bg-jb-surface]="mode() === 'revised'"
-            [class.text-jb-text]="mode() === 'revised'"
-            [class.text-jb-text-mid]="mode() !== 'revised'"
-            [style.background]="mode() !== 'revised' ? 'transparent' : ''"
-            [style.box-shadow]="mode() === 'revised' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
-            (click)="mode.set('revised')">
-            Revised
-          </button>
-          <button
-            class="px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer border-none"
-            [class.bg-jb-surface]="mode() === 'original'"
-            [class.text-jb-text]="mode() === 'original'"
-            [class.text-jb-text-mid]="mode() !== 'original'"
-            [style.background]="mode() !== 'original' ? 'transparent' : ''"
-            [style.box-shadow]="mode() === 'original' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
-            (click)="mode.set('original')">
-            Original
-          </button>
-        </div>
-        @if (mode() === 'diff') {
-          <span class="text-2xs text-jb-text-dim ml-2">
-            <span class="text-jb-success font-medium">+{{ addCount() }}</span>
-            <span class="mx-1">/</span>
-            <span class="text-jb-danger font-medium">-{{ delCount() }}</span>
-            words changed
-          </span>
-        }
-      </div>
-
-      <!-- Content -->
-      <div class="text-base leading-relaxed" style="white-space:pre-wrap;">
-        @if (mode() === 'diff') {
-          @for (seg of segments(); track $index) {
-            @if (seg.type === 'keep') {
-              <span>{{ seg.text }}</span>
-            } @else if (seg.type === 'add') {
-              <span class="bg-jb-success-soft text-jb-success rounded-sm px-0.5">{{ seg.text }}</span>
-            } @else {
-              <span class="bg-jb-danger-soft text-jb-danger line-through rounded-sm px-0.5 opacity-70">{{ seg.text }}</span>
-            }
-          }
-        } @else if (mode() === 'revised') {
-          {{ after }}
-        } @else {
-          {{ before }}
-        }
-      </div>
-    </div>
-  `,
+  templateUrl: './diff-viewer.component.html',
 })
 export class DiffViewerComponent {
   @Input() before = '';

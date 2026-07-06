@@ -1,73 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewChecked, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { StructuredDocument } from '../../../core/models/structured-document.model';
+import { StructuredDocument } from '../../../../core/models/structured-document.model';
 import { ChatMessage } from './application-generator.types';
 
 @Component({
   selector: 'app-document-refine-panel',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  template: `
-    <div class="card flex flex-col gap-3" style="height: fit-content; max-height: 600px;">
-      @if (structuredDocument?.documentType === 'CV') {
-        <div class="space-y-3 pb-4 border-b border-gray-200">
-          <h2 class="text-base font-semibold text-gray-900">CV Sections</h2>
-          <div class="space-y-2">
-            @for (section of structuredDocument?.sections ?? []; track section.id; let i = $index) {
-              <div class="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-2 py-1.5">
-                <span class="text-sm text-gray-700 flex-1 truncate">{{ section.heading }}</span>
-                <button type="button" class="btn-secondary text-xs px-2 py-1" (click)="moveSection.emit({ index: i, direction: -1 })" [disabled]="i === 0">Up</button>
-                <button type="button" class="btn-secondary text-xs px-2 py-1" (click)="moveSection.emit({ index: i, direction: 1 })" [disabled]="i === (structuredDocument?.sections?.length ?? 0) - 1">Down</button>
-                <button type="button" class="text-xs px-2 py-1 rounded-md border border-red-200 text-red-600 hover:bg-red-50" (click)="removeSection.emit(i)">Hide</button>
-              </div>
-            }
-          </div>
-
-          <div class="space-y-2">
-            <input class="input text-sm" [(ngModel)]="newCustomHeading" [ngModelOptions]="{standalone: true}" placeholder="Custom section heading" />
-            <textarea class="input text-sm" rows="3" [(ngModel)]="newCustomBody" [ngModelOptions]="{standalone: true}" placeholder="Custom section text"></textarea>
-            <button type="button" class="btn-secondary text-xs" (click)="addSection()" [disabled]="!newCustomHeading.trim()">Add Section</button>
-          </div>
-        </div>
-      }
-
-      <h2 class="text-base font-semibold text-gray-900 shrink-0">Refine with AI</h2>
-      <p class="text-xs text-gray-500 shrink-0">Ask the AI to adjust the document — e.g. "Make it shorter", "Add more emphasis on leadership"</p>
-
-      <div #chatScroll class="flex-1 space-y-2 overflow-y-auto min-h-0" style="max-height: 300px;">
-        @for (msg of chatHistory; track $index) {
-          <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-            <div [class]="msg.role === 'user'
-              ? 'bg-blue-600 text-white text-xs rounded-2xl rounded-tr-sm px-3 py-2 max-w-xs'
-              : 'bg-gray-100 text-gray-700 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-xs'">
-              {{ msg.text }}
-            </div>
-          </div>
-        }
-        @if (refining) {
-          <div class="flex justify-start">
-            <div class="bg-gray-100 text-gray-500 text-xs rounded-2xl rounded-tl-sm px-3 py-2">
-              Thinking...
-            </div>
-          </div>
-        }
-      </div>
-
-      <div class="flex gap-2 shrink-0">
-        <input type="text"
-               [ngModel]="chatMessage"
-               (ngModelChange)="chatMessageChange.emit($event)"
-               (keydown.enter)="send.emit()"
-               placeholder="Refine the document..."
-               class="input flex-1 text-sm"
-               [ngModelOptions]="{standalone: true}" />
-        <button (click)="send.emit()" [disabled]="!chatMessage.trim() || refining" class="btn-primary text-sm px-3">
-          Send
-        </button>
-      </div>
-    </div>
-  `
+  templateUrl: './document-refine-panel.component.html'
 })
 export class DocumentRefinePanelComponent implements AfterViewChecked {
   @ViewChild('chatScroll') chatScrollEl!: ElementRef<HTMLDivElement>;

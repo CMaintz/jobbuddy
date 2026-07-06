@@ -1,0 +1,3 @@
+
+    .rb-select { flex:1;border-radius:6px;border:1px solid var(--jb-border);background:var(--jb-surface-2);color:var(--jb-text);padding:6px 8px;font-size:13px;outline:none;transition:border-color 0.15s; }
+    .rb-select:focus { border-color:var(--jb-accent); }

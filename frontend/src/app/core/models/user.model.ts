@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   role: 'USER' | 'ADMIN';
+  onboardingComplete: boolean;
 }
 
 export interface Profile {
@@ -34,6 +35,7 @@ export interface UserPreferences {
   maxCommuteKm: number | null;
   notificationEnabled: boolean;
   notificationFrequency: string | null;
+  weeklyApplicationGoal: number | null;
 }
 
 export interface ProfilePrivateInfo {

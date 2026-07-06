@@ -1,0 +1,22 @@
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      @for (proj of projects; track proj.id) {
+        <div class="rb-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:500;color:var(--jb-text);">{{ proj.name || 'New Project' }}</span>
+            <button class="rb-remove" (click)="remove(proj.id)">Remove</button>
+          </div>
+          <label class="rb-label">Project Name</label>
+          <input class="rb-input" [value]="proj.name" (input)="update(proj.id, 'name', $any($event.target).value)" placeholder="My Awesome Project" />
+          <label class="rb-label">Link / URL</label>
+          <input class="rb-input" [value]="proj.link" (input)="update(proj.id, 'link', $any($event.target).value)" placeholder="https://github.com/you/project" />
+          <label class="rb-label">Date</label>
+          <input class="rb-input" [value]="proj.date" (input)="update(proj.id, 'date', $any($event.target).value)" placeholder="2024-01" />
+          <label class="rb-label">Description</label>
+          <app-debounced-textarea [value]="proj.description" [rows]="3" placeholder="What did you build and why?" (debouncedChange)="update(proj.id, 'description', $event)" />
+          <label class="rb-label">Skills (comma separated)</label>
+          <input class="rb-input" [value]="(proj.skills ?? []).join(', ')" (change)="updateSkills(proj.id, $any($event.target).value)" placeholder="React, Node.js, PostgreSQL" />
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Project</button>
+    </div>

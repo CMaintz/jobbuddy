@@ -3,14 +3,8 @@ import { Component, Input } from '@angular/core';
 @Component({
   selector: 'jb-company-mark',
   standalone: true,
-  template: `
-    <div [style.width.px]="size" [style.height.px]="size" [style.border-radius.px]="size > 24 ? 8 : 5"
-      [style.background]="bgColor" [style.font-size.px]="size * 0.45"
-      class="flex items-center justify-center font-semibold text-white shrink-0 uppercase tracking-wide">
-      {{ initials }}
-    </div>
-  `,
-  styles: [`:host { @apply inline-flex; }`]
+  templateUrl: './company-mark.component.html',
+  styleUrls: ['./company-mark.component.css']
 })
 export class CompanyMarkComponent {
   @Input() name = '';

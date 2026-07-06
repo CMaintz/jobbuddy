@@ -5,16 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'jb-sparkline',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <svg [attr.width]="width" [attr.height]="height" style="display:block;overflow:visible;">
-      <path *ngIf="showFill" [attr.d]="areaPath" [attr.fill]="color" opacity="0.14" />
-      <path [attr.d]="linePath" fill="none" [attr.stroke]="color" stroke-width="1.5"
-        stroke-linejoin="round" stroke-linecap="round" />
-      <circle *ngIf="lastPoint" [attr.cx]="lastPoint[0]" [attr.cy]="lastPoint[1]"
-        r="2.5" [attr.fill]="color" />
-    </svg>
-  `,
-  styles: [`:host { display: inline-flex; }`]
+  templateUrl: './sparkline.component.html',
+  styleUrls: ['./sparkline.component.css']
 })
 export class SparklineComponent implements OnChanges {
   @Input() data: number[] = [];

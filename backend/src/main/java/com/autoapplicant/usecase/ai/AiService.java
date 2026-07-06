@@ -75,7 +75,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
             PromptComposition composition = new PromptComposition(
                     "You are an expert ATS and career coach. Analyze CVs and provide actionable feedback.",
                     prompt, "", "", "", "", prompt);
-            String response = aiProvider.generate(composition);
+            String response = sanitizeAiText(aiProvider.generate(composition));
             return CompletableFuture.completedFuture(new AiAnalysisResult(List.of(response), 0, response));
         } catch (Exception e) {
             log.error("CV analysis failed: {}", e.getMessage(), e);
@@ -102,7 +102,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
             userPrompt.append("## Refinement Request\n").append(request.userMessage());
             PromptComposition composition = new PromptComposition(
                     systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
-            String refined = aiProvider.generate(composition);
+            String refined = sanitizeAiText(aiProvider.generate(composition));
             return CompletableFuture.completedFuture(
                     new RefineDocumentResult(refined, aiProvider.chatModelName()));
         } catch (Exception e) {
@@ -132,7 +132,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
                     customInstructions, motivationText, targetLanguage, styleTemplate);
 
             String json = AiResponseParser.extractJsonObject(
-                    aiProvider.generateJson(composition).trim());
+                    sanitizeAiText(aiProvider.generateJson(composition)).trim());
 
             ApplicationDocumentAiResponse aiResponse =
                     objectMapper.readValue(json, ApplicationDocumentAiResponse.class);
@@ -161,7 +161,19 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
     private static DocumentType parseDocumentType(String type) {
         if (type == null) return DocumentType.COVER_LETTER;
         try { return DocumentType.valueOf(type.toUpperCase()); }
-        catch (IllegalArgumentException ex) { return DocumentType.COVER_LETTER; }
+        catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid document type: " + type
+                    + ". Valid types: " + java.util.Arrays.toString(DocumentType.values()));
+        }
+    }
+
+    /**
+     * Replaces em dashes and en dashes with regular hyphens in AI-generated text.
+     */
+    private static String sanitizeAiText(String text) {
+        if (text == null) return null;
+        return text.replace('\u2014', '-')   // em dash
+                   .replace('\u2013', '-');   // en dash
     }
 
     private static String buildAnalysisPrompt(String cvContent, String jobDescription) {

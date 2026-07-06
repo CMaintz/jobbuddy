@@ -1,11 +1,11 @@
 import { forkJoin } from 'rxjs';
-import { AiApiService } from '../../../core/api/ai.api';
-import { ApplicationsApiService } from '../../../core/api/applications.api';
-import { PdfTemplatesApiService } from '../../../core/api/pdf-templates.api';
-import { ApplicationStatus } from '../../../core/models/application.model';
-import { StructuredDocument, StructuredDocumentSection } from '../../../core/models/structured-document.model';
-import { runAction, resetFlagAfter } from '../../../shared/utils/async-ui';
-import { copyText } from '../../../shared/utils/file-download';
+import { AiApiService } from '../../../../core/api/ai.api';
+import { ApplicationsApiService } from '../../../../core/api/applications.api';
+import { PdfTemplatesApiService } from '../../../../core/api/pdf-templates.api';
+import { ApplicationStatus } from '../../../../core/models/application.model';
+import { StructuredDocument, StructuredDocumentSection } from '../../../../core/models/structured-document.model';
+import { runAction, resetFlagAfter } from '../../../../shared/utils/async-ui';
+import { copyText } from '../../../../shared/utils/file-download';
 import { cvPlainText, documentText } from './structured-document-content';
 import type { ApplicationGeneratorComponent } from './application-generator.component';
 

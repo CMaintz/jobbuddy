@@ -1,0 +1,51 @@
+
+    <div style="height:100%;display:flex;flex-direction:column;background:var(--jb-bg);">
+      <!-- Wizard context banner -->
+      @if (wizardJobId()) {
+        <div style="background:var(--jb-accent);color:#1c1004;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+          <span>Step 2 of 4 — Review and edit your tailored CV</span>
+          <button
+            style="background:rgba(0,0,0,0.15);color:#1c1004;font-weight:600;padding:4px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;"
+            (click)="continueToWizard()"
+          >Continue to Cover Letter &rarr;</button>
+        </div>
+      }
+      <!-- Header -->
+      <header style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:44px;border-bottom:1px solid var(--jb-border);flex:0 0 auto;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h1 style="font-size:13px;font-weight:500;">Resume Builder</h1>
+          @if (state.isDirty()) {
+            <span class="pill pill-accent" style="font-size:11px;">Unsaved changes</span>
+          }
+          @if (state.isSaving()) {
+            <span class="pill pill-info" style="font-size:11px;">Saving...</span>
+          }
+        </div>
+        <!-- Mobile tabs -->
+        <div style="display:flex;gap:2px;padding:2px;background:var(--jb-surface-2);border:1px solid var(--jb-border);border-radius:5px;">
+          <button (click)="activeTab = 'editor'"
+            style="padding:3px 8px;border:none;border-radius:3px;cursor:pointer;font-size:12px;font-weight:500;"
+            [style.background]="activeTab === 'editor' ? 'var(--jb-surface)' : 'transparent'"
+            [style.color]="activeTab === 'editor' ? 'var(--jb-text)' : 'var(--jb-text-dim)'">Editor</button>
+          <button (click)="activeTab = 'preview'"
+            style="padding:3px 8px;border:none;border-radius:3px;cursor:pointer;font-size:12px;font-weight:500;"
+            [style.background]="activeTab === 'preview' ? 'var(--jb-surface)' : 'transparent'"
+            [style.color]="activeTab === 'preview' ? 'var(--jb-text)' : 'var(--jb-text-dim)'">Preview</button>
+        </div>
+      </header>
+
+      <!-- Split layout -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Editor panel -->
+        <div class="w-full md:w-[420px] md:min-w-[380px] overflow-y-auto md:border-r border-jb-border jb-scroll"
+          [style.display]="activeTab === 'editor' ? 'block' : 'none'">
+          <app-resume-editor />
+        </div>
+
+        <!-- Preview panel -->
+        <div class="flex-1 overflow-y-auto p-4 bg-jb-surface jb-scroll"
+          [style.display]="activeTab === 'preview' ? 'block' : 'none'">
+          <app-resume-preview />
+        </div>
+      </div>
+    </div>

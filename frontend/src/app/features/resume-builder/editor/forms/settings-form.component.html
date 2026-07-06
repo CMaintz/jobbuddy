@@ -1,0 +1,71 @@
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label class="rb-label">Theme Color</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="color" style="height:36px;width:56px;border-radius:6px;border:1px solid var(--jb-border);cursor:pointer;background:var(--jb-surface-2);"
+            [value]="settings.themeColor"
+            (input)="update('themeColor', $any($event.target).value)" />
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            @for (color of presetColors; track color) {
+              <button
+                style="width:24px;height:24px;border-radius:50%;border-width:2px;border-style:solid;transition:transform 0.1s;cursor:pointer;"
+                [style.background-color]="color"
+                [style.border-color]="settings.themeColor === color ? color : 'transparent'"
+                (click)="update('themeColor', color)"
+              ></button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="rb-label">Font Family</label>
+        <select class="rb-input" [value]="settings.fontFamily" (change)="update('fontFamily', $any($event.target).value)">
+          @for (font of fonts; track font.value) {
+            <option [value]="font.value">{{ font.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="rb-label">Font Size</label>
+        <select class="rb-input" [value]="settings.fontSize" (change)="update('fontSize', $any($event.target).value)">
+          <option value="sm">Small</option>
+          <option value="md">Medium</option>
+          <option value="lg">Large</option>
+          <option value="xl">Extra Large</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="rb-label">Document Size</label>
+        <div style="display:flex;gap:8px;">
+          <button class="rb-toggle" [class.active]="settings.documentSize === 'A4'"
+            (click)="update('documentSize', 'A4')">A4</button>
+          <button class="rb-toggle" [class.active]="settings.documentSize === 'Letter'"
+            (click)="update('documentSize', 'Letter')">Letter</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="rb-label">Photo Style</label>
+        <div style="display:flex;gap:8px;">
+          @for (style of ['square', 'rounded', 'circle']; track style) {
+            <button class="rb-toggle" [class.active]="settings.photoStyle === style"
+              (click)="update('photoStyle', style)" style="text-transform:capitalize;">{{ style }}</button>
+          }
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <label class="rb-label" style="margin-bottom:0;">Show Skill Level (dots)</label>
+        <button
+          class="rb-switch"
+          [class.on]="settings.showSkillLevel"
+          (click)="update('showSkillLevel', !settings.showSkillLevel)"
+        >
+          <span class="rb-switch-thumb" [style.transform]="settings.showSkillLevel ? 'translateX(16px)' : 'translateX(2px)'"></span>
+        </button>
+      </div>
+    </div>

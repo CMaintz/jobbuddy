@@ -44,6 +44,9 @@ public class ApplicationService implements
 
     @Override
     public Application createApplication(CreateApplicationCommand command) {
+        if (command.jobId() != null && repo.existsByUserIdAndJobId(command.userId(), command.jobId())) {
+            throw new IllegalStateException("An application for this job already exists");
+        }
         ApplicationStatus status = command.status() != null ? command.status() : ApplicationStatus.SAVED;
         Application app = new Application(null, command.userId(), command.jobId(), status,
                 status == ApplicationStatus.APPLIED ? Instant.now() : null,

@@ -13,4 +13,5 @@ public interface ApplicationJpaRepository extends JpaRepository<ApplicationEntit
     List<ApplicationEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
     Page<ApplicationEntity> findByUserId(UUID userId, Pageable pageable);
     Optional<ApplicationEntity> findByIdAndUserId(UUID id, UUID userId);
+    boolean existsByUserIdAndJobId(UUID userId, UUID jobId);
 }

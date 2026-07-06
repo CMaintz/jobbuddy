@@ -1,0 +1,28 @@
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      @for (s of socials; track s.id) {
+        <div class="rb-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:500;color:var(--jb-text);">{{ s.platform || 'New Social' }}</span>
+            <button class="rb-remove" (click)="remove(s.id)">Remove</button>
+          </div>
+          <label class="rb-label">Platform</label>
+          <select class="rb-input" [value]="s.platform" (change)="onPlatformChange(s.id, $any($event.target).value)">
+            @for (p of platforms; track p.platform) {
+              <option [value]="p.platform">{{ p.platform }}</option>
+            }
+          </select>
+          <label class="rb-label">URL</label>
+          <input class="rb-input" [value]="s.url" (input)="update(s.id, 'url', $any($event.target).value)" placeholder="https://linkedin.com/in/you" />
+          <label class="rb-label">Username (optional)</label>
+          <input class="rb-input" [value]="s.username ?? ''" (input)="update(s.id, 'username', $any($event.target).value)" placeholder="@yourhandle" />
+          <app-icon-picker
+            label="Icon"
+            [icons]="iconLibrary"
+            [selected]="s.iconKey"
+            (iconSelected)="update(s.id, 'iconKey', $event)"
+          />
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Social Link</button>
+    </div>

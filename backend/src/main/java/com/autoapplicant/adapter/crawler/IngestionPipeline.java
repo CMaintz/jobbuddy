@@ -52,11 +52,23 @@ public class IngestionPipeline {
 
     public void ingest(RawJobData raw) {
         try {
-            // Deduplication check
-            if (raw.sourceJobId() != null &&
-                    jobRepo.findBySourceAndSourceJobId(raw.source(), raw.sourceJobId()).isPresent()) {
-                log.debug("Skipping duplicate job: {} / {}", raw.source(), raw.sourceJobId());
-                return;
+            // Deduplication check — refresh lastSeenAt for existing jobs so stale detection works
+            if (raw.sourceJobId() != null) {
+                var existing = jobRepo.findBySourceAndSourceJobId(raw.source(), raw.sourceJobId());
+                if (existing.isPresent()) {
+                    Job seen = existing.get();
+                    jobRepo.save(new Job(seen.id(), seen.source(), seen.sourceJobId(), seen.url(),
+                            seen.title(), seen.companyId(), seen.companyName(), seen.descriptionRaw(),
+                            seen.descriptionClean(), seen.employmentType(), seen.seniority(), seen.remoteType(),
+                            seen.location(), seen.municipality(), seen.region(), seen.country(),
+                            seen.salaryMin(), seen.salaryMax(), seen.currency(), seen.technologies(),
+                            seen.skills(), seen.languages(), seen.postedAt(), seen.scrapedAt(),
+                            seen.aiSummary(), seen.aiTags(), seen.aiSeniorityEstimate(),
+                            seen.duplicateGroupId(), seen.isActive(), seen.jobCategory(),
+                            seen.createdAt(), seen.updatedAt(), seen.shortDescription(), Instant.now()));
+                    log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
+                    return;
+                }
             }
 
             String cleanText = textCleaner.clean(raw.rawHtml());
@@ -68,7 +80,7 @@ public class IngestionPipeline {
                     null, null, null, null, null, null, "DK",
                     null, null, "DKK", List.of(), List.of(), List.of(),
                     null, raw.scrapedAt(), null, List.of(), null, null,
-                    true, category, null, null, raw.shortDescription());
+                    true, category, null, null, raw.shortDescription(), Instant.now());
 
             Job saved = jobRepo.save(draft);
 

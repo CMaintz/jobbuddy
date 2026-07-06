@@ -422,3 +422,16 @@
 
 /* ── Focus ring removal for frozen UI elements ── */
 .jb-no-focus:focus { outline: none; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive — Sidebar & Layout
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  .jb-sidebar {
+    transform: translateX(-100%);
+  }
+  .jb-sidebar.jb-sidebar-open {
+    transform: translateX(0);
+  }
+}

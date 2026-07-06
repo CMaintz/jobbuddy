@@ -1,0 +1,64 @@
+    <!-- Topbar -->
+    <div class="flex items-center gap-2.5 px-[18px] h-11 border-b border-jb-border flex-[0_0_auto]">
+      <a routerLink="/cv" class="inline-flex items-center gap-[5px] py-[5px] px-[9px] rounded bg-transparent border border-jb-border text-jb-text-mid text-sm no-underline">
+        <jb-icon name="arrow-left" [size]="11" /> Master CV
+      </a>
+      <span class="text-sm text-jb-text-dim">/</span>
+      <span class="text-base text-jb-text-mid">Import</span>
+    </div>
+
+    <div class="flex-1 overflow-auto p-10 flex flex-col items-center gap-7 jb-scroll">
+      <div class="max-w-[640px] w-full text-center">
+        <div class="text-[20px] font-medium tracking-tight">Import your CV</div>
+        <div class="text-base text-jb-text-dim mt-1">Upload a PDF, paste text, or connect LinkedIn. We'll parse it into your master CV.</div>
+      </div>
+
+      <div class="grid gap-4 max-w-[720px] w-full grid-cols-1 sm:grid-cols-3">
+        @for (opt of importOptions; track opt.key) {
+          <button (click)="selectedMode.set(opt.key)" class="card jb-liftcard py-6 px-[18px] cursor-pointer text-center flex flex-col items-center gap-3"
+            [style.border-color]="selectedMode() === opt.key ? 'var(--jb-accent-border)' : ''">
+            <div class="w-12 h-12 rounded-[10px] bg-jb-surface-2 border border-jb-border flex items-center justify-center">
+              <jb-icon [name]="opt.icon" [size]="20"
+                [style.color]="selectedMode() === opt.key ? 'var(--jb-accent)' : 'var(--jb-text-mid)'" />
+            </div>
+            <div class="text-xl font-medium">{{ opt.label }}</div>
+            <div class="text-xs text-jb-text-dim leading-normal">{{ opt.description }}</div>
+          </button>
+        }
+      </div>
+
+      @if (selectedMode() === 'pdf') {
+        <div class="max-w-[640px] w-full">
+          <div class="card p-10 text-center border-2 border-dashed border-jb-border-strong rounded-lg">
+            <jb-icon name="upload" [size]="28" class="text-jb-text-dim mb-3" />
+            <div class="text-md font-medium mb-1">Drop your CV here</div>
+            <div class="text-xs text-jb-text-dim">PDF, DOC, or DOCX · max 10 MB</div>
+            <input type="file" accept=".pdf,.doc,.docx" class="hidden" #fileInput />
+            <jb-button [primary]="true" class="mt-4" (clicked)="fileInput.click()">Choose file</jb-button>
+          </div>
+        </div>
+      }
+
+      @if (selectedMode() === 'paste') {
+        <div class="max-w-[640px] w-full">
+          <div class="card p-[18px]">
+            <textarea placeholder="Paste your CV text here..."
+              class="w-full min-h-[240px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-sm leading-relaxed text-jb-text resize-y jb-scroll" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
+            <div class="flex justify-end mt-3">
+              <jb-button [primary]="true" icon="sparkle">Parse & import</jb-button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (selectedMode() === 'linkedin') {
+        <div class="max-w-[640px] w-full">
+          <div class="card p-6 text-center">
+            <jb-icon name="link" [size]="24" class="text-jb-info mb-3" />
+            <div class="text-md font-medium mb-1">Connect LinkedIn</div>
+            <div class="text-xs text-jb-text-dim mb-4">We'll import your profile, experience, education, and skills.</div>
+            <jb-button [primary]="true">Connect with LinkedIn</jb-button>
+          </div>
+        </div>
+      }
+    </div>

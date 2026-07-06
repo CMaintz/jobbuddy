@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { SkillsApiService } from '../../core/api/skills.api';
-import { ProfileSkill, SkillTaxonomy } from '../../core/models/skill-taxonomy.model';
+import { SkillsApiService } from '../../../core/api/skills.api';
+import { ProfileSkill, SkillTaxonomy } from '../../../core/models/skill-taxonomy.model';
 import type { ProfileComponent } from './profile.component';
 
 type SectionSkillTarget = 'exp' | 'project' | 'edu';

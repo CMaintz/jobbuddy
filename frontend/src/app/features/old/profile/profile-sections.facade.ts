@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { ProfileSectionsApiService } from '../../core/api/profile-sections.api';
-import { SkillsApiService } from '../../core/api/skills.api';
-import { deleteAndReload } from '../../shared/utils/crud-actions';
+import { ProfileSectionsApiService } from '../../../core/api/profile-sections.api';
+import { SkillsApiService } from '../../../core/api/skills.api';
+import { deleteAndReload } from '../../../shared/utils/crud-actions';
 import * as profileActions from './profile.actions';
 import type { ProfileComponent } from './profile.component';
 

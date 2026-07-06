@@ -1,0 +1,236 @@
+
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-shrink-0 gap-3">
+      <div class="font-medium text-md">Dashboard</div>
+
+      <!-- Layout toggle -->
+      <div class="flex gap-0.5 ml-2 p-0.5 bg-jb-surface-2 border border-jb-border rounded">
+        <button (click)="layout.set('dense')"
+          [style.background]="layout() === 'dense' ? 'var(--jb-surface)' : 'transparent'"
+          [style.color]="layout() === 'dense' ? 'var(--jb-text)' : 'var(--jb-text-dim)'"
+          class="py-[3px] px-1.5 border-none rounded-sm cursor-pointer flex">
+          <jb-icon name="grid" [size]="12" />
+        </button>
+        <button (click)="layout.set('editorial')"
+          [style.background]="layout() === 'editorial' ? 'var(--jb-surface)' : 'transparent'"
+          [style.color]="layout() === 'editorial' ? 'var(--jb-text)' : 'var(--jb-text-dim)'"
+          class="py-[3px] px-1.5 border-none rounded-sm cursor-pointer flex">
+          <jb-icon name="list" [size]="12" />
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="hidden sm:flex flex-1 max-w-[380px] items-center gap-2 py-[5px] px-2.5 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
+        <jb-icon name="search" [size]="12" />
+        <span>Search jobs, companies, drafts…</span>
+        <span class="ml-auto flex gap-[3px]">
+          <span class="kbd">⌘</span><span class="kbd">K</span>
+        </span>
+      </div>
+
+      <div class="ml-auto flex gap-2 items-center">
+        <jb-button small icon="calendar" class="hidden sm:inline-flex">This week</jb-button>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="flex-1 overflow-auto p-5 jb-scroll">
+      <div class="max-w-[1200px] flex flex-col gap-4">
+
+        <!-- Greeting -->
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <div class="text-2xl sm:text-3xl font-medium tracking-tight">Good morning.</div>
+            <div class="text-base text-jb-text-dim mt-[3px]">
+              You're <span class="text-jb-accent-2">{{ remainingApps }} applications</span> from your weekly goal.
+            </div>
+          </div>
+          <div class="hidden md:flex items-center gap-1.5 text-xs text-jb-text-dim">
+            <span class="kbd">N</span> new · <span class="kbd">G</span><span class="kbd">P</span> pipeline · <span class="kbd">?</span> help
+          </div>
+        </div>
+
+        @if (layout() === 'dense') {
+          <!-- ═══ DENSE LAYOUT ═══ -->
+
+          <!-- Stat row -->
+          <div class="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            <jb-stat-card label="Sent this week" [value]="'' + appliedThisWeek" sub="/ 10" icon="bolt" [delta]="'+' + appliedThisWeek" [accent]="true">
+              <div class="bar mt-0.5"><i [style.width.%]="appliedThisWeek * 10"></i></div>
+              <div class="text-xs text-jb-text-dim">{{ remainingApps }} to go</div>
+            </jb-stat-card>
+
+            <jb-stat-card label="Sent this month" [value]="'' + (data?.activeApplications ?? 0)" delta="+18" icon="arrow-right">
+              <jb-sparkline [data]="appsSpark" [width]="170" [height]="28" />
+            </jb-stat-card>
+
+            <jb-stat-card label="Response rate" value="23" sub="%" delta="+4" icon="arrow-up">
+              <jb-sparkline [data]="respSpark" [width]="170" [height]="28" color="var(--jb-success)" />
+            </jb-stat-card>
+
+            <jb-stat-card label="Activity streak" value="12" sub="days" icon="flame">
+              <div class="flex gap-[3px]">
+                @for (v of weekData; track $index) {
+                  <div class="flex-1 h-[22px] rounded-sm"
+                    [style.background]="v === 0 ? 'var(--jb-surface-3)' : v < 2 ? 'rgba(245,166,35,0.32)' : v < 4 ? 'rgba(245,166,35,0.66)' : 'var(--jb-accent)'">
+                  </div>
+                }
+              </div>
+              <div class="mono text-2xs text-jb-text-faint text-center" style="letter-spacing:0.3em;">MTWTFSS</div>
+            </jb-stat-card>
+
+            <jb-stat-card label="Saved roles" value="7" delta="2" icon="bookmark">
+              <div class="flex flex-col gap-1 mt-auto">
+                @for (saved of savedPreview; track saved.name) {
+                  <div class="flex justify-between text-xs text-jb-text-mid">
+                    <span>{{ saved.name }}</span>
+                    <span class="mono" [style.color]="saved.hot ? 'var(--jb-accent)' : 'var(--jb-text-dim)'">{{ saved.age }}</span>
+                  </div>
+                }
+              </div>
+            </jb-stat-card>
+          </div>
+
+          <!-- Body: activity + funnel | queue + recent -->
+          <div class="grid gap-2.5 grid-cols-1 lg:grid-cols-[1.5fr_1fr]">
+            <div class="flex flex-col gap-2.5">
+              <!-- Activity heatmap -->
+              <div class="card p-4">
+                <div class="flex justify-between items-baseline mb-3">
+                  <div>
+                    <div class="text-md font-medium">Activity</div>
+                    <div class="text-xs text-jb-text-dim mt-px">Last 14 weeks</div>
+                  </div>
+                  <div class="flex items-center gap-[5px] text-2xs text-jb-text-dim font-mono">
+                    Less
+                    @for (v of [0,1,2,3,4]; track v) {
+                      <div [style.width.px]="11" [style.height.px]="11" class="rounded-sm"
+                        [style.background]="v === 0 ? 'var(--jb-surface-3)' : 'rgba(245,166,35,' + (0.22 + v * 0.18) + ')'"></div>
+                    }
+                    More
+                  </div>
+                </div>
+                <jb-heatmap />
+              </div>
+
+              <!-- Funnel -->
+              <div class="card p-4">
+                <div class="flex justify-between items-baseline mb-3.5">
+                  <div>
+                    <div class="text-md font-medium">Pipeline funnel</div>
+                    <div class="text-xs text-jb-text-dim">Conversion across stages</div>
+                  </div>
+                  <jb-button small [ghost]="true" icon="external" routerLink="/pipeline">Open pipeline</jb-button>
+                </div>
+                <jb-funnel />
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2.5">
+              <!-- Today's queue -->
+              <div class="card p-4">
+                <div class="flex justify-between items-baseline mb-2">
+                  <div>
+                    <div class="text-md font-medium">Today's queue</div>
+                    <div class="text-xs text-jb-text-dim">{{ todayQueue.length }} things · {{ overdueCount }} overdue</div>
+                  </div>
+                  <jb-button small [ghost]="true">Plan</jb-button>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                  @for (item of todayQueue; track $index) {
+                    <div class="grid gap-3 rounded-md items-center" style="grid-template-columns:46px 1fr auto;padding:9px 10px;"
+                      [style.background]="item.hot ? 'rgba(248,113,113,0.06)' : 'transparent'"
+                      [style.border]="item.hot ? '1px solid rgba(248,113,113,0.18)' : '1px solid transparent'">
+                      <div class="mono text-xs"
+                        [style.color]="item.hot ? 'var(--jb-danger)' : 'var(--jb-text-dim)'">{{ item.time }}</div>
+                      <div class="flex flex-col gap-px">
+                        <div class="text-base">{{ item.what }}</div>
+                        <div class="text-xs text-jb-text-dim">{{ item.detail }}</div>
+                      </div>
+                      <jb-pill [tone]="item.tone">{{ item.tag }}</jb-pill>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Recent activity -->
+              <div class="card p-4 flex-1">
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <div class="text-md font-medium">Recent activity</div>
+                  <jb-button small [ghost]="true">All</jb-button>
+                </div>
+                <div class="flex flex-col">
+                  @for (item of recentFeed; track $index; let last = $last) {
+                    <div class="grid gap-2 py-2 items-start" style="grid-template-columns:32px 12px 1fr;"
+                      [style.border-bottom]="!last ? '1px solid var(--jb-border-faint)' : 'none'">
+                      <div class="mono text-2xs text-jb-text-dim">{{ item.time }}</div>
+                      <div class="pt-[5px]"><span class="dot" [style.background]="item.color"></span></div>
+                      <div>
+                        <div class="text-sm">{{ item.what }}</div>
+                        <div class="text-xs text-jb-text-dim">{{ item.who }}</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+        } @else {
+          <!-- ═══ EDITORIAL LAYOUT ═══ -->
+
+          <!-- Hero -->
+          <div class="card p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <jb-goal-ring [current]="appliedThisWeek" [goal]="10" [size]="80" />
+            <div class="flex-1 text-center sm:text-left">
+              <div class="text-3xl sm:text-4xl font-medium tracking-tighter">{{ appliedThisWeek }} of 10 this week</div>
+              <div class="text-base text-jb-text-dim mt-1">
+                {{ remainingApps }} to go · 12-day streak · 23% response rate
+              </div>
+            </div>
+            <jb-button [primary]="true" icon="sparkle" routerLink="/apply" class="w-full sm:w-auto">New application</jb-button>
+          </div>
+
+          <!-- Upcoming + Funnel -->
+          <div class="grid gap-2.5 grid-cols-1 md:grid-cols-2">
+            <div class="card p-4">
+              <div class="text-md font-medium mb-3">Upcoming</div>
+              <div class="flex flex-col gap-2">
+                @for (item of todayQueue.slice(0, 3); track $index) {
+                  <div class="card p-3 flex items-center gap-3">
+                    <jb-pill [tone]="item.tone">{{ item.tag }}</jb-pill>
+                    <div class="flex-1">
+                      <div class="text-base">{{ item.what }}</div>
+                      <div class="text-xs text-jb-text-dim">{{ item.detail }}</div>
+                    </div>
+                    <span class="mono text-xs text-jb-text-dim">{{ item.time }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="card p-4">
+              <div class="text-md font-medium mb-3.5">Pipeline funnel</div>
+              <jb-funnel />
+            </div>
+          </div>
+
+          <!-- Saved roles -->
+          <div class="card p-4">
+            <div class="flex justify-between items-baseline mb-2.5">
+              <div class="text-md font-medium">Saved roles</div>
+              <jb-button small [ghost]="true" icon="external" routerLink="/jobs/saved">View all</jb-button>
+            </div>
+            <div class="flex flex-col gap-1">
+              @for (saved of savedPreview; track saved.name) {
+                <div class="flex justify-between text-sm text-jb-text-mid py-1.5"
+                  [style.border-bottom]="'1px solid var(--jb-border-faint)'">
+                  <span>{{ saved.name }}</span>
+                  <span class="mono" [style.color]="saved.hot ? 'var(--jb-accent)' : 'var(--jb-text-dim)'">{{ saved.age }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
