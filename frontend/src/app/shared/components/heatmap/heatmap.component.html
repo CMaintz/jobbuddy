@@ -1,0 +1,9 @@
+    <div style="display:flex;gap:3px;">
+      <div *ngFor="let week of weeks" style="display:flex;flex-direction:column;gap:3px;">
+        <div *ngFor="let day of week"
+          [style.width.px]="cellSize" [style.height.px]="cellSize"
+          [style.border-radius.px]="2"
+          [style.background]="cellColor(day)">
+        </div>
+      </div>
+    </div>

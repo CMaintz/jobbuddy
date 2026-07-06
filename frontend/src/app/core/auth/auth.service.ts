@@ -19,6 +19,7 @@ export interface MeResponse {
   userId: string;
   email: string;
   role: 'USER' | 'ADMIN';
+  onboardingComplete: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -96,10 +97,27 @@ export class AuthService {
     return !!auth.currentUser;
   }
 
+  isOnboardingComplete(): boolean {
+    return this.currentUserSubject.value?.onboardingComplete ?? true;
+  }
+
+  completeOnboarding(): Observable<void> {
+    return this.http.post<void>('/api/v1/auth/complete-onboarding', {}).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          const updated: User = { ...user, onboardingComplete: true };
+          localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+          this.currentUserSubject.next(updated);
+        }
+      })
+    );
+  }
+
   private fetchMe(): Observable<MeResponse> {
     return this.http.get<MeResponse>('/api/v1/auth/me').pipe(
       tap(res => {
-        const user: User = { id: res.userId, email: res.email, role: res.role };
+        const user: User = { id: res.userId, email: res.email, role: res.role, onboardingComplete: res.onboardingComplete };
         localStorage.setItem(this.USER_KEY, JSON.stringify(user));
         this.currentUserSubject.next(user);
       })

@@ -38,6 +38,7 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         e.setMaxCommuteKm(prefs.maxCommuteKm());
         e.setNotificationEnabled(prefs.notificationEnabled());
         e.setNotificationFrequency(prefs.notificationFrequency());
+        e.setWeeklyApplicationGoal(prefs.weeklyApplicationGoal());
         return toDomain(repo.save(e));
     }
 
@@ -55,7 +56,7 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
                 toList(e.getPreferredSeniority()), toList(e.getPreferredIndustries()),
                 e.getSalaryMin(), e.getSalaryMax(), e.getMaxCommuteKm(),
                 e.isNotificationEnabled(), e.getNotificationFrequency(),
-                e.getCreatedAt(), e.getUpdatedAt());
+                e.getWeeklyApplicationGoal(), e.getCreatedAt(), e.getUpdatedAt());
     }
 
     private static String[] toArray(List<String> l) { return l != null ? l.toArray(String[]::new) : new String[0]; }

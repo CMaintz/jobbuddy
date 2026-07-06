@@ -1,0 +1,25 @@
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      @for (s of strengths; track s.id) {
+        <div class="rb-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <lucide-icon [img]="getIcon(s.iconKey)" [size]="18" [strokeWidth]="1.5" style="color:var(--jb-text-dim);"></lucide-icon>
+            <button class="rb-remove" (click)="remove(s.id)">Remove</button>
+          </div>
+          <label class="rb-label">Title</label>
+          <input class="rb-input" [value]="s.title"
+                 (input)="update(s.id, 'title', $any($event.target).value)"
+                 placeholder="Problem Solving" />
+          <label class="rb-label">Description</label>
+          <textarea class="rb-input" style="resize:none;" rows="2" [value]="s.description"
+                    (input)="update(s.id, 'description', $any($event.target).value)"
+                    placeholder="Brief description of this strength..."></textarea>
+          <app-icon-picker
+            label="Icon"
+            [selected]="s.iconKey"
+            (iconSelected)="update(s.id, 'iconKey', $event)"
+          />
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Strength</button>
+    </div>

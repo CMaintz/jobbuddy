@@ -1,0 +1,22 @@
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      @for (skill of skills; track skill.id) {
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input class="rb-input" style="flex:1;" [value]="skill.name" (input)="update(skill.id, 'name', $any($event.target).value)" placeholder="Skill name" />
+          <select class="rb-select" style="width:72px;"
+            [value]="skill.level ?? ''"
+            (change)="update(skill.id, 'level', $any($event.target).value ? +$any($event.target).value : undefined)"
+          >
+            <option value="">Level</option>
+            <option [value]="1">1</option>
+            <option [value]="2">2</option>
+            <option [value]="3">3</option>
+            <option [value]="4">4</option>
+            <option [value]="5">5</option>
+          </select>
+          <button class="rb-remove" (click)="remove(skill.id)">✕</button>
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Skill</button>
+      <p style="font-size:11px;color:var(--jb-text-faint);">Level 1–5 shown as dots in templates that support it. Toggle visibility in Settings.</p>
+    </div>

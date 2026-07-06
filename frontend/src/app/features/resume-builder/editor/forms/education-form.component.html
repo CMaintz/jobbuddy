@@ -1,0 +1,34 @@
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      @for (edu of education; track edu.id) {
+        <div class="rb-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:500;color:var(--jb-text);">{{ edu.degree || 'New Education' }}</span>
+            <button class="rb-remove" (click)="remove(edu.id)">Remove</button>
+          </div>
+          <label class="rb-label">Degree</label>
+          <input class="rb-input" [value]="edu.degree" (input)="update(edu.id, 'degree', $any($event.target).value)" placeholder="Bachelor of Science" />
+          <label class="rb-label">School</label>
+          <input class="rb-input" [value]="edu.school" (input)="update(edu.id, 'school', $any($event.target).value)" placeholder="MIT" />
+          <label class="rb-label">Location</label>
+          <input class="rb-input" [value]="edu.location" (input)="update(edu.id, 'location', $any($event.target).value)" placeholder="Cambridge, MA" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label class="rb-label">Start Date</label>
+              <app-month-year-picker [value]="edu.startDate" (valueChange)="update(edu.id, 'startDate', $event)" />
+            </div>
+            <div>
+              <label class="rb-label">End Date</label>
+              <app-month-year-picker [value]="edu.endDate" (valueChange)="update(edu.id, 'endDate', $event)" />
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" [id]="'current-edu-' + edu.id" [checked]="edu.current" (change)="update(edu.id, 'current', $any($event.target).checked)" style="border-radius:3px;" />
+            <label [for]="'current-edu-' + edu.id" style="font-size:11px;color:var(--jb-text-dim);">Currently studying</label>
+          </div>
+          <label class="rb-label">Skills (comma separated)</label>
+          <input class="rb-input" [value]="(edu.skills ?? []).join(', ')" (change)="updateSkills(edu.id, $any($event.target).value)" placeholder="Java, Python, Data Structures" />
+        </div>
+      }
+      <button class="rb-add" (click)="add()">+ Add Education</button>
+    </div>

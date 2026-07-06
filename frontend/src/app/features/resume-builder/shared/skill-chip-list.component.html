@@ -1,0 +1,10 @@
+
+    @if (skills && skills.length > 0) {
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+        @for (skill of skills; track skill) {
+          <span style="display:inline-block;padding:2px 8px;font-size:11px;border-radius:4px;background:var(--jb-surface-2);color:var(--jb-text-dim);border:1px solid var(--jb-border);">
+            {{ skill }}
+          </span>
+        }
+      </div>
+    }

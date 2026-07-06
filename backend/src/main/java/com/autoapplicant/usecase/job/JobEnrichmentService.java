@@ -42,7 +42,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                                 "You are a job data enrichment assistant. Respond only with JSON.",
                                 prompt, "", "", "", "", prompt
                         );
-                String response = aiProvider.generate(composition);
+                String response = aiProvider.generateJson(composition);
                 return CompletableFuture.completedFuture(applyEnrichment(job, response));
             } catch (Exception e) {
                 String msg = e.getMessage() != null ? e.getMessage() : "";
@@ -123,10 +123,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     @SuppressWarnings("unchecked")
     private Job applyEnrichment(Job job, String jsonResponse) {
         try {
-            String cleaned = jsonResponse.trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceFirst("```json", "").replaceFirst("```", "").trim();
-            }
+            String cleaned = sanitizeJsonResponse(jsonResponse);
             Map<String, Object> parsed = objectMapper.readValue(cleaned, new TypeReference<>() {});
 
             // AI-extracted clean description (replaces the raw page-text version from TextCleaningService)
@@ -193,11 +190,43 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                     job.postedAt(), job.scrapedAt(),
                     summary, tags, aiSeniority,
                     job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt(),
-                    shortDescription);
+                    shortDescription, job.lastSeenAt());
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
             return job;
         }
+    }
+
+    /**
+     * Cleans up common AI response artifacts that break JSON parsing:
+     * markdown fences, semicolons used instead of commas, trailing commas.
+     */
+    static String sanitizeJsonResponse(String raw) {
+        if (raw == null) return "{}";
+        String cleaned = raw.trim();
+
+        // Strip markdown code fences
+        if (cleaned.startsWith("```")) {
+            int firstNewline = cleaned.indexOf('\n');
+            if (firstNewline > 0) cleaned = cleaned.substring(firstNewline + 1);
+            if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length() - 3).trim();
+        }
+
+        // Extract the JSON object if surrounded by extra text
+        int firstBrace = cleaned.indexOf('{');
+        int lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
+
+        // Replace semicolons between JSON entries with commas
+        // Matches: "value"; or ]; or }; followed by whitespace and a quote or bracket
+        cleaned = cleaned.replaceAll(";(\\s*[\"{}\\[\\]])", ",$1");
+
+        // Remove trailing commas before } or ]
+        cleaned = cleaned.replaceAll(",\\s*([}\\]])", "$1");
+
+        return cleaned;
     }
 
     @SuppressWarnings("unchecked")

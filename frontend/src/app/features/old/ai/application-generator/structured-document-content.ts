@@ -1,4 +1,4 @@
-import { DocumentTheme, StructuredDocument } from '../../../core/models/structured-document.model';
+import { DocumentTheme, StructuredDocument } from '../../../../core/models/structured-document.model';
 
 export function applyRenderOptions(
   document: StructuredDocument,

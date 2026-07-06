@@ -1,13 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 
 @Component({
   selector: 'app-master-cv-import',
   standalone: true,
-  template: `
-    <div style="padding: 24px;">
-      <h1 style="font-size: 19px; font-weight: 500; letter-spacing: -0.015em;">Import CV</h1>
-      <p style="font-size: 12.5px; color: var(--jb-text-dim); margin-top: 4px;">Coming soon — this screen is being built.</p>
-    </div>
-  `
+  imports: [CommonModule, RouterLink, JbIconComponent, JbButtonComponent],
+  templateUrl: './master-cv-import.component.html'
 })
-export class MasterCvImportComponent {}
+export class MasterCvImportComponent {
+  selectedMode = signal<'pdf' | 'paste' | 'linkedin'>('pdf');
+
+  importOptions = [
+    { key: 'pdf' as const, icon: 'upload', label: 'Upload PDF', description: 'Upload an existing CV and we\'ll parse it into structured sections.' },
+    { key: 'paste' as const, icon: 'copy', label: 'Paste text', description: 'Paste your CV text and we\'ll extract the structure.' },
+    { key: 'linkedin' as const, icon: 'link', label: 'LinkedIn', description: 'Connect your LinkedIn profile to auto-import.' },
+  ];
+}

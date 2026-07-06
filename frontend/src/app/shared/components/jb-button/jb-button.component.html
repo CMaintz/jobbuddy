@@ -1,0 +1,4 @@
+    <button [class]="classes" (click)="clicked.emit($event)" [disabled]="disabled">
+      <jb-icon *ngIf="icon" [name]="icon" [size]="small ? 11 : 12" />
+      <ng-content />
+    </button>

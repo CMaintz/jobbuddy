@@ -7,18 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
   selector: 'app-linkedin-callback',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <div class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        @if (error) {
-          <div class="bg-red-50 text-red-700 rounded-md p-4 text-sm">{{ error }}</div>
-          <a routerLink="/login" class="mt-4 text-blue-600 hover:underline text-sm block">Back to login</a>
-        } @else {
-          <div class="text-gray-600">Completing sign in...</div>
-        }
-      </div>
-    </div>
-  `
+  templateUrl: './linkedin-callback.component.html'
 })
 export class LinkedInCallbackComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -35,7 +24,7 @@ export class LinkedInCallbackComponent implements OnInit {
     }
     const redirectUri = window.location.origin + '/auth/linkedin/callback';
     this.authService.linkedinCallback(code, redirectUri).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
       error: () => {
         this.error = 'Sign in with LinkedIn failed. Please try again.';
       }

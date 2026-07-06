@@ -5,17 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'jb-segmented',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div style="display:flex;gap:3px;padding:3px;background:var(--jb-surface-2);border:1px solid var(--jb-border);border-radius:7px;">
-      <button *ngFor="let o of options" (click)="changed.emit(o)"
-        [style.background]="value === o ? 'var(--jb-surface)' : 'transparent'"
-        [style.color]="value === o ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
-        style="padding:5px 11px;border-radius:5px;border:none;cursor:pointer;font-size:11.5px;font-weight:500;font-family:inherit;">
-        {{ o }}
-      </button>
-    </div>
-  `,
-  styles: [`:host { display: inline-flex; }`]
+  templateUrl: './jb-segmented.component.html',
+  styleUrls: ['./jb-segmented.component.css']
 })
 export class JbSegmentedComponent {
   @Input() options: string[] = [];

@@ -1,0 +1,202 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
+      <div class="font-medium text-md">Settings</div>
+      <div class="ml-auto">
+        <jb-button small [primary]="true" icon="check">Saved</jb-button>
+      </div>
+    </div>
+
+    <!-- Mobile section tabs -->
+    <div class="flex md:hidden items-center gap-1.5 px-3 py-2 border-b border-jb-border overflow-x-auto flex-shrink-0">
+      @for (s of sections; track s.key) {
+        <button (click)="activeSection.set(s.key)"
+          class="px-2.5 py-1 rounded-full cursor-pointer whitespace-nowrap text-xs font-medium flex-shrink-0"
+          [style.background]="activeSection() === s.key ? 'var(--jb-surface-3)' : 'transparent'"
+          [style.border]="'1px solid ' + (activeSection() === s.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+          [style.color]="activeSection() === s.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+          {{ s.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Body -->
+    <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[210px_1fr]">
+      <!-- Section nav -->
+      <aside class="hidden md:flex border-r border-jb-border p-[14px_8px] flex-col gap-[1px]">
+        @for (s of sections; track s.key) {
+          <button (click)="activeSection.set(s.key)"
+            class="jb-nav flex items-center gap-[9px] p-[8px_10px] rounded-md border-none cursor-pointer text-base text-left font-[inherit]"
+            [style.background]="activeSection() === s.key ? 'var(--jb-surface-3)' : 'transparent'"
+            [style.color]="activeSection() === s.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+            [style.font-weight]="activeSection() === s.key ? '500' : '400'">
+            <jb-icon [name]="s.icon" [size]="14" />
+            {{ s.label }}
+          </button>
+        }
+
+        <!-- Theme toggle in settings nav -->
+        <div class="mt-auto p-[8px_10px]">
+          <div class="flex items-center gap-[9px] text-sm text-jb-text-mid">
+            <jb-icon [name]="theme.theme() === 'dark' ? 'moon' : 'sun'" [size]="14" />
+            <span>{{ theme.theme() === 'dark' ? 'Dark' : 'Light' }} mode</span>
+            <jb-toggle [on]="theme.theme() === 'dark'" (toggled)="theme.toggle()" class="ml-auto" />
+          </div>
+        </div>
+      </aside>
+
+      <!-- Section body -->
+      <div class="overflow-auto p-[24px_28px_48px] jb-scroll">
+        <div class="max-w-[640px]">
+
+          @if (activeSection() === 'match') {
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Match preferences</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
+              What Jobbuddy uses to score and recommend roles in your feed.
+            </p>
+
+            <!-- Skills -->
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="flex justify-between items-baseline mb-2">
+                <div class="text-base font-medium">Skills to match on</div>
+                <span class="jb-link text-xs">Pulled from master CV · edit</span>
+              </div>
+              <div class="text-xs text-jb-text-dim mb-2">
+                Roles are scored on overlap with these.
+              </div>
+              <jb-tag-input [value]="skills" (valueChange)="skills = $event" placeholder="Add a skill…" />
+            </div>
+
+            <!-- Industries -->
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Industries</div>
+              <div class="text-xs text-jb-text-dim mb-2.5">We prioritise roles in these sectors.</div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (ind of allIndustries; track ind) {
+                  <button (click)="toggleIndustry(ind)"
+                    class="p-[5px_11px] rounded-full cursor-pointer text-sm font-medium inline-flex items-center gap-[5px]"
+                    [style.background]="industries.has(ind) ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+                    [style.border]="'1px solid ' + (industries.has(ind) ? 'var(--jb-accent-border)' : 'var(--jb-border)')"
+                    [style.color]="industries.has(ind) ? 'var(--jb-accent-2)' : 'var(--jb-text-mid)'">
+                    @if (industries.has(ind)) { <jb-icon name="check" [size]="9" [strokeWidth]="3" /> }
+                    {{ ind }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Seniority -->
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1">
+                <div class="text-base font-medium">Seniority</div>
+                <div class="text-xs text-jb-text-dim mt-[1px]">The levels you want surfaced</div>
+              </div>
+              <jb-segmented [options]="['Mid', 'Senior', 'Staff+']" [value]="seniority" (changed)="seniority = $event" />
+            </div>
+
+            <!-- Toggles -->
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Open to remote</div><div class="text-xs text-jb-text-dim mt-[1px]">Prioritise remote-friendly roles</div></div>
+              <jb-toggle [on]="remote" (toggled)="remote = $event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Open to relocation</div><div class="text-xs text-jb-text-dim mt-[1px]">Include roles that require a move</div></div>
+              <jb-toggle [on]="relocate" (toggled)="relocate = $event" />
+            </div>
+
+            <!-- Min match slider -->
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Minimum match score</div><div class="text-xs text-jb-text-dim mt-[1px]">Hide roles below this in the feed</div></div>
+              <div class="flex items-center gap-2.5 w-[200px]">
+                <input type="range" [min]="50" [max]="95" [(ngModel)]="minMatch" class="flex-1" style="accent-color:var(--jb-accent);" />
+                <span class="mono text-sm text-jb-accent-2 min-w-[26px]">{{ minMatch }}</span>
+              </div>
+            </div>
+
+            <!-- Weekly goal -->
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Weekly application goal</div><div class="text-xs text-jb-text-dim mt-[1px]">Drives your streak + dashboard</div></div>
+              <div class="flex items-center gap-2">
+                <button (click)="weeklyGoal = Math.max(1, weeklyGoal - 1)" class="w-[26px] h-[26px] rounded bg-jb-surface-2 border border-jb-border text-jb-text cursor-pointer text-xl">–</button>
+                <span class="mono text-xl min-w-[22px] text-center">{{ weeklyGoal }}</span>
+                <button (click)="weeklyGoal = weeklyGoal + 1" class="w-[26px] h-[26px] rounded bg-jb-surface-2 border border-jb-border text-jb-text cursor-pointer text-xl">+</button>
+              </div>
+            </div>
+          }
+
+          @if (activeSection() === 'gen') {
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Generation defaults</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
+              The defaults applied each time you generate — override per application.
+            </p>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Default voice</div></div>
+              <jb-segmented [options]="['Direct', 'Warm', 'Formal']" [value]="voice" (changed)="voice = $event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Default language</div></div>
+              <jb-segmented [options]="['English', 'Dansk']" [value]="lang" (changed)="lang = $event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Default length</div></div>
+              <jb-segmented [options]="['Short', 'Standard', 'Detailed']" [value]="length" (changed)="length = $event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Highlight JD keywords</div><div class="text-xs text-jb-text-dim mt-[1px]">Show matched keywords in generated docs</div></div>
+              <jb-toggle [on]="highlightKw" (toggled)="highlightKw = $event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Auto-draft follow-ups</div><div class="text-xs text-jb-text-dim mt-[1px]">Queue a follow-up draft 5 days after applying</div></div>
+              <jb-toggle [on]="autoFollowup" (toggled)="autoFollowup = $event" />
+            </div>
+          }
+
+          @if (activeSection() === 'sources') {
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Sources & feed</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">Where the job feed pulls from.</p>
+            @for (src of sources; track src.label) {
+              <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+                <div class="flex-1"><div class="text-base font-medium">{{ src.label }}</div></div>
+                <jb-toggle [on]="src.on" (toggled)="src.on = $event" />
+              </div>
+            }
+          }
+
+          @if (activeSection() === 'account') {
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Account</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">Your profile and plan.</p>
+
+            <div class="flex items-center gap-3.5 py-3.5 border-b border-jb-border-faint">
+              <div class="w-[48px] h-[48px] rounded-full bg-jb-surface-3 border border-jb-border-strong flex items-center justify-center text-[16px] font-semibold">U</div>
+              <div class="flex-1">
+                <div class="text-xl font-medium">User</div>
+                <div class="text-sm text-jb-text-dim">user&#64;example.com</div>
+              </div>
+              <jb-button small>Change photo</jb-button>
+            </div>
+          }
+
+          @if (activeSection() === 'privacy') {
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Privacy & data</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
+              Your CV and applications live in your workspace. Nothing is shared with recruiters automatically.
+            </p>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Anonymise CV for feed matching</div><div class="text-xs text-jb-text-dim mt-[1px]">Strip name + contact before scoring</div></div>
+              <jb-toggle [on]="anonymise" (toggled)="anonymise = $event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Store generation history</div><div class="text-xs text-jb-text-dim mt-[1px]">Keep past versions of documents</div></div>
+              <jb-toggle [on]="true" (toggled)="$event" />
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Export all data</div><div class="text-xs text-jb-text-dim mt-[1px]">Download a zip of your CV, applications & contacts</div></div>
+              <jb-button small icon="download">Export</jb-button>
+            </div>
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Delete account</div><div class="text-xs text-jb-text-dim mt-[1px]">Permanently remove everything</div></div>
+              <jb-button small class="text-jb-danger" style="border-color:rgba(248,113,113,0.3);">Delete</jb-button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>

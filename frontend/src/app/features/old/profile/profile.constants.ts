@@ -1,5 +1,5 @@
-import { LanguageProficiency } from '../../core/models/profile-section.model';
-import { ProfileSkill } from '../../core/models/skill-taxonomy.model';
+import { LanguageProficiency } from '../../../core/models/profile-section.model';
+import { ProfileSkill } from '../../../core/models/skill-taxonomy.model';
 
 export type ProfileTab = 'overview' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'languages' | 'socials' | 'strengths';
 

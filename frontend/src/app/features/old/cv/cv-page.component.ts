@@ -1,14 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AiApiService } from '../../core/api/ai.api';
-import { PdfTemplatesApiService } from '../../core/api/pdf-templates.api';
-import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
-import { StructuredDocument, DocumentTemplateOption, STRUCTURED_DOCUMENT_TEMPLATES } from '../../core/models/structured-document.model';
-import { StructuredDocumentRendererComponent } from '../../shared/components/structured-document-renderer/structured-document-renderer.component';
+import { AiApiService } from '../../../core/api/ai.api';
+import { PdfTemplatesApiService } from '../../../core/api/pdf-templates.api';
+import { StructuredDocumentTemplatesApiService } from '../../../core/api/structured-document-templates.api';
+import { StructuredDocument, DocumentTemplateOption, STRUCTURED_DOCUMENT_TEMPLATES } from '../../../core/models/structured-document.model';
+import { StructuredDocumentRendererComponent } from '../../../shared/components/structured-document-renderer/structured-document-renderer.component';
 import { AtsReportPanelComponent } from './components/ats-report-panel.component';
-import { runAction } from '../../shared/utils/async-ui';
-import { downloadBlob } from '../../shared/utils/file-download';
+import { runAction } from '../../../shared/utils/async-ui';
+import { downloadBlob } from '../../../shared/utils/file-download';
 
 const SECTION_ORDER_KEY = 'cv_section_order';
 
@@ -16,123 +16,8 @@ const SECTION_ORDER_KEY = 'cv_section_order';
   selector: 'app-cv-page',
   standalone: true,
   imports: [CommonModule, FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
-  styles: [`
-    @media print {
-      .no-print { display: none !important; }
-      body * { visibility: hidden; }
-      .print-area, .print-area * { visibility: visible; }
-      .print-area { position: fixed; top: 0; left: 0; width: 210mm; }
-    }
-  `],
-  template: `
-    <div class="max-w-6xl mx-auto space-y-6">
-
-      <!-- Header + actions -->
-      <div class="no-print flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">My CV</h1>
-        <div class="flex gap-2">
-          <button (click)="downloadPdf()" [disabled]="downloadingPdf" class="btn-secondary text-sm">
-            {{ downloadingPdf ? 'Generating PDF...' : 'Download PDF' }}
-          </button>
-        </div>
-      </div>
-
-      @if (loading) {
-        <div class="text-center text-gray-500 py-12">Loading CV...</div>
-      } @else if (error) {
-        <div class="bg-red-50 text-red-700 rounded-md p-3 text-sm">{{ error }}</div>
-      } @else if (document) {
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-          <!-- Left sidebar: template picker + section order -->
-          <div class="no-print lg:col-span-1 space-y-4">
-
-            <!-- Template picker -->
-            <div class="bg-white border border-gray-200 rounded-lg p-4">
-              <h3 class="text-sm font-semibold text-gray-700 mb-3">Template</h3>
-              <div class="space-y-2">
-                @for (tpl of cvTemplates; track tpl.id) {
-                  <button (click)="selectTemplate(tpl)"
-                          [ngClass]="selectedTemplateId === tpl.id
-                            ? 'w-full text-left px-3 py-2 rounded text-sm font-medium bg-blue-600 text-white'
-                            : 'w-full text-left px-3 py-2 rounded text-sm text-gray-700 hover:bg-gray-50 border border-gray-200'">
-                    {{ tpl.label }}
-                    <span class="ml-1 text-xs opacity-70">{{ tpl.layoutType === 'two-column' ? '2-col' : '1-col' }}</span>
-                  </button>
-                }
-              </div>
-            </div>
-
-            <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
-              <h3 class="text-sm font-semibold text-gray-700">Appearance</h3>
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" [(ngModel)]="showProfileImage" class="rounded border-gray-300" />
-                Show profile image
-              </label>
-              <div>
-                <label class="label">Primary Color</label>
-                <input type="color" [(ngModel)]="primaryColor" class="h-10 w-full rounded-md border border-gray-300 bg-white px-2" />
-              </div>
-              <div>
-                <label class="label">Accent Color</label>
-                <input type="color" [(ngModel)]="accentColor" class="h-10 w-full rounded-md border border-gray-300 bg-white px-2" />
-              </div>
-              <div>
-                <label class="label">Font</label>
-                <select [(ngModel)]="fontFamily" class="input">
-                  <option value="Arial">Arial</option>
-                  <option value="Inter">Inter</option>
-                  <option value="Calibri">Calibri</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                </select>
-              </div>
-              <div>
-                <label class="label">Font Size</label>
-                <select [(ngModel)]="fontScale" class="input">
-                  <option value="small">Small</option>
-                  <option value="normal">Normal</option>
-                  <option value="large">Large</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Section order -->
-            <div class="bg-white border border-gray-200 rounded-lg p-4">
-              <h3 class="text-sm font-semibold text-gray-700 mb-3">Section Order</h3>
-              <div class="space-y-1.5">
-                @for (sec of orderedSections; track sec.id; let i = $index) {
-                  <div class="flex items-center gap-2 text-sm text-gray-700">
-                    <span class="flex-1 truncate capitalize">{{ sec.heading }}</span>
-                    <div class="flex gap-1">
-                      <button [disabled]="i === 0"
-                              (click)="moveSection(i, -1)"
-                              class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-30 text-xs">
-                        ↑
-                      </button>
-                      <button [disabled]="i === orderedSections.length - 1"
-                              (click)="moveSection(i, 1)"
-                              class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-30 text-xs">
-                        ↓
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- ATS report -->
-            <app-ats-report-panel [report]="document.atsReport"></app-ats-report-panel>
-          </div>
-
-          <!-- Main: document preview -->
-          <div class="lg:col-span-3 print-area">
-            <app-structured-document-renderer [document]="renderedDocument"></app-structured-document-renderer>
-          </div>
-        </div>
-      }
-    </div>
-  `
+  styleUrls: ['./cv-page.component.css'],
+  templateUrl: './cv-page.component.html'
 })
 export class CvPageComponent implements OnInit {
   private aiApi = inject(AiApiService);

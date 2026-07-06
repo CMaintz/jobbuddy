@@ -3,11 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 @Component({
   selector: 'app-confirm-delete-button',
   standalone: true,
-  template: `
-    <button type="button" (click)="onClick()" [class]="buttonClass">
-      {{ confirming ? confirmLabel : label }}
-    </button>
-  `
+  templateUrl: './confirm-delete-button.component.html'
 })
 export class ConfirmDeleteButtonComponent {
   @Input() label = 'Delete';

@@ -8,6 +8,7 @@ import com.autoapplicant.adapter.web.dto.ai.RefineRequest;
 import com.autoapplicant.adapter.web.dto.ai.SaveStructuredDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.StructuredGenerateRequest;
 import com.autoapplicant.domain.ai.AiAnalysisResult;
+import com.autoapplicant.domain.ai.AiUsageSummary;
 import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
 import com.autoapplicant.domain.document.GeneratedDocument;
@@ -15,6 +16,7 @@ import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
+import com.autoapplicant.port.in.ai.GetAiUsageUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
@@ -45,6 +47,7 @@ public class AiController {
     private final GetCvRenderModelUseCase cvRenderModel;
     private final GenerateTailoredCvUseCase generateTailoredCv;
     private final PersistGeneratedDocumentUseCase persistedDocuments;
+    private final GetAiUsageUseCase aiUsage;
     private final SecurityContextHelper secCtx;
 
     public AiController(AnalyzeCvUseCase analyze,
@@ -54,6 +57,7 @@ public class AiController {
                         GetCvRenderModelUseCase cvRenderModel,
                         GenerateTailoredCvUseCase generateTailoredCv,
                         PersistGeneratedDocumentUseCase persistedDocuments,
+                        GetAiUsageUseCase aiUsage,
                         SecurityContextHelper secCtx) {
         this.analyze = analyze;
         this.parseCv = parseCv;
@@ -62,7 +66,14 @@ public class AiController {
         this.cvRenderModel = cvRenderModel;
         this.generateTailoredCv = generateTailoredCv;
         this.persistedDocuments = persistedDocuments;
+        this.aiUsage = aiUsage;
         this.secCtx = secCtx;
+    }
+
+    @Operation(summary = "Get AI usage summary for current user")
+    @GetMapping("/usage")
+    public ResponseEntity<AiUsageSummary> getUsage() {
+        return ResponseEntity.ok(aiUsage.getUsageSummary(secCtx.getCurrentUserId()));
     }
 
     @Operation(summary = "Get CV render model (non-tailored)")
@@ -79,6 +90,8 @@ public class AiController {
     public DeferredResult<ResponseEntity<StructuredDocument>> generateStructuredCv(
             @Valid @RequestBody StructuredGenerateRequest req) {
         DeferredResult<ResponseEntity<StructuredDocument>> result = new DeferredResult<>(60_000L);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body("AI generation timed out. Please try again.")));
         UUID userId = secCtx.getCurrentUserId();
         CompletableFuture.supplyAsync(() -> generateTailoredCv.generateTailoredCv(
                         userId,
@@ -105,6 +118,8 @@ public class AiController {
     public DeferredResult<ResponseEntity<StructuredDocument>> generateDocument(
             @Valid @RequestBody GenerateDocumentRequest req) {
         DeferredResult<ResponseEntity<StructuredDocument>> result = new DeferredResult<>(60_000L);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body("AI generation timed out. Please try again.")));
         UUID userId = secCtx.getCurrentUserId();
         generateDocument.generateDocument(
                         userId,
@@ -152,6 +167,8 @@ public class AiController {
     public DeferredResult<ResponseEntity<RefineDocumentResult>> refine(
             @Valid @RequestBody RefineRequest req) {
         DeferredResult<ResponseEntity<RefineDocumentResult>> result = new DeferredResult<>(60_000L);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body("AI refinement timed out. Please try again.")));
         UUID userId = secCtx.getCurrentUserId();
         RefineDocumentRequest request = new RefineDocumentRequest(
                 userId, req.currentContent(), req.userMessage(),
@@ -170,6 +187,8 @@ public class AiController {
     public DeferredResult<ResponseEntity<AiAnalysisResult>> analyze(
             @Valid @RequestBody AnalyzeCvRequest req) {
         DeferredResult<ResponseEntity<AiAnalysisResult>> result = new DeferredResult<>(60_000L);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body("AI analysis timed out. Please try again.")));
         analyze.analyze(req.cvVersionId(), req.jobId())
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {

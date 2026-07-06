@@ -1,0 +1,49 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
+      <div class="font-medium text-md">Saved roles</div>
+      <jb-pill tone="accent">{{ savedJobs.length }}</jb-pill>
+      <div class="ml-auto flex gap-2 items-center">
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="p-12 text-center text-jb-text-dim">Loading saved roles...</div>
+    } @else {
+      <div class="flex-1 overflow-auto jb-scroll overflow-x-auto">
+        <div class="min-w-[500px]">
+        <!-- Column headers -->
+        <div class="grid gap-3 p-[8px_18px] text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint" style="grid-template-columns:1fr 120px 100px 80px;">
+          <span>Role & company</span>
+          <span>Location</span>
+          <span>Source</span>
+          <span></span>
+        </div>
+
+        @for (job of savedJobs; track job.id) {
+          <a [routerLink]="['/jobs', job.id]" class="jb-row grid gap-3 p-[12px_18px] items-center border-b border-jb-border-faint cursor-pointer no-underline text-inherit" style="grid-template-columns:1fr 120px 100px 80px;">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <jb-company-mark [name]="job.companyName || '?'" [size]="28" />
+              <div class="min-w-0">
+                <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ job.title }}</div>
+                <div class="text-xs text-jb-text-dim">{{ job.companyName || 'Unknown' }}</div>
+              </div>
+            </div>
+            <div class="text-sm text-jb-text-mid">{{ job.location || 'Remote' }}</div>
+            <div class="text-sm text-jb-text-dim">{{ job.source || '\u2014' }}</div>
+            <div class="flex gap-1.5 justify-end">
+              <jb-button small icon="sparkle" routerLink="/apply">Apply</jb-button>
+            </div>
+          </a>
+        }
+
+        @if (savedJobs.length === 0) {
+          <div class="p-[48px_24px] text-center text-jb-text-dim">
+            <jb-icon name="bookmark" [size]="24" class="mb-2" />
+            <div class="text-md font-medium mb-[4px]">No saved roles</div>
+            <div class="text-sm">Save roles from the job feed to track them here.</div>
+          </div>
+        }
+        </div>
+      </div>
+    }

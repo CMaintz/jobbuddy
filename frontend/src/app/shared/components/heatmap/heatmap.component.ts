@@ -5,18 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'jb-heatmap',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div style="display:flex;gap:3px;">
-      <div *ngFor="let week of weeks" style="display:flex;flex-direction:column;gap:3px;">
-        <div *ngFor="let day of week"
-          [style.width.px]="cellSize" [style.height.px]="cellSize"
-          [style.border-radius.px]="2"
-          [style.background]="cellColor(day)">
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`:host { display: block; }`]
+  templateUrl: './heatmap.component.html',
+  styleUrls: ['./heatmap.component.css']
 })
 export class HeatmapComponent implements OnChanges {
   @Input() data: number[] = [];

@@ -1,0 +1,23 @@
+
+    <div style="display:flex;gap:8px;">
+      <select
+        class="rb-select"
+        [(ngModel)]="selectedMonth"
+        (ngModelChange)="emitChange()"
+      >
+        <option value="">Month</option>
+        @for (m of months; track m.value) {
+          <option [value]="m.value">{{ m.label }}</option>
+        }
+      </select>
+      <select
+        class="rb-select"
+        [(ngModel)]="selectedYear"
+        (ngModelChange)="emitChange()"
+      >
+        <option value="">Year</option>
+        @for (y of years; track y) {
+          <option [value]="y">{{ y }}</option>
+        }
+      </select>
+    </div>

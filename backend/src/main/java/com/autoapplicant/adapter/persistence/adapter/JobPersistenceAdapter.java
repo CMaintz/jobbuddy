@@ -8,6 +8,7 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -67,6 +68,17 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public Optional<Job> findByUrl(String url) {
         return repo.findByUrl(url).map(JobMapper::toDomain);
+    }
+
+    @Override
+    public List<Job> findByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return repo.findAllById(ids).stream().map(JobMapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public int deactivateStaleJobs(Instant cutoff) {
+        return repo.deactivateStaleJobs(cutoff);
     }
 
     @Override

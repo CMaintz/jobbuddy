@@ -1,0 +1,6 @@
+
+    .rb-label { display:block;font-size:11px;font-weight:500;color:var(--jb-text-dim);margin-bottom:4px; }
+    .rb-tpl-card { padding:12px;text-align:left;border-radius:8px;border:2px solid var(--jb-border);background:transparent;cursor:pointer;transition:all 0.15s; }
+    .rb-tpl-card.active { border-color:var(--jb-accent);background:rgba(245,166,35,0.08); }
+    .rb-tpl-card:hover { border-color:var(--jb-border-strong); }
+    .rb-section-row { display:flex;align-items:center;gap:8px;padding:8px;background:var(--jb-surface-2);border-radius:6px;border:1px solid var(--jb-border); }

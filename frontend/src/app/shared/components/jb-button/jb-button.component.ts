@@ -6,23 +6,8 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
   selector: 'jb-button',
   standalone: true,
   imports: [CommonModule, JbIconComponent],
-  template: `
-    <button [class]="classes" (click)="clicked.emit($event)" [disabled]="disabled">
-      <jb-icon *ngIf="icon" [name]="icon" [size]="small ? 11 : 12" />
-      <ng-content />
-    </button>
-  `,
-  styles: [`
-    :host { display: inline-flex; }
-    button {
-      font-family: inherit;
-      transition: filter 0.12s, background 0.12s, border-color 0.12s;
-    }
-    .jb-btn:hover:not(:disabled) { @apply bg-jb-hover border-jb-border-strong; }
-    .jb-btn-primary { color: #1c1004; border-color: #c8881c; box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset; }
-    .jb-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
-    .jb-btn-ghost:hover:not(:disabled) { @apply bg-jb-hover text-jb-text; }
-  `]
+  templateUrl: './jb-button.component.html',
+  styleUrls: ['./jb-button.component.css']
 })
 export class JbButtonComponent {
   @Input() icon?: string;

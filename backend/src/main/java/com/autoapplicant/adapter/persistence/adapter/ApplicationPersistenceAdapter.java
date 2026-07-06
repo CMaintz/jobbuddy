@@ -47,4 +47,9 @@ public class ApplicationPersistenceAdapter implements ApplicationRepositoryPort 
     public Optional<Application> findByIdAndUserId(UUID id, UUID userId) {
         return repo.findByIdAndUserId(id, userId).map(ApplicationMapper::toDomain);
     }
+
+    @Override
+    public boolean existsByUserIdAndJobId(UUID userId, UUID jobId) {
+        return repo.existsByUserIdAndJobId(userId, jobId);
+    }
 }
