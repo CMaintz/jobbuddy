@@ -91,6 +91,23 @@
         </div>
       </div>
 
+      <div>
+        <label class="rb-label">Photo Size — {{ settings.photoSize ? settings.photoSize + 'px' : 'template default' }}</label>
+        <input type="range" min="40" max="200" step="4" style="width:100%;accent-color:var(--jb-accent);"
+          [value]="settings.photoSize ?? 96"
+          (input)="update('photoSize', +$any($event.target).value)" />
+        <div style="font-size:10px;color:var(--jb-text-dim);margin-top:2px;">Tip: you can also drag the photo in the preview to resize it.</div>
+      </div>
+
+      <div>
+        <label class="rb-label">Photo Placement</label>
+        <div style="display:flex;gap:8px;">
+          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'left'" (click)="update('photoPlacement', 'left')">Left</button>
+          <button class="rb-toggle" [class.active]="!settings.photoPlacement" (click)="update('photoPlacement', undefined)">Template</button>
+          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'right'" (click)="update('photoPlacement', 'right')">Right</button>
+        </div>
+      </div>
+
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <label class="rb-label" style="margin-bottom:0;">Show Skill Level (dots)</label>
         <button
