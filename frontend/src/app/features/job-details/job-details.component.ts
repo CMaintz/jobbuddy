@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -35,6 +35,7 @@ const STAGE_TONES: Record<string, string> = {
 })
 export class JobDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private jobsApi = inject(JobsApiService);
   private appsApi = inject(ApplicationsApiService);
 
@@ -55,10 +56,9 @@ export class JobDetailsComponent implements OnInit {
   ];
 
   generateActions = [
-    { label: 'Application', icon: 'layers' },
-    { label: 'Angled CV', icon: 'doc' },
-    { label: 'Recruiter email', icon: 'mail' },
-    { label: 'Follow-up', icon: 'chat' },
+    { label: 'Application', icon: 'layers', format: 'application' },
+    { label: 'Cover letter', icon: 'doc', format: 'cover-letter' },
+    { label: 'Short pitch', icon: 'mail', format: 'short-pitch' },
   ];
 
   activityEvents: { time: string; what: string; who: string; dot: string }[] = [];
@@ -147,8 +147,22 @@ export class JobDetailsComponent implements OnInit {
     });
   }
 
-  onGenerate(_action: string): void {
-    // Will navigate to the appropriate generation screen
+  onGenerate(format: string): void {
+    if (!this.job) return;
+    this.router.navigate(['/apply'], { queryParams: { jobId: this.job.id, format } });
+  }
+
+  /**
+   * mailto: link for reaching out before applying. The recruiter's address is
+   * known only once an application exists; otherwise the compose window opens
+   * without a recipient but with subject and opener prefilled.
+   */
+  get contactMailto(): string {
+    const to = this.application?.recruiterEmail ?? '';
+    const subject = encodeURIComponent(`Question about the ${this.job?.title ?? 'open'} role at ${this.job?.companyName ?? 'your company'}`);
+    const body = encodeURIComponent(
+      `Hi,\n\nI came across the ${this.job?.title ?? ''} opening and have a quick question before applying.\n\n`);
+    return `mailto:${to}?subject=${subject}&body=${body}`;
   }
 
   ageLabel(dateStr: string): string {
