@@ -1,7 +1,7 @@
 
     <div class="p-10 flex flex-col gap-6 bg-white">
       <!-- Executive header with full-width color band -->
-      <div class="p-8 text-white -m-10 mb-0" [style.background-color]="themeColor">
+      <section rbSection="header" class="p-8 text-white -m-10 mb-0" [style.background-color]="themeColor">
         <div class="flex justify-between items-end">
           <div>
             <h1 class="text-3xl font-semibold tracking-wide">{{ pi.fullName }}</h1>
@@ -24,7 +24,7 @@
             </span>
           }
         </div>
-      </div>
+      </section>
 
       <div class="mt-8 flex flex-col gap-6">
         @if (pi.summary) {
