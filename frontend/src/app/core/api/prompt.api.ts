@@ -29,4 +29,14 @@ export class PromptApiService {
   duplicate(id: string, name?: string): Observable<PromptTemplate> {
     return this.http.post<PromptTemplate>(`${this.base}/${id}/duplicate`, {}, name ? { params: { name } } : undefined);
   }
+
+  /** Own templates only; system templates require an admin account. */
+  update(id: string, req: CreateTemplateRequest): Observable<PromptTemplate> {
+    return this.http.put<PromptTemplate>(`${this.base}/${id}`, req);
+  }
+
+  /** Own templates only; system templates require an admin account. */
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
 }

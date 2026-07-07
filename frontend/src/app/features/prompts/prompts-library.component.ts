@@ -4,59 +4,188 @@ import { FormsModule } from '@angular/forms';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
+import { PromptApiService } from '../../core/api/prompt.api';
+import { AuthService } from '../../core/auth/auth.service';
+import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
 
-interface Prompt {
-  id: number;
-  kind: string;
-  name: string;
-  body: string;
-  tags: string[];
-  lang: string;
-  uses: number;
-  fav: boolean;
-  updated: string;
-}
-
-const PROMPT_KINDS = [
-  { key: 'cv', label: 'Angled CV', icon: 'doc', color: 'var(--jb-violet)' },
-  { key: 'application', label: 'Application', icon: 'layers', color: 'var(--jb-accent)' },
-  { key: 'cl', label: 'Cover letter', icon: 'doc', color: 'var(--jb-info)' },
-  { key: 'recruiter', label: 'Recruiter email', icon: 'mail', color: '#7df2a8' },
-  { key: 'followup', label: 'Follow-up', icon: 'chat', color: 'var(--jb-accent)' },
-  { key: 'other', label: 'Other', icon: 'lightbulb', color: 'var(--jb-text-dim)' },
+const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: string }[] = [
+  { key: 'APPLICATION', label: 'Application', icon: 'layers', color: 'var(--jb-accent)' },
+  { key: 'COVER_LETTER', label: 'Cover letter', icon: 'doc', color: 'var(--jb-info)' },
+  { key: 'RECRUITER_MESSAGE', label: 'Recruiter email', icon: 'mail', color: '#7df2a8' },
+  { key: 'CV_ANALYSIS', label: 'CV analysis', icon: 'doc', color: 'var(--jb-violet)' },
+  { key: 'GENERAL', label: 'General', icon: 'lightbulb', color: 'var(--jb-text-dim)' },
 ];
 
 @Component({
   selector: 'app-prompts-library',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent],
   templateUrl: './prompts-library.component.html'
 })
-export class PromptsLibraryComponent {
-  activeKind = signal('all');
-  openPrompt = signal<Prompt | null>(null);
+export class PromptsLibraryComponent implements OnInit {
+  private promptApi = inject(PromptApiService);
+  private auth = inject(AuthService);
+
+  loading = signal(true);
+  toast = signal('');
+  activeKind = signal<'all' | PromptCategory>('all');
+  openPrompt = signal<PromptTemplate | null>(null);
+  showCreate = signal(false);
+  creating = signal(false);
+  editing = signal(false);
+  savingEdit = signal(false);
   promptKinds = PROMPT_KINDS;
 
-  // Mock data
-  prompts: Prompt[] = [
-    { id: 1, kind: 'application', name: 'DK \u00b7 Ans\u00f8gning \u2014 warm + concrete result', body: 'Open with one concrete result from my master CV that maps to the JD\'s primary hire-for. Three short paragraphs in Danish. End with availability and one specific question.', tags: ['dansk', 'warm'], lang: 'dansk', uses: 14, fav: true, updated: '2d' },
-    { id: 2, kind: 'application', name: 'EN \u00b7 Ans\u00f8gning \u2014 formal', body: 'Open with the company\'s last shipped product I admire. Map two bullets from master CV. Formal close.', tags: ['english', 'formal'], lang: 'english', uses: 6, fav: false, updated: '1w' },
-    { id: 3, kind: 'cl', name: 'Short cover \u00b7 220\u2013260 words', body: 'Three paragraphs. First: a single concrete result. Second: why this company specifically. Third: short close. No fluff.', tags: ['english', 'short'], lang: 'english', uses: 21, fav: true, updated: '6h' },
-    { id: 4, kind: 'cv', name: 'Angled CV \u2014 quantify-everything', body: 'Re-angle the profile to lead with the JD\'s primary hire-for. Add numbers to every bullet. Cut anything older than 5 years if it doesn\'t map.', tags: ['quantify'], lang: 'either', uses: 9, fav: true, updated: '3d' },
-    { id: 5, kind: 'cv', name: 'Angled CV \u2014 motion / craft lead', body: 'Lead with motion and craft. Promote any prototype work. Demote pure infra bullets.', tags: ['motion'], lang: 'either', uses: 4, fav: false, updated: '11d' },
-    { id: 6, kind: 'recruiter', name: 'Recruiter DM \u2014 friendly', body: 'Hi {name}, saw your post about {role}. Quick intro: I\'ve been doing {result}. If it sounds relevant I\'d love a 15-min chat.', tags: ['linkedin'], lang: 'english', uses: 11, fav: false, updated: '4d' },
-    { id: 7, kind: 'recruiter', name: 'Recruiter DM \u2014 direct', body: 'Hi {name}, I\'m a senior frontend engineer. Three relevant results: {bullets}. Open to a chat?', tags: ['linkedin', 'short'], lang: 'english', uses: 3, fav: false, updated: '2w' },
-    { id: 8, kind: 'followup', name: 'Polite follow-up \u2014 5 days', body: 'Hi {name}, circling back on my application for {role}. Happy to share more about {specific-thing} if useful.', tags: ['english'], lang: 'english', uses: 7, fav: false, updated: '3d' },
-    { id: 9, kind: 'other', name: 'Interview prep \u2014 STAR drafts', body: 'For each of the top 3 likely Qs from the JD, draft a STAR answer using master CV bullets. ~80 words each.', tags: ['interview'], lang: 'english', uses: 2, fav: true, updated: '1d' },
-  ];
+  prompts: PromptTemplate[] = [];
+  private myUserId = '';
+  private isAdmin = false;
 
-  filteredPrompts(): Prompt[] {
-    const kind = this.activeKind();
-    if (kind === 'all') return this.prompts;
-    return this.prompts.filter(p => p.kind === kind);
+  // Create form
+  newName = '';
+  newCategory: PromptCategory = 'APPLICATION';
+  newDescription = '';
+  newBody = '';
+
+  // Edit form (populated when editing an existing template)
+  editName = '';
+  editCategory: PromptCategory = 'APPLICATION';
+  editDescription = '';
+  editBody = '';
+
+  ngOnInit(): void {
+    this.auth.currentUser$.subscribe(u => {
+      this.myUserId = u?.id ?? '';
+      this.isAdmin = u?.role === 'ADMIN';
+    });
+    this.load();
   }
 
-  kindConfig(kind: string) {
-    return PROMPT_KINDS.find(k => k.key === kind) || { key: kind, label: kind, icon: 'doc', color: 'var(--jb-text-dim)' };
+  /** System templates are admin-only; user templates belong to their creator. Mirrors the backend rule. */
+  canModify(p: PromptTemplate): boolean {
+    return p.isSystem ? this.isAdmin : p.userId === this.myUserId;
+  }
+
+  startEdit(p: PromptTemplate): void {
+    this.editName = p.name;
+    this.editCategory = p.category ?? 'GENERAL';
+    this.editDescription = p.description ?? '';
+    this.editBody = p.userPrompt;
+    this.editing.set(true);
+  }
+
+  saveEdit(p: PromptTemplate): void {
+    if (!this.editName.trim() || !this.editBody.trim() || this.savingEdit()) return;
+    this.savingEdit.set(true);
+    this.promptApi.update(p.id, {
+      name: this.editName.trim(),
+      category: this.editCategory,
+      description: this.editDescription.trim() || undefined,
+      systemPrompt: p.systemPrompt,
+      userPrompt: this.editBody.trim(),
+      outputConstraints: p.outputConstraints,
+      isPublic: p.isPublic,
+    }).subscribe({
+      next: () => {
+        this.savingEdit.set(false);
+        this.editing.set(false);
+        this.openPrompt.set(null);
+        this.toast.set('Prompt updated');
+        this.load();
+      },
+      error: err => {
+        this.savingEdit.set(false);
+        this.toast.set(err?.status === 403 ? 'Only admins can change system templates' : 'Could not update the prompt');
+      }
+    });
+  }
+
+  deletePrompt(p: PromptTemplate): void {
+    if (!window.confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    this.promptApi.delete(p.id).subscribe({
+      next: () => {
+        this.openPrompt.set(null);
+        this.toast.set('Prompt deleted');
+        this.load();
+      },
+      error: err => {
+        this.toast.set(err?.status === 403 ? 'Only admins can delete system templates' : 'Could not delete the prompt');
+      }
+    });
+  }
+
+  closeModal(): void {
+    this.editing.set(false);
+    this.openPrompt.set(null);
+  }
+
+  private load(): void {
+    this.promptApi.getAll().subscribe({
+      next: prompts => {
+        this.prompts = prompts;
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.set('Could not load prompts');
+      }
+    });
+  }
+
+  filteredPrompts(): PromptTemplate[] {
+    const kind = this.activeKind();
+    if (kind === 'all') return this.prompts;
+    return this.prompts.filter(p => p.category === kind);
+  }
+
+  kindConfig(category?: string) {
+    return PROMPT_KINDS.find(k => k.key === category)
+      ?? { key: 'GENERAL', label: category ?? 'General', icon: 'lightbulb', color: 'var(--jb-text-dim)' };
+  }
+
+  ageLabel(iso?: string): string {
+    if (!iso) return '';
+    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (days === 0) return 'today';
+    if (days < 7) return `${days}d ago`;
+    if (days < 30) return `${Math.floor(days / 7)}w ago`;
+    return `${Math.floor(days / 30)}mo ago`;
+  }
+
+  duplicate(p: PromptTemplate): void {
+    this.promptApi.duplicate(p.id).subscribe({
+      next: () => {
+        this.openPrompt.set(null);
+        this.toast.set('Prompt duplicated');
+        this.load();
+      },
+      error: () => this.toast.set('Could not duplicate the prompt')
+    });
+  }
+
+  create(): void {
+    if (!this.newName.trim() || !this.newBody.trim() || this.creating()) return;
+    this.creating.set(true);
+    this.promptApi.create({
+      name: this.newName.trim(),
+      category: this.newCategory,
+      description: this.newDescription.trim() || undefined,
+      userPrompt: this.newBody.trim(),
+      isPublic: false,
+    }).subscribe({
+      next: () => {
+        this.creating.set(false);
+        this.showCreate.set(false);
+        this.newName = '';
+        this.newDescription = '';
+        this.newBody = '';
+        this.toast.set('Prompt created');
+        this.load();
+      },
+      error: () => {
+        this.creating.set(false);
+        this.toast.set('Could not create the prompt');
+      }
+    });
   }
 }
