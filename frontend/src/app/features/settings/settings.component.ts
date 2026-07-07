@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToggleComponent } from '../../shared/components/jb-toggle/jb-toggle.component';
@@ -60,6 +61,7 @@ export class SettingsComponent implements OnInit {
   theme = inject(ThemeService);
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private route = inject(ActivatedRoute);
   Math = Math;
 
   activeSection = signal<Section>('match');
@@ -92,6 +94,9 @@ export class SettingsComponent implements OnInit {
   gen = loadGenDefaults();
 
   ngOnInit(): void {
+    const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
+    if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
+
     this.auth.currentUser$.subscribe(u => this.userEmail = u?.email ?? '');
 
     this.http.get<UserPreferences>('/api/v1/users/me/preferences').subscribe({
