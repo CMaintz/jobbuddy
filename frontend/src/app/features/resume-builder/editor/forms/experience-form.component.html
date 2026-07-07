@@ -36,7 +36,11 @@
               <label [for]="'current-' + exp.id" style="font-size:11px;color:var(--jb-text-dim);">Currently working here</label>
             </div>
             <div style="grid-column:span 2;">
-              <label class="rb-label">Description</label>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <label class="rb-label" style="margin-bottom:0;">Description</label>
+                <app-ai-refine-menu [content]="exp.description" [jobDescription]="jobDescription"
+                  (refined)="update(exp.id, 'description', $event)" />
+              </div>
               <app-rich-text-editor [value]="exp.description" placeholder="Describe your role and achievements..." (debouncedChange)="update(exp.id, 'description', $event)" />
             </div>
             <div style="grid-column:span 2;">

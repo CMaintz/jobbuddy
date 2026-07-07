@@ -41,12 +41,17 @@ export class ResumeStateService {
   private _resumeData = signal<ResumeData>({ ...INITIAL_RESUME_DATA });
   private _settings = signal<ResumeSettings>({ ...INITIAL_SETTINGS });
   private _draftId = signal<string | null>(null);
+  private _draftJobId = signal<string | null>(null);
   private _isDirty = signal(false);
   private _isSaving = signal(false);
 
   readonly resumeData = this._resumeData.asReadonly();
   readonly settings = this._settings.asReadonly();
   readonly draftId = this._draftId.asReadonly();
+  /** Job this draft targets (tailored CVs created via Apply), if any. */
+  readonly draftJobId = this._draftJobId.asReadonly();
+  /** Target job's description — set by the builder so AI refinements are job-aware. */
+  readonly jobDescription = signal<string | null>(null);
   readonly isDirty = this._isDirty.asReadonly();
   readonly isSaving = this._isSaving.asReadonly();
 
@@ -104,6 +109,7 @@ export class ResumeStateService {
             this._settings.set(draft.settings as ResumeSettings);
           }
           this._draftId.set(draft.id ?? null);
+          this._draftJobId.set(draft.jobId ?? null);
           this._isDirty.set(false);
           observer.next();
           observer.complete();

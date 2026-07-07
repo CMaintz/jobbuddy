@@ -54,10 +54,13 @@
           <input class="rb-input" type="text" [value]="pi.github" (input)="update('github', $any($event.target).value)" placeholder="github.com/jane" />
         </div>
         <div style="grid-column:span 2;">
-          <label class="rb-label">Summary</label>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <label class="rb-label" style="margin-bottom:0;">Summary</label>
+            <app-ai-refine-menu [content]="pi.summary" [jobDescription]="jobDescription"
+              (refined)="update('summary', $event)" />
+          </div>
           <app-rich-text-editor
             [value]="pi.summary"
-           
             placeholder="A brief professional summary..."
             (debouncedChange)="update('summary', $event)"
           />
