@@ -7,15 +7,17 @@
       <span class="text-base text-jb-text-mid">Import</span>
     </div>
 
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
     <div class="flex-1 overflow-auto p-10 flex flex-col items-center gap-7 jb-scroll">
       <div class="max-w-[640px] w-full text-center">
         <div class="text-[20px] font-medium tracking-tight">Import your CV</div>
-        <div class="text-base text-jb-text-dim mt-1">Upload a PDF, paste text, or connect LinkedIn. We'll parse it into your master CV.</div>
+        <div class="text-base text-jb-text-dim mt-1">Upload a PDF, paste text, or use your LinkedIn PDF export. We'll parse it into your master CV.</div>
       </div>
 
       <div class="grid gap-4 max-w-[720px] w-full grid-cols-1 sm:grid-cols-3">
         @for (opt of importOptions; track opt.key) {
-          <button (click)="selectedMode.set(opt.key)" class="card jb-liftcard py-6 px-[18px] cursor-pointer text-center flex flex-col items-center gap-3"
+          <button (click)="selectedMode.set(opt.key); discardPreview()" class="card jb-liftcard py-6 px-[18px] cursor-pointer text-center flex flex-col items-center gap-3"
             [style.border-color]="selectedMode() === opt.key ? 'var(--jb-accent-border)' : ''">
             <div class="w-12 h-12 rounded-[10px] bg-jb-surface-2 border border-jb-border flex items-center justify-center">
               <jb-icon [name]="opt.icon" [size]="20"
@@ -27,37 +29,108 @@
         }
       </div>
 
-      @if (selectedMode() === 'pdf') {
-        <div class="max-w-[640px] w-full">
-          <div class="card p-10 text-center border-2 border-dashed border-jb-border-strong rounded-lg">
-            <jb-icon name="upload" [size]="28" class="text-jb-text-dim mb-3" />
-            <div class="text-md font-medium mb-1">Drop your CV here</div>
-            <div class="text-xs text-jb-text-dim">PDF, DOC, or DOCX · max 10 MB</div>
-            <input type="file" accept=".pdf,.doc,.docx" class="hidden" #fileInput />
-            <jb-button [primary]="true" class="mt-4" (clicked)="fileInput.click()">Choose file</jb-button>
-          </div>
-        </div>
-      }
-
-      @if (selectedMode() === 'paste') {
-        <div class="max-w-[640px] w-full">
-          <div class="card p-[18px]">
-            <textarea placeholder="Paste your CV text here..."
-              class="w-full min-h-[240px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-sm leading-relaxed text-jb-text resize-y jb-scroll" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
-            <div class="flex justify-end mt-3">
-              <jb-button [primary]="true" icon="sparkle">Parse & import</jb-button>
+      @if (!preview()) {
+        @if (selectedMode() === 'pdf') {
+          <div class="max-w-[640px] w-full">
+            <div class="card p-10 text-center border-2 border-dashed border-jb-border-strong rounded-lg">
+              <jb-icon name="upload" [size]="28" class="text-jb-text-dim mb-3" />
+              <div class="text-md font-medium mb-1">{{ parsing() ? 'Parsing your CV…' : 'Upload your CV' }}</div>
+              <div class="text-xs text-jb-text-dim">PDF · max 10 MB</div>
+              <input type="file" accept=".pdf" class="hidden" #fileInput (change)="onCvPdfSelected($event)" />
+              <jb-button [primary]="true" class="mt-4 inline-block" [disabled]="parsing()" (clicked)="fileInput.click()">
+                {{ parsing() ? 'Parsing…' : 'Choose file' }}
+              </jb-button>
             </div>
           </div>
-        </div>
-      }
+        }
 
-      @if (selectedMode() === 'linkedin') {
+        @if (selectedMode() === 'paste') {
+          <div class="max-w-[640px] w-full">
+            <div class="card p-[18px]">
+              <textarea placeholder="Paste your CV text here..." [(ngModel)]="pastedText"
+                class="w-full min-h-[240px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-sm leading-relaxed text-jb-text resize-y jb-scroll" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
+              <div class="flex justify-end mt-3">
+                <jb-button [primary]="true" icon="sparkle" [disabled]="parsing()" (clicked)="parsePastedText()">
+                  {{ parsing() ? 'Parsing…' : 'Parse & import' }}
+                </jb-button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (selectedMode() === 'linkedin') {
+          <div class="max-w-[640px] w-full">
+            <div class="card p-6 text-center">
+              <jb-icon name="link" [size]="24" class="text-jb-info mb-3" />
+              <div class="text-md font-medium mb-1">Import from LinkedIn</div>
+              <div class="text-xs text-jb-text-dim mb-4">
+                On LinkedIn, open your profile → More → Save to PDF, then upload that file here.
+                We'll extract your headline, summary, and skills.
+              </div>
+              <input type="file" accept=".pdf" class="hidden" #liInput (change)="onLinkedInPdfSelected($event)" />
+              <jb-button [primary]="true" [disabled]="parsing()" (clicked)="liInput.click()">
+                {{ parsing() ? 'Parsing…' : 'Upload LinkedIn PDF' }}
+              </jb-button>
+            </div>
+          </div>
+        }
+      } @else {
+        <!-- Parsed preview -->
         <div class="max-w-[640px] w-full">
-          <div class="card p-6 text-center">
-            <jb-icon name="link" [size]="24" class="text-jb-info mb-3" />
-            <div class="text-md font-medium mb-1">Connect LinkedIn</div>
-            <div class="text-xs text-jb-text-dim mb-4">We'll import your profile, experience, education, and skills.</div>
-            <jb-button [primary]="true">Connect with LinkedIn</jb-button>
+          <div class="card p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <jb-icon name="check-circle" [size]="16" class="text-jb-success" />
+              <div class="text-md font-medium">Here's what we found</div>
+            </div>
+            <div class="flex flex-col gap-3">
+              @if (preview()!.fullName) {
+                <div>
+                  <div class="label">Name</div>
+                  <div class="text-base">{{ preview()!.fullName }}</div>
+                </div>
+              }
+              @if (preview()!.headline) {
+                <div>
+                  <div class="label">Headline</div>
+                  <div class="text-base">{{ preview()!.headline }}</div>
+                </div>
+              }
+              @if (preview()!.summary) {
+                <div>
+                  <div class="label">Summary</div>
+                  <div class="text-sm text-jb-text-mid leading-relaxed">{{ preview()!.summary }}</div>
+                </div>
+              }
+              @if (preview()!.skills.length > 0) {
+                <div>
+                  <div class="label">Skills ({{ preview()!.skills.length }})</div>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    @for (skill of preview()!.skills; track skill) {
+                      <span class="pill pill-neutral">{{ skill }}</span>
+                    }
+                  </div>
+                </div>
+              }
+              @if (preview()!.technologies.length > 0) {
+                <div>
+                  <div class="label">Technologies ({{ preview()!.technologies.length }})</div>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    @for (tech of preview()!.technologies; track tech) {
+                      <span class="pill pill-accent">{{ tech }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="flex gap-2 mt-5 justify-end">
+              <jb-button (clicked)="discardPreview()">Discard</jb-button>
+              <jb-button [primary]="true" icon="check" [disabled]="applying()" (clicked)="applyPreview()">
+                {{ applying() ? 'Applying…' : 'Apply to Master CV' }}
+              </jb-button>
+            </div>
+            <div class="text-xs text-jb-text-dim mt-3 text-right">
+              Merges into your existing profile — nothing is overwritten with blanks.
+            </div>
           </div>
         </div>
       }

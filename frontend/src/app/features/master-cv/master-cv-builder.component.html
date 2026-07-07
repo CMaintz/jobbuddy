@@ -2,12 +2,18 @@
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       <div class="font-medium text-md">Master CV</div>
       <div class="ml-auto flex gap-2 items-center">
-        <span class="text-xs text-jb-text-dim mono">saved</span>
-        <jb-button small icon="download">Export</jb-button>
+        <span class="text-xs mono"
+          [style.color]="dirty() ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
+          {{ saving() ? 'saving…' : dirty() ? 'unsaved changes' : 'saved' }}
+        </span>
+        <jb-button small icon="check" [primary]="dirty()" [disabled]="saving() || !dirty()" (clicked)="saveAll()">Save</jb-button>
+        <jb-button small icon="download" routerLink="/resume-builder">Export</jb-button>
         <jb-button small icon="upload" routerLink="/cv/import">Import</jb-button>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">Apply to job</jb-button>
       </div>
     </div>
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     @if (loading) {
       <div class="p-12 text-center text-jb-text-dim">Loading profile...</div>
@@ -63,34 +69,33 @@
               <div class="text-xs text-jb-text-dim">{{ sectionHint() }}</div>
             </div>
           </div>
-          <div class="flex-1 overflow-auto p-[18px] jb-scroll">
+          <div class="flex-1 overflow-auto p-[18px] jb-scroll" (input)="markDirty()" (change)="markDirty()">
             <!-- Header section -->
             @if (activeSec() === 'Header') {
               <div class="grid gap-3.5" style="grid-template-columns:1fr 1fr;">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Full name</span>
-                  <input [(ngModel)]="profileData.name" class="input" placeholder="Your name" />
+                  <input [(ngModel)]="privateInfo.fullName" class="input" placeholder="Your name" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Title</span>
-                  <input [(ngModel)]="profileData.title" class="input" placeholder="e.g. Senior Frontend Engineer" />
+                  <input [(ngModel)]="profile.headline" class="input" placeholder="e.g. Senior Frontend Engineer" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
-                  <span class="label">Email</span>
-                  <input [(ngModel)]="profileData.email" class="input mono" placeholder="you@example.com" />
+                  <span class="label">Contact email</span>
+                  <input [(ngModel)]="privateInfo.contactEmail" class="input mono" placeholder="you@example.com" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Phone</span>
-                  <input [(ngModel)]="profileData.phone" class="input mono" placeholder="+45 1234 5678" />
-                </label>
-                <label class="flex flex-col gap-[5px]">
-                  <span class="label">Website</span>
-                  <input [(ngModel)]="profileData.website" class="input mono" placeholder="https://yoursite.com" />
+                  <input [(ngModel)]="privateInfo.phone" class="input mono" placeholder="+45 1234 5678" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Location</span>
-                  <input [(ngModel)]="profileData.location" class="input" placeholder="Copenhagen, DK" />
+                  <input [(ngModel)]="privateInfo.location" class="input" placeholder="Copenhagen, DK" />
                 </label>
+              </div>
+              <div class="mt-3 text-xs text-jb-text-dim">
+                Contact details stay on your device and server — they are never sent to the AI provider.
               </div>
             }
 
@@ -99,13 +104,39 @@
               <div class="flex flex-col gap-3">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Profile / summary</span>
-                  <textarea [(ngModel)]="profileData.summary" rows="6" class="input resize-y text-base leading-relaxed"
+                  <textarea [(ngModel)]="profile.summary" rows="6" class="input resize-y text-base leading-relaxed"
                     placeholder="A brief professional summary..."></textarea>
                   <div class="text-xs text-jb-text-dim">Jobbuddy re-angles this per role at generation time.</div>
                 </label>
-                <button class="flex items-center gap-1.5 p-[7px_12px] bg-jb-accent-soft border border-jb-accent-border rounded-md text-jb-accent-2 text-xs font-medium cursor-pointer self-start">
-                  <jb-icon name="sparkle" [size]="11" /> Polish with AI
-                </button>
+                <label class="flex flex-col gap-[5px] self-start">
+                  <span class="label">Years of experience</span>
+                  <input [(ngModel)]="profile.yearsExperience" type="number" min="0" class="input mono w-24" placeholder="5" />
+                </label>
+              </div>
+            }
+
+            <!-- Strengths section -->
+            @if (activeSec() === 'Strengths') {
+              <div class="flex flex-col gap-3">
+                <div class="text-xs text-jb-text-dim">Punchy strengths shown as pills. Matched against job keywords at generation time.</div>
+                @for (s of strengthsList; track s.id || $index) {
+                  <div class="card p-3.5">
+                    <div class="flex gap-2 items-start">
+                      <div class="flex-1 grid gap-2" style="grid-template-columns:1fr 1.6fr;">
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Strength</span>
+                          <input [(ngModel)]="s.title" class="input" placeholder="e.g. Systems thinking" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Why it matters (optional)</span>
+                          <input [(ngModel)]="s.description" class="input" placeholder="One line of context" />
+                        </label>
+                      </div>
+                      <button class="icon-btn mt-5" title="Remove" (click)="removeStrength($index)"><jb-icon name="x" [size]="12" /></button>
+                    </div>
+                  </div>
+                }
+                <jb-button small icon="plus" (clicked)="addStrength()">Add strength</jb-button>
               </div>
             }
 
@@ -114,18 +145,31 @@
               <div class="flex flex-col gap-4">
                 @for (exp of experienceList; track exp.id || $index) {
                   <div class="card p-3.5">
-                    <div class="grid gap-2 mb-3" style="grid-template-columns:1.3fr 1fr 0.9fr;">
+                    <div class="flex gap-2 items-start">
+                      <div class="flex-1 grid gap-2 mb-3" style="grid-template-columns:1.3fr 1fr;">
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Company</span>
+                          <input [(ngModel)]="exp.companyName" class="input" placeholder="Company" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Role</span>
+                          <input [(ngModel)]="exp.title" class="input" placeholder="Role" />
+                        </label>
+                      </div>
+                      <button class="icon-btn mt-5" title="Remove" (click)="removeExperience($index)"><jb-icon name="x" [size]="12" /></button>
+                    </div>
+                    <div class="grid gap-2 mb-3" style="grid-template-columns:1fr 1fr 1fr;">
                       <label class="flex flex-col gap-[5px]">
-                        <span class="label">Company</span>
-                        <input [(ngModel)]="exp.companyName" class="input" placeholder="Company" />
+                        <span class="label">Start date</span>
+                        <input [(ngModel)]="exp.startDate" class="input mono" placeholder="2022-03-01" />
                       </label>
                       <label class="flex flex-col gap-[5px]">
-                        <span class="label">Role</span>
-                        <input [(ngModel)]="exp.title" class="input" placeholder="Role" />
+                        <span class="label">End date</span>
+                        <input [(ngModel)]="exp.endDate" class="input mono" placeholder="2024-06-30" [disabled]="exp.isCurrent" />
                       </label>
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Dates</span>
-                        <input [ngModel]="exp.startDate + ' \u2013 ' + (exp.endDate || 'Present')" class="input mono" readonly />
+                      <label class="flex items-center gap-2 mt-5 cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="exp.isCurrent" />
+                        <span class="text-sm text-jb-text-mid">Current role</span>
                       </label>
                     </div>
                     <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Description</div>
@@ -138,23 +182,23 @@
                     No experience entries yet. Add your work history.
                   </div>
                 }
+                <jb-button small icon="plus" (clicked)="addExperience()">Add experience</jb-button>
               </div>
             }
 
             <!-- Skills section -->
             @if (activeSec() === 'Skills') {
-              <div class="flex flex-col gap-2.5">
-                <div class="text-xs text-jb-text-dim leading-normal">
-                  Skills from your profile. Edit them in the Profile editor for now.
-                </div>
-                <div class="flex flex-wrap gap-1.5">
-                  @for (skill of skillsList; track skill) {
-                    <span class="pill pill-neutral">{{ skill }}</span>
-                  }
-                </div>
-                @if (skillsList.length === 0) {
-                  <div class="text-sm text-jb-text-dim">No skills added yet.</div>
-                }
+              <div class="flex flex-col gap-4">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">Skills</span>
+                  <jb-tag-input [value]="skillsList" (valueChange)="onSkillsChange($event)" placeholder="Add a skill…" />
+                  <div class="text-xs text-jb-text-dim">Broader competencies: architecture, accessibility, mentoring…</div>
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">Technologies</span>
+                  <jb-tag-input [value]="technologiesList" (valueChange)="onTechnologiesChange($event)" placeholder="Add a technology…" />
+                  <div class="text-xs text-jb-text-dim">Concrete tools & stacks: Angular, Spring Boot, PostgreSQL… Used directly for job matching.</div>
+                </label>
               </div>
             }
 
@@ -163,25 +207,33 @@
               <div class="flex flex-col gap-3">
                 @for (edu of educationList; track edu.id || $index) {
                   <div class="card p-3.5">
-                    <div class="grid gap-2" style="grid-template-columns:1.4fr 1.4fr 1fr;">
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">School</span>
-                        <input [(ngModel)]="edu.institution" class="input" placeholder="University" />
-                      </label>
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Degree</span>
-                        <input [(ngModel)]="edu.degree" class="input" placeholder="BSc Computer Science" />
-                      </label>
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Dates</span>
-                        <input [ngModel]="edu.startDate + ' \u2013 ' + (edu.endDate || 'Present')" class="input mono" readonly />
-                      </label>
+                    <div class="flex gap-2 items-start">
+                      <div class="flex-1 grid gap-2" style="grid-template-columns:1.4fr 1.4fr;">
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">School</span>
+                          <input [(ngModel)]="edu.institution" class="input" placeholder="University" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Degree</span>
+                          <input [(ngModel)]="edu.degree" class="input" placeholder="BSc Computer Science" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Start date</span>
+                          <input [(ngModel)]="edu.startDate" class="input mono" placeholder="2016-09-01" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">End date</span>
+                          <input [(ngModel)]="edu.endDate" class="input mono" placeholder="2019-06-30" />
+                        </label>
+                      </div>
+                      <button class="icon-btn mt-5" title="Remove" (click)="removeEducation($index)"><jb-icon name="x" [size]="12" /></button>
                     </div>
                   </div>
                 }
                 @if (educationList.length === 0) {
                   <div class="p-8 text-center text-jb-text-dim text-base">No education entries yet.</div>
                 }
+                <jb-button small icon="plus" (clicked)="addEducation()">Add education</jb-button>
               </div>
             }
 
@@ -190,24 +242,72 @@
               <div class="flex flex-col gap-3">
                 @for (proj of projectsList; track proj.id || $index) {
                   <div class="card p-3.5">
-                    <div class="grid gap-2" style="grid-template-columns:1fr 1.6fr 1fr;">
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Project</span>
-                        <input [(ngModel)]="proj.name" class="input" placeholder="Project name" />
-                      </label>
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Description</span>
-                        <input [(ngModel)]="proj.description" class="input" placeholder="Short description" />
-                      </label>
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Link</span>
-                        <input [(ngModel)]="proj.url" class="input mono" placeholder="https://..." />
-                      </label>
+                    <div class="flex gap-2 items-start">
+                      <div class="flex-1 grid gap-2" style="grid-template-columns:1fr 1.6fr;">
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Project</span>
+                          <input [(ngModel)]="proj.name" class="input" placeholder="Project name" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Description</span>
+                          <input [(ngModel)]="proj.description" class="input" placeholder="Short description" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">GitHub</span>
+                          <input [(ngModel)]="proj.githubUrl" class="input mono" placeholder="https://github.com/..." />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Live URL</span>
+                          <input [(ngModel)]="proj.liveUrl" class="input mono" placeholder="https://..." />
+                        </label>
+                      </div>
+                      <button class="icon-btn mt-5" title="Remove" (click)="removeProject($index)"><jb-icon name="x" [size]="12" /></button>
                     </div>
                   </div>
                 }
                 @if (projectsList.length === 0) {
                   <div class="p-8 text-center text-jb-text-dim text-base">No projects yet.</div>
+                }
+                <jb-button small icon="plus" (clicked)="addProject()">Add project</jb-button>
+              </div>
+            }
+
+            <!-- Certifications section -->
+            @if (activeSec() === 'Certifications') {
+              <div class="flex flex-col gap-3">
+                @for (cert of certificationsList; track cert.id || $index) {
+                  <div class="card p-3.5 flex justify-between items-center">
+                    <div>
+                      <div class="text-base font-medium">{{ cert.name }}</div>
+                      <div class="text-xs text-jb-text-dim">{{ cert.issuer }} {{ cert.issuedAt ? '· ' + cert.issuedAt : '' }}</div>
+                    </div>
+                    <button class="icon-btn" title="Remove" (click)="removeCertification($index)"><jb-icon name="x" [size]="12" /></button>
+                  </div>
+                }
+                @if (certificationsList.length === 0 && !showCertForm) {
+                  <div class="p-8 text-center text-jb-text-dim text-base">No certifications yet.</div>
+                }
+                @if (showCertForm) {
+                  <div class="card p-3.5 grid gap-2" style="grid-template-columns:1.4fr 1fr 0.8fr;">
+                    <label class="flex flex-col gap-[5px]">
+                      <span class="label">Name</span>
+                      <input [(ngModel)]="newCert.name" class="input" placeholder="AWS Certified Developer" />
+                    </label>
+                    <label class="flex flex-col gap-[5px]">
+                      <span class="label">Issuer</span>
+                      <input [(ngModel)]="newCert.issuer" class="input" placeholder="Amazon Web Services" />
+                    </label>
+                    <label class="flex flex-col gap-[5px]">
+                      <span class="label">Issued</span>
+                      <input [(ngModel)]="newCert.issuedAt" class="input mono" placeholder="2024-06-01" />
+                    </label>
+                    <div class="col-span-3 flex gap-2">
+                      <jb-button small [primary]="true" (clicked)="saveCertification()">Add</jb-button>
+                      <jb-button small (clicked)="showCertForm = false">Cancel</jb-button>
+                    </div>
+                  </div>
+                } @else {
+                  <jb-button small icon="plus" (clicked)="showCertForm = true">Add certification</jb-button>
                 }
               </div>
             }
@@ -217,36 +317,61 @@
               <div class="flex flex-col gap-3">
                 @for (lang of languagesList; track lang.id || $index) {
                   <div class="card p-3.5">
-                    <div class="grid gap-2" style="grid-template-columns:1fr 1.4fr;">
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Language</span>
-                        <input [(ngModel)]="lang.language" class="input" placeholder="English" />
-                      </label>
-                      <label class="flex flex-col gap-[5px]">
-                        <span class="label">Level</span>
-                        <input [(ngModel)]="lang.proficiency" class="input" placeholder="Native / Fluent / B2" />
-                      </label>
+                    <div class="flex gap-2 items-start">
+                      <div class="flex-1 grid gap-2" style="grid-template-columns:1fr 1.4fr;">
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Language</span>
+                          <input [(ngModel)]="lang.language" class="input" placeholder="English" />
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Level</span>
+                          <select [(ngModel)]="lang.proficiency" class="input">
+                            @for (p of proficiencies; track p) {
+                              <option [value]="p">{{ p | titlecase }}</option>
+                            }
+                          </select>
+                        </label>
+                      </div>
+                      <button class="icon-btn mt-5" title="Remove" (click)="removeLanguage($index)"><jb-icon name="x" [size]="12" /></button>
                     </div>
                   </div>
                 }
                 @if (languagesList.length === 0) {
                   <div class="p-8 text-center text-jb-text-dim text-base">No languages added yet.</div>
                 }
+                <jb-button small icon="plus" (clicked)="addLanguage()">Add language</jb-button>
               </div>
             }
 
-            <!-- Strengths section -->
-            @if (activeSec() === 'Strengths') {
-              <div class="flex flex-col gap-2.5">
-                <div class="text-xs text-jb-text-dim">Punchy strengths shown as pills. Matched against job keywords at generation time.</div>
-                <div class="flex flex-wrap gap-1.5">
-                  @for (s of strengthsList; track s) {
-                    <span class="pill pill-accent">{{ s }}</span>
-                  }
-                </div>
-                @if (strengthsList.length === 0) {
-                  <div class="text-sm text-jb-text-dim">No strengths added yet.</div>
+            <!-- Socials section -->
+            @if (activeSec() === 'Socials') {
+              <div class="flex flex-col gap-3">
+                <div class="text-xs text-jb-text-dim">Links shown in your CV header. Never sent to the AI provider.</div>
+                @for (social of socialsList; track social.id || $index) {
+                  <div class="card p-3.5">
+                    <div class="flex gap-2 items-start">
+                      <div class="flex-1 grid gap-2" style="grid-template-columns:0.8fr 1.8fr;">
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">Platform</span>
+                          <select [(ngModel)]="social.platform" (ngModelChange)="onSocialPlatformChange(social)" class="input">
+                            @for (p of socialPlatforms; track p) {
+                              <option [value]="p">{{ p }}</option>
+                            }
+                          </select>
+                        </label>
+                        <label class="flex flex-col gap-[5px]">
+                          <span class="label">URL</span>
+                          <input [(ngModel)]="social.url" class="input mono" placeholder="https://github.com/you" />
+                        </label>
+                      </div>
+                      <button class="icon-btn mt-5" title="Remove" (click)="removeSocial($index)"><jb-icon name="x" [size]="12" /></button>
+                    </div>
+                  </div>
                 }
+                @if (socialsList.length === 0) {
+                  <div class="p-8 text-center text-jb-text-dim text-base">No links added yet.</div>
+                }
+                <jb-button small icon="plus" (clicked)="addSocial()">Add link</jb-button>
               </div>
             }
           </div>
@@ -256,14 +381,31 @@
         <div class="hidden lg:flex overflow-auto p-5 justify-center jb-scroll" style="background:radial-gradient(ellipse at top,rgba(26,30,37,0.5) 0%,transparent 60%);">
           <div class="rounded-md self-start w-full" style="background:#f6f3ec;color:#1a1714;padding:56px 64px;box-shadow:0 18px 60px rgba(0,0,0,0.45);max-width:600px;font-size:12.5px;line-height:1.65;">
             <div style="margin-bottom:32px;">
-              <div style="font-size:18px;font-weight:500;letter-spacing:-0.01em;color:#1a1714;">{{ profileData.name || 'Your Name' }}</div>
-              <div style="font-size:11.5px;color:#6b6660;">{{ profileData.title || 'Your Title' }}</div>
-              <div style="font-size:11px;color:#6b6660;">{{ profileData.email }} · {{ profileData.phone }}</div>
+              <div style="font-size:18px;font-weight:500;letter-spacing:-0.01em;color:#1a1714;">{{ privateInfo.fullName || 'Your Name' }}</div>
+              <div style="font-size:11.5px;color:#6b6660;">{{ profile.headline || 'Your Title' }}</div>
+              <div style="font-size:11px;color:#6b6660;">{{ privateInfo.contactEmail }} {{ privateInfo.phone ? '· ' + privateInfo.phone : '' }} {{ privateInfo.location ? '· ' + privateInfo.location : '' }}</div>
+              @if (socialsList.length > 0) {
+                <div style="font-size:10.5px;color:#6b6660;margin-top:2px;">
+                  @for (social of socialsList; track social.id || $index) {
+                    <span>{{ social.url }}{{ !$last ? ' · ' : '' }}</span>
+                  }
+                </div>
+              }
             </div>
-            @if (profileData.summary) {
+            @if (profile.summary) {
               <div style="margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #d9d2c4;">
                 <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Profile</div>
-                <div style="font-size:12px;line-height:1.6;">{{ profileData.summary }}</div>
+                <div style="font-size:12px;line-height:1.6;">{{ profile.summary }}</div>
+              </div>
+            }
+            @if (strengthsList.length > 0) {
+              <div style="margin-bottom:20px;">
+                <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Strengths</div>
+                <div style="font-size:11px;">
+                  @for (s of strengthsList; track s.id || $index) {
+                    <span>{{ s.title }}{{ !$last ? ' · ' : '' }}</span>
+                  }
+                </div>
               </div>
             }
             @if (experienceList.length > 0) {
@@ -272,23 +414,49 @@
                 @for (exp of experienceList; track exp.id || $index) {
                   <div style="margin-bottom:12px;">
                     <div style="font-size:12.5px;font-weight:500;">{{ exp.title }} at {{ exp.companyName }}</div>
-                    <div style="font-size:10.5px;color:#6b6660;">{{ exp.startDate }} \u2013 {{ exp.endDate || 'Present' }}</div>
+                    <div style="font-size:10.5px;color:#6b6660;">{{ exp.startDate }} – {{ exp.isCurrent ? 'Present' : exp.endDate }}</div>
                   </div>
                 }
               </div>
             }
-            @if (skillsList.length > 0) {
+            @if (skillsList.length > 0 || technologiesList.length > 0) {
               <div style="margin-bottom:20px;">
                 <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Skills</div>
-                <div style="font-size:11px;color:#1a1714;">{{ skillsList.join(' \u00b7 ') }}</div>
+                <div style="font-size:11px;color:#1a1714;">{{ skillsList.concat(technologiesList).join(' · ') }}</div>
+              </div>
+            }
+            @if (projectsList.length > 0) {
+              <div style="margin-bottom:20px;">
+                <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Projects</div>
+                @for (proj of projectsList; track proj.id || $index) {
+                  <div style="font-size:12px;margin-bottom:4px;"><b style="font-weight:500;">{{ proj.name }}</b>{{ proj.description ? ' — ' + proj.description : '' }}</div>
+                }
               </div>
             }
             @if (educationList.length > 0) {
-              <div>
+              <div style="margin-bottom:20px;">
                 <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Education</div>
                 @for (edu of educationList; track edu.id || $index) {
-                  <div style="font-size:12px;">{{ edu.degree }} \u2014 {{ edu.institution }}</div>
+                  <div style="font-size:12px;">{{ edu.degree }} — {{ edu.institution }}</div>
                 }
+              </div>
+            }
+            @if (certificationsList.length > 0) {
+              <div style="margin-bottom:20px;">
+                <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Certifications</div>
+                @for (cert of certificationsList; track cert.id || $index) {
+                  <div style="font-size:12px;">{{ cert.name }}{{ cert.issuer ? ' — ' + cert.issuer : '' }}</div>
+                }
+              </div>
+            }
+            @if (languagesList.length > 0) {
+              <div>
+                <div style="font-size:10.5px;color:#6b6660;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Languages</div>
+                <div style="font-size:11px;">
+                  @for (lang of languagesList; track lang.id || $index) {
+                    <span>{{ lang.language }} ({{ lang.proficiency | titlecase }}){{ !$last ? ' · ' : '' }}</span>
+                  }
+                </div>
               </div>
             }
           </div>
