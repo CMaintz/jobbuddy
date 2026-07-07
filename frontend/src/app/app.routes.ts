@@ -222,9 +222,7 @@ export const routes: Routes = [
       // Redirects for old paths
       { path: 'jobs/search', redirectTo: 'jobs/feed', pathMatch: 'full' },
       { path: 'applications/pipeline', redirectTo: 'pipeline', pathMatch: 'full' },
-      // Templates are chosen inside the resume builder / output screens now
-      { path: 'templates', redirectTo: 'resume-builder', pathMatch: 'full' },
-      { path: 'profile', redirectTo: 'cv', pathMatch: 'full' },
+      { path: 'profile', redirectTo: 'settings?section=account', pathMatch: 'full' },
       { path: 'ai/generate', redirectTo: 'apply', pathMatch: 'full' },
       { path: 'ai/documents', redirectTo: 'documents', pathMatch: 'full' },
       { path: 'ai/cv', redirectTo: 'cv/import', pathMatch: 'full' },
