@@ -6,8 +6,10 @@
       <span class="text-sm text-jb-text-dim">/</span>
       <span class="text-base text-jb-text-mid">{{ job?.companyName || 'Loading' }}</span>
       <div class="ml-auto flex gap-1.5 items-center">
-        <jb-button small ghost icon="bookmark">Save</jb-button>
-        <jb-button small icon="external">Open original</jb-button>
+        <jb-button small [ghost]="!saved()" icon="bookmark" (clicked)="toggleSave()">{{ saved() ? 'Saved' : 'Save' }}</jb-button>
+        @if (job?.url) {
+          <jb-button small icon="external" (clicked)="openOriginal()">Open original</jb-button>
+        }
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job?.id }">
           {{ documents.length > 0 ? 'Regenerate' : 'Generate application' }}
         </jb-button>
@@ -153,10 +155,13 @@
 
             @if (tab() === 'notes') {
               <div class="max-w-[720px]">
-                <textarea [(ngModel)]="notesText"
+                <textarea [(ngModel)]="notesText" (blur)="saveNotes()"
                   class="w-full min-h-[240px] p-4 bg-jb-surface border border-jb-border rounded-lg text-jb-text text-md leading-[1.7] resize-y"
                   style="font-family:var(--font-mono,JetBrains Mono,monospace);"
                   placeholder="Add notes about this role..."></textarea>
+                <div class="text-xs text-jb-text-dim mt-1 h-4">
+                  {{ notesStatus() || 'Saved automatically when you click away.' }}
+                </div>
               </div>
             }
           </div>
