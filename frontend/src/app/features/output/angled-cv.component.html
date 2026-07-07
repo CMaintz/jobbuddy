@@ -6,274 +6,202 @@
           <button class="text-jb-text-dim text-sm hover:text-jb-text" (click)="goBack()">&larr; Back</button>
           <span class="text-jb-text-faint">/</span>
           <span class="text-md font-medium">Angled CV</span>
+          @if (application(); as app) {
+            <span class="text-sm text-jb-text-dim">· {{ app.jobCompanyName }} — {{ app.jobTitle }}</span>
+          }
         </div>
         <div class="flex items-center gap-2">
-          <button class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-jb-surface-2 border border-jb-border rounded-md text-jb-text cursor-pointer">
-            <jb-icon name="doc" [size]="12" />Open master CV
-          </button>
-          <button class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-jb-surface-2 border border-jb-border rounded-md text-jb-text cursor-pointer">
-            <jb-icon name="download" [size]="12" />PDF
-          </button>
-          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-jb-accent rounded-md cursor-pointer border-none" style="color:#1c1004;">
-            <jb-icon name="arrow-right" [size]="12" />Attach to application
-          </button>
+          @if (activeCv()) {
+            <jb-button small [primary]="true" icon="edit" [disabled]="openingDraft()" (clicked)="editInBuilder()">
+              {{ openingDraft() ? 'Opening…' : 'Edit in Resume Builder' }}
+            </jb-button>
+          }
         </div>
       </header>
 
-      <!-- Main grid -->
-      <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 lg:grid-cols-[1fr_320px]">
-        <!-- Paper area -->
-        <div class="flex flex-col min-w-0 min-h-0">
-          <!-- Paper toolbar -->
-          <div class="flex justify-between items-center px-4 py-2.5 bg-jb-surface border-b border-jb-border">
-            <div class="flex items-center gap-2.5">
-              <jb-icon name="doc" [size]="14" class="text-jb-text-mid" />
-              <div>
-                <div class="text-md font-medium">Angled for Anthropic - Design Engineer</div>
-                <div class="text-xs text-jb-text-dim">{{ toolbarSubtitle() }}</div>
+      <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+      @if (loading()) {
+        <div class="flex-1 flex items-center justify-center text-jb-text-dim">Loading…</div>
+      } @else if (loadError()) {
+        <div class="flex-1 flex items-center justify-center text-jb-text-dim">{{ loadError() }}</div>
+      } @else {
+        <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 lg:grid-cols-[1fr_320px]">
+          <!-- CV area -->
+          <div class="overflow-auto flex justify-center jb-scroll" style="padding:32px 32px 60px;background:radial-gradient(ellipse at top, #1a1e25 0%, var(--jb-bg) 60%);">
+            @if (activeCv(); as cv) {
+              <div class="w-full self-start" style="max-width:820px;">
+                <app-structured-document-renderer [document]="cv" />
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <!-- Diff/Clean toggle -->
-              <div class="flex items-center gap-0.5 p-0.5 bg-jb-surface-2 border border-jb-border rounded-md">
-                @for (m of modes; track m.key) {
-                  <button
-                    class="px-2 py-1 rounded text-xs font-medium cursor-pointer border-none"
-                    [class.bg-jb-surface]="mode() === m.key"
-                    [class.text-jb-text]="mode() === m.key"
-                    [class.text-jb-text-mid]="mode() !== m.key"
-                    [style.background]="mode() !== m.key ? 'transparent' : ''"
-                    (click)="mode.set($any(m.key))">
-                    {{ m.label }}
-                  </button>
-                }
-              </div>
-              <!-- Template picker -->
-              <div class="relative">
-                <button
-                  class="flex items-center gap-1.5 px-2 py-1 bg-jb-surface-2 border border-jb-border rounded-md text-sm font-medium text-jb-text cursor-pointer"
-                  (click)="tplOpen.set(!tplOpen())">
-                  <span class="w-4 h-[18px] rounded-sm flex-shrink-0"
-                    [style.background]="activeTemplate().swatchBg"
-                    [style.border]="'1px solid ' + activeTemplate().swatchAccent"></span>
-                  {{ activeTemplate().label }}
-                  <jb-icon name="chev-down" [size]="11" class="text-jb-text-dim" />
+            } @else {
+              <div class="self-center text-center max-w-[440px]">
+                <jb-icon name="sparkle" [size]="24" class="text-jb-accent" />
+                <div class="text-md font-medium mt-3 mb-1">No angled CV yet</div>
+                <div class="text-sm text-jb-text-dim mb-4">
+                  Generate a job-tailored CV from your master profile. Pick a prompt and angle in the panel, then generate.
+                </div>
+                <button class="px-4 py-2 bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer inline-flex items-center gap-1.5"
+                  style="color:#1c1004;border-color:#c8881c;"
+                  [style.opacity]="generating() ? '0.6' : '1'"
+                  (click)="generate()">
+                  <jb-icon name="sparkle" [size]="12" />
+                  {{ generating() ? 'Generating… (up to a minute)' : 'Generate angled CV' }}
                 </button>
-                @if (tplOpen()) {
-                  <div class="fixed inset-0 z-[5]" (click)="tplOpen.set(false)"></div>
-                  <div class="absolute top-[calc(100%+6px)] right-0 z-[6] w-[260px] p-1.5 bg-jb-surface border border-jb-border-strong rounded-lg"
-                       style="box-shadow:0 14px 40px rgba(0,0,0,0.4);">
-                    @for (t of templates; track t.key) {
-                      <button
-                        class="w-full p-2 flex items-center gap-2.5 rounded-md border-none text-left cursor-pointer text-jb-text"
-                        [class.bg-jb-surface-3]="template() === t.key"
-                        [style.background]="template() !== t.key ? 'transparent' : ''"
-                        (click)="template.set(t.key); tplOpen.set(false)">
-                        <div class="w-9 h-[46px] rounded-sm flex-shrink-0 flex flex-col justify-start p-1.5 gap-1"
-                             [style.background]="t.swatchBg"
-                             [style.border]="'1px solid ' + t.swatchAccent + '33'"
-                             style="box-shadow:0 2px 8px rgba(0,0,0,0.3);">
-                          <div class="h-[3px] rounded-sm" [style.background]="t.swatchAccent" style="width:70%;"></div>
-                        </div>
-                        <div class="min-w-0">
-                          <div class="text-sm font-medium">{{ t.label }}</div>
-                          <div class="text-xs text-jb-text-dim">{{ t.sub }}</div>
-                        </div>
-                        @if (template() === t.key) {
-                          <jb-icon name="check" [size]="12" class="text-jb-accent ml-auto" />
-                        }
-                      </button>
-                    }
-                  </div>
-                }
               </div>
-            </div>
+            }
           </div>
 
-          <!-- CV Paper -->
-          <div class="flex-1 overflow-auto flex justify-center jb-scroll" style="padding:32px 40px 60px;background:radial-gradient(ellipse at top, #1a1e25 0%, var(--jb-bg) 60%);">
-            <div class="w-full rounded-md" style="max-width:720px;padding:44px 48px;box-shadow:0 18px 60px rgba(0,0,0,0.45);min-height:600px;"
-                 [style.background]="activeTemplate().bg"
-                 [style.color]="activeTemplate().fg"
-                 [style.font-family]="activeTemplate().font"
-                 [style.font-size.px]="activeTemplate().size"
-                 [style.line-height]="activeTemplate().lineH">
-              <!-- Name -->
-              @if (activeTemplate().sectionStyle === 'underline') {
-                <div class="text-center pb-3.5 mb-4" [style.border-bottom]="'1px solid ' + activeTemplate().divider">
-                  <div [style.font-size.px]="activeTemplate().nameSize" [style.font-weight]="activeTemplate().nameWeight" style="letter-spacing:-0.01em;">Marta Olsen</div>
-                  <div class="mt-1" [style.color]="activeTemplate().muted" style="font-size:12px;">Design Engineer - Product UI - Motion</div>
-                  <div class="mt-1" [style.color]="activeTemplate().muted" style="font-size:10.5px;">marta&#64;olsen.dk - +45 28 13 09 04 - Copenhagen</div>
-                </div>
-              } @else {
-                <div class="flex justify-between items-baseline pb-3 mb-4" [style.border-bottom]="'1px solid ' + activeTemplate().divider">
-                  <div>
-                    <div [style.font-size.px]="activeTemplate().nameSize" [style.font-weight]="activeTemplate().nameWeight" style="letter-spacing:-0.02em;">Marta Olsen</div>
-                    <div class="mt-0.5" [style.color]="activeTemplate().muted" style="font-size:11.5px;">Design Engineer - Product UI - Motion</div>
-                  </div>
-                  <div [style.color]="activeTemplate().muted" class="text-right" style="font-size:10.5px;line-height:1.5;">
-                    marta&#64;olsen.dk - +45 28 13 09 04<br/>martaolsen.dk - Copenhagen, DK
-                  </div>
-                </div>
-              }
-
-              <!-- Profile -->
-              <div class="mb-4">
-                <div [class]="sectionLabelClass()">Profile</div>
-                <div [style.font-size.px]="activeTemplate().size + 0.5" style="line-height:1.65;">
-                  Senior frontend engineer with 7 years of experience building polished web products.
-                  @if (mode() === 'diff') {
-                    <span class="diff-add">Specialising in the design-engineering seam: motion, prototyping, and component systems for AI-first surfaces.</span>
-                  } @else {
-                    Specialising in the design-engineering seam: motion, prototyping, and component systems for AI-first surfaces.
-                  }
-                  Previously at Mercury, Linear and Klarna.
-                </div>
-              </div>
-
-              <!-- Experience -->
-              <div [class]="sectionLabelClass()">Experience</div>
-              <div class="flex flex-col gap-3.5">
-                @for (job of experience; track job.company) {
-                  <div>
-                    <div class="flex justify-between items-baseline">
-                      <div [style.font-size.px]="activeTemplate().size + 1.5" style="font-weight:600;">
-                        {{ job.role }} - <span style="font-weight:500;opacity:0.85;">{{ job.company }}</span>
-                      </div>
-                      <div [style.color]="activeTemplate().muted" class="font-mono" style="font-size:10.5px;">{{ job.dates }}</div>
-                    </div>
-                    <ul style="margin:6px 0 0;padding-left:18px;" class="flex flex-col gap-1">
-                      @for (b of job.bullets; track b.id) {
-                        @if (b.mode === 'cut' && mode() === 'clean') {
-                          <!-- hidden in clean mode -->
-                        } @else if (b.mode === 'cut') {
-                          <li [style.color]="activeTemplate().muted" style="text-decoration:line-through;text-decoration-color:rgba(0,0,0,0.25);">
-                            <span class="font-mono text-2xs mr-1" style="color:#c44;">cut</span>
-                            {{ b.text }}
-                          </li>
-                        } @else if (b.mode === 'moved') {
-                          <li style="line-height:1.55;">
-                            <span class="font-mono text-2xs mr-1 px-1 rounded-sm" style="color:#c97a14;background:rgba(245,166,35,0.12);">moved &uarr;</span>
-                            {{ b.text }}
-                          </li>
-                        } @else if (b.mode === 'add') {
-                          <li style="line-height:1.55;">
-                            @if (mode() === 'diff') {
-                              <span class="diff-add">{{ b.text }}</span>
-                            } @else {
-                              {{ b.text }}
-                            }
-                          </li>
-                        } @else {
-                          <li style="line-height:1.55;">{{ b.text }}</li>
-                        }
-                      }
-                    </ul>
-                  </div>
-                }
-              </div>
-
-              <!-- Skills -->
-              <div class="mt-4">
-                <div [class]="sectionLabelClass()">Skills</div>
-                <div style="font-size:11.5px;opacity:0.92;">
-                  <b>React - TypeScript - Motion - Prototyping - Design systems - Accessibility</b> - GraphQL - Node - Figma - Rust (hobby)
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right sidebar (desktop) -->
-        <aside class="hidden lg:flex border-l border-jb-border flex-col min-h-0 overflow-auto jb-scroll">
-          <ng-container *ngTemplateOutlet="sidebarContent" />
-        </aside>
-      </div>
-
-      <!-- Mobile sidebar drawer -->
-      @if (mobileShowSidebar()) {
-        <div class="fixed inset-0 z-40 lg:hidden">
-          <div class="absolute inset-0 bg-black/50" (click)="mobileShowSidebar.set(false)"></div>
-          <div class="absolute right-0 top-0 bottom-0 w-[320px] max-w-[85vw] bg-jb-bg border-l border-jb-border flex flex-col overflow-auto jb-scroll"
-               (click)="$event.stopPropagation()">
-            <div class="flex items-center justify-between p-3 border-b border-jb-border flex-shrink-0">
-              <span class="text-sm font-medium">CV Details</span>
-              <button class="p-1 text-jb-text-dim cursor-pointer bg-transparent border-none" (click)="mobileShowSidebar.set(false)">
-                <jb-icon name="x" [size]="14" />
-              </button>
-            </div>
+          <!-- Sidebar -->
+          <aside class="hidden lg:flex border-l border-jb-border flex-col min-h-0 overflow-auto jb-scroll">
             <ng-container *ngTemplateOutlet="sidebarContent" />
-          </div>
+          </aside>
         </div>
-      }
 
-      <!-- Mobile FAB -->
-      <button class="fixed bottom-4 right-4 z-30 lg:hidden flex items-center gap-2 px-4 py-2.5 bg-jb-accent rounded-full text-sm font-semibold cursor-pointer border-none"
-              style="color:#1c1004;box-shadow:0 4px 16px rgba(0,0,0,0.3);"
-              (click)="mobileShowSidebar.set(true)">
-        <jb-icon name="target" [size]="14" /> Fit &amp; details
-      </button>
+        <!-- Mobile sidebar drawer -->
+        @if (mobileShowSidebar()) {
+          <div class="fixed inset-0 z-40 lg:hidden">
+            <div class="absolute inset-0 bg-black/50" (click)="mobileShowSidebar.set(false)"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-[320px] max-w-[85vw] bg-jb-bg border-l border-jb-border flex flex-col overflow-auto jb-scroll"
+                 (click)="$event.stopPropagation()">
+              <div class="flex items-center justify-between p-3 border-b border-jb-border flex-shrink-0">
+                <span class="text-sm font-medium">Angle & ATS</span>
+                <button class="p-1 text-jb-text-dim cursor-pointer bg-transparent border-none" (click)="mobileShowSidebar.set(false)">
+                  <jb-icon name="x" [size]="14" />
+                </button>
+              </div>
+              <ng-container *ngTemplateOutlet="sidebarContent" />
+            </div>
+          </div>
+        }
+
+        <!-- Mobile FAB -->
+        <button class="fixed bottom-4 right-4 z-30 lg:hidden flex items-center gap-2 px-4 py-2.5 bg-jb-accent rounded-full text-sm font-semibold cursor-pointer border-none"
+                style="color:#1c1004;box-shadow:0 4px 16px rgba(0,0,0,0.3);"
+                (click)="mobileShowSidebar.set(true)">
+          <jb-icon name="sparkle" [size]="14" /> Angle
+        </button>
+      }
     </div>
 
-    <!-- Sidebar content template -->
+    <!-- Sidebar content -->
     <ng-template #sidebarContent>
-      <!-- Fit score -->
+      <!-- Generation config -->
       <div class="p-4 border-b border-jb-border">
-        <div class="flex items-center gap-2">
-          <jb-icon name="target" [size]="13" class="text-jb-accent" />
-          <div class="text-sm font-semibold">Fit score</div>
-          <span class="ml-auto font-mono text-md text-jb-accent-2">92</span>
-        </div>
-        <div class="mt-2 h-1.5 rounded-full bg-jb-surface-3 overflow-hidden">
-          <div class="h-full rounded-full bg-jb-accent" style="width:92%;"></div>
-        </div>
-        <div class="mt-2.5 text-xs text-jb-text-dim">
-          <span class="text-jb-success">+14</span> vs master - 9 of 10 JD keywords picked up.
-        </div>
-      </div>
-
-      <!-- Changes vs master -->
-      <div class="p-4 border-b border-jb-border">
-        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Changes vs master</div>
-        <div class="flex flex-col gap-1.5">
-          @for (change of changesList; track change.label) {
-            <div class="flex items-start gap-2 text-xs text-jb-text-mid">
-              <span class="font-mono text-2xs px-1.5 py-0.5 rounded-sm text-center flex-shrink-0" style="min-width:36px;"
-                [style.background]="changeBg(change.type)"
-                [style.color]="changeColor(change.type)">{{ change.type }}</span>
-              <span>{{ change.label }}</span>
-            </div>
+        <div class="flex items-center gap-2 mb-2.5">
+          <jb-icon name="sparkle" [size]="13" class="text-jb-accent" />
+          <div class="text-sm font-semibold">{{ activeCv() ? 'Regenerate' : 'Generate' }}</div>
+          @if (versionCount() > 0) {
+            <span class="ml-auto text-xs text-jb-text-dim font-mono">v{{ versionCount() }} · {{ ageLabel(cvDocuments()[0].createdAt) }}</span>
           }
         </div>
-      </div>
 
-      <!-- Keyword coverage -->
-      <div class="p-4 border-b border-jb-border">
-        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Keyword coverage</div>
-        <div class="grid grid-cols-2 gap-1">
-          @for (kw of keywords; track kw.term) {
-            <div class="flex items-center gap-1.5 text-xs" [class.text-jb-text]="kw.hit" [class.text-jb-text-dim]="!kw.hit">
-              @if (kw.hit) {
-                <jb-icon name="check" [size]="10" class="text-jb-success" />
-              } @else {
-                <jb-icon name="x" [size]="10" class="text-jb-text-faint" />
-              }
-              <span>{{ kw.term }}</span>
-            </div>
+        @if (promptTemplates.length > 0) {
+          <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Prompt</div>
+          <select class="input mb-2.5" [ngModel]="selectedPromptId()" (ngModelChange)="selectedPromptId.set($event || null)">
+            <option [ngValue]="null">Default prompt</option>
+            @for (tpl of promptTemplates; track tpl.id) {
+              <option [ngValue]="tpl.id">{{ tpl.name }}</option>
+            }
+          </select>
+        }
+
+        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Language</div>
+        <div class="grid gap-1 mb-2.5" style="grid-template-columns:repeat(2,1fr);">
+          @for (lang of languages; track lang) {
+            <button (click)="selectedLanguage.set(lang)"
+              class="p-[5px_8px] rounded cursor-pointer text-[11.5px] font-medium"
+              [style.background]="selectedLanguage() === lang ? 'var(--jb-surface-3)' : 'transparent'"
+              [style.border]="'1px solid ' + (selectedLanguage() === lang ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+              [style.color]="selectedLanguage() === lang ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ lang }}</button>
           }
         </div>
-      </div>
 
-      <!-- Re-angle prompts -->
-      <div class="p-4">
-        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Re-angle</div>
-        <div class="flex flex-col gap-1.5">
+        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Angle</div>
+        <div class="flex flex-col gap-1.5 mb-2">
           @for (prompt of anglePrompts; track prompt) {
-            <button class="flex items-center gap-2 px-2.5 py-[7px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer">
-              <jb-icon name="sparkle" [size]="11" class="text-jb-accent" />
+            <button class="flex items-center gap-2 px-2.5 py-[6px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer"
+              (click)="addAngle(prompt)">
+              <jb-icon name="plus" [size]="10" class="text-jb-accent" />
               <span>{{ prompt }}</span>
             </button>
           }
         </div>
+        <textarea [(ngModel)]="customInstructions" rows="3" class="input resize-y text-xs leading-normal"
+          placeholder="Angle instructions — e.g. emphasise leadership, drop anything older than 2018…"></textarea>
+
+        <button class="mt-2.5 w-full p-[8px_12px] bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer flex items-center justify-center gap-1.5"
+          style="color:#1c1004;border-color:#c8881c;"
+          [style.opacity]="generating() ? '0.6' : '1'"
+          (click)="generate()">
+          <jb-icon name="sparkle" [size]="12" />
+          {{ generating() ? 'Generating…' : activeCv() ? 'Regenerate CV' : 'Generate angled CV' }}
+        </button>
       </div>
+
+      <!-- ATS report -->
+      @if (atsReport(); as ats) {
+        <div class="p-4 border-b border-jb-border">
+          <div class="flex items-center gap-2 mb-2.5">
+            <span class="text-[24px] font-semibold num"
+              [style.color]="ats.score >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ ats.score }}</span>
+            <div>
+              <div class="text-sm font-semibold">ATS score</div>
+              <div class="text-xs text-jb-text-dim">{{ ats.keywordCoverage }}% keyword coverage</div>
+            </div>
+          </div>
+
+          @if (ats.matchedKeywords.length > 0) {
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Matched keywords</div>
+            <div class="flex flex-wrap gap-1 mb-2.5">
+              @for (kw of ats.matchedKeywords; track kw) {
+                <span class="pill pill-success">{{ kw }}</span>
+              }
+            </div>
+          }
+          @if (ats.missingKeywords.length > 0) {
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Missing keywords</div>
+            <div class="flex flex-wrap gap-1 mb-2.5">
+              @for (kw of ats.missingKeywords; track kw) {
+                <span class="pill pill-danger">{{ kw }}</span>
+              }
+            </div>
+          }
+          @if (ats.checks.length > 0) {
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Checks</div>
+            <div class="flex flex-col gap-1">
+              @for (check of ats.checks; track check.code) {
+                <div class="flex items-start gap-1.5 text-xs">
+                  <jb-icon [name]="check.status === 'PASS' ? 'check-circle' : check.status === 'FAIL' ? 'x-circle' : 'lightbulb'" [size]="12"
+                    [class]="check.status === 'PASS' ? 'text-jb-success' : check.status === 'FAIL' ? 'text-jb-danger' : 'text-jb-accent'" />
+                  <span class="text-jb-text-mid">{{ check.label }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- What changed vs master -->
+      @if (profileDiff(); as diff) {
+        <div class="p-4 border-b border-jb-border">
+          <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Profile — vs master CV</div>
+          <jb-diff-viewer [before]="diff.before" [after]="diff.after" />
+        </div>
+      }
+
+      <!-- Versions -->
+      @if (cvDocuments().length > 1) {
+        <div class="p-4">
+          <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Versions</div>
+          <div class="flex flex-col gap-1">
+            @for (doc of cvDocuments(); track doc.id; let i = $index) {
+              <div class="flex items-center gap-2 text-xs text-jb-text-mid">
+                <span class="mono">v{{ cvDocuments().length - i }}</span>
+                <span class="text-jb-text-dim">{{ ageLabel(doc.createdAt) }}</span>
+                @if (i === 0) { <jb-pill tone="accent">current</jb-pill> }
+              </div>
+            }
+          </div>
+        </div>
+      }
     </ng-template>
