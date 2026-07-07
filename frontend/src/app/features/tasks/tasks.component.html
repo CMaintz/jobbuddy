@@ -2,79 +2,99 @@
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       <div class="font-medium text-md">Tasks</div>
       <div class="ml-auto flex gap-2 items-center">
-        <jb-button small icon="plus">Add task</jb-button>
+        <jb-button small icon="plus" (clicked)="showForm.set(!showForm())">Add follow-up</jb-button>
       </div>
     </div>
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     <!-- Content -->
     <div class="flex-1 overflow-auto p-[16px_20px] jb-scroll">
       <div class="max-w-[800px]">
-        <!-- Summary strip -->
-        <div class="flex gap-4 mb-4">
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="text-jb-danger font-semibold">{{ overdueCount }}</span>
-            <span class="text-jb-text-dim">Overdue</span>
-          </div>
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="text-jb-accent-2 font-semibold">{{ todayCount }}</span>
-            <span class="text-jb-text-dim">Due today</span>
-          </div>
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="font-semibold">{{ weekCount }}</span>
-            <span class="text-jb-text-dim">This week</span>
-          </div>
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="text-jb-success font-semibold">{{ doneCount }}</span>
-            <span class="text-jb-text-dim">Done today</span>
-          </div>
-        </div>
-
-        <!-- Filter chips -->
-        <div class="flex gap-1 mb-4">
-          @for (f of filters; track f) {
-            <button (click)="activeFilter.set(f)"
-              [class]="'pill pill-' + (activeFilter() === f ? 'accent' : 'neutral')"
-              class="cursor-pointer">{{ f }}</button>
-          }
-        </div>
-
-        <!-- Grouped tasks -->
-        @for (group of groups; track group.key) {
-          @if (tasksForGroup(group.key).length > 0) {
-            <div class="mb-5">
-              <div class="text-xs font-medium uppercase tracking-widest py-[6px] mb-[4px]"
-                [style.color]="group.key === 'overdue' ? 'var(--jb-danger)' : 'var(--jb-text-dim)'">
-                {{ group.label }}
-              </div>
-              @for (task of tasksForGroup(group.key); track task.id) {
-                <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint" style="grid-template-columns:24px 28px 1fr auto auto;"
-                  [style.opacity]="done.has(task.id) ? '0.4' : '1'"
-                  [style.text-decoration]="done.has(task.id) ? 'line-through' : 'none'">
-                  <!-- Checkbox -->
-                  <button (click)="toggleDone(task.id)"
-                    class="w-4 h-4 rounded flex items-center justify-center bg-transparent cursor-pointer" style="border:1.5px solid var(--jb-border-strong);"
-                    [style.background]="done.has(task.id) ? 'var(--jb-accent)' : 'transparent'"
-                    [style.border-color]="done.has(task.id) ? 'var(--jb-accent)' : 'var(--jb-border-strong)'">
-                    @if (done.has(task.id)) { <jb-icon name="check" [size]="9" [strokeWidth]="3" style="color:#1c1004;" /> }
-                  </button>
-
-                  <!-- Company mark -->
-                  <jb-company-mark [name]="task.company" [size]="22" />
-
-                  <!-- Content -->
-                  <div class="min-w-0">
-                    <div class="text-base font-medium">{{ task.what }}</div>
-                    <div class="text-xs text-jb-text-dim">{{ task.company }} · {{ task.detail }}</div>
-                  </div>
-
-                  <!-- Kind pill -->
-                  <jb-pill [tone]="task.tone">{{ task.kind }}</jb-pill>
-
-                  <!-- Action button -->
-                  <jb-button small>{{ task.action }}</jb-button>
-                </div>
-              }
+        @if (showForm()) {
+          <div class="card p-3.5 mb-4">
+            <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">New follow-up reminder</div>
+            <div class="grid gap-2" style="grid-template-columns:1.4fr 1.6fr 1fr auto;">
+              <select [(ngModel)]="newAppId" class="input">
+                <option value="" disabled>Application…</option>
+                @for (app of applications; track app.id) {
+                  <option [value]="app.id">{{ app.jobCompanyName }} — {{ app.jobTitle }}</option>
+                }
+              </select>
+              <input [(ngModel)]="newNote" class="input" placeholder="What to do — e.g. Send follow-up email" />
+              <input [(ngModel)]="newDue" type="date" class="input mono" />
+              <jb-button small [primary]="true" (clicked)="createReminder()">Add</jb-button>
             </div>
+          </div>
+        }
+
+        @if (loading()) {
+          <div class="p-10 text-center text-jb-text-dim">Loading reminders…</div>
+        } @else {
+          <!-- Summary strip -->
+          <div class="flex gap-4 mb-4">
+            <div class="flex items-center gap-1.5 text-sm">
+              <span class="text-jb-danger font-semibold">{{ overdueCount }}</span>
+              <span class="text-jb-text-dim">Overdue</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm">
+              <span class="text-jb-accent-2 font-semibold">{{ todayCount }}</span>
+              <span class="text-jb-text-dim">Due today</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm">
+              <span class="font-semibold">{{ weekCount }}</span>
+              <span class="text-jb-text-dim">This week</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm">
+              <span class="text-jb-success font-semibold">{{ doneToday() }}</span>
+              <span class="text-jb-text-dim">Done today</span>
+            </div>
+          </div>
+
+          @if (rows().length === 0) {
+            <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md">
+              <jb-icon name="check-circle" [size]="20" class="text-jb-success" />
+              <div class="text-base text-jb-text-mid mt-2">All caught up — no open follow-ups.</div>
+              <div class="text-xs text-jb-text-dim mt-1">Add one from an application, or with the button above.</div>
+            </div>
+          }
+
+          <!-- Grouped tasks -->
+          @for (group of groups; track group.key) {
+            @if (tasksForGroup(group.key).length > 0) {
+              <div class="mb-5">
+                <div class="text-xs font-medium uppercase tracking-widest py-[6px] mb-[4px]"
+                  [style.color]="group.key === 'overdue' ? 'var(--jb-danger)' : 'var(--jb-text-dim)'">
+                  {{ group.label }}
+                </div>
+                @for (row of tasksForGroup(group.key); track row.reminder.id) {
+                  <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint" style="grid-template-columns:24px 28px 1fr auto auto auto;">
+                    <!-- Complete checkbox -->
+                    <button (click)="complete(row)" title="Mark done"
+                      class="w-4 h-4 rounded flex items-center justify-center bg-transparent cursor-pointer" style="border:1.5px solid var(--jb-border-strong);">
+                    </button>
+
+                    <!-- Company mark -->
+                    <jb-company-mark [name]="row.company" [size]="22" />
+
+                    <!-- Content -->
+                    <div class="min-w-0 cursor-pointer" (click)="openApplication(row)">
+                      <div class="text-base font-medium">{{ row.reminder.note || 'Follow up' }}</div>
+                      <div class="text-xs text-jb-text-dim">{{ row.company }}{{ row.role ? ' · ' + row.role : '' }}</div>
+                    </div>
+
+                    <!-- Due pill -->
+                    <jb-pill [tone]="group.key === 'overdue' ? 'danger' : group.key === 'today' ? 'accent' : 'neutral'">{{ row.dueLabel }}</jb-pill>
+
+                    <!-- Open application -->
+                    <jb-button small (clicked)="openApplication(row)">Open</jb-button>
+
+                    <!-- Delete -->
+                    <button class="icon-btn" title="Delete" (click)="remove(row)"><jb-icon name="x" [size]="12" /></button>
+                  </div>
+                }
+              </div>
+            }
           }
         }
       </div>
