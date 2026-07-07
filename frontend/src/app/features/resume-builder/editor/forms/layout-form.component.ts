@@ -16,6 +16,7 @@ const TEMPLATES: { type: TemplateType; label: string; description: string }[] = 
 
 /** Sections that can carry typography overrides (matches rbSection tags in the layouts). */
 const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
+  { id: 'header', label: 'Header / contact' },
   { id: 'summary', label: 'Summary' },
   { id: 'experience', label: 'Experience' },
   { id: 'education', label: 'Education' },

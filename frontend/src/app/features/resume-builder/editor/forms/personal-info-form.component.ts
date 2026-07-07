@@ -3,12 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
+import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.component';
 
 @Component({
   selector: 'app-personal-info-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RichTextEditorComponent, PhotoCropDialogComponent],
+  imports: [CommonModule, FormsModule, RichTextEditorComponent, PhotoCropDialogComponent, AiRefineMenuComponent],
   templateUrl: './personal-info-form.component.html',
   styleUrls: ['./personal-info-form.component.css'],
 })
@@ -19,6 +20,7 @@ export class PersonalInfoFormComponent {
 
   get pi() { return this.state.personalInfo(); }
   get photoShape() { return this.state.settings().photoStyle ?? 'circle'; }
+  get jobDescription() { return this.state.jobDescription() ?? undefined; }
 
   update(field: string, value: string): void {
     this.state.updatePersonalInfo({ [field]: value } as any);
