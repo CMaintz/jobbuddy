@@ -1,104 +1,105 @@
     <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-none gap-3">
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       <div class="font-medium text-md">Interviews</div>
-      <div class="ml-auto flex gap-2 items-center">
-        <jb-button small icon="calendar">Sync calendar</jb-button>
-        <jb-button [primary]="true" icon="plus">Log interview</jb-button>
+      <div class="ml-auto text-xs text-jb-text-dim">
+        {{ interviews().length }} in interview stages
       </div>
     </div>
 
-    <!-- Summary cards -->
-    <div class="p-3.5 px-[22px] grid gap-3 border-b border-jb-border grid-cols-2 md:grid-cols-4">
-      @for (s of summaryCards; track s.label) {
-        <div class="card p-3 px-3.5 flex items-center gap-3">
-          <div class="text-[24px] font-medium tracking-tight" style="font-variant-numeric:tabular-nums;"
-            [style.color]="s.color">{{ s.value }}</div>
-          <div class="text-xs text-jb-text-dim">{{ s.label }}</div>
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+    @if (loading()) {
+      <div class="p-12 text-center text-jb-text-dim">Loading…</div>
+    } @else if (interviews().length === 0) {
+      <div class="flex-1 flex items-center justify-center">
+        <div class="p-10 text-center max-w-[420px]">
+          <jb-icon name="briefcase" [size]="24" class="text-jb-text-dim" />
+          <div class="text-md font-medium mt-3 mb-1">No interviews yet</div>
+          <div class="text-sm text-jb-text-dim">
+            When an application reaches the screen / interview / technical stage in your pipeline, it shows up here with an AI prep question bank.
+          </div>
         </div>
-      }
-    </div>
-
-    <!-- Tabs -->
-    <div class="p-3 px-[22px] flex items-center gap-1.5 border-b border-jb-border">
-      @for (t of tabs; track t.key) {
-        <button (click)="activeTab.set(t.key)"
-          class="py-[5px] px-2.5 rounded-full cursor-pointer text-sm font-medium inline-flex items-center gap-1.5"
-          [style.background]="activeTab() === t.key ? 'var(--jb-surface-3)' : 'transparent'"
-          [style.border]="'1px solid ' + (activeTab() === t.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
-          [style.color]="activeTab() === t.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
-          {{ t.label }}
-          <span class="mono text-xs text-jb-text-dim">{{ t.count }}</span>
-        </button>
-      }
-    </div>
-
-    <!-- Interview cards -->
-    <div class="flex-1 overflow-auto p-[22px] jb-scroll">
-      <div class="grid gap-3.5 grid-cols-1 md:grid-cols-2">
-        @for (iv of shownInterviews(); track iv.id) {
-          <div class="card p-4 flex flex-col gap-3">
-            <!-- Header -->
-            <div class="flex items-start gap-3">
-              <jb-company-mark [name]="iv.company" [size]="34" />
+      </div>
+    } @else {
+      <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[320px_1fr]">
+        <!-- Interview list -->
+        <aside class="border-r border-jb-border overflow-auto jb-scroll">
+          @for (app of interviews(); track app.id) {
+            <div (click)="select(app)"
+              class="flex items-center gap-2.5 p-[12px_14px] border-b border-jb-border-faint cursor-pointer"
+              [style.background]="selected()?.id === app.id ? 'var(--jb-surface-2)' : 'transparent'">
+              <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="30" />
               <div class="flex-1 min-w-0">
-                <div class="text-[13.5px] font-medium">{{ iv.role }}</div>
-                <div class="text-xs text-jb-text-dim">{{ iv.company }} · Round {{ iv.round }}</div>
+                <div class="text-base font-medium truncate">{{ app.jobCompanyName }}</div>
+                <div class="text-xs text-jb-text-dim truncate">{{ app.jobTitle }}</div>
               </div>
-              @if (iv.status === 'upcoming') {
-                <jb-pill tone="accent">{{ iv.when }}</jb-pill>
-              } @else if (iv.outcome) {
-                <jb-pill [tone]="outcomeConfig(iv.outcome).tone">{{ outcomeConfig(iv.outcome).label }}</jb-pill>
-              }
+              <jb-pill tone="accent">{{ stageLabel(app.status) }}</jb-pill>
             </div>
+          }
+        </aside>
 
-            <!-- Info -->
-            <div class="flex flex-wrap gap-2 text-xs text-jb-text-mid">
-              <span class="inline-flex items-center gap-[5px]">
-                <jb-icon name="briefcase" [size]="11" class="text-jb-text-dim" /> {{ iv.type }}
-              </span>
-              <span class="text-jb-text-faint">·</span>
-              <span class="inline-flex items-center gap-[5px]">
-                <jb-icon name="clock" [size]="11" class="text-jb-text-dim" /> {{ iv.format }}
-              </span>
-            </div>
-
-            <div class="text-xs text-jb-text-dim">
-              {{ iv.people.join(' · ') }}
-            </div>
-
-            @if (iv.status === 'upcoming' && iv.prep) {
-              <!-- Prep checklist -->
-              <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs text-jb-text-dim">Prep · {{ doneCount(iv.prep) }}/{{ iv.prep.length }}</span>
-                  <div class="bar w-[120px]"><i [style.width]="(doneCount(iv.prep) / iv.prep.length * 100) + '%'"></i></div>
+        <!-- Prep panel -->
+        <div class="overflow-auto p-5 jb-scroll">
+          @if (selected(); as app) {
+            <div class="max-w-[720px]">
+              <div class="flex items-center gap-3 mb-4">
+                <div>
+                  <div class="text-xl font-medium">{{ app.jobCompanyName }} — {{ app.jobTitle }}</div>
+                  <div class="text-xs text-jb-text-dim mt-0.5">
+                    Stage: {{ stageLabel(app.status) }}
+                    @if (questions().length > 0) {
+                      · {{ practicedCount() }}/{{ questions().length }} practiced
+                    }
+                  </div>
                 </div>
-                <div class="flex flex-col gap-1">
-                  @for (p of iv.prep; track p.text) {
-                    <div class="flex items-center gap-[7px] text-xs"
-                      [style.color]="p.done ? 'var(--jb-text-dim)' : 'var(--jb-text)'">
-                      <span class="w-[13px] h-[13px] rounded-[4px] shrink-0 flex items-center justify-center"
-                        [style.background]="p.done ? 'var(--jb-success)' : 'transparent'"
-                        [style.border]="'1px solid ' + (p.done ? 'var(--jb-success)' : 'var(--jb-border-strong)')">
-                        @if (p.done) { <jb-icon name="check" [size]="8" [strokeWidth]="3" style="color:#0a1810;" /> }
-                      </span>
-                      <span [style.text-decoration]="p.done ? 'line-through' : 'none'">{{ p.text }}</span>
+                <div class="ml-auto flex gap-2">
+                  <jb-button small (clicked)="openApplication(app)">Open application</jb-button>
+                  <jb-button small [primary]="true" icon="sparkle" [disabled]="generating()" (clicked)="generate()">
+                    {{ generating() ? 'Generating…' : questions().length > 0 ? 'More questions' : 'Generate prep questions' }}
+                  </jb-button>
+                </div>
+              </div>
+
+              @if (loadingQuestions()) {
+                <div class="p-8 text-center text-jb-text-dim">Loading questions…</div>
+              } @else if (questions().length === 0) {
+                <div class="p-8 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md">
+                  <jb-icon name="lightbulb" [size]="20" class="text-jb-accent" />
+                  <div class="text-base text-jb-text-mid mt-2">No prep questions yet.</div>
+                  <div class="text-xs text-jb-text-dim mt-1">Generate likely questions from the job description, then draft STAR answers.</div>
+                </div>
+              } @else {
+                <div class="flex flex-col gap-2">
+                  @for (q of questions(); track q.id) {
+                    <div class="card p-3">
+                      <div class="flex items-start gap-2.5">
+                        <button (click)="togglePracticed(q)" title="Mark practiced"
+                          class="w-4 h-4 mt-0.5 rounded flex items-center justify-center bg-transparent cursor-pointer shrink-0" style="border:1.5px solid var(--jb-border-strong);"
+                          [style.background]="q.practiced ? 'var(--jb-accent)' : 'transparent'"
+                          [style.border-color]="q.practiced ? 'var(--jb-accent)' : 'var(--jb-border-strong)'">
+                          @if (q.practiced) { <jb-icon name="check" [size]="9" [strokeWidth]="3" style="color:#1c1004;" /> }
+                        </button>
+                        <div class="flex-1 min-w-0 cursor-pointer" (click)="expandedQuestion.set(expandedQuestion() === q.id ? null : q.id)">
+                          <div class="text-base" [style.opacity]="q.practiced ? '0.6' : '1'">{{ q.question }}</div>
+                        </div>
+                        <jb-pill [tone]="categoryTone(q.category)">{{ q.category | titlecase }}</jb-pill>
+                        <jb-icon [name]="expandedQuestion() === q.id ? 'chev-down' : 'chev-right'" [size]="12" class="text-jb-text-dim mt-1" />
+                      </div>
+                      @if (expandedQuestion() === q.id) {
+                        <div class="mt-3 pl-[26px]">
+                          <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Your STAR answer</div>
+                          <textarea #answer rows="4" class="input resize-y text-sm leading-relaxed"
+                            [value]="q.starAnswer ?? ''"
+                            (blur)="saveAnswer(q, answer.value)"
+                            placeholder="Situation, Task, Action, Result — saved when you click away."></textarea>
+                        </div>
+                      }
                     </div>
                   }
                 </div>
-                <div class="flex gap-1.5 mt-1">
-                  <jb-button small icon="sparkle">Prep notes</jb-button>
-                  <jb-button small ghost icon="calendar">Reschedule</jb-button>
-                </div>
-              </div>
-            } @else if (iv.debrief) {
-              <!-- Debrief -->
-              <div class="bg-jb-surface-2 border border-jb-border rounded-md p-2.5">
-                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1">Debrief</div>
-                <div class="text-sm text-jb-text-mid" style="line-height:1.55;">{{ iv.debrief }}</div>
-              </div>
-            }
-          </div>
-        }
+              }
+            </div>
+          }
+        </div>
       </div>
-    </div>
+    }

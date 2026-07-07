@@ -1,123 +1,129 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
+import { ApplicationsApiService } from '../../core/api/applications.api';
+import { InterviewPrepApiService, InterviewQuestion } from '../../core/api/interview-prep.api';
+import { JobsApiService } from '../../core/api/jobs.api';
+import { Application, ApplicationStatus } from '../../core/models/application.model';
 
-interface PrepItem { done: boolean; text: string; }
+const INTERVIEW_STAGES: ApplicationStatus[] = ['RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'];
 
-interface Interview {
-  id: number;
-  company: string;
-  role: string;
-  when: string;
-  date: string;
-  round: string;
-  type: string;
-  status: 'upcoming' | 'done';
-  people: string[];
-  format: string;
-  prep?: PrepItem[];
-  outcome?: 'advanced' | 'rejected' | 'pending';
-  debrief?: string;
-}
+const STAGE_LABELS: Record<string, string> = {
+  RECRUITER_CONTACT: 'Screen', INTERVIEW: 'Interview',
+  TECHNICAL_TEST: 'Technical', FINAL_ROUND: 'Final round',
+};
 
-const OUTCOME_CONFIG: Record<string, { label: string; tone: 'success' | 'danger' | 'accent' }> = {
-  advanced: { label: 'Advanced', tone: 'success' },
-  rejected: { label: 'Rejected', tone: 'danger' },
-  pending:  { label: 'Awaiting', tone: 'accent' },
+const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> = {
+  BEHAVIORAL: 'info', TECHNICAL: 'accent', SITUATIONAL: 'violet', COMPANY: 'neutral',
 };
 
 @Component({
   selector: 'app-interviews',
   standalone: true,
-  imports: [CommonModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
   templateUrl: './interviews.component.html'
 })
-export class InterviewsComponent {
-  activeTab = signal<'upcoming' | 'past'>('upcoming');
+export class InterviewsComponent implements OnInit {
+  private appsApi = inject(ApplicationsApiService);
+  private prepApi = inject(InterviewPrepApiService);
+  private jobsApi = inject(JobsApiService);
+  private router = inject(Router);
 
-  interviews: Interview[] = [
-    {
-      id: 1, company: 'Stripe', role: 'Frontend Engineer', when: 'Tomorrow · 09:30', date: 'Thu 16 May',
-      round: '2 of 4', type: 'Technical · pairing', status: 'upcoming',
-      people: ['Sarah Chen (recruiter)', 'Diego R. (staff eng)', 'Mia T. (eng)'],
-      format: 'Video · 60 min · CoderPad',
-      prep: [
-        { done: true, text: 'Review their public API design docs' },
-        { done: true, text: 'Re-do a streaming-UI warm-up' },
-        { done: false, text: 'Prepare 2 questions about the team' },
-        { done: false, text: 'Test camera + CoderPad setup' },
-      ],
-    },
-    {
-      id: 2, company: 'Plaid', role: 'Software Engineer, Web', when: 'Wed · 14:00', date: 'Wed 15 May',
-      round: '1 of 3', type: 'Recruiter screen', status: 'upcoming',
-      people: ['James Park (recruiter)'],
-      format: 'Phone · 20 min',
-      prep: [
-        { done: false, text: 'Prepare salary expectations range' },
-        { done: false, text: 'One-line "why Plaid"' },
-      ],
-    },
-    {
-      id: 3, company: 'Anthropic', role: 'Design Engineer', when: 'Mon 21 May', date: 'Mon 21 May',
-      round: '1 of 4', type: 'Hiring manager', status: 'upcoming',
-      people: ['Alex M. (EM)'],
-      format: 'Video · 45 min',
-      prep: [
-        { done: false, text: 'Read up on Artifacts + recent launches' },
-        { done: false, text: 'Prepare design-eng portfolio walkthrough' },
-      ],
-    },
-    {
-      id: 4, company: 'Figma', role: 'Design Engineer', when: '2 weeks ago', date: 'Tue 30 Apr',
-      round: '2 of 3', type: 'Technical', status: 'done', outcome: 'advanced',
-      people: ['Priya N. (lead)'],
-      format: 'Video · 60 min',
-      debrief: 'Went well. Pairing on a canvas-rendering bug \u2014 got it. They liked my motion questions. Next: team-fit round.',
-    },
-    {
-      id: 5, company: 'Mercury', role: 'Senior Frontend', when: '3 weeks ago', date: 'Mon 22 Apr',
-      round: '1 of 3', type: 'Recruiter screen', status: 'done', outcome: 'advanced',
-      people: ['Recruiter'],
-      format: 'Phone · 25 min',
-      debrief: 'Standard screen. Comp aligned. Advanced to take-home.',
-    },
-    {
-      id: 6, company: 'Webflow', role: 'Frontend Engineer', when: '1 month ago', date: 'Apr',
-      round: 'Final', type: 'Onsite loop', status: 'done', outcome: 'rejected',
-      people: ['Panel of 4'],
-      format: 'Onsite · 4h',
-      debrief: 'Strong on craft, but they wanted deeper backend. Good practice. Ask for feedback notes.',
-    },
-  ];
+  loading = signal(true);
+  toast = signal('');
+  interviews = signal<Application[]>([]);
+  selected = signal<Application | null>(null);
+  questions = signal<InterviewQuestion[]>([]);
+  loadingQuestions = signal(false);
+  generating = signal(false);
+  expandedQuestion = signal<string | null>(null);
 
-  get upcoming() { return this.interviews.filter(i => i.status === 'upcoming'); }
-  get past() { return this.interviews.filter(i => i.status === 'done'); }
+  stageLabel = (s: string) => STAGE_LABELS[s] ?? s;
+  categoryTone = (c: string) => CATEGORY_TONES[c] ?? 'neutral';
 
-  summaryCards = [
-    { label: 'Upcoming', value: 3, color: 'var(--jb-accent)' },
-    { label: 'This week', value: 2, color: 'var(--jb-info)' },
-    { label: 'Advanced', value: 2, color: 'var(--jb-success)' },
-    { label: 'Conversion', value: '67%', color: 'var(--jb-text)' },
-  ];
-
-  tabs = [
-    { key: 'upcoming' as const, label: 'Upcoming', count: 3 },
-    { key: 'past' as const, label: 'Past', count: 3 },
-  ];
-
-  shownInterviews(): Interview[] {
-    return this.activeTab() === 'upcoming' ? this.upcoming : this.past;
+  ngOnInit(): void {
+    this.appsApi.getAll().subscribe({
+      next: apps => {
+        const inInterview = apps.filter(a => INTERVIEW_STAGES.includes(a.status));
+        this.interviews.set(inInterview);
+        this.loading.set(false);
+        if (inInterview.length > 0) this.select(inInterview[0]);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.set('Could not load applications');
+      }
+    });
   }
 
-  doneCount(prep: PrepItem[]): number {
-    return prep.filter(p => p.done).length;
+  select(app: Application): void {
+    this.selected.set(app);
+    this.questions.set([]);
+    this.loadingQuestions.set(true);
+    this.prepApi.getQuestions(app.jobId).subscribe({
+      next: qs => {
+        this.questions.set(qs);
+        this.loadingQuestions.set(false);
+      },
+      error: () => this.loadingQuestions.set(false)
+    });
   }
 
-  outcomeConfig(outcome: string) {
-    return OUTCOME_CONFIG[outcome] || OUTCOME_CONFIG['pending'];
+  generate(): void {
+    const app = this.selected();
+    if (!app || this.generating()) return;
+    this.generating.set(true);
+    // Prep generation needs the JD — fetch the job first
+    this.jobsApi.getById(app.jobId).subscribe({
+      next: job => {
+        this.prepApi.generateQuestions(app.jobId, job.descriptionClean ?? job.title, 10).subscribe({
+          next: qs => {
+            this.questions.set(qs);
+            this.generating.set(false);
+          },
+          error: () => {
+            this.generating.set(false);
+            this.toast.set('Question generation failed — try again');
+          }
+        });
+      },
+      error: () => {
+        this.generating.set(false);
+        this.toast.set('Could not load the job description');
+      }
+    });
+  }
+
+  togglePracticed(q: InterviewQuestion): void {
+    const app = this.selected();
+    if (!app) return;
+    const practiced = !q.practiced;
+    this.questions.update(qs => qs.map(x => x.id === q.id ? { ...x, practiced } : x));
+    this.prepApi.updateQuestion(app.jobId, q.id, { practiced }).subscribe({
+      error: () => this.questions.update(qs => qs.map(x => x.id === q.id ? { ...x, practiced: !practiced } : x))
+    });
+  }
+
+  saveAnswer(q: InterviewQuestion, answer: string): void {
+    const app = this.selected();
+    if (!app || answer === (q.starAnswer ?? '')) return;
+    this.prepApi.updateQuestion(app.jobId, q.id, { starAnswer: answer }).subscribe({
+      next: () => this.questions.update(qs => qs.map(x => x.id === q.id ? { ...x, starAnswer: answer } : x)),
+      error: () => this.toast.set('Could not save the answer')
+    });
+  }
+
+  practicedCount(): number {
+    return this.questions().filter(q => q.practiced).length;
+  }
+
+  openApplication(app: Application): void {
+    this.router.navigate(['/applications', app.id]);
   }
 }
