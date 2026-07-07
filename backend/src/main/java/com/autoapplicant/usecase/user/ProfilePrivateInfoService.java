@@ -27,11 +27,23 @@ public class ProfilePrivateInfoService implements ManageProfilePrivateInfoUseCas
 
     @Override
     public ProfilePrivateInfo updatePrivateInfo(UUID userId, ProfilePrivateInfo info) {
+        // Merge semantics: null means "keep existing", so clients can send partial updates.
+        // Fields are cleared by sending an empty string, not null.
+        ProfilePrivateInfo existing = getPrivateInfo(userId);
         ProfilePrivateInfo toSave = new ProfilePrivateInfo(
-                repo.findByUserId(userId).map(ProfilePrivateInfo::id).orElse(null),
-                userId, info.fullName(), info.phone(), info.photoUrl(),
-                info.location(), info.municipality(), info.contactEmail(), null, null);
+                existing.id(), userId,
+                coalesce(info.fullName(), existing.fullName()),
+                coalesce(info.phone(), existing.phone()),
+                coalesce(info.photoUrl(), existing.photoUrl()),
+                coalesce(info.location(), existing.location()),
+                coalesce(info.municipality(), existing.municipality()),
+                coalesce(info.contactEmail(), existing.contactEmail()),
+                null, null);
         return repo.save(toSave);
+    }
+
+    private static String coalesce(String value, String fallback) {
+        return value != null ? value : fallback;
     }
 
     @Override

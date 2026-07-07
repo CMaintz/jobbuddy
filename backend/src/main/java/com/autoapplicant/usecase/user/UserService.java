@@ -59,13 +59,29 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
 
     @Override
     public Profile updateProfile(UUID userId, Profile profile) {
-        Profile saved = profileRepo.save(new Profile(null, userId, profile.headline(),
-                profile.summary(), profile.yearsExperience(), profile.skills(), profile.technologies(),
-                profile.languages(), profile.desiredSalaryMin(), profile.desiredSalaryMax(),
-                profile.desiredCurrency(), profile.remotePreference(), profile.employmentTypePreference(),
+        // Merge semantics: null means "keep existing", so clients can send partial updates.
+        // Text fields are cleared with an empty string, lists with an empty list.
+        Profile existing = profileRepo.findByUserId(userId).orElse(null);
+        Profile saved = profileRepo.save(new Profile(null, userId,
+                merged(profile.headline(), existing, Profile::headline),
+                merged(profile.summary(), existing, Profile::summary),
+                merged(profile.yearsExperience(), existing, Profile::yearsExperience),
+                merged(profile.skills(), existing, Profile::skills),
+                merged(profile.technologies(), existing, Profile::technologies),
+                merged(profile.languages(), existing, Profile::languages),
+                merged(profile.desiredSalaryMin(), existing, Profile::desiredSalaryMin),
+                merged(profile.desiredSalaryMax(), existing, Profile::desiredSalaryMax),
+                merged(profile.desiredCurrency(), existing, Profile::desiredCurrency),
+                merged(profile.remotePreference(), existing, Profile::remotePreference),
+                merged(profile.employmentTypePreference(), existing, Profile::employmentTypePreference),
                 null, null));
         recomputeProfileEmbeddingAsync(userId, saved);
         return saved;
+    }
+
+    private static <T> T merged(T incoming, Profile existing, java.util.function.Function<Profile, T> getter) {
+        if (incoming != null) return incoming;
+        return existing != null ? getter.apply(existing) : null;
     }
 
     @Override
