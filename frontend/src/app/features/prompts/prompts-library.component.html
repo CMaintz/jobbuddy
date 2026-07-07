@@ -2,9 +2,11 @@
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       <div class="font-medium text-md">Prompts</div>
       <div class="ml-auto flex gap-2 items-center">
-        <jb-button [primary]="true" icon="plus">New prompt</jb-button>
+        <jb-button [primary]="true" icon="plus" (clicked)="showCreate.set(true)">New prompt</jb-button>
       </div>
     </div>
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     <!-- Filter tabs -->
     <div class="py-3 px-[22px] flex items-center gap-1.5 border-b border-jb-border">
@@ -28,80 +30,178 @@
 
     <!-- Card grid -->
     <div class="flex-1 overflow-auto p-[22px] jb-scroll">
-      <div class="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        @for (p of filteredPrompts(); track p.id) {
-          <div (click)="openPrompt.set(p)" class="card jb-liftcard p-3.5 cursor-pointer flex flex-col gap-2.5 min-h-[158px]">
-            <!-- Header -->
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 rounded shrink-0 bg-jb-surface-2 border border-jb-border flex items-center justify-center"
-                [style.color]="kindConfig(p.kind).color">
-                <jb-icon [name]="kindConfig(p.kind).icon" [size]="12" />
+      @if (loading()) {
+        <div class="p-10 text-center text-jb-text-dim">Loading prompts…</div>
+      } @else if (filteredPrompts().length === 0) {
+        <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md max-w-[560px] mx-auto">
+          <jb-icon name="lightbulb" [size]="20" class="text-jb-accent" />
+          <div class="text-base text-jb-text-mid mt-2">No prompts yet.</div>
+          <div class="text-xs text-jb-text-dim mt-1 mb-3">Prompts steer how documents get generated — tone, structure, angles.</div>
+          <jb-button [primary]="true" small icon="plus" (clicked)="showCreate.set(true)">Create your first prompt</jb-button>
+        </div>
+      } @else {
+        <div class="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          @for (p of filteredPrompts(); track p.id) {
+            <div (click)="openPrompt.set(p)" class="card jb-liftcard p-3.5 cursor-pointer flex flex-col gap-2.5 min-h-[158px]">
+              <!-- Header -->
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded shrink-0 bg-jb-surface-2 border border-jb-border flex items-center justify-center"
+                  [style.color]="kindConfig(p.category).color">
+                  <jb-icon [name]="kindConfig(p.category).icon" [size]="12" />
+                </div>
+                <div class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ kindConfig(p.category).label }}</div>
+                <div class="ml-auto flex items-center gap-1.5">
+                  @if (p.isSystem) {
+                    <jb-pill tone="neutral">system</jb-pill>
+                  }
+                </div>
               </div>
-              <div class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ kindConfig(p.kind).label }}</div>
-              <div class="ml-auto flex items-center gap-1.5">
-                @if (p.fav) {
-                  <jb-icon name="star" [size]="11" class="text-jb-accent" />
-                }
+              <!-- Title -->
+              <div class="text-lg font-medium leading-[1.3] tracking-[-0.01em]">{{ p.name }}</div>
+              <!-- Body preview -->
+              <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">{{ p.description || p.userPrompt }}</div>
+              <!-- Footer -->
+              <div class="flex items-center gap-1.5 mt-auto">
+                <div class="ml-auto flex items-center gap-2 text-2xs text-jb-text-dim">
+                  <span class="mono">v{{ p.versionNumber }}</span>
+                  <span>·</span>
+                  <span>{{ ageLabel(p.updatedAt) }}</span>
+                </div>
               </div>
             </div>
-            <!-- Title -->
-            <div class="text-lg font-medium leading-[1.3] tracking-[-0.01em]">{{ p.name }}</div>
-            <!-- Body preview -->
-            <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">{{ p.body }}</div>
-            <!-- Footer -->
-            <div class="flex items-center gap-1.5 mt-auto">
-              @for (tag of p.tags; track tag) {
-                <span class="pill pill-neutral text-2xs">{{ tag }}</span>
-              }
-              <div class="ml-auto flex items-center gap-2 text-2xs text-jb-text-dim">
-                <span class="mono">{{ p.uses }} uses</span>
-                <span>·</span>
-                <span>{{ p.updated }} ago</span>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </div>
 
     <!-- Modal detail -->
     @if (openPrompt(); as p) {
-      <div (click)="openPrompt.set(null)" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">
+      <div (click)="closeModal()" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">
         <div (click)="$event.stopPropagation()" class="max-h-[85vh] bg-jb-surface border border-jb-border-strong rounded-[10px] flex flex-col" style="width:min(640px,92vw);box-shadow:0 28px 80px rgba(0,0,0,0.5);">
           <div class="py-3.5 px-[18px] border-b border-jb-border flex items-center gap-2.5">
-            <jb-pill tone="neutral">{{ kindConfig(p.kind).label }}</jb-pill>
-            <div class="text-xl font-medium flex-1">{{ p.name }}</div>
-            <button (click)="openPrompt.set(null)" class="bg-transparent border-none text-jb-text-mid cursor-pointer p-1">
+            <jb-pill tone="neutral">{{ kindConfig(p.category).label }}</jb-pill>
+            <div class="text-xl font-medium flex-1">{{ editing() ? 'Edit prompt' : p.name }}</div>
+            @if (p.isSystem) {
+              <jb-pill tone="info">system</jb-pill>
+            }
+            <button (click)="closeModal()" class="bg-transparent border-none text-jb-text-mid cursor-pointer p-1">
               <jb-icon name="x" [size]="14" />
             </button>
           </div>
           <div class="p-[18px] flex-1 overflow-auto flex flex-col gap-4 jb-scroll">
-            <div>
-              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Prompt</div>
-              <textarea [ngModel]="p.body" class="w-full min-h-[160px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-sm leading-relaxed text-jb-text resize-y" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
-              <div class="text-2xs text-jb-text-dim mt-1.5">
-                Tip: <span class="mono text-jb-text-mid">{{'{'}}role{{'}'}}</span>, <span class="mono text-jb-text-mid">{{'{'}}company{{'}'}}</span>, <span class="mono text-jb-text-mid">{{'{'}}bullets{{'}'}}</span> are auto-filled at generation time.
+            @if (editing()) {
+              <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">Name</span>
+                  <input [(ngModel)]="editName" class="input" />
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">Type</span>
+                  <select [(ngModel)]="editCategory" class="input">
+                    @for (kind of promptKinds; track kind.key) {
+                      <option [ngValue]="kind.key">{{ kind.label }}</option>
+                    }
+                  </select>
+                </label>
               </div>
-            </div>
-            <div class="grid gap-2.5" style="grid-template-columns:1fr 1fr 1fr;">
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">Description</span>
+                <input [(ngModel)]="editDescription" class="input" />
+              </label>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">Prompt</span>
+                <textarea [(ngModel)]="editBody" rows="8" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
+              </label>
+            } @else {
+              @if (p.description) {
+                <div class="text-sm text-jb-text-mid">{{ p.description }}</div>
+              }
               <div>
-                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Type</div>
-                <div class="text-base">{{ kindConfig(p.kind).label }}</div>
+                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Prompt</div>
+                <pre class="w-full min-h-[120px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-sm leading-relaxed text-jb-text whitespace-pre-wrap m-0" style="font-family:var(--font-mono,JetBrains Mono,monospace);">{{ p.userPrompt }}</pre>
               </div>
-              <div>
-                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Language</div>
-                <div class="text-base">{{ p.lang }}</div>
+              @if (p.systemPrompt) {
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">System prompt</div>
+                  <pre class="w-full p-3 bg-jb-surface-2 border border-jb-border rounded-md text-xs leading-relaxed text-jb-text-mid whitespace-pre-wrap m-0" style="font-family:var(--font-mono,JetBrains Mono,monospace);">{{ p.systemPrompt }}</pre>
+                </div>
+              }
+              <div class="grid gap-2.5" style="grid-template-columns:1fr 1fr 1fr;">
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Type</div>
+                  <div class="text-base">{{ kindConfig(p.category).label }}</div>
+                </div>
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Version</div>
+                  <div class="mono text-base">v{{ p.versionNumber }}</div>
+                </div>
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Updated</div>
+                  <div class="text-base">{{ ageLabel(p.updatedAt) }}</div>
+                </div>
               </div>
-              <div>
-                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Uses</div>
-                <div class="mono text-base">{{ p.uses }}</div>
-              </div>
+            }
+          </div>
+          <div class="py-3 px-[18px] border-t border-jb-border flex items-center gap-2">
+            @if (canModify(p) && !editing()) {
+              <button class="text-xs text-jb-danger cursor-pointer bg-transparent border-none" (click)="deletePrompt(p)">Delete</button>
+            }
+            <div class="ml-auto flex items-center gap-2">
+              @if (editing()) {
+                <jb-button small (clicked)="editing.set(false)">Cancel</jb-button>
+                <jb-button small [primary]="true" icon="check" [disabled]="savingEdit()" (clicked)="saveEdit(p)">
+                  {{ savingEdit() ? 'Saving…' : 'Save changes' }}
+                </jb-button>
+              } @else {
+                <jb-button small icon="copy" (clicked)="duplicate(p)">Duplicate</jb-button>
+                @if (canModify(p)) {
+                  <jb-button small [primary]="true" icon="edit" (clicked)="startEdit(p)">Edit</jb-button>
+                }
+              }
             </div>
           </div>
+        </div>
+      </div>
+    }
+
+    <!-- Create modal -->
+    @if (showCreate()) {
+      <div (click)="showCreate.set(false)" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">
+        <div (click)="$event.stopPropagation()" class="max-h-[85vh] bg-jb-surface border border-jb-border-strong rounded-[10px] flex flex-col" style="width:min(640px,92vw);box-shadow:0 28px 80px rgba(0,0,0,0.5);">
+          <div class="py-3.5 px-[18px] border-b border-jb-border flex items-center gap-2.5">
+            <div class="text-xl font-medium flex-1">New prompt</div>
+            <button (click)="showCreate.set(false)" class="bg-transparent border-none text-jb-text-mid cursor-pointer p-1">
+              <jb-icon name="x" [size]="14" />
+            </button>
+          </div>
+          <div class="p-[18px] flex-1 overflow-auto flex flex-col gap-3.5 jb-scroll">
+            <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">Name</span>
+                <input [(ngModel)]="newName" class="input" placeholder="DK · Ansøgning — warm + concrete result" />
+              </label>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">Type</span>
+                <select [(ngModel)]="newCategory" class="input">
+                  @for (kind of promptKinds; track kind.key) {
+                    <option [ngValue]="kind.key">{{ kind.label }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            <label class="flex flex-col gap-[5px]">
+              <span class="label">Description (optional)</span>
+              <input [(ngModel)]="newDescription" class="input" placeholder="Short note on when to use this prompt" />
+            </label>
+            <label class="flex flex-col gap-[5px]">
+              <span class="label">Prompt</span>
+              <textarea [(ngModel)]="newBody" rows="7" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"
+                placeholder="Open with one concrete result from my master CV that maps to the JD's primary hire-for..."></textarea>
+            </label>
+          </div>
           <div class="py-3 px-[18px] border-t border-jb-border flex items-center gap-2 justify-end">
-            <jb-button small ghost icon="star">{{ p.fav ? 'Unfavourite' : 'Favourite' }}</jb-button>
-            <jb-button small icon="copy">Duplicate</jb-button>
-            <jb-button [primary]="true" icon="check">Save</jb-button>
+            <jb-button small (clicked)="showCreate.set(false)">Cancel</jb-button>
+            <jb-button [primary]="true" icon="check" [disabled]="creating()" (clicked)="create()">{{ creating() ? 'Creating…' : 'Create prompt' }}</jb-button>
           </div>
         </div>
       </div>
