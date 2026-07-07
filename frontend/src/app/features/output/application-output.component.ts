@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
+import { RichTextEditorComponent } from '../resume-builder/shared/rich-text-editor.component';
+import { RichTextPipe } from '../resume-builder/shared/rich-text.pipe';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -60,7 +62,7 @@ const FORMAT_TO_DOC_TYPE: Record<FormatKey, string> = {
 @Component({
   selector: 'app-application-output',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, DiffViewerComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, DiffViewerComponent, RichTextEditorComponent, RichTextPipe],
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {
@@ -81,6 +83,9 @@ export class ApplicationOutputComponent implements OnInit {
   refining = signal(false);
   generatingMissing = signal(false);
   copied = signal(false);
+  editing = signal(false);
+  editDirty = signal(false);
+  savingEdit = signal(false);
   originalText = signal('');
   refinedText = signal('');
   customRevisePrompt = '';
@@ -118,15 +123,27 @@ export class ApplicationOutputComponent implements OnInit {
     return {};
   });
 
+  /** True when the content carries rich-text markup (from in-place editing). */
+  isRichContent = computed<boolean>(() => (this.activeDoc()?.content ?? '').includes('<'));
+
   paragraphs = computed<string[]>(() => {
     const content = this.activeDoc()?.content ?? '';
     return content.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
   });
 
   wordCount = computed<number>(() => {
-    const content = this.activeDoc()?.content ?? '';
+    const content = this.plainText();
     return content.trim() ? content.trim().split(/\s+/).length : 0;
   });
+
+  /** Plain-text version of the active document (tags stripped). */
+  plainText(): string {
+    const content = this.activeDoc()?.content ?? '';
+    if (!content.includes('<')) return content;
+    const div = document.createElement('div');
+    div.innerHTML = content.replace(/<\/(p|li|ul|ol)>/g, '</$1>\n');
+    return (div.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim();
+  }
 
   docCountForFormat(key: FormatKey): number {
     return this.documents().filter(d => d.documentType === FORMAT_TO_DOC_TYPE[key]).length;
@@ -227,7 +244,7 @@ export class ApplicationOutputComponent implements OnInit {
   }
 
   copyContent(): void {
-    const content = this.activeDoc()?.content;
+    const content = this.plainText();
     if (!content) return;
     navigator.clipboard.writeText(content).then(() => {
       this.copied.set(true);
@@ -235,14 +252,40 @@ export class ApplicationOutputComponent implements OnInit {
     });
   }
 
+  /** In-place editing of the letter body. */
+  onEdited(html: string): void {
+    const doc = this.activeDoc();
+    if (!doc) return;
+    this.documents.update(docs => docs.map(d =>
+      d.id === doc.id ? { ...d, content: html } : d));
+    this.editDirty.set(true);
+  }
+
+  saveEdit(): void {
+    const doc = this.activeDoc();
+    const app = this.application();
+    if (!doc || this.savingEdit()) return;
+    this.savingEdit.set(true);
+    const structured = this.buildStructuredDoc(doc, doc.content);
+    this.aiApi.saveStructuredDocument(structured, app?.jobId).subscribe({
+      next: () => {
+        this.savingEdit.set(false);
+        this.editDirty.set(false);
+        this.editing.set(false);
+        if (app) this.loadDocuments(app.jobId);
+      },
+      error: () => this.savingEdit.set(false)
+    });
+  }
+
   refineWith(prompt: string): void {
     const doc = this.activeDoc();
     if (!prompt?.trim() || this.refining() || !doc?.content) return;
-    this.originalText.set(doc.content);
+    this.originalText.set(this.plainText());
     this.refining.set(true);
 
     this.aiApi.refine({
-      currentContent: doc.content,
+      currentContent: this.plainText(),
       userMessage: prompt,
     }).subscribe({
       next: (resp) => {
