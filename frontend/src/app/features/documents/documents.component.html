@@ -1,0 +1,55 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
+      <div class="font-medium text-md">Documents</div>
+      <div class="ml-auto text-xs text-jb-text-dim">{{ rows().length }} generated</div>
+    </div>
+
+    <!-- Filter tabs -->
+    @if (presentTypes().length > 1) {
+      <div class="py-3 px-[22px] flex items-center gap-1.5 border-b border-jb-border">
+        <button (click)="activeType.set('all')"
+          class="py-[5px] px-2.5 rounded-full cursor-pointer text-sm font-medium"
+          [style.background]="activeType() === 'all' ? 'var(--jb-surface-3)' : 'transparent'"
+          [style.border]="'1px solid ' + (activeType() === 'all' ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+          [style.color]="activeType() === 'all' ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+          All
+        </button>
+        @for (t of presentTypes(); track t.key) {
+          <button (click)="activeType.set(t.key)"
+            class="py-[5px] px-2.5 rounded-full cursor-pointer text-sm font-medium"
+            [style.background]="activeType() === t.key ? 'var(--jb-surface-3)' : 'transparent'"
+            [style.border]="'1px solid ' + (activeType() === t.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+            [style.color]="activeType() === t.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+            {{ t.label }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="flex-1 overflow-auto jb-scroll">
+      @if (loading()) {
+        <div class="p-12 text-center text-jb-text-dim">Loading documents…</div>
+      } @else if (loadError()) {
+        <div class="p-12 text-center text-jb-text-dim">Could not load documents.</div>
+      } @else if (filteredRows().length === 0) {
+        <div class="p-12 text-center">
+          <jb-icon name="doc" [size]="24" class="text-jb-text-dim" />
+          <div class="text-base text-jb-text-mid mt-2">No generated documents yet.</div>
+          <div class="text-xs text-jb-text-dim mt-1">Everything you generate from Apply or an application lands here.</div>
+        </div>
+      } @else {
+        @for (row of filteredRows(); track row.doc.id) {
+          <div (click)="open(row)" class="jb-row flex items-center gap-3 p-[12px_18px] cursor-pointer border-b border-jb-border-faint">
+            <jb-pill [tone]="typeTone(row.doc.documentType)">{{ typeLabel(row.doc.documentType) }}</jb-pill>
+            <div class="flex-1 min-w-0">
+              <div class="text-base font-medium truncate">
+                {{ row.company }}{{ row.role ? ' — ' + row.role : '' }}
+              </div>
+              <div class="text-xs text-jb-text-dim truncate">{{ preview(row.doc.content) }}</div>
+            </div>
+            <div class="text-xs text-jb-text-dim mono whitespace-nowrap">{{ ageLabel(row.doc.createdAt) }}</div>
+            <jb-icon name="arrow-right" [size]="12" class="text-jb-text-dim" />
+          </div>
+        }
+      }
+    </div>

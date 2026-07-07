@@ -1,0 +1,73 @@
+    <!-- Topbar -->
+    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
+      <div class="font-medium text-md">Analytics</div>
+      @if (trend(); as t) {
+        <div class="ml-auto text-xs text-jb-text-dim">{{ t.message }}</div>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="p-12 text-center text-jb-text-dim">Loading analytics…</div>
+    } @else if (loadError()) {
+      <div class="p-12 text-center text-jb-text-dim">Could not load analytics.</div>
+    } @else {
+      @if (metrics(); as m) {
+      <div class="flex-1 overflow-auto p-[20px_24px_48px] jb-scroll">
+        <div class="max-w-[960px] flex flex-col gap-5">
+
+          <!-- Stat cards -->
+          <div class="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <jb-stat-card label="Applications" [value]="'' + m.total" [sub]="m.appliedThisWeek + ' this week'" icon="layers" [accent]="true" />
+            <jb-stat-card label="Response rate" [value]="pct(m.responseRate)" [sub]="m.pendingResponse + ' awaiting reply'" icon="chat" />
+            <jb-stat-card label="Interview rate" [value]="pct(m.interviewRate)" [sub]="m.activeInterviews + ' active'" icon="briefcase" />
+            <jb-stat-card label="Offer rate" [value]="pct(m.offerRate)" [sub]="m.offers + (m.offers === 1 ? ' offer' : ' offers')" icon="star" />
+          </div>
+
+          <!-- Trend + funnel -->
+          <div class="grid gap-3 grid-cols-1 lg:grid-cols-2">
+            <div class="card p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-base font-medium">Weekly activity</div>
+                @if (trend(); as t) {
+                  <span class="mono text-xs" [style.color]="t.delta >= 0 ? 'var(--jb-success)' : 'var(--jb-danger)'">
+                    {{ t.delta >= 0 ? '+' : '' }}{{ t.delta }} vs last week
+                  </span>
+                }
+              </div>
+              <jb-sparkline [data]="trendData()" [width]="380" [height]="64" />
+              <div class="mt-2 text-xs text-jb-text-dim">
+                {{ trend()?.thisWeek ?? 0 }} applications this week · {{ trend()?.lastWeek ?? 0 }} last week
+              </div>
+            </div>
+
+            <div class="card p-4">
+              <div class="text-base font-medium mb-3">Pipeline funnel</div>
+              <jb-funnel [stages]="funnelStages()" />
+            </div>
+          </div>
+
+          <!-- Heatmap -->
+          <div class="card p-4">
+            <div class="text-base font-medium mb-3">Application activity — last {{ heatmapWeeks }} weeks</div>
+            <jb-heatmap [data]="heatmapData()" [weekCount]="heatmapWeeks" />
+          </div>
+
+          <!-- Top companies -->
+          @if (m.topCompanies.length > 0) {
+            <div class="card p-4">
+              <div class="text-base font-medium mb-3">Most applied-to companies</div>
+              <div class="flex flex-col gap-2">
+                @for (company of m.topCompanies; track company; let i = $index) {
+                  <div class="flex items-center gap-2.5">
+                    <span class="mono text-xs text-jb-text-dim w-4">{{ i + 1 }}</span>
+                    <jb-company-mark [name]="company" [size]="22" />
+                    <span class="text-sm">{{ company }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      }
+    }
