@@ -52,4 +52,54 @@
           }
         </div>
       </div>
+
+      <!-- Per-section typography -->
+      <div>
+        <label class="rb-label">Section Typography</label>
+        <div style="font-size:10.5px;color:var(--jb-text-dim);margin-bottom:6px;">
+          Overrides the document defaults for one section. Selection-level formatting lives in the text editors.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          @for (sec of typographySections; track sec.id) {
+            <div style="border:1px solid var(--jb-border);border-radius:6px;overflow:hidden;">
+              <button style="width:100%;display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--jb-surface-2);border:none;cursor:pointer;font-size:11px;color:var(--jb-text);"
+                (click)="expandedTypo.set(expandedTypo() === sec.id ? null : sec.id)">
+                <span style="flex:1;text-align:left;">{{ sec.label }}</span>
+                @if (hasOverrides(sec.id)) {
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--jb-accent);"></span>
+                }
+                <span style="color:var(--jb-text-faint);">{{ expandedTypo() === sec.id ? '▾' : '▸' }}</span>
+              </button>
+              @if (expandedTypo() === sec.id) {
+                <div style="padding:8px;display:flex;flex-direction:column;gap:8px;">
+                  <select class="rb-input" [ngModel]="typo(sec.id).fontFamily ?? ''"
+                    (ngModelChange)="setTypo(sec.id, { fontFamily: $event || undefined })">
+                    <option value="">Document font</option>
+                    @for (font of fonts; track font.value) {
+                      <option [value]="font.value">{{ font.label }}</option>
+                    }
+                  </select>
+                  <div>
+                    <div style="font-size:10px;color:var(--jb-text-dim);margin-bottom:2px;">
+                      Text size — {{ ((typo(sec.id).sizeScale ?? 1) * 100).toFixed(0) }}%
+                    </div>
+                    <input type="range" min="0.7" max="1.4" step="0.05" style="width:100%;accent-color:var(--jb-accent);"
+                      [ngModel]="typo(sec.id).sizeScale ?? 1"
+                      (ngModelChange)="setTypo(sec.id, { sizeScale: +$event })" />
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <button class="rb-toggle" [class.active]="typo(sec.id).bold" (click)="setTypo(sec.id, { bold: !typo(sec.id).bold })"><b>B</b></button>
+                    <button class="rb-toggle" [class.active]="typo(sec.id).italic" (click)="setTypo(sec.id, { italic: !typo(sec.id).italic })"><i>I</i></button>
+                    <input type="color" style="width:26px;height:26px;padding:1px;border:1px solid var(--jb-border);border-radius:4px;background:var(--jb-surface-2);cursor:pointer;"
+                      [value]="typo(sec.id).color ?? '#1f2937'"
+                      (input)="setTypo(sec.id, { color: $any($event.target).value })" />
+                    <button style="margin-left:auto;font-size:10.5px;color:var(--jb-text-dim);background:none;border:none;cursor:pointer;"
+                      (click)="resetTypo(sec.id)">Reset</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
     </div>

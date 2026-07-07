@@ -1,5 +1,25 @@
 
     <div style="display:flex;flex-direction:column;gap:12px;">
+      <!-- Photo -->
+      <div style="display:flex;align-items:center;gap:12px;">
+        @if (pi.photoUrl) {
+          <img [src]="pi.photoUrl" alt="Photo"
+            style="width:56px;height:56px;object-fit:cover;border:1px solid var(--jb-border);"
+            [style.border-radius]="photoShape === 'circle' ? '50%' : photoShape === 'rounded' ? '12px' : '4px'" />
+        } @else {
+          <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--jb-surface-2);border:1px dashed var(--jb-border-strong);color:var(--jb-text-dim);font-size:11px;"
+            [style.border-radius]="photoShape === 'circle' ? '50%' : '8px'">Photo</div>
+        }
+        <div style="display:flex;gap:6px;">
+          <input type="file" accept="image/*" class="hidden" #photoInput (change)="onPhotoSelected($event)" style="display:none;" />
+          <button class="btn btn-sm" (click)="photoInput.click()">{{ pi.photoUrl ? 'Replace' : 'Upload' }}</button>
+          @if (pi.photoUrl) {
+            <button class="btn btn-sm" (click)="recrop()">Re-crop</button>
+            <button class="btn btn-sm btn-danger" (click)="removePhoto()">Remove</button>
+          }
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div style="grid-column:span 2;">
           <label class="rb-label">Full Name</label>
@@ -44,3 +64,8 @@
         </div>
       </div>
     </div>
+
+    @if (cropSrc(); as src) {
+      <app-photo-crop-dialog [src]="src" [shape]="photoShape"
+        (cropped)="onCropped($event)" (cancelled)="cropSrc.set(null)" />
+    }

@@ -6,7 +6,7 @@
       <div class="flex-[40] p-8 flex flex-col gap-5 border-r border-gray-100 mt-2">
         <div class="flex flex-col items-center text-center mt-4">
           @if (pi.photoUrl) {
-            <img [src]="pi.photoUrl" alt="Photo" class="w-28 h-28 object-cover mb-3 shadow-lg"
+            <img rbResumePhoto [src]="pi.photoUrl" alt="Photo" class="w-28 h-28 object-cover mb-3 shadow-lg"
               [class.rounded-full]="photoStyle === 'circle'" [class.rounded-2xl]="photoStyle === 'rounded'" />
           }
           <h1 class="text-2xl font-bold" [style.color]="themeColor">{{ pi.fullName }}</h1>
@@ -62,7 +62,7 @@
           <div class="text-sm text-gray-600 leading-relaxed" [innerHTML]="pi.summary | richText"></div>
         }
         @if (experience.length > 0) {
-          <section>
+          <section rbSection="experience">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Experience</h2>
             @for (exp of experience; track exp.id) {
               <div class="mb-4 pl-3 border-l-2" [style.border-color]="themeColor + '60'">
@@ -75,7 +75,7 @@
           </section>
         }
         @if (education.length > 0) {
-          <section>
+          <section rbSection="education">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Education</h2>
             @for (edu of education; track edu.id) {
               <div class="mb-2"><p class="font-medium text-sm">{{ edu.degree }}</p><p class="text-xs text-gray-400">{{ edu.school }}</p></div>
@@ -83,7 +83,7 @@
           </section>
         }
         @if (projects.length > 0) {
-          <section>
+          <section rbSection="projects">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Projects</h2>
             @for (proj of projects; track proj.id) {
               <div class="mb-3"><p class="font-semibold text-sm">{{ proj.name }}</p>@if (proj.description) { <div class="text-xs text-gray-500" [innerHTML]="proj.description | richText"></div> }<app-skill-chip-list [skills]="proj.skills ?? []" /></div>
@@ -91,7 +91,7 @@
           </section>
         }
         @if (strengths.length > 0) {
-          <section>
+          <section rbSection="strengths">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Strengths</h2>
             <div class="grid grid-cols-2 gap-2">
               @for (s of strengths; track s.id) {
@@ -109,7 +109,7 @@
 
         <!-- Custom Sections -->
         @for (cs of customSections; track cs.id) {
-          <section>
+          <section rbSection="custom">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">{{ cs.heading }}</h2>
             @if (cs.body) { <div class="text-sm text-gray-600 leading-relaxed" [innerHTML]="cs.body | richText"></div> }
             @if (cs.items && cs.items.length > 0) {

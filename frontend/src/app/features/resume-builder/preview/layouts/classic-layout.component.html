@@ -15,7 +15,7 @@
 
         <!-- Summary -->
         @if (pi.summary) {
-          <section>
+          <section rbSection="summary">
             <h2 class="section-heading" [style.color]="themeColor">Summary</h2>
             <div class="text-sm leading-relaxed text-gray-700" [innerHTML]="pi.summary | richText"></div>
           </section>
@@ -23,7 +23,7 @@
 
         <!-- Experience -->
         @if (experience.length > 0) {
-          <section>
+          <section rbSection="experience">
             <h2 class="section-heading" [style.color]="themeColor">Experience</h2>
             <div class="flex flex-col gap-4">
               @for (exp of experience; track exp.id) {
@@ -49,7 +49,7 @@
 
         <!-- Education -->
         @if (education.length > 0) {
-          <section>
+          <section rbSection="education">
             <h2 class="section-heading" [style.color]="themeColor">Education</h2>
             <div class="flex flex-col gap-3">
               @for (edu of education; track edu.id) {
@@ -72,7 +72,7 @@
 
         <!-- Projects -->
         @if (projects.length > 0) {
-          <section>
+          <section rbSection="projects">
             <h2 class="section-heading" [style.color]="themeColor">Projects</h2>
             <div class="flex flex-col gap-3">
               @for (proj of projects; track proj.id) {
@@ -93,7 +93,7 @@
 
         <!-- Custom Sections -->
         @for (cs of customSections; track cs.id) {
-          <section>
+          <section rbSection="custom">
             <h2 class="section-heading" [style.color]="themeColor">{{ cs.heading }}</h2>
             @if (cs.body) { <div class="text-sm leading-relaxed text-gray-700" [innerHTML]="cs.body | richText"></div> }
             @if (cs.items && cs.items.length > 0) {
@@ -112,7 +112,7 @@
         <!-- Photo -->
         @if (pi.photoUrl) {
           <div class="flex justify-center">
-            <img
+            <img rbResumePhoto
               [src]="pi.photoUrl"
               alt="Profile photo"
               class="w-24 h-24 object-cover"
@@ -124,7 +124,7 @@
 
         <!-- Skills -->
         @if (skills.length > 0) {
-          <section>
+          <section rbSection="skills">
             <h2 class="sidebar-heading" [style.color]="themeColor">Skills</h2>
             <div class="flex flex-col gap-1.5">
               @for (skill of skills; track skill.id) {
@@ -148,7 +148,7 @@
 
         <!-- Languages -->
         @if (languages.length > 0) {
-          <section>
+          <section rbSection="languages">
             <h2 class="sidebar-heading" [style.color]="themeColor">Languages</h2>
             <div class="flex flex-col gap-1">
               @for (lang of languages; track lang.id) {
@@ -163,7 +163,7 @@
 
         <!-- Certifications -->
         @if (certifications.length > 0) {
-          <section>
+          <section rbSection="certifications">
             <h2 class="sidebar-heading" [style.color]="themeColor">Certifications</h2>
             <div class="flex flex-col gap-2">
               @for (cert of certifications; track cert.id) {
@@ -179,7 +179,7 @@
 
         <!-- Strengths -->
         @if (strengths.length > 0) {
-          <section>
+          <section rbSection="strengths">
             <h2 class="sidebar-heading" [style.color]="themeColor">Strengths</h2>
             <div class="flex flex-col gap-2">
               @for (s of strengths; track s.id) {
@@ -197,7 +197,7 @@
 
         <!-- Socials -->
         @if (socials.length > 0) {
-          <section>
+          <section rbSection="socials">
             <h2 class="sidebar-heading" [style.color]="themeColor">Links</h2>
             <div class="flex flex-col gap-1.5">
               @for (s of socials; track s.id) {

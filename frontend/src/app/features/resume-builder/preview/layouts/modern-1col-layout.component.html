@@ -3,7 +3,7 @@
       <!-- Header -->
       <div class="flex items-center gap-6" [style.border-bottom]="'3px solid ' + themeColor" style="padding-bottom:1.5rem">
         @if (pi.photoUrl) {
-          <img
+          <img rbResumePhoto
             [src]="pi.photoUrl"
             alt="Photo"
             class="w-20 h-20 object-cover flex-shrink-0"
@@ -34,7 +34,7 @@
 
       <!-- Experience -->
       @if (experience.length > 0) {
-        <section>
+        <section rbSection="experience">
           <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">Experience</h2>
           <div class="flex flex-col gap-4">
             @for (exp of experience; track exp.id) {
@@ -51,7 +51,7 @@
 
       <!-- Education -->
       @if (education.length > 0) {
-        <section>
+        <section rbSection="education">
           <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">Education</h2>
           <div class="flex flex-col gap-3">
             @for (edu of education; track edu.id) {
@@ -67,7 +67,7 @@
 
       <!-- Skills -->
       @if (skills.length > 0) {
-        <section>
+        <section rbSection="skills">
           <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">Skills</h2>
           <div class="flex flex-wrap gap-2">
             @for (skill of skills; track skill.id) {
@@ -81,7 +81,7 @@
       @if (languages.length > 0 || certifications.length > 0) {
         <div class="grid grid-cols-2 gap-6">
           @if (languages.length > 0) {
-            <section>
+            <section rbSection="languages">
               <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-2">Languages</h2>
               @for (lang of languages; track lang.id) {
                 <div class="flex justify-between text-xs"><span>{{ lang.name }}</span><span class="text-gray-400">{{ lang.proficiency }}</span></div>
@@ -89,7 +89,7 @@
             </section>
           }
           @if (certifications.length > 0) {
-            <section>
+            <section rbSection="certifications">
               <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-2">Certifications</h2>
               @for (cert of certifications; track cert.id) {
                 <p class="text-xs font-medium">{{ cert.name }}</p>
@@ -101,7 +101,7 @@
 
       <!-- Custom Sections -->
       @for (cs of customSections; track cs.id) {
-        <section>
+        <section rbSection="custom">
           <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">{{ cs.heading }}</h2>
           @if (cs.body) { <div class="text-sm leading-relaxed text-gray-700" [innerHTML]="cs.body | richText"></div> }
           @if (cs.items && cs.items.length > 0) {

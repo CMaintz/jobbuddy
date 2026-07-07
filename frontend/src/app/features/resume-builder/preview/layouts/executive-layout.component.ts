@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
+import { SectionTypographyDirective } from '../../shared/section-typography.directive';
+import { ResumePhotoDirective } from '../../shared/resume-photo.directive';
 import { SkillChipListComponent } from '../../shared/skill-chip-list.component';
 import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 
 @Component({
   selector: 'app-executive-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SkillChipListComponent, RichTextPipe],
+  imports: [CommonModule, LucideAngularModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
   templateUrl: './executive-layout.component.html',
 })
 export class ExecutiveLayoutComponent {
