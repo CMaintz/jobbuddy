@@ -5,18 +5,24 @@
         <div class="flex items-center gap-2">
           <button class="text-jb-text-dim text-sm hover:text-jb-text" (click)="goBack()">&larr; Back</button>
           <span class="text-jb-text-faint">/</span>
-          <span class="text-md font-medium">{{ format() === 'app' ? 'Application' : format() === 'cl' ? 'Cover Letter' : 'Short Pitch' }}</span>
+          <span class="text-md font-medium">{{ formatLabel() }}</span>
+          @if (application(); as app) {
+            <span class="text-sm text-jb-text-dim">· {{ app.jobCompanyName }} — {{ app.jobTitle }}</span>
+          }
         </div>
         <div class="flex items-center gap-2">
-          <button class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-jb-surface-2 border border-jb-border rounded-md text-jb-text cursor-pointer">
-            <jb-icon name="doc" [size]="12" />Copy
-          </button>
-          <button class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-jb-surface-2 border border-jb-border rounded-md text-jb-text cursor-pointer">
-            <jb-icon name="download" [size]="12" />PDF
+          <button class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-jb-surface-2 border border-jb-border rounded-md text-jb-text cursor-pointer"
+            (click)="copyContent()" [disabled]="!activeDoc()">
+            <jb-icon [name]="copied() ? 'check' : 'doc'" [size]="12" />{{ copied() ? 'Copied' : 'Copy' }}
           </button>
         </div>
       </header>
 
+      @if (loading()) {
+        <div class="flex-1 flex items-center justify-center text-jb-text-dim">Loading application…</div>
+      } @else if (loadError()) {
+        <div class="flex-1 flex items-center justify-center text-jb-text-dim">{{ loadError() }}</div>
+      } @else {
       <!-- Main grid: paper + sidebar -->
       <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 lg:grid-cols-[1fr_320px]">
         <!-- Paper area -->
@@ -26,8 +32,10 @@
             <div class="flex items-center gap-2.5">
               <jb-icon name="doc" [size]="14" class="text-jb-text-mid" />
               <div>
-                <div class="text-md font-medium">{{ format() === 'app' ? 'Application' : 'Cover letter' }}</div>
-                <div class="text-xs text-jb-text-dim">{{ paperSubtitle() }}</div>
+                <div class="text-md font-medium">{{ formatLabel() }}</div>
+                <div class="text-xs text-jb-text-dim">
+                  {{ activeDoc() ? wordCount() + ' words · generated ' + ageLabel(activeDoc()!.createdAt) : 'not generated yet' }}
+                </div>
               </div>
             </div>
             <div class="flex items-center gap-1.5">
@@ -41,9 +49,11 @@
                     [class.text-jb-text-mid]="format() !== fmt.key"
                     [style.background]="format() !== fmt.key ? 'transparent' : ''"
                     [style.box-shadow]="format() === fmt.key ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
-                    (click)="format.set($any(fmt.key))">
+                    (click)="format.set(fmt.key)">
                     {{ fmt.label }}
-                    <span class="font-mono text-2xs text-jb-text-dim ml-1">{{ fmt.words }}</span>
+                    @if (docCountForFormat(fmt.key) > 0) {
+                      <span class="inline-block w-1.5 h-1.5 rounded-full bg-jb-success ml-1"></span>
+                    }
                   </button>
                 }
               </div>
@@ -93,39 +103,58 @@
 
           <!-- Paper scroll area -->
           <div class="flex-1 overflow-auto flex justify-center jb-scroll" style="padding:32px 32px 60px;background:radial-gradient(ellipse at top, #1a1e25 0%, var(--jb-bg) 60%);">
-            <div [style.background]="activeTemplate().bg"
-                 [style.color]="activeTemplate().fg"
-                 [style.font-family]="activeTemplate().font"
-                 [style.font-size.px]="activeTemplate().size"
-                 [style.line-height]="activeTemplate().lineH"
-                 class="rounded-md w-full relative"
-                 style="max-width:720px;padding:56px 64px;box-shadow:0 18px 60px rgba(0,0,0,0.45);">
-              <!-- Rail accent -->
-              @if (activeTemplate().rail) {
-                <div class="absolute left-0 top-14 bottom-14 w-1 bg-jb-accent"></div>
-              }
-              <!-- Header -->
-              @if (activeTemplate().headerStyle === 'centered') {
-                <div class="text-center mb-8 pb-4" [style.border-bottom]="'1px solid ' + activeTemplate().divider">
-                  <div style="font-size:22px;font-weight:600;letter-spacing:-0.01em;">Marta Olsen</div>
-                  <div class="mt-1" [style.color]="activeTemplate().muted" style="font-size:11.5px;">Senior Frontend Engineer - marta&#64;olsen.dk</div>
-                </div>
-              } @else {
-                <div class="mb-8">
-                  <div style="font-size:18px;font-weight:500;letter-spacing:-0.01em;">Marta Olsen</div>
-                  <div [style.color]="activeTemplate().muted" style="font-size:11.5px;">Senior Frontend Engineer - marta&#64;olsen.dk</div>
-                </div>
-              }
-              <!-- Body content -->
-              <div class="mb-4" style="font-weight:500;">Dear Hiring Manager,</div>
-              <div class="flex flex-col gap-3.5">
-                @for (para of sampleBody; track $index) {
-                  <p style="margin:0;text-wrap:pretty;">{{ para }}</p>
+            @if (activeDoc()) {
+              <div [style.background]="activeTemplate().bg"
+                   [style.color]="activeTemplate().fg"
+                   [style.font-family]="activeTemplate().font"
+                   [style.font-size.px]="activeTemplate().size"
+                   [style.line-height]="activeTemplate().lineH"
+                   class="rounded-md w-full relative self-start"
+                   style="max-width:720px;padding:56px 64px;box-shadow:0 18px 60px rgba(0,0,0,0.45);">
+                <!-- Rail accent -->
+                @if (activeTemplate().rail) {
+                  <div class="absolute left-0 top-14 bottom-14 w-1 bg-jb-accent"></div>
                 }
+                <!-- Header (identity is assembled server-side, never sent to the AI) -->
+                @if (identity().name) {
+                  @if (activeTemplate().headerStyle === 'centered') {
+                    <div class="text-center mb-8 pb-4" [style.border-bottom]="'1px solid ' + activeTemplate().divider">
+                      <div style="font-size:22px;font-weight:600;letter-spacing:-0.01em;">{{ identity().name }}</div>
+                      <div class="mt-1" [style.color]="activeTemplate().muted" style="font-size:11.5px;">
+                        {{ identity().headline }}{{ identity().email ? ' - ' + identity().email : '' }}
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="mb-8">
+                      <div style="font-size:18px;font-weight:500;letter-spacing:-0.01em;">{{ identity().name }}</div>
+                      <div [style.color]="activeTemplate().muted" style="font-size:11.5px;">
+                        {{ identity().headline }}{{ identity().email ? ' - ' + identity().email : '' }}
+                      </div>
+                    </div>
+                  }
+                }
+                <!-- Body content -->
+                <div class="flex flex-col gap-3.5">
+                  @for (para of paragraphs(); track $index) {
+                    <p style="margin:0;text-wrap:pretty;white-space:pre-line;">{{ para }}</p>
+                  }
+                </div>
               </div>
-              <div class="mt-6" style="white-space:pre-line;">Best regards,
-Marta Olsen</div>
-            </div>
+            } @else {
+              <!-- No document of this type yet -->
+              <div class="self-center text-center max-w-[420px]">
+                <jb-icon name="sparkle" [size]="24" class="text-jb-accent" />
+                <div class="text-md font-medium mt-3 mb-1">No {{ formatLabel().toLowerCase() }} yet</div>
+                <div class="text-sm text-jb-text-dim mb-4">Generate one from your master CV and this job's description.</div>
+                <button class="px-4 py-2 bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer inline-flex items-center gap-1.5"
+                  style="color:#1c1004;border-color:#c8881c;"
+                  [style.opacity]="generatingMissing() ? '0.6' : '1'"
+                  (click)="generateMissing()">
+                  <jb-icon name="sparkle" [size]="12" />
+                  {{ generatingMissing() ? 'Generating…' : 'Generate ' + formatLabel().toLowerCase() }}
+                </button>
+              </div>
+            }
           </div>
         </div>
 
@@ -158,6 +187,7 @@ Marta Olsen</div>
               (click)="mobileShowSidebar.set(true)">
         <jb-icon name="sparkle" [size]="14" /> Revise
       </button>
+      }
     </div>
 
     <!-- Sidebar content template -->
@@ -167,17 +197,18 @@ Marta Olsen</div>
         <div class="flex items-center gap-2 mb-2.5">
           <jb-icon name="sparkle" [size]="13" class="text-jb-accent" />
           <div class="text-sm font-semibold">Generation</div>
-          <span class="ml-auto text-xs text-jb-text-dim font-mono">v3 - 8s ago</span>
-        </div>
-        <div class="text-xs text-jb-text-dim mb-1.5">Writing angles used</div>
-        <div class="flex flex-wrap gap-1.5">
-          @for (angle of writingAngles; track angle) {
-            <span class="px-2 py-0.5 rounded-full bg-jb-accent-soft border border-jb-accent-border text-jb-accent-2 text-xs">{{ angle }}</span>
+          @if (activeDoc(); as doc) {
+            <span class="ml-auto text-xs text-jb-text-dim font-mono">v{{ docCountForFormat(format()) }} · {{ ageLabel(doc.createdAt) }}</span>
           }
         </div>
-        <div class="mt-3.5 text-xs text-jb-text-dim">
-          Voice: <b class="text-jb-text-mid">Warm</b> - Language: <b class="text-jb-text-mid">{{ format() === 'app' ? 'Dansk' : 'English' }}</b>
-        </div>
+        @if (activeDoc(); as doc) {
+          <div class="text-xs text-jb-text-dim">
+            Type: <b class="text-jb-text-mid">{{ doc.documentType }}</b>
+            @if (doc.modelUsed) { <span> · Model: <b class="text-jb-text-mid">{{ doc.modelUsed }}</b></span> }
+          </div>
+        } @else {
+          <div class="text-xs text-jb-text-dim">Nothing generated for this format yet.</div>
+        }
       </div>
 
       <!-- Revise prompts -->
@@ -187,8 +218,8 @@ Marta Olsen</div>
           @for (prompt of revisePrompts; track prompt) {
             <button class="flex items-center gap-2 px-2.5 py-[7px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer"
               (click)="refineWith(prompt)"
-              [style.opacity]="refining() ? '0.5' : '1'"
-              [style.pointer-events]="refining() ? 'none' : 'auto'">
+              [style.opacity]="refining() || !activeDoc() ? '0.5' : '1'"
+              [style.pointer-events]="refining() || !activeDoc() ? 'none' : 'auto'">
               <jb-icon name="sparkle" [size]="11" class="text-jb-accent" />
               <span>{{ prompt }}</span>
               <jb-icon name="arrow-right" [size]="11" class="ml-auto text-jb-text-dim" />

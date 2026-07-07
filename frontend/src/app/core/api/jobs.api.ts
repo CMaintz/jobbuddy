@@ -71,4 +71,16 @@ export class JobsApiService {
   getDocumentsForJob(id: string): Observable<GeneratedDocument[]> {
     return this.http.get<GeneratedDocument[]>(`${this.base}/${id}/documents`);
   }
+
+  lookupByUrl(url: string): Observable<Job> {
+    return this.http.get<Job>(`${this.base}/lookup`, { params: { url } });
+  }
+
+  addManual(payload: {
+    title: string; companyName: string; description: string;
+    url?: string; location?: string; employmentType?: string; remoteType?: string;
+    salaryMin?: number; salaryMax?: number; currency?: string;
+  }): Observable<Job> {
+    return this.http.post<Job>(`${this.base}/manual`, payload);
+  }
 }

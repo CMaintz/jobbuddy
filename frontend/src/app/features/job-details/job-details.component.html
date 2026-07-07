@@ -8,7 +8,7 @@
       <div class="ml-auto flex gap-1.5 items-center">
         <jb-button small ghost icon="bookmark">Save</jb-button>
         <jb-button small icon="external">Open original</jb-button>
-        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job?.id }">
           {{ documents.length > 0 ? 'Regenerate' : 'Generate application' }}
         </jb-button>
       </div>
@@ -196,7 +196,7 @@
                 <jb-icon name="sparkle" [size]="18" class="text-jb-accent" />
                 <div class="text-base text-jb-text-mid mt-1.5">No documents yet</div>
                 <div class="text-xs text-jb-text-dim mt-0.5 mb-3">Generate an angled CV + application.</div>
-                <jb-button [primary]="true" small icon="sparkle" routerLink="/apply">Generate</jb-button>
+                <jb-button [primary]="true" small icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job?.id }">Generate</jb-button>
               </div>
             }
           </div>
@@ -206,12 +206,18 @@
             <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">Generate</div>
             <div class="grid grid-cols-2 gap-1.5">
               @for (action of generateActions; track action.label) {
-                <button (click)="onGenerate(action.label)" class="flex items-center gap-[7px] py-2 px-2.5 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-[11.5px] font-medium cursor-pointer text-left">
+                <button (click)="onGenerate(action.format)" class="flex items-center gap-[7px] py-2 px-2.5 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-[11.5px] font-medium cursor-pointer text-left">
                   <jb-icon [name]="action.icon" [size]="12" class="text-jb-accent flex-shrink-0" />
                   <span class="flex-1 min-w-0">{{ action.label }}</span>
                   <jb-icon name="sparkle" [size]="10" class="text-jb-text-dim" />
                 </button>
               }
+              <a [href]="contactMailto"
+                class="flex items-center gap-[7px] py-2 px-2.5 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-[11.5px] font-medium cursor-pointer text-left no-underline">
+                <jb-icon name="mail" [size]="12" class="text-jb-info flex-shrink-0" />
+                <span class="flex-1 min-w-0">Contact via email</span>
+                <jb-icon name="external" [size]="10" class="text-jb-text-dim" />
+              </a>
             </div>
           </div>
 
