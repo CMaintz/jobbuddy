@@ -187,6 +187,25 @@
     margin-bottom: 5px;
   }
 
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    width: 26px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--jb-text-dim);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover {
+    background: var(--jb-surface-2);
+    border-color: var(--jb-border);
+    color: var(--jb-text);
+  }
+
   .form-panel {
     background: var(--jb-surface);
     border: 1px solid var(--jb-border);
@@ -435,3 +454,39 @@
     transform: translateX(0);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Resume builder — document typography controls
+   Driven by CSS vars set on #previewContainer from ResumeSettings:
+   --rb-font-scale, --rb-line, --rb-text, --rb-section-gap
+   Layout templates use Tailwind rem classes, so font sizes are
+   rescaled here rather than per-template.
+   ═══════════════════════════════════════════════════════════════ */
+
+#previewContainer { color: var(--rb-text, #1f2937); }
+
+/* Font size scale */
+#previewContainer .text-\[10px\] { font-size: calc(10px * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-xs   { font-size: calc(0.75rem  * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-sm   { font-size: calc(0.875rem * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-base { font-size: calc(1rem     * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-lg   { font-size: calc(1.125rem * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-xl   { font-size: calc(1.25rem  * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-2xl  { font-size: calc(1.5rem   * var(--rb-font-scale, 1)) !important; }
+#previewContainer .text-3xl  { font-size: calc(1.875rem * var(--rb-font-scale, 1)) !important; }
+
+/* Line spacing (body text only — headings keep their own rhythm) */
+#previewContainer :is(p, li, .text-xs, .text-sm, .text-base, .leading-relaxed, .leading-snug) {
+  line-height: var(--rb-line, 1.5);
+}
+
+/* Body text colour tiers — grays derived from the chosen text colour */
+#previewContainer :is(.text-gray-800, .text-gray-900) { color: var(--rb-text, #1f2937) !important; }
+#previewContainer .text-gray-700 { color: color-mix(in srgb, var(--rb-text, #1f2937) 92%, white) !important; }
+#previewContainer .text-gray-600 { color: color-mix(in srgb, var(--rb-text, #1f2937) 78%, white) !important; }
+#previewContainer .text-gray-500 { color: color-mix(in srgb, var(--rb-text, #1f2937) 62%, white) !important; }
+#previewContainer .text-gray-400 { color: color-mix(in srgb, var(--rb-text, #1f2937) 48%, white) !important; }
+#previewContainer .text-gray-300 { color: color-mix(in srgb, var(--rb-text, #1f2937) 34%, white) !important; }
+
+/* Section spacing — every flex column that directly contains <section>s */
+#previewContainer div:has(> section) { row-gap: var(--rb-section-gap, 20px); }
