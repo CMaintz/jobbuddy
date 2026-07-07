@@ -13,7 +13,8 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
   { key: 'APPLICATION', label: 'Application', icon: 'layers', color: 'var(--jb-accent)' },
   { key: 'COVER_LETTER', label: 'Cover letter', icon: 'doc', color: 'var(--jb-info)' },
   { key: 'RECRUITER_MESSAGE', label: 'Recruiter email', icon: 'mail', color: '#7df2a8' },
-  { key: 'CV_ANALYSIS', label: 'CV analysis', icon: 'doc', color: 'var(--jb-violet)' },
+  { key: 'CV_TAILORING', label: 'Angled CV', icon: 'doc', color: 'var(--jb-violet)' },
+  { key: 'CV_ANALYSIS', label: 'CV analysis', icon: 'doc', color: 'var(--jb-text-dim)' },
   { key: 'GENERAL', label: 'General', icon: 'lightbulb', color: 'var(--jb-text-dim)' },
 ];
 

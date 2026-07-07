@@ -162,10 +162,10 @@ Most roles work best with the whole listing — responsibilities, requirements, 
             <!-- Prompt template + custom instructions -->
             <div class="mt-3.5 pt-3.5 border-t border-jb-border">
               <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Prompt</div>
-              @if (promptTemplates.length > 0) {
+              @if (relevantPromptTemplates.length > 0) {
                 <select class="input mb-2" [ngModel]="selectedPromptId()" (ngModelChange)="selectedPromptId.set($event || null)">
                   <option [ngValue]="null">Default prompt</option>
-                  @for (tpl of promptTemplates; track tpl.id) {
+                  @for (tpl of relevantPromptTemplates; track tpl.id) {
                     <option [ngValue]="tpl.id">{{ tpl.name }}</option>
                   }
                 </select>
