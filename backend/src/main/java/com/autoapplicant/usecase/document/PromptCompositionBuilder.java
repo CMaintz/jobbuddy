@@ -57,7 +57,8 @@ public class PromptCompositionBuilder {
             String customInstructions,
             String motivationText,
             String targetLanguage,
-            PromptTemplate styleTemplate) {
+            PromptTemplate styleTemplate,
+            WritingProfile writingProfile) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write the document body in " + targetLanguage + "."
@@ -98,8 +99,11 @@ public class PromptCompositionBuilder {
                   "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job — omit if none"]
                 }""";
 
+        String styleMemory = buildStyleMemory(writingProfile);
+
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
+                + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -127,7 +131,8 @@ public class PromptCompositionBuilder {
             String jobDescription,
             String customInstructions,
             String targetLanguage,
-            PromptTemplate styleTemplate) {
+            PromptTemplate styleTemplate,
+            WritingProfile writingProfile) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write all rewritten text in " + targetLanguage + "."
@@ -157,8 +162,11 @@ public class PromptCompositionBuilder {
                   "notes": ["1-3 specific observations about gaps or opportunities — omit if none"]
                 }""";
 
+        String styleMemory = buildStyleMemory(writingProfile);
+
         String userPrompt = "Tailor the CV content from the contact-free master career profile below "
                 + "to best match the job description." + styleGuidance
+                + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
@@ -177,7 +185,7 @@ public class PromptCompositionBuilder {
 
     private String buildStyleMemory(WritingProfile profile) {
         if (profile == null) return "";
-        StringBuilder sb = new StringBuilder("## Writing Style\n");
+        StringBuilder sb = new StringBuilder();
         if (profile.tone() != null) sb.append("Tone: ").append(profile.tone()).append("\n");
         if (profile.vocabularyNotes() != null)
             sb.append("Vocabulary: ").append(profile.vocabularyNotes()).append("\n");
@@ -185,7 +193,7 @@ public class PromptCompositionBuilder {
             sb.append("Preferred phrases: ")
               .append(String.join(", ", profile.phrasingPatterns())).append("\n");
         }
-        return sb.toString();
+        return sb.isEmpty() ? "" : "## Writing Style\n" + sb;
     }
 
     private static String appendLanguage(String systemPrompt, String targetLanguage) {

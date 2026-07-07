@@ -12,6 +12,7 @@ import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
+import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
@@ -37,6 +38,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
     private final JobRepositoryPort jobRepo;
     private final CvVersionRepositoryPort cvRepo;
     private final PromptTemplateRepositoryPort promptTemplateRepo;
+    private final WritingProfileRepositoryPort writingProfileRepo;
     private final PromptCompositionBuilder compositionBuilder;
     private final CareerProfileContextService careerProfileContext;
     private final BuildApplicationDocumentPort buildApplicationDocument;
@@ -47,6 +49,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
                      JobRepositoryPort jobRepo,
                      CvVersionRepositoryPort cvRepo,
                      PromptTemplateRepositoryPort promptTemplateRepo,
+                     WritingProfileRepositoryPort writingProfileRepo,
                      PromptCompositionBuilder compositionBuilder,
                      CareerProfileContextService careerProfileContext,
                      BuildApplicationDocumentPort buildApplicationDocument,
@@ -56,6 +59,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
         this.jobRepo = jobRepo;
         this.cvRepo = cvRepo;
         this.promptTemplateRepo = promptTemplateRepo;
+        this.writingProfileRepo = writingProfileRepo;
         this.compositionBuilder = compositionBuilder;
         this.careerProfileContext = careerProfileContext;
         this.buildApplicationDocument = buildApplicationDocument;
@@ -129,7 +133,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
 
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                     documentType, contactFreeJson, jobDescription,
-                    customInstructions, motivationText, targetLanguage, styleTemplate);
+                    customInstructions, motivationText, targetLanguage, styleTemplate,
+                    writingProfileRepo.findByUserId(userId).orElse(null));
 
             String json = AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition)).trim());
