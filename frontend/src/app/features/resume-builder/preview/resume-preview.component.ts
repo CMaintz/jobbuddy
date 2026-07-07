@@ -29,12 +29,24 @@ export class ResumePreviewComponent {
   protected state = inject(ResumeStateService);
   private pdfExport = inject(PdfExportService);
 
+  private static readonly FONT_SCALES: Record<string, number> = { sm: 0.85, md: 1, lg: 1.15, xl: 1.3 };
+
   get docWidth(): number {
     return this.state.settings().documentSize === 'A4' ? 794 : 816;
   }
 
   get docHeight(): number {
     return this.state.settings().documentSize === 'A4' ? 1123 : 1056;
+  }
+
+  /** Typography settings → CSS vars consumed by the #previewContainer rules in styles.css */
+  get typographyVars(): string {
+    const s = this.state.settings();
+    const scale = ResumePreviewComponent.FONT_SCALES[s.fontSize] ?? 1;
+    return `--rb-font-scale:${scale};` +
+      `--rb-line:${s.lineSpacing ?? 1.5};` +
+      `--rb-text:${s.textColor ?? '#1f2937'};` +
+      `--rb-section-gap:${s.sectionSpacing ?? 20}px;`;
   }
 
   async downloadPdf(): Promise<void> {

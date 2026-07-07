@@ -39,6 +39,39 @@
       </div>
 
       <div>
+        <label class="rb-label">Text Color</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="color" style="height:36px;width:56px;border-radius:6px;border:1px solid var(--jb-border);cursor:pointer;background:var(--jb-surface-2);"
+            [value]="settings.textColor ?? '#1f2937'"
+            (input)="update('textColor', $any($event.target).value)" />
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            @for (color of presetTextColors; track color) {
+              <button
+                style="width:24px;height:24px;border-radius:50%;border-width:2px;border-style:solid;cursor:pointer;"
+                [style.background-color]="color"
+                [style.border-color]="(settings.textColor ?? '#1f2937') === color ? 'var(--jb-accent)' : 'transparent'"
+                (click)="update('textColor', color)"
+              ></button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="rb-label">Line Spacing — {{ (settings.lineSpacing ?? 1.5).toFixed(2) }}</label>
+        <input type="range" min="1" max="2.2" step="0.05" style="width:100%;accent-color:var(--jb-accent);"
+          [value]="settings.lineSpacing ?? 1.5"
+          (input)="update('lineSpacing', +$any($event.target).value)" />
+      </div>
+
+      <div>
+        <label class="rb-label">Section Spacing — {{ settings.sectionSpacing ?? 20 }}px</label>
+        <input type="range" min="8" max="48" step="2" style="width:100%;accent-color:var(--jb-accent);"
+          [value]="settings.sectionSpacing ?? 20"
+          (input)="update('sectionSpacing', +$any($event.target).value)" />
+      </div>
+
+      <div>
         <label class="rb-label">Document Size</label>
         <div style="display:flex;gap:8px;">
           <button class="rb-toggle" [class.active]="settings.documentSize === 'A4'"
