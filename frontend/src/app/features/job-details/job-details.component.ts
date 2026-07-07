@@ -9,6 +9,8 @@ import { CompanyMarkComponent } from '../../shared/components/company-mark/compa
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
+import { NotesApiService } from '../../core/api/notes.api';
+import { Note } from '../../core/models/note.model';
 import { Job } from '../../core/models/job.model';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -38,12 +40,16 @@ export class JobDetailsComponent implements OnInit {
   private router = inject(Router);
   private jobsApi = inject(JobsApiService);
   private appsApi = inject(ApplicationsApiService);
+  private notesApi = inject(NotesApiService);
 
   loading = true;
   job: Job | null = null;
   application: Application | null = null;
   documents: GeneratedDocument[] = [];
   notesText = '';
+  notesStatus = signal('');
+  saved = signal(false);
+  private note: Note | null = null;
   tab = signal<'jd' | 'activity' | 'notes'>('jd');
   mobileShowRail = signal(false);
 
@@ -89,6 +95,7 @@ export class JobDetailsComponent implements OnInit {
         this.job = job;
         this.loading = false;
         this.buildActivity();
+        this.loadJobExtras(job.id);
         // Try to load documents for this job
         this.jobsApi.getDocumentsForJob(id).subscribe({
           next: (docs) => { this.documents = docs; this.tabs[1].count = this.activityEvents.length; },
@@ -108,6 +115,7 @@ export class JobDetailsComponent implements OnInit {
                   this.job = job;
                   this.loading = false;
                   this.buildActivity();
+                  this.loadJobExtras(job.id);
                   this.jobsApi.getDocumentsForJob(app.jobId).subscribe({
                     next: (docs) => this.documents = docs,
                     error: () => {}
@@ -124,6 +132,23 @@ export class JobDetailsComponent implements OnInit {
           error: () => this.loading = false
         });
       }
+    });
+  }
+
+  /** Saved-state + first note for the job (independent of the application). */
+  private loadJobExtras(jobId: string): void {
+    this.jobsApi.getSaved().subscribe({
+      next: saved => this.saved.set(saved.some(j => j.id === jobId)),
+      error: () => {}
+    });
+    this.notesApi.getForJob(jobId).subscribe({
+      next: notes => {
+        if (notes.length > 0) {
+          this.note = notes[0];
+          this.notesText = notes[0].content;
+        }
+      },
+      error: () => {}
     });
   }
 
@@ -150,6 +175,41 @@ export class JobDetailsComponent implements OnInit {
   onGenerate(format: string): void {
     if (!this.job) return;
     this.router.navigate(['/apply'], { queryParams: { jobId: this.job.id, format } });
+  }
+
+  toggleSave(): void {
+    if (!this.job) return;
+    const wasSaved = this.saved();
+    this.saved.set(!wasSaved);
+    (wasSaved ? this.jobsApi.unsave(this.job.id) : this.jobsApi.save(this.job.id)).subscribe({
+      error: () => this.saved.set(wasSaved)
+    });
+  }
+
+  openOriginal(): void {
+    if (this.job?.url) window.open(this.job.url, '_blank', 'noopener');
+  }
+
+  saveNotes(): void {
+    if (!this.job) return;
+    const content = this.notesText.trim();
+    if (this.note) {
+      if (content === this.note.content) return;
+      this.notesApi.update(this.job.id, this.note.id, content).subscribe({
+        next: note => { this.note = note; this.flashNotesStatus('saved'); },
+        error: () => this.flashNotesStatus('save failed')
+      });
+    } else if (content) {
+      this.notesApi.create(this.job.id, content).subscribe({
+        next: note => { this.note = note; this.flashNotesStatus('saved'); },
+        error: () => this.flashNotesStatus('save failed')
+      });
+    }
+  }
+
+  private flashNotesStatus(text: string): void {
+    this.notesStatus.set(text);
+    setTimeout(() => this.notesStatus.set(''), 1800);
   }
 
   /**
