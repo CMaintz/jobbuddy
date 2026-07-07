@@ -37,7 +37,7 @@
             </div>
             <div style="grid-column:span 2;">
               <label class="rb-label">Description</label>
-              <app-debounced-textarea [value]="exp.description" [rows]="3" placeholder="Describe your role and achievements..." (debouncedChange)="update(exp.id, 'description', $event)" />
+              <app-rich-text-editor [value]="exp.description" placeholder="Describe your role and achievements..." (debouncedChange)="update(exp.id, 'description', $event)" />
             </div>
             <div style="grid-column:span 2;">
               <label class="rb-label">Skills (comma separated)</label>

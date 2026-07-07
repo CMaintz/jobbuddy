@@ -23,14 +23,11 @@
           </div>
           <div style="padding:8px 12px 12px;">
             @if (section.body !== undefined || (!section.items || section.items.length === 0)) {
-              <textarea
-                class="rb-input"
-                style="resize:none;"
-                rows="3"
+              <app-rich-text-editor
                 placeholder="Write a paragraph..."
                 [value]="section.body ?? ''"
-                (input)="updateBody(section.id, $any($event.target).value)"
-              ></textarea>
+                (debouncedChange)="updateBody(section.id, $event)"
+              />
             }
             @if (section.items && section.items.length > 0) {
               <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
