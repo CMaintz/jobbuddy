@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public interface PromptTemplateRepositoryPort {
     PromptTemplate save(PromptTemplate template);
+    void deleteById(UUID id);
     Optional<PromptTemplate> findById(UUID id);
     List<PromptTemplate> findByUserId(UUID userId);
     List<PromptTemplate> findPublic();
