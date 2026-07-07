@@ -72,10 +72,6 @@ export const routes: Routes = [
         path: 'applications/:id/cv',
         loadComponent: () => import('./features/output/angled-cv.component').then(m => m.AngledCvComponent)
       },
-      {
-        path: 'applications/:id/doc/:kind',
-        loadComponent: () => import('./features/output/document-view.component').then(m => m.DocumentViewComponent)
-      },
 
       // Master CV
       {
