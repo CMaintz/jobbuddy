@@ -31,6 +31,11 @@ public class FollowUpReminderService implements ManageFollowUpRemindersUseCase {
     }
 
     @Override
+    public List<FollowUpReminder> getOpenReminders(UUID userId) {
+        return repo.findOpenByUserId(userId);
+    }
+
+    @Override
     public FollowUpReminder createReminder(UUID applicationId, UUID userId, String note, Instant dueAt) {
         return repo.save(new FollowUpReminder(null, applicationId, userId, note, dueAt, false, null, null, null));
     }
