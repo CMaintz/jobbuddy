@@ -12,7 +12,8 @@ export class ProfilePrivateApiService {
     return this.http.get<ProfilePrivateInfo>(this.base);
   }
 
+  /** Partial update — omitted/null fields keep their current value; empty string clears. */
   updatePrivateInfo(data: ProfilePrivateInfo): Observable<ProfilePrivateInfo> {
-    return this.http.put<ProfilePrivateInfo>(this.base, data);
+    return this.http.patch<ProfilePrivateInfo>(this.base, data);
   }
 }
