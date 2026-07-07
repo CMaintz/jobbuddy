@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DocumentTheme, StructuredDocument } from '../models/structured-document.model';
+import { Profile } from '../models/user.model';
 
 export interface StructuredCvGenerateRequest {
   jobId?: string;
@@ -18,6 +19,7 @@ export interface GenerateDocumentRequest {
   jobDescription?: string;
   documentType: string;
   templateId?: string;
+  promptTemplateId?: string;
   customInstructions?: string;
   motivationText?: string;
   recruiterContext?: string;    // recruiter reply — included as additional context
@@ -76,5 +78,9 @@ export class AiApiService {
 
   getDocuments(): Observable<any[]> {
     return this.http.get<any[]>('/api/v1/ai/documents');
+  }
+
+  parseCv(rawCvText: string): Observable<Profile> {
+    return this.http.post<Profile>('/api/v1/ai/parse-cv', { rawCvText });
   }
 }
