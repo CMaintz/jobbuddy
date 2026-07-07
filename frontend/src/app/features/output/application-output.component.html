@@ -39,6 +39,20 @@
               </div>
             </div>
             <div class="flex items-center gap-1.5">
+              <!-- Edit toggle / save -->
+              @if (activeDoc()) {
+                @if (editing()) {
+                  <button class="px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer bg-jb-accent border" style="color:#1c1004;border-color:#c8881c;"
+                    [style.opacity]="savingEdit() ? '0.6' : '1'" (click)="saveEdit()">
+                    {{ savingEdit() ? 'Saving…' : editDirty() ? 'Save changes' : 'Done' }}
+                  </button>
+                } @else {
+                  <button class="flex items-center gap-1.5 px-2 py-1 bg-jb-surface-2 border border-jb-border rounded-md text-sm font-medium text-jb-text cursor-pointer"
+                    (click)="editing.set(true)">
+                    <jb-icon name="edit" [size]="11" /> Edit text
+                  </button>
+                }
+              }
               <!-- Format switch -->
               <div class="flex items-center gap-0.5 p-0.5 bg-jb-surface-2 border border-jb-border rounded-lg">
                 @for (fmt of formats; track fmt.key) {
@@ -134,11 +148,17 @@
                   }
                 }
                 <!-- Body content -->
-                <div class="flex flex-col gap-3.5">
-                  @for (para of paragraphs(); track $index) {
-                    <p style="margin:0;text-wrap:pretty;white-space:pre-line;">{{ para }}</p>
-                  }
-                </div>
+                @if (editing()) {
+                  <app-rich-text-editor [value]="activeDoc()!.content" (debouncedChange)="onEdited($event)" />
+                } @else if (isRichContent()) {
+                  <div class="rte-rendered" [innerHTML]="activeDoc()!.content | richText"></div>
+                } @else {
+                  <div class="flex flex-col gap-3.5">
+                    @for (para of paragraphs(); track $index) {
+                      <p style="margin:0;text-wrap:pretty;white-space:pre-line;">{{ para }}</p>
+                    }
+                  </div>
+                }
               </div>
             } @else {
               <!-- No document of this type yet -->
