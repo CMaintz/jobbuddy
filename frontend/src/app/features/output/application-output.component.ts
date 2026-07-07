@@ -76,6 +76,8 @@ export class ApplicationOutputComponent implements OnInit {
   loadError = signal('');
   application = signal<Application | null>(null);
   documents = signal<GeneratedDocument[]>([]);
+  /** Job description for job-aware refinements. */
+  private jobDescription = signal<string | null>(null);
 
   format = signal<FormatKey>('app');
   template = signal('editorial');
@@ -198,6 +200,10 @@ export class ApplicationOutputComponent implements OnInit {
       next: app => {
         this.application.set(app);
         this.loadDocuments(app.jobId);
+        this.jobsApi.getById(app.jobId).subscribe({
+          next: job => this.jobDescription.set(job.descriptionClean ?? null),
+          error: () => {}
+        });
       },
       error: () => {
         this.loadError.set('Could not load this application.');
@@ -287,6 +293,7 @@ export class ApplicationOutputComponent implements OnInit {
     this.aiApi.refine({
       currentContent: this.plainText(),
       userMessage: prompt,
+      jobDescription: this.jobDescription() ?? undefined,
     }).subscribe({
       next: (resp) => {
         this.refinedText.set(resp.refinedContent);
