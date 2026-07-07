@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { TemplateType, SectionConfig, SectionTypography } from '../../models/resume-builder.models';
 import { FONT_FAMILIES } from '../../data/font-families';
@@ -32,7 +33,7 @@ const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
 @Component({
   selector: 'app-layout-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DragDropModule],
   templateUrl: './layout-form.component.html',
   styleUrls: ['./layout-form.component.css'],
 })
@@ -54,6 +55,12 @@ export class LayoutFormComponent {
   toggleSection(column: 'leftColumn' | 'rightColumn', index: number): void {
     const cols = [...this.state.settings()[column]];
     cols[index] = { ...cols[index], visible: !cols[index].visible };
+    this.state.updateLayoutColumn(column, cols);
+  }
+
+  drop(column: 'leftColumn' | 'rightColumn', event: CdkDragDrop<SectionConfig[]>): void {
+    const cols = [...this.state.settings()[column]];
+    moveItemInArray(cols, event.previousIndex, event.currentIndex);
     this.state.updateLayoutColumn(column, cols);
   }
 
