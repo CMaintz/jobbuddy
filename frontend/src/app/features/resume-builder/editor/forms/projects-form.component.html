@@ -13,7 +13,7 @@
           <label class="rb-label">Date</label>
           <input class="rb-input" [value]="proj.date" (input)="update(proj.id, 'date', $any($event.target).value)" placeholder="2024-01" />
           <label class="rb-label">Description</label>
-          <app-debounced-textarea [value]="proj.description" [rows]="3" placeholder="What did you build and why?" (debouncedChange)="update(proj.id, 'description', $event)" />
+          <app-rich-text-editor [value]="proj.description" placeholder="What did you build and why?" (debouncedChange)="update(proj.id, 'description', $event)" />
           <label class="rb-label">Skills (comma separated)</label>
           <input class="rb-input" [value]="(proj.skills ?? []).join(', ')" (change)="updateSkills(proj.id, $any($event.target).value)" placeholder="React, Node.js, PostgreSQL" />
         </div>

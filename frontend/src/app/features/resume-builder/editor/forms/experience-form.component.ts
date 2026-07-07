@@ -3,13 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeExperience } from '../../models/resume-builder.models';
-import { DebouncedTextareaComponent } from '../../shared/debounced-textarea.component';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { MonthYearPickerComponent } from '../../shared/month-year-picker.component';
 
 @Component({
   selector: 'app-experience-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, DebouncedTextareaComponent, MonthYearPickerComponent],
+  imports: [CommonModule, FormsModule, RichTextEditorComponent, MonthYearPickerComponent],
   templateUrl: './experience-form.component.html',
   styleUrls: ['./experience-form.component.css'],
 })

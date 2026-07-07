@@ -28,7 +28,7 @@
 
       <div class="mt-8 flex flex-col gap-6">
         @if (pi.summary) {
-          <p class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor">{{ pi.summary }}</p>
+          <div class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor" [innerHTML]="pi.summary | richText"></div>
         }
         @if (experience.length > 0) {
           <section>
@@ -40,7 +40,7 @@
                     <div><h3 class="font-semibold text-sm">{{ exp.title }}</h3><p class="text-xs text-gray-500">{{ exp.company }}@if (exp.location) { · {{ exp.location }} }</p></div>
                     <span class="text-xs text-gray-400">{{ exp.startDate }} – {{ exp.current ? 'Present' : exp.endDate }}</span>
                   </div>
-                  @if (exp.description) { <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">{{ exp.description }}</p> }
+                  @if (exp.description) { <div class="text-xs text-gray-600 mt-1.5 leading-relaxed" [innerHTML]="exp.description | richText"></div> }
                   <app-skill-chip-list [skills]="exp.skills ?? []" />
                 </div>
               }
@@ -72,7 +72,7 @@
         @for (cs of customSections; track cs.id) {
           <section>
             <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">{{ cs.heading }}</h2>
-            @if (cs.body) { <p class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor">{{ cs.body }}</p> }
+            @if (cs.body) { <div class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor" [innerHTML]="cs.body | richText"></div> }
             @if (cs.items && cs.items.length > 0) {
               <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
                 @for (item of cs.items; track item.id) {

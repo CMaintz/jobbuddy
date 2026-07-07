@@ -17,7 +17,7 @@
         @if (pi.summary) {
           <section>
             <h2 class="section-heading" [style.color]="themeColor">Summary</h2>
-            <p class="text-sm leading-relaxed text-gray-700">{{ pi.summary }}</p>
+            <div class="text-sm leading-relaxed text-gray-700" [innerHTML]="pi.summary | richText"></div>
           </section>
         }
 
@@ -38,7 +38,7 @@
                     </span>
                   </div>
                   @if (exp.description) {
-                    <p class="text-xs text-gray-600 mt-1 leading-relaxed">{{ exp.description }}</p>
+                    <div class="text-xs text-gray-600 mt-1 leading-relaxed" [innerHTML]="exp.description | richText"></div>
                   }
                   <app-skill-chip-list [skills]="exp.skills ?? []" />
                 </div>
@@ -82,7 +82,7 @@
                     @if (proj.date) { <span class="text-xs text-gray-400">{{ proj.date }}</span> }
                   </div>
                   @if (proj.description) {
-                    <p class="text-xs text-gray-600 mt-1 leading-relaxed">{{ proj.description }}</p>
+                    <div class="text-xs text-gray-600 mt-1 leading-relaxed" [innerHTML]="proj.description | richText"></div>
                   }
                   <app-skill-chip-list [skills]="proj.skills ?? []" />
                 </div>
@@ -95,7 +95,7 @@
         @for (cs of customSections; track cs.id) {
           <section>
             <h2 class="section-heading" [style.color]="themeColor">{{ cs.heading }}</h2>
-            @if (cs.body) { <p class="text-sm leading-relaxed text-gray-700">{{ cs.body }}</p> }
+            @if (cs.body) { <div class="text-sm leading-relaxed text-gray-700" [innerHTML]="cs.body | richText"></div> }
             @if (cs.items && cs.items.length > 0) {
               <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
                 @for (item of cs.items; track item.id) {

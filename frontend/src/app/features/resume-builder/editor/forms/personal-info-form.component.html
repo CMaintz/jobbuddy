@@ -35,9 +35,9 @@
         </div>
         <div style="grid-column:span 2;">
           <label class="rb-label">Summary</label>
-          <app-debounced-textarea
+          <app-rich-text-editor
             [value]="pi.summary"
-            [rows]="4"
+           
             placeholder="A brief professional summary..."
             (debouncedChange)="update('summary', $event)"
           />
