@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { ResumeCustomSection, ResumeCustomSectionItem } from '../../models/resume-builder.models';
 
 const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 'bullets' }[] = [
@@ -15,7 +16,7 @@ const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 
 @Component({
   selector: 'app-custom-sections-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RichTextEditorComponent],
   templateUrl: './custom-sections-form.component.html',
   styleUrls: ['./custom-sections-form.component.css'],
 })

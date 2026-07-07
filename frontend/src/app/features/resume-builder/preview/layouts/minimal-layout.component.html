@@ -10,7 +10,7 @@
         </div>
       </div>
       @if (pi.summary) {
-        <p class="text-sm text-gray-600 leading-relaxed font-light border-l-2 pl-4" [style.border-color]="themeColor">{{ pi.summary }}</p>
+        <div class="text-sm text-gray-600 leading-relaxed font-light border-l-2 pl-4" [style.border-color]="themeColor" [innerHTML]="pi.summary | richText"></div>
       }
       @if (experience.length > 0) {
         <section>
@@ -22,7 +22,7 @@
                 <div class="flex-1">
                   <p class="font-medium text-sm">{{ exp.title }}</p>
                   <p class="text-xs text-gray-400">{{ exp.company }}</p>
-                  @if (exp.description) { <p class="text-xs text-gray-500 mt-1">{{ exp.description }}</p> }
+                  @if (exp.description) { <div class="text-xs text-gray-500 mt-1" [innerHTML]="exp.description | richText"></div> }
                   <app-skill-chip-list [skills]="exp.skills ?? []" />
                 </div>
               </div>
@@ -56,7 +56,7 @@
       @for (cs of customSections; track cs.id) {
         <section>
           <h2 class="text-xs uppercase tracking-[0.15em] text-gray-400 mb-3">{{ cs.heading }}</h2>
-          @if (cs.body) { <p class="text-sm text-gray-600 leading-relaxed font-light">{{ cs.body }}</p> }
+          @if (cs.body) { <div class="text-sm text-gray-600 leading-relaxed font-light" [innerHTML]="cs.body | richText"></div> }
           @if (cs.items && cs.items.length > 0) {
             <ul class="list-disc list-inside flex flex-col gap-0.5">
               @for (item of cs.items; track item.id) {
