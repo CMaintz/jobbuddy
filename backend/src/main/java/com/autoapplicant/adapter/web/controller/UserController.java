@@ -47,8 +47,8 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Update current user profile")
-    @PutMapping("/profile")
+    @Operation(summary = "Update current user profile. Merge semantics: omitted/null fields keep their current value; send an empty string/list to clear a field.")
+    @RequestMapping(value = "/profile", method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ResponseEntity<Profile> updateProfile(@RequestBody Profile profile) {
         return ResponseEntity.ok(updateProfile.updateProfile(secCtx.getCurrentUserId(), profile));
     }
