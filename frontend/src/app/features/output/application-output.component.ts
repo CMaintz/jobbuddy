@@ -51,12 +51,13 @@ const LETTER_TEMPLATES: LetterTemplate[] = [
   },
 ];
 
-type FormatKey = 'app' | 'cl' | 'dm';
+type FormatKey = 'app' | 'cl' | 'dm' | 'fu';
 
 const FORMAT_TO_DOC_TYPE: Record<FormatKey, string> = {
   app: 'APPLICATION_TEXT',
   cl: 'COVER_LETTER',
   dm: 'RECRUITER_MESSAGE',
+  fu: 'FOLLOW_UP_MESSAGE',
 };
 
 @Component({
@@ -98,6 +99,7 @@ export class ApplicationOutputComponent implements OnInit {
     { key: 'app', label: 'Application' },
     { key: 'cl', label: 'Cover letter' },
     { key: 'dm', label: 'Short pitch' },
+    { key: 'fu', label: 'Follow-up' },
   ];
 
   revisePrompts = [
@@ -188,7 +190,7 @@ export class ApplicationOutputComponent implements OnInit {
 
   ngOnInit(): void {
     const fmt = this.route.snapshot.queryParamMap.get('format');
-    if (fmt === 'cl' || fmt === 'dm') this.format.set(fmt);
+    if (fmt === 'cl' || fmt === 'dm' || fmt === 'fu') this.format.set(fmt);
 
     const appId = this.route.snapshot.paramMap.get('id');
     if (!appId) {
