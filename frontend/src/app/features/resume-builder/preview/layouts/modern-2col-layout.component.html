@@ -4,7 +4,7 @@
       <div class="flex-[35] p-7 flex flex-col gap-5 text-white" [style.background-color]="themeColor">
         @if (pi.photoUrl) {
           <div class="flex justify-center">
-            <img [src]="pi.photoUrl" alt="Photo" class="w-24 h-24 object-cover border-2 border-white/30"
+            <img rbResumePhoto [src]="pi.photoUrl" alt="Photo" class="w-24 h-24 object-cover border-2 border-white/30"
               [class.rounded-full]="photoStyle === 'circle'" [class.rounded-xl]="photoStyle === 'rounded'" />
           </div>
         }
@@ -80,7 +80,7 @@
           <div class="text-sm leading-relaxed text-gray-600" [innerHTML]="pi.summary | richText"></div>
         }
         @if (experience.length > 0) {
-          <section>
+          <section rbSection="experience">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Experience</h2>
             <div class="flex flex-col gap-4">
               @for (exp of experience; track exp.id) {
@@ -97,7 +97,7 @@
           </section>
         }
         @if (education.length > 0) {
-          <section>
+          <section rbSection="education">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Education</h2>
             <div class="flex flex-col gap-3">
               @for (edu of education; track edu.id) {
@@ -111,7 +111,7 @@
           </section>
         }
         @if (projects.length > 0) {
-          <section>
+          <section rbSection="projects">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Projects</h2>
             <div class="flex flex-col gap-3">
               @for (proj of projects; track proj.id) {
@@ -125,7 +125,7 @@
           </section>
         }
         @if (certifications.length > 0) {
-          <section>
+          <section rbSection="certifications">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Certifications</h2>
             @for (cert of certifications; track cert.id) {
               <div class="mb-1.5">
@@ -138,7 +138,7 @@
 
         <!-- Custom Sections -->
         @for (cs of customSections; track cs.id) {
-          <section>
+          <section rbSection="custom">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">{{ cs.heading }}</h2>
             @if (cs.body) { <div class="text-sm leading-relaxed text-gray-600" [innerHTML]="cs.body | richText"></div> }
             @if (cs.items && cs.items.length > 0) {

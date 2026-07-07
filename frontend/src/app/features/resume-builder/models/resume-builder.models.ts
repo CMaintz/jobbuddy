@@ -117,6 +117,12 @@ export interface SectionConfig {
 export interface SectionTypography {
   fontSize?: 'sm' | 'md' | 'lg' | 'xl';
   headingSize?: 'sm' | 'md' | 'lg' | 'xl';
+  fontFamily?: string;
+  /** Text size multiplier for the whole section (1 = template default). */
+  sizeScale?: number;
+  bold?: boolean;
+  italic?: boolean;
+  color?: string;
 }
 
 export interface ResumeSettings {
@@ -136,6 +142,10 @@ export interface ResumeSettings {
   lineSpacing?: number;
   /** Vertical gap between sections in px. */
   sectionSpacing?: number;
+  /** Photo edge length in px; unset = the layout's default size. */
+  photoSize?: number;
+  /** Photo side within the header, where the layout supports it. */
+  photoPlacement?: 'left' | 'right';
 }
 
 export interface ResumeDraft {

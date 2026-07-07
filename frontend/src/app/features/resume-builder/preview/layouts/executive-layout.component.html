@@ -8,7 +8,7 @@
             <p class="text-base opacity-80 mt-1">{{ pi.title }}</p>
           </div>
           @if (pi.photoUrl) {
-            <img [src]="pi.photoUrl" alt="Photo" class="w-20 h-20 object-cover border-2 border-white/30"
+            <img rbResumePhoto [src]="pi.photoUrl" alt="Photo" class="w-20 h-20 object-cover border-2 border-white/30"
               [class.rounded-full]="photoStyle === 'circle'"
               [class.rounded-xl]="photoStyle === 'rounded'" />
           }
@@ -31,7 +31,7 @@
           <div class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor" [innerHTML]="pi.summary | richText"></div>
         }
         @if (experience.length > 0) {
-          <section>
+          <section rbSection="experience">
             <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">Professional Experience</h2>
             <div class="flex flex-col gap-5">
               @for (exp of experience; track exp.id) {
@@ -49,7 +49,7 @@
         }
         <div class="grid grid-cols-2 gap-6">
           @if (education.length > 0) {
-            <section>
+            <section rbSection="education">
               <h2 class="font-semibold text-sm tracking-widest uppercase mb-3 pb-2 border-b" [style.color]="themeColor" [style.border-color]="themeColor">Education</h2>
               @for (edu of education; track edu.id) {
                 <div class="mb-2"><p class="font-medium text-sm">{{ edu.degree }}</p><p class="text-xs text-gray-500">{{ edu.school }}</p></div>
@@ -57,7 +57,7 @@
             </section>
           }
           @if (skills.length > 0) {
-            <section>
+            <section rbSection="skills">
               <h2 class="font-semibold text-sm tracking-widest uppercase mb-3 pb-2 border-b" [style.color]="themeColor" [style.border-color]="themeColor">Core Skills</h2>
               <div class="flex flex-wrap gap-1.5">
                 @for (s of skills; track s.id) {
@@ -70,7 +70,7 @@
 
         <!-- Custom Sections -->
         @for (cs of customSections; track cs.id) {
-          <section>
+          <section rbSection="custom">
             <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">{{ cs.heading }}</h2>
             @if (cs.body) { <div class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor" [innerHTML]="cs.body | richText"></div> }
             @if (cs.items && cs.items.length > 0) {
