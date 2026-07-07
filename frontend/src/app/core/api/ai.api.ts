@@ -10,6 +10,7 @@ export interface StructuredCvGenerateRequest {
   customInstructions?: string;
   targetLanguage?: string;
   templateId?: string;
+  promptTemplateId?: string;
   showProfileImage?: boolean;
   theme?: DocumentTheme;
 }
