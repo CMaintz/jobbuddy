@@ -102,9 +102,19 @@ export const routes: Routes = [
         path: 'interviews',
         loadComponent: () => import('./features/interviews/interviews.component').then(m => m.InterviewsComponent)
       },
+
+      // Insights & library
       {
-        path: 'contacts',
-        loadComponent: () => import('./features/contacts/contacts.component').then(m => m.ContactsComponent)
+        path: 'analytics',
+        loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
+      },
+      {
+        path: 'companies',
+        loadComponent: () => import('./features/companies/companies.component').then(m => m.CompaniesComponent)
+      },
+      {
+        path: 'documents',
+        loadComponent: () => import('./features/documents/documents.component').then(m => m.DocumentsComponent)
       },
 
       // Settings
@@ -212,14 +222,13 @@ export const routes: Routes = [
       // Redirects for old paths
       { path: 'jobs/search', redirectTo: 'jobs/feed', pathMatch: 'full' },
       { path: 'applications/pipeline', redirectTo: 'pipeline', pathMatch: 'full' },
-{ path: 'templates', redirectTo: 'old/templates', pathMatch: 'full' },
-      { path: 'analytics', redirectTo: 'old/analytics', pathMatch: 'full' },
-      { path: 'companies', redirectTo: 'old/companies', pathMatch: 'full' },
-      { path: 'profile', redirectTo: 'old/profile', pathMatch: 'full' },
-      { path: 'ai/generate', redirectTo: 'old/ai/generate', pathMatch: 'full' },
-      { path: 'ai/documents', redirectTo: 'old/ai/documents', pathMatch: 'full' },
-      { path: 'ai/cv', redirectTo: 'old/ai/cv', pathMatch: 'full' },
-      { path: 'ai/analyze', redirectTo: 'old/ai/analyze', pathMatch: 'full' },
+      // Templates are chosen inside the resume builder / output screens now
+      { path: 'templates', redirectTo: 'resume-builder', pathMatch: 'full' },
+      { path: 'profile', redirectTo: 'cv', pathMatch: 'full' },
+      { path: 'ai/generate', redirectTo: 'apply', pathMatch: 'full' },
+      { path: 'ai/documents', redirectTo: 'documents', pathMatch: 'full' },
+      { path: 'ai/cv', redirectTo: 'cv/import', pathMatch: 'full' },
+      { path: 'ai/analyze', redirectTo: 'documents', pathMatch: 'full' },
     ]
   },
   { path: '**', redirectTo: '/dashboard' }

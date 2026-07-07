@@ -38,23 +38,25 @@ export class AppComponent implements OnInit, OnDestroy {
   // ── Navigation definitions ──────────────────────────
   mainNav: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard',       icon: 'dashboard', route: '/dashboard',  kbd: 'G D' },
-    { id: 'jobfeed',   label: 'Job feed',        icon: 'compass',   route: '/jobs/feed',  kbd: 'G F', badge: 'new' },
-    { id: 'pipeline',  label: 'Pipeline',        icon: 'pipeline',  route: '/pipeline',   kbd: 'G P', count: 14 },
+    { id: 'jobfeed',   label: 'Job feed',        icon: 'compass',   route: '/jobs/feed',  kbd: 'G F' },
+    { id: 'pipeline',  label: 'Pipeline',        icon: 'pipeline',  route: '/pipeline',   kbd: 'G P' },
     { id: 'addjob',    label: 'New application', icon: 'sparkle',   route: '/apply',      kbd: 'N', accent: true },
   ];
 
   trackNav: NavItem[] = [
-    { id: 'tasks',      label: 'Tasks',      icon: 'bell',      route: '/tasks',      count: 3, hot: true },
-    { id: 'interviews', label: 'Interviews', icon: 'briefcase', route: '/interviews', count: 3 },
-    { id: 'contacts',   label: 'Contacts',   icon: 'user',      route: '/contacts',   count: 6 },
+    { id: 'tasks',      label: 'Tasks',      icon: 'bell',      route: '/tasks' },
+    { id: 'interviews', label: 'Interviews', icon: 'briefcase', route: '/interviews' },
   ];
 
   libraryNav: NavItem[] = [
     { id: 'master',       label: 'Master CV',      icon: 'doc',       route: '/cv' },
-    { id: 'applications', label: 'Applications',   icon: 'layers',    route: '/applications', count: 38 },
-    { id: 'saved',        label: 'Saved roles',    icon: 'bookmark',  route: '/jobs/saved',   count: 7 },
-    { id: 'prompts',      label: 'Prompts',        icon: 'lightbulb', route: '/prompts',  count: 9 },
+    { id: 'applications', label: 'Applications',   icon: 'layers',    route: '/applications' },
+    { id: 'documents',    label: 'Documents',      icon: 'clipboard', route: '/documents' },
+    { id: 'saved',        label: 'Saved roles',    icon: 'bookmark',  route: '/jobs/saved' },
+    { id: 'prompts',      label: 'Prompts',        icon: 'lightbulb', route: '/prompts' },
     { id: 'resume',       label: 'Resume Builder', icon: 'edit',      route: '/resume-builder' },
+    { id: 'analytics',    label: 'Analytics',      icon: 'chart-up',  route: '/analytics' },
+    { id: 'companies',    label: 'Companies',      icon: 'building',  route: '/companies' },
   ];
 
   oldFrontendNav = [

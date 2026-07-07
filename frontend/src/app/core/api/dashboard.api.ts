@@ -25,6 +25,21 @@ export interface WeeklyTrend {
   daily: DailyCount[];
 }
 
+export interface DetailedMetrics {
+  total: number;
+  saved: number;
+  applied: number;
+  pendingResponse: number;
+  activeInterviews: number;
+  offers: number;
+  appliedThisWeek: number;
+  appliedThisMonth: number;
+  responseRate: number;
+  interviewRate: number;
+  offerRate: number;
+  topCompanies: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
   private http = inject(HttpClient);
@@ -35,6 +50,10 @@ export class DashboardApiService {
 
   getAnalytics(): Observable<any> {
     return this.http.get('/api/v1/analytics');
+  }
+
+  getDetailedAnalytics(): Observable<DetailedMetrics> {
+    return this.http.get<DetailedMetrics>('/api/v1/analytics/detailed');
   }
 
   getWeeklyTrend(): Observable<WeeklyTrend> {
