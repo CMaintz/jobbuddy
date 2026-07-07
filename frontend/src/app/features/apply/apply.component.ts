@@ -26,6 +26,12 @@ const FORMAT_TO_OUTPUT_KEY: Record<string, string> = {
   'short-pitch': 'dm',
 };
 
+const FORMAT_TO_PROMPT_CATEGORY: Record<string, string> = {
+  'application': 'APPLICATION',
+  'cover-letter': 'COVER_LETTER',
+  'short-pitch': 'RECRUITER_MESSAGE',
+};
+
 @Component({
   selector: 'app-apply',
   standalone: true,
@@ -57,6 +63,13 @@ export class ApplyComponent implements OnInit {
   resumableApp = signal<Application | null>(null);
 
   promptTemplates: PromptTemplate[] = [];
+
+  /** Templates matching the selected format's category, plus GENERAL ones. */
+  get relevantPromptTemplates(): PromptTemplate[] {
+    const category = FORMAT_TO_PROMPT_CATEGORY[this.selectedFormat()];
+    return this.promptTemplates.filter(t =>
+      !t.category || t.category === 'GENERAL' || t.category === category);
+  }
 
   company = '';
   role = '';
