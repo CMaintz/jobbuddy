@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.PromptTemplate;
+import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import com.autoapplicant.port.out.ai.AiProviderPort;
@@ -34,14 +35,14 @@ public class TailoredCvGenerator {
      */
     public TailoredCvContent generate(CareerProfileForAi source, String jobDescription,
                                       String customInstructions, String targetLanguage,
-                                      PromptTemplate styleTemplate) {
+                                      PromptTemplate styleTemplate, WritingProfile writingProfile) {
         try {
             String sourceJson = objectMapper.writeValueAsString(source);
             String json = AiResponseParser.extractJsonObject(
                     aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
                                     sourceJson, jobDescription, customInstructions,
-                                    targetLanguage, styleTemplate)
+                                    targetLanguage, styleTemplate, writingProfile)
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {

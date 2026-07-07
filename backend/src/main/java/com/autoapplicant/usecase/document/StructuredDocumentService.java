@@ -13,6 +13,7 @@ import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
+import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -36,6 +37,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final ProfileSocialRepositoryPort socialRepo;
     private final JobRepositoryPort jobRepo;
     private final PromptTemplateRepositoryPort promptTemplateRepo;
+    private final WritingProfileRepositoryPort writingProfileRepo;
     private final CareerProfileContextService careerProfileContext;
     private final CvDocumentAssembler cvAssembler;
     private final TailoredCvGenerator tailoredCvGenerator;
@@ -47,6 +49,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      ProfileSocialRepositoryPort socialRepo,
                                      JobRepositoryPort jobRepo,
                                      PromptTemplateRepositoryPort promptTemplateRepo,
+                                     WritingProfileRepositoryPort writingProfileRepo,
                                      CareerProfileContextService careerProfileContext,
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
@@ -57,6 +60,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.socialRepo = socialRepo;
         this.jobRepo = jobRepo;
         this.promptTemplateRepo = promptTemplateRepo;
+        this.writingProfileRepo = writingProfileRepo;
         this.careerProfileContext = careerProfileContext;
         this.cvAssembler = cvAssembler;
         this.tailoredCvGenerator = tailoredCvGenerator;
@@ -168,7 +172,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String jobDescription = resolveJobDescription(jobId, rawJobDescription);
         PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
-                source, jobDescription, customInstructions, targetLanguage, promptTemplate);
+                source, jobDescription, customInstructions, targetLanguage, promptTemplate,
+                writingProfileRepo.findByUserId(userId).orElse(null));
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
                 showProfileImage, resolveTheme(theme));
