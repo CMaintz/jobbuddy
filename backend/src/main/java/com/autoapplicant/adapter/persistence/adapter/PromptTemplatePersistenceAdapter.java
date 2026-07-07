@@ -26,6 +26,11 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
     }
 
     @Override
+    public void deleteById(UUID id) {
+        repo.deleteById(id);
+    }
+
+    @Override
     public Optional<PromptTemplate> findById(UUID id) {
         return repo.findById(id).map(DocumentMapper::toDomain);
     }
