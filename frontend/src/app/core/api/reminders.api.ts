@@ -22,6 +22,10 @@ export class RemindersApiService {
     return this.http.get<FollowUpReminder[]>('/api/v1/reminders/due');
   }
 
+  getOpenReminders(): Observable<FollowUpReminder[]> {
+    return this.http.get<FollowUpReminder[]>('/api/v1/reminders');
+  }
+
   getForApplication(applicationId: string): Observable<FollowUpReminder[]> {
     return this.http.get<FollowUpReminder[]>(`/api/v1/applications/${applicationId}/reminders`);
   }

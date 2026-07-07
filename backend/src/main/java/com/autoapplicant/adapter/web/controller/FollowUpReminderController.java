@@ -29,6 +29,12 @@ public class FollowUpReminderController {
         this.secCtx = secCtx;
     }
 
+    @Operation(summary = "List all open (uncompleted) follow-up reminders")
+    @GetMapping("/api/v1/reminders")
+    public ResponseEntity<List<FollowUpReminder>> getOpen() {
+        return ResponseEntity.ok(reminders.getOpenReminders(secCtx.getCurrentUserId()));
+    }
+
     @Operation(summary = "List follow-up reminders due within 24 hours")
     @GetMapping("/api/v1/reminders/due")
     public ResponseEntity<List<FollowUpReminder>> getDue() {
