@@ -130,6 +130,12 @@ export interface ResumeSettings {
   sectionTypography: Record<string, SectionTypography>;
   photoStyle?: 'square' | 'rounded' | 'circle';
   showSkillLevel: boolean;
+  /** Body text colour (headings keep the theme colour). Optional for drafts saved before this existed. */
+  textColor?: string;
+  /** Unitless line-height multiplier for body text, e.g. 1.5. */
+  lineSpacing?: number;
+  /** Vertical gap between sections in px. */
+  sectionSpacing?: number;
 }
 
 export interface ResumeDraft {
@@ -196,4 +202,7 @@ export const INITIAL_SETTINGS: ResumeSettings = {
   sectionTypography: {},
   photoStyle: 'circle',
   showSkillLevel: true,
+  textColor: '#1f2937',
+  lineSpacing: 1.5,
+  sectionSpacing: 20,
 };
