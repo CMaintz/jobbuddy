@@ -13,14 +13,14 @@
           <button class="jb-menu-item" (click)="exportPdf(false); exportDd.close()">
             <jb-icon name="doc" [size]="13" class="text-jb-accent mt-0.5" />
             <span>
-              <span class="block text-sm font-medium">PDF — full</span>
-              <span class="block text-xs text-jb-text-dim">With your name & contact details</span>
+              <span class="block text-sm font-medium">PDF — full (ATS-safe)</span>
+              <span class="block text-xs text-jb-text-dim">Selectable text, with your contact details</span>
             </span>
           </button>
           <button class="jb-menu-item" (click)="exportPdf(true); exportDd.close()">
             <jb-icon name="key" [size]="13" class="text-jb-accent mt-0.5" />
             <span>
-              <span class="block text-sm font-medium">PDF — anonymised</span>
+              <span class="block text-sm font-medium">PDF — anonymised (ATS-safe)</span>
               <span class="block text-xs text-jb-text-dim">Initials only, no contact/photo/links</span>
             </span>
           </button>
@@ -446,9 +446,3 @@
       </div>
     }
 
-    <!-- Off-screen render surface for PDF export (html2canvas needs a laid-out element) -->
-    @if (exportDoc(); as doc) {
-      <div #exportEl style="position:fixed;left:-10000px;top:0;width:794px;background:white;">
-        <app-structured-document-renderer [document]="doc" />
-      </div>
-    }
