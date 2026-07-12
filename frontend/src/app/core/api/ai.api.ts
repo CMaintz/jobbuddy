@@ -45,6 +45,15 @@ export interface AnalysisResponse {
   suggestions: string[];
   score: number;
   rawResponse: string;
+  summary?: string;
+  strengths?: string[];
+  gaps?: string[];
+}
+
+export interface AnalyzeRequest {
+  cvVersionId?: string;
+  jobId?: string;
+  jobDescription?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -75,6 +84,11 @@ export class AiApiService {
 
   analyzeCv(cvVersionId: string, jobId?: string): Observable<AnalysisResponse> {
     return this.http.post<AnalysisResponse>('/api/v1/ai/analyze', { cvVersionId, jobId });
+  }
+
+  /** Analyzes the master profile (no cvVersionId) against an optional job. */
+  analyze(req: AnalyzeRequest): Observable<AnalysisResponse> {
+    return this.http.post<AnalysisResponse>('/api/v1/ai/analyze', req);
   }
 
   getDocuments(): Observable<any[]> {

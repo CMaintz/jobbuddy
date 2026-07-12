@@ -101,6 +101,10 @@ export const routes: Routes = [
 
       // Insights & library
       {
+        path: 'analysis',
+        loadComponent: () => import('./features/analysis/cv-analysis.component').then(m => m.CvAnalysisComponent)
+      },
+      {
         path: 'analytics',
         loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
       },
@@ -222,7 +226,7 @@ export const routes: Routes = [
       { path: 'ai/generate', redirectTo: 'apply', pathMatch: 'full' },
       { path: 'ai/documents', redirectTo: 'documents', pathMatch: 'full' },
       { path: 'ai/cv', redirectTo: 'cv/import', pathMatch: 'full' },
-      { path: 'ai/analyze', redirectTo: 'documents', pathMatch: 'full' },
+      { path: 'ai/analyze', redirectTo: 'analysis', pathMatch: 'full' },
     ]
   },
   { path: '**', redirectTo: '/dashboard' }
