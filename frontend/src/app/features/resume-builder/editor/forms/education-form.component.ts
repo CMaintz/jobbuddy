@@ -9,7 +9,6 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
   standalone: true,
   imports: [CommonModule, FormsModule, MonthYearPickerComponent],
   templateUrl: './education-form.component.html',
-  styleUrls: ['./education-form.component.css'],
 })
 export class EducationFormComponent {
   private state = inject(ResumeStateService);

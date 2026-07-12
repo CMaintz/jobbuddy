@@ -11,7 +11,6 @@ import { getStrengthIcon } from '../../data/strength-icons';
   standalone: true,
   imports: [CommonModule, FormsModule, LucideAngularModule, IconPickerComponent],
   templateUrl: './strengths-form.component.html',
-  styleUrls: ['./strengths-form.component.css'],
 })
 export class StrengthsFormComponent {
   private state = inject(ResumeStateService);

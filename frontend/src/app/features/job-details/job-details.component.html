@@ -148,7 +148,7 @@
             @if (tab() === 'activity') {
               <div class="max-w-[720px] flex flex-col">
                 @for (event of activityEvents; track event.what; let last = $last) {
-                  <div class="grid gap-2.5 py-2.5" style="grid-template-columns:70px 14px 1fr;"
+                  <div class="grid gap-2.5 py-2.5 grid-cols-[70px_14px_1fr]"
                     [style.border-bottom]="last ? 'none' : '1px solid var(--jb-border-faint)'">
                     <div class="mono text-xs text-jb-text-dim">{{ event.time }}</div>
                     <div class="pt-[5px]"><span class="dot" [style.background]="event.dot"></span></div>

@@ -56,7 +56,7 @@
           @if (app.recruiterName || app.recruiterEmail) {
             <div class="card p-[18px] mb-4">
               <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">Recruiter</div>
-              <div class="grid gap-1.5 text-sm" style="grid-template-columns:80px 1fr;">
+              <div class="grid gap-1.5 text-sm grid-cols-[80px_1fr]">
                 @if (app.recruiterName) {
                   <div class="text-jb-text-dim">Name</div><div>{{ app.recruiterName }}</div>
                 }
@@ -70,7 +70,7 @@
           <!-- Metadata -->
           <div class="card p-[18px]">
             <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">Details</div>
-            <div class="grid gap-1.5 text-sm" style="grid-template-columns:80px 1fr;">
+            <div class="grid gap-1.5 text-sm grid-cols-[80px_1fr]">
               <div class="text-jb-text-dim">Status</div><div>{{ stageLabel(app.status) }}</div>
               <div class="text-jb-text-dim">Created</div><div>{{ app.createdAt | date:'mediumDate' }}</div>
               @if (app.appliedAt) {

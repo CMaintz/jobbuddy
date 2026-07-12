@@ -12,7 +12,6 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
   standalone: true,
   imports: [CommonModule, FormsModule, RichTextEditorComponent, MonthYearPickerComponent, AiRefineMenuComponent],
   templateUrl: './experience-form.component.html',
-  styleUrls: ['./experience-form.component.css'],
 })
 export class ExperienceFormComponent {
   private state = inject(ResumeStateService);

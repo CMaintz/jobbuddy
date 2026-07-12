@@ -9,7 +9,6 @@ import { FONT_FAMILIES } from '../../data/font-families';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './settings-form.component.html',
-  styleUrls: ['./settings-form.component.css'],
 })
 export class SettingsFormComponent {
   private state = inject(ResumeStateService);
