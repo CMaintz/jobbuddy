@@ -85,7 +85,9 @@ export class AiRefineMenuComponent {
   @Input() content = '';
   /** Optional job description so refinements are job-aware. */
   @Input() jobDescription?: string;
-  /** Emits the refined content as rich-text HTML. */
+  /** Emit plain text instead of rich-text HTML (master CV fields are plain by design). */
+  @Input() plainOutput = false;
+  /** Emits the refined content — HTML by default, plain text with plainOutput. */
   @Output() refined = new EventEmitter<string>();
 
   suggestions = SUGGESTIONS;
@@ -121,7 +123,7 @@ export class AiRefineMenuComponent {
 
   apply(): void {
     const result = this.preview();
-    if (result) this.refined.emit(toHtml(result));
+    if (result) this.refined.emit(this.plainOutput ? result : toHtml(result));
     this.preview.set(null);
     this.open.set(false);
   }

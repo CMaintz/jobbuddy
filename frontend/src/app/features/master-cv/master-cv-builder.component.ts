@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,13 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
+import { PhotoCropDialogComponent } from '../resume-builder/shared/photo-crop-dialog.component';
+import { AiRefineMenuComponent } from '../resume-builder/shared/ai-refine-menu.component';
+import { StructuredDocumentRendererComponent } from '../../shared/components/structured-document-renderer/structured-document-renderer.component';
+import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
+import { PdfExportService } from '../resume-builder/services/pdf-export.service';
+import { AiApiService } from '../../core/api/ai.api';
+import { StructuredDocument } from '../../core/models/structured-document.model';
 import { ProfileSectionsApiService, FullProfileResponse } from '../../core/api/profile-sections.api';
 import { ProfilePrivateApiService } from '../../core/api/profile-private.api';
 import { ProfileStrengthApiService } from '../../core/api/profile-strength.api';
@@ -31,15 +38,19 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
 @Component({
   selector: 'app-master-cv-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent],
+  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent, StructuredDocumentRendererComponent, JbDropdownComponent],
   templateUrl: './master-cv-builder.component.html'
 })
 export class MasterCvBuilderComponent implements OnInit {
+  @ViewChild('exportEl') exportEl!: ElementRef<HTMLElement>;
+
   private http = inject(HttpClient);
   private profileApi = inject(ProfileSectionsApiService);
   private privateApi = inject(ProfilePrivateApiService);
   private strengthApi = inject(ProfileStrengthApiService);
   private socialApi = inject(ProfileSocialApiService);
+  private aiApi = inject(AiApiService);
+  private pdfExport = inject(PdfExportService);
 
   loading = true;
   saving = signal(false);
@@ -62,6 +73,12 @@ export class MasterCvBuilderComponent implements OnInit {
 
   newCert: Certification = { name: '' };
   showCertForm = false;
+  cropSrc = signal<string | null>(null);
+  uploadingPhoto = signal(false);
+
+  // PDF export (full or anonymised) via an off-screen structured render
+  exportingPdf = signal(false);
+  exportDoc = signal<StructuredDocument | null>(null);
 
   get skillsList(): string[] { return this.profile.skills ?? []; }
   get technologiesList(): string[] { return this.profile.technologies ?? []; }
@@ -141,6 +158,93 @@ export class MasterCvBuilderComponent implements OnInit {
 
   markDirty(): void {
     this.dirty.set(true);
+  }
+
+  // ── PDF export ────────────────────────────────────────────────
+
+  /** Renders the master CV off-screen and downloads it — optionally anonymised. */
+  exportPdf(anonymised: boolean): void {
+    if (this.exportingPdf()) return;
+    this.exportingPdf.set(true);
+    this.aiApi.getCvRenderModel().subscribe({
+      next: doc => {
+        this.exportDoc.set(anonymised ? this.anonymiseDoc(doc) : doc);
+        // Let Angular render the off-screen sheet before capturing it
+        setTimeout(async () => {
+          try {
+            const filename = anonymised
+              ? 'master-cv-anonymised'
+              : `${this.privateInfo.fullName || 'master-cv'} - CV`;
+            await this.pdfExport.download(this.exportEl.nativeElement, filename);
+          } catch {
+            this.toast.set('PDF export failed — try again');
+          } finally {
+            this.exportDoc.set(null);
+            this.exportingPdf.set(false);
+          }
+        }, 200);
+      },
+      error: () => {
+        this.exportingPdf.set(false);
+        this.toast.set('Could not build the CV render — check your master CV content');
+      }
+    });
+  }
+
+  /** Masks identity: initials only, no contact details, links, or photo. */
+  private anonymiseDoc(doc: StructuredDocument): StructuredDocument {
+    const initials = (doc.identity?.name ?? '').trim().split(/\s+/).filter(Boolean)
+      .map(p => p[0].toUpperCase() + '.').join(' ');
+    return {
+      ...doc,
+      identity: {
+        name: initials || 'Candidate',
+        headline: doc.identity?.headline,
+        location: doc.identity?.location,
+      },
+      options: { ...(doc.options ?? { showProfileImage: false }), showProfileImage: false },
+    };
+  }
+
+  // ── Profile photo ─────────────────────────────────────────────
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => this.cropSrc.set(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  recropPhoto(): void {
+    if (this.privateInfo.photoUrl) this.cropSrc.set(this.privateInfo.photoUrl);
+  }
+
+  onPhotoCropped(dataUrl: string): void {
+    this.cropSrc.set(null);
+    this.uploadingPhoto.set(true);
+    const formData = new FormData();
+    formData.append('file', dataUrlToBlob(dataUrl), 'photo.jpg');
+    this.http.post<{ url: string }>('/api/v1/users/me/profile/photo', formData).subscribe({
+      next: res => {
+        this.privateInfo.photoUrl = res.url;
+        this.uploadingPhoto.set(false);
+        this.toast.set('Photo updated');
+      },
+      error: () => {
+        this.uploadingPhoto.set(false);
+        this.toast.set('Photo upload failed');
+      }
+    });
+  }
+
+  removePhoto(): void {
+    this.privateInfo.photoUrl = '';
+    this.privateApi.updatePrivateInfo({ photoUrl: '' }).subscribe({
+      error: () => this.toast.set('Could not remove the photo')
+    });
   }
 
   onSkillsChange(value: string[]): void {
@@ -281,4 +385,13 @@ export class MasterCvBuilderComponent implements OnInit {
   ): Observable<unknown>[] {
     return list.filter(isValid).map(entry => entry.id ? update(entry.id, entry) : create(entry));
   }
+}
+
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, base64] = dataUrl.split(',');
+  const mime = meta.match(/data:(.*?);/)?.[1] ?? 'image/jpeg';
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
 }
