@@ -60,6 +60,11 @@ export class JobsApiService {
     return this.http.delete<void>(`${this.base}/${id}/feedback`);
   }
 
+  /** Hides the job for this user and asks the server to verify the posting URL. */
+  reportInactive(id: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${id}/report-inactive`, {});
+  }
+
   getIgnored(): Observable<IgnoredJob[]> {
     return this.http.get<IgnoredJob[]>(`${this.base}/ignored`);
   }

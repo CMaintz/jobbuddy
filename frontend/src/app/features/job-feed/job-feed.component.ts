@@ -23,6 +23,8 @@ interface FeedRow {
   source: string;
   posted: string;
   remote: boolean;
+  seniority?: string;
+  category?: string;
 }
 
 @Component({
@@ -48,6 +50,10 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   locationFilter = 'all';
   activeSources = new Set<string>();
   sourceFilters: string[] = [];
+  activeSeniorities = new Set<string>();
+  seniorityFilters: string[] = [];
+  activeCategories = new Set<string>();
+  categoryFilters: string[] = [];
 
   private search$ = new Subject<string>();
   private searchSub?: Subscription;
@@ -137,12 +143,18 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       source: job.source ?? 'unknown',
       posted: this.ageLabel(job.postedAt),
       remote: job.remoteType === 'REMOTE',
+      seniority: job.seniority ?? undefined,
+      category: job.jobCategory ?? undefined,
     };
   }
 
   private refreshSourceFilters(): void {
     this.sourceFilters = [...new Set(this.feedRows().map(r => r.source))].sort();
     this.activeSources = new Set(this.sourceFilters);
+    this.seniorityFilters = [...new Set(this.feedRows().map(r => r.seniority).filter((s): s is string => !!s))].sort();
+    this.activeSeniorities = new Set(this.seniorityFilters);
+    this.categoryFilters = [...new Set(this.feedRows().map(r => r.category).filter((c): c is string => !!c))].sort();
+    this.activeCategories = new Set(this.categoryFilters);
   }
 
   private ageLabel(iso?: string): string {
@@ -160,6 +172,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       if (this.locationFilter === 'remote' && !row.remote) return false;
       if (this.locationFilter === 'onsite' && row.remote) return false;
       if (this.activeSources.size > 0 && !this.activeSources.has(row.source)) return false;
+      if (row.seniority && this.seniorityFilters.length > 1 && !this.activeSeniorities.has(row.seniority)) return false;
+      if (row.category && this.categoryFilters.length > 1 && !this.activeCategories.has(row.category)) return false;
       return true;
     });
   }
@@ -170,6 +184,22 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     this.activeSources = new Set(this.activeSources);
   }
 
+  toggleSeniority(level: string): void {
+    if (this.activeSeniorities.has(level)) this.activeSeniorities.delete(level);
+    else this.activeSeniorities.add(level);
+    this.activeSeniorities = new Set(this.activeSeniorities);
+  }
+
+  toggleCategory(cat: string): void {
+    if (this.activeCategories.has(cat)) this.activeCategories.delete(cat);
+    else this.activeCategories.add(cat);
+    this.activeCategories = new Set(this.activeCategories);
+  }
+
+  categoryLabel(cat: string): string {
+    return cat.replace(/_/g, ' ').toLowerCase();
+  }
+
   saveJob(row: FeedRow): void {
     if (this.savedIds().has(row.id)) return;
     this.jobsApi.save(row.id).subscribe({
@@ -178,6 +208,19 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         this.toast.set('Saved to your roles');
       },
       error: () => this.toast.set('Could not save the role')
+    });
+  }
+
+  /** Not interested: drop the role from this user's feed (server-side ignore). */
+  hideJob(row: FeedRow): void {
+    this.feedRows.update(rows => rows.filter(r => r.id !== row.id));
+    if (this.selectedJob()?.id === row.id) {
+      this.selectedJob.set(null);
+      this.mobilePanel.set('list');
+    }
+    this.jobsApi.ignore(row.id, 'not interested').subscribe({
+      next: () => this.toast.set('Hidden from your feed'),
+      error: () => this.toast.set('Could not hide the role')
     });
   }
 }

@@ -41,6 +41,34 @@
           </div>
         }
 
+        <!-- Seniority checkboxes -->
+        @if (seniorityFilters.length > 1) {
+          <div>
+            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Seniority</div>
+            @for (level of seniorityFilters; track level) {
+              <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer">
+                <input type="checkbox" [checked]="activeSeniorities.has(level)" (change)="toggleSeniority(level)"
+                  style="accent-color:var(--jb-accent);" class="w-3 h-3" />
+                {{ level | titlecase }}
+              </label>
+            }
+          </div>
+        }
+
+        <!-- Category checkboxes -->
+        @if (categoryFilters.length > 1) {
+          <div>
+            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Category</div>
+            @for (cat of categoryFilters; track cat) {
+              <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer capitalize">
+                <input type="checkbox" [checked]="activeCategories.has(cat)" (change)="toggleCategory(cat)"
+                  style="accent-color:var(--jb-accent);" class="w-3 h-3" />
+                {{ categoryLabel(cat) }}
+              </label>
+            }
+          </div>
+        }
+
         <!-- Source checkboxes -->
         @if (sourceFilters.length > 1) {
           <div>
@@ -166,10 +194,11 @@
           }
 
           <!-- Actions -->
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <jb-button icon="bookmark" (clicked)="saveJob(job)">{{ savedIds().has(job.id) ? 'Saved' : 'Save' }}</jb-button>
             <jb-button icon="external" [routerLink]="['/jobs', job.id]">Details</jb-button>
             <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">Generate application</jb-button>
+            <jb-button ghost icon="x" (clicked)="hideJob(job)">Hide</jb-button>
           </div>
         } @else {
           <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">
