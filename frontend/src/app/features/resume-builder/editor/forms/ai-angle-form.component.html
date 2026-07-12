@@ -1,0 +1,89 @@
+<div class="flex flex-col gap-3.5">
+  <!-- ATS report from the latest generation -->
+  @if (atsReport(); as ats) {
+    <div class="card p-3 bg-jb-surface-2">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-2xl font-semibold num"
+          [style.color]="ats.score >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ ats.score }}</span>
+        <div>
+          <div class="text-sm font-semibold">ATS score</div>
+          <div class="text-xs text-jb-text-dim">{{ ats.keywordCoverage }}% keyword coverage</div>
+        </div>
+      </div>
+      @if (ats.matchedKeywords.length > 0) {
+        <div class="flex flex-wrap gap-1 mb-1.5">
+          @for (kw of ats.matchedKeywords; track kw) {
+            <span class="pill pill-success">{{ kw }}</span>
+          }
+        </div>
+      }
+      @if (ats.missingKeywords.length > 0) {
+        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1">Missing</div>
+        <div class="flex flex-wrap gap-1">
+          @for (kw of ats.missingKeywords; track kw) {
+            <span class="pill pill-danger">{{ kw }}</span>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (!pending()) {
+    <!-- Re-angle config -->
+    @if (promptTemplates.length > 0) {
+      <div>
+        <label class="rb-label">Prompt</label>
+        <select class="rb-input" [(ngModel)]="selectedPromptId">
+          <option [ngValue]="null">Default prompt</option>
+          @for (tpl of promptTemplates; track tpl.id) {
+            <option [ngValue]="tpl.id">{{ tpl.name }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <div>
+      <label class="rb-label">Angle</label>
+      <div class="flex flex-col gap-1.5 mb-2">
+        @for (prompt of anglePrompts; track prompt) {
+          <button type="button" (click)="addAngle(prompt)"
+            class="px-2.5 py-[6px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer">
+            + {{ prompt }}
+          </button>
+        }
+      </div>
+      <textarea [(ngModel)]="instructions" rows="3" class="rb-input" style="resize:vertical;"
+        placeholder="e.g. emphasise leadership, drop anything older than 2018…"></textarea>
+    </div>
+
+    <button type="button" (click)="regenerate()"
+      class="w-full p-[8px_12px] bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer"
+      style="color:#1c1004;border-color:#c8881c;"
+      [style.opacity]="generating() ? '0.6' : '1'">
+      {{ generating() ? 'Re-angling… (up to a minute)' : 'Re-angle this CV' }}
+    </button>
+    <div class="text-xs text-jb-text-dim">
+      Regenerates the content from your master CV for this job. Your template, layout and styling stay as they are.
+    </div>
+    @if (error()) {
+      <div class="text-xs text-jb-danger">{{ error() }}</div>
+    }
+  } @else {
+    <!-- Diff review before the new content replaces the draft -->
+    <div>
+      <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Profile summary — what changed</div>
+      @if (summaryBefore() !== summaryAfter()) {
+        <jb-diff-viewer [before]="summaryBefore()" [after]="summaryAfter()" />
+      } @else {
+        <div class="text-xs text-jb-text-dim">The summary is unchanged — experience and skill selections may still differ.</div>
+      }
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button type="button" class="btn btn-sm" (click)="discardPending()">Discard</button>
+      <button type="button" class="btn btn-sm btn-primary" (click)="applyPending()">Apply to draft</button>
+    </div>
+    <div class="text-xs text-jb-text-dim">
+      Applying replaces the draft's content with the regenerated version. Layout & styling are kept.
+    </div>
+  }
+</div>
