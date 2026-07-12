@@ -12,7 +12,7 @@
         @if (showForm()) {
           <div class="card p-3.5 mb-4">
             <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">New follow-up reminder</div>
-            <div class="grid gap-2" style="grid-template-columns:1.4fr 1.6fr 1fr auto;">
+            <div class="grid gap-2 grid-cols-[1.4fr_1.6fr_1fr_auto]">
               <select [(ngModel)]="newAppId" class="input">
                 <option value="" disabled>Application…</option>
                 @for (app of applications; track app.id) {
@@ -80,7 +80,7 @@
                   {{ group.label }}
                 </div>
                 @for (row of tasksForGroup(group.key); track row.reminder.id) {
-                  <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint" style="grid-template-columns:24px 28px 1fr auto auto auto auto;">
+                  <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint grid-cols-[24px_28px_1fr_auto_auto_auto_auto]">
                     <!-- Complete checkbox -->
                     <button (click)="complete(row)" title="Mark done"
                       class="w-4 h-4 rounded flex items-center justify-center bg-transparent cursor-pointer" style="border:1.5px solid var(--jb-border-strong);">

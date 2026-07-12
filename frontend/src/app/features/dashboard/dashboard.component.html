@@ -189,7 +189,7 @@
                     <div class="text-xs text-jb-text-dim py-3 text-center">No activity yet — start with your first application.</div>
                   }
                   @for (item of recentFeed; track $index; let last = $last) {
-                    <div class="grid gap-2 py-2 items-start" style="grid-template-columns:32px 12px 1fr;"
+                    <div class="grid gap-2 py-2 items-start grid-cols-[32px_12px_1fr]"
                       [style.border-bottom]="!last ? '1px solid var(--jb-border-faint)' : 'none'">
                       <div class="mono text-2xs text-jb-text-dim">{{ item.time }}</div>
                       <div class="pt-[5px]"><span class="dot" [style.background]="item.color"></span></div>

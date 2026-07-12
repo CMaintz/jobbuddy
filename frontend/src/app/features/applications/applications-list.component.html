@@ -42,7 +42,7 @@
     </div>
 
     <!-- Column headers -->
-    <div class="hidden md:grid gap-3 p-[8px_18px] text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint" style="grid-template-columns:24px 1.7fr 0.7fr 0.7fr 80px 110px 50px;">
+    <div class="hidden md:grid gap-3 p-[8px_18px] text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint grid-cols-[24px_1.7fr_0.7fr_0.7fr_80px_110px_50px]">
       <span></span>
       <span>Role · Company</span>
       <span>Stage</span>
@@ -59,7 +59,7 @@
         @for (app of filteredApps(); track app.id) {
           <!-- Application row -->
           <div class="border-b border-jb-border-faint">
-            <div (click)="toggleOpen(app.id)" class="grid gap-3 p-[11px_18px] items-center cursor-pointer" style="grid-template-columns:24px 1.7fr 0.7fr 0.7fr 80px 110px 50px;">
+            <div (click)="toggleOpen(app.id)" class="grid gap-3 p-[11px_18px] items-center cursor-pointer grid-cols-[24px_1.7fr_0.7fr_0.7fr_80px_110px_50px]">
               <div class="flex items-center justify-center text-jb-text-dim">
                 <jb-icon name="chevron-right" [size]="11"
                   [style.transform]="openIds.has(app.id) ? 'rotate(90deg)' : 'none'"
@@ -85,7 +85,7 @@
             @if (openIds.has(app.id)) {
               <div class="bg-jb-surface">
                 <a [routerLink]="['/applications', app.id]"
-                  class="grid gap-2.5 items-center p-[8px_12px_8px_48px] border-t border-jb-border-faint cursor-pointer no-underline text-inherit" style="grid-template-columns:22px 1fr auto;">
+                  class="grid gap-2.5 items-center p-[8px_12px_8px_48px] border-t border-jb-border-faint cursor-pointer no-underline text-inherit grid-cols-[22px_1fr_auto]">
                   <jb-icon name="doc" [size]="12" class="text-jb-text-mid" />
                   <div class="flex items-center gap-2 min-w-0">
                     <span class="mono p-[1px_6px] rounded bg-jb-surface-2 text-[9.5px] text-jb-text-dim tracking-[0.04em] uppercase">Application</span>

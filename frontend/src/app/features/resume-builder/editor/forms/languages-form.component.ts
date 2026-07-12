@@ -9,7 +9,6 @@ import { LANGUAGE_PROFICIENCIES } from '../../data/language-proficiencies';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './languages-form.component.html',
-  styleUrls: ['./languages-form.component.css'],
 })
 export class LanguagesFormComponent {
   private state = inject(ResumeStateService);

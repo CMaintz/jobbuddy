@@ -117,7 +117,7 @@
                 <div class="text-xs text-jb-text-dim ml-1">Shown on angled CVs & designed templates.</div>
               </div>
 
-              <div class="grid gap-3.5" style="grid-template-columns:1fr 1fr;">
+              <div class="grid gap-3.5 grid-cols-[1fr_1fr]">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Full name</span>
                   <input [(ngModel)]="privateInfo.fullName" class="input" placeholder="Your name" />
@@ -171,7 +171,7 @@
                 @for (s of strengthsList; track s.id || $index) {
                   <div class="card p-3.5">
                     <div class="flex gap-2 items-start">
-                      <div class="flex-1 grid gap-2" style="grid-template-columns:1fr 1.6fr;">
+                      <div class="flex-1 grid gap-2 grid-cols-[1fr_1.6fr]">
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">Strength</span>
                           <input [(ngModel)]="s.title" class="input" placeholder="e.g. Systems thinking" />
@@ -195,7 +195,7 @@
                 @for (exp of experienceList; track exp.id || $index) {
                   <div class="card p-3.5">
                     <div class="flex gap-2 items-start">
-                      <div class="flex-1 grid gap-2 mb-3" style="grid-template-columns:1.3fr 1fr;">
+                      <div class="flex-1 grid gap-2 mb-3 grid-cols-[1.3fr_1fr]">
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">Company</span>
                           <input [(ngModel)]="exp.companyName" class="input" placeholder="Company" />
@@ -207,7 +207,7 @@
                       </div>
                       <button class="icon-btn mt-5" title="Remove" (click)="removeExperience($index)"><jb-icon name="x" [size]="12" /></button>
                     </div>
-                    <div class="grid gap-2 mb-3" style="grid-template-columns:1fr 1fr 1fr;">
+                    <div class="grid gap-2 mb-3 grid-cols-[1fr_1fr_1fr]">
                       <label class="flex flex-col gap-[5px]">
                         <span class="label">Start date</span>
                         <input [(ngModel)]="exp.startDate" class="input mono" placeholder="2022-03-01" />
@@ -261,7 +261,7 @@
                 @for (edu of educationList; track edu.id || $index) {
                   <div class="card p-3.5">
                     <div class="flex gap-2 items-start">
-                      <div class="flex-1 grid gap-2" style="grid-template-columns:1.4fr 1.4fr;">
+                      <div class="flex-1 grid gap-2 grid-cols-[1.4fr_1.4fr]">
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">School</span>
                           <input [(ngModel)]="edu.institution" class="input" placeholder="University" />
@@ -296,7 +296,7 @@
                 @for (proj of projectsList; track proj.id || $index) {
                   <div class="card p-3.5">
                     <div class="flex gap-2 items-start">
-                      <div class="flex-1 grid gap-2" style="grid-template-columns:1fr 1.6fr;">
+                      <div class="flex-1 grid gap-2 grid-cols-[1fr_1.6fr]">
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">Project</span>
                           <input [(ngModel)]="proj.name" class="input" placeholder="Project name" />
@@ -345,7 +345,7 @@
                   <div class="p-8 text-center text-jb-text-dim text-base">No certifications yet.</div>
                 }
                 @if (showCertForm) {
-                  <div class="card p-3.5 grid gap-2" style="grid-template-columns:1.4fr 1fr 0.8fr;">
+                  <div class="card p-3.5 grid gap-2 grid-cols-[1.4fr_1fr_0.8fr]">
                     <label class="flex flex-col gap-[5px]">
                       <span class="label">Name</span>
                       <input [(ngModel)]="newCert.name" class="input" placeholder="AWS Certified Developer" />
@@ -375,7 +375,7 @@
                 @for (lang of languagesList; track lang.id || $index) {
                   <div class="card p-3.5">
                     <div class="flex gap-2 items-start">
-                      <div class="flex-1 grid gap-2" style="grid-template-columns:1fr 1.4fr;">
+                      <div class="flex-1 grid gap-2 grid-cols-[1fr_1.4fr]">
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">Language</span>
                           <input [(ngModel)]="lang.language" class="input" placeholder="English" />
@@ -407,7 +407,7 @@
                 @for (social of socialsList; track social.id || $index) {
                   <div class="card p-3.5">
                     <div class="flex gap-2 items-start">
-                      <div class="flex-1 grid gap-2" style="grid-template-columns:0.8fr 1.8fr;">
+                      <div class="flex-1 grid gap-2 grid-cols-[0.8fr_1.8fr]">
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">Platform</span>
                           <select [(ngModel)]="social.platform" (ngModelChange)="onSocialPlatformChange(social)" class="input">

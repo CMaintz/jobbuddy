@@ -10,7 +10,6 @@ import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
   standalone: true,
   imports: [CommonModule, FormsModule, RichTextEditorComponent, AiRefineMenuComponent],
   templateUrl: './projects-form.component.html',
-  styleUrls: ['./projects-form.component.css'],
 })
 export class ProjectsFormComponent {
   private state = inject(ResumeStateService);

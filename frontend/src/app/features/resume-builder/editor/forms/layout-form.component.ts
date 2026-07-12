@@ -35,7 +35,6 @@ const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
   standalone: true,
   imports: [CommonModule, FormsModule, DragDropModule],
   templateUrl: './layout-form.component.html',
-  styleUrls: ['./layout-form.component.css'],
 })
 export class LayoutFormComponent {
   private state = inject(ResumeStateService);
