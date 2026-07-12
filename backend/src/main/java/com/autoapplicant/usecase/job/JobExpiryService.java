@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.job;
 
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.port.out.job.JobSearchPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 /**
- * Deactivates jobs that haven't been seen by any crawler for a configurable
- * number of days (default 30). Runs daily at 03:00.
+ * Deactivates jobs that haven't been seen by any crawler (or confirmed alive by
+ * a URL probe) for a configurable number of days (default 30). Runs daily at
+ * 03:00. Manual jobs are exempt — no crawler ever refreshes them.
  */
 @Service
 public class JobExpiryService {
@@ -21,11 +25,13 @@ public class JobExpiryService {
     private static final Logger log = LoggerFactory.getLogger(JobExpiryService.class);
 
     private final JobRepositoryPort jobRepo;
+    private final JobSearchPort jobSearch;
     private final int staleDays;
 
-    public JobExpiryService(JobRepositoryPort jobRepo,
+    public JobExpiryService(JobRepositoryPort jobRepo, JobSearchPort jobSearch,
                             @Value("${app.job.stale-days:30}") int staleDays) {
         this.jobRepo = jobRepo;
+        this.jobSearch = jobSearch;
         this.staleDays = staleDays;
     }
 
@@ -33,9 +39,11 @@ public class JobExpiryService {
     @Transactional
     public void deactivateStaleJobs() {
         Instant cutoff = Instant.now().minus(Duration.ofDays(staleDays));
+        List<UUID> staleIds = jobRepo.findStaleActiveJobIds(cutoff);
+        if (staleIds.isEmpty()) return;
         int deactivated = jobRepo.deactivateStaleJobs(cutoff);
-        if (deactivated > 0) {
-            log.info("Deactivated {} stale jobs (not seen since {})", deactivated, cutoff);
-        }
+        // Expired postings must also leave the search index, or search keeps surfacing them.
+        staleIds.forEach(jobSearch::delete);
+        log.info("Deactivated {} stale jobs (not seen since {})", deactivated, cutoff);
     }
 }
