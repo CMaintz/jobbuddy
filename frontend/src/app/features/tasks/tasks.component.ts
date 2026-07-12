@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
@@ -27,7 +28,7 @@ interface TaskRow {
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit {

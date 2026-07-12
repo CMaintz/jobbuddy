@@ -246,27 +246,38 @@ export class ResumeStateService {
     this._isDirty.set(true);
   }
 
-  // ── Experience ────────────────────────────────────────────────────────────
-  addExperience(item: Omit<ResumeExperience, 'id'>): void {
+  // ── Generic list CRUD ─────────────────────────────────────────────────────
+  // Every resume section is a list of { id, ... } items with identical
+  // add/update/remove semantics; the public per-section methods below are
+  // thin aliases kept for readable call sites in the form components.
+
+  private addTo<K extends ResumeListKey>(key: K, item: Omit<ResumeListItem<K>, 'id'>): void {
     this._resumeData.update(d => ({
       ...d,
-      experience: [...d.experience, { ...item, id: crypto.randomUUID() }],
+      [key]: [...(d[key] ?? []), { ...item, id: crypto.randomUUID() }],
     }));
     this._isDirty.set(true);
   }
 
-  updateExperience(id: string, patch: Partial<ResumeExperience>): void {
+  private updateIn<K extends ResumeListKey>(key: K, id: string, patch: Partial<ResumeListItem<K>>): void {
     this._resumeData.update(d => ({
       ...d,
-      experience: d.experience.map(e => (e.id === id ? { ...e, ...patch } : e)),
+      [key]: (d[key] ?? []).map(item => (item.id === id ? { ...item, ...patch } : item)),
     }));
     this._isDirty.set(true);
   }
 
-  removeExperience(id: string): void {
-    this._resumeData.update(d => ({ ...d, experience: d.experience.filter(e => e.id !== id) }));
+  private removeFrom(key: ResumeListKey, id: string): void {
+    this._resumeData.update(d => ({
+      ...d,
+      [key]: ((d[key] ?? []) as { id: string }[]).filter(item => item.id !== id),
+    }));
     this._isDirty.set(true);
   }
+
+  addExperience(item: Omit<ResumeExperience, 'id'>): void { this.addTo('experience', item); }
+  updateExperience(id: string, patch: Partial<ResumeExperience>): void { this.updateIn('experience', id, patch); }
+  removeExperience(id: string): void { this.removeFrom('experience', id); }
 
   reorderExperience(from: number, to: number): void {
     this._resumeData.update(d => {
@@ -278,187 +289,37 @@ export class ResumeStateService {
     this._isDirty.set(true);
   }
 
-  // ── Education ─────────────────────────────────────────────────────────────
-  addEducation(item: Omit<ResumeEducation, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      education: [...d.education, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
+  addEducation(item: Omit<ResumeEducation, 'id'>): void { this.addTo('education', item); }
+  updateEducation(id: string, patch: Partial<ResumeEducation>): void { this.updateIn('education', id, patch); }
+  removeEducation(id: string): void { this.removeFrom('education', id); }
 
-  updateEducation(id: string, patch: Partial<ResumeEducation>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      education: d.education.map(e => (e.id === id ? { ...e, ...patch } : e)),
-    }));
-    this._isDirty.set(true);
-  }
+  addProject(item: Omit<ResumeProject, 'id'>): void { this.addTo('projects', item); }
+  updateProject(id: string, patch: Partial<ResumeProject>): void { this.updateIn('projects', id, patch); }
+  removeProject(id: string): void { this.removeFrom('projects', id); }
 
-  removeEducation(id: string): void {
-    this._resumeData.update(d => ({ ...d, education: d.education.filter(e => e.id !== id) }));
-    this._isDirty.set(true);
-  }
+  addSkill(item: Omit<ResumeSkill, 'id'>): void { this.addTo('skills', item); }
+  updateSkill(id: string, patch: Partial<ResumeSkill>): void { this.updateIn('skills', id, patch); }
+  removeSkill(id: string): void { this.removeFrom('skills', id); }
 
-  // ── Projects ──────────────────────────────────────────────────────────────
-  addProject(item: Omit<ResumeProject, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      projects: [...d.projects, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
+  addLanguage(item: Omit<ResumeLanguage, 'id'>): void { this.addTo('languages', item); }
+  updateLanguage(id: string, patch: Partial<ResumeLanguage>): void { this.updateIn('languages', id, patch); }
+  removeLanguage(id: string): void { this.removeFrom('languages', id); }
 
-  updateProject(id: string, patch: Partial<ResumeProject>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      projects: d.projects.map(p => (p.id === id ? { ...p, ...patch } : p)),
-    }));
-    this._isDirty.set(true);
-  }
+  addCertification(item: Omit<ResumeCertification, 'id'>): void { this.addTo('certifications', item); }
+  updateCertification(id: string, patch: Partial<ResumeCertification>): void { this.updateIn('certifications', id, patch); }
+  removeCertification(id: string): void { this.removeFrom('certifications', id); }
 
-  removeProject(id: string): void {
-    this._resumeData.update(d => ({ ...d, projects: d.projects.filter(p => p.id !== id) }));
-    this._isDirty.set(true);
-  }
+  addStrength(item: Omit<ResumeStrength, 'id'>): void { this.addTo('strengths', item); }
+  updateStrength(id: string, patch: Partial<ResumeStrength>): void { this.updateIn('strengths', id, patch); }
+  removeStrength(id: string): void { this.removeFrom('strengths', id); }
 
-  // ── Skills ────────────────────────────────────────────────────────────────
-  addSkill(item: Omit<ResumeSkill, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      skills: [...d.skills, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
+  addSocial(item: Omit<ResumeSocial, 'id'>): void { this.addTo('socials', item); }
+  updateSocial(id: string, patch: Partial<ResumeSocial>): void { this.updateIn('socials', id, patch); }
+  removeSocial(id: string): void { this.removeFrom('socials', id); }
 
-  updateSkill(id: string, patch: Partial<ResumeSkill>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      skills: d.skills.map(s => (s.id === id ? { ...s, ...patch } : s)),
-    }));
-    this._isDirty.set(true);
-  }
-
-  removeSkill(id: string): void {
-    this._resumeData.update(d => ({ ...d, skills: d.skills.filter(s => s.id !== id) }));
-    this._isDirty.set(true);
-  }
-
-  // ── Languages ─────────────────────────────────────────────────────────────
-  addLanguage(item: Omit<ResumeLanguage, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      languages: [...d.languages, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
-
-  updateLanguage(id: string, patch: Partial<ResumeLanguage>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      languages: d.languages.map(l => (l.id === id ? { ...l, ...patch } : l)),
-    }));
-    this._isDirty.set(true);
-  }
-
-  removeLanguage(id: string): void {
-    this._resumeData.update(d => ({ ...d, languages: d.languages.filter(l => l.id !== id) }));
-    this._isDirty.set(true);
-  }
-
-  // ── Certifications ────────────────────────────────────────────────────────
-  addCertification(item: Omit<ResumeCertification, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      certifications: [...d.certifications, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
-
-  updateCertification(id: string, patch: Partial<ResumeCertification>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      certifications: d.certifications.map(c => (c.id === id ? { ...c, ...patch } : c)),
-    }));
-    this._isDirty.set(true);
-  }
-
-  removeCertification(id: string): void {
-    this._resumeData.update(d => ({
-      ...d,
-      certifications: d.certifications.filter(c => c.id !== id),
-    }));
-    this._isDirty.set(true);
-  }
-
-  // ── Strengths ─────────────────────────────────────────────────────────────
-  addStrength(item: Omit<ResumeStrength, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      strengths: [...d.strengths, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
-
-  updateStrength(id: string, patch: Partial<ResumeStrength>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      strengths: d.strengths.map(s => (s.id === id ? { ...s, ...patch } : s)),
-    }));
-    this._isDirty.set(true);
-  }
-
-  removeStrength(id: string): void {
-    this._resumeData.update(d => ({ ...d, strengths: d.strengths.filter(s => s.id !== id) }));
-    this._isDirty.set(true);
-  }
-
-  // ── Socials ───────────────────────────────────────────────────────────────
-  addSocial(item: Omit<ResumeSocial, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      socials: [...d.socials, { ...item, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
-
-  updateSocial(id: string, patch: Partial<ResumeSocial>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      socials: d.socials.map(s => (s.id === id ? { ...s, ...patch } : s)),
-    }));
-    this._isDirty.set(true);
-  }
-
-  removeSocial(id: string): void {
-    this._resumeData.update(d => ({ ...d, socials: d.socials.filter(s => s.id !== id) }));
-    this._isDirty.set(true);
-  }
-
-  // ── Custom Sections ────────────────────────────────────────────────────────
-  addCustomSection(section: Omit<ResumeCustomSection, 'id'>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      customSections: [...(d.customSections ?? []), { ...section, id: crypto.randomUUID() }],
-    }));
-    this._isDirty.set(true);
-  }
-
-  updateCustomSection(id: string, patch: Partial<ResumeCustomSection>): void {
-    this._resumeData.update(d => ({
-      ...d,
-      customSections: (d.customSections ?? []).map(s => (s.id === id ? { ...s, ...patch } : s)),
-    }));
-    this._isDirty.set(true);
-  }
-
-  removeCustomSection(id: string): void {
-    this._resumeData.update(d => ({
-      ...d,
-      customSections: (d.customSections ?? []).filter(s => s.id !== id),
-    }));
-    this._isDirty.set(true);
-  }
+  addCustomSection(section: Omit<ResumeCustomSection, 'id'>): void { this.addTo('customSections', section); }
+  updateCustomSection(id: string, patch: Partial<ResumeCustomSection>): void { this.updateIn('customSections', id, patch); }
+  removeCustomSection(id: string): void { this.removeFrom('customSections', id); }
 
   // ── Settings ──────────────────────────────────────────────────────────────
   updateSettings(patch: Partial<ResumeSettings>): void {
@@ -483,6 +344,13 @@ export class ResumeStateService {
     return this.draftApi.publishDraft(id);
   }
 }
+
+/** Keys of ResumeData that hold { id, ... } item lists. */
+type ResumeListKey = {
+  [K in keyof ResumeData]-?: NonNullable<ResumeData[K]> extends { id: string }[] ? K : never;
+}[keyof ResumeData];
+
+type ResumeListItem<K extends ResumeListKey> = NonNullable<ResumeData[K]>[number];
 
 /** "Ada Lovelace" → "A. L." */
 function initialsOf(name: string): string {

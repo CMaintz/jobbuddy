@@ -1,7 +1,5 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Applications</div>
-      <div class="ml-auto flex gap-2 items-center">
+    <jb-topbar title="Applications">
+      <ng-container jb-topbar-actions>
         <!-- Export all -->
         <jb-dropdown #exportDd>
           <jb-button jb-trigger small icon="download">
@@ -23,8 +21,8 @@
           </button>
         </jb-dropdown>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     <!-- Filter tabs -->
     <div class="p-[12px_22px] flex items-center gap-1.5 border-b border-jb-border">

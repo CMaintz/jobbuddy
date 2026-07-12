@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
@@ -23,7 +24,7 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
 @Component({
   selector: 'app-prompts-library',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent],
   templateUrl: './prompts-library.component.html'
 })
 export class PromptsLibraryComponent implements OnInit {
