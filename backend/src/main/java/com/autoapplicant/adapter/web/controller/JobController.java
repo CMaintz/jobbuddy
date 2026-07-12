@@ -17,6 +17,7 @@ import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.port.in.document.GetDocumentsForJobUseCase;
 import com.autoapplicant.port.in.job.*;
+import com.autoapplicant.port.in.job.ReportJobInactiveUseCase;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import java.net.URI;
 import java.time.Instant;
@@ -49,6 +50,7 @@ public class JobController {
     private final CreateManualJobUseCase createManualJob;
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
     private final GetDocumentsForJobUseCase getDocsForJob;
+    private final ReportJobInactiveUseCase reportJobInactive;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
@@ -58,6 +60,7 @@ public class JobController {
                          CreateManualJobUseCase createManualJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          GetDocumentsForJobUseCase getDocsForJob,
+                         ReportJobInactiveUseCase reportJobInactive,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -70,6 +73,7 @@ public class JobController {
         this.createManualJob = createManualJob;
         this.feedbackUseCase = feedbackUseCase;
         this.getDocsForJob = getDocsForJob;
+        this.reportJobInactive = reportJobInactive;
         this.secCtx = secCtx;
     }
 
@@ -140,6 +144,14 @@ public class JobController {
                                         @RequestParam(required = false) String reason) {
         ignoreJob.ignoreJob(secCtx.getCurrentUserId(), id, reason);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Report a job as taken down — hides it for the user and verifies the URL server-side")
+    @ApiResponse(responseCode = "202", description = "Report accepted; verification runs in the background")
+    @PostMapping("/{id}/report-inactive")
+    public ResponseEntity<Void> reportInactive(@PathVariable UUID id) {
+        reportJobInactive.reportInactive(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.accepted().build();
     }
 
     @Operation(summary = "Unignore a job")

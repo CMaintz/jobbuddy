@@ -28,7 +28,8 @@ public record JobResponse(
         String aiSummary,
         List<String> aiTags,
         String jobCategory,
-        String shortDescription
+        String shortDescription,
+        boolean active
 ) {
     public static JobResponse from(Job job) {
         return new JobResponse(
@@ -43,7 +44,8 @@ public record JobResponse(
                 job.technologies(), job.skills(), job.languages(),
                 job.postedAt(), job.aiSummary(), job.aiTags(),
                 job.jobCategory() != null ? job.jobCategory().name() : null,
-                job.shortDescription()
+                job.shortDescription(),
+                job.isActive()
         );
     }
 }
