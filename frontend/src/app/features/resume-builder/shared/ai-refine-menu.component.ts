@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, inject, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiApiService } from '../../../core/api/ai.api';
+import { DiffViewerComponent } from '../../../shared/components/diff-viewer/diff-viewer.component';
 import { toHtml } from './rich-text-editor.component';
 
 const SUGGESTIONS = [
@@ -21,7 +22,7 @@ const SUGGESTION_LABELS = ['Quantify', 'Tighten', 'More impact', 'Fix grammar'];
 @Component({
   selector: 'app-ai-refine-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DiffViewerComponent],
   template: `
     <div class="relative inline-block">
       <button type="button" class="airm-trigger" (click)="open.set(!open())" title="Improve with AI">
@@ -46,8 +47,10 @@ const SUGGESTION_LABELS = ['Quantify', 'Tighten', 'More impact', 'Fix grammar'];
               <div class="airm-error">{{ error() }}</div>
             }
           } @else {
-            <div class="airm-label">Suggestion</div>
-            <div class="airm-preview">{{ preview() }}</div>
+            <div class="airm-label">Suggested change</div>
+            <div class="airm-preview">
+              <jb-diff-viewer [before]="plainContent()" [after]="preview()!" />
+            </div>
             <div class="airm-actions">
               <button type="button" class="airm-item" (click)="preview.set(null)">Discard</button>
               <button type="button" class="airm-item airm-apply" (click)="apply()">Apply</button>
@@ -60,7 +63,7 @@ const SUGGESTION_LABELS = ['Quantify', 'Tighten', 'More impact', 'Fix grammar'];
   styles: [`
     .airm-trigger { padding:2px 8px; font-size:10.5px; font-weight:600; border-radius:99px; cursor:pointer;
       background:var(--jb-accent-soft); border:1px solid var(--jb-accent-border); color:var(--jb-accent-2); }
-    .airm-panel { position:absolute; right:0; top:calc(100% + 4px); z-index:100; width:240px; padding:8px;
+    .airm-panel { position:absolute; right:0; top:calc(100% + 4px); z-index:100; width:300px; padding:8px;
       background:var(--jb-surface); border:1px solid var(--jb-border-strong); border-radius:8px;
       box-shadow:0 14px 40px rgba(0,0,0,0.35); display:flex; flex-direction:column; gap:4px; }
     .airm-label { font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--jb-text-dim); padding:0 2px 2px; }
@@ -128,7 +131,8 @@ export class AiRefineMenuComponent {
     this.open.set(false);
   }
 
-  private plainContent(): string {
+  /** Plain-text view of the field content (also feeds the diff preview). */
+  plainContent(): string {
     if (!this.content.includes('<')) return this.content;
     const div = document.createElement('div');
     div.innerHTML = this.content.replace(/<\/(p|li)>/g, '</$1>\n');
