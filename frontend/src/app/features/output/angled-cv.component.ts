@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,6 +17,7 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { PromptTemplate } from '../../core/models/prompt-template.model';
 import { AtsReport, StructuredDocument } from '../../core/models/structured-document.model';
 import { ResumeDraftApiService } from '../resume-builder/services/resume-draft-api.service';
+import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { structuredDocToResumeData } from '../resume-builder/services/structured-doc-mapper';
 import { INITIAL_SETTINGS } from '../resume-builder/models/resume-builder.models';
 import { loadGenDefaults } from '../settings/settings.component';
@@ -35,6 +36,8 @@ const ANGLE_PROMPTS = [
   templateUrl: './angled-cv.component.html',
 })
 export class AngledCvComponent implements OnInit {
+  @ViewChild('cvEl') cvEl!: ElementRef<HTMLElement>;
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private aiApi = inject(AiApiService);
@@ -42,16 +45,20 @@ export class AngledCvComponent implements OnInit {
   private jobsApi = inject(JobsApiService);
   private promptApi = inject(PromptApiService);
   private draftApi = inject(ResumeDraftApiService);
+  private pdfExport = inject(PdfExportService);
 
   loading = signal(true);
   loadError = signal('');
   generating = signal(false);
   openingDraft = signal(false);
+  downloading = signal(false);
   toast = signal('');
   mobileShowSidebar = signal(false);
 
   application = signal<Application | null>(null);
   cvDocuments = signal<GeneratedDocument[]>([]);
+  /** Non-CV documents (letters, pitches) for the cross-link to the output screen. */
+  letterCount = signal(0);
   promptTemplates: PromptTemplate[] = [];
 
   selectedPromptId = signal<string | null>(null);
@@ -91,6 +98,12 @@ export class AngledCvComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Config handed off from the Apply screen, if any
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.get('promptId')) this.selectedPromptId.set(qp.get('promptId'));
+    if (qp.get('lang') && this.languages.includes(qp.get('lang')!)) this.selectedLanguage.set(qp.get('lang')!);
+    if (qp.get('instructions')) this.customInstructions = qp.get('instructions')!;
+
     this.promptApi.getAll().subscribe({
       next: templates => this.promptTemplates = templates.filter(t =>
         !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING'),
@@ -126,6 +139,7 @@ export class AngledCvComponent implements OnInit {
         this.cvDocuments.set(docs
           .filter(d => d.documentType === 'CV')
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        this.letterCount.set(docs.filter(d => d.documentType !== 'CV').length);
         this.loading.set(false);
       },
       error: () => {
@@ -150,6 +164,7 @@ export class AngledCvComponent implements OnInit {
       promptTemplateId: this.selectedPromptId() ?? undefined,
       customInstructions: this.customInstructions.trim() || undefined,
       targetLanguage: this.selectedLanguage() === 'Dansk' ? 'da' : 'en',
+      showProfileImage: true, // master CV photo carries onto angled CVs automatically
     }).subscribe({
       next: () => {
         this.generating.set(false);
@@ -190,6 +205,21 @@ export class AngledCvComponent implements OnInit {
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h ago`;
     return `${Math.floor(hours / 24)}d ago`;
+  }
+
+  goToLetters(): void {
+    const appId = this.route.snapshot.paramMap.get('id');
+    if (appId) this.router.navigate(['/applications', appId, 'output']);
+  }
+
+  downloadPdf(): void {
+    if (!this.cvEl?.nativeElement || this.downloading()) return;
+    this.downloading.set(true);
+    const app = this.application();
+    const filename = app
+      ? `${app.jobCompanyName ?? 'cv'} - Angled CV`
+      : 'Angled CV';
+    this.pdfExport.download(this.cvEl.nativeElement, filename).finally(() => this.downloading.set(false));
   }
 
   goBack(): void {

@@ -15,6 +15,11 @@
             (click)="copyContent()" [disabled]="!activeDoc()">
             <jb-icon [name]="copied() ? 'check' : 'doc'" [size]="12" />{{ copied() ? 'Copied' : 'Copy' }}
           </button>
+          <button class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-jb-surface-2 border border-jb-border rounded-md text-jb-text cursor-pointer"
+            (click)="downloadPdf()" [disabled]="!activeDoc() || downloading() || editing()"
+            [title]="editing() ? 'Finish editing first' : 'Download as PDF'">
+            <jb-icon name="download" [size]="12" />{{ downloading() ? 'Exporting…' : 'PDF' }}
+          </button>
         </div>
       </header>
 
@@ -72,53 +77,46 @@
                 }
               </div>
               <!-- Template picker -->
-              <div class="relative">
-                <button
-                  class="flex items-center gap-1.5 px-2 py-1 bg-jb-surface-2 border border-jb-border rounded-md text-sm font-medium text-jb-text cursor-pointer"
-                  (click)="tplOpen.set(!tplOpen())">
+              <jb-dropdown #tplDd [width]="260">
+                <button jb-trigger
+                  class="flex items-center gap-1.5 px-2 py-1 bg-jb-surface-2 border border-jb-border rounded-md text-sm font-medium text-jb-text cursor-pointer">
                   <span class="w-4 h-[18px] rounded-sm flex-shrink-0"
                     [style.background]="activeTemplate().swatchBg"
                     [style.border]="'1px solid ' + activeTemplate().swatchAccent"></span>
                   Template - {{ activeTemplate().label }}
                   <jb-icon name="chev-down" [size]="11" class="text-jb-text-dim" />
                 </button>
-                @if (tplOpen()) {
-                  <div class="fixed inset-0 z-[5]" (click)="tplOpen.set(false)"></div>
-                  <div class="absolute top-[calc(100%+6px)] right-0 z-[6] w-[260px] p-1.5 bg-jb-surface border border-jb-border-strong rounded-lg"
-                       style="box-shadow:0 14px 40px rgba(0,0,0,0.4);">
-                    <div class="text-2xs text-jb-text-dim uppercase tracking-widest px-2 py-1">Template</div>
-                    @for (t of templates; track t.key) {
-                      <button
-                        class="w-full p-2 flex items-center gap-2.5 rounded-md border-none text-left cursor-pointer text-jb-text"
-                        [class.bg-jb-surface-3]="template() === t.key"
-                        [style.background]="template() !== t.key ? 'transparent' : ''"
-                        (click)="template.set(t.key); tplOpen.set(false)">
-                        <div class="w-9 h-[46px] rounded-sm flex-shrink-0 flex flex-col justify-start p-1.5 gap-1"
-                             [style.background]="t.swatchBg"
-                             [style.border]="'1px solid ' + t.swatchAccent + '33'"
-                             style="box-shadow:0 2px 8px rgba(0,0,0,0.3);">
-                          <div class="h-[3px] rounded-sm" [style.background]="t.swatchAccent" [style.width]="t.headerStyle === 'centered' ? '60%' : '70%'" [style.margin]="t.headerStyle === 'centered' ? '0 auto' : ''"></div>
-                          <div class="h-px opacity-40" [style.background]="t.swatchAccent" [style.width]="t.headerStyle === 'centered' ? '40%' : '50%'" [style.margin]="t.headerStyle === 'centered' ? '0 auto' : ''"></div>
-                        </div>
-                        <div class="min-w-0">
-                          <div class="text-sm font-medium">{{ t.label }}</div>
-                          <div class="text-xs text-jb-text-dim">{{ t.sub }}</div>
-                        </div>
-                        @if (template() === t.key) {
-                          <jb-icon name="check" [size]="12" class="text-jb-accent ml-auto" />
-                        }
-                      </button>
+                <div class="text-2xs text-jb-text-dim uppercase tracking-widest px-2 py-1">Template</div>
+                @for (t of templates; track t.key) {
+                  <button
+                    class="jb-menu-item items-center"
+                    [class.bg-jb-surface-3]="template() === t.key"
+                    (click)="template.set(t.key); tplDd.close()">
+                    <div class="w-9 h-[46px] rounded-sm flex-shrink-0 flex flex-col justify-start p-1.5 gap-1"
+                         [style.background]="t.swatchBg"
+                         [style.border]="'1px solid ' + t.swatchAccent + '33'"
+                         style="box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+                      <div class="h-[3px] rounded-sm" [style.background]="t.swatchAccent" [style.width]="t.headerStyle === 'centered' ? '60%' : '70%'" [style.margin]="t.headerStyle === 'centered' ? '0 auto' : ''"></div>
+                      <div class="h-px opacity-40" [style.background]="t.swatchAccent" [style.width]="t.headerStyle === 'centered' ? '40%' : '50%'" [style.margin]="t.headerStyle === 'centered' ? '0 auto' : ''"></div>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="text-sm font-medium">{{ t.label }}</div>
+                      <div class="text-xs text-jb-text-dim">{{ t.sub }}</div>
+                    </div>
+                    @if (template() === t.key) {
+                      <jb-icon name="check" [size]="12" class="text-jb-accent ml-auto" />
                     }
-                  </div>
+                  </button>
                 }
-              </div>
+              </jb-dropdown>
             </div>
           </div>
 
           <!-- Paper scroll area -->
           <div class="flex-1 overflow-auto flex justify-center jb-scroll" style="padding:32px 32px 60px;background:radial-gradient(ellipse at top, #1a1e25 0%, var(--jb-bg) 60%);">
             @if (activeDoc()) {
-              <div [style.background]="activeTemplate().bg"
+              <div #paperEl
+                   [style.background]="activeTemplate().bg"
                    [style.color]="activeTemplate().fg"
                    [style.font-family]="activeTemplate().font"
                    [style.font-size.px]="activeTemplate().size"
@@ -151,11 +149,11 @@
                 @if (editing()) {
                   <app-rich-text-editor [value]="activeDoc()!.content" (debouncedChange)="onEdited($event)" />
                 } @else if (isRichContent()) {
-                  <div class="rte-rendered" [innerHTML]="activeDoc()!.content | richText"></div>
+                  <div class="rte-rendered" [innerHTML]="richHtml(activeDoc()!.content) | richText"></div>
                 } @else {
                   <div class="flex flex-col gap-3.5">
                     @for (para of paragraphs(); track $index) {
-                      <p style="margin:0;text-wrap:pretty;white-space:pre-line;">{{ para }}</p>
+                      <p style="margin:0;text-wrap:pretty;white-space:pre-line;" [innerHTML]="paraHtml(para)"></p>
                     }
                   </div>
                 }
@@ -273,6 +271,49 @@
         </div>
       }
 
+      <!-- JD keyword coverage -->
+      @if (keywordStats(); as kw) {
+        <div class="p-4 border-b border-jb-border">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest">JD keywords</div>
+            <span class="mono text-xs"
+              [style.color]="kw.missing.length === 0 ? 'var(--jb-success)' : 'var(--jb-text-dim)'">
+              {{ kw.matched.length }}/{{ kw.matched.length + kw.missing.length }} covered
+            </span>
+          </div>
+          @if (kw.matched.length > 0) {
+            <div class="flex flex-wrap gap-1 mb-2">
+              @for (k of kw.matched; track k) {
+                <span class="pill pill-success">{{ k }}</span>
+              }
+            </div>
+          }
+          @if (kw.missing.length > 0) {
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1">Not mentioned</div>
+            <div class="flex flex-wrap gap-1 mb-2">
+              @for (k of kw.missing; track k) {
+                <span class="pill pill-neutral">{{ k }}</span>
+              }
+            </div>
+          }
+          <label class="flex items-center gap-2 text-xs text-jb-text-mid cursor-pointer mt-1">
+            <input type="checkbox" [ngModel]="highlightKw()" (ngModelChange)="highlightKw.set($event)" />
+            Highlight keywords in the letter
+          </label>
+        </div>
+      }
+
+      <!-- Next step: the angled CV lives on its own screen -->
+      <div class="p-4 border-b border-jb-border">
+        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Angled CV</div>
+        <button class="w-full flex items-center gap-2 px-2.5 py-2 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-xs font-medium text-left cursor-pointer"
+          (click)="goToCv()">
+          <jb-icon name="target" [size]="12" class="text-jb-accent" />
+          <span class="flex-1">{{ hasCv() ? 'View the angled CV for this job' : 'Generate an angled CV for this job' }}</span>
+          <jb-icon name="arrow-right" [size]="11" class="text-jb-text-dim" />
+        </button>
+      </div>
+
       <!-- Stats -->
       <div class="p-4">
         <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Stats</div>
@@ -284,5 +325,11 @@
             </div>
           }
         </div>
+        @if (wordHint()) {
+          <div class="mt-2.5 text-xs text-jb-text-dim flex items-start gap-1.5">
+            <jb-icon name="lightbulb" [size]="11" class="text-jb-accent mt-px flex-shrink-0" />
+            <span>{{ wordHint() }}</span>
+          </div>
+        }
       </div>
     </ng-template>
