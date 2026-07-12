@@ -18,7 +18,6 @@ const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 
   standalone: true,
   imports: [CommonModule, FormsModule, RichTextEditorComponent],
   templateUrl: './custom-sections-form.component.html',
-  styleUrls: ['./custom-sections-form.component.css'],
 })
 export class CustomSectionsFormComponent {
   readonly stateService = inject(ResumeStateService);

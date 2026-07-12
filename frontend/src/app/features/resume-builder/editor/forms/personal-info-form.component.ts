@@ -11,7 +11,6 @@ import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.compone
   standalone: true,
   imports: [CommonModule, FormsModule, RichTextEditorComponent, PhotoCropDialogComponent, AiRefineMenuComponent],
   templateUrl: './personal-info-form.component.html',
-  styleUrls: ['./personal-info-form.component.css'],
 })
 export class PersonalInfoFormComponent {
   private state = inject(ResumeStateService);

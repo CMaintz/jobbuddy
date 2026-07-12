@@ -8,7 +8,6 @@ import { ResumeStateService } from '../../services/resume-state.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './skills-form.component.html',
-  styleUrls: ['./skills-form.component.css'],
 })
 export class SkillsFormComponent {
   private state = inject(ResumeStateService);

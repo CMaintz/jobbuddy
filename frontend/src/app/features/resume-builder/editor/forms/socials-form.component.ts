@@ -10,7 +10,6 @@ import { SOCIAL_PLATFORMS, SOCIAL_ICON_LIBRARY } from '../../data/social-platfor
   standalone: true,
   imports: [CommonModule, FormsModule, IconPickerComponent],
   templateUrl: './socials-form.component.html',
-  styleUrls: ['./socials-form.component.css'],
 })
 export class SocialsFormComponent {
   private state = inject(ResumeStateService);

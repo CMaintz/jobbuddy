@@ -112,7 +112,7 @@
                 <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Timeline</div>
                 <div class="flex flex-col">
                   @for (event of timelineFor(c); track event.what; let last = $last) {
-                    <div class="grid gap-2.5 py-2" style="grid-template-columns:90px 12px 1fr;"
+                    <div class="grid gap-2.5 py-2 grid-cols-[90px_12px_1fr]"
                       [style.border-bottom]="last ? 'none' : '1px solid var(--jb-border-faint)'">
                       <div class="mono text-2xs text-jb-text-dim">{{ event.time }}</div>
                       <div class="pt-1"><span class="dot bg-jb-text-dim"></span></div>

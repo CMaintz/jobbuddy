@@ -99,7 +99,7 @@
           }
         </ng-container>
             @if (editing()) {
-              <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
+              <div class="grid gap-2.5 grid-cols-[1.6fr_1fr]">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Name</span>
                   <input [(ngModel)]="editName" class="input" />
@@ -139,7 +139,7 @@
                   <pre class="w-full p-3 bg-jb-surface-2 border border-jb-border rounded-md text-xs leading-relaxed text-jb-text-mid whitespace-pre-wrap m-0" style="font-family:var(--font-mono,JetBrains Mono,monospace);">{{ p.systemPrompt }}</pre>
                 </div>
               }
-              <div class="grid gap-2.5" style="grid-template-columns:1fr 1fr 1fr;">
+              <div class="grid gap-2.5 grid-cols-[1fr_1fr_1fr]">
                 <div>
                   <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">Type</div>
                   <div class="text-base">{{ kindConfig(p.category).label }}</div>
@@ -183,7 +183,7 @@
           <div class="text-xl font-medium flex-1">New prompt</div>
         </ng-container>
 
-        <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
+        <div class="grid gap-2.5 grid-cols-[1.6fr_1fr]">
           <label class="flex flex-col gap-[5px]">
             <span class="label">Name</span>
             <input [(ngModel)]="newName" class="input" placeholder="DK · Ansøgning — warm + concrete result" />
