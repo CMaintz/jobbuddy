@@ -25,14 +25,25 @@
             <div class="flex items-center gap-2.5 min-w-0">
               <jb-company-mark [name]="job.companyName || '?'" [size]="28" />
               <div class="min-w-0">
-                <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ job.title }}</div>
+                <div class="flex items-center gap-2">
+                  <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                    [style.opacity]="job.active === false ? '0.55' : '1'">{{ job.title }}</div>
+                  @if (job.active === false) {
+                    <jb-pill tone="danger">no longer active</jb-pill>
+                  }
+                </div>
                 <div class="text-xs text-jb-text-dim">{{ job.companyName || 'Unknown' }}</div>
               </div>
             </div>
             <div class="text-sm text-jb-text-mid">{{ job.location || 'Remote' }}</div>
             <div class="text-sm text-jb-text-dim">{{ job.source || '\u2014' }}</div>
-            <div class="flex gap-1.5 justify-end">
-              <jb-button small icon="sparkle" routerLink="/apply">Apply</jb-button>
+            <div class="flex gap-1.5 justify-end items-center">
+              @if (job.active !== false) {
+                <jb-button small icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">Apply</jb-button>
+              }
+              <button class="icon-btn" title="Remove from saved" (click)="remove(job, $event)">
+                <jb-icon name="x" [size]="12" />
+              </button>
             </div>
           </a>
         }

@@ -19,6 +19,17 @@
     @if (loading) {
       <div class="p-12 text-center text-jb-text-dim">Loading job details...</div>
     } @else if (job) {
+      @if (job.active === false || reportedInactive()) {
+        <div class="flex items-center gap-2.5 px-6 py-2.5 border-b flex-shrink-0"
+             style="background:rgba(248,113,113,0.08);border-color:rgba(248,113,113,0.35);">
+          <jb-icon name="x-circle" [size]="13" class="text-jb-danger" />
+          <span class="text-sm text-jb-text">
+            {{ reportedInactive()
+              ? 'Marked as taken down — it\'s hidden from your feed and we\'re verifying the posting.'
+              : 'This posting is no longer active. Your application history for it is kept.' }}
+          </span>
+        </div>
+      }
       <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_340px]">
         <!-- Main content -->
         <div class="flex flex-col min-h-0 border-r border-jb-border">
@@ -181,16 +192,17 @@
             @if (documents.length > 0) {
               <div class="flex flex-col gap-2">
                 @for (doc of documents; track doc.id) {
-                  <div class="grid items-center py-2.5 px-3 bg-jb-surface border border-jb-border rounded-md cursor-pointer" style="grid-template-columns:28px 1fr auto;gap:10px;">
+                  <div class="grid items-center py-2.5 px-3 bg-jb-surface border border-jb-border rounded-md cursor-pointer hover:bg-jb-surface-2 transition-colors"
+                    style="grid-template-columns:28px 1fr auto;gap:10px;"
+                    (click)="openDocument(doc)">
                     <div class="w-[28px] h-[28px] rounded-[5px] bg-jb-surface-2 border border-jb-border flex items-center justify-center text-jb-text-mid">
-                      <jb-icon name="doc" [size]="13" />
+                      <jb-icon [name]="doc.documentType === 'CV' ? 'target' : 'doc'" [size]="13" />
                     </div>
                     <div class="min-w-0">
-                      <div class="text-base font-medium">{{ doc.documentType }}</div>
+                      <div class="text-base font-medium">{{ docTypeLabel(doc.documentType) }}</div>
                       <div class="text-xs text-jb-text-dim">{{ ageLabel(doc.createdAt) }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <jb-pill tone="info">generated</jb-pill>
                       <jb-icon name="arrow-right" [size]="12" class="text-jb-text-dim" />
                     </div>
                   </div>
@@ -211,9 +223,11 @@
             <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">Generate</div>
             <div class="grid grid-cols-2 gap-1.5">
               @for (action of generateActions; track action.label) {
-                <button (click)="onGenerate(action.format)" class="flex items-center gap-[7px] py-2 px-2.5 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-[11.5px] font-medium cursor-pointer text-left">
+                <button (click)="onGenerate(action.format)"
+                  [disabled]="action.format === 'cv' && openingCv"
+                  class="flex items-center gap-[7px] py-2 px-2.5 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-[11.5px] font-medium cursor-pointer text-left">
                   <jb-icon [name]="action.icon" [size]="12" class="text-jb-accent flex-shrink-0" />
-                  <span class="flex-1 min-w-0">{{ action.label }}</span>
+                  <span class="flex-1 min-w-0">{{ action.format === 'cv' && openingCv ? 'Opening…' : action.label }}</span>
                   <jb-icon name="sparkle" [size]="10" class="text-jb-text-dim" />
                 </button>
               }
@@ -224,6 +238,13 @@
                 <jb-icon name="external" [size]="10" class="text-jb-text-dim" />
               </a>
             </div>
+            @if (job.active !== false && !reportedInactive()) {
+              <button (click)="reportTakenDown()"
+                class="mt-2 w-full flex items-center gap-[7px] py-1.5 px-2.5 bg-transparent border border-jb-border rounded-md text-jb-text-dim text-[11.5px] cursor-pointer text-left hover:text-jb-text-mid">
+                <jb-icon name="x-circle" [size]="11" class="flex-shrink-0" />
+                <span class="flex-1 min-w-0">Job taken down? Report & hide it</span>
+              </button>
+            }
           </div>
 
           <!-- Move to stage -->

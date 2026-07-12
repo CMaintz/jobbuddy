@@ -26,4 +26,13 @@ export class SavedRolesComponent implements OnInit {
       error: () => this.loading = false
     });
   }
+
+  remove(job: Job, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.savedJobs = this.savedJobs.filter(j => j.id !== job.id);
+    this.jobsApi.unsave(job.id).subscribe({
+      error: () => this.savedJobs = [...this.savedJobs, job]
+    });
+  }
 }
