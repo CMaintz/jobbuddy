@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.repository;
 
 import com.autoapplicant.adapter.persistence.entity.PromptTemplateEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,8 @@ public interface PromptTemplateJpaRepository extends JpaRepository<PromptTemplat
     List<PromptTemplateEntity> findByIsPublicTrueOrderByCreatedAtDesc();
 
     Optional<PromptTemplateEntity> findFirstByCategoryAndIsSystemTrue(String category);
+
+    @Modifying
+    @Query("UPDATE PromptTemplateEntity t SET t.usageCount = t.usageCount + 1 WHERE t.id = :id")
+    void incrementUsage(@Param("id") UUID id);
 }
