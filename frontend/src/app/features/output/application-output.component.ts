@@ -1,15 +1,19 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { RichTextEditorComponent } from '../resume-builder/shared/rich-text-editor.component';
 import { RichTextPipe } from '../resume-builder/shared/rich-text.pipe';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
+import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { Application } from '../../core/models/application.model';
+import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { DocumentIdentity, StructuredDocument } from '../../core/models/structured-document.model';
 
@@ -60,29 +64,46 @@ const FORMAT_TO_DOC_TYPE: Record<FormatKey, string> = {
   fu: 'FOLLOW_UP_MESSAGE',
 };
 
+/** Sensible word-count ranges per format, used for the length hint. */
+const WORD_TARGETS: Record<FormatKey, [number, number]> = {
+  app: [250, 450],
+  cl: [200, 400],
+  dm: [60, 150],
+  fu: [40, 120],
+};
+
 @Component({
   selector: 'app-application-output',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, DiffViewerComponent, RichTextEditorComponent, RichTextPipe],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbDropdownComponent, DiffViewerComponent, RichTextEditorComponent, RichTextPipe],
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {
+  @ViewChild('paperEl') paperEl!: ElementRef<HTMLElement>;
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private aiApi = inject(AiApiService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
+  private pdfExport = inject(PdfExportService);
+
+  private sanitizer = inject(DomSanitizer);
 
   loading = signal(true);
+  downloading = signal(false);
   loadError = signal('');
   application = signal<Application | null>(null);
   documents = signal<GeneratedDocument[]>([]);
-  /** Job description for job-aware refinements. */
-  private jobDescription = signal<string | null>(null);
+  /** The job this application targets — description feeds refinements, keywords feed the stats. */
+  job = signal<Job | null>(null);
+  /** Highlight JD keywords inside the rendered letter. */
+  highlightKw = signal(false);
+
+  private jobDescription = computed<string | null>(() => this.job()?.descriptionClean ?? null);
 
   format = signal<FormatKey>('app');
   template = signal('editorial');
-  tplOpen = signal(false);
   refining = signal(false);
   generatingMissing = signal(false);
   copied = signal(false);
@@ -114,6 +135,62 @@ export class ApplicationOutputComponent implements OnInit {
     const wanted = FORMAT_TO_DOC_TYPE[this.format()];
     return this.documents().find(d => d.documentType === wanted) ?? null;
   });
+
+  /** Whether an angled CV already exists for this job (for the next-step link). */
+  hasCv = computed<boolean>(() => this.documents().some(d => d.documentType === 'CV'));
+
+  /** Keywords the JD cares about (technologies + skills + AI tags). */
+  jdKeywords = computed<string[]>(() => {
+    const job = this.job();
+    if (!job) return [];
+    const all = [...(job.technologies ?? []), ...(job.skills ?? []), ...(job.aiTags ?? [])]
+      .map(k => k.trim()).filter(k => k.length > 1);
+    return [...new Set(all)].slice(0, 15);
+  });
+
+  /** Which JD keywords the current letter actually mentions. */
+  keywordStats = computed<{ matched: string[]; missing: string[] } | null>(() => {
+    const keywords = this.jdKeywords();
+    if (keywords.length === 0 || !this.activeDoc()) return null;
+    const text = this.plainText().toLowerCase();
+    const matched: string[] = [];
+    const missing: string[] = [];
+    for (const kw of keywords) (text.includes(kw.toLowerCase()) ? matched : missing).push(kw);
+    return { matched, missing };
+  });
+
+  /** Length guidance for the current format. */
+  wordHint = computed<string>(() => {
+    if (!this.activeDoc()) return '';
+    const [lo, hi] = WORD_TARGETS[this.format()];
+    const n = this.wordCount();
+    if (n < lo) return `On the short side — ${lo}–${hi} words usually lands better here.`;
+    if (n > hi) return `Running long — ${lo}–${hi} words is the sweet spot for this format.`;
+    return `Good length — within the ${lo}–${hi} word sweet spot.`;
+  });
+
+  /** Wraps JD keywords in <mark> while leaving HTML tags untouched. */
+  private markKeywords(html: string): string {
+    const keywords = this.jdKeywords();
+    if (!this.highlightKw() || keywords.length === 0) return html;
+    const pattern = new RegExp(
+      `(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+    return html.split(/(<[^>]+>)/g)
+      .map(seg => seg.startsWith('<') ? seg : seg.replace(pattern, '<mark class="jb-kw">$1</mark>'))
+      .join('');
+  }
+
+  /** Plain paragraph → safe HTML with optional keyword marks. */
+  paraHtml(para: string): SafeHtml {
+    const escaped = para
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return this.sanitizer.bypassSecurityTrustHtml(this.markKeywords(escaped));
+  }
+
+  /** Rich (TipTap) content with optional keyword marks. */
+  richHtml(content: string): string {
+    return this.markKeywords(content);
+  }
 
   /** Identity from the structured payload of the active document, if present. */
   identity = computed<DocumentIdentity>(() => {
@@ -203,7 +280,7 @@ export class ApplicationOutputComponent implements OnInit {
         this.application.set(app);
         this.loadDocuments(app.jobId);
         this.jobsApi.getById(app.jobId).subscribe({
-          next: job => this.jobDescription.set(job.descriptionClean ?? null),
+          next: job => this.job.set(job),
           error: () => {}
         });
       },
@@ -342,6 +419,21 @@ export class ApplicationOutputComponent implements OnInit {
       sections: [],
       bodyContent: body,
     };
+  }
+
+  downloadPdf(): void {
+    if (!this.paperEl?.nativeElement || this.downloading() || this.editing()) return;
+    this.downloading.set(true);
+    const app = this.application();
+    const filename = app
+      ? `${app.jobCompanyName ?? 'application'} - ${this.formatLabel()}`
+      : this.formatLabel();
+    this.pdfExport.download(this.paperEl.nativeElement, filename).finally(() => this.downloading.set(false));
+  }
+
+  goToCv(): void {
+    const appId = this.route.snapshot.paramMap.get('id');
+    if (appId) this.router.navigate(['/applications', appId, 'cv']);
   }
 
   goBack(): void {

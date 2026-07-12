@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, effect, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -30,7 +30,26 @@ const FORMAT_TO_PROMPT_CATEGORY: Record<string, string> = {
   'application': 'APPLICATION',
   'cover-letter': 'COVER_LETTER',
   'short-pitch': 'RECRUITER_MESSAGE',
+  'cv': 'CV_TAILORING',
 };
+
+const DRAFT_KEY = 'jb-apply-draft';
+const DRAFT_MAX_AGE_MS = 7 * 24 * 3600_000;
+
+interface ApplyDraft {
+  savedAt: number;
+  mode: 'paste' | 'url' | 'manual';
+  company: string;
+  role: string;
+  location: string;
+  jd: string;
+  jobUrl: string;
+  customInstructions: string;
+  format: string;
+  voice: string;
+  language: string;
+  promptId: string | null;
+}
 
 @Component({
   selector: 'app-apply',
@@ -88,6 +107,7 @@ export class ApplyComponent implements OnInit {
     { key: 'application', label: 'Application' },
     { key: 'cover-letter', label: 'Cover letter' },
     { key: 'short-pitch', label: 'Short pitch' },
+    { key: 'cv', label: 'Angled CV' },
   ];
 
   voices = ['Direct', 'Warm', 'Formal'];
@@ -104,6 +124,72 @@ export class ApplyComponent implements OnInit {
     return this.jd.trim() ? this.jd.trim().split(/\s+/).length : 0;
   }
 
+  get selectedFormatLabel(): string {
+    return this.formats.find(f => f.key === this.selectedFormat())?.label ?? 'Application';
+  }
+
+  constructor() {
+    // Auto-save: this effect covers the signal-backed choices; the template's
+    // (input) hook covers the typed fields. Both funnel into persistDraft().
+    effect(() => {
+      const tracked = [this.mode(), this.selectedFormat(), this.selectedVoice(),
+        this.selectedLanguage(), this.selectedPromptId()];
+      void tracked;
+      if (this.restored) this.persistDraft();
+    });
+  }
+
+  /** Guards against the initial effect run persisting defaults over a stored draft. */
+  private restored = false;
+
+  persistDraft(): void {
+    const draft: ApplyDraft = {
+      savedAt: Date.now(),
+      mode: this.mode(),
+      company: this.company,
+      role: this.role,
+      location: this.location,
+      jd: this.jd,
+      jobUrl: this.jobUrl,
+      customInstructions: this.customInstructions,
+      format: this.selectedFormat(),
+      voice: this.selectedVoice(),
+      language: this.selectedLanguage(),
+      promptId: this.selectedPromptId(),
+    };
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* storage full/blocked */ }
+  }
+
+  /** Restores an unfinished form. Job fields are skipped when a job is preset via ?jobId=. */
+  private restoreDraft(hasPresetJob: boolean): void {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as ApplyDraft;
+      if (!draft.savedAt || Date.now() - draft.savedAt > DRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      if (!hasPresetJob) {
+        this.mode.set(draft.mode ?? 'paste');
+        this.company = draft.company ?? '';
+        this.role = draft.role ?? '';
+        this.location = draft.location ?? '';
+        this.jd = draft.jd ?? '';
+        this.jobUrl = draft.jobUrl ?? '';
+      }
+      this.customInstructions = draft.customInstructions ?? '';
+      if (this.formats.some(f => f.key === draft.format)) this.selectedFormat.set(draft.format);
+      if (this.voices.includes(draft.voice)) this.selectedVoice.set(draft.voice);
+      if (this.languages.includes(draft.language)) this.selectedLanguage.set(draft.language);
+      this.selectedPromptId.set(draft.promptId ?? null);
+    } catch { /* corrupt draft — ignore */ }
+  }
+
+  private clearDraft(): void {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+  }
+
   ngOnInit(): void {
     const defaults = loadGenDefaults();
     if (this.voices.includes(defaults.voice)) this.selectedVoice.set(defaults.voice);
@@ -114,11 +200,15 @@ export class ApplyComponent implements OnInit {
       error: () => {} // prompt templates are optional
     });
 
+    const jobId = this.route.snapshot.queryParamMap.get('jobId');
+    this.restoreDraft(!!jobId);
+
+    // Explicit query params outrank the restored draft
     const format = this.route.snapshot.queryParamMap.get('format');
     if (format && this.formats.some(f => f.key === format)) this.selectedFormat.set(format);
 
-    const jobId = this.route.snapshot.queryParamMap.get('jobId');
     if (jobId) this.loadPresetJob(jobId);
+    this.restored = true;
   }
 
   private loadPresetJob(jobId: string): void {
@@ -167,8 +257,10 @@ export class ApplyComponent implements OnInit {
       // Step 2: reuse an in-progress application or create one
       switchMap(job => this.resolveApplication(job)),
       tap(() => this.activeStep.set(2)),
-      // Step 3: generate the document (the long step)
+      // Step 3: generate the document (the long step).
+      // The angled CV is configured & generated on its own screen — hand off after step 2.
       switchMap(app => {
+        if (this.selectedFormat() === 'cv') return of(app);
         const req: GenerateDocumentRequest = {
           jobId: app.jobId,
           documentType: FORMAT_TO_DOC_TYPE[this.selectedFormat()] ?? 'APPLICATION_TEXT',
@@ -182,8 +274,19 @@ export class ApplyComponent implements OnInit {
     ).subscribe({
       next: app => {
         this.activeStep.set(4);
-        this.router.navigate(['/applications', app.id, 'output'],
-          { queryParams: { format: FORMAT_TO_OUTPUT_KEY[this.selectedFormat()] ?? 'app' } });
+        this.clearDraft();
+        if (this.selectedFormat() === 'cv') {
+          this.router.navigate(['/applications', app.id, 'cv'], {
+            queryParams: {
+              promptId: this.selectedPromptId() ?? undefined,
+              lang: this.selectedLanguage(),
+              instructions: this.customInstructions.trim() || undefined,
+            }
+          });
+        } else {
+          this.router.navigate(['/applications', app.id, 'output'],
+            { queryParams: { format: FORMAT_TO_OUTPUT_KEY[this.selectedFormat()] ?? 'app' } });
+        }
       },
       error: (err) => {
         this.busy.set(false);
