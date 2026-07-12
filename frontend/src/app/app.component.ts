@@ -54,7 +54,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { id: 'documents',    label: 'Documents',      icon: 'clipboard', route: '/documents' },
     { id: 'saved',        label: 'Saved roles',    icon: 'bookmark',  route: '/jobs/saved' },
     { id: 'prompts',      label: 'Prompts',        icon: 'lightbulb', route: '/prompts' },
-    { id: 'resume',       label: 'Resume Builder', icon: 'edit',      route: '/resume-builder' },
+    { id: 'resume',       label: 'CV Builder', icon: 'edit',      route: '/resume-builder' },
     { id: 'analysis',     label: 'CV analysis',    icon: 'target',    route: '/analysis' },
     { id: 'analytics',    label: 'Analytics',      icon: 'chart-up',  route: '/analytics' },
     { id: 'companies',    label: 'Companies',      icon: 'building',  route: '/companies' },

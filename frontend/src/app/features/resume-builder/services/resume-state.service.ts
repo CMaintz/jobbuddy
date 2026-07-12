@@ -234,6 +234,12 @@ export class ResumeStateService {
     });
   }
 
+  /** Wholesale content swap (AI re-angle) — layout/settings stay untouched. */
+  replaceResumeData(data: ResumeData): void {
+    this._resumeData.set(data);
+    this._isDirty.set(true);
+  }
+
   // ── Personal Info ─────────────────────────────────────────────────────────
   updatePersonalInfo(patch: Partial<PersonalInfo>): void {
     this._resumeData.update(d => ({ ...d, personalInfo: { ...d.personalInfo, ...patch } }));
