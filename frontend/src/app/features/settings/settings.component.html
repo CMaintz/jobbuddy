@@ -161,9 +161,55 @@
                 {{ (userEmail || 'U').charAt(0).toUpperCase() }}
               </div>
               <div class="flex-1">
-                <div class="text-sm text-jb-text-dim">{{ userEmail || '—' }}</div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">{{ userEmail || '—' }}</span>
+                  @if (emailVerified) {
+                    <span class="pill pill-success">verified</span>
+                  } @else {
+                    <span class="pill pill-neutral">unverified</span>
+                  }
+                </div>
                 <div class="text-xs text-jb-text-dim mt-1">Name, photo & contact details live in your <a class="jb-link" href="/cv">Master CV header</a>.</div>
               </div>
+            </div>
+
+            @if (!emailVerified) {
+              <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+                <div class="flex-1">
+                  <div class="text-base font-medium">Verify your email</div>
+                  <div class="text-xs text-jb-text-dim mt-[1px]">We'll send a fresh verification link to {{ userEmail }}</div>
+                </div>
+                <jb-button small icon="mail" [disabled]="sendingVerification()" (clicked)="resendVerification()">
+                  {{ sendingVerification() ? 'Sending…' : 'Resend link' }}
+                </jb-button>
+              </div>
+            }
+
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1">
+                <div class="text-base font-medium">Sign-in method</div>
+                <div class="text-xs text-jb-text-dim mt-[1px]">{{ providerLabel }}</div>
+              </div>
+            </div>
+
+            @if (provider === 'password') {
+              <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+                <div class="flex-1">
+                  <div class="text-base font-medium">Change password</div>
+                  <div class="text-xs text-jb-text-dim mt-[1px]">We'll email you a secure reset link — no old password needed</div>
+                </div>
+                <jb-button small icon="key" [disabled]="sendingReset()" (clicked)="sendPasswordReset()">
+                  {{ sendingReset() ? 'Sending…' : 'Send reset link' }}
+                </jb-button>
+              </div>
+            }
+
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1">
+                <div class="text-base font-medium">Sign out</div>
+                <div class="text-xs text-jb-text-dim mt-[1px]">Ends this session on this device</div>
+              </div>
+              <jb-button small icon="arrow-right" (clicked)="signOut()">Sign out</jb-button>
             </div>
           }
 
