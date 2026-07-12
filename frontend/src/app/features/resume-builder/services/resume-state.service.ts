@@ -56,6 +56,28 @@ export class ResumeStateService {
   readonly isSaving = this._isSaving.asReadonly();
 
   readonly personalInfo = computed(() => this._resumeData().personalInfo);
+
+  /** What the preview/PDF renders: masked when the anonymise setting is on. */
+  readonly displayPersonalInfo = computed(() => {
+    const pi = this._resumeData().personalInfo;
+    if (!this._settings().anonymise) return pi;
+    return {
+      ...pi,
+      fullName: initialsOf(pi.fullName) || 'Candidate',
+      email: '',
+      phone: '',
+      website: '',
+      linkedin: '',
+      github: '',
+      twitter: '',
+      photoUrl: undefined,
+    };
+  });
+
+  /** Social links are identity — hidden entirely on anonymised output. */
+  readonly displaySocials = computed(() =>
+    this._settings().anonymise ? [] : this._resumeData().socials);
+
   readonly experience = computed(() => this._resumeData().experience);
   readonly education = computed(() => this._resumeData().education);
   readonly projects = computed(() => this._resumeData().projects);
@@ -454,6 +476,12 @@ export class ResumeStateService {
     if (!id) throw new Error('No draft to publish');
     return this.draftApi.publishDraft(id);
   }
+}
+
+/** "Ada Lovelace" → "A. L." */
+function initialsOf(name: string): string {
+  return (name ?? '').trim().split(/\s+/).filter(Boolean)
+    .map(part => part[0].toUpperCase() + '.').join(' ');
 }
 
 function mapProficiency(p: string): 'Native' | 'Fluent' | 'Proficient' | 'Intermediate' | 'Basic' {

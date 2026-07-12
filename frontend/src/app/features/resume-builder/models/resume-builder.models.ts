@@ -146,6 +146,8 @@ export interface ResumeSettings {
   photoSize?: number;
   /** Photo side within the header, where the layout supports it. */
   photoPlacement?: 'left' | 'right';
+  /** Mask personal details (name → initials, no contact/photo/links) in preview & PDF. */
+  anonymise?: boolean;
 }
 
 export interface ResumeDraft {

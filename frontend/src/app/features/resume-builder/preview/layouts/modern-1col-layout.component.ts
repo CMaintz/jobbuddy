@@ -16,13 +16,13 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 })
 export class Modern1ColLayoutComponent {
   private svc = inject(ResumeStateService);
-  get pi() { return this.svc.personalInfo(); }
+  get pi() { return this.svc.displayPersonalInfo(); }
   get experience() { return this.svc.experience(); }
   get education() { return this.svc.education(); }
   get skills() { return this.svc.skills(); }
   get languages() { return this.svc.languages(); }
   get certifications() { return this.svc.certifications(); }
-  get socials() { return this.svc.socials(); }
+  get socials() { return this.svc.displaySocials(); }
   get customSections() { return this.svc.customSections(); }
   get themeColor() { return this.svc.settings().themeColor; }
   get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }

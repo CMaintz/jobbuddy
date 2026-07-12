@@ -118,4 +118,20 @@
           <span class="rb-switch-thumb" [style.transform]="settings.showSkillLevel ? 'translateX(16px)' : 'translateX(2px)'"></span>
         </button>
       </div>
+
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <label class="rb-label" style="margin-bottom:0;">Anonymise CV</label>
+          <button
+            class="rb-switch"
+            [class.on]="settings.anonymise"
+            (click)="update('anonymise', !settings.anonymise)"
+          >
+            <span class="rb-switch-thumb" [style.transform]="settings.anonymise ? 'translateX(16px)' : 'translateX(2px)'"></span>
+          </button>
+        </div>
+        <div style="font-size:10px;color:var(--jb-text-dim);margin-top:4px;">
+          Preview & PDF show initials only — no photo, contact details or social links. Your data stays untouched.
+        </div>
+      </div>
     </div>
