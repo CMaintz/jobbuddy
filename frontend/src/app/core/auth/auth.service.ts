@@ -9,6 +9,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithPopup,
   signInWithCustomToken,
   signOut,
@@ -86,6 +87,28 @@ export class AuthService {
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
     return signOut(auth);
+  }
+
+  /** True when the signed-in Firebase user has verified their email. */
+  isEmailVerified(): boolean {
+    return auth.currentUser?.emailVerified ?? false;
+  }
+
+  /** Sign-in provider id of the current session: 'password', 'google.com', or custom (LinkedIn). */
+  signInProvider(): string {
+    return auth.currentUser?.providerData[0]?.providerId ?? 'password';
+  }
+
+  resendVerification(): Promise<void> {
+    if (!auth.currentUser) return Promise.reject(new Error('Not signed in'));
+    return sendEmailVerification(auth.currentUser);
+  }
+
+  /** Sends the Firebase password-reset email to the signed-in user's address. */
+  sendPasswordReset(): Promise<void> {
+    const email = auth.currentUser?.email;
+    if (!email) return Promise.reject(new Error('No email on the account'));
+    return sendPasswordResetEmail(auth, email);
   }
 
   /** Returns the current Firebase ID token (auto-refreshed by the Firebase SDK). */
