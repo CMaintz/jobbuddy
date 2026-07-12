@@ -15,4 +15,9 @@ export interface PromptTemplate {
   versionNumber: number;
   createdAt: string;
   updatedAt: string;
+  tags?: string[];
+  /** How many generations used this template. */
+  usageCount?: number;
+  /** Per-user star. */
+  favourite?: boolean;
 }
