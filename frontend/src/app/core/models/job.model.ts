@@ -21,6 +21,8 @@ export interface Job {
   aiTags?: string[];
   duplicateGroupId?: string;
   jobCategory?: string;
+  /** false once the posting disappears from crawls or is expired. */
+  active?: boolean;
 }
 
 export interface JobSearchResult {

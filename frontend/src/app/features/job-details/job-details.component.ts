@@ -49,6 +49,7 @@ export class JobDetailsComponent implements OnInit {
   notesText = '';
   notesStatus = signal('');
   saved = signal(false);
+  reportedInactive = signal(false);
   private note: Note | null = null;
   tab = signal<'jd' | 'activity' | 'notes'>('jd');
   mobileShowRail = signal(false);
@@ -61,10 +62,13 @@ export class JobDetailsComponent implements OnInit {
     { key: 'notes' as const, label: 'Notes', count: 0 },
   ];
 
+  openingCv = false;
+
   generateActions = [
     { label: 'Application', icon: 'layers', format: 'application' },
     { label: 'Cover letter', icon: 'doc', format: 'cover-letter' },
     { label: 'Short pitch', icon: 'mail', format: 'short-pitch' },
+    { label: 'Angled CV', icon: 'target', format: 'cv' },
   ];
 
   activityEvents: { time: string; what: string; who: string; dot: string }[] = [];
@@ -96,6 +100,18 @@ export class JobDetailsComponent implements OnInit {
         this.loading = false;
         this.buildActivity();
         this.loadJobExtras(job.id);
+        // An application may already exist for this job (stepper, documents, recruiter email)
+        this.appsApi.getAll().subscribe({
+          next: apps => {
+            const app = apps.find(a => a.jobId === job.id);
+            if (app) {
+              this.application = app;
+              if (!this.notesText) this.notesText = app.notes || '';
+              this.buildActivity();
+            }
+          },
+          error: () => {}
+        });
         // Try to load documents for this job
         this.jobsApi.getDocumentsForJob(id).subscribe({
           next: (docs) => { this.documents = docs; this.tabs[1].count = this.activityEvents.length; },
@@ -174,7 +190,60 @@ export class JobDetailsComponent implements OnInit {
 
   onGenerate(format: string): void {
     if (!this.job) return;
+    if (format === 'cv') {
+      this.navigateWithApplication(appId => ['/applications', appId, 'cv']);
+      return;
+    }
     this.router.navigate(['/apply'], { queryParams: { jobId: this.job.id, format } });
+  }
+
+  openDocument(doc: GeneratedDocument): void {
+    if (doc.documentType === 'CV') {
+      this.navigateWithApplication(appId => ['/applications', appId, 'cv']);
+    } else {
+      this.navigateWithApplication(
+        appId => ['/applications', appId, 'output'],
+        { format: this.docTypeToFormat(doc.documentType) });
+    }
+  }
+
+  /** Both CV and output screens are application-scoped; create the application first if none exists yet. */
+  private navigateWithApplication(route: (appId: string) => string[], queryParams?: Record<string, string>): void {
+    if (this.application) {
+      this.router.navigate(route(this.application.id), { queryParams });
+      return;
+    }
+    if (!this.job || this.openingCv) return;
+    this.openingCv = true;
+    this.appsApi.create(this.job.id).subscribe({
+      next: app => {
+        this.application = app;
+        this.openingCv = false;
+        this.router.navigate(route(app.id), { queryParams });
+      },
+      error: () => { this.openingCv = false; }
+    });
+  }
+
+  private docTypeToFormat(docType: string): string {
+    const map: Record<string, string> = {
+      APPLICATION_TEXT: 'app',
+      COVER_LETTER: 'cl',
+      RECRUITER_MESSAGE: 'dm',
+      FOLLOW_UP_MESSAGE: 'fu',
+    };
+    return map[docType] ?? 'app';
+  }
+
+  docTypeLabel(docType: string): string {
+    const labels: Record<string, string> = {
+      CV: 'Angled CV',
+      APPLICATION_TEXT: 'Application',
+      COVER_LETTER: 'Cover letter',
+      RECRUITER_MESSAGE: 'Short pitch',
+      FOLLOW_UP_MESSAGE: 'Follow-up',
+    };
+    return labels[docType] ?? docType;
   }
 
   toggleSave(): void {
@@ -188,6 +257,18 @@ export class JobDetailsComponent implements OnInit {
 
   openOriginal(): void {
     if (this.job?.url) window.open(this.job.url, '_blank', 'noopener');
+  }
+
+  /** User says the posting is gone: hide it here, let the server verify the URL. */
+  reportTakenDown(): void {
+    if (!this.job || this.reportedInactive()) return;
+    this.jobsApi.reportInactive(this.job.id).subscribe({
+      next: () => {
+        this.reportedInactive.set(true);
+        this.saved.set(false);
+      },
+      error: () => {}
+    });
   }
 
   saveNotes(): void {
