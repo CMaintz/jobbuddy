@@ -2,6 +2,26 @@
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       <div class="font-medium text-md">Applications</div>
       <div class="ml-auto flex gap-2 items-center">
+        <!-- Export all -->
+        <jb-dropdown #exportDd>
+          <jb-button jb-trigger small icon="download">
+            {{ exporting() ? 'Exporting…' : 'Export all' }}
+          </jb-button>
+          <button class="jb-menu-item" (click)="exportCsv(); exportDd.close()">
+            <jb-icon name="doc" [size]="13" class="text-jb-accent mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">Spreadsheet (CSV)</span>
+              <span class="block text-xs text-jb-text-dim">Pipeline overview — one row per application</span>
+            </span>
+          </button>
+          <button class="jb-menu-item" (click)="exportJson(); exportDd.close()">
+            <jb-icon name="layers" [size]="13" class="text-jb-accent mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">Full bundle (JSON)</span>
+              <span class="block text-xs text-jb-text-dim">Applications + every generated CV & letter</span>
+            </span>
+          </button>
+        </jb-dropdown>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
       </div>
     </div>
