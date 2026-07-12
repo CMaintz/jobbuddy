@@ -1,10 +1,59 @@
     <!-- Topbar -->
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       <div class="font-medium text-md">Interviews</div>
-      <div class="ml-auto text-xs text-jb-text-dim">
-        {{ interviews().length }} in interview stages
+      <div class="ml-auto flex gap-2 items-center">
+        <span class="hidden sm:inline text-xs text-jb-text-dim mr-1">{{ interviews().length }} in interview stages</span>
+        <jb-button small icon="calendar" [disabled]="exportingIcs()" (clicked)="exportCalendar()">
+          {{ exportingIcs() ? 'Exporting…' : 'Sync calendar (.ics)' }}
+        </jb-button>
+        <jb-button small [primary]="true" icon="plus" (clicked)="openLog()">Log interview</jb-button>
       </div>
     </div>
+
+    <!-- Log interview modal -->
+    @if (logOpen()) {
+      <jb-modal [width]="440" (closed)="logOpen.set(false)">
+        <ng-container jb-modal-header>
+          <div class="text-md font-medium flex-1">Log an interview</div>
+        </ng-container>
+
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">Application</span>
+          <select class="input" [(ngModel)]="logAppId">
+            @for (app of allApps; track app.id) {
+              <option [value]="app.id">{{ app.jobCompanyName }} — {{ app.jobTitle }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">Round</span>
+          <select class="input" [(ngModel)]="logStage">
+            @for (s of logStages; track s.key) {
+              <option [value]="s.key">{{ s.label }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">When</span>
+          <input type="datetime-local" class="input mono" [(ngModel)]="logWhen" />
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">Note <span class="text-jb-text-dim normal-case">(optional)</span></span>
+          <input class="input" [(ngModel)]="logNote" placeholder="e.g. with the CTO, on Meet" />
+        </label>
+        <div class="text-xs text-jb-text-dim">
+          Moves the application to the chosen stage and adds a reminder at the interview time.
+        </div>
+
+        <ng-container jb-modal-footer>
+          <div class="ml-auto flex items-center gap-2">
+            <jb-button small ghost (clicked)="logOpen.set(false)">Cancel</jb-button>
+            <jb-button small [primary]="true" icon="check" [disabled]="logSaving() || !logAppId || !logWhen"
+              (clicked)="saveLog()">{{ logSaving() ? 'Saving…' : 'Log interview' }}</jb-button>
+          </div>
+        </ng-container>
+      </jb-modal>
+    }
 
     <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
