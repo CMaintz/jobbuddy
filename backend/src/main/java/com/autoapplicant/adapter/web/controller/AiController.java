@@ -182,14 +182,14 @@ public class AiController {
         return result;
     }
 
-    @Operation(summary = "Analyze CV against job description")
+    @Operation(summary = "Analyze the master CV (or a CV version) against an optional job")
     @PostMapping("/analyze")
     public DeferredResult<ResponseEntity<AiAnalysisResult>> analyze(
             @Valid @RequestBody AnalyzeCvRequest req) {
         DeferredResult<ResponseEntity<AiAnalysisResult>> result = new DeferredResult<>(60_000L);
         result.onTimeout(() -> result.setErrorResult(
                 ResponseEntity.status(504).body("AI analysis timed out. Please try again.")));
-        analyze.analyze(req.cvVersionId(), req.jobId())
+        analyze.analyze(secCtx.getCurrentUserId(), req.cvVersionId(), req.jobId(), req.jobDescription())
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);

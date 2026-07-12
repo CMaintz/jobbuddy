@@ -181,10 +181,11 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
 
     /** Loads the prompt template by explicit ID, or falls back to the system default for the category. */
     private PromptTemplate resolvePromptTemplate(UUID promptTemplateId, String fallbackCategory) {
-        if (promptTemplateId != null) {
-            return promptTemplateRepo.findById(promptTemplateId).orElse(null);
-        }
-        return promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
+        PromptTemplate resolved = promptTemplateId != null
+                ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
+                : promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
+        if (resolved != null) promptTemplateRepo.incrementUsage(resolved.id());
+        return resolved;
     }
 
     private String resolveJobDescription(UUID jobId, String rawJobDescription) {
