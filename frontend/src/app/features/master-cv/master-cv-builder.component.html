@@ -7,7 +7,33 @@
           {{ saving() ? 'saving…' : dirty() ? 'unsaved changes' : 'saved' }}
         </span>
         <jb-button small icon="check" [primary]="dirty()" [disabled]="saving() || !dirty()" (clicked)="saveAll()">Save</jb-button>
-        <jb-button small icon="download" routerLink="/resume-builder">Export</jb-button>
+        <!-- Export: direct PDF (full / anonymised) or the resume builder for styling -->
+        <jb-dropdown #exportDd [width]="250">
+          <jb-button jb-trigger small icon="download">
+            {{ exportingPdf() ? 'Exporting…' : 'Export' }}
+          </jb-button>
+          <button class="jb-menu-item" (click)="exportPdf(false); exportDd.close()">
+            <jb-icon name="doc" [size]="13" class="text-jb-accent mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">PDF — full</span>
+              <span class="block text-xs text-jb-text-dim">With your name & contact details</span>
+            </span>
+          </button>
+          <button class="jb-menu-item" (click)="exportPdf(true); exportDd.close()">
+            <jb-icon name="key" [size]="13" class="text-jb-accent mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">PDF — anonymised</span>
+              <span class="block text-xs text-jb-text-dim">Initials only, no contact/photo/links</span>
+            </span>
+          </button>
+          <button class="jb-menu-item" routerLink="/resume-builder" (click)="exportDd.close()">
+            <jb-icon name="edit" [size]="13" class="text-jb-text-mid mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">Open in Resume Builder</span>
+              <span class="block text-xs text-jb-text-dim">Style it first — templates, fonts, layout</span>
+            </span>
+          </button>
+        </jb-dropdown>
         <jb-button small icon="upload" routerLink="/cv/import">Import</jb-button>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">Apply to job</jb-button>
       </div>
@@ -72,6 +98,27 @@
           <div class="flex-1 overflow-auto p-[18px] jb-scroll" (input)="markDirty()" (change)="markDirty()">
             <!-- Header section -->
             @if (activeSec() === 'Header') {
+              <!-- Photo -->
+              <div class="flex items-center gap-3 mb-4">
+                @if (privateInfo.photoUrl) {
+                  <img [src]="privateInfo.photoUrl" alt="Profile photo"
+                    class="w-14 h-14 rounded-full object-cover border border-jb-border" />
+                } @else {
+                  <div class="w-14 h-14 rounded-full flex items-center justify-center bg-jb-surface-2 border border-dashed border-jb-border-strong text-jb-text-dim text-xs">Photo</div>
+                }
+                <div class="flex gap-1.5">
+                  <input type="file" accept="image/*" #photoInput style="display:none;" (change)="onPhotoSelected($event)" />
+                  <jb-button small (clicked)="photoInput.click()" [disabled]="uploadingPhoto()">
+                    {{ uploadingPhoto() ? 'Uploading…' : privateInfo.photoUrl ? 'Replace' : 'Upload photo' }}
+                  </jb-button>
+                  @if (privateInfo.photoUrl) {
+                    <jb-button small (clicked)="recropPhoto()">Re-crop</jb-button>
+                    <jb-button small ghost (clicked)="removePhoto()">Remove</jb-button>
+                  }
+                </div>
+                <div class="text-xs text-jb-text-dim ml-1">Shown on angled CVs & designed templates.</div>
+              </div>
+
               <div class="grid gap-3.5" style="grid-template-columns:1fr 1fr;">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">Full name</span>
@@ -102,12 +149,16 @@
             <!-- Profile section -->
             @if (activeSec() === 'Profile') {
               <div class="flex flex-col gap-3">
-                <label class="flex flex-col gap-[5px]">
-                  <span class="label">Profile / summary</span>
+                <div class="flex flex-col gap-[5px]">
+                  <div class="flex items-center justify-between">
+                    <span class="label">Profile / summary</span>
+                    <app-ai-refine-menu [plainOutput]="true" [content]="profile.summary || ''"
+                      (refined)="profile.summary = $event; markDirty()" />
+                  </div>
                   <textarea [(ngModel)]="profile.summary" rows="6" class="input resize-y text-base leading-relaxed"
                     placeholder="A brief professional summary..."></textarea>
                   <div class="text-xs text-jb-text-dim">Jobbuddy re-angles this per role at generation time.</div>
-                </label>
+                </div>
                 <label class="flex flex-col gap-[5px] self-start">
                   <span class="label">Years of experience</span>
                   <input [(ngModel)]="profile.yearsExperience" type="number" min="0" class="input mono w-24" placeholder="5" />
@@ -172,7 +223,11 @@
                         <span class="text-sm text-jb-text-mid">Current role</span>
                       </label>
                     </div>
-                    <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Description</div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-2xs text-jb-text-dim tracking-widest uppercase">Description</span>
+                      <app-ai-refine-menu [plainOutput]="true" [content]="exp.description || ''"
+                        (refined)="exp.description = $event; markDirty()" />
+                    </div>
                     <textarea [(ngModel)]="exp.description" rows="3" class="input resize-y text-sm leading-normal"
                       placeholder="Key responsibilities and achievements..."></textarea>
                   </div>
@@ -248,10 +303,14 @@
                           <span class="label">Project</span>
                           <input [(ngModel)]="proj.name" class="input" placeholder="Project name" />
                         </label>
-                        <label class="flex flex-col gap-[5px]">
-                          <span class="label">Description</span>
+                        <div class="flex flex-col gap-[5px]">
+                          <div class="flex items-center justify-between">
+                            <span class="label">Description</span>
+                            <app-ai-refine-menu [plainOutput]="true" [content]="proj.description || ''"
+                              (refined)="proj.description = $event; markDirty()" />
+                          </div>
                           <input [(ngModel)]="proj.description" class="input" placeholder="Short description" />
-                        </label>
+                        </div>
                         <label class="flex flex-col gap-[5px]">
                           <span class="label">GitHub</span>
                           <input [(ngModel)]="proj.githubUrl" class="input mono" placeholder="https://github.com/..." />
@@ -461,5 +520,12 @@
             }
           </div>
         </div>
+      </div>
+    }
+
+    <!-- Off-screen render surface for PDF export (html2canvas needs a laid-out element) -->
+    @if (exportDoc(); as doc) {
+      <div #exportEl style="position:fixed;left:-10000px;top:0;width:794px;background:white;">
+        <app-structured-document-renderer [document]="doc" />
       </div>
     }
