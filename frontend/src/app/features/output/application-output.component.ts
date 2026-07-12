@@ -1,17 +1,16 @@
-import { Component, ElementRef, ViewChild, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, ViewChild, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
-import { RichTextEditorComponent } from '../resume-builder/shared/rich-text-editor.component';
-import { RichTextPipe } from '../resume-builder/shared/rich-text.pipe';
+import { LetterPaperComponent } from './letter-paper.component';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { PdfExportService } from '../resume-builder/services/pdf-export.service';
+import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -22,11 +21,11 @@ import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_T
 @Component({
   selector: 'app-application-output',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbDropdownComponent, DiffViewerComponent, RichTextEditorComponent, RichTextPipe],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbDropdownComponent, DiffViewerComponent, LetterPaperComponent],
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {
-  @ViewChild('paperEl') paperEl!: ElementRef<HTMLElement>;
+  @ViewChild(LetterPaperComponent) paper?: LetterPaperComponent;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -34,8 +33,7 @@ export class ApplicationOutputComponent implements OnInit {
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
   private pdfExport = inject(PdfExportService);
-
-  private sanitizer = inject(DomSanitizer);
+  private atsPdf = inject(AtsPdfService);
 
   loading = signal(true);
   downloading = signal(false);
@@ -116,29 +114,6 @@ export class ApplicationOutputComponent implements OnInit {
     return `Good length — within the ${lo}–${hi} word sweet spot.`;
   });
 
-  /** Wraps JD keywords in <mark> while leaving HTML tags untouched. */
-  private markKeywords(html: string): string {
-    const keywords = this.jdKeywords();
-    if (!this.highlightKw() || keywords.length === 0) return html;
-    const pattern = new RegExp(
-      `(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-    return html.split(/(<[^>]+>)/g)
-      .map(seg => seg.startsWith('<') ? seg : seg.replace(pattern, '<mark class="jb-kw">$1</mark>'))
-      .join('');
-  }
-
-  /** Plain paragraph → safe HTML with optional keyword marks. */
-  paraHtml(para: string): SafeHtml {
-    const escaped = para
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return this.sanitizer.bypassSecurityTrustHtml(this.markKeywords(escaped));
-  }
-
-  /** Rich (TipTap) content with optional keyword marks. */
-  richHtml(content: string): string {
-    return this.markKeywords(content);
-  }
-
   /** Identity from the structured payload of the active document, if present. */
   identity = computed<DocumentIdentity>(() => {
     const doc = this.activeDoc();
@@ -152,7 +127,6 @@ export class ApplicationOutputComponent implements OnInit {
   });
 
   /** True when the content carries rich-text markup (from in-place editing). */
-  isRichContent = computed<boolean>(() => (this.activeDoc()?.content ?? '').includes('<'));
 
   paragraphs = computed<string[]>(() => {
     const content = this.activeDoc()?.content ?? '';
@@ -368,14 +342,32 @@ export class ApplicationOutputComponent implements OnInit {
     };
   }
 
+  /** Pixel-perfect capture of the styled letter (image-based). */
   downloadPdf(): void {
-    if (!this.paperEl?.nativeElement || this.downloading() || this.editing()) return;
+    const paperEl = this.paper?.el.nativeElement;
+    if (!paperEl || this.downloading() || this.editing()) return;
     this.downloading.set(true);
+    this.pdfExport.download(paperEl, this.exportFilename())
+      .finally(() => this.downloading.set(false));
+  }
+
+  /** Text-based letter PDF — selectable text, safe for ATS parsers. */
+  downloadAtsPdf(): void {
+    if (!this.activeDoc() || this.downloading()) return;
+    this.downloading.set(true);
+    const id = this.identity();
+    this.atsPdf.downloadLetter({
+      name: id.name,
+      headline: id.headline,
+      contactLine: [id.email, id.phone, id.location].filter(Boolean).join('  ·  ') || undefined,
+      paragraphs: this.plainText().split(/\n{2,}/).map(p => p.trim()).filter(Boolean),
+      filename: `${this.exportFilename()} (ATS)`,
+    }).finally(() => this.downloading.set(false));
+  }
+
+  private exportFilename(): string {
     const app = this.application();
-    const filename = app
-      ? `${app.jobCompanyName ?? 'application'} - ${this.formatLabel()}`
-      : this.formatLabel();
-    this.pdfExport.download(this.paperEl.nativeElement, filename).finally(() => this.downloading.set(false));
+    return app ? `${app.jobCompanyName ?? 'application'} - ${this.formatLabel()}` : this.formatLabel();
   }
 
   goToCv(): void {

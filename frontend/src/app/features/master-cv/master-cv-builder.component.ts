@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -11,10 +11,9 @@ import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.comp
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { PhotoCropDialogComponent } from '../resume-builder/shared/photo-crop-dialog.component';
 import { AiRefineMenuComponent } from '../resume-builder/shared/ai-refine-menu.component';
-import { StructuredDocumentRendererComponent } from '../../shared/components/structured-document-renderer/structured-document-renderer.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { MasterCvPreviewComponent } from './master-cv-preview.component';
-import { PdfExportService } from '../resume-builder/services/pdf-export.service';
+import { AtsPdfService, structuredDocToAts } from '../../shared/services/ats-pdf.service';
 import { AiApiService } from '../../core/api/ai.api';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 import { ProfileSectionsApiService, FullProfileResponse } from '../../core/api/profile-sections.api';
@@ -40,19 +39,17 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
 @Component({
   selector: 'app-master-cv-builder',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent, StructuredDocumentRendererComponent, JbDropdownComponent, MasterCvPreviewComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent, JbDropdownComponent, MasterCvPreviewComponent],
   templateUrl: './master-cv-builder.component.html'
 })
 export class MasterCvBuilderComponent implements OnInit {
-  @ViewChild('exportEl') exportEl!: ElementRef<HTMLElement>;
-
   private http = inject(HttpClient);
   private profileApi = inject(ProfileSectionsApiService);
   private privateApi = inject(ProfilePrivateApiService);
   private strengthApi = inject(ProfileStrengthApiService);
   private socialApi = inject(ProfileSocialApiService);
   private aiApi = inject(AiApiService);
-  private pdfExport = inject(PdfExportService);
+  private atsPdf = inject(AtsPdfService);
 
   loading = true;
   saving = signal(false);
@@ -78,9 +75,8 @@ export class MasterCvBuilderComponent implements OnInit {
   cropSrc = signal<string | null>(null);
   uploadingPhoto = signal(false);
 
-  // PDF export (full or anonymised) via an off-screen structured render
+  // ATS-safe PDF export (full or anonymised)
   exportingPdf = signal(false);
-  exportDoc = signal<StructuredDocument | null>(null);
 
   get skillsList(): string[] { return this.profile.skills ?? []; }
   get technologiesList(): string[] { return this.profile.technologies ?? []; }
@@ -164,27 +160,27 @@ export class MasterCvBuilderComponent implements OnInit {
 
   // ── PDF export ────────────────────────────────────────────────
 
-  /** Renders the master CV off-screen and downloads it — optionally anonymised. */
+  /**
+   * Text-based ATS-safe PDF of the master CV, optionally anonymised.
+   * Styled/designed exports live in the CV Builder — the master CV is
+   * plain by design, so its export is always parseable text.
+   */
   exportPdf(anonymised: boolean): void {
     if (this.exportingPdf()) return;
     this.exportingPdf.set(true);
     this.aiApi.getCvRenderModel().subscribe({
-      next: doc => {
-        this.exportDoc.set(anonymised ? this.anonymiseDoc(doc) : doc);
-        // Let Angular render the off-screen sheet before capturing it
-        setTimeout(async () => {
-          try {
-            const filename = anonymised
-              ? 'master-cv-anonymised'
-              : `${this.privateInfo.fullName || 'master-cv'} - CV`;
-            await this.pdfExport.download(this.exportEl.nativeElement, filename);
-          } catch {
-            this.toast.set('PDF export failed — try again');
-          } finally {
-            this.exportDoc.set(null);
-            this.exportingPdf.set(false);
-          }
-        }, 200);
+      next: async doc => {
+        try {
+          const model = structuredDocToAts(anonymised ? this.anonymiseDoc(doc) : doc);
+          const filename = anonymised
+            ? 'master-cv-anonymised'
+            : `${this.privateInfo.fullName || 'master-cv'} - CV`;
+          await this.atsPdf.downloadResume(model, filename);
+        } catch {
+          this.toast.set('PDF export failed — try again');
+        } finally {
+          this.exportingPdf.set(false);
+        }
       },
       error: () => {
         this.exportingPdf.set(false);

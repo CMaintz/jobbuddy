@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../services/resume-state.service';
 import { PdfExportService } from '../services/pdf-export.service';
+import { AtsPdfService, resumeDataToAts } from '../../../shared/services/ats-pdf.service';
 import { ClassicLayoutComponent } from './layouts/classic-layout.component';
 import { Modern1ColLayoutComponent } from './layouts/modern-1col-layout.component';
 import { Modern2ColLayoutComponent } from './layouts/modern-2col-layout.component';
@@ -28,6 +29,7 @@ export class ResumePreviewComponent {
 
   protected state = inject(ResumeStateService);
   private pdfExport = inject(PdfExportService);
+  private atsPdf = inject(AtsPdfService);
 
   private static readonly FONT_SCALES: Record<string, number> = { sm: 0.85, md: 1, lg: 1.15, xl: 1.3 };
 
@@ -49,11 +51,19 @@ export class ResumePreviewComponent {
       `--rb-section-gap:${s.sectionSpacing ?? 20}px;`;
   }
 
+  /** Pixel-perfect capture of the styled preview (image-based — not ATS-parseable). */
   async downloadPdf(): Promise<void> {
     if (!this.previewRef) return;
     // Display variant: an anonymised export must not carry the real name in its filename
     const name = this.state.displayPersonalInfo().fullName || 'resume';
     await this.pdfExport.download(this.previewRef.nativeElement, name, this.state.settings().documentSize);
+  }
+
+  /** Text-based single-column PDF — selectable text, safe for ATS parsers. */
+  async downloadAtsPdf(): Promise<void> {
+    const pi = this.state.displayPersonalInfo();
+    const model = resumeDataToAts({ ...this.state.resumeData(), socials: this.state.displaySocials() }, pi);
+    await this.atsPdf.downloadResume(model, `${pi.fullName || 'resume'} - ATS`);
   }
 
   async printResume(): Promise<void> {
