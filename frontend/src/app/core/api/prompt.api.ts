@@ -11,6 +11,7 @@ export interface CreateTemplateRequest {
   userPrompt: string;
   outputConstraints?: string;
   isPublic: boolean;
+  tags?: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,5 +39,13 @@ export class PromptApiService {
   /** Own templates only; system templates require an admin account. */
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  favourite(id: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${id}/favorite`, {});
+  }
+
+  unfavourite(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/favorite`);
   }
 }

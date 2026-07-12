@@ -5,6 +5,8 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
+import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
+import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
@@ -21,7 +23,7 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
 @Component({
   selector: 'app-prompts-library',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent],
   templateUrl: './prompts-library.component.html'
 })
 export class PromptsLibraryComponent implements OnInit {
@@ -47,12 +49,14 @@ export class PromptsLibraryComponent implements OnInit {
   newCategory: PromptCategory = 'APPLICATION';
   newDescription = '';
   newBody = '';
+  newTags: string[] = [];
 
   // Edit form (populated when editing an existing template)
   editName = '';
   editCategory: PromptCategory = 'APPLICATION';
   editDescription = '';
   editBody = '';
+  editTags: string[] = [];
 
   ngOnInit(): void {
     this.auth.currentUser$.subscribe(u => {
@@ -72,6 +76,7 @@ export class PromptsLibraryComponent implements OnInit {
     this.editCategory = p.category ?? 'GENERAL';
     this.editDescription = p.description ?? '';
     this.editBody = p.userPrompt;
+    this.editTags = [...(p.tags ?? [])];
     this.editing.set(true);
   }
 
@@ -86,6 +91,7 @@ export class PromptsLibraryComponent implements OnInit {
       userPrompt: this.editBody.trim(),
       outputConstraints: p.outputConstraints,
       isPublic: p.isPublic,
+      tags: this.editTags,
     }).subscribe({
       next: () => {
         this.savingEdit.set(false);
@@ -133,10 +139,25 @@ export class PromptsLibraryComponent implements OnInit {
     });
   }
 
+  /** Favourites first, then most-used. */
   filteredPrompts(): PromptTemplate[] {
     const kind = this.activeKind();
-    if (kind === 'all') return this.prompts;
-    return this.prompts.filter(p => p.category === kind);
+    const list = kind === 'all' ? this.prompts : this.prompts.filter(p => p.category === kind);
+    return [...list].sort((a, b) =>
+      Number(b.favourite ?? false) - Number(a.favourite ?? false)
+      || (b.usageCount ?? 0) - (a.usageCount ?? 0));
+  }
+
+  toggleFavourite(p: PromptTemplate, event?: Event): void {
+    event?.stopPropagation();
+    const next = !p.favourite;
+    p.favourite = next; // optimistic
+    (next ? this.promptApi.favourite(p.id) : this.promptApi.unfavourite(p.id)).subscribe({
+      error: () => {
+        p.favourite = !next;
+        this.toast.set('Could not update the favourite');
+      }
+    });
   }
 
   kindConfig(category?: string) {
@@ -173,6 +194,7 @@ export class PromptsLibraryComponent implements OnInit {
       description: this.newDescription.trim() || undefined,
       userPrompt: this.newBody.trim(),
       isPublic: false,
+      tags: this.newTags,
     }).subscribe({
       next: () => {
         this.creating.set(false);
@@ -180,6 +202,7 @@ export class PromptsLibraryComponent implements OnInit {
         this.newName = '';
         this.newDescription = '';
         this.newBody = '';
+        this.newTags = [];
         this.toast.set('Prompt created');
         this.load();
       },

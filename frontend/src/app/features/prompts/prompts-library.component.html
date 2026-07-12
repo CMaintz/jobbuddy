@@ -54,14 +54,30 @@
                   @if (p.isSystem) {
                     <jb-pill tone="neutral">system</jb-pill>
                   }
+                  <button class="icon-btn" [title]="p.favourite ? 'Unfavourite' : 'Favourite'"
+                    (click)="toggleFavourite(p, $event)"
+                    [style.color]="p.favourite ? 'var(--jb-accent)' : 'var(--jb-text-dim)'">
+                    <jb-icon name="star" [size]="13" [strokeWidth]="p.favourite ? 2.5 : 1.5" />
+                  </button>
                 </div>
               </div>
               <!-- Title -->
               <div class="text-lg font-medium leading-[1.3] tracking-[-0.01em]">{{ p.name }}</div>
               <!-- Body preview -->
               <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">{{ p.description || p.userPrompt }}</div>
+              <!-- Tags -->
+              @if (p.tags?.length) {
+                <div class="flex flex-wrap gap-1">
+                  @for (tag of p.tags; track tag) {
+                    <span class="pill pill-neutral">{{ tag }}</span>
+                  }
+                </div>
+              }
               <!-- Footer -->
               <div class="flex items-center gap-1.5 mt-auto">
+                @if (p.usageCount) {
+                  <span class="text-2xs text-jb-text-dim">used {{ p.usageCount }}×</span>
+                }
                 <div class="ml-auto flex items-center gap-2 text-2xs text-jb-text-dim">
                   <span class="mono">v{{ p.versionNumber }}</span>
                   <span>·</span>
@@ -76,19 +92,14 @@
 
     <!-- Modal detail -->
     @if (openPrompt(); as p) {
-      <div (click)="closeModal()" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">
-        <div (click)="$event.stopPropagation()" class="max-h-[85vh] bg-jb-surface border border-jb-border-strong rounded-[10px] flex flex-col" style="width:min(640px,92vw);box-shadow:0 28px 80px rgba(0,0,0,0.5);">
-          <div class="py-3.5 px-[18px] border-b border-jb-border flex items-center gap-2.5">
-            <jb-pill tone="neutral">{{ kindConfig(p.category).label }}</jb-pill>
-            <div class="text-xl font-medium flex-1">{{ editing() ? 'Edit prompt' : p.name }}</div>
-            @if (p.isSystem) {
-              <jb-pill tone="info">system</jb-pill>
-            }
-            <button (click)="closeModal()" class="bg-transparent border-none text-jb-text-mid cursor-pointer p-1">
-              <jb-icon name="x" [size]="14" />
-            </button>
-          </div>
-          <div class="p-[18px] flex-1 overflow-auto flex flex-col gap-4 jb-scroll">
+      <jb-modal (closed)="closeModal()">
+        <ng-container jb-modal-header>
+          <jb-pill tone="neutral">{{ kindConfig(p.category).label }}</jb-pill>
+          <div class="text-xl font-medium flex-1">{{ editing() ? 'Edit prompt' : p.name }}</div>
+          @if (p.isSystem) {
+            <jb-pill tone="info">system</jb-pill>
+          }
+        </ng-container>
             @if (editing()) {
               <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
                 <label class="flex flex-col gap-[5px]">
@@ -112,6 +123,10 @@
                 <span class="label">Prompt</span>
                 <textarea [(ngModel)]="editBody" rows="8" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
               </label>
+              <div class="flex flex-col gap-[5px]">
+                <span class="label">Tags</span>
+                <jb-tag-input [value]="editTags" (valueChange)="editTags = $event" placeholder="Add a tag…" />
+              </div>
             } @else {
               @if (p.description) {
                 <div class="text-sm text-jb-text-mid">{{ p.description }}</div>
@@ -141,68 +156,68 @@
                 </div>
               </div>
             }
-          </div>
-          <div class="py-3 px-[18px] border-t border-jb-border flex items-center gap-2">
-            @if (canModify(p) && !editing()) {
-              <button class="text-xs text-jb-danger cursor-pointer bg-transparent border-none" (click)="deletePrompt(p)">Delete</button>
-            }
-            <div class="ml-auto flex items-center gap-2">
-              @if (editing()) {
-                <jb-button small (clicked)="editing.set(false)">Cancel</jb-button>
-                <jb-button small [primary]="true" icon="check" [disabled]="savingEdit()" (clicked)="saveEdit(p)">
-                  {{ savingEdit() ? 'Saving…' : 'Save changes' }}
-                </jb-button>
-              } @else {
-                <jb-button small icon="copy" (clicked)="duplicate(p)">Duplicate</jb-button>
-                @if (canModify(p)) {
-                  <jb-button small [primary]="true" icon="edit" (clicked)="startEdit(p)">Edit</jb-button>
-                }
+
+        <ng-container jb-modal-footer>
+          @if (canModify(p) && !editing()) {
+            <button class="text-xs text-jb-danger cursor-pointer bg-transparent border-none" (click)="deletePrompt(p)">Delete</button>
+          }
+          <div class="ml-auto flex items-center gap-2">
+            @if (editing()) {
+              <jb-button small (clicked)="editing.set(false)">Cancel</jb-button>
+              <jb-button small [primary]="true" icon="check" [disabled]="savingEdit()" (clicked)="saveEdit(p)">
+                {{ savingEdit() ? 'Saving…' : 'Save changes' }}
+              </jb-button>
+            } @else {
+              <jb-button small icon="copy" (clicked)="duplicate(p)">Duplicate</jb-button>
+              @if (canModify(p)) {
+                <jb-button small [primary]="true" icon="edit" (clicked)="startEdit(p)">Edit</jb-button>
               }
-            </div>
+            }
           </div>
-        </div>
-      </div>
+        </ng-container>
+      </jb-modal>
     }
 
     <!-- Create modal -->
     @if (showCreate()) {
-      <div (click)="showCreate.set(false)" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">
-        <div (click)="$event.stopPropagation()" class="max-h-[85vh] bg-jb-surface border border-jb-border-strong rounded-[10px] flex flex-col" style="width:min(640px,92vw);box-shadow:0 28px 80px rgba(0,0,0,0.5);">
-          <div class="py-3.5 px-[18px] border-b border-jb-border flex items-center gap-2.5">
-            <div class="text-xl font-medium flex-1">New prompt</div>
-            <button (click)="showCreate.set(false)" class="bg-transparent border-none text-jb-text-mid cursor-pointer p-1">
-              <jb-icon name="x" [size]="14" />
-            </button>
-          </div>
-          <div class="p-[18px] flex-1 overflow-auto flex flex-col gap-3.5 jb-scroll">
-            <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
-              <label class="flex flex-col gap-[5px]">
-                <span class="label">Name</span>
-                <input [(ngModel)]="newName" class="input" placeholder="DK · Ansøgning — warm + concrete result" />
-              </label>
-              <label class="flex flex-col gap-[5px]">
-                <span class="label">Type</span>
-                <select [(ngModel)]="newCategory" class="input">
-                  @for (kind of promptKinds; track kind.key) {
-                    <option [ngValue]="kind.key">{{ kind.label }}</option>
-                  }
-                </select>
-              </label>
-            </div>
-            <label class="flex flex-col gap-[5px]">
-              <span class="label">Description (optional)</span>
-              <input [(ngModel)]="newDescription" class="input" placeholder="Short note on when to use this prompt" />
-            </label>
-            <label class="flex flex-col gap-[5px]">
-              <span class="label">Prompt</span>
-              <textarea [(ngModel)]="newBody" rows="7" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"
-                placeholder="Open with one concrete result from my master CV that maps to the JD's primary hire-for..."></textarea>
-            </label>
-          </div>
-          <div class="py-3 px-[18px] border-t border-jb-border flex items-center gap-2 justify-end">
+      <jb-modal (closed)="showCreate.set(false)">
+        <ng-container jb-modal-header>
+          <div class="text-xl font-medium flex-1">New prompt</div>
+        </ng-container>
+
+        <div class="grid gap-2.5" style="grid-template-columns:1.6fr 1fr;">
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">Name</span>
+            <input [(ngModel)]="newName" class="input" placeholder="DK · Ansøgning — warm + concrete result" />
+          </label>
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">Type</span>
+            <select [(ngModel)]="newCategory" class="input">
+              @for (kind of promptKinds; track kind.key) {
+                <option [ngValue]="kind.key">{{ kind.label }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">Description (optional)</span>
+          <input [(ngModel)]="newDescription" class="input" placeholder="Short note on when to use this prompt" />
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">Prompt</span>
+          <textarea [(ngModel)]="newBody" rows="7" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"
+            placeholder="Open with one concrete result from my master CV that maps to the JD's primary hire-for..."></textarea>
+        </label>
+        <div class="flex flex-col gap-[5px]">
+          <span class="label">Tags (optional)</span>
+          <jb-tag-input [value]="newTags" (valueChange)="newTags = $event" placeholder="e.g. danish, formal, startup…" />
+        </div>
+
+        <ng-container jb-modal-footer>
+          <div class="ml-auto flex items-center gap-2">
             <jb-button small (clicked)="showCreate.set(false)">Cancel</jb-button>
             <jb-button [primary]="true" icon="check" [disabled]="creating()" (clicked)="create()">{{ creating() ? 'Creating…' : 'Create prompt' }}</jb-button>
           </div>
-        </div>
-      </div>
+        </ng-container>
+      </jb-modal>
     }
