@@ -17,14 +17,14 @@ import { getStrengthIcon } from '../../data/strength-icons';
 })
 export class CreativeLayoutComponent {
   private svc = inject(ResumeStateService);
-  get pi() { return this.svc.personalInfo(); }
+  get pi() { return this.svc.displayPersonalInfo(); }
   get experience() { return this.svc.experience(); }
   get education() { return this.svc.education(); }
   get projects() { return this.svc.projects(); }
   get skills() { return this.svc.skills(); }
   get languages() { return this.svc.languages(); }
   get strengths() { return this.svc.strengths(); }
-  get socials() { return this.svc.socials(); }
+  get socials() { return this.svc.displaySocials(); }
   get customSections() { return this.svc.customSections(); }
   get themeColor() { return this.svc.settings().themeColor; }
   get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }

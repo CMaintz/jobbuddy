@@ -19,7 +19,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
 export class ClassicLayoutComponent {
   private stateService = inject(ResumeStateService);
 
-  get pi() { return this.stateService.personalInfo(); }
+  get pi() { return this.stateService.displayPersonalInfo(); }
   get experience() { return this.stateService.experience(); }
   get education() { return this.stateService.education(); }
   get projects() { return this.stateService.projects(); }
@@ -27,7 +27,7 @@ export class ClassicLayoutComponent {
   get languages() { return this.stateService.languages(); }
   get certifications() { return this.stateService.certifications(); }
   get strengths() { return this.stateService.strengths(); }
-  get socials() { return this.stateService.socials(); }
+  get socials() { return this.stateService.displaySocials(); }
   get customSections() { return this.stateService.customSections(); }
   get themeColor() { return this.stateService.settings().themeColor; }
   get photoStyle() { return this.stateService.settings().photoStyle ?? 'circle'; }
