@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.document.CreatePromptTemplateRequest;
+import com.autoapplicant.adapter.web.dto.document.PromptTemplateResponse;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.port.in.document.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,24 +28,45 @@ public class PromptController {
     private final DuplicatePromptTemplateUseCase duplicate;
     private final UpdatePromptTemplateUseCase update;
     private final DeletePromptTemplateUseCase delete;
+    private final FavouritePromptTemplateUseCase favourites;
     private final SecurityContextHelper secCtx;
 
     public PromptController(CreatePromptTemplateUseCase create, GetPromptTemplatesUseCase getAll,
                              DuplicatePromptTemplateUseCase duplicate,
                              UpdatePromptTemplateUseCase update, DeletePromptTemplateUseCase delete,
+                             FavouritePromptTemplateUseCase favourites,
                              SecurityContextHelper secCtx) {
         this.create = create;
         this.getAll = getAll;
         this.duplicate = duplicate;
         this.update = update;
         this.delete = delete;
+        this.favourites = favourites;
         this.secCtx = secCtx;
     }
 
-    @Operation(summary = "List prompt templates")
+    @Operation(summary = "List prompt templates (with the caller's favourite flags)")
     @GetMapping
-    public ResponseEntity<List<PromptTemplate>> list() {
-        return ResponseEntity.ok(getAll.getTemplates(secCtx.getCurrentUserId()));
+    public ResponseEntity<List<PromptTemplateResponse>> list() {
+        UUID userId = secCtx.getCurrentUserId();
+        var favIds = favourites.getFavouriteIds(userId);
+        return ResponseEntity.ok(getAll.getTemplates(userId).stream()
+                .map(t -> PromptTemplateResponse.from(t, favIds.contains(t.id())))
+                .toList());
+    }
+
+    @Operation(summary = "Favourite a prompt template")
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<Void> favourite(@PathVariable UUID id) {
+        favourites.favourite(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Unfavourite a prompt template")
+    @DeleteMapping("/{id}/favorite")
+    public ResponseEntity<Void> unfavourite(@PathVariable UUID id) {
+        favourites.unfavourite(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Create prompt template")
@@ -54,7 +76,8 @@ public class PromptController {
         UUID userId = secCtx.getCurrentUserId();
         PromptTemplate template = new PromptTemplate(null, userId, req.name(), req.category(),
                 req.description(), req.systemPrompt(), req.userPrompt(), req.outputConstraints(),
-                req.isPublic(), null, 1, null, null, false);
+                req.isPublic(), null, 1, null, null, false,
+                req.tags() != null ? req.tags() : List.of(), 0);
         PromptTemplate saved = create.createTemplate(userId, template);
         return ResponseEntity.created(URI.create("/api/v1/prompts/" + saved.id())).body(saved);
     }
@@ -69,7 +92,8 @@ public class PromptController {
                                                   @Valid @RequestBody CreatePromptTemplateRequest req) {
         PromptTemplate changes = new PromptTemplate(null, null, req.name(), req.category(),
                 req.description(), req.systemPrompt(), req.userPrompt(), req.outputConstraints(),
-                req.isPublic(), null, 0, null, null, false);
+                req.isPublic(), null, 0, null, null, false,
+                req.tags(), 0);
         return ResponseEntity.ok(update.updateTemplate(
                 id, secCtx.getCurrentUserId(), secCtx.isAdmin(), changes));
     }

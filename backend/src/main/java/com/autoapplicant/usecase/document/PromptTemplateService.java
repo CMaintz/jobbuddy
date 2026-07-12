@@ -11,7 +11,7 @@ import java.util.UUID;
 @Service
 public class PromptTemplateService implements
         CreatePromptTemplateUseCase, GetPromptTemplatesUseCase, DuplicatePromptTemplateUseCase,
-        UpdatePromptTemplateUseCase, DeletePromptTemplateUseCase {
+        UpdatePromptTemplateUseCase, DeletePromptTemplateUseCase, FavouritePromptTemplateUseCase {
 
     private final PromptTemplateRepositoryPort repo;
 
@@ -20,11 +20,29 @@ public class PromptTemplateService implements
     }
 
     @Override
+    public void favourite(UUID userId, UUID templateId) {
+        repo.findById(templateId)
+                .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
+        repo.addFavourite(userId, templateId);
+    }
+
+    @Override
+    public void unfavourite(UUID userId, UUID templateId) {
+        repo.removeFavourite(userId, templateId);
+    }
+
+    @Override
+    public java.util.Set<UUID> getFavouriteIds(UUID userId) {
+        return repo.findFavouriteTemplateIds(userId);
+    }
+
+    @Override
     public PromptTemplate createTemplate(UUID userId, PromptTemplate template) {
         PromptTemplate toSave = new PromptTemplate(null, userId, template.name(),
                 template.category(), template.description(), template.systemPrompt(),
                 template.userPrompt(), template.outputConstraints(), template.isPublic(),
-                template.parentTemplateId(), 1, null, null, false);
+                template.parentTemplateId(), 1, null, null, false,
+                template.tags() != null ? template.tags() : List.of(), 0);
         return repo.save(toSave);
     }
 
@@ -40,7 +58,8 @@ public class PromptTemplateService implements
                 changes.name(), changes.category(), changes.description(),
                 changes.systemPrompt(), changes.userPrompt(), changes.outputConstraints(),
                 changes.isPublic(), existing.parentTemplateId(),
-                existing.versionNumber() + 1, existing.createdAt(), null, existing.isSystem());
+                existing.versionNumber() + 1, existing.createdAt(), null, existing.isSystem(),
+                changes.tags() != null ? changes.tags() : existing.tags(), existing.usageCount());
         return repo.save(toSave);
     }
 
@@ -70,7 +89,8 @@ public class PromptTemplateService implements
                 newName != null ? newName : original.name() + " (copy)",
                 original.category(), original.description(), original.systemPrompt(),
                 original.userPrompt(), original.outputConstraints(), false,
-                original.id(), original.versionNumber() + 1, null, null, false);
+                original.id(), original.versionNumber() + 1, null, null, false,
+                original.tags(), 0);
         return repo.save(copy);
     }
 }
