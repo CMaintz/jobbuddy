@@ -1,10 +1,8 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Tasks</div>
-      <div class="ml-auto flex gap-2 items-center">
+    <jb-topbar title="Tasks">
+      <ng-container jb-topbar-actions>
         <jb-button small icon="plus" (clicked)="showForm.set(!showForm())">Add follow-up</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 

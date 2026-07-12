@@ -17,60 +17,7 @@ import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { DocumentIdentity, StructuredDocument } from '../../core/models/structured-document.model';
 
-interface LetterTemplate {
-  key: string;
-  label: string;
-  sub: string;
-  bg: string;
-  fg: string;
-  muted: string;
-  divider: string;
-  font: string;
-  size: number;
-  lineH: number;
-  headerStyle: 'columns' | 'centered' | 'rail';
-  rail: boolean;
-  swatchBg: string;
-  swatchAccent: string;
-}
-
-const LETTER_TEMPLATES: LetterTemplate[] = [
-  {
-    key: 'editorial', label: 'Editorial', sub: 'Calm serif headers - cream paper',
-    bg: '#f6f3ec', fg: '#1a1714', muted: '#6b6660', divider: '#d9d2c4',
-    font: '"Geist", ui-sans-serif, system-ui', size: 12.5, lineH: 1.65,
-    headerStyle: 'columns', rail: false, swatchBg: '#f6f3ec', swatchAccent: '#1a1714',
-  },
-  {
-    key: 'classic', label: 'Classic', sub: 'Serif body - centered header',
-    bg: '#fbfaf6', fg: '#1c1a16', muted: '#5a554e', divider: '#cfc8b9',
-    font: '"Source Serif Pro", Charter, Cambria, Georgia, serif', size: 13, lineH: 1.78,
-    headerStyle: 'centered', rail: false, swatchBg: '#fbfaf6', swatchAccent: '#5a554e',
-  },
-  {
-    key: 'bold', label: 'Bold', sub: 'White paper - amber rail accent',
-    bg: '#ffffff', fg: '#0e0e0e', muted: '#5a5a5a', divider: '#e5e0d4',
-    font: '"Geist", ui-sans-serif, system-ui', size: 12.5, lineH: 1.62,
-    headerStyle: 'rail', rail: true, swatchBg: '#ffffff', swatchAccent: '#f5a623',
-  },
-];
-
-type FormatKey = 'app' | 'cl' | 'dm' | 'fu';
-
-const FORMAT_TO_DOC_TYPE: Record<FormatKey, string> = {
-  app: 'APPLICATION_TEXT',
-  cl: 'COVER_LETTER',
-  dm: 'RECRUITER_MESSAGE',
-  fu: 'FOLLOW_UP_MESSAGE',
-};
-
-/** Sensible word-count ranges per format, used for the length hint. */
-const WORD_TARGETS: Record<FormatKey, [number, number]> = {
-  app: [250, 450],
-  cl: [200, 400],
-  dm: [60, 150],
-  fu: [40, 120],
-};
+import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_TARGETS } from './letter-templates';
 
 @Component({
   selector: 'app-application-output',

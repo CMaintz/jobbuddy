@@ -1,14 +1,12 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Interviews</div>
-      <div class="ml-auto flex gap-2 items-center">
+    <jb-topbar title="Interviews">
+      <ng-container jb-topbar-actions>
         <span class="hidden sm:inline text-xs text-jb-text-dim mr-1">{{ interviews().length }} in interview stages</span>
         <jb-button small icon="calendar" [disabled]="exportingIcs()" (clicked)="exportCalendar()">
           {{ exportingIcs() ? 'Exporting…' : 'Sync calendar (.ics)' }}
         </jb-button>
         <jb-button small [primary]="true" icon="plus" (clicked)="openLog()">Log interview</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     <!-- Log interview modal -->
     @if (logOpen()) {

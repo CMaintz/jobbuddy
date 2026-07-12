@@ -1,11 +1,9 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Saved roles</div>
+    <jb-topbar title="Saved roles">
       <jb-pill tone="accent">{{ savedJobs.length }}</jb-pill>
-      <div class="ml-auto flex gap-2 items-center">
+      <ng-container jb-topbar-actions>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     @if (loading) {
       <div class="p-12 text-center text-jb-text-dim">Loading saved roles...</div>

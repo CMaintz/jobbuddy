@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
@@ -12,6 +13,7 @@ import { PhotoCropDialogComponent } from '../resume-builder/shared/photo-crop-di
 import { AiRefineMenuComponent } from '../resume-builder/shared/ai-refine-menu.component';
 import { StructuredDocumentRendererComponent } from '../../shared/components/structured-document-renderer/structured-document-renderer.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
+import { MasterCvPreviewComponent } from './master-cv-preview.component';
 import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { AiApiService } from '../../core/api/ai.api';
 import { StructuredDocument } from '../../core/models/structured-document.model';
@@ -38,7 +40,7 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
 @Component({
   selector: 'app-master-cv-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent, StructuredDocumentRendererComponent, JbDropdownComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent, StructuredDocumentRendererComponent, JbDropdownComponent, MasterCvPreviewComponent],
   templateUrl: './master-cv-builder.component.html'
 })
 export class MasterCvBuilderComponent implements OnInit {
