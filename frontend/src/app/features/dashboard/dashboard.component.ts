@@ -21,6 +21,23 @@ import { activityStreak, buildFunnelStages, buildHeatmapData, FunnelStage } from
 
 const HEATMAP_WEEKS = 14;
 
+type PeriodKey = '4w' | '3m' | '6m' | 'all';
+
+const PERIODS: { key: PeriodKey; label: string; days: number; weeks: number }[] = [
+  { key: '4w', label: '4 weeks', days: 28, weeks: 4 },
+  { key: '3m', label: '3 months', days: 91, weeks: 13 },
+  { key: '6m', label: '6 months', days: 182, weeks: 26 },
+  { key: 'all', label: 'All time', days: Infinity, weeks: 26 },
+];
+
+/** Statuses that mean the company replied in some form. */
+const RESPONDED_STATUSES = new Set([
+  'RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND', 'OFFER', 'REJECTED',
+]);
+const SENT_STATUSES = new Set([
+  'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND', 'OFFER', 'REJECTED', 'ARCHIVED',
+]);
+
 const STATUS_FEED: Record<string, { what: string; color: string }> = {
   SAVED: { what: 'Saved to pipeline', color: 'var(--jb-text-dim)' },
   PREPARING: { what: 'Preparing application', color: 'var(--jb-accent)' },
@@ -73,14 +90,20 @@ export class DashboardComponent implements OnInit {
   private jobsApi = inject(JobsApiService);
 
   layout = signal<'dense' | 'editorial'>('dense');
+  period = signal<PeriodKey>((localStorage.getItem('jb-dash-period') as PeriodKey) || '4w');
+  periods = PERIODS;
 
   appliedThisWeek = 0;
-  appliedThisMonth = 0;
   weeklyGoal = 10;
   responseRate = 0;
+  /** Response-rate change vs the previous period of equal length, in points. Null for all-time. */
+  responseDelta: number | null = null;
+  sentInPeriod = 0;
   streak = 0;
   savedCount = 0;
   overdueCount = 0;
+
+  private allApps: Application[] = [];
 
   appsSpark: number[] = [];
   weekData: number[] = [];
@@ -110,10 +133,9 @@ export class DashboardComponent implements OnInit {
       prefs: this.http.get<UserPreferences>('/api/v1/users/me/preferences'),
     }).subscribe({
       next: ({ metrics, trend, apps, saved, reminders, prefs }) => {
+        this.allApps = apps;
         this.applyMetrics(metrics, trend, prefs);
-        this.funnelStages = buildFunnelStages(apps);
-        this.heatmapData = buildHeatmapData(apps, HEATMAP_WEEKS);
-        this.streak = activityStreak(this.heatmapData);
+        this.applyPeriod();
         this.recentFeed = this.buildFeed(apps);
         this.savedCount = saved.length;
         this.savedPreview = saved.slice(0, 3).map(job => ({
@@ -129,11 +151,59 @@ export class DashboardComponent implements OnInit {
 
   private applyMetrics(metrics: DetailedMetrics, trend: WeeklyTrend, prefs: UserPreferences): void {
     this.appliedThisWeek = metrics.appliedThisWeek;
-    this.appliedThisMonth = metrics.appliedThisMonth;
-    this.responseRate = Math.round(metrics.responseRate * 100);
     this.weeklyGoal = prefs.weeklyApplicationGoal ?? 10;
     this.appsSpark = (trend.daily ?? []).map(d => d.count);
     this.weekData = this.appsSpark.slice(-7);
+  }
+
+  // ── Period-scoped stats ───────────────────────────────────────
+
+  get periodDef() {
+    return PERIODS.find(p => p.key === this.period()) ?? PERIODS[0];
+  }
+
+  setPeriod(key: PeriodKey): void {
+    this.period.set(key);
+    localStorage.setItem('jb-dash-period', key);
+    this.applyPeriod();
+  }
+
+  private applyPeriod(): void {
+    const def = this.periodDef;
+    const now = Date.now();
+    const from = def.days === Infinity ? 0 : now - def.days * 86400000;
+    const prevFrom = def.days === Infinity ? 0 : from - def.days * 86400000;
+
+    const inPeriod = this.allApps.filter(a => this.sentTime(a) >= from);
+    this.sentInPeriod = inPeriod.filter(a => SENT_STATUSES.has(a.status)).length;
+    this.responseRate = this.rateOf(inPeriod);
+
+    if (def.days === Infinity) {
+      this.responseDelta = null;
+    } else {
+      const previous = this.allApps.filter(a => {
+        const t = this.sentTime(a);
+        return t >= prevFrom && t < from;
+      });
+      const prevSent = previous.filter(a => SENT_STATUSES.has(a.status)).length;
+      this.responseDelta = prevSent > 0 ? this.responseRate - this.rateOf(previous) : null;
+    }
+
+    this.funnelStages = buildFunnelStages(inPeriod);
+    this.heatmapWeeks = def.weeks;
+    this.heatmapData = buildHeatmapData(inPeriod, def.weeks);
+    this.streak = activityStreak(buildHeatmapData(this.allApps, 26));
+  }
+
+  private sentTime(app: Application): number {
+    return new Date(app.appliedAt ?? app.createdAt).getTime();
+  }
+
+  /** Share of sent applications that got any reply, in whole percent. */
+  private rateOf(apps: Application[]): number {
+    const sent = apps.filter(a => SENT_STATUSES.has(a.status));
+    if (sent.length === 0) return 0;
+    return Math.round((sent.filter(a => RESPONDED_STATUSES.has(a.status)).length / sent.length) * 100);
   }
 
   private buildFeed(apps: Application[]): FeedItem[] {
