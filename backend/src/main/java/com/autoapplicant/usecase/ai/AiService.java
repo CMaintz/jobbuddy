@@ -69,21 +69,46 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
 
     @Override
     @Async("aiTaskExecutor")
-    public CompletableFuture<AiAnalysisResult> analyze(UUID cvVersionId, UUID jobId) {
+    public CompletableFuture<AiAnalysisResult> analyze(UUID userId, UUID cvVersionId,
+                                                       UUID jobId, String rawJobDescription) {
         try {
+            // Explicit CV version wins; otherwise the PII-free master profile JSON.
             String cvContent = cvVersionId != null
-                    ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("") : "";
+                    ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("")
+                    : careerProfileContext.buildJson(userId);
             String jobDesc = jobId != null
-                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse("") : "";
+                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse(rawJobDescription)
+                    : rawJobDescription;
             String prompt = buildAnalysisPrompt(cvContent, jobDesc);
             PromptComposition composition = new PromptComposition(
-                    "You are an expert ATS and career coach. Analyze CVs and provide actionable feedback.",
+                    "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only.",
                     prompt, "", "", "", "", prompt);
-            String response = sanitizeAiText(aiProvider.generate(composition));
-            return CompletableFuture.completedFuture(new AiAnalysisResult(List.of(response), 0, response));
+            String response = sanitizeAiText(aiProvider.generateJson(composition));
+            return CompletableFuture.completedFuture(parseAnalysis(response));
         } catch (Exception e) {
             log.error("CV analysis failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /** Parses the structured analysis; falls back to the raw text when the JSON is broken. */
+    private AiAnalysisResult parseAnalysis(String response) {
+        try {
+            var node = objectMapper.readTree(AiResponseParser.extractJsonObject(response));
+            List<String> suggestions = new java.util.ArrayList<>();
+            node.path("suggestions").forEach(s -> suggestions.add(s.asText()));
+            List<String> strengths = new java.util.ArrayList<>();
+            node.path("strengths").forEach(s -> strengths.add(s.asText()));
+            List<String> gaps = new java.util.ArrayList<>();
+            node.path("gaps").forEach(s -> gaps.add(s.asText()));
+            return new AiAnalysisResult(suggestions,
+                    Math.max(0, Math.min(100, node.path("score").asInt(0))),
+                    response,
+                    node.path("summary").asText(null),
+                    strengths, gaps);
+        } catch (Exception e) {
+            log.warn("Analysis response was not valid JSON — returning raw text: {}", e.getMessage());
+            return AiAnalysisResult.unstructured(response);
         }
     }
 
@@ -130,6 +155,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
             PromptTemplate styleTemplate = promptTemplateId != null
                     ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
                     : promptTemplateRepo.findSystemDefault(documentType).orElse(null);
+            if (styleTemplate != null) promptTemplateRepo.incrementUsage(styleTemplate.id());
 
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                     documentType, contactFreeJson, jobDescription,
@@ -183,13 +209,25 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
 
     private static String buildAnalysisPrompt(String cvContent, String jobDescription) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Analyze this CV and provide specific, actionable feedback:\n\n");
+        sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
         sb.append("## CV Content\n").append(cvContent).append("\n\n");
         if (jobDescription != null && !jobDescription.isBlank()) {
             sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
-            sb.append("Focus on: ATS keyword matching, relevant experience alignment, gaps.\n");
+            sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
+        } else {
+            sb.append("No target job given — judge the CV on general strength: clarity, quantified achievements, ATS readiness.\n");
         }
-        sb.append("Provide: 1) ATS optimization tips, 2) Key missing keywords, 3) Achievement improvements, 4) Readability score (1-10)");
+        sb.append("""
+
+                Respond with ONLY a JSON object in exactly this shape:
+                {
+                  "score": <0-100 overall score>,
+                  "summary": "<2-3 sentence overall verdict>",
+                  "strengths": ["<what already works well>", ...],
+                  "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                  "suggestions": ["<concrete, actionable improvement — one per entry>", ...]
+                }
+                Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
         return sb.toString();
     }
 }
