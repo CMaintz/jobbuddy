@@ -22,13 +22,30 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.isActive = true ORDER BY j.postedAt DESC")
     List<JobEntity> findActiveJobs();
 
+    @Query("SELECT j FROM JobEntity j WHERE j.isActive = true ORDER BY j.postedAt DESC")
+    List<JobEntity> findActiveJobs(Pageable pageable);
+
     @Query("SELECT j FROM JobEntity j WHERE j.aiSummary IS NULL ORDER BY j.createdAt ASC")
     List<JobEntity> findUnenriched(Pageable pageable);
 
-    @Query("SELECT j FROM JobEntity j WHERE j.id NOT IN :excludedIds ORDER BY j.postedAt DESC")
+    @Query("SELECT j FROM JobEntity j WHERE j.isActive = true AND j.id NOT IN :excludedIds ORDER BY j.postedAt DESC")
     List<JobEntity> findAllExcluding(@Param("excludedIds") Set<UUID> excludedIds, Pageable pageable);
 
+    long countByIsActiveTrue();
+
+    // Manual jobs are excluded: no crawler ever refreshes their lastSeenAt, so staleness means nothing for them.
+    @Query("SELECT j.id FROM JobEntity j WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
+    List<UUID> findStaleActiveJobIds(@Param("cutoff") Instant cutoff);
+
     @Modifying
-    @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.lastSeenAt < :cutoff")
+    @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
     int deactivateStaleJobs(@Param("cutoff") Instant cutoff);
+
+    @Query("""
+            SELECT j FROM JobEntity j
+            WHERE j.isActive = true AND j.url IS NOT NULL AND j.source <> 'MANUAL'
+              AND (j.lastUrlCheckAt IS NULL OR j.lastUrlCheckAt < :recheckCutoff)
+            ORDER BY j.lastUrlCheckAt ASC NULLS FIRST
+            """)
+    List<JobEntity> findUrlCheckCandidates(@Param("recheckCutoff") Instant recheckCutoff, Pageable pageable);
 }

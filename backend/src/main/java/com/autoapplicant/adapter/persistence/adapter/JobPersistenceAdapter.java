@@ -26,7 +26,16 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
 
     @Override
     public Job save(Job job) {
-        return JobMapper.toDomain(repo.save(JobMapper.toEntity(job)));
+        var entity = JobMapper.toEntity(job);
+        // URL-check state lives only on the entity; carry it over so crawl
+        // re-saves don't reset the probe schedule.
+        if (job.id() != null) {
+            repo.findById(job.id()).ifPresent(existing -> {
+                entity.setLastUrlCheckAt(existing.getLastUrlCheckAt());
+                entity.setUrlCheckFailures(existing.getUrlCheckFailures());
+            });
+        }
+        return JobMapper.toDomain(repo.save(entity));
     }
 
     @Override
@@ -47,9 +56,15 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public List<Job> findActive(int page, int size) {
+        return repo.findActiveJobs(PageRequest.of(page, size)).stream()
+                .map(JobMapper::toDomain).toList();
+    }
+
+    @Override
     public List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size) {
         if (excludedIds == null || excludedIds.isEmpty()) {
-            return findAll(page, size);
+            return findActive(page, size);
         }
         return repo.findAllExcluding(excludedIds, PageRequest.of(page, size))
                 .stream().map(JobMapper::toDomain).toList();
@@ -77,8 +92,49 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public List<UUID> findStaleActiveJobIds(Instant cutoff) {
+        return repo.findStaleActiveJobIds(cutoff);
+    }
+
+    @Override
     public int deactivateStaleJobs(Instant cutoff) {
         return repo.deactivateStaleJobs(cutoff);
+    }
+
+    @Override
+    public List<Job> findUrlCheckCandidates(Instant recheckCutoff, int limit) {
+        return repo.findUrlCheckCandidates(recheckCutoff, PageRequest.of(0, limit))
+                .stream().map(JobMapper::toDomain).toList();
+    }
+
+    @Override
+    public void markUrlAlive(UUID jobId) {
+        repo.findById(jobId).ifPresent(e -> {
+            e.setUrlCheckFailures(0);
+            e.setLastUrlCheckAt(Instant.now());
+            e.setLastSeenAt(Instant.now()); // confirmed alive counts as "seen" for staleness expiry
+            repo.save(e);
+        });
+    }
+
+    @Override
+    public void markUrlCheckInconclusive(UUID jobId) {
+        repo.findById(jobId).ifPresent(e -> {
+            e.setLastUrlCheckAt(Instant.now());
+            repo.save(e);
+        });
+    }
+
+    @Override
+    public boolean markUrlTakenDown(UUID jobId, int failureThreshold) {
+        return repo.findById(jobId).map(e -> {
+            e.setUrlCheckFailures(e.getUrlCheckFailures() + 1);
+            e.setLastUrlCheckAt(Instant.now());
+            boolean deactivate = e.getUrlCheckFailures() >= failureThreshold && e.isActive();
+            if (deactivate) e.setActive(false);
+            repo.save(e);
+            return deactivate;
+        }).orElse(false);
     }
 
     @Override
@@ -90,5 +146,10 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public long count() {
         return repo.count();
+    }
+
+    @Override
+    public long countActive() {
+        return repo.countByIsActiveTrue();
     }
 }
