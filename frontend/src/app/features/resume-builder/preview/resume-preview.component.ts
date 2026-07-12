@@ -51,7 +51,8 @@ export class ResumePreviewComponent {
 
   async downloadPdf(): Promise<void> {
     if (!this.previewRef) return;
-    const name = this.state.personalInfo().fullName || 'resume';
+    // Display variant: an anonymised export must not carry the real name in its filename
+    const name = this.state.displayPersonalInfo().fullName || 'resume';
     await this.pdfExport.download(this.previewRef.nativeElement, name, this.state.settings().documentSize);
   }
 
