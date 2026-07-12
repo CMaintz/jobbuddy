@@ -70,6 +70,10 @@ export class SettingsComponent implements OnInit {
   dirty = signal(false);
   toast = signal('');
   userEmail = '';
+  emailVerified = false;
+  provider = 'password';
+  sendingVerification = signal(false);
+  sendingReset = signal(false);
 
   sections: { key: Section; label: string; icon: string }[] = [
     { key: 'match', label: 'Match preferences', icon: 'target' },
@@ -98,6 +102,8 @@ export class SettingsComponent implements OnInit {
     if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
 
     this.auth.currentUser$.subscribe(u => this.userEmail = u?.email ?? '');
+    this.emailVerified = this.auth.isEmailVerified();
+    this.provider = this.auth.signInProvider();
 
     this.http.get<UserPreferences>('/api/v1/users/me/preferences').subscribe({
       next: prefs => {
@@ -159,6 +165,34 @@ export class SettingsComponent implements OnInit {
         this.toast.set('Could not save settings');
       }
     });
+  }
+
+  get providerLabel(): string {
+    if (this.provider === 'google.com') return 'Google';
+    if (this.provider === 'password') return 'Email & password';
+    return 'LinkedIn';
+  }
+
+  resendVerification(): void {
+    if (this.sendingVerification()) return;
+    this.sendingVerification.set(true);
+    this.auth.resendVerification()
+      .then(() => this.toast.set('Verification email sent — check your inbox'))
+      .catch(() => this.toast.set('Could not send the verification email'))
+      .finally(() => this.sendingVerification.set(false));
+  }
+
+  sendPasswordReset(): void {
+    if (this.sendingReset()) return;
+    this.sendingReset.set(true);
+    this.auth.sendPasswordReset()
+      .then(() => this.toast.set(`Password-reset email sent to ${this.userEmail}`))
+      .catch(() => this.toast.set('Could not send the reset email'))
+      .finally(() => this.sendingReset.set(false));
+  }
+
+  signOut(): void {
+    this.auth.logout().then(() => window.location.href = '/login');
   }
 
   exportData(): void {
