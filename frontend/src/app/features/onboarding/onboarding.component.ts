@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { FileUploadButtonComponent } from '../../shared/components/file-upload-button/file-upload-button.component';
+import { CvImportPanelComponent, ImportPreview } from '../../shared/components/cv-import-panel/cv-import-panel.component';
 import { ProfilePrivateApiService } from '../../core/api/profile-private.api';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -19,7 +19,7 @@ interface Step {
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, FileUploadButtonComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
   templateUrl: './onboarding.component.html'
 })
 export class OnboardingComponent {
@@ -31,10 +31,9 @@ export class OnboardingComponent {
   currentStep = signal(0);
   saving = signal(false);
   error = signal('');
-  cvUploading = signal(false);
-  linkedinUploading = signal(false);
 
-  parsedProfile: { skills?: string[]; headline?: string; experienceCount?: number } | null = null;
+  /** One-line confirmation after the shared import panel merged data into the master CV. */
+  importedSummary = '';
 
   steps: Step[] = [
     { key: 'welcome', label: 'Welcome', icon: 'sparkle' },
@@ -83,61 +82,19 @@ export class OnboardingComponent {
     this.router.navigate([path]);
   }
 
-  onCvFileSelected(file: File): void {
-    this.cvUploading.set(true);
+  /** The shared panel already merged the data server-side — reflect it in the wizard. */
+  onImportApplied(preview: ImportPreview): void {
     this.error.set('');
-    const formData = new FormData();
-    formData.append('file', file);
-    this.http.post<any>('/api/v1/profile/import/cv-pdf', formData).subscribe({
-      next: (profile) => {
-        this.cvUploading.set(false);
-        this.mergeParsedProfile(profile);
-      },
-      error: () => {
-        this.cvUploading.set(false);
-        this.error.set('CV import failed. Please try again or skip.');
-      }
-    });
-  }
-
-  onLinkedInFileSelected(file: File): void {
-    this.linkedinUploading.set(true);
-    this.error.set('');
-    const formData = new FormData();
-    formData.append('file', file);
-    this.http.post<any>('/api/v1/users/me/import/linkedin-pdf', formData, { responseType: 'text' as 'json' }).subscribe({
-      next: (raw) => {
-        this.linkedinUploading.set(false);
-        try {
-          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-          this.mergeParsedProfile(parsed);
-        } catch {
-          // ignore parse errors
-        }
-      },
-      error: () => {
-        this.linkedinUploading.set(false);
-        this.error.set('LinkedIn import failed. Please try again or skip.');
-      }
-    });
-  }
-
-  private mergeParsedProfile(parsed: any): void {
-    if (!parsed) return;
-    const existing = this.parsedProfile ?? {};
-    const newSkills = [...new Set([...(existing.skills ?? []), ...(parsed.skills ?? [])])];
-    const expCount = Math.max(
-      existing.experienceCount ?? 0,
-      Array.isArray(parsed.experience) ? parsed.experience.length : 0
-    );
-    this.parsedProfile = {
-      skills: newSkills,
-      headline: existing.headline || parsed.headline || '',
-      experienceCount: expCount,
-    };
-    if (!this.targetRoles && parsed.headline) {
-      this.targetRoles = parsed.headline;
-    }
+    const bits: string[] = [];
+    if (preview.headline) bits.push(`headline "${preview.headline}"`);
+    if (preview.skills.length) bits.push(`${preview.skills.length} skills`);
+    if (preview.technologies.length) bits.push(`${preview.technologies.length} technologies`);
+    this.importedSummary = bits.length
+      ? `Imported ${bits.join(', ')} into your master CV.`
+      : 'Import applied to your master CV.';
+    if (!this.targetRoles && preview.headline) this.targetRoles = preview.headline;
+    if (!this.title && preview.headline) this.title = preview.headline;
+    if (!this.name && preview.fullName) this.name = preview.fullName;
   }
 
   private saveProfileStep(): void {

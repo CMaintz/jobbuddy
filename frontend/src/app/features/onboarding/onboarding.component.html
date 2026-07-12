@@ -55,61 +55,16 @@
     @if (currentStep() === 2) {
       <div>
         <div class="text-[20px] font-medium tracking-tight mb-[4px]">Import your CV</div>
-        <div class="text-base text-jb-text-dim mb-5">Upload your CV or LinkedIn PDF — we'll pre-fill your profile automatically.</div>
+        <div class="text-base text-jb-text-dim mb-5">Upload your CV, paste it, or use your LinkedIn PDF export — we'll pre-fill your master CV.</div>
 
-        <div class="card p-[18px] flex flex-col gap-4">
-          <!-- CV PDF upload -->
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-sm font-medium">CV / Resume PDF</div>
-              <div class="text-xs text-jb-text-dim">Parses skills, experience, and headline</div>
-            </div>
-            <app-file-upload-button
-              accept=".pdf"
-              label="Upload CV"
-              loadingLabel="Parsing..."
-              [loading]="cvUploading()"
-              (fileSelected)="onCvFileSelected($event)" />
+        <jb-cv-import-panel [compact]="true" (applied)="onImportApplied($event)" (failed)="error.set($event)" />
+
+        @if (importedSummary) {
+          <div class="mt-3 p-3 rounded-md flex items-center gap-2" style="background:var(--jb-success-soft,rgba(74,222,128,0.08));border:1px solid rgba(74,222,128,0.3);">
+            <jb-icon name="check-circle" [size]="13" class="text-jb-success" />
+            <span class="text-sm text-jb-text">{{ importedSummary }}</span>
           </div>
-
-          <!-- LinkedIn PDF upload -->
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-sm font-medium">LinkedIn Profile PDF</div>
-              <div class="text-xs text-jb-text-dim">Export from LinkedIn → Save to PDF</div>
-            </div>
-            <app-file-upload-button
-              accept=".pdf"
-              label="Upload LinkedIn"
-              loadingLabel="Parsing..."
-              [loading]="linkedinUploading()"
-              (fileSelected)="onLinkedInFileSelected($event)" />
-          </div>
-
-          <!-- Parsed profile summary -->
-          @if (parsedProfile) {
-            <div class="p-3 rounded-md" style="background:var(--jb-surface-2);border:1px solid var(--jb-border);">
-              <div class="text-xs font-medium text-jb-text-mid mb-2">Detected from your documents</div>
-              <div class="flex flex-wrap gap-1.5">
-                @if (parsedProfile.experienceCount && parsedProfile.experienceCount > 0) {
-                  <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--jb-surface-3);border:1px solid var(--jb-border);">
-                    {{ parsedProfile.experienceCount }} jobs found
-                  </span>
-                }
-                @if (parsedProfile.skills && parsedProfile.skills.length > 0) {
-                  <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--jb-surface-3);border:1px solid var(--jb-border);">
-                    {{ parsedProfile.skills.length }} skills detected
-                  </span>
-                }
-                @if (parsedProfile.headline) {
-                  <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--jb-surface-3);border:1px solid var(--jb-border);">
-                    Headline found
-                  </span>
-                }
-              </div>
-            </div>
-          }
-        </div>
+        }
 
         @if (error()) {
           <div class="mt-3 text-sm text-jb-error">{{ error() }}</div>
