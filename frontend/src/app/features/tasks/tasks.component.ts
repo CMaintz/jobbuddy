@@ -13,12 +13,14 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application } from '../../core/models/application.model';
 
 type Group = 'overdue' | 'today' | 'tomorrow' | 'week' | 'later';
+type Kind = 'followup' | 'interview';
 
 interface TaskRow {
   reminder: FollowUpReminder;
   company: string;
   role: string;
   group: Group;
+  kind: Kind;
   dueLabel: string;
 }
 
@@ -52,6 +54,17 @@ export class TasksComponent implements OnInit {
     { key: 'week', label: 'This week' },
     { key: 'later', label: 'Later' },
   ];
+
+  kindFilter = signal<'all' | Kind>('all');
+  kindChips: { key: 'all' | Kind; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'followup', label: 'Follow-ups' },
+    { key: 'interview', label: 'Interviews' },
+  ];
+
+  kindCount(kind: 'all' | Kind): number {
+    return kind === 'all' ? this.rows().length : this.rows().filter(r => r.kind === kind).length;
+  }
 
   get overdueCount(): number { return this.rows().filter(r => r.group === 'overdue').length; }
   get todayCount(): number { return this.rows().filter(r => r.group === 'today').length; }
@@ -102,12 +115,24 @@ export class TasksComponent implements OnInit {
       company: app?.jobCompanyName ?? 'Unknown',
       role: app?.jobTitle ?? '',
       group,
+      kind: (reminder.note ?? '').toLowerCase().startsWith('interview') ? 'interview' : 'followup',
       dueLabel,
     };
   }
 
   tasksForGroup(group: Group): TaskRow[] {
-    return this.rows().filter(r => r.group === group);
+    const kind = this.kindFilter();
+    return this.rows().filter(r => r.group === group && (kind === 'all' || r.kind === kind));
+  }
+
+  /** Contextual action: prep for interviews, draft the follow-up message otherwise. */
+  contextAction(row: TaskRow): void {
+    if (row.kind === 'interview') {
+      this.router.navigate(['/interviews']);
+    } else {
+      this.router.navigate(['/applications', row.reminder.applicationId, 'output'],
+        { queryParams: { format: 'fu' } });
+    }
   }
 
   complete(row: TaskRow): void {

@@ -31,6 +31,17 @@
       </div>
 
       <div class="ml-auto flex gap-2 items-center">
+        <!-- Search -->
+        <div class="hidden md:flex items-center gap-2 py-[5px] px-2.5 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm w-[220px]">
+          <jb-icon name="search" [size]="12" />
+          <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Company or role…"
+            class="border-none bg-transparent outline-none text-jb-text text-sm flex-1 min-w-0" />
+          @if (search()) {
+            <button class="border-none bg-transparent cursor-pointer text-jb-text-dim p-0 flex" (click)="search.set('')">
+              <jb-icon name="x" [size]="11" />
+            </button>
+          }
+        </div>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
       </div>
     </div>

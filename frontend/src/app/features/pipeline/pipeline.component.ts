@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
@@ -18,7 +19,7 @@ interface StageConfig {
 @Component({
   selector: 'app-pipeline',
   standalone: true,
-  imports: [CommonModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {
@@ -28,6 +29,7 @@ export class PipelineComponent implements OnInit {
   loading = true;
   view = signal<'table' | 'kanban'>('table');
   activeFilters = signal<Set<ApplicationStatus>>(new Set());
+  search = signal('');
 
   stages: StageConfig[] = [
     { key: 'SAVED', label: 'Saved', tone: 'neutral' },
@@ -61,16 +63,26 @@ export class PipelineComponent implements OnInit {
 
   filteredApplications(): Application[] {
     const filters = this.activeFilters();
-    if (filters.size === 0) return this.applications;
-    return this.applications.filter(a => filters.has(a.status));
+    let apps = this.searchedApplications();
+    if (filters.size > 0) apps = apps.filter(a => filters.has(a.status));
+    return apps;
   }
 
   countByStage(stage: ApplicationStatus): number {
-    return this.applications.filter(a => a.status === stage).length;
+    return this.searchedApplications().filter(a => a.status === stage).length;
   }
 
   appsForStage(stage: ApplicationStatus): Application[] {
-    return this.applications.filter(a => a.status === stage);
+    return this.searchedApplications().filter(a => a.status === stage);
+  }
+
+  private searchedApplications(): Application[] {
+    const q = this.search().trim().toLowerCase();
+    if (!q) return this.applications;
+    return this.applications.filter(a =>
+      (a.jobCompanyName ?? '').toLowerCase().includes(q) ||
+      (a.jobTitle ?? '').toLowerCase().includes(q) ||
+      (a.notes ?? '').toLowerCase().includes(q));
   }
 
   stageTone(status: ApplicationStatus): 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'violet' {

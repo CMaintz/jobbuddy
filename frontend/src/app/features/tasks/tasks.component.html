@@ -31,6 +31,20 @@
         @if (loading()) {
           <div class="p-10 text-center text-jb-text-dim">Loading reminders…</div>
         } @else {
+          <!-- Kind filter chips -->
+          <div class="flex gap-1.5 mb-3">
+            @for (chip of kindChips; track chip.key) {
+              <button (click)="kindFilter.set(chip.key)"
+                class="p-[5px_10px] rounded-full cursor-pointer text-sm font-medium inline-flex items-center gap-1.5"
+                [style.background]="kindFilter() === chip.key ? 'var(--jb-surface-3)' : 'transparent'"
+                [style.border]="'1px solid ' + (kindFilter() === chip.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+                [style.color]="kindFilter() === chip.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+                {{ chip.label }}
+                <span class="mono text-xs text-jb-text-dim">{{ kindCount(chip.key) }}</span>
+              </button>
+            }
+          </div>
+
           <!-- Summary strip -->
           <div class="flex gap-4 mb-4">
             <div class="flex items-center gap-1.5 text-sm">
@@ -68,7 +82,7 @@
                   {{ group.label }}
                 </div>
                 @for (row of tasksForGroup(group.key); track row.reminder.id) {
-                  <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint" style="grid-template-columns:24px 28px 1fr auto auto auto;">
+                  <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint" style="grid-template-columns:24px 28px 1fr auto auto auto auto;">
                     <!-- Complete checkbox -->
                     <button (click)="complete(row)" title="Mark done"
                       class="w-4 h-4 rounded flex items-center justify-center bg-transparent cursor-pointer" style="border:1.5px solid var(--jb-border-strong);">
@@ -79,12 +93,24 @@
 
                     <!-- Content -->
                     <div class="min-w-0 cursor-pointer" (click)="openApplication(row)">
-                      <div class="text-base font-medium">{{ row.reminder.note || 'Follow up' }}</div>
+                      <div class="text-base font-medium flex items-center gap-1.5">
+                        {{ row.reminder.note || 'Follow up' }}
+                        @if (row.kind === 'interview') {
+                          <jb-icon name="briefcase" [size]="11" class="text-jb-accent" />
+                        }
+                      </div>
                       <div class="text-xs text-jb-text-dim">{{ row.company }}{{ row.role ? ' · ' + row.role : '' }}</div>
                     </div>
 
                     <!-- Due pill -->
                     <jb-pill [tone]="group.key === 'overdue' ? 'danger' : group.key === 'today' ? 'accent' : 'neutral'">{{ row.dueLabel }}</jb-pill>
+
+                    <!-- Contextual action -->
+                    <jb-button small [primary]="group.key === 'overdue' || group.key === 'today'"
+                      [icon]="row.kind === 'interview' ? 'briefcase' : 'sparkle'"
+                      (clicked)="contextAction(row)">
+                      {{ row.kind === 'interview' ? 'Prep' : 'Draft' }}
+                    </jb-button>
 
                     <!-- Open application -->
                     <jb-button small (clicked)="openApplication(row)">Open</jb-button>
