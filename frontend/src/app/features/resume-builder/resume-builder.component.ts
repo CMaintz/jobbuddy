@@ -68,7 +68,7 @@ export class ResumeBuilderComponent implements OnInit {
   continueToWizard(): void {
     const jobId = this.wizardJobId();
     if (jobId) {
-      this.router.navigate(['/apply', jobId], { queryParams: { step: 3 } });
+      this.router.navigate(['/apply'], { queryParams: { jobId } });
     }
   }
 }
