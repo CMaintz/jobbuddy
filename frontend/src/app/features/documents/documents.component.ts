@@ -95,10 +95,20 @@ export class DocumentsComponent implements OnInit {
     return this.typeFilters.filter(t => present.has(t.key));
   }
 
+  /** CVs open the CV flow (config + builder); letter-type docs open the output screen. */
   open(row: DocRow): void {
+    if (row.doc.documentType === 'CV_ANALYSIS_REPORT') {
+      this.router.navigate(['/analysis']);
+      return;
+    }
     if (row.applicationId) {
+      if (row.doc.documentType === 'CV') {
+        this.router.navigate(['/applications', row.applicationId, 'cv']);
+        return;
+      }
       const format = row.doc.documentType === 'COVER_LETTER' ? 'cl'
-        : row.doc.documentType === 'RECRUITER_MESSAGE' ? 'dm' : 'app';
+        : row.doc.documentType === 'RECRUITER_MESSAGE' ? 'dm'
+        : row.doc.documentType === 'FOLLOW_UP_MESSAGE' ? 'fu' : 'app';
       this.router.navigate(['/applications', row.applicationId, 'output'], { queryParams: { format } });
     } else if (row.doc.jobId) {
       this.router.navigate(['/jobs', row.doc.jobId]);

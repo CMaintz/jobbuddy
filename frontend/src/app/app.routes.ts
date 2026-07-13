@@ -31,6 +31,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/onboarding/onboarding.component').then(m => m.OnboardingComponent)
       },
 
+      // Redirects for old paths — before the :id routes, which would otherwise swallow them
+      { path: 'jobs/search', redirectTo: 'jobs/feed', pathMatch: 'full' },
+      { path: 'applications/pipeline', redirectTo: 'pipeline', pathMatch: 'full' },
+      { path: 'profile', redirectTo: 'settings', pathMatch: 'full' },
+      { path: 'ai/generate', redirectTo: 'apply', pathMatch: 'full' },
+      { path: 'ai/documents', redirectTo: 'documents', pathMatch: 'full' },
+      { path: 'ai/cv', redirectTo: 'cv/import', pathMatch: 'full' },
+      { path: 'ai/analyze', redirectTo: 'analysis', pathMatch: 'full' },
+
       // ── Core screens (new design) ────────────────────
       {
         path: 'dashboard',
@@ -218,15 +227,6 @@ export const routes: Routes = [
         path: 'old/cv',
         loadComponent: () => import('./features/old/cv/cv-page.component').then(m => m.CvPageComponent)
       },
-
-      // Redirects for old paths
-      { path: 'jobs/search', redirectTo: 'jobs/feed', pathMatch: 'full' },
-      { path: 'applications/pipeline', redirectTo: 'pipeline', pathMatch: 'full' },
-      { path: 'profile', redirectTo: 'settings?section=account', pathMatch: 'full' },
-      { path: 'ai/generate', redirectTo: 'apply', pathMatch: 'full' },
-      { path: 'ai/documents', redirectTo: 'documents', pathMatch: 'full' },
-      { path: 'ai/cv', redirectTo: 'cv/import', pathMatch: 'full' },
-      { path: 'ai/analyze', redirectTo: 'analysis', pathMatch: 'full' },
     ]
   },
   { path: '**', redirectTo: '/dashboard' }
