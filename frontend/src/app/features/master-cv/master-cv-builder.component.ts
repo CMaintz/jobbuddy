@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,6 +13,13 @@ import { PhotoCropDialogComponent } from '../resume-builder/shared/photo-crop-di
 import { AiRefineMenuComponent } from '../resume-builder/shared/ai-refine-menu.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { MasterCvPreviewComponent } from './master-cv-preview.component';
+import { McvStrengthsSectionComponent } from './sections/mcv-strengths-section.component';
+import { McvExperienceSectionComponent } from './sections/mcv-experience-section.component';
+import { McvEducationSectionComponent } from './sections/mcv-education-section.component';
+import { McvProjectsSectionComponent } from './sections/mcv-projects-section.component';
+import { McvCertificationsSectionComponent } from './sections/mcv-certifications-section.component';
+import { McvLanguagesSectionComponent } from './sections/mcv-languages-section.component';
+import { McvSocialsSectionComponent } from './sections/mcv-socials-section.component';
 import { AtsPdfService, structuredDocToAts } from '../../shared/services/ats-pdf.service';
 import { AiApiService } from '../../core/api/ai.api';
 import { StructuredDocument } from '../../core/models/structured-document.model';
@@ -23,7 +30,7 @@ import { ProfileSocialApiService } from '../../core/api/profile-social.api';
 import { Profile, ProfilePrivateInfo } from '../../core/models/user.model';
 import {
   WorkExperience, Education, Project, Certification,
-  SpokenLanguage, LanguageProficiency, ProfileSocial, ProfileStrength
+  SpokenLanguage, ProfileSocial, ProfileStrength
 } from '../../core/models/profile-section.model';
 
 interface CvSection {
@@ -33,13 +40,18 @@ interface CvSection {
   empty?: boolean;
 }
 
-const SOCIAL_PLATFORMS = ['GitHub', 'LinkedIn', 'Website', 'X', 'Mastodon', 'Other'];
-const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL', 'CONVERSATIONAL', 'ELEMENTARY'];
-
 @Component({
   selector: 'app-master-cv-builder',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent, JbDropdownComponent, MasterCvPreviewComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink,
+    JbTopbarComponent, JbIconComponent, JbButtonComponent, JbToastComponent,
+    TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent,
+    JbDropdownComponent, MasterCvPreviewComponent,
+    McvStrengthsSectionComponent, McvExperienceSectionComponent, McvEducationSectionComponent,
+    McvProjectsSectionComponent, McvCertificationsSectionComponent,
+    McvLanguagesSectionComponent, McvSocialsSectionComponent,
+  ],
   templateUrl: './master-cv-builder.component.html'
 })
 export class MasterCvBuilderComponent implements OnInit {
@@ -67,11 +79,8 @@ export class MasterCvBuilderComponent implements OnInit {
   socialsList: ProfileSocial[] = [];
   strengthsList: ProfileStrength[] = [];
 
-  socialPlatforms = SOCIAL_PLATFORMS;
-  proficiencies = PROFICIENCIES;
+  @ViewChild(McvCertificationsSectionComponent) certSection?: McvCertificationsSectionComponent;
 
-  newCert: Certification = { name: '' };
-  showCertForm = false;
   cropSrc = signal<string | null>(null);
   uploadingPhoto = signal(false);
 
@@ -287,11 +296,6 @@ export class MasterCvBuilderComponent implements OnInit {
     this.markDirty();
   }
 
-  onSocialPlatformChange(social: ProfileSocial): void {
-    social.iconKey = social.platform.toLowerCase();
-    this.markDirty();
-  }
-
   removeExperience(i: number): void { this.removeEntry(this.experienceList, i, id => this.profileApi.deleteExperience(id)); }
   removeEducation(i: number): void { this.removeEntry(this.educationList, i, id => this.profileApi.deleteEducation(id)); }
   removeProject(i: number): void { this.removeEntry(this.projectsList, i, id => this.profileApi.deleteProject(id)); }
@@ -313,13 +317,12 @@ export class MasterCvBuilderComponent implements OnInit {
     }
   }
 
-  saveCertification(): void {
-    if (!this.newCert.name.trim()) return;
-    this.profileApi.addCertification(this.newCert).subscribe({
-      next: cert => {
-        this.certificationsList.push(cert);
-        this.newCert = { name: '' };
-        this.showCertForm = false;
+  /** Certifications persist immediately; the child form resets once the API call succeeds. */
+  saveCertification(cert: Certification): void {
+    this.profileApi.addCertification(cert).subscribe({
+      next: saved => {
+        this.certificationsList.push(saved);
+        this.certSection?.reset();
       },
       error: () => this.toast.set('Failed to add certification')
     });

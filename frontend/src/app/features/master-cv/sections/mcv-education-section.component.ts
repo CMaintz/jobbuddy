@@ -1,0 +1,51 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
+import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
+import { Education } from '../../../core/models/profile-section.model';
+
+/** Master CV editor — education list. */
+@Component({
+  selector: 'app-mcv-education-section',
+  standalone: true,
+  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent],
+  template: `
+    <div class="flex flex-col gap-3">
+      @for (edu of list; track edu.id || $index) {
+        <div class="card p-3.5">
+          <div class="flex gap-2 items-start">
+            <div class="flex-1 grid gap-2 grid-cols-[1.4fr_1.4fr]">
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">School</span>
+                <input [(ngModel)]="edu.institution" class="input" placeholder="University" />
+              </label>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">Degree</span>
+                <input [(ngModel)]="edu.degree" class="input" placeholder="BSc Computer Science" />
+              </label>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">Start date</span>
+                <input [(ngModel)]="edu.startDate" class="input mono" placeholder="2016-09-01" />
+              </label>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">End date</span>
+                <input [(ngModel)]="edu.endDate" class="input mono" placeholder="2019-06-30" />
+              </label>
+            </div>
+            <button class="icon-btn mt-5" title="Remove" (click)="removeAt.emit($index)"><jb-icon name="x" [size]="12" /></button>
+          </div>
+        </div>
+      }
+      @if (list.length === 0) {
+        <div class="p-8 text-center text-jb-text-dim text-base">No education entries yet.</div>
+      }
+      <jb-button small icon="plus" (clicked)="add.emit()">Add education</jb-button>
+    </div>
+  `,
+})
+export class McvEducationSectionComponent {
+  @Input({ required: true }) list: Education[] = [];
+  @Output() add = new EventEmitter<void>();
+  @Output() removeAt = new EventEmitter<number>();
+}
