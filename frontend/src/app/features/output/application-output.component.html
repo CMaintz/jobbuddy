@@ -283,13 +283,13 @@
         </div>
       }
 
-      <!-- Next step: the angled CV lives on its own screen -->
+      <!-- Next step: the tailored CV lives on its own screen -->
       <div class="p-4 border-b border-jb-border">
-        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Angled CV</div>
+        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">Tailored CV</div>
         <button class="w-full flex items-center gap-2 px-2.5 py-2 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-xs font-medium text-left cursor-pointer"
           (click)="goToCv()">
           <jb-icon name="target" [size]="12" class="text-jb-accent" />
-          <span class="flex-1">{{ hasCv() ? 'View the angled CV for this job' : 'Generate an angled CV for this job' }}</span>
+          <span class="flex-1">{{ hasCv() ? 'View the tailored CV for this job' : 'Generate an tailored CV for this job' }}</span>
           <jb-icon name="arrow-right" [size]="11" class="text-jb-text-dim" />
         </button>
       </div>

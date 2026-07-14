@@ -29,7 +29,7 @@
   }
 
   @if (!pending()) {
-    <!-- Re-angle config -->
+    <!-- Re-tailor config -->
     @if (promptTemplates.length > 0) {
       <div>
         <label class="rb-label">Prompt</label>
@@ -43,10 +43,10 @@
     }
 
     <div>
-      <label class="rb-label">Angle</label>
+      <label class="rb-label">Focus</label>
       <div class="flex flex-col gap-1.5 mb-2">
-        @for (prompt of anglePrompts; track prompt) {
-          <button type="button" (click)="addAngle(prompt)"
+        @for (prompt of tailorPrompts; track prompt) {
+          <button type="button" (click)="addTailorPrompt(prompt)"
             class="px-2.5 py-[6px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer">
             + {{ prompt }}
           </button>
@@ -60,7 +60,7 @@
       class="w-full p-[8px_12px] bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer"
       style="color:#1c1004;border-color:#c8881c;"
       [style.opacity]="generating() ? '0.6' : '1'">
-      {{ generating() ? 'Re-angling… (up to a minute)' : 'Re-angle this CV' }}
+      {{ generating() ? 'Re-tailoring… (up to a minute)' : 'Re-tailor this CV' }}
     </button>
     <div class="text-xs text-jb-text-dim">
       Regenerates the content from your master CV for this job. Your template, layout and styling stay as they are.

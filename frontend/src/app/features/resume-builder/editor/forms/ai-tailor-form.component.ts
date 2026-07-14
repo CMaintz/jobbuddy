@@ -11,7 +11,7 @@ import { PromptTemplate } from '../../../../core/models/prompt-template.model';
 import { ResumeData } from '../../models/resume-builder.models';
 import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/diff-viewer.component';
 
-const ANGLE_PROMPTS = [
+const TAILOR_PROMPTS = [
   'More technical depth',
   'Lead with motion / craft',
   'Quantify everything',
@@ -20,16 +20,16 @@ const ANGLE_PROMPTS = [
 
 /**
  * AI panel for job-linked drafts: shows the ATS report of the latest
- * generation and re-angles the whole CV — new content lands in this draft
+ * generation and re-tailors the whole CV — new content lands in this draft
  * (after a diff review), the chosen template/layout stays as-is.
  */
 @Component({
-  selector: 'app-ai-angle-form',
+  selector: 'app-ai-tailor-form',
   standalone: true,
   imports: [CommonModule, FormsModule, DiffViewerComponent],
-  templateUrl: './ai-angle-form.component.html',
+  templateUrl: './ai-tailor-form.component.html',
 })
-export class AiAngleFormComponent implements OnInit {
+export class AiTailorFormComponent implements OnInit {
   protected state = inject(ResumeStateService);
   private aiApi = inject(AiApiService);
   private jobsApi = inject(JobsApiService);
@@ -41,7 +41,7 @@ export class AiAngleFormComponent implements OnInit {
   promptTemplates: PromptTemplate[] = [];
   selectedPromptId: string | null = null;
   instructions = '';
-  anglePrompts = ANGLE_PROMPTS;
+  tailorPrompts = TAILOR_PROMPTS;
 
   /** Regenerated content awaiting the user's diff review. */
   pending = signal<{ data: ResumeData; ats: AtsReport | null } | null>(null);
@@ -76,7 +76,7 @@ export class AiAngleFormComponent implements OnInit {
     });
   }
 
-  addAngle(prompt: string): void {
+  addTailorPrompt(prompt: string): void {
     this.instructions = this.instructions
       ? `${this.instructions.trim().replace(/\.?$/, '.')} ${prompt}.`
       : `${prompt}.`;

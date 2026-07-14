@@ -17,7 +17,7 @@ import { structuredDocToResumeData } from '../resume-builder/services/structured
 import { INITIAL_SETTINGS, ResumeDraft } from '../resume-builder/models/resume-builder.models';
 import { loadGenDefaults } from '../settings/settings.component';
 
-const ANGLE_PROMPTS = [
+const TAILOR_PROMPTS = [
   'More technical depth',
   'Lead with motion / craft',
   'Quantify everything',
@@ -25,18 +25,18 @@ const ANGLE_PROMPTS = [
 ];
 
 /**
- * Angled-CV entry point: configure the generation (prompt, language, angle)
+ * Tailored-CV entry point: configure the generation (prompt, language, focus)
  * and hand the result to the CV Builder as a draft. Existing drafts for the
  * job are offered for direct opening — the builder is where CVs live;
  * template and styling are chosen there, not here.
  */
 @Component({
-  selector: 'app-angled-cv',
+  selector: 'app-tailored-cv',
   standalone: true,
   imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbToastComponent],
-  templateUrl: './angled-cv.component.html',
+  templateUrl: './tailored-cv.component.html',
 })
-export class AngledCvComponent implements OnInit {
+export class TailoredCvComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private aiApi = inject(AiApiService);
@@ -63,7 +63,7 @@ export class AngledCvComponent implements OnInit {
   selectedLanguage = signal(loadGenDefaults().lang);
   languages = ['English', 'Dansk'];
   customInstructions = '';
-  anglePrompts = ANGLE_PROMPTS;
+  tailorPrompts = TAILOR_PROMPTS;
 
   ngOnInit(): void {
     // Config handed off from the Apply screen, if any
@@ -118,13 +118,13 @@ export class AngledCvComponent implements OnInit {
     });
   }
 
-  addAngle(prompt: string): void {
+  addTailorPrompt(prompt: string): void {
     this.customInstructions = this.customInstructions
       ? `${this.customInstructions.trim().replace(/\.?$/, '.')} ${prompt}.`
       : `${prompt}.`;
   }
 
-  /** Generate a fresh angled CV and open it in the CV Builder as a draft. */
+  /** Generate a fresh tailored CV and open it in the CV Builder as a draft. */
   generate(): void {
     const app = this.application();
     if (!app || this.generating()) return;
@@ -134,7 +134,7 @@ export class AngledCvComponent implements OnInit {
       promptTemplateId: this.selectedPromptId() ?? undefined,
       customInstructions: this.customInstructions.trim() || undefined,
       targetLanguage: this.selectedLanguage() === 'Dansk' ? 'da' : 'en',
-      showProfileImage: true, // master CV photo carries onto angled CVs automatically
+      showProfileImage: true, // master CV photo carries onto tailored CVs automatically
     }).subscribe({
       next: doc => this.createDraftAndOpen(doc, app),
       error: err => {
@@ -159,7 +159,7 @@ export class AngledCvComponent implements OnInit {
 
   private createDraftAndOpen(doc: StructuredDocument, app: Application): void {
     this.draftApi.createDraft({
-      name: `Angled CV — ${app.jobCompanyName ?? 'job'}`,
+      name: `Tailored CV — ${app.jobCompanyName ?? 'job'}`,
       jobId: app.jobId,
       applicationId: app.id,
       resumeData: structuredDocToResumeData(doc),

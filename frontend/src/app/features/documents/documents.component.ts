@@ -10,7 +10,7 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { Application } from '../../core/models/application.model';
 
 const TYPE_LABELS: Record<string, string> = {
-  CV: 'Angled CV',
+  CV: 'Tailored CV',
   COVER_LETTER: 'Cover letter',
   APPLICATION_TEXT: 'Application',
   RECRUITER_MESSAGE: 'Short pitch',

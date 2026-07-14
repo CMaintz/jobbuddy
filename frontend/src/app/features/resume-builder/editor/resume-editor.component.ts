@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../services/resume-state.service';
-import { AiAngleFormComponent } from './forms/ai-angle-form.component';
+import { AiTailorFormComponent } from './forms/ai-tailor-form.component';
 import { PersonalInfoFormComponent } from './forms/personal-info-form.component';
 import { ExperienceFormComponent } from './forms/experience-form.component';
 import { EducationFormComponent } from './forms/education-form.component';
@@ -27,7 +27,7 @@ interface EditorSection {
   standalone: true,
   imports: [
     CommonModule,
-    AiAngleFormComponent,
+    AiTailorFormComponent,
     PersonalInfoFormComponent,
     ExperienceFormComponent,
     EducationFormComponent,
@@ -46,15 +46,15 @@ interface EditorSection {
 export class ResumeEditorComponent {
   private state = inject(ResumeStateService);
 
-  /** The AI panel only makes sense for job-linked (angled) drafts. */
+  /** The AI panel only makes sense for job-linked (tailored) drafts. */
   get visibleSections(): EditorSection[] {
     return this.state.draftJobId()
       ? this.sections
-      : this.sections.filter(s => s.id !== 'ai-angle');
+      : this.sections.filter(s => s.id !== 'ai-tailor');
   }
 
   sections: EditorSection[] = [
-    { id: 'ai-angle', label: 'AI Angle & ATS', icon: '✦', open: true },
+    { id: 'ai-tailor', label: 'AI Tailoring & ATS', icon: '✦', open: true },
     { id: 'personal', label: 'Personal Info', icon: '👤', open: true },
     { id: 'experience', label: 'Work Experience', icon: '💼', open: false },
     { id: 'education', label: 'Education', icon: '🎓', open: false },
