@@ -107,7 +107,7 @@ export class ApplyComponent implements OnInit {
     { key: 'application', label: 'Application' },
     { key: 'cover-letter', label: 'Cover letter' },
     { key: 'short-pitch', label: 'Short pitch' },
-    { key: 'cv', label: 'Angled CV' },
+    { key: 'cv', label: 'Tailored CV' },
   ];
 
   voices = ['Direct', 'Warm', 'Formal'];
@@ -258,7 +258,7 @@ export class ApplyComponent implements OnInit {
       switchMap(job => this.resolveApplication(job)),
       tap(() => this.activeStep.set(2)),
       // Step 3: generate the document (the long step).
-      // The angled CV is configured & generated on its own screen — hand off after step 2.
+      // The tailored CV is configured & generated on its own screen — hand off after step 2.
       switchMap(app => {
         if (this.selectedFormat() === 'cv') return of(app);
         const req: GenerateDocumentRequest = {

@@ -81,7 +81,7 @@ export class ApplicationOutputComponent implements OnInit {
     return this.documents().find(d => d.documentType === wanted) ?? null;
   });
 
-  /** Whether an angled CV already exists for this job (for the next-step link). */
+  /** Whether an tailored CV already exists for this job (for the next-step link). */
   hasCv = computed<boolean>(() => this.documents().some(d => d.documentType === 'CV'));
 
   /** Keywords the JD cares about (technologies + skills + AI tags). */

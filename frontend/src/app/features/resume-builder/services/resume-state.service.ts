@@ -234,7 +234,7 @@ export class ResumeStateService {
     });
   }
 
-  /** Wholesale content swap (AI re-angle) — layout/settings stay untouched. */
+  /** Wholesale content swap (AI re-tailor) — layout/settings stay untouched. */
   replaceResumeData(data: ResumeData): void {
     this._resumeData.set(data);
     this._isDirty.set(true);
