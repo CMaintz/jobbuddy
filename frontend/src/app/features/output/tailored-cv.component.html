@@ -4,7 +4,7 @@
         <div class="flex items-center gap-2">
           <button class="text-jb-text-dim text-sm hover:text-jb-text" (click)="goBack()">&larr; Back</button>
           <span class="text-jb-text-faint">/</span>
-          <span class="text-md font-medium">Angled CV</span>
+          <span class="text-md font-medium">Tailored CV</span>
           @if (application(); as app) {
             <span class="text-sm text-jb-text-dim">· {{ app.jobCompanyName }} — {{ app.jobTitle }}</span>
           }
@@ -48,7 +48,7 @@
             <div class="card p-4">
               <div class="flex items-center justify-between mb-3">
                 <span class="text-xs text-jb-text-dim tracking-widest uppercase">
-                  {{ versionCount() > 0 ? 'Generate a new angle' : 'Generate your angled CV' }}
+                  {{ versionCount() > 0 ? 'Generate a new version' : 'Generate your tailored CV' }}
                 </span>
                 @if (versionCount() > 0) {
                   <span class="mono text-xs text-jb-text-dim">{{ versionCount() }} version{{ versionCount() === 1 ? '' : 's' }} generated</span>
@@ -76,17 +76,17 @@
                 }
               </div>
 
-              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Angle</div>
+              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Focus</div>
               <div class="flex flex-wrap gap-1.5 mb-2">
-                @for (prompt of anglePrompts; track prompt) {
+                @for (prompt of tailorPrompts; track prompt) {
                   <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-border rounded-full text-jb-text-mid text-xs cursor-pointer"
-                    (click)="addAngle(prompt)">
+                    (click)="addTailorPrompt(prompt)">
                     + {{ prompt }}
                   </button>
                 }
               </div>
               <textarea [(ngModel)]="customInstructions" rows="3" class="input resize-y text-xs leading-normal"
-                placeholder="Angle instructions — e.g. emphasise leadership, drop anything older than 2018…"></textarea>
+                placeholder="Focus instructions — e.g. emphasise leadership, drop anything older than 2018…"></textarea>
 
               <div class="flex items-center justify-between mt-3.5">
                 <div class="text-xs text-jb-text-dim">

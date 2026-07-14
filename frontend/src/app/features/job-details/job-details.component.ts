@@ -68,7 +68,7 @@ export class JobDetailsComponent implements OnInit {
     { label: 'Application', icon: 'layers', format: 'application' },
     { label: 'Cover letter', icon: 'doc', format: 'cover-letter' },
     { label: 'Short pitch', icon: 'mail', format: 'short-pitch' },
-    { label: 'Angled CV', icon: 'target', format: 'cv' },
+    { label: 'Tailored CV', icon: 'target', format: 'cv' },
   ];
 
   activityEvents: { time: string; what: string; who: string; dot: string }[] = [];
@@ -237,7 +237,7 @@ export class JobDetailsComponent implements OnInit {
 
   docTypeLabel(docType: string): string {
     const labels: Record<string, string> = {
-      CV: 'Angled CV',
+      CV: 'Tailored CV',
       APPLICATION_TEXT: 'Application',
       COVER_LETTER: 'Cover letter',
       RECRUITER_MESSAGE: 'Short pitch',

@@ -244,7 +244,7 @@ export function resumeDataToAts(data: ResumeData, pi = data.personalInfo): AtsRe
   };
 }
 
-/** StructuredDocument (master/angled CV render model) → ATS model. */
+/** StructuredDocument (master/tailored CV render model) → ATS model. */
 export function structuredDocToAts(doc: StructuredDocument): AtsResumeModel {
   const id = doc.identity ?? {};
   const contact = [id.email, id.phone, id.location].filter(Boolean).join('  ·  ');
