@@ -41,6 +41,19 @@ export interface RefineResponse {
   modelUsed: string;
 }
 
+export interface ReviewRequest {
+  currentContent: string;
+  documentType?: string;
+  jobDescription?: string;
+  targetLanguage?: string;
+}
+
+export interface ReviewResponse {
+  revisedContent: string;
+  critique: string[];
+  modelUsed: string;
+}
+
 export interface AnalysisDimensions {
   technicalSkills?: number;
   experience?: number;
@@ -92,6 +105,11 @@ export class AiApiService {
 
   refine(req: RefineRequest): Observable<RefineResponse> {
     return this.http.post<RefineResponse>('/api/v1/ai/refine', req);
+  }
+
+  /** Fresh-context reviewer pass: critiques the draft against the posting and revises it. */
+  review(req: ReviewRequest): Observable<ReviewResponse> {
+    return this.http.post<ReviewResponse>('/api/v1/ai/review', req);
   }
 
   analyzeCv(cvVersionId: string, jobId?: string): Observable<AnalysisResponse> {
