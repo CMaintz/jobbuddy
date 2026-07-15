@@ -110,6 +110,9 @@ public class JobEntity {
     @Column(name = "last_seen_at")
     private Instant lastSeenAt;
 
+    @Column(name = "application_deadline")
+    private java.time.LocalDate applicationDeadline;
+
     @Column(name = "last_url_check_at")
     private Instant lastUrlCheckAt;
 
@@ -188,6 +191,8 @@ public class JobEntity {
     public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
     public Instant getLastSeenAt() { return lastSeenAt; }
     public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
+    public java.time.LocalDate getApplicationDeadline() { return applicationDeadline; }
+    public void setApplicationDeadline(java.time.LocalDate applicationDeadline) { this.applicationDeadline = applicationDeadline; }
     public Instant getLastUrlCheckAt() { return lastUrlCheckAt; }
     public void setLastUrlCheckAt(Instant lastUrlCheckAt) { this.lastUrlCheckAt = lastUrlCheckAt; }
     public int getUrlCheckFailures() { return urlCheckFailures; }

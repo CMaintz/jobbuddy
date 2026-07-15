@@ -29,6 +29,7 @@ public record JobResponse(
         List<String> aiTags,
         String jobCategory,
         String shortDescription,
+        java.time.LocalDate applicationDeadline,
         boolean active
 ) {
     public static JobResponse from(Job job) {
@@ -45,6 +46,7 @@ public record JobResponse(
                 job.postedAt(), job.aiSummary(), job.aiTags(),
                 job.jobCategory() != null ? job.jobCategory().name() : null,
                 job.shortDescription(),
+                job.applicationDeadline(),
                 job.isActive()
         );
     }
