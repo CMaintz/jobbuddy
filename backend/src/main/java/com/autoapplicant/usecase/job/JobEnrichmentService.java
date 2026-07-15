@@ -98,6 +98,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                   "salaryMax": null,
                   "currency": null,
                   "municipality": "primary Danish municipality name or null",
+                  "applicationDeadline": "YYYY-MM-DD or null",
                   "jobCategory": "SOFTWARE_IT|DATA_ANALYTICS|DESIGN_UX|MARKETING|SALES|FINANCE|HR|ENGINEERING|OPERATIONS_LOGISTICS|CUSTOMER_SERVICE|LEGAL|HEALTHCARE|MANAGEMENT|EDUCATION|CREATIVE_MEDIA|OTHER"
                 }
 
@@ -108,6 +109,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
                 - Only include salary if numbers are explicitly stated in the posting
                 - municipality: match to a known Danish kommune name (e.g. "København", "Aarhus", "Odense")
+                - applicationDeadline: the stated application deadline (e.g. "Ansøgningsfrist"); null when not stated or "as soon as possible"
                 - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits.
 
                 Job title: %s
@@ -181,6 +183,13 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 }
             }
 
+            // Crawler-provided deadline wins; the AI extraction is the fallback
+            java.time.LocalDate applicationDeadline = job.applicationDeadline();
+            if (applicationDeadline == null && parsed.get("applicationDeadline") instanceof String rawDeadline) {
+                try { applicationDeadline = java.time.LocalDate.parse(rawDeadline); }
+                catch (java.time.format.DateTimeParseException ignored) {}
+            }
+
             return new Job(job.id(), job.source(), job.sourceJobId(), job.url(), job.title(),
                     job.companyId(), job.companyName(), job.descriptionRaw(), descriptionClean,
                     employmentType, job.seniority(), remoteType,
@@ -190,7 +199,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                     job.postedAt(), job.scrapedAt(),
                     summary, tags, aiSeniority,
                     job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt(),
-                    shortDescription, job.lastSeenAt());
+                    shortDescription, job.lastSeenAt(), applicationDeadline);
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
             return job;

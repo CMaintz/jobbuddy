@@ -65,7 +65,8 @@ public class IngestionPipeline {
                             seen.skills(), seen.languages(), seen.postedAt(), seen.scrapedAt(),
                             seen.aiSummary(), seen.aiTags(), seen.aiSeniorityEstimate(),
                             seen.duplicateGroupId(), seen.isActive(), seen.jobCategory(),
-                            seen.createdAt(), seen.updatedAt(), seen.shortDescription(), Instant.now()));
+                            seen.createdAt(), seen.updatedAt(), seen.shortDescription(), Instant.now(),
+                            seen.applicationDeadline()));
                     log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
                     return;
                 }
@@ -80,7 +81,8 @@ public class IngestionPipeline {
                     null, null, null, null, null, null, "DK",
                     null, null, "DKK", List.of(), List.of(), List.of(),
                     null, raw.scrapedAt(), null, List.of(), null, null,
-                    true, category, null, null, raw.shortDescription(), Instant.now());
+                    true, category, null, null, raw.shortDescription(), Instant.now(),
+                    raw.applicationDeadline());
 
             Job saved = jobRepo.save(draft);
 
