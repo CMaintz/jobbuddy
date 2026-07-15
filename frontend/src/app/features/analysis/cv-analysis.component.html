@@ -68,6 +68,32 @@
             </div>
           </div>
 
+          <!-- Fit breakdown (job-targeted analyses only) -->
+          @if (r.dimensions; as d) {
+            <div class="card p-4">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">Fit breakdown</div>
+              <div class="flex flex-col gap-2.5">
+                @for (dim of dimensionRows(d); track dim.label) {
+                  <div class="grid items-center gap-3 grid-cols-[130px_1fr_34px]">
+                    <div class="text-sm text-jb-text-mid">{{ dim.label }}</div>
+                    <div class="bar"><i [style.width]="dim.value + '%'" [style.background]="scoreColor(dim.value)"></i></div>
+                    <div class="mono text-xs text-right" [style.color]="scoreColor(dim.value)">{{ dim.value }}</div>
+                  </div>
+                }
+              </div>
+              @if (d.location) {
+                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-jb-border-faint text-sm">
+                  <jb-pill [tone]="d.location === 'PASS' ? 'success' : d.location === 'FAIL' ? 'danger' : 'accent'">
+                    Location {{ d.location | lowercase }}
+                  </jb-pill>
+                  @if (d.locationNote) {
+                    <span class="text-jb-text-dim text-xs">{{ d.locationNote }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <div class="grid gap-4 grid-cols-1 md:grid-cols-2">
             <!-- Strengths -->
             @if (r.strengths?.length) {
