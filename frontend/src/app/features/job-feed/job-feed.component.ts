@@ -22,6 +22,9 @@ interface FeedRow {
   keywords: string[];
   source: string;
   posted: string;
+  /** e.g. "Deadline 12 Aug" — undefined when the posting has none. */
+  deadline?: string;
+  deadlinePassed?: boolean;
   remote: boolean;
   seniority?: string;
   category?: string;
@@ -142,6 +145,10 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       keywords: [...(job.technologies ?? []), ...(job.skills ?? [])].slice(0, 10),
       source: job.source ?? 'unknown',
       posted: this.ageLabel(job.postedAt),
+      deadline: job.applicationDeadline
+        ? 'Deadline ' + new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+        : undefined,
+      deadlinePassed: job.applicationDeadline ? new Date(job.applicationDeadline) < new Date() : undefined,
       remote: job.remoteType === 'REMOTE',
       seniority: job.seniority ?? undefined,
       category: job.jobCategory ?? undefined,

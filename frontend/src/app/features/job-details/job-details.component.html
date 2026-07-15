@@ -66,6 +66,11 @@
                   @if (job.postedAt) {
                     <span class="mono text-xs text-jb-text-dim">Posted {{ ageLabel(job.postedAt) }}</span>
                   }
+                  @if (job.applicationDeadline) {
+                    <span class="mono text-xs" [class]="deadlinePassed(job.applicationDeadline) ? 'text-jb-danger' : 'text-jb-text-dim'">
+                      Deadline {{ job.applicationDeadline | date:'d MMM' }}{{ deadlinePassed(job.applicationDeadline) ? ' — passed' : '' }}
+                    </span>
+                  }
                 </div>
               </div>
             </div>
@@ -290,6 +295,12 @@
               @if (job.postedAt) {
                 <div class="text-jb-text-dim">Posted</div>
                 <div>{{ ageLabel(job.postedAt) }}</div>
+              }
+              @if (job.applicationDeadline) {
+                <div class="text-jb-text-dim">Deadline</div>
+                <div [class.text-jb-danger]="deadlinePassed(job.applicationDeadline)">
+                  {{ job.applicationDeadline | date:'d MMM y' }}{{ deadlinePassed(job.applicationDeadline) ? ' (passed)' : '' }}
+                </div>
               }
               @if (application?.matchScore) {
                 <div class="text-jb-text-dim">Fit</div>

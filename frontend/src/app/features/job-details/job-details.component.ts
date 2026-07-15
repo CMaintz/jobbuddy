@@ -306,6 +306,10 @@ export class JobDetailsComponent implements OnInit {
     return `mailto:${to}?subject=${subject}&body=${body}`;
   }
 
+  deadlinePassed(iso: string): boolean {
+    return new Date(iso).getTime() < Date.now();
+  }
+
   ageLabel(dateStr: string): string {
     if (!dateStr) return '—';
     const diff = Date.now() - new Date(dateStr).getTime();
