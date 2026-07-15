@@ -45,7 +45,8 @@ public final class JobMapper {
                 e.getCreatedAt(),
                 e.getUpdatedAt(),
                 e.getShortDescription(),
-                e.getLastSeenAt()
+                e.getLastSeenAt(),
+                e.getApplicationDeadline()
         );
     }
 
@@ -83,6 +84,7 @@ public final class JobMapper {
         e.setJobCategory(d.jobCategory() != null ? d.jobCategory().name() : null);
         e.setShortDescription(d.shortDescription());
         e.setLastSeenAt(d.lastSeenAt());
+        e.setApplicationDeadline(d.applicationDeadline());
         return e;
     }
 

@@ -175,7 +175,7 @@ public class TypesenseSearchAdapter implements JobSearchPort {
                 null, null, null, null, null,
                 (List<String>) doc.getOrDefault("technologies", List.of()),
                 (List<String>) doc.getOrDefault("skills", List.of()),
-                List.of(), null, null, null, List.of(), null, null, true, jobCategory, null, null, null, null);
+                List.of(), null, null, null, List.of(), null, null, true, jobCategory, null, null, null, null, null);
     }
 
     private JobSearchResult emptyResult(JobSearchQuery query) {

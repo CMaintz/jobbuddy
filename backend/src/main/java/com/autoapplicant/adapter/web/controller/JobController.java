@@ -208,7 +208,7 @@ public class JobController {
                 req.location(), null, null, null,
                 req.salaryMin(), req.salaryMax(), req.currency() != null ? req.currency() : "DKK",
                 List.of(), List.of(), List.of(),
-                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null, null, null, Instant.now());
+                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null, null, null, Instant.now(), null);
         Job saved = createManualJob.createManualJob(job);
         return ResponseEntity.created(URI.create("/api/v1/jobs/" + saved.id())).body(JobResponse.from(saved));
     }
