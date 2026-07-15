@@ -104,6 +104,7 @@ public class PromptCompositionBuilder {
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
+                + "\n\n" + HONESTY_RULES
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -170,6 +171,10 @@ public class PromptCompositionBuilder {
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
+                + "\n\n" + HONESTY_RULES
+                + "\n- When content must be condensed, drop the bullets with the lowest combination of "
+                + "relevance to this posting's keywords and uniqueness within the document — not simply "
+                + "the oldest ones. A dated bullet that hits posting keywords outranks a recent one that does not."
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -182,6 +187,15 @@ public class PromptCompositionBuilder {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
+
+    /** Fixed guardrails appended to every generation prompt — never user-editable. */
+    private static final String HONESTY_RULES = """
+            ## Honesty & ATS Rules
+            - Never fabricate skills, experience, credentials, or outcomes. When the profile lacks a \
+            requirement, frame genuinely adjacent experience instead of inventing a match — or leave the \
+            gap visible rather than papering over it.
+            - Mirror the posting's exact terminology for skills the profile genuinely supports (ATS \
+            scanners match literal keywords), but never stuff keywords the profile cannot back up.""";
 
     private String buildStyleMemory(WritingProfile profile) {
         if (profile == null) return "";
