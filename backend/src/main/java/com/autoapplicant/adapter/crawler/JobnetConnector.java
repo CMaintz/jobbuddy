@@ -135,7 +135,8 @@ public class JobnetConnector extends AbstractJobSourceConnector {
         config.onJobFound().accept(new RawJobData(
                 JobSource.JOBNET, id, String.format(PUBLIC_URL, id),
                 html.toString(), detailJson, Instant.now(),
-                categories, shortDescription(body), deadline));
+                categories, shortDescription(body), deadline,
+                employer.isBlank() ? null : employer, null));
     }
 
     /** Detail deadline wins over the search-card one; both are ISO date or datetime strings. */
