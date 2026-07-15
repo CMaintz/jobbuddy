@@ -101,15 +101,36 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
             node.path("strengths").forEach(s -> strengths.add(s.asText()));
             List<String> gaps = new java.util.ArrayList<>();
             node.path("gaps").forEach(s -> gaps.add(s.asText()));
-            return new AiAnalysisResult(suggestions,
-                    Math.max(0, Math.min(100, node.path("score").asInt(0))),
-                    response,
+
+            // Dimensional scores (job-targeted analyses). When complete, the overall
+            // score is computed server-side from the fixed weights, not trusted from the model.
+            AnalysisDimensions dimensions = parseDimensions(node.path("dimensions"));
+            int score = dimensions != null && dimensions.isComplete()
+                    ? dimensions.weightedScore()
+                    : Math.max(0, Math.min(100, node.path("score").asInt(0)));
+
+            return new AiAnalysisResult(suggestions, score, response,
                     node.path("summary").asText(null),
-                    strengths, gaps);
+                    strengths, gaps, dimensions);
         } catch (Exception e) {
             log.warn("Analysis response was not valid JSON — returning raw text: {}", e.getMessage());
             return AiAnalysisResult.unstructured(response);
         }
+    }
+
+    private static AnalysisDimensions parseDimensions(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null || !node.isObject()) return null;
+        return new AnalysisDimensions(
+                intOrNull(node, "technicalSkills"),
+                intOrNull(node, "experience"),
+                intOrNull(node, "cultureFit"),
+                intOrNull(node, "careerAlignment"),
+                node.path("location").asText(null),
+                node.path("locationNote").asText(null));
+    }
+
+    private static Integer intOrNull(com.fasterxml.jackson.databind.JsonNode node, String field) {
+        return node.path(field).isNumber() ? node.path(field).asInt() : null;
     }
 
     @Override
@@ -214,20 +235,41 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
         if (jobDescription != null && !jobDescription.isBlank()) {
             sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
             sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
+            sb.append("""
+
+                    Respond with ONLY a JSON object in exactly this shape:
+                    {
+                      "score": <0-100 overall score>,
+                      "summary": "<2-3 sentence overall verdict>",
+                      "strengths": ["<what already works well>", ...],
+                      "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                      "suggestions": ["<concrete, actionable improvement — one per entry>", ...],
+                      "dimensions": {
+                        "technicalSkills": <0-100 — required/preferred skills coverage>,
+                        "experience": <0-100 — work-history domain and role-type alignment>,
+                        "cultureFit": <0-100 — company culture signals vs the candidate's profile>,
+                        "careerAlignment": <0-100 — growth path and motivation fit for this role>,
+                        "location": "PASS|FLAG|FAIL — commute/remote/relocation feasibility",
+                        "locationNote": "<one sentence explaining the location verdict, or null>"
+                      }
+                    }
+                    Score each dimension independently; do not average them yourself.
+                    Be honest about gaps — never assume skills the CV does not state.
+                    Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
         } else {
             sb.append("No target job given — judge the CV on general strength: clarity, quantified achievements, ATS readiness.\n");
-        }
-        sb.append("""
+            sb.append("""
 
-                Respond with ONLY a JSON object in exactly this shape:
-                {
-                  "score": <0-100 overall score>,
-                  "summary": "<2-3 sentence overall verdict>",
-                  "strengths": ["<what already works well>", ...],
-                  "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
-                  "suggestions": ["<concrete, actionable improvement — one per entry>", ...]
-                }
-                Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
+                    Respond with ONLY a JSON object in exactly this shape:
+                    {
+                      "score": <0-100 overall score>,
+                      "summary": "<2-3 sentence overall verdict>",
+                      "strengths": ["<what already works well>", ...],
+                      "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                      "suggestions": ["<concrete, actionable improvement — one per entry>", ...]
+                    }
+                    Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
+        }
         return sb.toString();
     }
 }
