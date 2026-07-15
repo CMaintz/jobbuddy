@@ -49,16 +49,16 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
     @Override
     public UrlProbeOutcome probe(String url) {
         try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                    .timeout(Duration.ofSeconds(12))
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
-                    .header("Accept", "text/html,application/xhtml+xml")
-                    .header("Accept-Language", "da,en;q=0.8")
-                    .GET()
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = send(url);
 
             int status = response.statusCode();
+            // One jittered retry on transient statuses so a blip doesn't burn a probe cycle.
+            if (status == 429 || status >= 500) {
+                Thread.sleep(1_000 + (long) (Math.random() * 1_000));
+                response = send(url);
+                status = response.statusCode();
+            }
+
             if (status == 404 || status == 410) return UrlProbeOutcome.GONE;
             if (status >= 400) return UrlProbeOutcome.INCONCLUSIVE; // 403/429/451/5xx: blocked or hiccup, not proof
 
@@ -74,5 +74,16 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
             log.debug("URL probe failed for {}: {}", url, e.getMessage());
             return UrlProbeOutcome.INCONCLUSIVE;
         }
+    }
+
+    private HttpResponse<String> send(String url) throws java.io.IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(Duration.ofSeconds(12))
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+                .header("Accept", "text/html,application/xhtml+xml")
+                .header("Accept-Language", "da,en;q=0.8")
+                .GET()
+                .build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 }
