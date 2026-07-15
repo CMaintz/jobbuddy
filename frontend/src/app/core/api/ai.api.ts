@@ -41,6 +41,16 @@ export interface RefineResponse {
   modelUsed: string;
 }
 
+export interface AnalysisDimensions {
+  technicalSkills?: number;
+  experience?: number;
+  cultureFit?: number;
+  careerAlignment?: number;
+  /** PASS | FLAG | FAIL — unweighted veto, not part of the score. */
+  location?: string;
+  locationNote?: string;
+}
+
 export interface AnalysisResponse {
   suggestions: string[];
   score: number;
@@ -48,6 +58,8 @@ export interface AnalysisResponse {
   summary?: string;
   strengths?: string[];
   gaps?: string[];
+  /** Present only for job-targeted analyses. */
+  dimensions?: AnalysisDimensions;
 }
 
 export interface AnalyzeRequest {

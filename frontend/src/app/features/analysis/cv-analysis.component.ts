@@ -8,7 +8,8 @@ import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.c
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
-import { AiApiService, AnalysisResponse } from '../../core/api/ai.api';
+import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { AiApiService, AnalysisDimensions, AnalysisResponse } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 
@@ -20,7 +21,7 @@ interface JobOption {
 @Component({
   selector: 'app-cv-analysis',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, GoalRingComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, GoalRingComponent, JbPillComponent],
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {
@@ -95,5 +96,15 @@ export class CvAnalysisComponent implements OnInit {
 
   scoreColor(score: number): string {
     return score >= 75 ? 'var(--jb-success)' : score >= 50 ? 'var(--jb-accent-2)' : 'var(--jb-danger)';
+  }
+
+  /** Weights match the server-side overall: 30/25/15/30; location is a veto, shown separately. */
+  dimensionRows(d: AnalysisDimensions): { label: string; value: number }[] {
+    return [
+      { label: 'Technical skills', value: d.technicalSkills ?? 0 },
+      { label: 'Experience', value: d.experience ?? 0 },
+      { label: 'Culture fit', value: d.cultureFit ?? 0 },
+      { label: 'Career alignment', value: d.careerAlignment ?? 0 },
+    ];
   }
 }

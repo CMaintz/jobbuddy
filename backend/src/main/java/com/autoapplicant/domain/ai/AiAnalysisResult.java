@@ -8,10 +8,12 @@ public record AiAnalysisResult(
         String rawResponse,
         String summary,
         List<String> strengths,
-        List<String> gaps
+        List<String> gaps,
+        /** Per-dimension scores — only present for job-targeted analyses. */
+        AnalysisDimensions dimensions
 ) {
     /** Fallback shape for legacy/unparseable responses. */
     public static AiAnalysisResult unstructured(String text) {
-        return new AiAnalysisResult(List.of(text), 0, text, null, List.of(), List.of());
+        return new AiAnalysisResult(List.of(text), 0, text, null, List.of(), List.of(), null);
     }
 }
