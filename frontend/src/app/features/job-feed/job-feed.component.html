@@ -111,6 +111,9 @@
                   </div>
                   <div class="text-xs text-jb-text-dim mt-0.5">
                     {{ job.company }} · {{ job.location }}
+                    @if (job.deadline) {
+                      <span class="mono" [class.text-jb-danger]="job.deadlinePassed"> · {{ job.deadline }}</span>
+                    }
                   </div>
                   <div class="flex flex-wrap gap-1 mt-1.5">
                     @for (reason of job.matchReasons.slice(0, 2); track reason) {
@@ -178,6 +181,10 @@
               <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Salary</div><div class="text-sm mt-0.5">{{ job.salary || '—' }}</div></div>
               <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Source</div><div class="text-sm mt-0.5">{{ job.source | titlecase }}</div></div>
               <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Posted</div><div class="text-sm mt-0.5">{{ job.posted }}</div></div>
+              @if (job.deadline) {
+                <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Deadline</div>
+                  <div class="text-sm mt-0.5" [class.text-jb-danger]="job.deadlinePassed">{{ job.deadline.replace('Deadline ', '') }}{{ job.deadlinePassed ? ' (passed)' : '' }}</div></div>
+              }
             </div>
           </div>
 

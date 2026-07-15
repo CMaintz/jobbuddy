@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.crawler;
 
+import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobEmbedding;
@@ -7,6 +8,7 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.usecase.job.JobCategoryClassifier;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.job.JobSearchPort;
@@ -35,12 +37,14 @@ public class IngestionPipeline {
     private final EnrichJobUseCase enrichJob;
     private final TextCleaningService textCleaner;
     private final JobCategoryClassifier categoryClassifier;
+    private final CompanyRepositoryPort companyRepo;
 
     public IngestionPipeline(JobRepositoryPort jobRepo, JobSearchPort jobSearch,
                               JobEmbeddingRepositoryPort embeddingRepo,
                               @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                               EnrichJobUseCase enrichJob, TextCleaningService textCleaner,
-                              JobCategoryClassifier categoryClassifier) {
+                              JobCategoryClassifier categoryClassifier,
+                              CompanyRepositoryPort companyRepo) {
         this.jobRepo = jobRepo;
         this.jobSearch = jobSearch;
         this.embeddingRepo = embeddingRepo;
@@ -48,6 +52,7 @@ public class IngestionPipeline {
         this.enrichJob = enrichJob;
         this.textCleaner = textCleaner;
         this.categoryClassifier = categoryClassifier;
+        this.companyRepo = companyRepo;
     }
 
     public void ingest(RawJobData raw) {
@@ -75,9 +80,10 @@ public class IngestionPipeline {
             String cleanText = textCleaner.clean(raw.rawHtml());
             String title = textCleaner.extractTitle(raw.rawHtml());
             JobCategory category = categoryClassifier.classify(raw.rawCategories(), title, cleanText);
+            UUID companyId = resolveCompany(raw);
 
             Job draft = new Job(null, raw.source(), raw.sourceJobId(), raw.url(),
-                    title, null, null, raw.rawHtml(), cleanText,
+                    title, companyId, raw.companyName(), raw.rawHtml(), cleanText,
                     null, null, null, null, null, null, "DK",
                     null, null, "DKK", List.of(), List.of(), List.of(),
                     null, raw.scrapedAt(), null, List.of(), null, null,
@@ -102,6 +108,31 @@ public class IngestionPipeline {
 
         } catch (Exception e) {
             log.error("Ingestion failed for raw job from {}: {}", raw.source(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Resolves (or creates) the company when the source provided a structured name,
+     * and backfills the company homepage if the crawl carried one and it's still empty.
+     */
+    private UUID resolveCompany(RawJobData raw) {
+        String name = raw.companyName();
+        if (name == null || name.isBlank()) return null;
+        try {
+            Company company = companyRepo.findOrCreate(name.trim());
+            String website = raw.companyWebsiteUrl();
+            if (website != null && !website.isBlank()
+                    && (company.website() == null || company.website().isBlank())) {
+                companyRepo.save(new Company(company.id(), company.name(), company.slug(),
+                        website.trim(), company.linkedinUrl(), company.description(), company.logoUrl(),
+                        company.sizeRange(), company.industry(), company.country(),
+                        company.isConsulting(), company.isRecruitingAgency(),
+                        company.createdAt(), company.updatedAt()));
+            }
+            return company.id();
+        } catch (Exception e) {
+            log.warn("Company resolution failed for '{}': {}", name, e.getMessage());
+            return null;
         }
     }
 

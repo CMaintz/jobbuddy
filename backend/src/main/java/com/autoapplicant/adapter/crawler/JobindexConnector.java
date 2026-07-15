@@ -3,6 +3,8 @@ package com.autoapplicant.adapter.crawler;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,9 +13,14 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class JobindexConnector extends AbstractJobSourceConnector {
@@ -143,17 +150,22 @@ public class JobindexConnector extends AbstractJobSourceConnector {
         // and in one or more subid feeds.
         Set<String> seenInRun = new HashSet<>();
 
+        // ── Phase 0: structured metadata from the search page Stash blob ──────
+        // The RSS feeds carry no deadline or company homepage; the search page
+        // embeds both per result. Best-effort: a miss just means null metadata.
+        Map<String, StashMeta> stashMeta = collectStashMetadata(config.force() ? 150 : 25);
+
         // ── Phase 1: base feed (all categories, most-recent first) ────────────
         // Capped at 50 pages = 1,000 jobs by the Jobindex RSS endpoint.
         log.info("Jobindex: phase 1 — base feed");
-        totalCount = crawlFeed(null, config, totalCount, seenInRun);
+        totalCount = crawlFeed(null, config, totalCount, seenInRun, stashMeta);
 
         // ── Phase 2: per-subid feeds (deeper history per category) ────────────
         // Each subid is also capped at 50 pages = 1,000 jobs. Jobs already
         // collected in phase 1 are skipped via seenInRun / isKnownGuid.
         log.info("Jobindex: phase 2 — subid feeds ({} jobs so far)", totalCount);
         for (int subid : SUBIDS) {
-            totalCount = crawlFeed(subid, config, totalCount, seenInRun);
+            totalCount = crawlFeed(subid, config, totalCount, seenInRun, stashMeta);
         }
 
         log.info("Jobindex crawl complete: {} jobs collected", totalCount);
@@ -171,7 +183,7 @@ public class JobindexConnector extends AbstractJobSourceConnector {
      * @return updated total count
      */
     private int crawlFeed(Integer subid, CrawlConfig config,
-                          int totalCount, Set<String> seenInRun) {
+                          int totalCount, Set<String> seenInRun, Map<String, StashMeta> stashMeta) {
         int consecutiveKnownPages = 0;
 
         for (int page = 1; ; page++) {
@@ -247,7 +259,12 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                 }
 
                 List<String> rssCategories = item.select("category").eachText();
-                config.onJobFound().accept(new RawJobData(JobSource.JOBINDEX, guid, link, detailHtml, null, Instant.now(), rssCategories, shortDescription));
+                StashMeta meta = stashMeta.get(extractTid(link));
+                config.onJobFound().accept(new RawJobData(JobSource.JOBINDEX, guid, link, detailHtml,
+                        null, Instant.now(), rssCategories, shortDescription,
+                        meta != null ? meta.deadline() : null,
+                        meta != null ? meta.companyName() : null,
+                        meta != null ? meta.companyHomeUrl() : null));
                 totalCount++;
                 newOnPage++;
             }
@@ -299,4 +316,116 @@ public class JobindexConnector extends AbstractJobSourceConnector {
         return result.isBlank() ? null : (result.length() > 400 ? result.substring(0, 400) + "…" : result);
     }
 
+    // ── Stash metadata (deadline + company homepage) ──────────────────────────
+    //
+    // Jobindex moved search results client-side: the /jobsoegning HTML embeds
+    // the result payload in a `var Stash = {...}` script blob, under
+    // …→ storeData → searchResponse → { results[] }. Each result carries
+    // structured fields the RSS feeds lack: apply_deadline, company.homeurl.
+    // (Technique ported from ai-job-search-master's jobindex CLI.)
+
+    record StashMeta(LocalDate deadline, String companyName, String companyHomeUrl) {}
+
+    private static final String SEARCH_PAGE = "https://www.jobindex.dk/jobsoegning?page=";
+    private static final Pattern TID_PATTERN = Pattern.compile("/jobannonce/([^/?#]+)");
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /** tid from a /jobannonce/{tid}… URL, or null. */
+    static String extractTid(String url) {
+        if (url == null) return null;
+        Matcher m = TID_PATTERN.matcher(url);
+        return m.find() ? m.group(1) : null;
+    }
+
+    /** Paginates the search page and maps tid → structured metadata. Best-effort. */
+    private Map<String, StashMeta> collectStashMetadata(int maxPages) {
+        Map<String, StashMeta> meta = new HashMap<>();
+        for (int page = 1; page <= maxPages; page++) {
+            try {
+                String html = Jsoup.connect(SEARCH_PAGE + page)
+                        .userAgent(USER_AGENT).timeout(15000).execute().body();
+                JsonNode results = findSearchResults(extractStash(html));
+                if (results == null || !results.isArray() || results.isEmpty()) break;
+                for (JsonNode r : results) {
+                    String tid = r.path("tid").asText(null);
+                    if (tid == null || tid.isBlank()) continue;
+                    meta.put(tid, new StashMeta(
+                            parseStashDeadline(r),
+                            firstNonBlank(r.path("company").path("name").asText(null),
+                                    r.path("companytext").asText(null)),
+                            r.path("company").path("homeurl").asText(null)));
+                }
+            } catch (Exception e) {
+                log.warn("Jobindex: stash metadata page {} failed: {} — continuing without", page, e.getMessage());
+                break;
+            }
+        }
+        log.info("Jobindex: stash metadata collected for {} jobs", meta.size());
+        return meta;
+    }
+
+    /** ASAP deadlines stay null — only a concrete date is stored. */
+    private static LocalDate parseStashDeadline(JsonNode r) {
+        if (r.path("apply_deadline_asap").asBoolean(false)) return null;
+        for (String field : new String[]{"apply_deadline", "lastdate"}) {
+            String raw = r.path(field).asText(null);
+            if (raw != null && raw.length() >= 10) {
+                try { return LocalDate.parse(raw.substring(0, 10)); } catch (Exception ignored) {}
+            }
+        }
+        return null;
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.isBlank()) return a;
+        return (b != null && !b.isBlank()) ? b : null;
+    }
+
+    /**
+     * Extracts the JSON object following {@code var Stash = } with a brace-counting
+     * scan (string- and escape-aware — the blob contains braces inside strings).
+     */
+    JsonNode extractStash(String html) throws Exception {
+        String marker = "var Stash = ";
+        int start = html.indexOf(marker);
+        if (start == -1) throw new IllegalStateException("No Stash blob in Jobindex HTML");
+        int open = start + marker.length();
+        int depth = 0;
+        boolean inStr = false, esc = false;
+        for (int i = open; i < html.length(); i++) {
+            char c = html.charAt(i);
+            if (inStr) {
+                if (esc) esc = false;
+                else if (c == '\\') esc = true;
+                else if (c == '"') inStr = false;
+            } else {
+                if (c == '"') inStr = true;
+                else if (c == '{') depth++;
+                else if (c == '}' && --depth == 0) {
+                    return objectMapper.readTree(html.substring(open, i + 1));
+                }
+            }
+        }
+        throw new IllegalStateException("Unterminated Stash blob in Jobindex HTML");
+    }
+
+    /** Recursively finds the node holding {@code searchResponse.results[]}. */
+    private static JsonNode findSearchResults(JsonNode node) {
+        if (node == null) return null;
+        if (node.isObject()) {
+            JsonNode sr = node.path("searchResponse");
+            if (sr.isObject() && sr.path("results").isArray()) return sr.path("results");
+            for (JsonNode child : node) {
+                JsonNode found = findSearchResults(child);
+                if (found != null) return found;
+            }
+        } else if (node.isArray()) {
+            for (JsonNode child : node) {
+                JsonNode found = findSearchResults(child);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
 }
