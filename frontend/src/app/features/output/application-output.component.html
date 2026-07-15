@@ -230,6 +230,15 @@
             class="w-full py-2 pl-7 pr-2.5 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-sm" />
           <jb-icon name="sparkle" [size]="11" class="absolute left-2.5 top-[11px] text-jb-accent" />
         </div>
+        <!-- Fresh-context reviewer pass -->
+        <button class="mt-2 w-full flex items-center gap-2 px-2.5 py-[7px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer"
+          (click)="reviewDraft()"
+          [style.opacity]="refining() || !activeDoc() ? '0.5' : '1'"
+          [style.pointer-events]="refining() || !activeDoc() ? 'none' : 'auto'">
+          <jb-icon name="check-circle" [size]="11" class="text-jb-accent" />
+          <span>AI review — critique & polish against the posting</span>
+          <jb-icon name="arrow-right" [size]="11" class="ml-auto text-jb-text-dim" />
+        </button>
         @if (refining()) {
           <div class="mt-2 flex items-center gap-2 text-xs text-jb-text-dim">
             <div class="w-3 h-3 rounded-full border-2 border-jb-surface-3 border-t-jb-accent animate-spin"></div>
@@ -247,6 +256,16 @@
               Accept
             </button>
           </div>
+          @if (reviewCritique().length) {
+            <div class="flex flex-col gap-1.5 mb-2.5">
+              @for (point of reviewCritique(); track point) {
+                <div class="flex items-start gap-1.5 text-xs text-jb-text-mid">
+                  <jb-icon name="check-circle" [size]="11" class="text-jb-accent mt-[1px] flex-shrink-0" />
+                  <span class="leading-relaxed">{{ point }}</span>
+                </div>
+              }
+            </div>
+          }
           <jb-diff-viewer [before]="originalText()" [after]="refinedText()" />
         </div>
       }

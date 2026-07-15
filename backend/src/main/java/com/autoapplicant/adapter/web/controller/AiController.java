@@ -5,12 +5,15 @@ import com.autoapplicant.adapter.web.dto.ai.AnalyzeCvRequest;
 import com.autoapplicant.adapter.web.dto.ai.GenerateDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.ParseCvRequest;
 import com.autoapplicant.adapter.web.dto.ai.RefineRequest;
+import com.autoapplicant.adapter.web.dto.ai.ReviewRequest;
 import com.autoapplicant.adapter.web.dto.ai.SaveStructuredDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.StructuredGenerateRequest;
 import com.autoapplicant.domain.ai.AiAnalysisResult;
 import com.autoapplicant.domain.ai.AiUsageSummary;
 import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
+import com.autoapplicant.domain.ai.ReviewDocumentRequest;
+import com.autoapplicant.domain.ai.ReviewDocumentResult;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.user.Profile;
@@ -18,6 +21,7 @@ import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.GetAiUsageUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
+import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
@@ -43,6 +47,7 @@ public class AiController {
     private final AnalyzeCvUseCase analyze;
     private final ParseCvUseCase parseCv;
     private final RefineDocumentUseCase refine;
+    private final ReviewDocumentUseCase reviewDocument;
     private final GenerateDocumentUseCase generateDocument;
     private final GetCvRenderModelUseCase cvRenderModel;
     private final GenerateTailoredCvUseCase generateTailoredCv;
@@ -53,6 +58,7 @@ public class AiController {
     public AiController(AnalyzeCvUseCase analyze,
                         ParseCvUseCase parseCv,
                         RefineDocumentUseCase refine,
+                        ReviewDocumentUseCase reviewDocument,
                         GenerateDocumentUseCase generateDocument,
                         GetCvRenderModelUseCase cvRenderModel,
                         GenerateTailoredCvUseCase generateTailoredCv,
@@ -62,6 +68,7 @@ public class AiController {
         this.analyze = analyze;
         this.parseCv = parseCv;
         this.refine = refine;
+        this.reviewDocument = reviewDocument;
         this.generateDocument = generateDocument;
         this.cvRenderModel = cvRenderModel;
         this.generateTailoredCv = generateTailoredCv;
@@ -174,6 +181,25 @@ public class AiController {
                 userId, req.currentContent(), req.userMessage(),
                 req.jobDescription(), req.targetLanguage());
         refine.refine(request)
+                .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
+                .exceptionally(e -> {
+                    result.setErrorResult(e);
+                    return null;
+                });
+        return result;
+    }
+
+    @Operation(summary = "Review a drafted document with a fresh-context AI reviewer")
+    @PostMapping("/review")
+    public DeferredResult<ResponseEntity<ReviewDocumentResult>> review(
+            @Valid @RequestBody ReviewRequest req) {
+        DeferredResult<ResponseEntity<ReviewDocumentResult>> result = new DeferredResult<>(60_000L);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body("AI review timed out. Please try again.")));
+        ReviewDocumentRequest request = new ReviewDocumentRequest(
+                secCtx.getCurrentUserId(), req.currentContent(), req.documentType(),
+                req.jobDescription(), req.targetLanguage());
+        reviewDocument.review(request)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);

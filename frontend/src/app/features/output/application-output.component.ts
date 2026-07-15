@@ -57,6 +57,8 @@ export class ApplicationOutputComponent implements OnInit {
   savingEdit = signal(false);
   originalText = signal('');
   refinedText = signal('');
+  /** Reviewer critique points shown next to the diff after an AI review pass. */
+  reviewCritique = signal<string[]>([]);
   customRevisePrompt = '';
   mobileShowSidebar = signal(false);
 
@@ -289,6 +291,7 @@ export class ApplicationOutputComponent implements OnInit {
     if (!prompt?.trim() || this.refining() || !doc?.content) return;
     this.originalText.set(this.plainText());
     this.refining.set(true);
+    this.reviewCritique.set([]);
 
     this.aiApi.refine({
       currentContent: this.plainText(),
@@ -297,6 +300,30 @@ export class ApplicationOutputComponent implements OnInit {
     }).subscribe({
       next: (resp) => {
         this.refinedText.set(resp.refinedContent);
+        this.refining.set(false);
+      },
+      error: () => {
+        this.refining.set(false);
+      }
+    });
+  }
+
+  /** Second-pass AI reviewer: fresh context critiques the draft, result lands in the same diff flow. */
+  reviewDraft(): void {
+    const doc = this.activeDoc();
+    if (this.refining() || !doc?.content) return;
+    this.originalText.set(this.plainText());
+    this.refining.set(true);
+    this.reviewCritique.set([]);
+
+    this.aiApi.review({
+      currentContent: this.plainText(),
+      documentType: doc.documentType,
+      jobDescription: this.jobDescription() ?? undefined,
+    }).subscribe({
+      next: (resp) => {
+        this.refinedText.set(resp.revisedContent);
+        this.reviewCritique.set(resp.critique ?? []);
         this.refining.set(false);
       },
       error: () => {
@@ -316,6 +343,7 @@ export class ApplicationOutputComponent implements OnInit {
       d.id === doc.id ? { ...d, content: refined } : d));
     this.originalText.set('');
     this.refinedText.set('');
+    this.reviewCritique.set([]);
 
     // Persist as a new manual-edit version
     const structured = this.buildStructuredDoc(doc, refined);
