@@ -22,12 +22,31 @@ public abstract class AbstractJobSourceConnector implements JobSourceConnectorPo
         log.warn("Connector for {} not yet implemented — skipping", getSource());
     }
 
+    /**
+     * GET with exponential backoff + jitter, capped at 5s between attempts.
+     * Retries only transient failures (429, 5xx, I/O errors); other 4xx are
+     * permanent and rethrown immediately.
+     */
     protected String fetchWithRetry(String url, int maxRetries) {
         Exception last = null;
+        long delay = 500;
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                if (attempt > 0) Thread.sleep(1000L * attempt);
+                if (attempt > 0) {
+                    Thread.sleep(delay + (long) (Math.random() * 500));
+                    delay = Math.min(delay * 2, 5_000);
+                }
                 return restTemplate.getForObject(url, String.class);
+            } catch (org.springframework.web.client.HttpStatusCodeException e) {
+                int status = e.getStatusCode().value();
+                if (status != 429 && status < 500) {
+                    throw new RuntimeException("Non-retryable HTTP " + status + " for " + url, e);
+                }
+                last = e;
+                log.warn("Fetch attempt {} got HTTP {} for {}", attempt + 1, status, url);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted fetching " + url, ie);
             } catch (Exception e) {
                 last = e;
                 log.warn("Fetch attempt {} failed for {}: {}", attempt + 1, url, e.getMessage());
