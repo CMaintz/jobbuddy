@@ -81,6 +81,21 @@ export interface AnalyzeRequest {
   jobDescription?: string;
 }
 
+export interface SkillGap {
+  skill: string;
+  /** Roughly how many analyzed postings ask for it. */
+  demand: number;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  why?: string;
+  resources?: string[];
+}
+
+export interface SkillGapReport {
+  gaps: SkillGap[];
+  summary?: string;
+  jobsAnalyzed: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AiApiService {
   private http = inject(HttpClient);
@@ -119,6 +134,11 @@ export class AiApiService {
   /** Analyzes the master profile (no cvVersionId) against an optional job. */
   analyze(req: AnalyzeRequest): Observable<AnalysisResponse> {
     return this.http.post<AnalysisResponse>('/api/v1/ai/analyze', req);
+  }
+
+  /** Skill-gap heatmap across the pipeline + embedding-matched market jobs. */
+  analyzeSkillGaps(): Observable<SkillGapReport> {
+    return this.http.post<SkillGapReport>('/api/v1/ai/skill-gaps', {});
   }
 
   getDocuments(): Observable<any[]> {
