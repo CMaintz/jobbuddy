@@ -58,7 +58,8 @@ public class PromptCompositionBuilder {
             String motivationText,
             String targetLanguage,
             PromptTemplate styleTemplate,
-            WritingProfile writingProfile) {
+            WritingProfile writingProfile,
+            java.util.List<String> outcomeLessons) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write the document body in " + targetLanguage + "."
@@ -104,6 +105,7 @@ public class PromptCompositionBuilder {
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
+                + buildOutcomeLearnings(outcomeLessons)
                 + "\n\n" + HONESTY_RULES
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
@@ -133,7 +135,8 @@ public class PromptCompositionBuilder {
             String customInstructions,
             String targetLanguage,
             PromptTemplate styleTemplate,
-            WritingProfile writingProfile) {
+            WritingProfile writingProfile,
+            java.util.List<String> outcomeLessons) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write all rewritten text in " + targetLanguage + "."
@@ -168,6 +171,7 @@ public class PromptCompositionBuilder {
         String userPrompt = "Tailor the CV content from the contact-free master career profile below "
                 + "to best match the job description." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
+                + buildOutcomeLearnings(outcomeLessons)
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
@@ -196,6 +200,18 @@ public class PromptCompositionBuilder {
             gap visible rather than papering over it.
             - Mirror the posting's exact terminology for skills the profile genuinely supports (ATS \
             scanners match literal keywords), but never stuff keywords the profile cannot back up.""";
+
+    /**
+     * Lessons the user recorded on past application outcomes ("emphasise ML projects
+     * next time") — the calibration loop from rejections back into generation.
+     */
+    private static String buildOutcomeLearnings(java.util.List<String> lessons) {
+        if (lessons == null || lessons.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("\n\n## Learnings From Past Applications\n")
+                .append("The candidate recorded these takeaways from earlier application outcomes — apply them where relevant:\n");
+        lessons.stream().limit(5).forEach(l -> sb.append("- ").append(l.strip()).append('\n'));
+        return sb.toString().stripTrailing();
+    }
 
     private String buildStyleMemory(WritingProfile profile) {
         if (profile == null) return "";

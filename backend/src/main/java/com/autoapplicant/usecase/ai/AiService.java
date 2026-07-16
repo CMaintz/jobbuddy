@@ -10,6 +10,7 @@ import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
@@ -44,6 +45,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final CareerProfileContextService careerProfileContext;
     private final BuildApplicationDocumentPort buildApplicationDocument;
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
+    private final ApplicationRepositoryPort applicationRepo;
     private final ObjectMapper objectMapper;
 
     public AiService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
@@ -55,6 +57,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      CareerProfileContextService careerProfileContext,
                      BuildApplicationDocumentPort buildApplicationDocument,
                      PersistGeneratedDocumentPort persistGeneratedDocument,
+                     ApplicationRepositoryPort applicationRepo,
                      ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.jobRepo = jobRepo;
@@ -65,6 +68,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.careerProfileContext = careerProfileContext;
         this.buildApplicationDocument = buildApplicationDocument;
         this.persistGeneratedDocument = persistGeneratedDocument;
+        this.applicationRepo = applicationRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -242,7 +246,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                     documentType, contactFreeJson, jobDescription,
                     customInstructions, motivationText, targetLanguage, styleTemplate,
-                    writingProfileRepo.findByUserId(userId).orElse(null));
+                    writingProfileRepo.findByUserId(userId).orElse(null),
+                    applicationRepo.findRecentOutcomeLessons(userId, 5));
 
             String json = AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition)).trim());

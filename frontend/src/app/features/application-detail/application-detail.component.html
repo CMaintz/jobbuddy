@@ -67,6 +67,34 @@
             </div>
           }
 
+          <!-- Outcome — shown once the application is past the preparing stage -->
+          @if (showOutcome()) {
+            <div class="card p-[18px] mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-xs text-jb-text-dim tracking-widest uppercase">Outcome</div>
+                <span class="text-2xs text-jb-text-dim">{{ outcomeSaved() ? 'Saved' : '' }}</span>
+              </div>
+              <div class="text-xs text-jb-text-dim mb-2.5">
+                Lessons are fed into future AI generations — the calibration loop.
+              </div>
+              <div class="flex flex-col gap-2.5">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">Feedback received</span>
+                  <textarea [(ngModel)]="outcomeFeedback" rows="2" class="input resize-y text-sm leading-relaxed"
+                    placeholder="e.g. Strong technical fit, but they wanted more ML experience…"></textarea>
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">What to do differently next time</span>
+                  <textarea [(ngModel)]="outcomeLessons" rows="2" class="input resize-y text-sm leading-relaxed"
+                    placeholder="e.g. Emphasise ML projects earlier; keep the letter under 300 words…"></textarea>
+                </label>
+                <jb-button small class="self-end" [primary]="true" [disabled]="savingOutcome()" (clicked)="saveOutcome()">
+                  {{ savingOutcome() ? 'Saving…' : 'Save outcome' }}
+                </jb-button>
+              </div>
+            </div>
+          }
+
           <!-- Metadata -->
           <div class="card p-[18px]">
             <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">Details</div>

@@ -54,6 +54,12 @@ public class ApplicationEntity {
     @Column(columnDefinition = "text")
     private String notes;
 
+    @Column(name = "outcome_feedback", columnDefinition = "text")
+    private String outcomeFeedback;
+
+    @Column(name = "outcome_lessons", columnDefinition = "text")
+    private String outcomeLessons;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -93,6 +99,10 @@ public class ApplicationEntity {
     public void setMatchScore(Integer matchScore) { this.matchScore = matchScore; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getOutcomeFeedback() { return outcomeFeedback; }
+    public void setOutcomeFeedback(String outcomeFeedback) { this.outcomeFeedback = outcomeFeedback; }
+    public String getOutcomeLessons() { return outcomeLessons; }
+    public void setOutcomeLessons(String outcomeLessons) { this.outcomeLessons = outcomeLessons; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

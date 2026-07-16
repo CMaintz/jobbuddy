@@ -21,6 +21,8 @@ public record ApplicationResponse(
         String notes,
         Instant createdAt,
         Instant updatedAt,
+        String outcomeFeedback,
+        String outcomeLessons,
         String jobTitle,
         String jobCompanyName
 ) {
@@ -29,6 +31,7 @@ public record ApplicationResponse(
                 a.appliedAt(), a.recruiterName(), a.recruiterEmail(),
                 a.coverLetterText(), a.applicationText(), a.recruiterMessage(), a.recruiterReply(),
                 a.matchScore(), a.notes(), a.createdAt(), a.updatedAt(),
+                a.outcomeFeedback(), a.outcomeLessons(),
                 null, null);
     }
 
@@ -37,6 +40,7 @@ public record ApplicationResponse(
                 a.appliedAt(), a.recruiterName(), a.recruiterEmail(),
                 a.coverLetterText(), a.applicationText(), a.recruiterMessage(), a.recruiterReply(),
                 a.matchScore(), a.notes(), a.createdAt(), a.updatedAt(),
+                a.outcomeFeedback(), a.outcomeLessons(),
                 job != null ? job.title() : null,
                 job != null ? job.companyName() : null);
     }
