@@ -49,6 +49,11 @@ export class ApplicationsApiService {
     return this.http.patch<Application>(`${this.base}/${id}/recruiter`, data);
   }
 
+  /** Records outcome feedback + lessons; lessons feed future AI generations. */
+  updateOutcome(id: string, data: { outcomeFeedback?: string; outcomeLessons?: string }): Observable<Application> {
+    return this.http.patch<Application>(`${this.base}/${id}/outcome`, data);
+  }
+
   attachGeneratedDocument(
     applicationId: string,
     generatedDocumentId: string,

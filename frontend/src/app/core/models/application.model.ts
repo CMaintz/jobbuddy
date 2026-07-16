@@ -16,6 +16,10 @@ export interface Application {
   recruiterReply?: string;
   matchScore?: number;
   notes?: string;
+  /** Feedback received from the company (rejection reasons, interviewer comments). */
+  outcomeFeedback?: string;
+  /** What to do differently next time — feeds back into future generations. */
+  outcomeLessons?: string;
   jobTitle?: string;
   jobCompanyName?: string;
   createdAt: string;

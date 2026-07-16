@@ -21,7 +21,8 @@ import java.util.UUID;
 @Service
 public class ApplicationService implements
         CreateApplicationUseCase, UpdateApplicationStatusUseCase,
-        UpdateRecruiterInfoUseCase, GetApplicationsUseCase, GetApplicationByIdUseCase {
+        UpdateRecruiterInfoUseCase, UpdateOutcomeUseCase,
+        GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
     private final ResponseMetricRepositoryPort responseMetricRepo;
@@ -51,7 +52,8 @@ public class ApplicationService implements
         Application app = new Application(null, command.userId(), command.jobId(), status,
                 status == ApplicationStatus.APPLIED ? Instant.now() : null,
                 null, null, command.coverLetterText(), command.applicationText(), command.recruiterMessage(),
-                null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null);
+                null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null,
+                null, null);
         Application saved = repo.save(app);
         if (command.generatedDocumentId() != null) {
             structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
@@ -74,7 +76,8 @@ public class ApplicationService implements
                 withContent.coverLetterText(), withContent.applicationText(), withContent.recruiterMessage(),
                 withContent.recruiterReply(), withContent.cvVersionId(), withContent.promptTemplateId(), withContent.matchScore(),
                 notes != null ? notes : withContent.notes(),
-                withContent.createdAt(), Instant.now());
+                withContent.createdAt(), Instant.now(),
+                withContent.outcomeFeedback(), withContent.outcomeLessons());
         return repo.save(updated);
     }
 
@@ -100,7 +103,8 @@ public class ApplicationService implements
                 application.appliedAt(), application.recruiterName(), application.recruiterEmail(),
                 coverLetterText, applicationText, recruiterMessage,
                 application.recruiterReply(), application.cvVersionId(), application.promptTemplateId(), application.matchScore(),
-                application.notes(), application.createdAt(), application.updatedAt());
+                application.notes(), application.createdAt(), application.updatedAt(),
+                application.outcomeFeedback(), application.outcomeLessons());
     }
 
     @Override
@@ -120,7 +124,8 @@ public class ApplicationService implements
                 existing.coverLetterText(), existing.applicationText(), existing.recruiterMessage(),
                 existing.recruiterReply(), existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
                 notes != null ? notes : existing.notes(),
-                existing.createdAt(), java.time.Instant.now());
+                existing.createdAt(), java.time.Instant.now(),
+                existing.outcomeFeedback(), existing.outcomeLessons());
         Application saved = repo.save(updated);
 
         String eventType = switch (newStatus) {
@@ -155,7 +160,23 @@ public class ApplicationService implements
                 recruiterMessage != null ? recruiterMessage : existing.recruiterMessage(),
                 recruiterReply   != null ? recruiterReply   : existing.recruiterReply(),
                 existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
-                existing.notes(), existing.createdAt(), Instant.now());
+                existing.notes(), existing.createdAt(), Instant.now(),
+                existing.outcomeFeedback(), existing.outcomeLessons());
+        return repo.save(updated);
+    }
+
+    @Override
+    public Application updateOutcome(UUID applicationId, UUID userId, String outcomeFeedback, String outcomeLessons) {
+        Application existing = repo.findByIdAndUserId(applicationId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        Application updated = new Application(
+                existing.id(), existing.userId(), existing.jobId(), existing.status(),
+                existing.appliedAt(), existing.recruiterName(), existing.recruiterEmail(),
+                existing.coverLetterText(), existing.applicationText(), existing.recruiterMessage(),
+                existing.recruiterReply(), existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
+                existing.notes(), existing.createdAt(), Instant.now(),
+                outcomeFeedback != null ? outcomeFeedback : existing.outcomeFeedback(),
+                outcomeLessons  != null ? outcomeLessons  : existing.outcomeLessons());
         return repo.save(updated);
     }
 
