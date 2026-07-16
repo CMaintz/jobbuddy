@@ -102,10 +102,40 @@
                 <div class="ml-auto flex gap-2">
                   <jb-button small (clicked)="openApplication(app)">Open application</jb-button>
                   <jb-button small [primary]="true" icon="sparkle" [disabled]="generating()" (clicked)="generate()">
-                    {{ generating() ? 'Generating…' : questions().length > 0 ? 'More questions' : 'Generate prep questions' }}
+                    {{ generating() ? 'Generating… (up to a minute)' : questions().length > 0 ? 'Regenerate prep pack' : 'Generate prep pack' }}
                   </jb-button>
                 </div>
               </div>
+
+              <!-- Consistency brief: claims from the submitted documents to defend -->
+              @if (consistencyBrief().length) {
+                <div class="card p-3.5 mb-3">
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Consistency brief — claims you must be ready to defend</div>
+                  <div class="flex flex-col gap-1.5">
+                    @for (claim of consistencyBrief(); track claim) {
+                      <div class="flex items-start gap-2 text-sm">
+                        <jb-icon name="clipboard" [size]="12" class="text-jb-accent mt-0.5 flex-shrink-0" />
+                        <span class="text-jb-text-mid leading-relaxed">{{ claim }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Questions to ask the interviewer -->
+              @if (questionsToAsk().length) {
+                <div class="card p-3.5 mb-3">
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Questions to ask them</div>
+                  <div class="flex flex-col gap-1.5">
+                    @for (q of questionsToAsk(); track q) {
+                      <div class="flex items-start gap-2 text-sm">
+                        <jb-icon name="chat" [size]="12" class="text-jb-info mt-0.5 flex-shrink-0" />
+                        <span class="text-jb-text-mid leading-relaxed">{{ q }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
 
               @if (loadingQuestions()) {
                 <div class="p-8 text-center text-jb-text-dim">Loading questions…</div>
