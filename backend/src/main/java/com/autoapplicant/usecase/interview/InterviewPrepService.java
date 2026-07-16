@@ -1,12 +1,19 @@
 package com.autoapplicant.usecase.interview;
 
+import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.domain.interview.InterviewPrepPack;
 import com.autoapplicant.domain.interview.InterviewQuestion;
+import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.port.in.interview.GenerateInterviewPrepUseCase;
 import com.autoapplicant.port.in.interview.GenerateInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.ManageInterviewQuestionsUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
+import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.interview.InterviewQuestionRepositoryPort;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -18,7 +25,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class InterviewPrepService implements ManageInterviewQuestionsUseCase, GenerateInterviewQuestionsUseCase {
+public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
+        GenerateInterviewQuestionsUseCase, GenerateInterviewPrepUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(InterviewPrepService.class);
 
@@ -32,13 +40,22 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase, Ge
     private final InterviewQuestionRepositoryPort repo;
     private final AiProviderPort aiProvider;
     private final ObjectMapper objectMapper;
+    private final JobRepositoryPort jobRepo;
+    private final GeneratedDocumentRepositoryPort documentRepo;
+    private final CareerProfileContextService careerProfileContext;
 
     public InterviewPrepService(InterviewQuestionRepositoryPort repo,
                                 @Qualifier("generationAiProvider") AiProviderPort aiProvider,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper,
+                                JobRepositoryPort jobRepo,
+                                GeneratedDocumentRepositoryPort documentRepo,
+                                CareerProfileContextService careerProfileContext) {
         this.repo = repo;
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
+        this.jobRepo = jobRepo;
+        this.documentRepo = documentRepo;
+        this.careerProfileContext = careerProfileContext;
     }
 
     @Override
@@ -79,6 +96,88 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase, Ge
                     null, null)));
         }
         return saved;
+    }
+
+    @Override
+    public InterviewPrepPack generatePrepPack(UUID userId, UUID jobId) {
+        Job job = jobRepo.findById(jobId).orElseThrow(
+                () -> new IllegalArgumentException("Job not found"));
+        String jobDescription = job.descriptionClean() != null ? job.descriptionClean() : "";
+
+        // Documents actually generated for this job — source of the consistency brief
+        String sentDocuments = documentRepo.findByJobId(jobId).stream()
+                .filter(d -> d.userId().equals(userId) && d.content() != null && !d.content().isBlank())
+                .limit(3)
+                .map(d -> "### " + d.documentType() + "\n"
+                        + d.content().substring(0, Math.min(3000, d.content().length())))
+                .reduce("", (a, b) -> a + "\n\n" + b);
+
+        String profileJson = careerProfileContext.buildJson(userId);
+
+        String systemPrompt = """
+                You are an expert interview coach preparing a candidate for an interview.
+                Never invent experience the candidate does not have; where the profile shows a gap
+                against the posting, prepare the candidate to address it honestly.
+                Return ONLY valid JSON — no markdown, no commentary.""";
+
+        String userPrompt = """
+                Build an interview prep pack.
+
+                Return only valid JSON in exactly this shape:
+                {
+                  "questions": [{"question": "...", "category": "BEHAVIORAL|TECHNICAL|SITUATIONAL|COMPANY"}],
+                  "consistencyBrief": ["<a claim made in the candidate's submitted documents they must be ready to defend — quote or paraphrase it>"],
+                  "questionsToAsk": ["<a sharp question the candidate should ask the interviewer>"]
+                }
+                Give 8-10 questions targeting the posting's requirements and the candidate's weakest
+                coverage of them; 3-6 consistency-brief entries (omit the field's entries if no documents
+                are provided); and 4-6 questions to ask.
+
+                ## Job (%s at %s)
+                %s
+
+                ## Candidate profile (contact-free)
+                %s
+                %s""".formatted(
+                job.title(), job.companyName() != null ? job.companyName() : "unknown company",
+                jobDescription,
+                profileJson,
+                sentDocuments.isBlank() ? "" : "\n## Documents the candidate submitted\n" + sentDocuments);
+
+        PromptComposition composition = new PromptComposition(
+                systemPrompt, userPrompt, "", "", "", "", userPrompt);
+        JsonNode root;
+        try {
+            String cleaned = aiProvider.generateJson(composition).trim();
+            if (cleaned.startsWith("```")) {
+                cleaned = cleaned.replaceAll("```[a-z]*\\n?", "").replace("```", "").trim();
+            }
+            root = objectMapper.readTree(cleaned);
+        } catch (Exception e) {
+            log.warn("Prep pack generation failed for job {}: {}", jobId, e.getMessage());
+            throw new IllegalStateException("Prep pack generation failed", e);
+        }
+
+        List<InterviewQuestion> saved = new ArrayList<>();
+        int order = repo.findByJobIdAndUserId(jobId, userId).size();
+        for (JsonNode node : root.path("questions")) {
+            String question = node.path("question").asText(null);
+            if (question == null || question.isBlank()) continue;
+            saved.add(repo.save(new InterviewQuestion(null, jobId, userId,
+                    question, node.path("category").asText("BEHAVIORAL"),
+                    null, false, order++, null, null)));
+        }
+
+        return new InterviewPrepPack(saved, textList(root, "consistencyBrief"), textList(root, "questionsToAsk"));
+    }
+
+    private static List<String> textList(JsonNode root, String field) {
+        List<String> out = new ArrayList<>();
+        root.path(field).forEach(n -> {
+            String text = n.asText(null);
+            if (text != null && !text.isBlank()) out.add(text);
+        });
+        return out;
     }
 
     private List<InterviewQuestion> parseQuestions(String json, UUID jobId, UUID userId) {

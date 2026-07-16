@@ -11,7 +11,6 @@ import { CompanyMarkComponent } from '../../shared/components/company-mark/compa
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { InterviewPrepApiService, InterviewQuestion } from '../../core/api/interview-prep.api';
-import { JobsApiService } from '../../core/api/jobs.api';
 import { RemindersApiService } from '../../core/api/reminders.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
@@ -35,7 +34,6 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
 export class InterviewsComponent implements OnInit {
   private appsApi = inject(ApplicationsApiService);
   private prepApi = inject(InterviewPrepApiService);
-  private jobsApi = inject(JobsApiService);
   private remindersApi = inject(RemindersApiService);
   private router = inject(Router);
 
@@ -45,6 +43,9 @@ export class InterviewsComponent implements OnInit {
   selected = signal<Application | null>(null);
   questions = signal<InterviewQuestion[]>([]);
   loadingQuestions = signal(false);
+  /** Prep-pack extras — transient, refreshed on each generation. */
+  consistencyBrief = signal<string[]>([]);
+  questionsToAsk = signal<string[]>([]);
   generating = signal(false);
   expandedQuestion = signal<string | null>(null);
 
@@ -177,6 +178,8 @@ export class InterviewsComponent implements OnInit {
   select(app: Application): void {
     this.selected.set(app);
     this.questions.set([]);
+    this.consistencyBrief.set([]);
+    this.questionsToAsk.set([]);
     this.loadingQuestions.set(true);
     this.prepApi.getQuestions(app.jobId).subscribe({
       next: qs => {
@@ -187,27 +190,24 @@ export class InterviewsComponent implements OnInit {
     });
   }
 
+  /**
+   * Full prep pack: gap-targeted questions (persisted, appended to the list),
+   * a consistency brief from the submitted documents, and questions to ask.
+   */
   generate(): void {
     const app = this.selected();
     if (!app || this.generating()) return;
     this.generating.set(true);
-    // Prep generation needs the JD — fetch the job first
-    this.jobsApi.getById(app.jobId).subscribe({
-      next: job => {
-        this.prepApi.generateQuestions(app.jobId, job.descriptionClean ?? job.title, 10).subscribe({
-          next: qs => {
-            this.questions.set(qs);
-            this.generating.set(false);
-          },
-          error: () => {
-            this.generating.set(false);
-            this.toast.set('Question generation failed — try again');
-          }
-        });
+    this.prepApi.generatePrepPack(app.jobId).subscribe({
+      next: pack => {
+        this.questions.update(qs => [...qs, ...pack.questions]);
+        this.consistencyBrief.set(pack.consistencyBrief ?? []);
+        this.questionsToAsk.set(pack.questionsToAsk ?? []);
+        this.generating.set(false);
       },
       error: () => {
         this.generating.set(false);
-        this.toast.set('Could not load the job description');
+        this.toast.set('Prep pack generation failed — try again');
       }
     });
   }

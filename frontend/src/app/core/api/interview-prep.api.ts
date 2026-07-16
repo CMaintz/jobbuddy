@@ -15,6 +15,13 @@ export interface InterviewQuestion {
   updatedAt: string;
 }
 
+export interface InterviewPrepPack {
+  questions: InterviewQuestion[];
+  /** Claims from the submitted documents the candidate must be ready to defend. */
+  consistencyBrief: string[];
+  questionsToAsk: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class InterviewPrepApiService {
   private http = inject(HttpClient);
@@ -32,6 +39,11 @@ export class InterviewPrepApiService {
       jobDescription,
       count,
     });
+  }
+
+  /** Full prep pack: gap-targeted questions (persisted) + consistency brief + questions to ask. */
+  generatePrepPack(jobId: string): Observable<InterviewPrepPack> {
+    return this.http.post<InterviewPrepPack>(`/api/v1/jobs/${jobId}/interview-prep/pack`, {});
   }
 
   updateQuestion(jobId: string, questionId: string, patch: Partial<InterviewQuestion>): Observable<InterviewQuestion> {
