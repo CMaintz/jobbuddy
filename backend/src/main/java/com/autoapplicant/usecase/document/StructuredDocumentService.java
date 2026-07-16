@@ -11,6 +11,7 @@ import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
@@ -42,6 +43,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final CvDocumentAssembler cvAssembler;
     private final TailoredCvGenerator tailoredCvGenerator;
     private final AtsReportBuilder atsReportBuilder;
+    private final ApplicationRepositoryPort applicationRepo;
 
     public StructuredDocumentService(UserRepositoryPort userRepo,
                                      ProfileRepositoryPort profileRepo,
@@ -53,7 +55,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      CareerProfileContextService careerProfileContext,
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
-                                     AtsReportBuilder atsReportBuilder) {
+                                     AtsReportBuilder atsReportBuilder,
+                                     ApplicationRepositoryPort applicationRepo) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.privateInfoRepo = privateInfoRepo;
@@ -65,6 +68,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.cvAssembler = cvAssembler;
         this.tailoredCvGenerator = tailoredCvGenerator;
         this.atsReportBuilder = atsReportBuilder;
+        this.applicationRepo = applicationRepo;
     }
 
     public StructuredDocument buildCv(UUID userId, String templateId) {
@@ -173,7 +177,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
                 source, jobDescription, customInstructions, targetLanguage, promptTemplate,
-                writingProfileRepo.findByUserId(userId).orElse(null));
+                writingProfileRepo.findByUserId(userId).orElse(null),
+                applicationRepo.findRecentOutcomeLessons(userId, 5));
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
                 showProfileImage, resolveTheme(theme));

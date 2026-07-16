@@ -202,7 +202,7 @@ class ApplicationServiceTest {
         return new Application(id, userId, jobId, status, appliedAt,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now());
+                Instant.now(), Instant.now(), null, null);
     }
 
     private Application applicationWithNotes(UUID id, UUID userId, UUID jobId,
@@ -210,6 +210,6 @@ class ApplicationServiceTest {
         return new Application(id, userId, jobId, status, null,
                 null, null, null, null, null,
                 null, null, null, null, notes,
-                Instant.now(), Instant.now());
+                Instant.now(), Instant.now(), null, null);
     }
 }

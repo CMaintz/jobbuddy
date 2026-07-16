@@ -32,6 +32,7 @@ public class ApplicationController {
     private final CreateApplicationUseCase create;
     private final UpdateApplicationStatusUseCase updateStatus;
     private final UpdateRecruiterInfoUseCase updateRecruiter;
+    private final UpdateOutcomeUseCase updateOutcome;
     private final GetApplicationsUseCase getAll;
     private final GetApplicationByIdUseCase getById;
     private final GetJobByIdUseCase getJobById;
@@ -41,6 +42,7 @@ public class ApplicationController {
     public ApplicationController(CreateApplicationUseCase create,
                                   UpdateApplicationStatusUseCase updateStatus,
                                   UpdateRecruiterInfoUseCase updateRecruiter,
+                                  UpdateOutcomeUseCase updateOutcome,
                                   GetApplicationsUseCase getAll,
                                   GetApplicationByIdUseCase getById,
                                   GetJobByIdUseCase getJobById,
@@ -49,6 +51,7 @@ public class ApplicationController {
         this.create = create;
         this.updateStatus = updateStatus;
         this.updateRecruiter = updateRecruiter;
+        this.updateOutcome = updateOutcome;
         this.getAll = getAll;
         this.getById = getById;
         this.getJobById = getJobById;
@@ -138,6 +141,16 @@ public class ApplicationController {
         var updated = updateRecruiter.updateRecruiterInfo(id, userId,
                 req.recruiterName(), req.recruiterEmail(),
                 req.recruiterMessage(), req.recruiterReply());
+        return ResponseEntity.ok(ApplicationResponse.from(updated));
+    }
+
+    @Operation(summary = "Record application outcome (feedback received, lessons for next time)")
+    @PatchMapping("/{id}/outcome")
+    public ResponseEntity<ApplicationResponse> updateOutcome(
+            @PathVariable UUID id,
+            @RequestBody UpdateOutcomeRequest req) {
+        UUID userId = secCtx.getCurrentUserId();
+        var updated = updateOutcome.updateOutcome(id, userId, req.outcomeFeedback(), req.outcomeLessons());
         return ResponseEntity.ok(ApplicationResponse.from(updated));
     }
 

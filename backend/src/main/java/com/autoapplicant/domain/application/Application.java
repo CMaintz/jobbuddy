@@ -20,5 +20,9 @@ public record Application(
         Integer matchScore,
         String notes,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        /** Feedback received from the company (rejection reasons, interviewer comments). */
+        String outcomeFeedback,
+        /** What to do differently next time — fed back into future generations. */
+        String outcomeLessons
 ) {}
