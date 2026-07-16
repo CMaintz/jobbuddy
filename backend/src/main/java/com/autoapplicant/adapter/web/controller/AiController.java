@@ -14,12 +14,14 @@ import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
 import com.autoapplicant.domain.ai.ReviewDocumentRequest;
 import com.autoapplicant.domain.ai.ReviewDocumentResult;
+import com.autoapplicant.domain.ai.SkillGapReport;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.GetAiUsageUseCase;
+import com.autoapplicant.port.in.ai.AnalyzeSkillGapsUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
@@ -48,6 +50,7 @@ public class AiController {
     private final ParseCvUseCase parseCv;
     private final RefineDocumentUseCase refine;
     private final ReviewDocumentUseCase reviewDocument;
+    private final AnalyzeSkillGapsUseCase skillGaps;
     private final GenerateDocumentUseCase generateDocument;
     private final GetCvRenderModelUseCase cvRenderModel;
     private final GenerateTailoredCvUseCase generateTailoredCv;
@@ -59,6 +62,7 @@ public class AiController {
                         ParseCvUseCase parseCv,
                         RefineDocumentUseCase refine,
                         ReviewDocumentUseCase reviewDocument,
+                        AnalyzeSkillGapsUseCase skillGaps,
                         GenerateDocumentUseCase generateDocument,
                         GetCvRenderModelUseCase cvRenderModel,
                         GenerateTailoredCvUseCase generateTailoredCv,
@@ -69,6 +73,7 @@ public class AiController {
         this.parseCv = parseCv;
         this.refine = refine;
         this.reviewDocument = reviewDocument;
+        this.skillGaps = skillGaps;
         this.generateDocument = generateDocument;
         this.cvRenderModel = cvRenderModel;
         this.generateTailoredCv = generateTailoredCv;
@@ -181,6 +186,21 @@ public class AiController {
                 userId, req.currentContent(), req.userMessage(),
                 req.jobDescription(), req.targetLanguage());
         refine.refine(request)
+                .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
+                .exceptionally(e -> {
+                    result.setErrorResult(e);
+                    return null;
+                });
+        return result;
+    }
+
+    @Operation(summary = "Skill-gap heatmap across the user's pipeline + matched market jobs")
+    @PostMapping("/skill-gaps")
+    public DeferredResult<ResponseEntity<SkillGapReport>> skillGaps() {
+        DeferredResult<ResponseEntity<SkillGapReport>> result = new DeferredResult<>(90_000L);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body("Skill-gap analysis timed out. Please try again.")));
+        skillGaps.analyzeSkillGaps(secCtx.getCurrentUserId())
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);
