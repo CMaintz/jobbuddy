@@ -1,7 +1,9 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.domain.interview.InterviewPrepPack;
 import com.autoapplicant.domain.interview.InterviewQuestion;
+import com.autoapplicant.port.in.interview.GenerateInterviewPrepUseCase;
 import com.autoapplicant.port.in.interview.GenerateInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.ManageInterviewQuestionsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,13 +27,16 @@ public class InterviewPrepController {
 
     private final ManageInterviewQuestionsUseCase manage;
     private final GenerateInterviewQuestionsUseCase generate;
+    private final GenerateInterviewPrepUseCase generatePrep;
     private final SecurityContextHelper secCtx;
 
     public InterviewPrepController(ManageInterviewQuestionsUseCase manage,
                                    GenerateInterviewQuestionsUseCase generate,
+                                   GenerateInterviewPrepUseCase generatePrep,
                                    SecurityContextHelper secCtx) {
         this.manage = manage;
         this.generate = generate;
+        this.generatePrep = generatePrep;
         this.secCtx = secCtx;
     }
 
@@ -65,6 +70,14 @@ public class InterviewPrepController {
                 req.count() > 0 ? req.count() : 10);
         return ResponseEntity.created(URI.create("/api/v1/jobs/" + jobId + "/interview-prep"))
                 .body(questions);
+    }
+
+    @Operation(summary = "Generate a full prep pack: gap-targeted questions, consistency brief, questions to ask")
+    @ApiResponse(responseCode = "201", description = "Prep pack generated")
+    @PostMapping("/pack")
+    public ResponseEntity<InterviewPrepPack> generatePack(@PathVariable UUID jobId) {
+        InterviewPrepPack pack = generatePrep.generatePrepPack(secCtx.getCurrentUserId(), jobId);
+        return ResponseEntity.created(URI.create("/api/v1/jobs/" + jobId + "/interview-prep")).body(pack);
     }
 
     @Operation(summary = "Update an interview question (save STAR answer, mark practiced)")
