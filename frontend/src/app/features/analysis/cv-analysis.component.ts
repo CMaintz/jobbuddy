@@ -9,7 +9,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
-import { AiApiService, AnalysisDimensions, AnalysisResponse } from '../../core/api/ai.api';
+import { AiApiService, AnalysisDimensions, AnalysisResponse, SkillGapReport } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 
@@ -32,9 +32,10 @@ export class CvAnalysisComponent implements OnInit {
   toast = signal('');
   analyzing = signal(false);
   result = signal<AnalysisResponse | null>(null);
+  gapReport = signal<SkillGapReport | null>(null);
 
   /** 'general' judges the master CV on its own; a job id or pasted JD makes it job-aware. */
-  target = signal<'general' | 'job' | 'paste'>('general');
+  target = signal<'general' | 'job' | 'paste' | 'pipeline'>('general');
   selectedJobId = '';
   pastedJd = '';
   jobOptions: JobOption[] = [];
@@ -43,6 +44,7 @@ export class CvAnalysisComponent implements OnInit {
     { key: 'general' as const, label: 'General strength', hint: 'Clarity, achievements, ATS readiness' },
     { key: 'job' as const, label: 'Against a job', hint: 'Pick from saved roles & applications' },
     { key: 'paste' as const, label: 'Against a pasted JD', hint: 'Paste any job description' },
+    { key: 'pipeline' as const, label: 'Across my pipeline', hint: 'Skill gaps vs saved, applied & matched roles' },
   ];
 
   ngOnInit(): void {
@@ -79,6 +81,22 @@ export class CvAnalysisComponent implements OnInit {
     if (!this.canAnalyze()) return;
     this.analyzing.set(true);
     this.result.set(null);
+    this.gapReport.set(null);
+
+    if (this.target() === 'pipeline') {
+      this.aiApi.analyzeSkillGaps().subscribe({
+        next: report => {
+          this.analyzing.set(false);
+          this.gapReport.set(report);
+        },
+        error: () => {
+          this.analyzing.set(false);
+          this.toast.set('Skill-gap analysis failed — try again');
+        }
+      });
+      return;
+    }
+
     this.aiApi.analyze({
       jobId: this.target() === 'job' ? this.selectedJobId : undefined,
       jobDescription: this.target() === 'paste' ? this.pastedJd.trim() : undefined,
@@ -96,6 +114,16 @@ export class CvAnalysisComponent implements OnInit {
 
   scoreColor(score: number): string {
     return score >= 75 ? 'var(--jb-success)' : score >= 50 ? 'var(--jb-accent-2)' : 'var(--jb-danger)';
+  }
+
+  gapTone(priority: string): 'danger' | 'accent' | 'neutral' {
+    return priority === 'HIGH' ? 'danger' : priority === 'MEDIUM' ? 'accent' : 'neutral';
+  }
+
+  /** Bar length relative to the most-demanded gap in the report. */
+  gapWidth(report: SkillGapReport, gap: { demand: number }): number {
+    const max = Math.max(...report.gaps.map(g => g.demand), 1);
+    return Math.round((gap.demand / max) * 100);
   }
 
   /** Weights match the server-side overall: 30/25/15/30; location is a veto, shown separately. */
