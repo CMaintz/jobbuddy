@@ -132,11 +132,34 @@ public class JobnetConnector extends AbstractJobSourceConnector {
         String label = detail.path("job").path("preferredLabelDa").asText(null);
         if (label != null && !label.isBlank() && !categories.contains(label)) categories.add(label);
 
+        Instant postedAt = parsePostedAt(detail.path("publicationDateTime")
+                .asText(searchAd.path("publicationDate").asText(null)));
+
         config.onJobFound().accept(new RawJobData(
                 JobSource.JOBNET, id, String.format(PUBLIC_URL, id),
                 html.toString(), detailJson, Instant.now(),
                 categories, shortDescription(body), deadline,
-                employer.isBlank() ? null : employer, null));
+                employer.isBlank() ? null : employer, null,
+                city.isBlank() ? null : city, postedAt));
+    }
+
+    /** ISO datetime with or without offset → Instant; date-only strings land at start of day UTC. */
+    private static Instant parsePostedAt(String raw) {
+        if (raw == null || raw.length() < 10) return null;
+        try {
+            return java.time.OffsetDateTime.parse(raw).toInstant();
+        } catch (Exception ignored) {
+            try {
+                return java.time.LocalDateTime.parse(raw).toInstant(java.time.ZoneOffset.UTC);
+            } catch (Exception ignored2) {
+                try {
+                    return LocalDate.parse(raw.substring(0, 10))
+                            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+                } catch (Exception ignored3) {
+                    return null;
+                }
+            }
+        }
     }
 
     /** Detail deadline wins over the search-card one; both are ISO date or datetime strings. */
