@@ -50,6 +50,7 @@ export class JobDetailsComponent implements OnInit {
   notesStatus = signal('');
   saved = signal(false);
   reportedInactive = signal(false);
+  similarJobs = signal<Job[]>([]);
   private note: Note | null = null;
   tab = signal<'jd' | 'activity' | 'notes'>('jd');
   mobileShowRail = signal(false);
@@ -92,7 +93,24 @@ export class JobDetailsComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) { this.loading = false; return; }
+    this.load(id);
+  }
 
+  /** Navigating between jobs reuses this component — reset and reload manually. */
+  openSimilar(id: string): void {
+    this.router.navigate(['/jobs', id]);
+    this.loading = true;
+    this.job = null;
+    this.application = null;
+    this.documents = [];
+    this.similarJobs.set([]);
+    this.note = null;
+    this.notesText = '';
+    this.tab.set('jd');
+    this.load(id);
+  }
+
+  private load(id: string): void {
     // Try loading as a job first
     this.jobsApi.getById(id).subscribe({
       next: (job) => {
@@ -156,6 +174,10 @@ export class JobDetailsComponent implements OnInit {
     this.jobsApi.getSaved().subscribe({
       next: saved => this.saved.set(saved.some(j => j.id === jobId)),
       error: () => {}
+    });
+    this.jobsApi.getSimilar(jobId, 5).subscribe({
+      next: jobs => this.similarJobs.set(jobs),
+      error: () => {} // panel simply stays hidden
     });
     this.notesApi.getForJob(jobId).subscribe({
       next: notes => {
