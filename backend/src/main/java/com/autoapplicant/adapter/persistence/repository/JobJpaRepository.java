@@ -48,4 +48,11 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
             ORDER BY j.lastUrlCheckAt ASC NULLS FIRST
             """)
     List<JobEntity> findUrlCheckCandidates(@Param("recheckCutoff") Instant recheckCutoff, Pageable pageable);
+
+    @Query("SELECT j.id FROM JobEntity j WHERE j.isActive = true AND j.applicationDeadline < :before")
+    List<UUID> findActiveWithDeadlineBefore(@Param("before") java.time.LocalDate before);
+
+    @Modifying
+    @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.applicationDeadline < :before")
+    int deactivateDeadlineExpired(@Param("before") java.time.LocalDate before);
 }
