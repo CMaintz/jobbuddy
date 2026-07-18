@@ -108,6 +108,13 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public List<UUID> deactivateDeadlineExpiredJobs(java.time.LocalDate before) {
+        List<UUID> ids = repo.findActiveWithDeadlineBefore(before);
+        if (!ids.isEmpty()) repo.deactivateDeadlineExpired(before);
+        return ids;
+    }
+
+    @Override
     public void markUrlAlive(UUID jobId) {
         repo.findById(jobId).ifPresent(e -> {
             e.setUrlCheckFailures(0);
