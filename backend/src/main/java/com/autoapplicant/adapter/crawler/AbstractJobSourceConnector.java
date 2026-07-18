@@ -55,6 +55,38 @@ public abstract class AbstractJobSourceConnector implements JobSourceConnectorPo
         throw new RuntimeException("All retries exhausted for " + url, last);
     }
 
+    /** JSON POST with the same backoff semantics as {@link #fetchWithRetry}. */
+    protected String postJsonWithRetry(String url, String jsonBody, int maxRetries) {
+        Exception last = null;
+        long delay = 500;
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                if (attempt > 0) {
+                    Thread.sleep(delay + (long) (Math.random() * 500));
+                    delay = Math.min(delay * 2, 5_000);
+                }
+                var headers = new org.springframework.http.HttpHeaders();
+                headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+                return restTemplate.postForObject(url,
+                        new org.springframework.http.HttpEntity<>(jsonBody, headers), String.class);
+            } catch (org.springframework.web.client.HttpStatusCodeException e) {
+                int status = e.getStatusCode().value();
+                if (status != 429 && status < 500) {
+                    throw new RuntimeException("Non-retryable HTTP " + status + " for " + url, e);
+                }
+                last = e;
+                log.warn("POST attempt {} got HTTP {} for {}", attempt + 1, status, url);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted posting to " + url, ie);
+            } catch (Exception e) {
+                last = e;
+                log.warn("POST attempt {} failed for {}: {}", attempt + 1, url, e.getMessage());
+            }
+        }
+        throw new RuntimeException("All retries exhausted for " + url, last);
+    }
+
     protected Document parseHtml(String html) {
         return Jsoup.parse(html);
     }
