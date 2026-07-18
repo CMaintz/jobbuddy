@@ -37,6 +37,11 @@ export class JobsApiService {
     return this.http.get<Job[]>(`${this.base}/${id}/similar`, { params: { limit } });
   }
 
+  /** Semantic search: query is embedded and ranked by vector distance. */
+  searchSemantic(q: string, limit = 30): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.base}/search/semantic`, { params: { q, limit } });
+  }
+
   getRecommendations(limit = 10): Observable<MatchResult[]> {
     return this.http.get<MatchResult[]>(`${this.base}/recommendations`, { params: { limit } });
   }

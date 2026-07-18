@@ -57,6 +57,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   locationFilter = 'all';
   hideExpired = false;
   sortBy: 'match' | 'newest' | 'deadline' = 'match';
+  /** true = embed the query and rank by meaning; false = Typesense keyword search. */
+  semanticMode = false;
   activeSources = new Set<string>();
   sourceFilters: string[] = [];
   activeSeniorities = new Set<string>();
@@ -123,6 +125,21 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       return;
     }
     this.loading.set(true);
+    if (this.semanticMode) {
+      this.jobsApi.searchSemantic(q, 30).subscribe({
+        next: jobs => {
+          this.feedRows.set(jobs.map(j => this.jobToRow(j)));
+          this.refreshSourceFilters();
+          this.searchMode.set(true);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.toast.set('Semantic search failed');
+        }
+      });
+      return;
+    }
     this.jobsApi.search(q, 0, 30).subscribe({
       next: result => {
         this.feedRows.set((result.jobs ?? []).map(j => this.jobToRow(j)));
@@ -135,6 +152,11 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         this.toast.set('Search failed');
       }
     });
+  }
+
+  toggleSemanticMode(): void {
+    this.semanticMode = !this.semanticMode;
+    if (this.query.trim()) this.runSearch(this.query.trim());
   }
 
   private matchToRow(r: MatchResult): FeedRow {
