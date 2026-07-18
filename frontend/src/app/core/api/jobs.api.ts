@@ -32,6 +32,11 @@ export class JobsApiService {
     return this.http.get<Job>(`${this.base}/${id}`);
   }
 
+  /** Semantically similar active jobs (embedding nearest-neighbors). */
+  getSimilar(id: string, limit = 5): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.base}/${id}/similar`, { params: { limit } });
+  }
+
   getRecommendations(limit = 10): Observable<MatchResult[]> {
     return this.http.get<MatchResult[]>(`${this.base}/recommendations`, { params: { limit } });
   }

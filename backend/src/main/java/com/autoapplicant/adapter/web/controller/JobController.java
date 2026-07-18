@@ -51,6 +51,7 @@ public class JobController {
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
     private final GetDocumentsForJobUseCase getDocsForJob;
     private final ReportJobInactiveUseCase reportJobInactive;
+    private final GetSimilarJobsUseCase getSimilarJobs;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
@@ -61,6 +62,7 @@ public class JobController {
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          GetDocumentsForJobUseCase getDocsForJob,
                          ReportJobInactiveUseCase reportJobInactive,
+                         GetSimilarJobsUseCase getSimilarJobs,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -74,6 +76,7 @@ public class JobController {
         this.feedbackUseCase = feedbackUseCase;
         this.getDocsForJob = getDocsForJob;
         this.reportJobInactive = reportJobInactive;
+        this.getSimilarJobs = getSimilarJobs;
         this.secCtx = secCtx;
     }
 
@@ -194,6 +197,15 @@ public class JobController {
         return getJobById.lookupByUrl(url)
                 .map(job -> ResponseEntity.ok(JobResponse.from(job)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Semantically similar active jobs (embedding nearest-neighbors)")
+    @GetMapping("/{id}/similar")
+    public ResponseEntity<List<JobResponse>> similar(@PathVariable UUID id,
+                                                     @RequestParam(defaultValue = "5") int limit) {
+        List<JobResponse> result = getSimilarJobs.getSimilarJobs(id, Math.min(Math.max(limit, 1), 20))
+                .stream().map(JobResponse::from).toList();
+        return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Add job manually")
