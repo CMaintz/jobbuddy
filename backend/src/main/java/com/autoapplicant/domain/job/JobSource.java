@@ -13,5 +13,6 @@ public enum JobSource {
     TEAMTAILOR,
     CORNERSTONE_ONDEMAND,
     JOBNET,
+    JOBDANMARK,
     MANUAL
 }
