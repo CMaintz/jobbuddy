@@ -84,9 +84,9 @@ public class IngestionPipeline {
 
             Job draft = new Job(null, raw.source(), raw.sourceJobId(), raw.url(),
                     title, companyId, raw.companyName(), raw.rawHtml(), cleanText,
-                    null, null, null, null, null, null, "DK",
+                    null, null, null, raw.location(), null, null, "DK",
                     null, null, "DKK", List.of(), List.of(), List.of(),
-                    null, raw.scrapedAt(), null, List.of(), null, null,
+                    raw.postedAt(), raw.scrapedAt(), null, List.of(), null, null,
                     true, category, null, null, raw.shortDescription(), Instant.now(),
                     raw.applicationDeadline());
 

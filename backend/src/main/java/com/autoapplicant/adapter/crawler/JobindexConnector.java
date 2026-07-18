@@ -264,7 +264,9 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                         null, Instant.now(), rssCategories, shortDescription,
                         meta != null ? meta.deadline() : null,
                         meta != null ? meta.companyName() : null,
-                        meta != null ? meta.companyHomeUrl() : null));
+                        meta != null ? meta.companyHomeUrl() : null,
+                        meta != null ? meta.area() : null,
+                        meta != null ? meta.firstDate() : null));
                 totalCount++;
                 newOnPage++;
             }
@@ -324,7 +326,8 @@ public class JobindexConnector extends AbstractJobSourceConnector {
     // structured fields the RSS feeds lack: apply_deadline, company.homeurl.
     // (Technique ported from ai-job-search-master's jobindex CLI.)
 
-    record StashMeta(LocalDate deadline, String companyName, String companyHomeUrl) {}
+    record StashMeta(LocalDate deadline, String companyName, String companyHomeUrl,
+                     String area, Instant firstDate) {}
 
     private static final String SEARCH_PAGE = "https://www.jobindex.dk/jobsoegning?page=";
     private static final Pattern TID_PATTERN = Pattern.compile("/jobannonce/([^/?#]+)");
@@ -354,7 +357,11 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                             parseStashDeadline(r),
                             firstNonBlank(r.path("company").path("name").asText(null),
                                     r.path("companytext").asText(null)),
-                            r.path("company").path("homeurl").asText(null)));
+                            r.path("company").path("homeurl").asText(null),
+                            firstNonBlank(r.path("area").asText(null),
+                                    r.path("geojson").path("features").path(0)
+                                            .path("properties").path("title").asText(null)),
+                            parseStashDate(r.path("firstdate").asText(null))));
                 }
             } catch (Exception e) {
                 log.warn("Jobindex: stash metadata page {} failed: {} — continuing without", page, e.getMessage());
@@ -375,6 +382,16 @@ public class JobindexConnector extends AbstractJobSourceConnector {
             }
         }
         return null;
+    }
+
+    /** "YYYY-MM-DD…" → Instant at start of day (Copenhagen would over-specify; UTC is fine for a date). */
+    private static Instant parseStashDate(String raw) {
+        if (raw == null || raw.length() < 10) return null;
+        try {
+            return LocalDate.parse(raw.substring(0, 10)).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static String firstNonBlank(String a, String b) {
