@@ -2,10 +2,18 @@
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-shrink-0 gap-3">
       <div class="font-medium text-md">Job feed</div>
       <jb-pill tone="accent">{{ filteredJobs().length }} {{ searchMode() ? 'results' : 'matches' }}</jb-pill>
-      <div class="hidden sm:flex flex-1 max-w-[300px] items-center gap-2 py-[5px] px-2.5 ml-3 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
+      <div class="hidden sm:flex flex-1 max-w-[340px] items-center gap-2 py-[5px] px-2.5 ml-3 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
         <jb-icon name="search" [size]="12" />
-        <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)" placeholder="Company, role, or keywords…"
+        <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)"
+          [placeholder]="semanticMode ? 'Describe the role you want…' : 'Company, role, or keywords…'"
           class="border-none bg-none outline-none text-jb-text text-sm flex-1" />
+        <button (click)="toggleSemanticMode()" title="Toggle semantic search — rank by meaning instead of keywords"
+          class="flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer text-2xs border"
+          [style.background]="semanticMode ? 'var(--jb-accent-soft)' : 'transparent'"
+          [style.border-color]="semanticMode ? 'var(--jb-accent-border)' : 'var(--jb-border)'"
+          [style.color]="semanticMode ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
+          <jb-icon name="sparkle" [size]="10" /> meaning
+        </button>
       </div>
       <div class="ml-auto flex gap-2 items-center">
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
