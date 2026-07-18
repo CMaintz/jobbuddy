@@ -52,6 +52,7 @@ public class JobController {
     private final GetDocumentsForJobUseCase getDocsForJob;
     private final ReportJobInactiveUseCase reportJobInactive;
     private final GetSimilarJobsUseCase getSimilarJobs;
+    private final SemanticSearchJobsUseCase semanticSearch;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
@@ -63,6 +64,7 @@ public class JobController {
                          GetDocumentsForJobUseCase getDocsForJob,
                          ReportJobInactiveUseCase reportJobInactive,
                          GetSimilarJobsUseCase getSimilarJobs,
+                         SemanticSearchJobsUseCase semanticSearch,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -77,6 +79,7 @@ public class JobController {
         this.getDocsForJob = getDocsForJob;
         this.reportJobInactive = reportJobInactive;
         this.getSimilarJobs = getSimilarJobs;
+        this.semanticSearch = semanticSearch;
         this.secCtx = secCtx;
     }
 
@@ -197,6 +200,15 @@ public class JobController {
         return getJobById.lookupByUrl(url)
                 .map(job -> ResponseEntity.ok(JobResponse.from(job)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Semantic job search — embeds the query and ranks by vector distance")
+    @GetMapping("/search/semantic")
+    public ResponseEntity<List<JobResponse>> searchSemantic(@RequestParam String q,
+                                                            @RequestParam(defaultValue = "30") int limit) {
+        List<JobResponse> result = semanticSearch.semanticSearch(q, Math.min(Math.max(limit, 1), 100))
+                .stream().map(JobResponse::from).toList();
+        return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Semantically similar active jobs (embedding nearest-neighbors)")
