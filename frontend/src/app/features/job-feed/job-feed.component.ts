@@ -22,8 +22,12 @@ interface FeedRow {
   keywords: string[];
   source: string;
   posted: string;
+  /** ISO posting date, for the "newest" sort. */
+  postedIso?: string;
   /** e.g. "Deadline 12 Aug" — undefined when the posting has none. */
   deadline?: string;
+  /** ISO deadline date, for the deadline sort/filter. */
+  deadlineIso?: string;
   deadlinePassed?: boolean;
   remote: boolean;
   seniority?: string;
@@ -51,6 +55,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   query = '';
   minMatch = +(localStorage.getItem('jb-min-match') ?? 60);
   locationFilter = 'all';
+  hideExpired = false;
+  sortBy: 'match' | 'newest' | 'deadline' = 'match';
   activeSources = new Set<string>();
   sourceFilters: string[] = [];
   activeSeniorities = new Set<string>();
@@ -65,6 +71,12 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     { label: 'All', value: 'all' },
     { label: 'Remote only', value: 'remote' },
     { label: 'On-site', value: 'onsite' },
+  ];
+
+  sortOptions = [
+    { label: 'Best match', value: 'match' as const },
+    { label: 'Newest', value: 'newest' as const },
+    { label: 'Deadline soonest', value: 'deadline' as const },
   ];
 
   ngOnInit(): void {
@@ -145,9 +157,11 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       keywords: [...(job.technologies ?? []), ...(job.skills ?? [])].slice(0, 10),
       source: job.source ?? 'unknown',
       posted: this.ageLabel(job.postedAt),
+      postedIso: job.postedAt,
       deadline: job.applicationDeadline
         ? 'Deadline ' + new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
         : undefined,
+      deadlineIso: job.applicationDeadline,
       deadlinePassed: job.applicationDeadline ? new Date(job.applicationDeadline) < new Date() : undefined,
       remote: job.remoteType === 'REMOTE',
       seniority: job.seniority ?? undefined,
@@ -174,15 +188,31 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   }
 
   filteredJobs(): FeedRow[] {
-    return this.feedRows().filter(row => {
+    const rows = this.feedRows().filter(row => {
       if (row.matchScore !== undefined && row.matchScore < this.minMatch) return false;
       if (this.locationFilter === 'remote' && !row.remote) return false;
       if (this.locationFilter === 'onsite' && row.remote) return false;
+      if (this.hideExpired && row.deadlinePassed) return false;
       if (this.activeSources.size > 0 && !this.activeSources.has(row.source)) return false;
       if (row.seniority && this.seniorityFilters.length > 1 && !this.activeSeniorities.has(row.seniority)) return false;
       if (row.category && this.categoryFilters.length > 1 && !this.activeCategories.has(row.category)) return false;
       return true;
     });
+    return this.sortRows(rows);
+  }
+
+  /** 'match' keeps server order (already ranked); jobs without the sort key go last. */
+  private sortRows(rows: FeedRow[]): FeedRow[] {
+    if (this.sortBy === 'newest') {
+      return [...rows].sort((a, b) =>
+        (b.postedIso ? Date.parse(b.postedIso) : 0) - (a.postedIso ? Date.parse(a.postedIso) : 0));
+    }
+    if (this.sortBy === 'deadline') {
+      return [...rows].sort((a, b) =>
+        (a.deadlineIso ? Date.parse(a.deadlineIso) : Infinity)
+        - (b.deadlineIso ? Date.parse(b.deadlineIso) : Infinity));
+    }
+    return rows;
   }
 
   toggleSource(src: string): void {
