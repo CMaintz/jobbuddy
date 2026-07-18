@@ -38,6 +38,8 @@ public class JobExpiryService {
     @Scheduled(cron = "${app.job.expiry-cron:0 0 3 * * *}")
     @Transactional
     public void deactivateStaleJobs() {
+        deactivateDeadlineExpired();
+
         Instant cutoff = Instant.now().minus(Duration.ofDays(staleDays));
         List<UUID> staleIds = jobRepo.findStaleActiveJobIds(cutoff);
         if (staleIds.isEmpty()) return;
@@ -45,5 +47,17 @@ public class JobExpiryService {
         // Expired postings must also leave the search index, or search keeps surfacing them.
         staleIds.forEach(jobSearch::delete);
         log.info("Deactivated {} stale jobs (not seen since {})", deactivated, cutoff);
+    }
+
+    /**
+     * A passed application deadline is a stronger signal than staleness: the
+     * posting may still render, but applying is pointless. The deadline day
+     * itself still counts as applicable.
+     */
+    private void deactivateDeadlineExpired() {
+        List<UUID> expiredIds = jobRepo.deactivateDeadlineExpiredJobs(java.time.LocalDate.now());
+        if (expiredIds.isEmpty()) return;
+        expiredIds.forEach(jobSearch::delete);
+        log.info("Deactivated {} jobs whose application deadline passed", expiredIds.size());
     }
 }

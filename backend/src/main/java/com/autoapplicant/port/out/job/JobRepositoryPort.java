@@ -38,4 +38,11 @@ public interface JobRepositoryPort {
      * once it reaches the threshold. Returns true when the job was deactivated.
      */
     boolean markUrlTakenDown(UUID jobId, int failureThreshold);
+
+    /**
+     * Deactivates active jobs whose application deadline lies strictly before the
+     * given date (the deadline day itself still counts as applicable).
+     * Returns the affected job ids so the search index can be updated.
+     */
+    List<UUID> deactivateDeadlineExpiredJobs(java.time.LocalDate before);
 }
