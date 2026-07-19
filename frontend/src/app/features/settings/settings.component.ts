@@ -12,8 +12,9 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { ThemeService } from '../../core/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserPreferences } from '../../core/models/user.model';
+import { WritingProfileApiService, WritingProfile } from '../../core/api/writing-profile.api';
 
-type Section = 'match' | 'gen' | 'account' | 'privacy';
+type Section = 'match' | 'gen' | 'style' | 'account' | 'privacy';
 
 /** Generation defaults have no backend home yet — kept client-side so the apply screen can read them. */
 export interface GenDefaults {
@@ -62,6 +63,7 @@ export class SettingsComponent implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private writingApi = inject(WritingProfileApiService);
   Math = Math;
 
   activeSection = signal<Section>('match');
@@ -78,6 +80,7 @@ export class SettingsComponent implements OnInit {
   sections: { key: Section; label: string; icon: string }[] = [
     { key: 'match', label: 'Match preferences', icon: 'target' },
     { key: 'gen', label: 'Generation defaults', icon: 'wand' },
+    { key: 'style', label: 'Writing style', icon: 'edit' },
     { key: 'account', label: 'Account', icon: 'user' },
     { key: 'privacy', label: 'Privacy & data', icon: 'key' },
   ];
@@ -96,6 +99,16 @@ export class SettingsComponent implements OnInit {
 
   // Generation defaults (localStorage)
   gen = loadGenDefaults();
+
+  // Writing style (persisted as WritingProfile)
+  styleTone = '';
+  styleVocabulary = '';
+  stylePhrases: string[] = [];
+  styleDos: string[] = [];
+  styleDonts: string[] = [];
+  styleStructure = '';
+  private writingProfile: WritingProfile | null = null;
+  private styleDirty = false;
 
   ngOnInit(): void {
     const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
@@ -123,9 +136,27 @@ export class SettingsComponent implements OnInit {
         this.toast.set('Could not load preferences');
       }
     });
+
+    this.writingApi.get().subscribe({
+      next: wp => {
+        this.writingProfile = wp;
+        this.styleTone = wp.tone ?? '';
+        this.styleVocabulary = wp.vocabularyNotes ?? '';
+        this.stylePhrases = wp.phrasingPatterns ?? [];
+        this.styleDos = wp.dos ?? [];
+        this.styleDonts = wp.donts ?? [];
+        this.styleStructure = wp.structureNotes ?? '';
+      },
+      error: () => {}
+    });
   }
 
   markDirty(): void {
+    this.dirty.set(true);
+  }
+
+  markStyleDirty(): void {
+    this.styleDirty = true;
     this.dirty.set(true);
   }
 
@@ -164,6 +195,27 @@ export class SettingsComponent implements OnInit {
         this.saving.set(false);
         this.toast.set('Could not save settings');
       }
+    });
+
+    if (this.styleDirty) this.saveWritingStyle();
+  }
+
+  private saveWritingStyle(): void {
+    const wp: WritingProfile = {
+      ...this.writingProfile,
+      tone: this.styleTone.trim() || undefined,
+      vocabularyNotes: this.styleVocabulary.trim() || undefined,
+      phrasingPatterns: this.stylePhrases,
+      dos: this.styleDos,
+      donts: this.styleDonts,
+      structureNotes: this.styleStructure.trim() || undefined,
+    };
+    this.writingApi.update(wp).subscribe({
+      next: saved => {
+        this.writingProfile = saved;
+        this.styleDirty = false;
+      },
+      error: () => this.toast.set('Could not save your writing style')
     });
   }
 

@@ -31,7 +31,7 @@ public class WritingProfileController {
         return writingProfileUseCase.get(userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.ok(new WritingProfile(null, userId,
-                        null, null, null, null, null, null, null)));
+                        null, null, null, null, null, null, null, null, null, null)));
     }
 
     @Operation(summary = "Update writing style profile")
@@ -42,6 +42,7 @@ public class WritingProfileController {
                 profile.id(), userId,
                 profile.tone(), profile.vocabularyNotes(),
                 profile.phrasingPatterns(), profile.exampleExcerpts(),
+                profile.dos(), profile.donts(), profile.structureNotes(),
                 profile.lastAnalyzedAt(), profile.createdAt(), profile.updatedAt());
         return ResponseEntity.ok(writingProfileUseCase.save(toSave));
     }

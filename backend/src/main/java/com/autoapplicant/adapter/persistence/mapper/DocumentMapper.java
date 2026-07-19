@@ -93,8 +93,11 @@ public final class DocumentMapper {
                 ? Arrays.asList(e.getPhrasing_patterns()) : List.of();
         List<String> excerpts = e.getExampleExcerpts() != null
                 ? Arrays.asList(e.getExampleExcerpts()) : List.of();
+        List<String> dos = e.getDos() != null ? Arrays.asList(e.getDos()) : List.of();
+        List<String> donts = e.getDonts() != null ? Arrays.asList(e.getDonts()) : List.of();
         return new WritingProfile(e.getId(), e.getUserId(), e.getTone(),
                 e.getVocabularyNotes(), patterns, excerpts,
+                dos, donts, e.getStructureNotes(),
                 e.getLastAnalyzedAt(), e.getCreatedAt(), e.getUpdatedAt());
     }
 
@@ -108,6 +111,9 @@ public final class DocumentMapper {
                 ? d.phrasingPatterns().toArray(String[]::new) : new String[0]);
         e.setExampleExcerpts(d.exampleExcerpts() != null
                 ? d.exampleExcerpts().toArray(String[]::new) : new String[0]);
+        e.setDos(d.dos() != null ? d.dos().toArray(String[]::new) : new String[0]);
+        e.setDonts(d.donts() != null ? d.donts().toArray(String[]::new) : new String[0]);
+        e.setStructureNotes(d.structureNotes());
         e.setLastAnalyzedAt(d.lastAnalyzedAt());
         return e;
     }
