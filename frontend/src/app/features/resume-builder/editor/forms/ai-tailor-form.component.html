@@ -57,8 +57,7 @@
     </div>
 
     <button type="button" (click)="regenerate()"
-      class="w-full p-[8px_12px] bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer"
-      style="color:#1c1004;border-color:#c8881c;"
+      class="w-full p-[8px_12px] bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer text-[#1c1004] border-[#c8881c]"
       [style.opacity]="generating() ? '0.6' : '1'">
       {{ generating() ? 'Re-tailoring… (up to a minute)' : 'Re-tailor this CV' }}
     </button>

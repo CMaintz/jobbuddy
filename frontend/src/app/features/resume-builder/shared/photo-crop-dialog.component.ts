@@ -21,7 +21,7 @@ const OUTPUT = 400;
 
         <div #viewport class="relative overflow-hidden select-none bg-black/40 touch-none"
              [style.width.px]="viewportSize" [style.height.px]="viewportSize"
-             style="cursor:grab;border-radius:8px;"
+             class="cursor-grab rounded-lg"
              (pointerdown)="startPan($event)" (pointermove)="pan($event)"
              (pointerup)="endPan()" (pointercancel)="endPan()">
           @if (imageLoaded()) {
@@ -32,7 +32,7 @@ const OUTPUT = 400;
           <!-- Mask overlay -->
           <div class="absolute inset-0 pointer-events-none"
             [style.border-radius]="shape === 'circle' ? '50%' : shape === 'rounded' ? '24px' : '0'"
-            style="box-shadow:0 0 0 999px rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.6);"></div>
+            class="shadow-[0_0_0_999px_rgba(0,0,0,0.55)] border border-[rgba(255,255,255,0.6)]"></div>
         </div>
 
         <div class="flex items-center gap-2">

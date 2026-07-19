@@ -24,7 +24,7 @@
       }
 
       @if (generateError() && phase() === 'input') {
-        <div class="mx-6 mt-4 p-3 flex items-center gap-3 rounded-md" style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.35);">
+        <div class="mx-6 mt-4 p-3 flex items-center gap-3 rounded-md bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.35)]">
           <jb-icon name="x-circle" [size]="14" class="text-jb-danger" />
           <div class="flex-1 text-sm text-jb-text">{{ generateError() }}</div>
         </div>
@@ -60,7 +60,7 @@
               <div class="mt-3 relative">
                 <jb-icon name="link" [size]="12" class="absolute left-[10px] top-[11px] text-jb-text-dim" />
                 <input [(ngModel)]="jobUrl" placeholder="https://jobs.lever.co/acme/senior-frontend"
-                  class="w-full bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-base" style="padding:9px 10px 9px 30px;font-family:var(--font-mono,JetBrains Mono,monospace);" />
+                  class="w-full bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-base mono p-[9px_10px_9px_30px]" />
               </div>
               <div class="mt-2 text-xs text-jb-text-dim">
                 If the link matches a job in your feed we reuse it — otherwise fill in the role and paste the description below.
@@ -109,7 +109,7 @@
               placeholder="Paste the full job description here...
 
 Most roles work best with the whole listing — responsibilities, requirements, and the nice-to-haves. We'll pull out the keywords and tailor your CV around them."
-              class="w-full min-h-[240px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text resize-y jb-scroll" style="font-family:var(--font-mono,JetBrains Mono,monospace);font-size:11.5px;line-height:1.6;"></textarea>
+              class="w-full min-h-[240px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text resize-y jb-scroll mono text-[11.5px] leading-[1.6]"></textarea>
             @if (jd.trim().length > 0 && jd.trim().length <= 40) {
               <div class="mt-2 text-xs text-jb-danger">That looks a bit short — paste the full listing for better tailoring.</div>
             }
@@ -200,7 +200,7 @@ Most roles work best with the whole listing — responsibilities, requirements, 
               </div>
             </div>
 
-            <button (click)="generate()" class="mt-3.5 w-full p-[10px_12px] bg-jb-accent border rounded-md font-semibold text-md cursor-pointer flex items-center justify-center gap-1.5" style="color:#1c1004;border-color:#c8881c;box-shadow:0 1px 0 rgba(255,255,255,0.25) inset, 0 6px 18px rgba(245,166,35,0.18);"
+            <button (click)="generate()" class="mt-3.5 w-full p-[10px_12px] bg-jb-accent border rounded-md font-semibold text-md cursor-pointer flex items-center justify-center gap-1.5 text-[#1c1004] border-[#c8881c] shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_6px_18px_rgba(245,166,35,0.18)]"
               [style.opacity]="isReady() ? '1' : '0.5'">
               <jb-icon name="sparkle" [size]="13" /> {{ selectedFormat() === 'cv' ? 'Set up tailored CV' : 'Generate ' + selectedFormatLabel.toLowerCase() }}
             </button>
@@ -222,7 +222,7 @@ Most roles work best with the whole listing — responsibilities, requirements, 
       </div>
       <div class="flex-1 overflow-auto p-[40px_60px] flex flex-col items-center gap-7 jb-scroll">
         @if (generateError()) {
-          <div class="flex items-center gap-3 max-w-[640px] w-full p-4 rounded-md" style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.35);">
+          <div class="flex items-center gap-3 max-w-[640px] w-full p-4 rounded-md bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.35)]">
             <jb-icon name="x-circle" [size]="18" class="text-jb-danger" />
             <div class="flex-1">
               <div class="text-base font-medium">Generation failed</div>
@@ -233,7 +233,7 @@ Most roles work best with the whole listing — responsibilities, requirements, 
         } @else {
           <div class="flex items-center gap-3">
             <div class="relative w-[56px] h-[56px]">
-              <div class="absolute inset-0 rounded-full" style="border:3px solid var(--jb-surface-3);border-top-color:var(--jb-accent);animation:jb-spin 1.1s linear infinite;"></div>
+              <div class="absolute inset-0 rounded-full border-[3px] border-jb-surface-3 border-t-jb-accent animate-[jb-spin_1.1s_linear_infinite]"></div>
               <jb-icon name="sparkle" [size]="22" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-jb-accent" />
             </div>
             <div>
@@ -254,7 +254,7 @@ Most roles work best with the whole listing — responsibilities, requirements, 
                       <jb-icon name="check" [size]="10" [strokeWidth]="2.5" />
                     </div>
                   } @else if (i === activeStep()) {
-                    <div class="w-4 h-4 rounded-full" style="border:2px solid var(--jb-surface-3);border-top-color:var(--jb-accent);animation:jb-spin 1s linear infinite;"></div>
+                    <div class="w-4 h-4 rounded-full border-2 border-jb-surface-3 border-t-jb-accent animate-[jb-spin_1s_linear_infinite]"></div>
                   } @else {
                     <div class="w-4 h-4 rounded-full border border-jb-border-strong"></div>
                   }

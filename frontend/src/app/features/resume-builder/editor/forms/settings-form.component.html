@@ -1,15 +1,15 @@
 
-    <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="flex flex-col gap-3.5">
       <div>
         <label class="rb-label">Theme Color</label>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="color" style="height:36px;width:56px;border-radius:6px;border:1px solid var(--jb-border);cursor:pointer;background:var(--jb-surface-2);"
+        <div class="flex items-center gap-2">
+          <input type="color" class="h-9 w-14 rounded-md border border-jb-border cursor-pointer bg-jb-surface-2"
             [value]="settings.themeColor"
             (input)="update('themeColor', $any($event.target).value)" />
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div class="flex flex-wrap gap-1.5">
             @for (color of presetColors; track color) {
               <button
-                style="width:24px;height:24px;border-radius:50%;border-width:2px;border-style:solid;transition:transform 0.1s;cursor:pointer;"
+                class="w-6 h-6 rounded-full border-2 border-solid transition-transform duration-100 cursor-pointer"
                 [style.background-color]="color"
                 [style.border-color]="settings.themeColor === color ? color : 'transparent'"
                 (click)="update('themeColor', color)"
@@ -40,14 +40,14 @@
 
       <div>
         <label class="rb-label">Text Color</label>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="color" style="height:36px;width:56px;border-radius:6px;border:1px solid var(--jb-border);cursor:pointer;background:var(--jb-surface-2);"
+        <div class="flex items-center gap-2">
+          <input type="color" class="h-9 w-14 rounded-md border border-jb-border cursor-pointer bg-jb-surface-2"
             [value]="settings.textColor ?? '#1f2937'"
             (input)="update('textColor', $any($event.target).value)" />
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div class="flex flex-wrap gap-1.5">
             @for (color of presetTextColors; track color) {
               <button
-                style="width:24px;height:24px;border-radius:50%;border-width:2px;border-style:solid;cursor:pointer;"
+                class="w-6 h-6 rounded-full border-2 border-solid cursor-pointer"
                 [style.background-color]="color"
                 [style.border-color]="(settings.textColor ?? '#1f2937') === color ? 'var(--jb-accent)' : 'transparent'"
                 (click)="update('textColor', color)"
@@ -59,21 +59,21 @@
 
       <div>
         <label class="rb-label">Line Spacing — {{ (settings.lineSpacing ?? 1.5).toFixed(2) }}</label>
-        <input type="range" min="1" max="2.2" step="0.05" style="width:100%;accent-color:var(--jb-accent);"
+        <input type="range" min="1" max="2.2" step="0.05" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.lineSpacing ?? 1.5"
           (input)="update('lineSpacing', +$any($event.target).value)" />
       </div>
 
       <div>
         <label class="rb-label">Section Spacing — {{ settings.sectionSpacing ?? 20 }}px</label>
-        <input type="range" min="8" max="48" step="2" style="width:100%;accent-color:var(--jb-accent);"
+        <input type="range" min="8" max="48" step="2" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.sectionSpacing ?? 20"
           (input)="update('sectionSpacing', +$any($event.target).value)" />
       </div>
 
       <div>
         <label class="rb-label">Document Size</label>
-        <div style="display:flex;gap:8px;">
+        <div class="flex gap-2">
           <button class="rb-toggle" [class.active]="settings.documentSize === 'A4'"
             (click)="update('documentSize', 'A4')">A4</button>
           <button class="rb-toggle" [class.active]="settings.documentSize === 'Letter'"
@@ -83,7 +83,7 @@
 
       <div>
         <label class="rb-label">Photo Style</label>
-        <div style="display:flex;gap:8px;">
+        <div class="flex gap-2">
           @for (style of ['square', 'rounded', 'circle']; track style) {
             <button class="rb-toggle" [class.active]="settings.photoStyle === style"
               (click)="update('photoStyle', style)" style="text-transform:capitalize;">{{ style }}</button>
@@ -93,22 +93,22 @@
 
       <div>
         <label class="rb-label">Photo Size — {{ settings.photoSize ? settings.photoSize + 'px' : 'template default' }}</label>
-        <input type="range" min="40" max="200" step="4" style="width:100%;accent-color:var(--jb-accent);"
+        <input type="range" min="40" max="200" step="4" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.photoSize ?? 96"
           (input)="update('photoSize', +$any($event.target).value)" />
-        <div style="font-size:10px;color:var(--jb-text-dim);margin-top:2px;">Tip: you can also drag the photo in the preview to resize it.</div>
+        <div class="text-[10px] text-jb-text-dim mt-[2px]">Tip: you can also drag the photo in the preview to resize it.</div>
       </div>
 
       <div>
         <label class="rb-label">Photo Placement</label>
-        <div style="display:flex;gap:8px;">
+        <div class="flex gap-2">
           <button class="rb-toggle" [class.active]="settings.photoPlacement === 'left'" (click)="update('photoPlacement', 'left')">Left</button>
           <button class="rb-toggle" [class.active]="!settings.photoPlacement" (click)="update('photoPlacement', undefined)">Template</button>
           <button class="rb-toggle" [class.active]="settings.photoPlacement === 'right'" (click)="update('photoPlacement', 'right')">Right</button>
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="flex items-center justify-between">
         <label class="rb-label" style="margin-bottom:0;">Show Skill Level (dots)</label>
         <button
           class="rb-switch"
@@ -120,7 +120,7 @@
       </div>
 
       <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="flex items-center justify-between">
           <label class="rb-label" style="margin-bottom:0;">Anonymise CV</label>
           <button
             class="rb-switch"
@@ -130,7 +130,7 @@
             <span class="rb-switch-thumb" [style.transform]="settings.anonymise ? 'translateX(16px)' : 'translateX(2px)'"></span>
           </button>
         </div>
-        <div style="font-size:10px;color:var(--jb-text-dim);margin-top:4px;">
+        <div class="text-[10px] text-jb-text-dim mt-1">
           Preview & PDF show initials only — no photo, contact details or social links. Your data stays untouched.
         </div>
       </div>
