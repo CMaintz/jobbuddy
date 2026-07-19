@@ -1,16 +1,16 @@
 
-    <div style="display:flex;flex-direction:column;gap:12px;">
+    <div class="flex flex-col gap-3">
       <!-- Photo -->
-      <div style="display:flex;align-items:center;gap:12px;">
+      <div class="flex items-center gap-3">
         @if (pi.photoUrl) {
           <img [src]="pi.photoUrl" alt="Photo"
-            style="width:56px;height:56px;object-fit:cover;border:1px solid var(--jb-border);"
+            class="w-14 h-14 object-cover border border-jb-border"
             [style.border-radius]="photoShape === 'circle' ? '50%' : photoShape === 'rounded' ? '12px' : '4px'" />
         } @else {
-          <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--jb-surface-2);border:1px dashed var(--jb-border-strong);color:var(--jb-text-dim);font-size:11px;"
+          <div class="w-14 h-14 flex items-center justify-center bg-jb-surface-2 border border-dashed border-jb-border-strong text-jb-text-dim text-xs"
             [style.border-radius]="photoShape === 'circle' ? '50%' : '8px'">Photo</div>
         }
-        <div style="display:flex;gap:6px;">
+        <div class="flex gap-1.5">
           <input type="file" accept="image/*" class="hidden" #photoInput (change)="onPhotoSelected($event)" style="display:none;" />
           <button class="btn btn-sm" (click)="photoInput.click()">{{ pi.photoUrl ? 'Replace' : 'Upload' }}</button>
           @if (pi.photoUrl) {
@@ -20,7 +20,7 @@
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="grid grid-cols-2 gap-2">
         <div style="grid-column:span 2;">
           <label class="rb-label">Full Name</label>
           <input class="rb-input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" placeholder="Jane Doe" />
@@ -54,7 +54,7 @@
           <input class="rb-input" type="text" [value]="pi.github" (input)="update('github', $any($event.target).value)" placeholder="github.com/jane" />
         </div>
         <div style="grid-column:span 2;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div class="flex justify-between items-center mb-1">
             <label class="rb-label" style="margin-bottom:0;">Summary</label>
             <app-ai-refine-menu [content]="pi.summary" [jobDescription]="jobDescription"
               (refined)="update('summary', $event)" />

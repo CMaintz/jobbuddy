@@ -60,7 +60,7 @@
         <jb-cv-import-panel [compact]="true" (applied)="onImportApplied($event)" (failed)="error.set($event)" />
 
         @if (importedSummary) {
-          <div class="mt-3 p-3 rounded-md flex items-center gap-2" style="background:var(--jb-success-soft,rgba(74,222,128,0.08));border:1px solid rgba(74,222,128,0.3);">
+          <div class="mt-3 p-3 rounded-md flex items-center gap-2 bg-jb-success-soft border border-[rgba(74,222,128,0.3)]">
             <jb-icon name="check-circle" [size]="13" class="text-jb-success" />
             <span class="text-sm text-jb-text">{{ importedSummary }}</span>
           </div>

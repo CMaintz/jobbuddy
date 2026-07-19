@@ -62,7 +62,7 @@
               <!-- Edit toggle / save -->
               @if (activeDoc()) {
                 @if (editing()) {
-                  <button class="px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer bg-jb-accent border" style="color:#1c1004;border-color:#c8881c;"
+                  <button class="px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer bg-jb-accent border text-[#1c1004] border-[#c8881c]"
                     [style.opacity]="savingEdit() ? '0.6' : '1'" (click)="saveEdit()">
                     {{ savingEdit() ? 'Saving…' : editDirty() ? 'Save changes' : 'Done' }}
                   </button>
@@ -128,7 +128,7 @@
           </div>
 
           <!-- Paper scroll area -->
-          <div class="flex-1 overflow-auto flex justify-center jb-scroll" style="padding:32px 32px 60px;background:radial-gradient(ellipse at top, #1a1e25 0%, var(--jb-bg) 60%);">
+          <div class="flex-1 overflow-auto flex justify-center jb-scroll p-[32px_32px_60px] bg-[radial-gradient(ellipse_at_top,#1a1e25_0%,var(--jb-bg)_60%)]">
             @if (activeDoc(); as doc) {
               <app-letter-paper class="w-full self-start flex justify-center"
                 [tpl]="activeTemplate()"
@@ -144,8 +144,7 @@
                 <jb-icon name="sparkle" [size]="24" class="text-jb-accent" />
                 <div class="text-md font-medium mt-3 mb-1">No {{ formatLabel().toLowerCase() }} yet</div>
                 <div class="text-sm text-jb-text-dim mb-4">Generate one from your master CV and this job's description.</div>
-                <button class="px-4 py-2 bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer inline-flex items-center gap-1.5"
-                  style="color:#1c1004;border-color:#c8881c;"
+                <button class="px-4 py-2 bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer inline-flex items-center gap-1.5 text-[#1c1004] border-[#c8881c]"
                   [style.opacity]="generatingMissing() ? '0.6' : '1'"
                   (click)="generateMissing()">
                   <jb-icon name="sparkle" [size]="12" />
@@ -180,8 +179,7 @@
       }
 
       <!-- Mobile FAB -->
-      <button class="fixed bottom-4 right-4 z-30 lg:hidden flex items-center gap-2 px-4 py-2.5 bg-jb-accent rounded-full text-sm font-semibold cursor-pointer border-none"
-              style="color:#1c1004;box-shadow:0 4px 16px rgba(0,0,0,0.3);"
+      <button class="fixed bottom-4 right-4 z-30 lg:hidden flex items-center gap-2 px-4 py-2.5 bg-jb-accent rounded-full text-sm font-semibold cursor-pointer border-none text-[#1c1004] shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
               (click)="mobileShowSidebar.set(true)">
         <jb-icon name="sparkle" [size]="14" /> Revise
       </button>

@@ -3,16 +3,15 @@
       @for (section of visibleSections; track section.id) {
         <div style="border-bottom:1px solid var(--jb-border-faint);">
           <button
-            style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;text-align:left;background:transparent;border:none;cursor:pointer;transition:background 0.12s;"
-            class="jb-row"
+            class="jb-row w-full flex items-center justify-between p-[10px_16px] text-left bg-transparent border-none cursor-pointer transition-colors duration-[120ms]"
             (click)="section.open = !section.open"
           >
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:14px;">{{ section.icon }}</span>
-              <span style="font-size:12.5px;font-weight:500;color:var(--jb-text);">{{ section.label }}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xl">{{ section.icon }}</span>
+              <span class="text-base font-medium text-jb-text">{{ section.label }}</span>
             </div>
             <svg
-              style="width:14px;height:14px;color:var(--jb-text-dim);transition:transform 0.15s;"
+              class="w-3.5 h-3.5 text-jb-text-dim transition-transform duration-150"
               [style.transform]="section.open ? 'rotate(180deg)' : 'none'"
               fill="none" stroke="currentColor" viewBox="0 0 24 24"
             >

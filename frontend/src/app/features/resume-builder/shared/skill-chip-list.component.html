@@ -1,8 +1,8 @@
 
     @if (skills && skills.length > 0) {
-      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+      <div class="flex flex-wrap gap-1 mt-1">
         @for (skill of skills; track skill) {
-          <span style="display:inline-block;padding:2px 8px;font-size:11px;border-radius:4px;background:var(--jb-surface-2);color:var(--jb-text-dim);border:1px solid var(--jb-border);">
+          <span class="inline-block p-[2px_8px] text-xs rounded-sm bg-jb-surface-2 text-jb-text-dim border border-jb-border">
             {{ skill }}
           </span>
         }
