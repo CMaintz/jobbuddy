@@ -9,6 +9,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 
 interface StageConfig {
   key: ApplicationStatus;
@@ -19,7 +20,7 @@ interface StageConfig {
 @Component({
   selector: 'app-pipeline',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent],
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {

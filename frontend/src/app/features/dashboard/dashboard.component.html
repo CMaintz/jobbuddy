@@ -1,8 +1,5 @@
 
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-shrink-0 gap-3">
-      <div class="font-medium text-md">Dashboard</div>
-
+    <jb-topbar title="Dashboard">
       <!-- Layout toggle -->
       <div class="flex gap-0.5 ml-2 p-0.5 bg-jb-surface-2 border border-jb-border rounded">
         <button (click)="layout.set('dense')"
@@ -40,10 +37,10 @@
         </span>
       </div>
 
-      <div class="ml-auto flex gap-2 items-center">
+      <ng-container jb-topbar-actions>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     <!-- Page content -->
     <div class="flex-1 overflow-auto p-5 jb-scroll">
