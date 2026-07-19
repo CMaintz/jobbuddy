@@ -1,12 +1,12 @@
 
-    <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="flex flex-col gap-3.5">
       @for (exp of experience; track exp.id; let i = $index) {
         <div class="rb-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:12px;font-weight:500;color:var(--jb-text);">{{ exp.title || 'New Position' }}</span>
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-jb-text">{{ exp.title || 'New Position' }}</span>
             <button class="rb-remove" (click)="remove(exp.id)">Remove</button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="grid grid-cols-2 gap-2">
             <div style="grid-column:span 2;">
               <label class="rb-label">Job Title</label>
               <input class="rb-input" [value]="exp.title" (input)="update(exp.id, 'title', $any($event.target).value)" placeholder="Software Engineer" />
@@ -28,15 +28,15 @@
               @if (!exp.current) {
                 <app-month-year-picker [value]="exp.endDate" (valueChange)="update(exp.id, 'endDate', $event)" />
               } @else {
-                <p style="font-size:11px;color:var(--jb-text-faint);margin-top:8px;">Present</p>
+                <p class="text-xs text-jb-text-faint mt-2">Present</p>
               }
             </div>
-            <div style="grid-column:span 2;display:flex;align-items:center;gap:8px;">
+            <div class="col-span-2 flex items-center gap-2">
               <input type="checkbox" [id]="'current-' + exp.id" [checked]="exp.current" (change)="update(exp.id, 'current', $any($event.target).checked)" style="border-radius:3px;" />
-              <label [for]="'current-' + exp.id" style="font-size:11px;color:var(--jb-text-dim);">Currently working here</label>
+              <label [for]="'current-' + exp.id" class="text-xs text-jb-text-dim">Currently working here</label>
             </div>
             <div style="grid-column:span 2;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <div class="flex justify-between items-center mb-1">
                 <label class="rb-label" style="margin-bottom:0;">Description</label>
                 <app-ai-refine-menu [content]="exp.description" [jobDescription]="jobDescription"
                   (refined)="update(exp.id, 'description', $event)" />

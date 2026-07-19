@@ -62,7 +62,7 @@
               <!-- Title -->
               <div class="text-lg font-medium leading-[1.3] tracking-[-0.01em]">{{ p.name }}</div>
               <!-- Body preview -->
-              <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">{{ p.description || p.userPrompt }}</div>
+              <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden line-clamp-3">{{ p.description || p.userPrompt }}</div>
               <!-- Tags -->
               @if (p.tags?.length) {
                 <div class="flex flex-wrap gap-1">

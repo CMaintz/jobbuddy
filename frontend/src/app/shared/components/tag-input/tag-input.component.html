@@ -1,13 +1,12 @@
-    <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;background:var(--jb-surface-2);border:1px solid var(--jb-border);border-radius:6px;min-height:36px;align-items:center;">
+    <div class="flex flex-wrap gap-1.5 p-[8px_10px] bg-jb-surface-2 border border-jb-border rounded-md min-h-[36px] items-center">
       <span *ngFor="let tag of value; let i = index"
-        style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:500;
-          background:var(--jb-accent-soft);border:1px solid var(--jb-accent-border);color:var(--jb-accent-2);">
+        class="inline-flex items-center gap-1 p-[2px_8px] rounded-full text-sm font-medium bg-jb-accent-soft border border-jb-accent-border text-jb-accent-2">
         {{ tag }}
-        <button (click)="removeTag(i)" style="background:none;border:none;cursor:pointer;padding:0;color:inherit;display:flex;">
+        <button (click)="removeTag(i)" class="bg-transparent border-none cursor-pointer p-0 text-inherit flex">
           <jb-icon name="x" [size]="9" [strokeWidth]="2.5" />
         </button>
       </span>
       <input [(ngModel)]="inputValue" (keydown.enter)="addTag()" (keydown.backspace)="onBackspace()"
         [placeholder]="value.length === 0 ? placeholder : ''"
-        style="background:none;border:none;outline:none;font-size:12px;color:var(--jb-text);flex:1;min-width:60px;padding:0;" />
+        class="bg-transparent border-none outline-none text-sm text-jb-text flex-1 min-w-[60px] p-0" />
     </div>

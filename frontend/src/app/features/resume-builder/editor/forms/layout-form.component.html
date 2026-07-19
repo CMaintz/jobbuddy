@@ -1,17 +1,17 @@
 
-    <div style="display:flex;flex-direction:column;gap:18px;">
+    <div class="flex flex-col gap-[18px]">
       <!-- Template picker -->
       <div>
         <label class="rb-label">Template</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="grid grid-cols-2 gap-2">
           @for (tpl of templates; track tpl.type) {
             <button
               class="rb-tpl-card"
               [class.active]="settings.template === tpl.type"
               (click)="selectTemplate(tpl.type)"
             >
-              <p style="font-size:12px;font-weight:600;color:var(--jb-text);">{{ tpl.label }}</p>
-              <p style="font-size:11px;color:var(--jb-text-faint);margin-top:2px;">{{ tpl.description }}</p>
+              <p class="text-sm font-semibold text-jb-text">{{ tpl.label }}</p>
+              <p class="text-xs text-jb-text-faint mt-[2px]">{{ tpl.description }}</p>
             </button>
           }
         </div>
@@ -20,13 +20,13 @@
       <!-- Left column sections -->
       <div>
         <label class="rb-label">Main Sections — drag to reorder</label>
-        <div style="display:flex;flex-direction:column;gap:4px;" cdkDropList (cdkDropListDropped)="drop('leftColumn', $event)">
+        <div class="flex flex-col gap-1" cdkDropList (cdkDropListDropped)="drop('leftColumn', $event)">
           @for (section of leftColumn; track section.id; let i = $index) {
             <div class="rb-section-row" cdkDrag>
-              <span cdkDragHandle style="color:var(--jb-text-faint);cursor:grab;font-size:11px;">⠿</span>
-              <span style="flex:1;font-size:11px;color:var(--jb-text);">{{ section.name }}</span>
+              <span cdkDragHandle class="text-jb-text-faint cursor-grab text-xs">⠿</span>
+              <span class="flex-1 text-xs text-jb-text">{{ section.name }}</span>
               <button
-                style="font-size:11px;padding:2px 8px;border-radius:4px;border:none;cursor:pointer;background:none;"
+                class="text-xs p-[2px_8px] rounded-sm border-none cursor-pointer bg-transparent"
                 [style.color]="section.visible ? 'var(--jb-success)' : 'var(--jb-text-faint)'"
                 (click)="toggleSection('leftColumn', i)"
               >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
@@ -38,13 +38,13 @@
       <!-- Right column sections -->
       <div>
         <label class="rb-label">Sidebar Sections — drag to reorder</label>
-        <div style="display:flex;flex-direction:column;gap:4px;" cdkDropList (cdkDropListDropped)="drop('rightColumn', $event)">
+        <div class="flex flex-col gap-1" cdkDropList (cdkDropListDropped)="drop('rightColumn', $event)">
           @for (section of rightColumn; track section.id; let i = $index) {
             <div class="rb-section-row" cdkDrag>
-              <span cdkDragHandle style="color:var(--jb-text-faint);cursor:grab;font-size:11px;">⠿</span>
-              <span style="flex:1;font-size:11px;color:var(--jb-text);">{{ section.name }}</span>
+              <span cdkDragHandle class="text-jb-text-faint cursor-grab text-xs">⠿</span>
+              <span class="flex-1 text-xs text-jb-text">{{ section.name }}</span>
               <button
-                style="font-size:11px;padding:2px 8px;border-radius:4px;border:none;cursor:pointer;background:none;"
+                class="text-xs p-[2px_8px] rounded-sm border-none cursor-pointer bg-transparent"
                 [style.color]="section.visible ? 'var(--jb-success)' : 'var(--jb-text-faint)'"
                 (click)="toggleSection('rightColumn', i)"
               >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
@@ -56,22 +56,22 @@
       <!-- Per-section typography -->
       <div>
         <label class="rb-label">Section Typography</label>
-        <div style="font-size:10.5px;color:var(--jb-text-dim);margin-bottom:6px;">
+        <div class="text-2xs text-jb-text-dim mb-1.5">
           Overrides the document defaults for one section. Selection-level formatting lives in the text editors.
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
+        <div class="flex flex-col gap-1">
           @for (sec of typographySections; track sec.id) {
-            <div style="border:1px solid var(--jb-border);border-radius:6px;overflow:hidden;">
-              <button style="width:100%;display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--jb-surface-2);border:none;cursor:pointer;font-size:11px;color:var(--jb-text);"
+            <div class="border border-jb-border rounded-md overflow-hidden">
+              <button class="w-full flex items-center gap-1.5 p-[6px_8px] bg-jb-surface-2 border-none cursor-pointer text-xs text-jb-text"
                 (click)="expandedTypo.set(expandedTypo() === sec.id ? null : sec.id)">
-                <span style="flex:1;text-align:left;">{{ sec.label }}</span>
+                <span class="flex-1 text-left">{{ sec.label }}</span>
                 @if (hasOverrides(sec.id)) {
-                  <span style="width:6px;height:6px;border-radius:50%;background:var(--jb-accent);"></span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-jb-accent"></span>
                 }
-                <span style="color:var(--jb-text-faint);">{{ expandedTypo() === sec.id ? '▾' : '▸' }}</span>
+                <span class="text-jb-text-faint">{{ expandedTypo() === sec.id ? '▾' : '▸' }}</span>
               </button>
               @if (expandedTypo() === sec.id) {
-                <div style="padding:8px;display:flex;flex-direction:column;gap:8px;">
+                <div class="p-2 flex flex-col gap-2">
                   <select class="rb-input" [ngModel]="typo(sec.id).fontFamily ?? ''"
                     (ngModelChange)="setTypo(sec.id, { fontFamily: $event || undefined })">
                     <option value="">Document font</option>
@@ -80,20 +80,20 @@
                     }
                   </select>
                   <div>
-                    <div style="font-size:10px;color:var(--jb-text-dim);margin-bottom:2px;">
+                    <div class="text-[10px] text-jb-text-dim mb-[2px]">
                       Text size — {{ ((typo(sec.id).sizeScale ?? 1) * 100).toFixed(0) }}%
                     </div>
-                    <input type="range" min="0.7" max="1.4" step="0.05" style="width:100%;accent-color:var(--jb-accent);"
+                    <input type="range" min="0.7" max="1.4" step="0.05" class="w-full" style="accent-color:var(--jb-accent);"
                       [ngModel]="typo(sec.id).sizeScale ?? 1"
                       (ngModelChange)="setTypo(sec.id, { sizeScale: +$event })" />
                   </div>
-                  <div style="display:flex;align-items:center;gap:6px;">
+                  <div class="flex items-center gap-1.5">
                     <button class="rb-toggle" [class.active]="typo(sec.id).bold" (click)="setTypo(sec.id, { bold: !typo(sec.id).bold })"><b>B</b></button>
                     <button class="rb-toggle" [class.active]="typo(sec.id).italic" (click)="setTypo(sec.id, { italic: !typo(sec.id).italic })"><i>I</i></button>
-                    <input type="color" style="width:26px;height:26px;padding:1px;border:1px solid var(--jb-border);border-radius:4px;background:var(--jb-surface-2);cursor:pointer;"
+                    <input type="color" class="w-[26px] h-[26px] p-[1px] border border-jb-border rounded-sm bg-jb-surface-2 cursor-pointer"
                       [value]="typo(sec.id).color ?? '#1f2937'"
                       (input)="setTypo(sec.id, { color: $any($event.target).value })" />
-                    <button style="margin-left:auto;font-size:10.5px;color:var(--jb-text-dim);background:none;border:none;cursor:pointer;"
+                    <button class="ml-auto text-2xs text-jb-text-dim bg-transparent border-none cursor-pointer"
                       (click)="resetTypo(sec.id)">Reset</button>
                   </div>
                 </div>

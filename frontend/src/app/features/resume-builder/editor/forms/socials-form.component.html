@@ -1,9 +1,9 @@
 
-    <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="flex flex-col gap-3.5">
       @for (s of socials; track s.id) {
         <div class="rb-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:12px;font-weight:500;color:var(--jb-text);">{{ s.platform || 'New Social' }}</span>
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-jb-text">{{ s.platform || 'New Social' }}</span>
             <button class="rb-remove" (click)="remove(s.id)">Remove</button>
           </div>
           <label class="rb-label">Platform</label>

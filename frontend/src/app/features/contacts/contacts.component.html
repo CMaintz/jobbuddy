@@ -25,7 +25,7 @@
         <!-- Contact list -->
         <div class="flex-1 overflow-auto jb-scroll">
           @for (c of filteredContacts(); track c.id) {
-            <div (click)="selected.set(c); mobilePanel.set('detail')" class="jb-click grid items-center p-3 px-3.5 cursor-pointer border-b border-jb-border-faint" style="grid-template-columns:34px 1fr auto;gap:11px;"
+            <div (click)="selected.set(c); mobilePanel.set('detail')" class="jb-click grid items-center p-3 px-3.5 cursor-pointer border-b border-jb-border-faint grid-cols-[34px_1fr_auto] gap-[11px]"
               [style.background]="selected()?.id === c.id ? 'var(--jb-surface-2)' : 'transparent'"
               [style.border-left]="'2px solid ' + (selected()?.id === c.id ? 'var(--jb-accent)' : 'transparent')">
               <!-- Avatar -->
@@ -100,7 +100,7 @@
 
               <section>
                 <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Details</div>
-                <div class="grid text-sm" style="grid-template-columns:80px 1fr;row-gap:6px;">
+                <div class="grid text-sm grid-cols-[80px_1fr] gap-y-1.5">
                   <div class="text-jb-text-dim">Email</div><div>{{ c.email }}</div>
                   <div class="text-jb-text-dim">Company</div><div>{{ c.company }}</div>
                   <div class="text-jb-text-dim">Relation</div><div>{{ relLabel(c.rel) }}</div>

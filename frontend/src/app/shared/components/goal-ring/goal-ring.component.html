@@ -6,13 +6,13 @@
         [attr.stroke-dasharray]="circumference"
         [attr.stroke-dashoffset]="offset"
         stroke-linecap="round"
-        style="transform:rotate(-90deg);transform-origin:center;" />
+        class="-rotate-90 origin-center" />
       <text [attr.x]="size/2" [attr.y]="size/2 + 1" text-anchor="middle" dominant-baseline="central"
-        style="font-size:16px;font-weight:600;fill:var(--jb-text);" class="num">
+        class="num text-[16px] font-semibold fill-[var(--jb-text)]">
         {{ current }}
       </text>
       <text [attr.x]="size/2" [attr.y]="size/2 + 16" text-anchor="middle"
-        style="font-size:9px;fill:var(--jb-text-dim);">
+        class="text-[9px] fill-[var(--jb-text-dim)]">
         / {{ goal }}
       </text>
     </svg>

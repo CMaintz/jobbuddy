@@ -1,31 +1,31 @@
 
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <div class="flex flex-col items-center gap-4">
       <!-- PDF controls -->
-      <div style="display:flex;gap:8px;width:100%;max-width:794px;">
+      <div class="flex gap-2 w-full max-w-[794px]">
         <button
-          style="display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;background:var(--jb-accent);color:#1c1004;border:1px solid #c8881c;border-radius:6px;cursor:pointer;"
+          class="flex items-center gap-1.5 p-[6px_10px] text-sm font-medium bg-jb-accent text-[#1c1004] border border-[#c8881c] rounded-md cursor-pointer"
           (click)="downloadPdf()"
         >
-          <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
           </svg>
           PDF — Designed
         </button>
         <button
-          style="display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;background:var(--jb-surface-2);color:var(--jb-text);border:1px solid var(--jb-border);border-radius:6px;cursor:pointer;"
+          class="flex items-center gap-1.5 p-[6px_10px] text-sm font-medium bg-jb-surface-2 text-jb-text border border-jb-border rounded-md cursor-pointer"
           title="Text-based single-column PDF — selectable text, parseable by applicant tracking systems"
           (click)="downloadAtsPdf()"
         >
-          <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
           PDF — ATS
         </button>
         <button
-          style="display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;background:var(--jb-surface-2);color:var(--jb-text);border:1px solid var(--jb-border);border-radius:6px;cursor:pointer;"
+          class="flex items-center gap-1.5 p-[6px_10px] text-sm font-medium bg-jb-surface-2 text-jb-text border border-jb-border rounded-md cursor-pointer"
           (click)="printResume()"
         >
-          <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
           </svg>
           Print

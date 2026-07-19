@@ -1,8 +1,8 @@
 
-    <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="flex flex-col gap-3.5">
       @for (s of strengths; track s.id) {
         <div class="rb-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="flex justify-between items-center">
             <lucide-icon [img]="getIcon(s.iconKey)" [size]="18" [strokeWidth]="1.5" style="color:var(--jb-text-dim);"></lucide-icon>
             <button class="rb-remove" (click)="remove(s.id)">Remove</button>
           </div>
