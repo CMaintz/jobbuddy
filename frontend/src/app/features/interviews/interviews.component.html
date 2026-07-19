@@ -53,6 +53,64 @@
       </jb-modal>
     }
 
+    <!-- Mock interview roleplay modal -->
+    @if (roleplayOpen()) {
+      <jb-modal [width]="600" (closed)="roleplayOpen.set(false)">
+        <ng-container jb-modal-header>
+          <div class="flex-1">
+            <div class="text-md font-medium">Mock interview</div>
+            <div class="text-xs text-jb-text-dim mt-0.5">
+              {{ selected()?.jobCompanyName }} — {{ selected()?.jobTitle }} · nothing is saved; answer out loud or in writing
+            </div>
+          </div>
+        </ng-container>
+
+        <div class="flex flex-col gap-2.5 max-h-[46vh] overflow-auto jb-scroll pr-1">
+          @for (turn of roleplayTurns(); track $index) {
+            <div class="flex" [class.justify-end]="turn.role === 'candidate'">
+              <div class="max-w-[85%] rounded-md p-[8px_11px] text-sm leading-relaxed whitespace-pre-wrap"
+                [style.background]="turn.role === 'candidate' ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+                [style.border]="'1px solid ' + (turn.role === 'candidate' ? 'var(--jb-accent-border)' : 'var(--jb-border)')">
+                {{ turn.content }}
+              </div>
+            </div>
+          }
+          @if (roleplayBusy()) {
+            <div class="text-xs text-jb-text-dim px-1">
+              {{ roleplayFeedback() ? '' : roleplayTurns().length === 0 ? 'Starting the interview…' : 'Interviewer is thinking…' }}
+            </div>
+          }
+          @if (roleplayFeedback()) {
+            <div class="card p-3.5 mt-1">
+              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Coach feedback</div>
+              <div class="text-sm text-jb-text-mid leading-relaxed whitespace-pre-wrap">{{ roleplayFeedback() }}</div>
+            </div>
+          }
+        </div>
+
+        @if (!roleplayFeedback()) {
+          <textarea rows="3" class="input resize-y text-sm leading-relaxed" [(ngModel)]="roleplayInput"
+            [disabled]="roleplayBusy()"
+            (keydown.control.enter)="sendRoleplayAnswer()"
+            placeholder="Your answer… (Ctrl+Enter to send)"></textarea>
+        }
+
+        <ng-container jb-modal-footer>
+          <div class="ml-auto flex items-center gap-2">
+            @if (roleplayFeedback()) {
+              <jb-button small (clicked)="openRoleplay()">Start over</jb-button>
+              <jb-button small [primary]="true" icon="check" (clicked)="roleplayOpen.set(false)">Done</jb-button>
+            } @else {
+              <jb-button small ghost [disabled]="roleplayBusy() || roleplayTurns().length < 2"
+                (clicked)="endRoleplay()">End & get feedback</jb-button>
+              <jb-button small [primary]="true" icon="arrow-right" [disabled]="roleplayBusy() || !roleplayInput.trim()"
+                (clicked)="sendRoleplayAnswer()">Send answer</jb-button>
+            }
+          </div>
+        </ng-container>
+      </jb-modal>
+    }
+
     <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     @if (loading()) {
@@ -101,6 +159,7 @@
                 </div>
                 <div class="ml-auto flex gap-2">
                   <jb-button small (clicked)="openApplication(app)">Open application</jb-button>
+                  <jb-button small icon="chat" (clicked)="openRoleplay()">Mock interview</jb-button>
                   <jb-button small [primary]="true" icon="sparkle" [disabled]="generating()" (clicked)="generate()">
                     {{ generating() ? 'Generating… (up to a minute)' : questions().length > 0 ? 'Regenerate prep pack' : 'Generate prep pack' }}
                   </jb-button>

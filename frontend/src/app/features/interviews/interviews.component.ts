@@ -10,7 +10,7 @@ import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.comp
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { ApplicationsApiService } from '../../core/api/applications.api';
-import { InterviewPrepApiService, InterviewQuestion } from '../../core/api/interview-prep.api';
+import { InterviewPrepApiService, InterviewQuestion, MockInterviewTurn } from '../../core/api/interview-prep.api';
 import { RemindersApiService } from '../../core/api/reminders.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
@@ -65,6 +65,14 @@ export class InterviewsComponent implements OnInit {
   ];
 
   exportingIcs = signal(false);
+
+  // Mock interview roleplay — stateless: this component owns the transcript
+  roleplayOpen = signal(false);
+  roleplayTurns = signal<MockInterviewTurn[]>([]);
+  roleplayBusy = signal(false);
+  /** Coaching feedback shown after "End & get feedback" — replaces the composer. */
+  roleplayFeedback = signal('');
+  roleplayInput = '';
 
   stageLabel = (s: string) => STAGE_LABELS[s] ?? s;
   categoryTone = (c: string) => CATEGORY_TONES[c] ?? 'neutral';
@@ -233,6 +241,69 @@ export class InterviewsComponent implements OnInit {
 
   practicedCount(): number {
     return this.questions().filter(q => q.practiced).length;
+  }
+
+  // ── Mock interview roleplay ───────────────────────────────────
+
+  openRoleplay(): void {
+    const app = this.selected();
+    if (!app) return;
+    this.roleplayTurns.set([]);
+    this.roleplayFeedback.set('');
+    this.roleplayInput = '';
+    this.roleplayOpen.set(true);
+    this.roleplayBusy.set(true);
+    this.prepApi.roleplay(app.jobId, []).subscribe({
+      next: res => {
+        this.roleplayTurns.set([{ role: 'interviewer', content: res.reply }]);
+        this.roleplayBusy.set(false);
+      },
+      error: () => {
+        this.roleplayBusy.set(false);
+        this.roleplayOpen.set(false);
+        this.toast.set('Could not start the mock interview');
+      }
+    });
+  }
+
+  sendRoleplayAnswer(): void {
+    const app = this.selected();
+    const answer = this.roleplayInput.trim();
+    if (!app || !answer || this.roleplayBusy()) return;
+    this.roleplayInput = '';
+    this.roleplayTurns.update(t => [...t, { role: 'candidate', content: answer }]);
+    this.roleplayBusy.set(true);
+    this.prepApi.roleplay(app.jobId, this.roleplayTurns()).subscribe({
+      next: res => {
+        this.roleplayTurns.update(t => [...t, { role: 'interviewer', content: res.reply }]);
+        this.roleplayBusy.set(false);
+      },
+      error: () => {
+        this.roleplayBusy.set(false);
+        this.toast.set('The interviewer did not respond — try sending again');
+      }
+    });
+  }
+
+  endRoleplay(): void {
+    const app = this.selected();
+    if (!app || this.roleplayBusy()) return;
+    const transcript = this.roleplayInput.trim()
+      ? [...this.roleplayTurns(), { role: 'candidate' as const, content: this.roleplayInput.trim() }]
+      : this.roleplayTurns();
+    this.roleplayInput = '';
+    this.roleplayTurns.set(transcript);
+    this.roleplayBusy.set(true);
+    this.prepApi.roleplay(app.jobId, transcript, true).subscribe({
+      next: res => {
+        this.roleplayFeedback.set(res.reply);
+        this.roleplayBusy.set(false);
+      },
+      error: () => {
+        this.roleplayBusy.set(false);
+        this.toast.set('Could not get feedback — try again');
+      }
+    });
   }
 
   openApplication(app: Application): void {
