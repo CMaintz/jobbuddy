@@ -4,10 +4,12 @@ import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.interview.InterviewPrepPack;
 import com.autoapplicant.domain.interview.InterviewQuestion;
+import com.autoapplicant.domain.interview.MockInterviewTurn;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.interview.GenerateInterviewPrepUseCase;
 import com.autoapplicant.port.in.interview.GenerateInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.ManageInterviewQuestionsUseCase;
+import com.autoapplicant.port.in.interview.MockInterviewUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
@@ -26,7 +28,7 @@ import java.util.UUID;
 
 @Service
 public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
-        GenerateInterviewQuestionsUseCase, GenerateInterviewPrepUseCase {
+        GenerateInterviewQuestionsUseCase, GenerateInterviewPrepUseCase, MockInterviewUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(InterviewPrepService.class);
 
@@ -169,6 +171,62 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         }
 
         return new InterviewPrepPack(saved, textList(root, "consistencyBrief"), textList(root, "questionsToAsk"));
+    }
+
+    @Override
+    public String respond(UUID userId, UUID jobId, List<MockInterviewTurn> transcript, boolean wrapUp) {
+        Job job = jobRepo.findById(jobId).orElseThrow(
+                () -> new IllegalArgumentException("Job not found"));
+        String jobDescription = job.descriptionClean() != null ? job.descriptionClean() : "";
+        String profileJson = careerProfileContext.buildJson(userId);
+        String company = job.companyName() != null ? job.companyName() : "the company";
+
+        String systemPrompt = """
+                You are roleplaying as an experienced hiring manager at %s interviewing a candidate \
+                for the role of %s. Stay fully in character: professional, friendly but probing. \
+                Ask ONE question or follow-up at a time; react naturally to the candidate's previous \
+                answer before moving on. Draw questions from the job description and dig into areas \
+                where the candidate's profile looks weakest against it. Keep each message under \
+                120 words. Never break character, never mention being an AI, and output plain \
+                conversational text only — no JSON, no markdown headers.""".formatted(company, job.title());
+
+        StringBuilder convo = new StringBuilder();
+        for (MockInterviewTurn turn : transcript) {
+            if (turn == null || turn.content() == null || turn.content().isBlank()) continue;
+            convo.append("candidate".equalsIgnoreCase(turn.role()) ? "Candidate: " : "Interviewer: ")
+                 .append(turn.content().strip()).append("\n\n");
+        }
+
+        String instruction;
+        if (wrapUp) {
+            systemPrompt = """
+                    You are an expert interview coach. The mock interview below has just ended. \
+                    Give the candidate honest, specific feedback on their answers: what landed, \
+                    what fell flat, and how to improve each weak answer — quote their own words \
+                    where useful. Be encouraging but do not sugar-coat. End with the three changes \
+                    that would most improve their next real interview. Plain text, short paragraphs.""";
+            instruction = "Give your coaching feedback on the interview.";
+        } else if (convo.isEmpty()) {
+            instruction = "Open the interview: greet the candidate briefly and ask your first question.";
+        } else {
+            instruction = "Continue as the interviewer: respond to the candidate's last answer.";
+        }
+
+        String userPrompt = """
+                ## Job (%s at %s)
+                %s
+
+                ## Candidate profile (contact-free)
+                %s
+
+                ## Interview so far
+                %s
+                %s""".formatted(job.title(), company, jobDescription, profileJson,
+                convo.isEmpty() ? "(not started)" : convo.toString().strip(), instruction);
+
+        PromptComposition composition = new PromptComposition(
+                systemPrompt, userPrompt, "", "", "", "", userPrompt);
+        return aiProvider.generate(composition).strip();
     }
 
     private static List<String> textList(JsonNode root, String field) {
