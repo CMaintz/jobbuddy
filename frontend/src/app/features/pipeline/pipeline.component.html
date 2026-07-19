@@ -1,7 +1,4 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-shrink-0 gap-3">
-      <div class="font-medium text-md">Pipeline</div>
-
+    <jb-topbar title="Pipeline">
       <!-- View toggle -->
       <div class="flex gap-0.5 ml-2 p-0.5 bg-jb-surface-2 border border-jb-border rounded-[5px]">
         <button (click)="view.set('table')"
@@ -30,7 +27,7 @@
         }
       </div>
 
-      <div class="ml-auto flex gap-2 items-center">
+      <ng-container jb-topbar-actions>
         <!-- Search -->
         <div class="hidden md:flex items-center gap-2 py-[5px] px-2.5 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm w-[220px]">
           <jb-icon name="search" [size]="12" />
@@ -43,8 +40,8 @@
           }
         </div>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     <!-- Content -->
     <div class="flex-1 overflow-auto jb-scroll">
