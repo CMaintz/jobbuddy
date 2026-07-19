@@ -3,9 +3,11 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.interview.InterviewPrepPack;
 import com.autoapplicant.domain.interview.InterviewQuestion;
+import com.autoapplicant.domain.interview.MockInterviewTurn;
 import com.autoapplicant.port.in.interview.GenerateInterviewPrepUseCase;
 import com.autoapplicant.port.in.interview.GenerateInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.ManageInterviewQuestionsUseCase;
+import com.autoapplicant.port.in.interview.MockInterviewUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,19 +26,24 @@ public class InterviewPrepController {
     public record AddQuestionRequest(String question, String category) {}
     public record UpdateQuestionRequest(String question, String category, String starAnswer, Boolean practiced) {}
     public record GenerateRequest(String jobDescription, int count) {}
+    public record RoleplayRequest(List<MockInterviewTurn> messages, Boolean wrapUp) {}
+    public record RoleplayResponse(String reply) {}
 
     private final ManageInterviewQuestionsUseCase manage;
     private final GenerateInterviewQuestionsUseCase generate;
     private final GenerateInterviewPrepUseCase generatePrep;
+    private final MockInterviewUseCase mockInterview;
     private final SecurityContextHelper secCtx;
 
     public InterviewPrepController(ManageInterviewQuestionsUseCase manage,
                                    GenerateInterviewQuestionsUseCase generate,
                                    GenerateInterviewPrepUseCase generatePrep,
+                                   MockInterviewUseCase mockInterview,
                                    SecurityContextHelper secCtx) {
         this.manage = manage;
         this.generate = generate;
         this.generatePrep = generatePrep;
+        this.mockInterview = mockInterview;
         this.secCtx = secCtx;
     }
 
@@ -78,6 +85,17 @@ public class InterviewPrepController {
     public ResponseEntity<InterviewPrepPack> generatePack(@PathVariable UUID jobId) {
         InterviewPrepPack pack = generatePrep.generatePrepPack(secCtx.getCurrentUserId(), jobId);
         return ResponseEntity.created(URI.create("/api/v1/jobs/" + jobId + "/interview-prep")).body(pack);
+    }
+
+    @Operation(summary = "Mock-interview roleplay turn — send the full transcript, get the interviewer's next message (or coaching feedback when wrapUp)")
+    @PostMapping("/roleplay")
+    public ResponseEntity<RoleplayResponse> roleplay(@PathVariable UUID jobId,
+                                                     @RequestBody RoleplayRequest req) {
+        String reply = mockInterview.respond(
+                secCtx.getCurrentUserId(), jobId,
+                req.messages() != null ? req.messages() : List.of(),
+                Boolean.TRUE.equals(req.wrapUp()));
+        return ResponseEntity.ok(new RoleplayResponse(reply));
     }
 
     @Operation(summary = "Update an interview question (save STAR answer, mark practiced)")
