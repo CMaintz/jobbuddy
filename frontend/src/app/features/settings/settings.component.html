@@ -152,6 +152,52 @@
             </div>
           }
 
+          @if (activeSection() === 'style') {
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Writing style</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
+              How the AI should sound when it writes for you. Every generated letter, message, and tailored CV follows these rules.
+            </p>
+
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Tone</div>
+              <div class="text-xs text-jb-text-dim mb-2">A sentence or two — e.g. "confident but understated, never salesy".</div>
+              <input type="text" [(ngModel)]="styleTone" (ngModelChange)="markStyleDirty()"
+                class="input" placeholder="e.g. warm and direct, lightly informal" />
+            </div>
+
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Vocabulary</div>
+              <div class="text-xs text-jb-text-dim mb-2">Words you lean on, words you'd never use.</div>
+              <textarea rows="2" [(ngModel)]="styleVocabulary" (ngModelChange)="markStyleDirty()"
+                class="input resize-y text-sm leading-relaxed" placeholder="e.g. plain verbs; say 'built' not 'spearheaded'"></textarea>
+            </div>
+
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Preferred phrases</div>
+              <div class="text-xs text-jb-text-dim mb-2">Turns of phrase that sound like you.</div>
+              <jb-tag-input [value]="stylePhrases" (valueChange)="stylePhrases = $event; markStyleDirty()" placeholder="Add a phrase…" />
+            </div>
+
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Always do</div>
+              <div class="text-xs text-jb-text-dim mb-2">Rules the AI must follow — e.g. "lead with the outcome".</div>
+              <jb-tag-input [value]="styleDos" (valueChange)="styleDos = $event; markStyleDirty()" placeholder="Add a rule…" />
+            </div>
+
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Never do</div>
+              <div class="text-xs text-jb-text-dim mb-2">Banned phrases and habits — e.g. "no 'I am writing to apply'".</div>
+              <jb-tag-input [value]="styleDonts" (valueChange)="styleDonts = $event; markStyleDirty()" placeholder="Add a rule…" />
+            </div>
+
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">Structure</div>
+              <div class="text-xs text-jb-text-dim mb-2">How documents should be built — paragraph order, length, sign-off.</div>
+              <textarea rows="3" [(ngModel)]="styleStructure" (ngModelChange)="markStyleDirty()"
+                class="input resize-y text-sm leading-relaxed" placeholder="e.g. hook → why this company → proof → short close; max one page; sign off with 'Best regards'"></textarea>
+            </div>
+          }
+
           @if (activeSection() === 'account') {
             <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Account</h2>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">Your login and identity.</p>
