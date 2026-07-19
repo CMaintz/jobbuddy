@@ -223,6 +223,16 @@ public class PromptCompositionBuilder {
             sb.append("Preferred phrases: ")
               .append(String.join(", ", profile.phrasingPatterns())).append("\n");
         }
+        if (profile.dos() != null && !profile.dos().isEmpty()) {
+            sb.append("Always:\n");
+            profile.dos().stream().limit(10).forEach(d -> sb.append("- ").append(d.strip()).append('\n'));
+        }
+        if (profile.donts() != null && !profile.donts().isEmpty()) {
+            sb.append("Never:\n");
+            profile.donts().stream().limit(10).forEach(d -> sb.append("- ").append(d.strip()).append('\n'));
+        }
+        if (profile.structureNotes() != null && !profile.structureNotes().isBlank())
+            sb.append("Structure: ").append(profile.structureNotes().strip()).append("\n");
         return sb.isEmpty() ? "" : "## Writing Style\n" + sb;
     }
 

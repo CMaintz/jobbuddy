@@ -9,6 +9,12 @@ export interface WritingProfile {
   vocabularyNotes?: string;
   phrasingPatterns?: string[];
   exampleExcerpts?: string[];
+  /** Style rules to always follow. */
+  dos?: string[];
+  /** Style rules to never break (banned phrases, clichés). */
+  donts?: string[];
+  /** How documents should be structured (paragraph order, length, sign-off). */
+  structureNotes?: string;
 }
 
 @Injectable({ providedIn: 'root' })
