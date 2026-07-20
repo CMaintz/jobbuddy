@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { LetterPaperComponent } from './letter-paper.component';
@@ -21,7 +22,7 @@ import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_T
 @Component({
   selector: 'app-application-output',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbDropdownComponent, DiffViewerComponent, LetterPaperComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbDropdownComponent, DiffViewerComponent, LetterPaperComponent],
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {
