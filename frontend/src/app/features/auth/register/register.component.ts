@@ -58,7 +58,7 @@ export class RegisterComponent {
     window.location.href = this.authService.buildLinkedInAuthUrl(redirectUri);
   }
 
-  private friendlyError(code: string): string {
+  private friendlyError(code?: string): string {
     switch (code) {
       case 'auth/email-already-in-use': return 'An account with this email already exists.';
       case 'auth/invalid-email': return 'Invalid email address.';
