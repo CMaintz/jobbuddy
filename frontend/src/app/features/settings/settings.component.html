@@ -1,13 +1,11 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Settings</div>
-      <div class="ml-auto flex items-center gap-2">
+    <jb-topbar title="Settings">
+      <ng-container jb-topbar-actions>
         <span class="text-xs mono" [style.color]="dirty() ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
           {{ saving() ? 'saving…' : dirty() ? 'unsaved changes' : 'saved' }}
         </span>
         <jb-button small [primary]="dirty()" icon="check" [disabled]="saving() || !dirty()" (clicked)="save()">Save</jb-button>
-      </div>
-    </div>
+      </ng-container>
+    </jb-topbar>
 
     <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 

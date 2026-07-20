@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { CompaniesApiService, Company } from '../../core/api/companies.api';
@@ -10,7 +11,7 @@ import { CompaniesApiService, Company } from '../../core/api/companies.api';
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbPillComponent, CompanyMarkComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbTopbarComponent, JbPillComponent, CompanyMarkComponent],
   templateUrl: './companies.component.html'
 })
 export class CompaniesComponent implements OnInit, OnDestroy {
