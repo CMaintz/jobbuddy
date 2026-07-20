@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToggleComponent } from '../../shared/components/jb-toggle/jb-toggle.component';
 import { JbSegmentedComponent } from '../../shared/components/jb-segmented/jb-segmented.component';
@@ -55,7 +56,7 @@ const SENIORITY_MAP: Record<string, string[]> = {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {

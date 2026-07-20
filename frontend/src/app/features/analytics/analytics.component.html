@@ -1,10 +1,10 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Analytics</div>
-      @if (trend(); as t) {
-        <div class="ml-auto text-xs text-jb-text-dim">{{ t.message }}</div>
-      }
-    </div>
+    <jb-topbar title="Analytics">
+      <ng-container jb-topbar-actions>
+        @if (trend(); as t) {
+          <div class="text-xs text-jb-text-dim">{{ t.message }}</div>
+        }
+      </ng-container>
+    </jb-topbar>
 
     @if (loading()) {
       <div class="p-12 text-center text-jb-text-dim">Loading analytics…</div>

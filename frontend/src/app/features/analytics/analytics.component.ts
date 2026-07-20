@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { FunnelComponent } from '../../shared/components/funnel/funnel.component';
 import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
@@ -16,7 +17,7 @@ const HEATMAP_WEEKS = 14;
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, JbIconComponent, StatCardComponent, FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent],
+  imports: [CommonModule, JbIconComponent, JbTopbarComponent, StatCardComponent, FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent],
   templateUrl: './analytics.component.html'
 })
 export class AnalyticsComponent implements OnInit {
