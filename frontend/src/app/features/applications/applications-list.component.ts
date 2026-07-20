@@ -115,6 +115,7 @@ export class ApplicationsListComponent implements OnInit {
       next: docs => {
         const byJob = new Map<string, unknown[]>();
         for (const doc of docs) {
+          if (!doc.jobId) continue;
           const list = byJob.get(doc.jobId) ?? [];
           list.push(doc);
           byJob.set(doc.jobId, list);

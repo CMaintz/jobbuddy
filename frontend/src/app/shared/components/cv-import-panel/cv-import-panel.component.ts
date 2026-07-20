@@ -6,7 +6,6 @@ import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../jb-button/jb-button.component';
 import { AiApiService } from '../../../core/api/ai.api';
-import { Profile } from '../../../core/models/user.model';
 
 /** Normalized preview of whatever the parser extracted, regardless of source. */
 export interface ImportPreview {
@@ -16,6 +15,16 @@ export interface ImportPreview {
   skills: string[];
   technologies: string[];
   yearsExperience?: number;
+}
+
+/** Raw parser payload — Profile-shaped fields plus the extracted full name. */
+interface ParsedCvResponse {
+  fullName?: string | null;
+  headline?: string | null;
+  summary?: string | null;
+  skills?: string[] | null;
+  technologies?: string[] | null;
+  yearsExperience?: number | null;
 }
 
 /**
@@ -58,7 +67,7 @@ export class CvImportPanelComponent {
     if (!file) return;
     const formData = new FormData();
     formData.append('file', file);
-    this.parse(this.http.post<Profile>('/api/v1/profile/import/cv-pdf', formData));
+    this.parse(this.http.post<ParsedCvResponse>('/api/v1/profile/import/cv-pdf', formData));
   }
 
   onLinkedInPdfSelected(event: Event): void {
@@ -66,7 +75,7 @@ export class CvImportPanelComponent {
     if (!file) return;
     const formData = new FormData();
     formData.append('file', file);
-    this.parse(this.http.post<Profile>('/api/v1/users/me/import/linkedin-pdf', formData));
+    this.parse(this.http.post<ParsedCvResponse>('/api/v1/users/me/import/linkedin-pdf', formData));
   }
 
   private takeFile(event: Event): File | null {
@@ -84,12 +93,12 @@ export class CvImportPanelComponent {
     this.parse(this.aiApi.parseCv(this.pastedText));
   }
 
-  private parse(request$: Observable<Profile>): void {
+  private parse(request$: Observable<ParsedCvResponse>): void {
     if (this.parsing()) return;
     this.parsing.set(true);
     this.preview.set(null);
     request$.subscribe({
-      next: (parsed: Profile) => {
+      next: (parsed: ParsedCvResponse) => {
         this.parsing.set(false);
         this.preview.set({
           fullName: parsed?.fullName || undefined,
