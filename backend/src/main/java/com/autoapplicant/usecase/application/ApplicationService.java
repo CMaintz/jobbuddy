@@ -6,9 +6,9 @@ import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
+import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
 import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,11 +26,11 @@ public class ApplicationService implements
 
     private final ApplicationRepositoryPort repo;
     private final ResponseMetricRepositoryPort responseMetricRepo;
-    private final StructuredGeneratedDocumentService structuredGeneratedDocuments;
+    private final PersistGeneratedDocumentUseCase structuredGeneratedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
                               ResponseMetricRepositoryPort responseMetricRepo,
-                              StructuredGeneratedDocumentService structuredGeneratedDocuments) {
+                              PersistGeneratedDocumentUseCase structuredGeneratedDocuments) {
         this.repo = repo;
         this.responseMetricRepo = responseMetricRepo;
         this.structuredGeneratedDocuments = structuredGeneratedDocuments;

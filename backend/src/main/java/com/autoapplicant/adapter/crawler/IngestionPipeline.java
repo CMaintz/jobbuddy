@@ -4,8 +4,8 @@ import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobEmbedding;
+import com.autoapplicant.domain.job.JobCategoryClassifier;
 import com.autoapplicant.domain.job.RawJobData;
-import com.autoapplicant.usecase.job.JobCategoryClassifier;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
@@ -36,14 +36,14 @@ public class IngestionPipeline {
     private final AiProviderPort aiProvider;
     private final EnrichJobUseCase enrichJob;
     private final TextCleaningService textCleaner;
-    private final JobCategoryClassifier categoryClassifier;
+    /** Pure domain service — stateless keyword classifier, no injection needed. */
+    private final JobCategoryClassifier categoryClassifier = new JobCategoryClassifier();
     private final CompanyRepositoryPort companyRepo;
 
     public IngestionPipeline(JobRepositoryPort jobRepo, JobSearchPort jobSearch,
                               JobEmbeddingRepositoryPort embeddingRepo,
                               @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                               EnrichJobUseCase enrichJob, TextCleaningService textCleaner,
-                              JobCategoryClassifier categoryClassifier,
                               CompanyRepositoryPort companyRepo) {
         this.jobRepo = jobRepo;
         this.jobSearch = jobSearch;
@@ -51,7 +51,6 @@ public class IngestionPipeline {
         this.aiProvider = aiProvider;
         this.enrichJob = enrichJob;
         this.textCleaner = textCleaner;
-        this.categoryClassifier = categoryClassifier;
         this.companyRepo = companyRepo;
     }
 

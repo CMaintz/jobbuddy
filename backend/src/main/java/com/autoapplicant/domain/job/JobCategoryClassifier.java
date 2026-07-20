@@ -1,7 +1,5 @@
-package com.autoapplicant.usecase.job;
+package com.autoapplicant.domain.job;
 
-import com.autoapplicant.domain.job.JobCategory;
-import org.springframework.stereotype.Service;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -18,7 +16,7 @@ import java.util.Map;
  * Categories are checked in priority order so that more specific categories
  * (e.g. SOFTWARE_IT) take precedence over broader ones (e.g. MANAGEMENT).
  */
-@Service
+
 public class JobCategoryClassifier {
 
     private static final int DESC_PREVIEW_CHARS = 300;
