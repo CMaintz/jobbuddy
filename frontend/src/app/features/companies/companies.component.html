@@ -1,13 +1,13 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Companies</div>
+    <jb-topbar title="Companies">
       <div class="hidden sm:flex flex-1 max-w-[300px] items-center gap-2 py-[5px] px-2.5 ml-3 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
         <jb-icon name="search" [size]="12" />
         <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)" placeholder="Search companies…"
           class="border-none bg-none outline-none text-jb-text text-sm flex-1" />
       </div>
-      <div class="ml-auto text-xs text-jb-text-dim">{{ companies().length }} companies</div>
-    </div>
+      <ng-container jb-topbar-actions>
+        <div class="text-xs text-jb-text-dim">{{ companies().length }} companies</div>
+      </ng-container>
+    </jb-topbar>
 
     <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_340px]">
       <!-- List -->

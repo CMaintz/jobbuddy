@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
@@ -37,7 +38,7 @@ interface DocRow {
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, JbIconComponent, JbPillComponent],
+  imports: [CommonModule, JbIconComponent, JbTopbarComponent, JbPillComponent],
   templateUrl: './documents.component.html'
 })
 export class DocumentsComponent implements OnInit {

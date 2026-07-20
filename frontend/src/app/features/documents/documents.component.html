@@ -1,8 +1,8 @@
-    <!-- Topbar -->
-    <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
-      <div class="font-medium text-md">Documents</div>
-      <div class="ml-auto text-xs text-jb-text-dim">{{ rows().length }} generated</div>
-    </div>
+    <jb-topbar title="Documents">
+      <ng-container jb-topbar-actions>
+        <div class="text-xs text-jb-text-dim">{{ rows().length }} generated</div>
+      </ng-container>
+    </jb-topbar>
 
     <!-- Filter tabs -->
     @if (presentTypes().length > 1) {
