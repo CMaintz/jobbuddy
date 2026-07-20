@@ -251,6 +251,7 @@ export class JobDetailsComponent implements OnInit {
     const map: Record<string, string> = {
       APPLICATION_TEXT: 'app',
       COVER_LETTER: 'cl',
+      UNSOLICITED_APPLICATION: 'ua',
       RECRUITER_MESSAGE: 'dm',
       FOLLOW_UP_MESSAGE: 'fu',
     };
@@ -262,6 +263,7 @@ export class JobDetailsComponent implements OnInit {
       CV: 'Tailored CV',
       APPLICATION_TEXT: 'Application',
       COVER_LETTER: 'Cover letter',
+      UNSOLICITED_APPLICATION: 'Unsolicited',
       RECRUITER_MESSAGE: 'Short pitch',
       FOLLOW_UP_MESSAGE: 'Follow-up',
     };

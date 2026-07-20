@@ -38,11 +38,12 @@ export const LETTER_TEMPLATES: LetterTemplate[] = [
   },
 ];
 
-export type FormatKey = 'app' | 'cl' | 'dm' | 'fu';
+export type FormatKey = 'app' | 'cl' | 'ua' | 'dm' | 'fu';
 
 export const FORMAT_TO_DOC_TYPE: Record<FormatKey, string> = {
   app: 'APPLICATION_TEXT',
   cl: 'COVER_LETTER',
+  ua: 'UNSOLICITED_APPLICATION',
   dm: 'RECRUITER_MESSAGE',
   fu: 'FOLLOW_UP_MESSAGE',
 };
@@ -51,6 +52,7 @@ export const FORMAT_TO_DOC_TYPE: Record<FormatKey, string> = {
 export const WORD_TARGETS: Record<FormatKey, [number, number]> = {
   app: [250, 450],
   cl: [200, 400],
+  ua: [250, 400],
   dm: [60, 150],
   fu: [40, 120],
 };
