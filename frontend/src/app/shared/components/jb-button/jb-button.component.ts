@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, booleanAttribute } from '@angular/core';
+import { Component, HostBinding, Input, Output, EventEmitter, booleanAttribute } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
@@ -15,7 +15,11 @@ export class JbButtonComponent {
   @Input({ transform: booleanAttribute }) ghost = false;
   @Input({ transform: booleanAttribute }) small = false;
   @Input({ transform: booleanAttribute }) disabled = false;
+  /** Full-width call-to-action variant. */
+  @Input({ transform: booleanAttribute }) block = false;
   @Output() clicked = new EventEmitter<MouseEvent>();
+
+  @HostBinding('class.w-full') get hostBlock() { return this.block; }
 
   private static readonly BASE = 'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-default';
   private static readonly DEFAULT = 'jb-btn bg-jb-surface-2 border border-jb-border text-jb-text';
@@ -29,6 +33,7 @@ export class JbButtonComponent {
     else if (this.ghost) variant = JbButtonComponent.GHOST;
     const parts = [JbButtonComponent.BASE, variant];
     if (this.small) parts.push(JbButtonComponent.SM);
+    if (this.block) parts.push('w-full justify-center');
     return parts.join(' ');
   }
 }

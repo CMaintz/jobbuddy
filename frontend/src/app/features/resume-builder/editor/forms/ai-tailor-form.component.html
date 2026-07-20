@@ -56,11 +56,9 @@
         placeholder="e.g. emphasise leadership, drop anything older than 2018…"></textarea>
     </div>
 
-    <button type="button" (click)="regenerate()"
-      class="w-full p-[8px_12px] bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer text-[#1c1004] border-[#c8881c]"
-      [style.opacity]="generating() ? '0.6' : '1'">
+    <jb-button block primary [disabled]="generating()" (clicked)="regenerate()">
       {{ generating() ? 'Re-tailoring… (up to a minute)' : 'Re-tailor this CV' }}
-    </button>
+    </jb-button>
     <div class="text-xs text-jb-text-dim">
       Regenerates the content from your master CV for this job. Your template, layout and styling stay as they are.
     </div>

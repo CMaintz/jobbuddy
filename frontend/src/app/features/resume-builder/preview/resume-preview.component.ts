@@ -9,12 +9,14 @@ import { Modern2ColLayoutComponent } from './layouts/modern-2col-layout.componen
 import { MinimalLayoutComponent } from './layouts/minimal-layout.component';
 import { ExecutiveLayoutComponent } from './layouts/executive-layout.component';
 import { CreativeLayoutComponent } from './layouts/creative-layout.component';
+import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
 
 @Component({
   selector: 'app-resume-preview',
   standalone: true,
   imports: [
     CommonModule,
+    JbButtonComponent,
     ClassicLayoutComponent,
     Modern1ColLayoutComponent,
     Modern2ColLayoutComponent,
