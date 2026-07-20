@@ -1,17 +1,17 @@
 
     <div class="flex flex-col gap-3.5">
       @for (s of strengths; track s.id) {
-        <div class="rb-card">
+        <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
             <lucide-icon [img]="getIcon(s.iconKey)" [size]="18" [strokeWidth]="1.5" style="color:var(--jb-text-dim);"></lucide-icon>
             <button class="rb-remove" (click)="remove(s.id)">Remove</button>
           </div>
-          <label class="rb-label">Title</label>
-          <input class="rb-input" [value]="s.title"
+          <label class="label">Title</label>
+          <input class="input" [value]="s.title"
                  (input)="update(s.id, 'title', $any($event.target).value)"
                  placeholder="Problem Solving" />
-          <label class="rb-label">Description</label>
-          <textarea class="rb-input" style="resize:none;" rows="2" [value]="s.description"
+          <label class="label">Description</label>
+          <textarea class="input" style="resize:none;" rows="2" [value]="s.description"
                     (input)="update(s.id, 'description', $any($event.target).value)"
                     placeholder="Brief description of this strength..."></textarea>
           <app-icon-picker

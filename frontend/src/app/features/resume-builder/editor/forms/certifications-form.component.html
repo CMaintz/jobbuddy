@@ -1,19 +1,19 @@
 
     <div class="flex flex-col gap-3.5">
       @for (cert of certifications; track cert.id) {
-        <div class="rb-card">
+        <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
             <span class="text-sm font-medium text-jb-text">{{ cert.name || 'New Certification' }}</span>
             <button class="rb-remove" (click)="remove(cert.id)">Remove</button>
           </div>
-          <label class="rb-label">Name</label>
-          <input class="rb-input" [value]="cert.name" (input)="update(cert.id, 'name', $any($event.target).value)" placeholder="AWS Certified Developer" />
-          <label class="rb-label">Issuer</label>
-          <input class="rb-input" [value]="cert.issuer" (input)="update(cert.id, 'issuer', $any($event.target).value)" placeholder="Amazon Web Services" />
-          <label class="rb-label">Date</label>
-          <input class="rb-input" [value]="cert.date" (input)="update(cert.id, 'date', $any($event.target).value)" placeholder="2024-06" />
-          <label class="rb-label">Credential URL</label>
-          <input class="rb-input" [value]="cert.link ?? ''" (input)="update(cert.id, 'link', $any($event.target).value)" placeholder="https://credly.com/..." />
+          <label class="label">Name</label>
+          <input class="input" [value]="cert.name" (input)="update(cert.id, 'name', $any($event.target).value)" placeholder="AWS Certified Developer" />
+          <label class="label">Issuer</label>
+          <input class="input" [value]="cert.issuer" (input)="update(cert.id, 'issuer', $any($event.target).value)" placeholder="Amazon Web Services" />
+          <label class="label">Date</label>
+          <input class="input" [value]="cert.date" (input)="update(cert.id, 'date', $any($event.target).value)" placeholder="2024-06" />
+          <label class="label">Credential URL</label>
+          <input class="input" [value]="cert.link ?? ''" (input)="update(cert.id, 'link', $any($event.target).value)" placeholder="https://credly.com/..." />
         </div>
       }
       <button class="rb-add" (click)="add()">+ Add Certification</button>

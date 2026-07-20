@@ -1,7 +1,7 @@
 
     <div class="flex gap-2">
       <select
-        class="rb-select"
+        class="input w-auto flex-1"
         [(ngModel)]="selectedMonth"
         (ngModelChange)="emitChange()"
       >
@@ -11,7 +11,7 @@
         }
       </select>
       <select
-        class="rb-select"
+        class="input w-auto flex-1"
         [(ngModel)]="selectedYear"
         (ngModelChange)="emitChange()"
       >
