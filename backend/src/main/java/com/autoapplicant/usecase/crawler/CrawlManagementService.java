@@ -1,16 +1,16 @@
 package com.autoapplicant.usecase.crawler;
 
-import com.autoapplicant.adapter.crawler.CrawlerOrchestrator;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
+import com.autoapplicant.port.out.crawler.CrawlOrchestrationPort;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CrawlManagementService implements TriggerCrawlUseCase {
 
-    private final CrawlerOrchestrator orchestrator;
+    private final CrawlOrchestrationPort orchestrator;
 
-    public CrawlManagementService(CrawlerOrchestrator orchestrator) {
+    public CrawlManagementService(CrawlOrchestrationPort orchestrator) {
         this.orchestrator = orchestrator;
     }
 
