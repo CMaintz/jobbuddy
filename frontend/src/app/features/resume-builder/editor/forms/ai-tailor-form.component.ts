@@ -10,6 +10,7 @@ import { AtsReport, StructuredDocument } from '../../../../core/models/structure
 import { PromptTemplate } from '../../../../core/models/prompt-template.model';
 import { ResumeData } from '../../models/resume-builder.models';
 import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/diff-viewer.component';
+import { JbButtonComponent } from '../../../../shared/components/jb-button/jb-button.component';
 
 const TAILOR_PROMPTS = [
   'More technical depth',
@@ -26,7 +27,7 @@ const TAILOR_PROMPTS = [
 @Component({
   selector: 'app-ai-tailor-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, DiffViewerComponent],
+  imports: [CommonModule, FormsModule, DiffViewerComponent, JbButtonComponent],
   templateUrl: './ai-tailor-form.component.html',
 })
 export class AiTailorFormComponent implements OnInit {

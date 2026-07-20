@@ -62,15 +62,11 @@
               <!-- Edit toggle / save -->
               @if (activeDoc()) {
                 @if (editing()) {
-                  <button class="px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer bg-jb-accent border text-[#1c1004] border-[#c8881c]"
-                    [style.opacity]="savingEdit() ? '0.6' : '1'" (click)="saveEdit()">
+                  <jb-button small primary [disabled]="savingEdit()" (clicked)="saveEdit()">
                     {{ savingEdit() ? 'Saving…' : editDirty() ? 'Save changes' : 'Done' }}
-                  </button>
+                  </jb-button>
                 } @else {
-                  <button class="flex items-center gap-1.5 px-2 py-1 bg-jb-surface-2 border border-jb-border rounded-md text-sm font-medium text-jb-text cursor-pointer"
-                    (click)="editing.set(true)">
-                    <jb-icon name="edit" [size]="11" /> Edit text
-                  </button>
+                  <jb-button small icon="edit" (clicked)="editing.set(true)">Edit text</jb-button>
                 }
               }
               <!-- Format switch -->
@@ -144,12 +140,9 @@
                 <jb-icon name="sparkle" [size]="24" class="text-jb-accent" />
                 <div class="text-md font-medium mt-3 mb-1">No {{ formatLabel().toLowerCase() }} yet</div>
                 <div class="text-sm text-jb-text-dim mb-4">Generate one from your master CV and this job's description.</div>
-                <button class="px-4 py-2 bg-jb-accent border rounded-md font-semibold text-sm cursor-pointer inline-flex items-center gap-1.5 text-[#1c1004] border-[#c8881c]"
-                  [style.opacity]="generatingMissing() ? '0.6' : '1'"
-                  (click)="generateMissing()">
-                  <jb-icon name="sparkle" [size]="12" />
+                <jb-button primary icon="sparkle" [disabled]="generatingMissing()" (clicked)="generateMissing()">
                   {{ generatingMissing() ? 'Generating…' : 'Generate ' + formatLabel().toLowerCase() }}
-                </button>
+                </jb-button>
               </div>
             }
           </div>
