@@ -21,7 +21,7 @@ export interface Company {
 export class CompaniesApiService {
   private http = inject(HttpClient);
 
-  search(query: string = '', page = 0, size = 20): Observable<Company[]> {
+  search(query = '', page = 0, size = 20): Observable<Company[]> {
     const params = new HttpParams()
       .set('q', query)
       .set('page', page)

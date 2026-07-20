@@ -10,6 +10,7 @@
             @for (color of presetColors; track color) {
               <button
                 class="w-6 h-6 rounded-full border-2 border-solid transition-transform duration-100 cursor-pointer"
+                [attr.aria-label]="'Use theme color ' + color"
                 [style.background-color]="color"
                 [style.border-color]="settings.themeColor === color ? color : 'transparent'"
                 (click)="update('themeColor', color)"
@@ -48,6 +49,7 @@
             @for (color of presetTextColors; track color) {
               <button
                 class="w-6 h-6 rounded-full border-2 border-solid cursor-pointer"
+                [attr.aria-label]="'Use text color ' + color"
                 [style.background-color]="color"
                 [style.border-color]="(settings.textColor ?? '#1f2937') === color ? 'var(--jb-accent)' : 'transparent'"
                 (click)="update('textColor', color)"

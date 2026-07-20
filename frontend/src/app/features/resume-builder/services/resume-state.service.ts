@@ -18,6 +18,7 @@ import {
   SectionConfig,
 } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
+import { ResumeDraft } from '../models/resume-builder.models';
 import { Profile, ProfilePrivateInfo } from '../../../core/models/user.model';
 import { ProfileSocial, ProfileStrength, WorkExperience, Education, Project, Certification, SpokenLanguage } from '../../../core/models/profile-section.model';
 
@@ -143,7 +144,7 @@ export class ResumeStateService {
 
   prefillFromProfile(data: FullProfileData): void {
     const pi = data.privateInfo ?? {};
-    const experience = (data.experience ?? []).map((e, i) => ({
+    const experience = (data.experience ?? []).map((e) => ({
       id: e.id ?? crypto.randomUUID(),
       title: e.title ?? '',
       company: e.companyName ?? '',
@@ -226,8 +227,8 @@ export class ResumeStateService {
     // Create a new draft on the server
     this.draftApi.createDraft({
       name: 'My Resume',
-      resumeData: this._resumeData() as any,
-      settings: this._settings() as any,
+      resumeData: this._resumeData(),
+      settings: this._settings(),
     }).subscribe(draft => {
       this._draftId.set(draft.id ?? null);
       this._isDirty.set(false);
@@ -338,7 +339,7 @@ export class ResumeStateService {
     this._isDirty.set(false);
   }
 
-  publishDraft(): Observable<any> {
+  publishDraft(): Observable<ResumeDraft> {
     const id = this._draftId();
     if (!id) throw new Error('No draft to publish');
     return this.draftApi.publishDraft(id);

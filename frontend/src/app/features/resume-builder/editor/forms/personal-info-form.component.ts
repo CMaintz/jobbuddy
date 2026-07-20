@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
+import { PersonalInfo } from '../../models/resume-builder.models';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.component';
@@ -22,7 +23,7 @@ export class PersonalInfoFormComponent {
   get jobDescription() { return this.state.jobDescription() ?? undefined; }
 
   update(field: string, value: string): void {
-    this.state.updatePersonalInfo({ [field]: value } as any);
+    this.state.updatePersonalInfo({ [field]: value } as Partial<PersonalInfo>);
   }
 
   onPhotoSelected(event: Event): void {

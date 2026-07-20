@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DocumentTheme, StructuredDocument } from '../models/structured-document.model';
 import { Profile } from '../models/user.model';
+import { GeneratedDocument } from '../models/generated-document.model';
 
 export interface StructuredCvGenerateRequest {
   jobId?: string;
@@ -141,8 +142,8 @@ export class AiApiService {
     return this.http.post<SkillGapReport>('/api/v1/ai/skill-gaps', {});
   }
 
-  getDocuments(): Observable<any[]> {
-    return this.http.get<any[]>('/api/v1/ai/documents');
+  getDocuments(): Observable<GeneratedDocument[]> {
+    return this.http.get<GeneratedDocument[]>('/api/v1/ai/documents');
   }
 
   parseCv(rawCvText: string): Observable<Profile> {

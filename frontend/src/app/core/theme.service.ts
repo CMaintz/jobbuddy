@@ -17,7 +17,7 @@ export class ThemeService {
       }
       try {
         localStorage.setItem(this.STORAGE_KEY, t);
-      } catch {}
+      } catch { /* private mode — theme just won't persist */ }
     });
   }
 
@@ -29,7 +29,7 @@ export class ThemeService {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored === 'light' || stored === 'dark') return stored;
-    } catch {}
+    } catch { /* private mode — fall through to default */ }
     return 'dark';
   }
 }
