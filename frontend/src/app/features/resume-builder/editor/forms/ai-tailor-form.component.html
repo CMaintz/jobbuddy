@@ -32,8 +32,8 @@
     <!-- Re-tailor config -->
     @if (promptTemplates.length > 0) {
       <div>
-        <label class="rb-label">Prompt</label>
-        <select class="rb-input" [(ngModel)]="selectedPromptId">
+        <label class="label">Prompt</label>
+        <select class="input" [(ngModel)]="selectedPromptId">
           <option [ngValue]="null">Default prompt</option>
           @for (tpl of promptTemplates; track tpl.id) {
             <option [ngValue]="tpl.id">{{ tpl.name }}</option>
@@ -43,7 +43,7 @@
     }
 
     <div>
-      <label class="rb-label">Focus</label>
+      <label class="label">Focus</label>
       <div class="flex flex-col gap-1.5 mb-2">
         @for (prompt of tailorPrompts; track prompt) {
           <button type="button" (click)="addTailorPrompt(prompt)"
@@ -52,7 +52,7 @@
           </button>
         }
       </div>
-      <textarea [(ngModel)]="instructions" rows="3" class="rb-input" style="resize:vertical;"
+      <textarea [(ngModel)]="instructions" rows="3" class="input" style="resize:vertical;"
         placeholder="e.g. emphasise leadership, drop anything older than 2018…"></textarea>
     </div>
 

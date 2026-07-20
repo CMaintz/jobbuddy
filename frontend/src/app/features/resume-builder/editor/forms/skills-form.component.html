@@ -2,8 +2,8 @@
     <div class="flex flex-col gap-2.5">
       @for (skill of skills; track skill.id) {
         <div class="flex items-center gap-2">
-          <input class="rb-input" style="flex:1;" [value]="skill.name" (input)="update(skill.id, 'name', $any($event.target).value)" placeholder="Skill name" />
-          <select class="rb-select" style="width:72px;"
+          <input class="input" style="flex:1;" [value]="skill.name" (input)="update(skill.id, 'name', $any($event.target).value)" placeholder="Skill name" />
+          <select class="input w-auto" style="width:72px;"
             [value]="skill.level ?? ''"
             (change)="update(skill.id, 'level', $any($event.target).value ? +$any($event.target).value : undefined)"
           >
