@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.crawler;
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
+import com.autoapplicant.port.out.crawler.CrawlOrchestrationPort;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.crawler.JobSourceConnectorPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -18,7 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class CrawlerOrchestrator {
+public class CrawlerOrchestrator implements CrawlOrchestrationPort {
 
     private static final Logger log = LoggerFactory.getLogger(CrawlerOrchestrator.class);
 
