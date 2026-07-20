@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { FONT_FAMILIES } from '../../data/font-families';
+import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-toggle.component';
 
 @Component({
   selector: 'app-settings-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JbToggleComponent],
   templateUrl: './settings-form.component.html',
 })
 export class SettingsFormComponent {

@@ -22,40 +22,40 @@
 
       <div class="grid grid-cols-2 gap-2">
         <div style="grid-column:span 2;">
-          <label class="rb-label">Full Name</label>
-          <input class="rb-input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" placeholder="Jane Doe" />
+          <label class="label">Full Name</label>
+          <input class="input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" placeholder="Jane Doe" />
         </div>
         <div style="grid-column:span 2;">
-          <label class="rb-label">Job Title</label>
-          <input class="rb-input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" placeholder="Senior Software Engineer" />
+          <label class="label">Job Title</label>
+          <input class="input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" placeholder="Senior Software Engineer" />
         </div>
         <div>
-          <label class="rb-label">Email</label>
-          <input class="rb-input" type="email" [value]="pi.email" (input)="update('email', $any($event.target).value)" placeholder="jane@example.com" />
+          <label class="label">Email</label>
+          <input class="input" type="email" [value]="pi.email" (input)="update('email', $any($event.target).value)" placeholder="jane@example.com" />
         </div>
         <div>
-          <label class="rb-label">Phone</label>
-          <input class="rb-input" type="tel" [value]="pi.phone" (input)="update('phone', $any($event.target).value)" placeholder="+1 234 567 8900" />
+          <label class="label">Phone</label>
+          <input class="input" type="tel" [value]="pi.phone" (input)="update('phone', $any($event.target).value)" placeholder="+1 234 567 8900" />
         </div>
         <div style="grid-column:span 2;">
-          <label class="rb-label">Location</label>
-          <input class="rb-input" type="text" [value]="pi.location" (input)="update('location', $any($event.target).value)" placeholder="New York, NY" />
+          <label class="label">Location</label>
+          <input class="input" type="text" [value]="pi.location" (input)="update('location', $any($event.target).value)" placeholder="New York, NY" />
         </div>
         <div style="grid-column:span 2;">
-          <label class="rb-label">Website</label>
-          <input class="rb-input" type="url" [value]="pi.website" (input)="update('website', $any($event.target).value)" placeholder="https://yoursite.com" />
+          <label class="label">Website</label>
+          <input class="input" type="url" [value]="pi.website" (input)="update('website', $any($event.target).value)" placeholder="https://yoursite.com" />
         </div>
         <div>
-          <label class="rb-label">LinkedIn</label>
-          <input class="rb-input" type="text" [value]="pi.linkedin" (input)="update('linkedin', $any($event.target).value)" placeholder="linkedin.com/in/jane" />
+          <label class="label">LinkedIn</label>
+          <input class="input" type="text" [value]="pi.linkedin" (input)="update('linkedin', $any($event.target).value)" placeholder="linkedin.com/in/jane" />
         </div>
         <div>
-          <label class="rb-label">GitHub</label>
-          <input class="rb-input" type="text" [value]="pi.github" (input)="update('github', $any($event.target).value)" placeholder="github.com/jane" />
+          <label class="label">GitHub</label>
+          <input class="input" type="text" [value]="pi.github" (input)="update('github', $any($event.target).value)" placeholder="github.com/jane" />
         </div>
         <div style="grid-column:span 2;">
           <div class="flex justify-between items-center mb-1">
-            <label class="rb-label" style="margin-bottom:0;">Summary</label>
+            <label class="label" style="margin-bottom:0;">Summary</label>
             <app-ai-refine-menu [content]="pi.summary" [jobDescription]="jobDescription"
               (refined)="update('summary', $event)" />
           </div>

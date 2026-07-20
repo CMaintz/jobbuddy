@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './month-year-picker.component.html',
-  styleUrls: ['./month-year-picker.component.css'],
 })
 export class MonthYearPickerComponent implements OnInit {
   @Input() value = ''; // YYYY-MM format

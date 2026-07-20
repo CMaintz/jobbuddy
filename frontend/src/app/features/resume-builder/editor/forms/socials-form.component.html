@@ -1,21 +1,21 @@
 
     <div class="flex flex-col gap-3.5">
       @for (s of socials; track s.id) {
-        <div class="rb-card">
+        <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
             <span class="text-sm font-medium text-jb-text">{{ s.platform || 'New Social' }}</span>
             <button class="rb-remove" (click)="remove(s.id)">Remove</button>
           </div>
-          <label class="rb-label">Platform</label>
-          <select class="rb-input" [value]="s.platform" (change)="onPlatformChange(s.id, $any($event.target).value)">
+          <label class="label">Platform</label>
+          <select class="input" [value]="s.platform" (change)="onPlatformChange(s.id, $any($event.target).value)">
             @for (p of platforms; track p.platform) {
               <option [value]="p.platform">{{ p.platform }}</option>
             }
           </select>
-          <label class="rb-label">URL</label>
-          <input class="rb-input" [value]="s.url" (input)="update(s.id, 'url', $any($event.target).value)" placeholder="https://linkedin.com/in/you" />
-          <label class="rb-label">Username (optional)</label>
-          <input class="rb-input" [value]="s.username ?? ''" (input)="update(s.id, 'username', $any($event.target).value)" placeholder="@yourhandle" />
+          <label class="label">URL</label>
+          <input class="input" [value]="s.url" (input)="update(s.id, 'url', $any($event.target).value)" placeholder="https://linkedin.com/in/you" />
+          <label class="label">Username (optional)</label>
+          <input class="input" [value]="s.username ?? ''" (input)="update(s.id, 'username', $any($event.target).value)" placeholder="@yourhandle" />
           <app-icon-picker
             label="Icon"
             [icons]="iconLibrary"

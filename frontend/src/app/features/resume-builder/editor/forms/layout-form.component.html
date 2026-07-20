@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-[18px]">
       <!-- Template picker -->
       <div>
-        <label class="rb-label">Template</label>
+        <label class="label">Template</label>
         <div class="grid grid-cols-2 gap-2">
           @for (tpl of templates; track tpl.type) {
             <button
@@ -19,7 +19,7 @@
 
       <!-- Left column sections -->
       <div>
-        <label class="rb-label">Main Sections — drag to reorder</label>
+        <label class="label">Main Sections — drag to reorder</label>
         <div class="flex flex-col gap-1" cdkDropList (cdkDropListDropped)="drop('leftColumn', $event)">
           @for (section of leftColumn; track section.id; let i = $index) {
             <div class="rb-section-row" cdkDrag>
@@ -37,7 +37,7 @@
 
       <!-- Right column sections -->
       <div>
-        <label class="rb-label">Sidebar Sections — drag to reorder</label>
+        <label class="label">Sidebar Sections — drag to reorder</label>
         <div class="flex flex-col gap-1" cdkDropList (cdkDropListDropped)="drop('rightColumn', $event)">
           @for (section of rightColumn; track section.id; let i = $index) {
             <div class="rb-section-row" cdkDrag>
@@ -55,7 +55,7 @@
 
       <!-- Per-section typography -->
       <div>
-        <label class="rb-label">Section Typography</label>
+        <label class="label">Section Typography</label>
         <div class="text-2xs text-jb-text-dim mb-1.5">
           Overrides the document defaults for one section. Selection-level formatting lives in the text editors.
         </div>
@@ -72,7 +72,7 @@
               </button>
               @if (expandedTypo() === sec.id) {
                 <div class="p-2 flex flex-col gap-2">
-                  <select class="rb-input" [ngModel]="typo(sec.id).fontFamily ?? ''"
+                  <select class="input" [ngModel]="typo(sec.id).fontFamily ?? ''"
                     (ngModelChange)="setTypo(sec.id, { fontFamily: $event || undefined })">
                     <option value="">Document font</option>
                     @for (font of fonts; track font.value) {

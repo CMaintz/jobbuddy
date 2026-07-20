@@ -1,25 +1,25 @@
 
     <div class="flex flex-col gap-3.5">
       @for (proj of projects; track proj.id) {
-        <div class="rb-card">
+        <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
             <span class="text-sm font-medium text-jb-text">{{ proj.name || 'New Project' }}</span>
             <button class="rb-remove" (click)="remove(proj.id)">Remove</button>
           </div>
-          <label class="rb-label">Project Name</label>
-          <input class="rb-input" [value]="proj.name" (input)="update(proj.id, 'name', $any($event.target).value)" placeholder="My Awesome Project" />
-          <label class="rb-label">Link / URL</label>
-          <input class="rb-input" [value]="proj.link" (input)="update(proj.id, 'link', $any($event.target).value)" placeholder="https://github.com/you/project" />
-          <label class="rb-label">Date</label>
-          <input class="rb-input" [value]="proj.date" (input)="update(proj.id, 'date', $any($event.target).value)" placeholder="2024-01" />
+          <label class="label">Project Name</label>
+          <input class="input" [value]="proj.name" (input)="update(proj.id, 'name', $any($event.target).value)" placeholder="My Awesome Project" />
+          <label class="label">Link / URL</label>
+          <input class="input" [value]="proj.link" (input)="update(proj.id, 'link', $any($event.target).value)" placeholder="https://github.com/you/project" />
+          <label class="label">Date</label>
+          <input class="input" [value]="proj.date" (input)="update(proj.id, 'date', $any($event.target).value)" placeholder="2024-01" />
           <div class="flex justify-between items-center mb-1">
-            <label class="rb-label" style="margin-bottom:0;">Description</label>
+            <label class="label" style="margin-bottom:0;">Description</label>
             <app-ai-refine-menu [content]="proj.description" [jobDescription]="jobDescription"
               (refined)="update(proj.id, 'description', $event)" />
           </div>
           <app-rich-text-editor [value]="proj.description" placeholder="What did you build and why?" (debouncedChange)="update(proj.id, 'description', $event)" />
-          <label class="rb-label">Skills (comma separated)</label>
-          <input class="rb-input" [value]="(proj.skills ?? []).join(', ')" (change)="updateSkills(proj.id, $any($event.target).value)" placeholder="React, Node.js, PostgreSQL" />
+          <label class="label">Skills (comma separated)</label>
+          <input class="input" [value]="(proj.skills ?? []).join(', ')" (change)="updateSkills(proj.id, $any($event.target).value)" placeholder="React, Node.js, PostgreSQL" />
         </div>
       }
       <button class="rb-add" (click)="add()">+ Add Project</button>
