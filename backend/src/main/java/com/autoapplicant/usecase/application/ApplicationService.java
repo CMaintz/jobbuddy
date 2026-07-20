@@ -91,7 +91,7 @@ public class ApplicationService implements
 
         switch (document.documentType()) {
             case COVER_LETTER -> coverLetterText = content;
-            case APPLICATION_TEXT -> applicationText = content;
+            case APPLICATION_TEXT, UNSOLICITED_APPLICATION -> applicationText = content;
             case RECRUITER_MESSAGE, FOLLOW_UP_MESSAGE -> recruiterMessage = content;
             default -> {
                 // CVs are attached as generated documents; application text fields stay unchanged.

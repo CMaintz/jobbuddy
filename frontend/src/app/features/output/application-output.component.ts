@@ -67,6 +67,7 @@ export class ApplicationOutputComponent implements OnInit {
   formats: { key: FormatKey; label: string }[] = [
     { key: 'app', label: 'Application' },
     { key: 'cl', label: 'Cover letter' },
+    { key: 'ua', label: 'Unsolicited' },
     { key: 'dm', label: 'Short pitch' },
     { key: 'fu', label: 'Follow-up' },
   ];

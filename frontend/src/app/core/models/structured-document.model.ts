@@ -2,6 +2,7 @@ export type StructuredDocumentType =
   | 'CV'
   | 'COVER_LETTER'
   | 'APPLICATION_TEXT'
+  | 'UNSOLICITED_APPLICATION'
   | 'RECRUITER_MESSAGE'
   | 'FOLLOW_UP_MESSAGE'
   | 'CV_ANALYSIS_REPORT';
