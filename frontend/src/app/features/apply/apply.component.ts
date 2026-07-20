@@ -38,7 +38,7 @@ const DRAFT_MAX_AGE_MS = 7 * 24 * 3600_000;
 
 interface ApplyDraft {
   savedAt: number;
-  mode: 'paste' | 'url' | 'manual';
+  mode: 'paste' | 'url' | 'manual' | 'unsolicited';
   company: string;
   role: string;
   location: string;
@@ -68,7 +68,7 @@ export class ApplyComponent implements OnInit {
 
   phase = signal<'input' | 'generating'>('input');
   private busy = signal(false);
-  mode = signal<'paste' | 'url' | 'manual'>('paste');
+  mode = signal<'paste' | 'url' | 'manual' | 'unsolicited'>('paste');
   selectedFormat = signal('application');
   selectedVoice = signal('Warm');
   selectedLanguage = signal('English');
@@ -101,6 +101,7 @@ export class ApplyComponent implements OnInit {
     { mode: 'paste' as const, icon: 'copy', label: 'Paste JD text', sub: 'Paste from clipboard' },
     { mode: 'url' as const, icon: 'link', label: 'Paste URL', sub: 'We look it up in your feed' },
     { mode: 'manual' as const, icon: 'edit', label: 'Enter manually', sub: 'Type company, role & JD' },
+    { mode: 'unsolicited' as const, icon: 'mail', label: 'Unsolicited', sub: 'No posting — pitch the company' },
   ];
 
   formats = [
@@ -241,7 +242,9 @@ export class ApplyComponent implements OnInit {
   }
 
   isReady(): boolean {
-    return !!(this.company.trim() && this.role.trim() && this.jd.trim().length > 40);
+    if (!this.company.trim() || !this.role.trim()) return false;
+    // Unsolicited: there is no posting, so the description is optional context.
+    return this.mode() === 'unsolicited' || this.jd.trim().length > 40;
   }
 
   generate(): void {
@@ -263,7 +266,7 @@ export class ApplyComponent implements OnInit {
         if (this.selectedFormat() === 'cv') return of(app);
         const req: GenerateDocumentRequest = {
           jobId: app.jobId,
-          documentType: FORMAT_TO_DOC_TYPE[this.selectedFormat()] ?? 'APPLICATION_TEXT',
+          documentType: this.documentTypeForRequest(),
           targetLanguage: this.selectedLanguage() === 'Dansk' ? 'da' : 'en',
           promptTemplateId: this.selectedPromptId() ?? undefined,
           customInstructions: this.buildInstructions(),
@@ -285,7 +288,7 @@ export class ApplyComponent implements OnInit {
           });
         } else {
           this.router.navigate(['/applications', app.id, 'output'],
-            { queryParams: { format: FORMAT_TO_OUTPUT_KEY[this.selectedFormat()] ?? 'app' } });
+            { queryParams: { format: this.outputKeyForRequest() } });
         }
       },
       error: (err) => {
@@ -302,6 +305,23 @@ export class ApplyComponent implements OnInit {
     this.generateError.set('');
   }
 
+  /** Letter formats become an unsolicited letter when there is no posting; pitch/CV stay as-is. */
+  private documentTypeForRequest(): string {
+    const format = this.selectedFormat();
+    if (this.mode() === 'unsolicited' && (format === 'application' || format === 'cover-letter')) {
+      return 'UNSOLICITED_APPLICATION';
+    }
+    return FORMAT_TO_DOC_TYPE[format] ?? 'APPLICATION_TEXT';
+  }
+
+  private outputKeyForRequest(): string {
+    const format = this.selectedFormat();
+    if (this.mode() === 'unsolicited' && (format === 'application' || format === 'cover-letter')) {
+      return 'ua';
+    }
+    return FORMAT_TO_OUTPUT_KEY[format] ?? 'app';
+  }
+
   private resolveJob(): Observable<Job> {
     const preset = this.presetJob();
     if (preset) return of(preset);
@@ -309,7 +329,9 @@ export class ApplyComponent implements OnInit {
     const createManual = () => this.jobsApi.addManual({
       title: this.role.trim(),
       companyName: this.company.trim(),
-      description: this.jd.trim(),
+      description: this.mode() === 'unsolicited' && !this.jd.trim()
+        ? `Unsolicited application target: ${this.role.trim()} at ${this.company.trim()} — no posted vacancy.`
+        : this.jd.trim(),
       url: this.mode() === 'url' ? this.jobUrl.trim() || undefined : undefined,
       location: this.location.trim() || undefined,
     });

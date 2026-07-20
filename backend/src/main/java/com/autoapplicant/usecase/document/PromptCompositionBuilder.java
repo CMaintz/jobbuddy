@@ -68,6 +68,11 @@ public class PromptCompositionBuilder {
         String docLabel = switch (documentType != null ? documentType.toUpperCase() : "") {
             case "COVER_LETTER" -> "a compelling cover letter";
             case "APPLICATION_TEXT" -> "a professional job application text";
+            case "UNSOLICITED_APPLICATION" -> "an unsolicited application letter — the candidate is "
+                    + "applying speculatively, there is NO posted vacancy. State early and clearly what "
+                    + "kind of role the candidate is looking for, show genuine knowledge of or interest "
+                    + "in the company, and make a concrete case for the value they would add. Do not "
+                    + "reference 'the position' or 'the posting'";
             case "RECRUITER_MESSAGE" -> "a brief, personalized recruiter message (under 150 words)";
             case "FOLLOW_UP_MESSAGE" -> "a polite follow-up message (under 100 words)";
             default -> "a professional document";
