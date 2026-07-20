@@ -226,7 +226,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
-        return aiProvider.generate(composition).strip();
+        return com.autoapplicant.usecase.document.AiResponseParser
+                .sanitize(aiProvider.generate(composition)).strip();
     }
 
     private static List<String> textList(JsonNode root, String field) {

@@ -213,7 +213,8 @@ public class PromptCompositionBuilder {
         return sb.toString().stripTrailing();
     }
 
-    private String buildStyleMemory(WritingProfile profile) {
+    /** Renders the writing profile as a "## Writing Style" prompt block; empty string when there is nothing to say. */
+    public String buildStyleMemory(WritingProfile profile) {
         if (profile == null) return "";
         StringBuilder sb = new StringBuilder();
         if (profile.tone() != null) sb.append("Tone: ").append(profile.tone()).append("\n");
