@@ -46,7 +46,7 @@ export class RegisterComponent {
     this.authService.register(email!, password!).then(() => {
       this.registeredEmail = email!;
       this.success = true;
-    }).catch((e: any) => {
+    }).catch((e: { code?: string }) => {
       this.error = this.friendlyError(e.code);
     }).finally(() => {
       this.loading = false;

@@ -1,8 +1,10 @@
     <div class="flex gap-[3px] p-[3px] bg-jb-surface-2 border border-jb-border rounded-[7px]">
-      <button *ngFor="let o of options" (click)="changed.emit(o)"
-        [style.background]="value === o ? 'var(--jb-surface)' : 'transparent'"
-        [style.color]="value === o ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
-        class="p-[5px_11px] rounded-[5px] border-none cursor-pointer text-[11.5px] font-medium font-[inherit]">
-        {{ o }}
-      </button>
+      @for (o of options; track o) {
+        <button (click)="changed.emit(o)"
+          [style.background]="value === o ? 'var(--jb-surface)' : 'transparent'"
+          [style.color]="value === o ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+          class="p-[5px_11px] rounded-[5px] border-none cursor-pointer text-[11.5px] font-medium font-[inherit]">
+          {{ o }}
+        </button>
+      }
     </div>

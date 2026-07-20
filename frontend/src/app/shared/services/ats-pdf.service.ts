@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import type { jsPDF } from 'jspdf';
 import { ResumeData } from '../../features/resume-builder/models/resume-builder.models';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 
@@ -106,7 +107,7 @@ export class AtsPdfService {
     return new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   }
 
-  private header(doc: any, model: AtsResumeModel, y: number): number {
+  private header(doc: jsPDF, model: AtsResumeModel, y: number): number {
     doc.setFont('helvetica', 'bold').setFontSize(17).setTextColor(15);
     doc.text(model.name || 'Curriculum Vitae', MARGIN, y + 5);
     y += 8;
@@ -130,7 +131,7 @@ export class AtsPdfService {
     return y + 5;
   }
 
-  private sectionHeading(doc: any, text: string, y: number): number {
+  private sectionHeading(doc: jsPDF, text: string, y: number): number {
     y = this.ensureRoom(doc, y, 16);
     doc.setFont('helvetica', 'bold').setFontSize(10.5).setTextColor(30);
     doc.text(text.toUpperCase(), MARGIN, y + 3.5);
@@ -139,7 +140,7 @@ export class AtsPdfService {
     return y + 8.5;
   }
 
-  private paragraph(doc: any, text: string, y: number, size: number, indent = 0, lineH = 4.4): number {
+  private paragraph(doc: jsPDF, text: string, y: number, size: number, indent = 0, lineH = 4.4): number {
     doc.setFont('helvetica', 'normal').setFontSize(size).setTextColor(40);
     const lines: string[] = doc.splitTextToSize(text, CONTENT_W - indent);
     for (const line of lines) {
@@ -150,7 +151,7 @@ export class AtsPdfService {
     return y;
   }
 
-  private wrapped(doc: any, text: string, y: number, lineH: number): number {
+  private wrapped(doc: jsPDF, text: string, y: number, lineH: number): number {
     const lines: string[] = doc.splitTextToSize(text, CONTENT_W);
     for (const line of lines) {
       y = this.ensureRoom(doc, y, lineH + 1);
@@ -160,7 +161,7 @@ export class AtsPdfService {
     return y;
   }
 
-  private ensureRoom(doc: any, y: number, needed: number): number {
+  private ensureRoom(doc: jsPDF, y: number, needed: number): number {
     if (y + needed > PAGE_H - MARGIN) {
       doc.addPage();
       return MARGIN;

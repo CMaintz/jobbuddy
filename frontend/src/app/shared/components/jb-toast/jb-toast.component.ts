@@ -10,7 +10,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 export class JbToastComponent implements OnChanges {
   @Input() message = '';
   @Output() dismissed = new EventEmitter<void>();
-  private timer: any;
+  private timer: ReturnType<typeof setTimeout> | undefined;
 
   ngOnChanges(): void {
     clearTimeout(this.timer);

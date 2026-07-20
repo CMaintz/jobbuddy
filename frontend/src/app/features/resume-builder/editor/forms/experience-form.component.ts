@@ -24,8 +24,8 @@ export class ExperienceFormComponent {
 
   remove(id: string): void { this.state.removeExperience(id); }
 
-  update(id: string, field: string, value: any): void {
-    this.state.updateExperience(id, { [field]: value } as any);
+  update(id: string, field: string, value: unknown): void {
+    this.state.updateExperience(id, { [field]: value } as Partial<ResumeExperience>);
   }
 
   updateSkills(id: string, value: string): void {

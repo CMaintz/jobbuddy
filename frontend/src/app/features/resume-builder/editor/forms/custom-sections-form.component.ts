@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
-import { ResumeCustomSection, ResumeCustomSectionItem } from '../../models/resume-builder.models';
+import { ResumeCustomSectionItem } from '../../models/resume-builder.models';
 
 const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 'bullets' }[] = [
   { label: 'About Me', heading: 'About Me', style: 'paragraph' },

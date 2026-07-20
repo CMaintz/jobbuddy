@@ -1,7 +1,10 @@
     <svg [attr.width]="width" [attr.height]="height" class="block overflow-visible">
-      <path *ngIf="showFill" [attr.d]="areaPath" [attr.fill]="color" opacity="0.14" />
+      @if (showFill) {
+        <path [attr.d]="areaPath" [attr.fill]="color" opacity="0.14" />
+      }
       <path [attr.d]="linePath" fill="none" [attr.stroke]="color" stroke-width="1.5"
         stroke-linejoin="round" stroke-linecap="round" />
-      <circle *ngIf="lastPoint" [attr.cx]="lastPoint[0]" [attr.cy]="lastPoint[1]"
-        r="2.5" [attr.fill]="color" />
+      @if (lastPoint; as p) {
+        <circle [attr.cx]="p[0]" [attr.cy]="p[1]" r="2.5" [attr.fill]="color" />
+      }
     </svg>
