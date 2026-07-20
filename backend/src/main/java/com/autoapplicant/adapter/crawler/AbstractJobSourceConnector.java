@@ -12,14 +12,20 @@ import org.springframework.web.client.RestTemplate;
 public abstract class AbstractJobSourceConnector implements JobSourceConnectorPort {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
-    protected final RestTemplate restTemplate = new RestTemplate();
 
     protected static final String USER_AGENT =
             "Mozilla/5.0 (compatible; AutoApplicant-Bot/1.0; +https://autoapplicant.dk)";
 
-    @Override
-    public void fetchJobs(CrawlConfig config) {
-        log.warn("Connector for {} not yet implemented — skipping", getSource());
+    /** Sends the same honest UA as the Jsoup fetches — the default Java/x UA gets blocked. */
+    protected final RestTemplate restTemplate = createRestTemplate();
+
+    private static RestTemplate createRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        template.getInterceptors().add((request, body, execution) -> {
+            request.getHeaders().set("User-Agent", USER_AGENT);
+            return execution.execute(request, body);
+        });
+        return template;
     }
 
     /**

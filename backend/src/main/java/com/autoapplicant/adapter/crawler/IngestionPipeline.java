@@ -15,7 +15,6 @@ import com.autoapplicant.port.out.job.JobSearchPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -56,11 +55,14 @@ public class IngestionPipeline {
 
     public void ingest(RawJobData raw) {
         try {
-            // Deduplication check — refresh lastSeenAt for existing jobs so stale detection works
+            // Deduplication check — refresh lastSeenAt for existing jobs so stale detection
+            // works, and pick up a deadline the source published (or changed) after first crawl.
             if (raw.sourceJobId() != null) {
                 var existing = jobRepo.findBySourceAndSourceJobId(raw.source(), raw.sourceJobId());
                 if (existing.isPresent()) {
                     Job seen = existing.get();
+                    var deadline = raw.applicationDeadline() != null
+                            ? raw.applicationDeadline() : seen.applicationDeadline();
                     jobRepo.save(new Job(seen.id(), seen.source(), seen.sourceJobId(), seen.url(),
                             seen.title(), seen.companyId(), seen.companyName(), seen.descriptionRaw(),
                             seen.descriptionClean(), seen.employmentType(), seen.seniority(), seen.remoteType(),
@@ -70,7 +72,7 @@ public class IngestionPipeline {
                             seen.aiSummary(), seen.aiTags(), seen.aiSeniorityEstimate(),
                             seen.duplicateGroupId(), seen.isActive(), seen.jobCategory(),
                             seen.createdAt(), seen.updatedAt(), seen.shortDescription(), Instant.now(),
-                            seen.applicationDeadline()));
+                            deadline));
                     log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
                     return;
                 }
@@ -95,7 +97,7 @@ public class IngestionPipeline {
             enrichJob.enrich(saved).thenAccept(enriched -> {
                 jobRepo.save(enriched);
                 jobSearch.index(enriched);
-                embedAsync(enriched);
+                embed(enriched);
                 int n = enrichedCount.incrementAndGet();
                 if (n % 50 == 0) {
                     log.info("Enrichment progress: {} jobs enriched so far", n);
@@ -135,8 +137,12 @@ public class IngestionPipeline {
         }
     }
 
-    @Async("aiTaskExecutor")
-    protected void embedAsync(Job job) {
+    /**
+     * Runs on the enrichment callback's thread (already the AI task executor).
+     * Deliberately not {@code @Async}: a self-invocation would bypass the Spring
+     * proxy anyway, so the annotation would only mislead.
+     */
+    private void embed(Job job) {
         try {
             String textToEmbed = job.title() + " " +
                     (job.descriptionClean() != null ? job.descriptionClean() : "");
