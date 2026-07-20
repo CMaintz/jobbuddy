@@ -107,6 +107,14 @@ export const routes: Routes = [
         path: 'interviews',
         loadComponent: () => import('./features/interviews/interviews.component').then(m => m.InterviewsComponent)
       },
+      // TODO(recruiter-contacts): a lightweight contacts screen is wanted here eventually.
+      // The data largely exists already — applications carry recruiterName/recruiterEmail/
+      // recruiterMessage/recruiterReply (see Application record + application-detail's
+      // recruiter section) — so a first version can simply aggregate those per person
+      // across applications (name, company via the job, last touch, linked applications).
+      // No new backend entity needed until we want contacts that aren't tied to an
+      // application (or email integration). A fully mocked standalone CRM screen used to
+      // live at features/contacts/ (deleted — recover from git history for layout ideas).
 
       // Insights & library
       {
