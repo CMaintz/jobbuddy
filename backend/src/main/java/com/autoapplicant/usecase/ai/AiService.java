@@ -194,10 +194,9 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
                 userPrompt.append("## Job Description\n").append(request.jobDescription()).append("\n\n");
             }
-            if (writingProfile != null) {
-                if (writingProfile.tone() != null) {
-                    userPrompt.append("## Candidate's Writing Style\nTone: ").append(writingProfile.tone()).append("\n\n");
-                }
+            String styleMemory = compositionBuilder.buildStyleMemory(writingProfile);
+            if (!styleMemory.isBlank()) {
+                userPrompt.append(styleMemory).append("\n\n");
             }
             userPrompt.append("""
                     Return only valid JSON in exactly this shape:
@@ -285,13 +284,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         }
     }
 
-    /**
-     * Replaces em dashes and en dashes with regular hyphens in AI-generated text.
-     */
     private static String sanitizeAiText(String text) {
-        if (text == null) return null;
-        return text.replace('\u2014', '-')   // em dash
-                   .replace('\u2013', '-');   // en dash
+        return AiResponseParser.sanitize(text);
     }
 
     private static String buildAnalysisPrompt(String cvContent, String jobDescription) {
