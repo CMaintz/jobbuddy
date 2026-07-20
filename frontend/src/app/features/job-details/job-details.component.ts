@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -195,7 +195,7 @@ export class JobDetailsComponent implements OnInit {
   }
 
   stageTone(status: ApplicationStatus | string): 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'violet' {
-    return (STAGE_TONES[status] as any) ?? 'neutral';
+    return (STAGE_TONES[status] as PillTone) ?? 'neutral';
   }
 
   stageIdx(stage: ApplicationStatus | string): number {

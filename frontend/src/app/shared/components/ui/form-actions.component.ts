@@ -12,5 +12,8 @@ export class FormActionsComponent {
   @Input() cancelLabel = 'Cancel';
   @Input() showCancel = true;
   @Input() disabled = false;
+  // Legacy component consumed only by features/old/ — renaming the output would churn
+  // screens that are scheduled for deletion. Dies together with old/.
+  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() cancel = new EventEmitter<void>();
 }

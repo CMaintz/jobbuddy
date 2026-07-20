@@ -13,7 +13,7 @@ export interface TabNavItem<T extends string = string> {
   templateUrl: './tab-nav.component.html'
 })
 export class TabNavComponent<T extends string = string> {
-  @Input() tabs: Array<TabNavItem<T>> = [];
+  @Input() tabs: TabNavItem<T>[] = [];
   @Input() activeKey!: T;
   @Output() activeKeyChange = new EventEmitter<T>();
 }

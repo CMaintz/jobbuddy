@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
@@ -17,7 +17,7 @@ const STAGE_LABEL: Record<string, string> = {
   RECRUITER_CONTACT: 'Screen', INTERVIEW: 'Interview', TECHNICAL_TEST: 'Technical',
   FINAL_ROUND: 'Final', OFFER: 'Offer', REJECTED: 'Rejected', ARCHIVED: 'Archived'
 };
-const STAGE_TONE: Record<string, string> = {
+const STAGE_TONE: Record<string, PillTone> = {
   SAVED: 'neutral', PREPARING: 'neutral', APPLIED: 'info',
   RECRUITER_CONTACT: 'violet', INTERVIEW: 'accent', TECHNICAL_TEST: 'accent',
   FINAL_ROUND: 'accent', OFFER: 'success', REJECTED: 'danger', ARCHIVED: 'neutral'
@@ -77,7 +77,7 @@ export class ApplicationsListComponent implements OnInit {
   }
 
   stageLabel(status: ApplicationStatus): string { return STAGE_LABEL[status] ?? status; }
-  stageTone(status: ApplicationStatus): any { return STAGE_TONE[status] ?? 'neutral'; }
+  stageTone(status: ApplicationStatus): PillTone { return STAGE_TONE[status] ?? 'neutral'; }
 
   ageLabel(dateStr: string): string {
     if (!dateStr) return '—';

@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./jb-icon.component.css'],
 })
 export class JbIconComponent {
-  @Input() name: string = '';
-  @Input() size: number = 14;
-  @Input() strokeWidth: number = 1.5;
+  @Input() name = '';
+  @Input() size = 14;
+  @Input() strokeWidth = 1.5;
 }

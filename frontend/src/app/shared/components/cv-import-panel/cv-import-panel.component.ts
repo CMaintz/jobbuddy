@@ -66,7 +66,7 @@ export class CvImportPanelComponent {
     if (!file) return;
     const formData = new FormData();
     formData.append('file', file);
-    this.parse(this.http.post<any>('/api/v1/users/me/import/linkedin-pdf', formData));
+    this.parse(this.http.post<Profile>('/api/v1/users/me/import/linkedin-pdf', formData));
   }
 
   private takeFile(event: Event): File | null {
@@ -84,12 +84,12 @@ export class CvImportPanelComponent {
     this.parse(this.aiApi.parseCv(this.pastedText));
   }
 
-  private parse(request$: Observable<any>): void {
+  private parse(request$: Observable<Profile>): void {
     if (this.parsing()) return;
     this.parsing.set(true);
     this.preview.set(null);
     request$.subscribe({
-      next: (parsed: any) => {
+      next: (parsed: Profile) => {
         this.parsing.set(false);
         this.preview.set({
           fullName: parsed?.fullName || undefined,

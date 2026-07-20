@@ -6,7 +6,7 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -87,7 +87,7 @@ export class PipelineComponent implements OnInit {
   }
 
   stageTone(status: ApplicationStatus): 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'violet' {
-    const map: Record<string, any> = {
+    const map: Record<string, PillTone> = {
       SAVED: 'neutral', PREPARING: 'neutral', APPLIED: 'info',
       RECRUITER_CONTACT: 'violet', INTERVIEW: 'accent', TECHNICAL_TEST: 'accent',
       FINAL_ROUND: 'accent', OFFER: 'success', REJECTED: 'danger', ARCHIVED: 'neutral'
