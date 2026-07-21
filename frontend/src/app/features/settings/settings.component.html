@@ -151,48 +151,89 @@
           }
 
           @if (activeSection() === 'style') {
-            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Writing style</h2>
-            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
+            <div class="flex items-center justify-between gap-3 m-[0_0_4px]">
+              <h2 class="text-[16px] font-medium tracking-tight m-0">Writing style</h2>
+              <jb-button small icon="sparkle" (clicked)="openAnalyze()">Analyze my writing</jb-button>
+            </div>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_6px]">
               How the AI should sound when it writes for you. Every generated letter, message, and tailored CV follows these rules.
+              Write them yourself, or let an analysis of your own texts propose them.
             </p>
+            @if (analyzedAt()) {
+              <div class="text-xs text-jb-text-dim mono m-[0_0_14px]">analyzed from your writing · {{ analyzedAt() | date:'d MMM y' }}</div>
+            } @else {
+              <div class="m-[0_0_8px]"></div>
+            }
+
+            @if (analysisBaseline) {
+              <div class="flex items-center gap-3 p-[10px_12px] rounded-lg mb-3"
+                   style="background:var(--jb-accent-soft);border:1px solid var(--jb-accent-border);">
+                <jb-icon name="sparkle" [size]="14" style="color:var(--jb-accent-2);" />
+                <div class="flex-1 text-sm" style="color:var(--jb-accent-2);">
+                  Analysis applied — marked fields changed; new rules were added to the end of each list. Review, tweak, then Save.
+                </div>
+                <jb-button small (clicked)="undoAnalysis()">Undo</jb-button>
+              </div>
+            }
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Tone</div>
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Tone
+                @if (changed('tone')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              </div>
               <div class="text-xs text-jb-text-dim mb-2">A sentence or two — e.g. "confident but understated, never salesy".</div>
               <input type="text" [(ngModel)]="styleTone" (ngModelChange)="markStyleDirty()"
                 class="input" placeholder="e.g. warm and direct, lightly informal" />
+              @if (changed('tone') && analysisBaseline?.tone) {
+                <div class="mt-2"><jb-diff-viewer [before]="analysisBaseline?.tone ?? ''" [after]="styleTone" /></div>
+              }
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Vocabulary</div>
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Vocabulary
+                @if (changed('vocabulary')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              </div>
               <div class="text-xs text-jb-text-dim mb-2">Words you lean on, words you'd never use.</div>
               <textarea rows="2" [(ngModel)]="styleVocabulary" (ngModelChange)="markStyleDirty()"
                 class="input resize-y text-sm leading-relaxed" placeholder="e.g. plain verbs; say 'built' not 'spearheaded'"></textarea>
+              @if (changed('vocabulary') && analysisBaseline?.vocabulary) {
+                <div class="mt-2"><jb-diff-viewer [before]="analysisBaseline?.vocabulary ?? ''" [after]="styleVocabulary" /></div>
+              }
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Preferred phrases</div>
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Preferred phrases
+                @if (changed('phrases')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              </div>
               <div class="text-xs text-jb-text-dim mb-2">Turns of phrase that sound like you.</div>
               <jb-tag-input [value]="stylePhrases" (valueChange)="stylePhrases = $event; markStyleDirty()" placeholder="Add a phrase…" />
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Always do</div>
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Always do
+                @if (changed('dos')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              </div>
               <div class="text-xs text-jb-text-dim mb-2">Rules the AI must follow — e.g. "lead with the outcome".</div>
               <jb-tag-input [value]="styleDos" (valueChange)="styleDos = $event; markStyleDirty()" placeholder="Add a rule…" />
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Never do</div>
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Never do
+                @if (changed('donts')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              </div>
               <div class="text-xs text-jb-text-dim mb-2">Banned phrases and habits — e.g. "no 'I am writing to apply'".</div>
               <jb-tag-input [value]="styleDonts" (valueChange)="styleDonts = $event; markStyleDirty()" placeholder="Add a rule…" />
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Structure</div>
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Structure
+                @if (changed('structure')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              </div>
               <div class="text-xs text-jb-text-dim mb-2">How documents should be built — paragraph order, length, sign-off.</div>
               <textarea rows="3" [(ngModel)]="styleStructure" (ngModelChange)="markStyleDirty()"
                 class="input resize-y text-sm leading-relaxed" placeholder="e.g. hook → why this company → proof → short close; max one page; sign off with 'Best regards'"></textarea>
+              @if (changed('structure') && analysisBaseline?.structure) {
+                <div class="mt-2"><jb-diff-viewer [before]="analysisBaseline?.structure ?? ''" [after]="styleStructure" /></div>
+              }
             </div>
           }
 
@@ -275,3 +316,61 @@
         </div>
       </div>
     </div>
+
+    @if (showAnalyze()) {
+      <jb-modal [width]="620" (closed)="showAnalyze.set(false)">
+        <ng-container jb-modal-header>
+          <jb-icon name="sparkle" [size]="15" />
+          <span class="text-base font-medium">Analyze my writing</span>
+        </ng-container>
+
+        <p class="text-sm text-jb-text-dim leading-relaxed m-0">
+          Paste 1–3 texts you actually wrote — an old cover letter, a long email — and/or pick generated
+          documents you've edited into your own voice. We'll propose style rules from them; nothing is
+          saved until you've reviewed the result and hit Save.
+        </p>
+
+        @for (s of analyzeSamples; track $index) {
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-jb-text-dim">Sample {{ $index + 1 }}</span>
+              @if (analyzeSamples.length > 1) {
+                <button (click)="removeSample($index)" class="bg-transparent border-none text-xs text-jb-text-dim cursor-pointer p-0 hover:text-jb-text">remove</button>
+              }
+            </div>
+            <textarea rows="5" [(ngModel)]="analyzeSamples[$index]"
+              class="input resize-y text-sm leading-relaxed" placeholder="Paste a text you wrote yourself…"></textarea>
+          </div>
+        }
+        @if (analyzeSamples.length < 3) {
+          <div><jb-button small icon="plus" (clicked)="addSample()">Add another sample</jb-button></div>
+        }
+
+        @if (pickerDocs().length) {
+          <div>
+            <div class="text-base font-medium mb-[4px]">Or pick from your generated documents</div>
+            <div class="text-xs text-jb-text-dim mb-2">Best when you've edited them until they sound like you.</div>
+            <div class="flex flex-col gap-1 max-h-[180px] overflow-auto jb-scroll">
+              @for (d of pickerDocs(); track d.id) {
+                <label class="flex items-center gap-2.5 p-[7px_10px] rounded-md border cursor-pointer"
+                  [style.background]="selectedDocIds.has(d.id) ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+                  [style.border-color]="selectedDocIds.has(d.id) ? 'var(--jb-accent-border)' : 'var(--jb-border)'">
+                  <input type="checkbox" [checked]="selectedDocIds.has(d.id)" (change)="toggleDoc(d.id)"
+                    style="accent-color:var(--jb-accent);" />
+                  <span class="text-sm">{{ docTypeLabel(d.documentType) }}</span>
+                  <span class="text-xs text-jb-text-dim ml-auto mono">{{ d.createdAt | date:'d MMM y' }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+
+        <ng-container jb-modal-footer>
+          <span class="text-xs text-jb-text-dim mr-auto">Contact details are stripped before analysis.</span>
+          <jb-button (clicked)="showAnalyze.set(false)">Cancel</jb-button>
+          <jb-button primary icon="sparkle" [disabled]="!canAnalyze() || analyzing()" (clicked)="runAnalysis()">
+            {{ analyzing() ? 'Analyzing…' : 'Analyze' }}
+          </jb-button>
+        </ng-container>
+      </jb-modal>
+    }

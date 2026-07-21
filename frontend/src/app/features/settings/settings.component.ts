@@ -10,10 +10,14 @@ import { JbToggleComponent } from '../../shared/components/jb-toggle/jb-toggle.c
 import { JbSegmentedComponent } from '../../shared/components/jb-segmented/jb-segmented.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
+import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
+import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { ThemeService } from '../../core/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserPreferences } from '../../core/models/user.model';
 import { WritingProfileApiService, WritingProfile } from '../../core/api/writing-profile.api';
+import { AiApiService } from '../../core/api/ai.api';
+import { GeneratedDocument } from '../../core/models/generated-document.model';
 
 type Section = 'match' | 'gen' | 'style' | 'account' | 'privacy';
 
@@ -53,10 +57,31 @@ const SENIORITY_MAP: Record<string, string[]> = {
   'Staff+': ['LEAD', 'PRINCIPAL', 'EXECUTIVE'],
 };
 
+/** Document types worth analyzing for voice — prose the user may have edited, not CVs. */
+const ANALYZABLE_DOC_TYPES: Record<string, string> = {
+  COVER_LETTER: 'Cover letter',
+  APPLICATION_TEXT: 'Application',
+  UNSOLICITED_APPLICATION: 'Unsolicited application',
+  RECRUITER_MESSAGE: 'Recruiter message',
+  FOLLOW_UP_MESSAGE: 'Follow-up',
+};
+
+/** Form values captured before an analysis proposal is applied, so it can be reviewed/undone. */
+interface StyleSnapshot {
+  tone: string;
+  vocabulary: string;
+  phrases: string[];
+  dos: string[];
+  donts: string[];
+  structure: string;
+  excerpts?: string[];
+  lastAnalyzedAt?: string;
+}
+
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent],
+  imports: [CommonModule, FormsModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
@@ -65,6 +90,7 @@ export class SettingsComponent implements OnInit {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);
+  private aiApi = inject(AiApiService);
   Math = Math;
 
   activeSection = signal<Section>('match');
@@ -111,6 +137,16 @@ export class SettingsComponent implements OnInit {
   private writingProfile: WritingProfile | null = null;
   private styleDirty = false;
 
+  // Writing-style analysis ("learn my voice from samples")
+  showAnalyze = signal(false);
+  analyzing = signal(false);
+  analyzeSamples: string[] = [''];
+  pickerDocs = signal<GeneratedDocument[]>([]);
+  selectedDocIds = new Set<string>();
+  analyzedAt = signal<string | undefined>(undefined);
+  /** Non-null while an applied analysis awaits review; drives the changed-field markers. */
+  analysisBaseline: StyleSnapshot | null = null;
+
   ngOnInit(): void {
     const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
     if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
@@ -147,6 +183,7 @@ export class SettingsComponent implements OnInit {
         this.styleDos = wp.dos ?? [];
         this.styleDonts = wp.donts ?? [];
         this.styleStructure = wp.structureNotes ?? '';
+        this.analyzedAt.set(wp.lastAnalyzedAt);
       },
       error: () => {}
     });
@@ -215,9 +252,123 @@ export class SettingsComponent implements OnInit {
       next: saved => {
         this.writingProfile = saved;
         this.styleDirty = false;
+        this.analyzedAt.set(saved.lastAnalyzedAt);
+        this.analysisBaseline = null;
       },
       error: () => this.toast.set('Could not save your writing style')
     });
+  }
+
+  openAnalyze(): void {
+    this.showAnalyze.set(true);
+    if (this.pickerDocs().length) return;
+    this.aiApi.getDocuments().subscribe({
+      next: docs => this.pickerDocs.set(
+        docs.filter(d => ANALYZABLE_DOC_TYPES[d.documentType] && d.content?.trim())
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+            .slice(0, 20)),
+      error: () => {}
+    });
+  }
+
+  addSample(): void {
+    if (this.analyzeSamples.length < 3) this.analyzeSamples.push('');
+  }
+
+  removeSample(index: number): void {
+    this.analyzeSamples.splice(index, 1);
+  }
+
+  toggleDoc(id: string): void {
+    if (this.selectedDocIds.has(id)) this.selectedDocIds.delete(id);
+    else this.selectedDocIds.add(id);
+  }
+
+  docTypeLabel(type: string): string {
+    return ANALYZABLE_DOC_TYPES[type] ?? type;
+  }
+
+  canAnalyze(): boolean {
+    return this.analyzeSamples.join('').trim().length >= 120 || this.selectedDocIds.size > 0;
+  }
+
+  runAnalysis(): void {
+    if (this.analyzing() || !this.canAnalyze()) return;
+    this.analyzing.set(true);
+    this.writingApi.analyze({
+      samples: this.analyzeSamples.map(s => s.trim()).filter(Boolean),
+      documentIds: [...this.selectedDocIds],
+    }).subscribe({
+      next: proposal => {
+        this.analyzing.set(false);
+        this.showAnalyze.set(false);
+        this.applyProposal(proposal);
+      },
+      error: () => {
+        this.analyzing.set(false);
+        this.toast.set('Analysis failed — check your samples and try again');
+      }
+    });
+  }
+
+  /** Prefills the form with the proposal; the user reviews the marked changes and saves as usual. */
+  private applyProposal(p: WritingProfile): void {
+    this.analysisBaseline = {
+      tone: this.styleTone,
+      vocabulary: this.styleVocabulary,
+      phrases: [...this.stylePhrases],
+      dos: [...this.styleDos],
+      donts: [...this.styleDonts],
+      structure: this.styleStructure,
+      excerpts: this.writingProfile?.exampleExcerpts,
+      lastAnalyzedAt: this.writingProfile?.lastAnalyzedAt,
+    };
+    if (p.tone?.trim()) this.styleTone = p.tone.trim();
+    if (p.vocabularyNotes?.trim()) this.styleVocabulary = p.vocabularyNotes.trim();
+    if (p.structureNotes?.trim()) this.styleStructure = p.structureNotes.trim();
+    this.stylePhrases = this.mergeTags(this.stylePhrases, p.phrasingPatterns);
+    this.styleDos = this.mergeTags(this.styleDos, p.dos);
+    this.styleDonts = this.mergeTags(this.styleDonts, p.donts);
+    this.writingProfile = {
+      ...this.writingProfile,
+      exampleExcerpts: p.exampleExcerpts?.length ? p.exampleExcerpts : this.writingProfile?.exampleExcerpts,
+      lastAnalyzedAt: p.lastAnalyzedAt,
+    };
+    this.markStyleDirty();
+  }
+
+  /** Hand-tuned entries are kept; the proposal's new ones are appended at the end. */
+  private mergeTags(current: string[], proposed?: string[]): string[] {
+    if (!proposed?.length) return current;
+    const seen = new Set(current.map(t => t.trim().toLowerCase()));
+    return [...current, ...proposed.filter(t => t.trim() && !seen.has(t.trim().toLowerCase()))];
+  }
+
+  undoAnalysis(): void {
+    const b = this.analysisBaseline;
+    if (!b) return;
+    this.styleTone = b.tone;
+    this.styleVocabulary = b.vocabulary;
+    this.styleStructure = b.structure;
+    this.stylePhrases = [...b.phrases];
+    this.styleDos = [...b.dos];
+    this.styleDonts = [...b.donts];
+    this.writingProfile = { ...this.writingProfile, exampleExcerpts: b.excerpts, lastAnalyzedAt: b.lastAnalyzedAt };
+    this.analysisBaseline = null;
+  }
+
+  changed(field: keyof StyleSnapshot): boolean {
+    const b = this.analysisBaseline;
+    if (!b) return false;
+    switch (field) {
+      case 'tone': return b.tone !== this.styleTone;
+      case 'vocabulary': return b.vocabulary !== this.styleVocabulary;
+      case 'structure': return b.structure !== this.styleStructure;
+      case 'phrases': return b.phrases.join('') !== this.stylePhrases.join('');
+      case 'dos': return b.dos.join('') !== this.styleDos.join('');
+      case 'donts': return b.donts.join('') !== this.styleDonts.join('');
+      default: return false;
+    }
   }
 
   get providerLabel(): string {
