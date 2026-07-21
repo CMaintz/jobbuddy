@@ -1,0 +1,17 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+
+/**
+ * Public privacy policy page (GDPR art. 13/14 information duties).
+ * The wording is a working draft — have it reviewed by counsel before launch.
+ */
+@Component({
+  selector: 'app-privacy-policy',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './privacy-policy.component.html',
+})
+export class PrivacyPolicyComponent {
+  readonly lastUpdated = '21 July 2026';
+}
