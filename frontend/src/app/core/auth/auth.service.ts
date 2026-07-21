@@ -111,9 +111,20 @@ export class AuthService {
     return sendPasswordResetEmail(auth, email);
   }
 
+  /**
+   * Resolves once Firebase has restored (or ruled out) a persisted session.
+   * On a fresh page load auth.currentUser is null until the SDK finishes reading
+   * IndexedDB — checking it before this resolves misreads a logged-in user as
+   * logged out.
+   */
+  whenAuthReady(): Promise<void> {
+    return auth.authStateReady();
+  }
+
   /** Returns the current Firebase ID token (auto-refreshed by the Firebase SDK). */
   getIdToken(): Promise<string | null> {
-    return auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
+    return auth.authStateReady()
+      .then(() => auth.currentUser ? auth.currentUser.getIdToken() : null);
   }
 
   isAuthenticated(): boolean {
