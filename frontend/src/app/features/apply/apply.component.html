@@ -30,6 +30,15 @@
         </div>
       }
 
+      @if (capturedFrom()) {
+        <div class="mx-6 mt-4 p-3 flex items-center gap-3 bg-jb-accent-soft border border-jb-accent-border rounded-md">
+          <jb-icon name="link" [size]="14" class="text-jb-accent" />
+          <div class="flex-1 text-sm text-jb-text">
+            Captured from <span class="font-medium">{{ capturedFrom() }}</span> — check the fields below, pick a format, and hit Generate.
+          </div>
+        </div>
+      }
+
       <!-- Auto-save: any typing in the form persists the draft to localStorage -->
       <div class="flex-1 overflow-auto p-[20px_24px_40px] grid gap-[22px] jb-scroll grid-cols-1 lg:grid-cols-[1fr_320px]"
            (input)="persistDraft()" (change)="persistDraft()">
