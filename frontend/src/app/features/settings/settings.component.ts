@@ -121,6 +121,7 @@ export class SettingsComponent implements OnInit {
   seniority = 'Senior';
   remote = true;
   weeklyGoal = 5;
+  digestEmail = false;
   minMatch = +(localStorage.getItem(MIN_MATCH_KEY) ?? 60);
   private prefs: UserPreferences | null = null;
 
@@ -166,6 +167,7 @@ export class SettingsComponent implements OnInit {
         this.remote = (prefs.preferredRemoteTypes ?? []).length === 0
           || prefs.preferredRemoteTypes.includes('REMOTE');
         this.weeklyGoal = prefs.weeklyApplicationGoal ?? 5;
+        this.digestEmail = prefs.notificationEnabled && prefs.notificationFrequency === 'WEEKLY';
         this.loading.set(false);
       },
       error: () => {
@@ -220,6 +222,8 @@ export class SettingsComponent implements OnInit {
       preferredSeniority: SENIORITY_MAP[this.seniority] ?? [],
       preferredRemoteTypes: this.remote ? [] : ['ON_SITE', 'HYBRID'],
       weeklyApplicationGoal: this.weeklyGoal,
+      notificationEnabled: this.digestEmail,
+      notificationFrequency: this.digestEmail ? 'WEEKLY' : this.prefs?.notificationFrequency ?? null,
     };
 
     this.http.put<UserPreferences>('/api/v1/users/me/preferences', payload).subscribe({
