@@ -2,9 +2,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 import { DashboardApiService, DetailedMetrics, WeeklyTrend } from '../../core/api/dashboard.api';
 import { RemindersApiService } from '../../core/api/reminders.api';
+import { NudgesApiService, Nudge } from '../../core/api/nudges.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { Application } from '../../core/models/application.model';
@@ -87,6 +88,7 @@ export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
   private api = inject(DashboardApiService);
   private remindersApi = inject(RemindersApiService);
+  private nudgesApi = inject(NudgesApiService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
 
@@ -131,9 +133,10 @@ export class DashboardComponent implements OnInit {
       apps: this.appsApi.getAll(),
       saved: this.jobsApi.getSaved(),
       reminders: this.remindersApi.getOpenReminders(),
+      nudges: this.nudgesApi.getNudges().pipe(catchError(() => of([] as Nudge[]))),
       prefs: this.http.get<UserPreferences>('/api/v1/users/me/preferences'),
     }).subscribe({
-      next: ({ metrics, trend, apps, saved, reminders, prefs }) => {
+      next: ({ metrics, trend, apps, saved, reminders, nudges, prefs }) => {
         this.allApps = apps;
         this.applyMetrics(metrics, trend, prefs);
         this.applyPeriod();
@@ -144,7 +147,7 @@ export class DashboardComponent implements OnInit {
           age: this.ageLabel(job.postedAt),
           hot: false,
         }));
-        this.buildQueue(reminders, apps);
+        this.buildQueue(reminders, apps, nudges);
       },
       error: () => {} // cards keep their zero states
     });
@@ -219,7 +222,7 @@ export class DashboardComponent implements OnInit {
       }));
   }
 
-  private buildQueue(reminders: { note: string | null; dueAt: string; applicationId: string }[], apps: Application[]): void {
+  private buildQueue(reminders: { note: string | null; dueAt: string; applicationId: string }[], apps: Application[], nudges: Nudge[]): void {
     const appMap = new Map(apps.map(a => [a.id, a]));
     const now = Date.now();
     const endOfDay = new Date();
@@ -227,7 +230,7 @@ export class DashboardComponent implements OnInit {
 
     const dueSoon = reminders.filter(r => new Date(r.dueAt).getTime() <= endOfDay.getTime());
     this.overdueCount = reminders.filter(r => new Date(r.dueAt).getTime() < now).length;
-    this.todayQueue = dueSoon.slice(0, 4).map(r => {
+    const reminderItems: QueueItem[] = dueSoon.map(r => {
       const app = appMap.get(r.applicationId);
       const overdue = new Date(r.dueAt).getTime() < now;
       return {
@@ -239,6 +242,32 @@ export class DashboardComponent implements OnInit {
         hot: overdue,
       };
     });
+
+    // Manual reminders lead; computed nudges fill the remaining slots
+    this.todayQueue = [...reminderItems, ...nudges.map(n => this.nudgeItem(n))].slice(0, 5);
+  }
+
+  private nudgeItem(n: Nudge): QueueItem {
+    const detail = `${n.companyName ?? ''}${n.jobTitle ? ' · ' + n.jobTitle : ''}` || '—';
+    if (n.type === 'DEADLINE_SOON') {
+      const daysLeft = Math.max(0, Math.ceil((new Date(n.deadline ?? '').getTime() - Date.now()) / 86400000));
+      return {
+        time: daysLeft === 0 ? 'today' : `${daysLeft}d left`,
+        what: 'Apply before the deadline',
+        detail,
+        tag: 'deadline',
+        tone: daysLeft <= 2 ? 'danger' : 'info',
+        hot: daysLeft <= 2,
+      };
+    }
+    return {
+      time: `${n.daysSinceApplied}d`,
+      what: 'No reply yet — send a follow-up',
+      detail,
+      tag: 'no reply',
+      tone: 'violet',
+      hot: false,
+    };
   }
 
   ageLabel(iso?: string): string {
