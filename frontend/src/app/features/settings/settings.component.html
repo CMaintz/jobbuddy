@@ -129,6 +129,12 @@
                 <button (click)="weeklyGoal = weeklyGoal + 1; markDirty()" class="w-[26px] h-[26px] rounded bg-jb-surface-2 border border-jb-border text-jb-text cursor-pointer text-xl">+</button>
               </div>
             </div>
+
+            <!-- Weekly digest email -->
+            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+              <div class="flex-1"><div class="text-base font-medium">Weekly email digest</div><div class="text-xs text-jb-text-dim mt-[1px]">Your top new matches in your inbox every Monday</div></div>
+              <jb-toggle [on]="digestEmail" (toggled)="digestEmail = $event; markDirty()" />
+            </div>
           }
 
           @if (activeSection() === 'gen') {
@@ -302,6 +308,7 @@
             <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Privacy & data</h2>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
               Your CV and applications live in your workspace. Your name and contact details are never sent to the AI provider.
+              Full details in our <a href="/privacy" class="jb-link">privacy policy</a>.
             </p>
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
               <div class="flex-1"><div class="text-base font-medium">Export all data</div><div class="text-xs text-jb-text-dim mt-[1px]">Download everything as JSON (GDPR data portability)</div></div>
