@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, signal, inject } from '@angular/core';
+import { Component, HostListener, OnInit, effect, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -35,6 +35,19 @@ const FORMAT_TO_PROMPT_CATEGORY: Record<string, string> = {
 
 const DRAFT_KEY = 'jb-apply-draft';
 const DRAFT_MAX_AGE_MS = 7 * 24 * 3600_000;
+
+/** Handoff key written by the job-capture browser extension (see extension/). */
+const CAPTURE_KEY = 'jb-captured-job';
+const CAPTURE_MAX_AGE_MS = 10 * 60_000;
+
+interface CapturedJob {
+  savedAt: number;
+  title?: string;
+  company?: string;
+  location?: string;
+  description?: string;
+  url?: string;
+}
 
 interface ApplyDraft {
   savedAt: number;
@@ -76,6 +89,8 @@ export class ApplyComponent implements OnInit {
   activeStep = signal(0);
   generateError = signal('');
 
+  /** Hostname the extension captured the posting from — shows a banner when set. */
+  capturedFrom = signal('');
   /** Job preselected via ?jobId= (from job details / feed) */
   presetJob = signal<Job | null>(null);
   /** Existing in-progress application for the preset job — offer to resume instead of regenerating */
@@ -202,7 +217,8 @@ export class ApplyComponent implements OnInit {
     });
 
     const jobId = this.route.snapshot.queryParamMap.get('jobId');
-    this.restoreDraft(!!jobId);
+    const captured = !jobId && this.consumeCapture();
+    this.restoreDraft(!!jobId || captured);
 
     // Explicit query params outrank the restored draft
     const format = this.route.snapshot.queryParamMap.get('format');
@@ -210,6 +226,38 @@ export class ApplyComponent implements OnInit {
 
     if (jobId) this.loadPresetJob(jobId);
     this.restored = true;
+  }
+
+  /** The extension's content script fires this after writing the capture, which can land post-init. */
+  @HostListener('window:jb-capture-ready')
+  onCaptureReady(): void {
+    this.consumeCapture();
+  }
+
+  /** Reads and clears a job captured by the browser extension; prefills the form when fresh. */
+  private consumeCapture(): boolean {
+    try {
+      const raw = localStorage.getItem(CAPTURE_KEY);
+      if (!raw) return false;
+      localStorage.removeItem(CAPTURE_KEY);
+      const capture = JSON.parse(raw) as CapturedJob;
+      if (!capture.savedAt || Date.now() - capture.savedAt > CAPTURE_MAX_AGE_MS) return false;
+      if (!capture.title && !capture.description) return false;
+      this.mode.set('paste');
+      this.role = capture.title ?? '';
+      this.company = capture.company ?? '';
+      this.location = capture.location ?? '';
+      this.jd = capture.description ?? '';
+      this.jobUrl = capture.url ?? '';
+      try {
+        this.capturedFrom.set(capture.url ? new URL(capture.url).hostname : 'your browser');
+      } catch {
+        this.capturedFrom.set('your browser');
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private loadPresetJob(jobId: string): void {
@@ -332,7 +380,7 @@ export class ApplyComponent implements OnInit {
       description: this.mode() === 'unsolicited' && !this.jd.trim()
         ? `Unsolicited application target: ${this.role.trim()} at ${this.company.trim()} — no posted vacancy.`
         : this.jd.trim(),
-      url: this.mode() === 'url' ? this.jobUrl.trim() || undefined : undefined,
+      url: this.jobUrl.trim() || undefined,
       location: this.location.trim() || undefined,
     });
 
