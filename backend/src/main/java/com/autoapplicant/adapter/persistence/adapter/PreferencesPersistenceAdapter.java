@@ -47,6 +47,11 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         return repo.findByUserId(userId).map(this::toDomain);
     }
 
+    @Override
+    public List<UserPreferences> findAllWithNotificationsEnabled() {
+        return repo.findByNotificationEnabledTrue().stream().map(this::toDomain).toList();
+    }
+
     private UserPreferences toDomain(PreferencesEntity e) {
         return new UserPreferences(e.getId(), e.getUserId(),
                 toList(e.getPreferredLocations()), toList(e.getPreferredMunicipalities()),
