@@ -18,6 +18,10 @@ export const routes: Routes = [
     path: 'auth/linkedin/callback',
     loadComponent: () => import('./features/auth/linkedin-callback/linkedin-callback.component').then(m => m.LinkedInCallbackComponent)
   },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./features/legal/privacy-policy.component').then(m => m.PrivacyPolicyComponent)
+  },
 
   // ── Protected routes ────────────────────────────────────
   {
