@@ -37,7 +37,7 @@
                  [style.font-weight]="isActive(item.route) ? '500' : '400'">
                 <jb-icon [name]="item.icon" [size]="14"
                          [style.color]="item.accent ? 'var(--jb-accent)' : 'inherit'" />
-                <span>{{ item.label }}</span>
+                <span>{{ item.label | translate }}</span>
                 @if (item.badge) {
                   <span class="ml-auto px-1.5 rounded-full text-[9.5px] font-semibold tracking-wider uppercase bg-jb-accent-soft border border-jb-accent-border text-jb-accent-2"
                         style="padding: 1px 6px;">
@@ -56,7 +56,7 @@
 
           <!-- Track group -->
           <nav class="flex flex-col gap-0.5">
-            <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">Track</div>
+            <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'nav.group.track' | translate }}</div>
             @for (item of trackNav; track item.id) {
               <a [routerLink]="item.route"
                  routerLinkActive="jb-nav-active"
@@ -65,7 +65,7 @@
                  [style.background]="isActive(item.route) ? 'var(--jb-surface-3)' : 'transparent'"
                  [style.font-weight]="isActive(item.route) ? '500' : '400'">
                 <jb-icon [name]="item.icon" [size]="14" />
-                <span>{{ item.label }}</span>
+                <span>{{ item.label | translate }}</span>
                 @if (item.count != null) {
                   <span class="ml-auto font-mono text-2xs"
                         [style.color]="item.hot ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">{{ item.count }}</span>
@@ -76,7 +76,7 @@
 
           <!-- Library group -->
           <nav class="flex flex-col gap-0.5">
-            <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">Library</div>
+            <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'nav.group.library' | translate }}</div>
             @for (item of libraryNav; track item.id) {
               <a [routerLink]="item.route"
                  routerLinkActive="jb-nav-active"
@@ -85,7 +85,7 @@
                  [style.background]="isActive(item.route) ? 'var(--jb-surface-3)' : 'transparent'"
                  [style.font-weight]="isActive(item.route) ? '500' : '400'">
                 <jb-icon [name]="item.icon" [size]="14" />
-                <span>{{ item.label }}</span>
+                <span>{{ item.label | translate }}</span>
                 @if (item.count != null) {
                   <span class="ml-auto font-mono text-2xs text-jb-text-dim">{{ item.count }}</span>
                 }
@@ -98,7 +98,7 @@
             <button (click)="oldFrontendOpen.set(!oldFrontendOpen())"
                     class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-dim bg-transparent border-none">
               <jb-icon name="layers" [size]="14" />
-              <span>Old frontend</span>
+              <span>{{ 'nav.oldFrontend' | translate }}</span>
               <jb-icon [name]="oldFrontendOpen() ? 'chev-down' : 'chev-right'" [size]="11" class="ml-auto" />
             </button>
             @if (oldFrontendOpen()) {
@@ -117,14 +117,22 @@
             <!-- Streak -->
             <div class="flex items-center gap-2.5 rounded-md py-1.5 px-2 text-base text-jb-text-mid">
               <jb-icon name="flame" [size]="14" class="text-jb-accent" />
-              <span>12-day streak</span>
+              <span>{{ 'nav.streak' | translate:{ count: 12 } }}</span>
             </div>
 
             <!-- Theme toggle -->
             <button (click)="theme.toggle()"
                     class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-mid bg-transparent border-none">
               <jb-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" [size]="14" />
-              <span>{{ theme.theme() === 'dark' ? 'Light mode' : 'Dark mode' }}</span>
+              <span>{{ (theme.theme() === 'dark' ? 'nav.lightMode' : 'nav.darkMode') | translate }}</span>
+            </button>
+
+            <!-- Language toggle -->
+            <button (click)="language.toggle()"
+                    class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-mid bg-transparent border-none">
+              <jb-icon name="globe" [size]="14" />
+              <span>{{ 'nav.language' | translate }}</span>
+              <span class="ml-auto font-mono text-2xs text-jb-text-dim uppercase">{{ language.lang() }}</span>
             </button>
 
             <!-- Settings -->
@@ -134,7 +142,7 @@
                [style.color]="isActive('/settings') ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
                [style.background]="isActive('/settings') ? 'var(--jb-surface-3)' : 'transparent'">
               <jb-icon name="settings" [size]="14" />
-              <span>Settings</span>
+              <span>{{ 'nav.settings' | translate }}</span>
             </a>
 
             <!-- User -->
@@ -148,7 +156,7 @@
               </div>
               <button (click)="logout()"
                       class="ml-auto p-1 rounded cursor-pointer bg-transparent border-none text-jb-text-dim"
-                      title="Logout">
+                      [title]="'common.logout' | translate">
                 <jb-icon name="arrow-right" [size]="12" />
               </button>
             </div>
