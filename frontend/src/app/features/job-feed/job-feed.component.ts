@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -38,11 +39,12 @@ interface FeedRow {
 @Component({
   selector: 'app-job-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
   templateUrl: './job-feed.component.html'
 })
 export class JobFeedComponent implements OnInit, OnDestroy {
   private jobsApi = inject(JobsApiService);
+  private translate = inject(TranslateService);
 
   loading = signal(true);
   toast = signal('');
@@ -71,15 +73,15 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
 
   locationFilters = [
-    { label: 'All', value: 'all' },
-    { label: 'Remote only', value: 'remote' },
-    { label: 'On-site', value: 'onsite' },
+    { label: 'jobFeed.location.all', value: 'all' },
+    { label: 'jobFeed.location.remote', value: 'remote' },
+    { label: 'jobFeed.location.onsite', value: 'onsite' },
   ];
 
   sortOptions = [
-    { label: 'Best match', value: 'match' as const },
-    { label: 'Newest', value: 'newest' as const },
-    { label: 'Deadline soonest', value: 'deadline' as const },
+    { label: 'jobFeed.sort.match', value: 'match' as const },
+    { label: 'jobFeed.sort.newest', value: 'newest' as const },
+    { label: 'jobFeed.sort.deadline', value: 'deadline' as const },
   ];
 
   ngOnInit(): void {
@@ -115,7 +117,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set('Could not load recommendations');
+        this.toast.set(this.translate.instant('jobFeed.toast.loadFailed'));
       }
     });
   }
@@ -136,7 +138,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading.set(false);
-          this.toast.set('Semantic search failed');
+          this.toast.set(this.translate.instant('jobFeed.toast.semanticFailed'));
         }
       });
       return;
@@ -150,7 +152,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set('Search failed');
+        this.toast.set(this.translate.instant('jobFeed.toast.searchFailed'));
       }
     });
   }
@@ -182,7 +184,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       posted: this.ageLabel(job.postedAt),
       postedIso: job.postedAt,
       deadline: job.applicationDeadline
-        ? 'Deadline ' + new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+        ? new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
         : undefined,
       deadlineIso: job.applicationDeadline,
       deadlinePassed: job.applicationDeadline ? new Date(job.applicationDeadline) < new Date() : undefined,
@@ -204,10 +206,10 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   private ageLabel(iso?: string): string {
     if (!iso) return '—';
     const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-    if (days <= 0) return 'today';
-    if (days < 7) return `${days}d ago`;
-    if (days < 30) return `${Math.floor(days / 7)}w ago`;
-    return `${Math.floor(days / 30)}mo ago`;
+    if (days <= 0) return this.translate.instant('time.today');
+    if (days < 7) return this.translate.instant('time.daysAgo', { n: days });
+    if (days < 30) return this.translate.instant('time.weeksAgo', { n: Math.floor(days / 7) });
+    return this.translate.instant('time.monthsAgo', { n: Math.floor(days / 30) });
   }
 
   filteredJobs(): FeedRow[] {
@@ -265,9 +267,9 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     this.jobsApi.save(row.id).subscribe({
       next: () => {
         this.savedIds.update(ids => new Set(ids).add(row.id));
-        this.toast.set('Saved to your roles');
+        this.toast.set(this.translate.instant('jobFeed.toast.saved'));
       },
-      error: () => this.toast.set('Could not save the role')
+      error: () => this.toast.set(this.translate.instant('jobFeed.toast.saveFailed'))
     });
   }
 
@@ -279,8 +281,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       this.mobilePanel.set('list');
     }
     this.jobsApi.ignore(row.id, 'not interested').subscribe({
-      next: () => this.toast.set('Hidden from your feed'),
-      error: () => this.toast.set('Could not hide the role')
+      next: () => this.toast.set(this.translate.instant('jobFeed.toast.hidden')),
+      error: () => this.toast.set(this.translate.instant('jobFeed.toast.hideFailed'))
     });
   }
 }

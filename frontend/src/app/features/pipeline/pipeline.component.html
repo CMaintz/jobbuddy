@@ -1,4 +1,4 @@
-    <jb-topbar title="Pipeline">
+    <jb-topbar [title]="'nav.pipeline' | translate">
       <!-- View toggle -->
       <div class="flex gap-0.5 ml-2 p-0.5 bg-jb-surface-2 border border-jb-border rounded-[5px]">
         <button (click)="view.set('table')"
@@ -21,7 +21,7 @@
           <button (click)="toggleStageFilter(stage.key)"
             [class]="'pill pill-' + (activeFilters().has(stage.key) ? stage.tone : 'neutral')"
             class="cursor-pointer">
-            {{ stage.label }}
+            {{ stage.label | translate }}
             <span class="mono text-[9.5px]">{{ countByStage(stage.key) }}</span>
           </button>
         }
@@ -31,7 +31,7 @@
         <!-- Search -->
         <div class="hidden md:flex items-center gap-2 py-[5px] px-2.5 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm w-[220px]">
           <jb-icon name="search" [size]="12" />
-          <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Company or role…"
+          <input [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'pipeline.searchPlaceholder' | translate"
             class="border-none bg-transparent outline-none text-jb-text text-sm flex-1 min-w-0" />
           @if (search()) {
             <button class="border-none bg-transparent cursor-pointer text-jb-text-dim p-0 flex" (click)="search.set('')">
@@ -39,24 +39,24 @@
             </button>
           }
         </div>
-        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">{{ 'nav.newApplication' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
     <!-- Content -->
     <div class="flex-1 overflow-auto jb-scroll">
       @if (loading) {
-        <div class="p-12 text-center text-jb-text-dim">Loading pipeline...</div>
+        <div class="p-12 text-center text-jb-text-dim">{{ 'pipeline.loading' | translate }}</div>
       } @else if (view() === 'table') {
         <!-- ═══ TABLE VIEW ═══ -->
         <div class="py-3 px-4 overflow-x-auto min-w-0">
           <div class="min-w-[600px]">
           <!-- Column headers -->
           <div class="grid gap-3 py-2 px-3 text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint grid-cols-[1fr_100px_90px_60px_70px]">
-            <span>Role & company</span>
-            <span>Stage</span>
-            <span>Fit</span>
-            <span>Age</span>
+            <span>{{ 'pipeline.colRole' | translate }}</span>
+            <span>{{ 'pipeline.colStage' | translate }}</span>
+            <span>{{ 'pipeline.colFit' | translate }}</span>
+            <span>{{ 'pipeline.colAge' | translate }}</span>
             <span></span>
           </div>
 
@@ -69,13 +69,13 @@
               <div class="flex items-center gap-2.5 min-w-0">
                 <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="28" />
                 <div class="min-w-0">
-                  <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ app.jobTitle || 'Untitled role' }}</div>
-                  <div class="text-xs text-jb-text-dim">{{ app.jobCompanyName || 'Unknown' }}</div>
+                  <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ app.jobTitle || ('pipeline.untitledRole' | translate) }}</div>
+                  <div class="text-xs text-jb-text-dim">{{ app.jobCompanyName || ('pipeline.unknown' | translate) }}</div>
                 </div>
               </div>
 
               <!-- Stage -->
-              <jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) }}</jb-pill>
+              <jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) | translate }}</jb-pill>
 
               <!-- Fit -->
               <jb-fit-bar [value]="app.matchScore ?? 0" />
@@ -92,7 +92,7 @@
 
           @if (filteredApplications().length === 0) {
             <div class="p-12 text-center text-jb-text-dim text-base">
-              No applications in this stage.
+              {{ 'pipeline.noApplications' | translate }}
             </div>
           }
           </div>
@@ -104,7 +104,7 @@
             <div class="min-w-[240px] w-[240px] flex flex-col gap-2">
               <!-- Column header -->
               <div class="flex items-center gap-2 py-2 px-2.5">
-                <jb-pill [tone]="stage.tone">{{ stage.label }}</jb-pill>
+                <jb-pill [tone]="stage.tone">{{ stage.label | translate }}</jb-pill>
                 <span class="mono text-2xs text-jb-text-dim">{{ appsForStage(stage.key).length }}</span>
               </div>
 
@@ -115,11 +115,11 @@
                   <div class="flex items-center gap-2 mb-2">
                     <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="22" />
                     <div class="text-xs text-jb-text-dim min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {{ app.jobCompanyName || 'Unknown' }}
+                      {{ app.jobCompanyName || ('pipeline.unknown' | translate) }}
                     </div>
                   </div>
                   <div class="text-base font-medium mb-1.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {{ app.jobTitle || 'Untitled role' }}
+                    {{ app.jobTitle || ('pipeline.untitledRole' | translate) }}
                   </div>
                   <div class="flex items-center gap-2">
                     <jb-fit-bar [value]="app.matchScore ?? 0" />

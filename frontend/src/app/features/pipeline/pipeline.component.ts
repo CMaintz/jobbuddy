@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -20,11 +21,12 @@ interface StageConfig {
 @Component({
   selector: 'app-pipeline',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent],
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {
   private api = inject(ApplicationsApiService);
+  private translate = inject(TranslateService);
 
   applications: Application[] = [];
   loading = true;
@@ -33,19 +35,19 @@ export class PipelineComponent implements OnInit {
   search = signal('');
 
   stages: StageConfig[] = [
-    { key: 'SAVED', label: 'Saved', tone: 'neutral' },
-    { key: 'APPLIED', label: 'Applied', tone: 'info' },
-    { key: 'RECRUITER_CONTACT', label: 'Screen', tone: 'violet' },
-    { key: 'INTERVIEW', label: 'Interview', tone: 'accent' },
-    { key: 'OFFER', label: 'Offer', tone: 'success' },
-    { key: 'REJECTED', label: 'Rejected', tone: 'danger' },
+    { key: 'SAVED', label: 'pipeline.stage.saved', tone: 'neutral' },
+    { key: 'APPLIED', label: 'pipeline.stage.applied', tone: 'info' },
+    { key: 'RECRUITER_CONTACT', label: 'pipeline.stage.screen', tone: 'violet' },
+    { key: 'INTERVIEW', label: 'pipeline.stage.interview', tone: 'accent' },
+    { key: 'OFFER', label: 'pipeline.stage.offer', tone: 'success' },
+    { key: 'REJECTED', label: 'pipeline.stage.rejected', tone: 'danger' },
   ];
 
   kanbanStages: StageConfig[] = [
-    { key: 'SAVED', label: 'Saved', tone: 'neutral' },
-    { key: 'APPLIED', label: 'Applied', tone: 'info' },
-    { key: 'INTERVIEW', label: 'Interview', tone: 'accent' },
-    { key: 'OFFER', label: 'Offer', tone: 'success' },
+    { key: 'SAVED', label: 'pipeline.stage.saved', tone: 'neutral' },
+    { key: 'APPLIED', label: 'pipeline.stage.applied', tone: 'info' },
+    { key: 'INTERVIEW', label: 'pipeline.stage.interview', tone: 'accent' },
+    { key: 'OFFER', label: 'pipeline.stage.offer', tone: 'success' },
   ];
 
   ngOnInit(): void {
@@ -97,9 +99,9 @@ export class PipelineComponent implements OnInit {
 
   stageLabel(status: ApplicationStatus): string {
     const map: Record<string, string> = {
-      SAVED: 'Saved', PREPARING: 'Preparing', APPLIED: 'Applied',
-      RECRUITER_CONTACT: 'Screen', INTERVIEW: 'Interview', TECHNICAL_TEST: 'Technical',
-      FINAL_ROUND: 'Final', OFFER: 'Offer', REJECTED: 'Rejected', ARCHIVED: 'Archived'
+      SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.preparing', APPLIED: 'pipeline.stage.applied',
+      RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview', TECHNICAL_TEST: 'pipeline.stage.technical',
+      FINAL_ROUND: 'pipeline.stage.final', OFFER: 'pipeline.stage.offer', REJECTED: 'pipeline.stage.rejected', ARCHIVED: 'pipeline.stage.archived'
     };
     return map[status] ?? status;
   }
@@ -108,10 +110,9 @@ export class PipelineComponent implements OnInit {
     if (!dateStr) return '—';
     const diff = Date.now() - new Date(dateStr).getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'today';
-    if (days === 1) return '1d';
-    if (days < 7) return `${days}d`;
-    if (days < 30) return `${Math.floor(days / 7)}w`;
-    return `${Math.floor(days / 30)}mo`;
+    if (days === 0) return this.translate.instant('time.today');
+    if (days < 7) return this.translate.instant('time.compact.days', { n: days });
+    if (days < 30) return this.translate.instant('time.compact.weeks', { n: Math.floor(days / 7) });
+    return this.translate.instant('time.compact.months', { n: Math.floor(days / 30) });
   }
 }
