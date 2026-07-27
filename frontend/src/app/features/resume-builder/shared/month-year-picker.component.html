@@ -5,9 +5,9 @@
         [(ngModel)]="selectedMonth"
         (ngModelChange)="emitChange()"
       >
-        <option value="">Month</option>
+        <option value="">{{ 'resumeBuilder.monthPicker.month' | translate }}</option>
         @for (m of months; track m.value) {
-          <option [value]="m.value">{{ m.label }}</option>
+          <option [value]="m.value">{{ m.label | translate }}</option>
         }
       </select>
       <select
@@ -15,7 +15,7 @@
         [(ngModel)]="selectedYear"
         (ngModelChange)="emitChange()"
       >
-        <option value="">Year</option>
+        <option value="">{{ 'resumeBuilder.monthPicker.year' | translate }}</option>
         @for (y of years; track y) {
           <option [value]="y">{{ y }}</option>
         }

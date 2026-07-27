@@ -1,7 +1,7 @@
 
     <div class="flex flex-col gap-3.5">
       <div>
-        <label class="label">Theme Color</label>
+        <label class="label">{{ 'resumeBuilder.settings.themeColor' | translate }}</label>
         <div class="flex items-center gap-2">
           <input type="color" class="h-9 w-14 rounded-md border border-jb-border cursor-pointer bg-jb-surface-2"
             [value]="settings.themeColor"
@@ -10,7 +10,7 @@
             @for (color of presetColors; track color) {
               <button
                 class="w-6 h-6 rounded-full border-2 border-solid transition-transform duration-100 cursor-pointer"
-                [attr.aria-label]="'Use theme color ' + color"
+                [attr.aria-label]="'resumeBuilder.settings.useThemeColor' | translate:{ color: color }"
                 [style.background-color]="color"
                 [style.border-color]="settings.themeColor === color ? color : 'transparent'"
                 (click)="update('themeColor', color)"
@@ -21,7 +21,7 @@
       </div>
 
       <div>
-        <label class="label">Font Family</label>
+        <label class="label">{{ 'resumeBuilder.settings.fontFamily' | translate }}</label>
         <select class="input" [value]="settings.fontFamily" (change)="update('fontFamily', $any($event.target).value)">
           @for (font of fonts; track font.value) {
             <option [value]="font.value">{{ font.label }}</option>
@@ -30,17 +30,17 @@
       </div>
 
       <div>
-        <label class="label">Font Size</label>
+        <label class="label">{{ 'resumeBuilder.settings.fontSize' | translate }}</label>
         <select class="input" [value]="settings.fontSize" (change)="update('fontSize', $any($event.target).value)">
-          <option value="sm">Small</option>
-          <option value="md">Medium</option>
-          <option value="lg">Large</option>
-          <option value="xl">Extra Large</option>
+          <option value="sm">{{ 'resumeBuilder.settings.small' | translate }}</option>
+          <option value="md">{{ 'resumeBuilder.settings.medium' | translate }}</option>
+          <option value="lg">{{ 'resumeBuilder.settings.large' | translate }}</option>
+          <option value="xl">{{ 'resumeBuilder.settings.xlarge' | translate }}</option>
         </select>
       </div>
 
       <div>
-        <label class="label">Text Color</label>
+        <label class="label">{{ 'resumeBuilder.settings.textColor' | translate }}</label>
         <div class="flex items-center gap-2">
           <input type="color" class="h-9 w-14 rounded-md border border-jb-border cursor-pointer bg-jb-surface-2"
             [value]="settings.textColor ?? '#1f2937'"
@@ -49,7 +49,7 @@
             @for (color of presetTextColors; track color) {
               <button
                 class="w-6 h-6 rounded-full border-2 border-solid cursor-pointer"
-                [attr.aria-label]="'Use text color ' + color"
+                [attr.aria-label]="'resumeBuilder.settings.useTextColor' | translate:{ color: color }"
                 [style.background-color]="color"
                 [style.border-color]="(settings.textColor ?? '#1f2937') === color ? 'var(--jb-accent)' : 'transparent'"
                 (click)="update('textColor', color)"
@@ -60,21 +60,21 @@
       </div>
 
       <div>
-        <label class="label">Line Spacing — {{ (settings.lineSpacing ?? 1.5).toFixed(2) }}</label>
+        <label class="label">{{ 'resumeBuilder.settings.lineSpacing' | translate }} — {{ (settings.lineSpacing ?? 1.5).toFixed(2) }}</label>
         <input type="range" min="1" max="2.2" step="0.05" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.lineSpacing ?? 1.5"
           (input)="update('lineSpacing', +$any($event.target).value)" />
       </div>
 
       <div>
-        <label class="label">Section Spacing — {{ settings.sectionSpacing ?? 20 }}px</label>
+        <label class="label">{{ 'resumeBuilder.settings.sectionSpacing' | translate }} — {{ settings.sectionSpacing ?? 20 }}px</label>
         <input type="range" min="8" max="48" step="2" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.sectionSpacing ?? 20"
           (input)="update('sectionSpacing', +$any($event.target).value)" />
       </div>
 
       <div>
-        <label class="label">Document Size</label>
+        <label class="label">{{ 'resumeBuilder.settings.documentSize' | translate }}</label>
         <div class="flex gap-2">
           <button class="rb-toggle" [class.active]="settings.documentSize === 'A4'"
             (click)="update('documentSize', 'A4')">A4</button>
@@ -84,44 +84,44 @@
       </div>
 
       <div>
-        <label class="label">Photo Style</label>
+        <label class="label">{{ 'resumeBuilder.settings.photoStyle' | translate }}</label>
         <div class="flex gap-2">
           @for (style of ['square', 'rounded', 'circle']; track style) {
             <button class="rb-toggle" [class.active]="settings.photoStyle === style"
-              (click)="update('photoStyle', style)" style="text-transform:capitalize;">{{ style }}</button>
+              (click)="update('photoStyle', style)">{{ ('resumeBuilder.settings.shape.' + style) | translate }}</button>
           }
         </div>
       </div>
 
       <div>
-        <label class="label">Photo Size — {{ settings.photoSize ? settings.photoSize + 'px' : 'template default' }}</label>
+        <label class="label">{{ 'resumeBuilder.settings.photoSize' | translate }} — {{ settings.photoSize ? settings.photoSize + 'px' : ('resumeBuilder.settings.templateDefault' | translate) }}</label>
         <input type="range" min="40" max="200" step="4" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.photoSize ?? 96"
           (input)="update('photoSize', +$any($event.target).value)" />
-        <div class="text-[10px] text-jb-text-dim mt-[2px]">Tip: you can also drag the photo in the preview to resize it.</div>
+        <div class="text-[10px] text-jb-text-dim mt-[2px]">{{ 'resumeBuilder.settings.photoSizeTip' | translate }}</div>
       </div>
 
       <div>
-        <label class="label">Photo Placement</label>
+        <label class="label">{{ 'resumeBuilder.settings.photoPlacement' | translate }}</label>
         <div class="flex gap-2">
-          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'left'" (click)="update('photoPlacement', 'left')">Left</button>
-          <button class="rb-toggle" [class.active]="!settings.photoPlacement" (click)="update('photoPlacement', undefined)">Template</button>
-          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'right'" (click)="update('photoPlacement', 'right')">Right</button>
+          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'left'" (click)="update('photoPlacement', 'left')">{{ 'resumeBuilder.settings.left' | translate }}</button>
+          <button class="rb-toggle" [class.active]="!settings.photoPlacement" (click)="update('photoPlacement', undefined)">{{ 'resumeBuilder.settings.template' | translate }}</button>
+          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'right'" (click)="update('photoPlacement', 'right')">{{ 'resumeBuilder.settings.right' | translate }}</button>
         </div>
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="label" style="margin-bottom:0;">Show Skill Level (dots)</label>
+        <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.settings.showSkillLevel' | translate }}</label>
         <jb-toggle [on]="settings.showSkillLevel === true" (toggled)="update('showSkillLevel', $event)" />
       </div>
 
       <div>
         <div class="flex items-center justify-between">
-          <label class="label" style="margin-bottom:0;">Anonymise CV</label>
+          <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.settings.anonymise' | translate }}</label>
           <jb-toggle [on]="settings.anonymise === true" (toggled)="update('anonymise', $event)" />
         </div>
         <div class="text-[10px] text-jb-text-dim mt-1">
-          Preview & PDF show initials only — no photo, contact details or social links. Your data stays untouched.
+          {{ 'resumeBuilder.settings.anonymiseHint' | translate }}
         </div>
       </div>
     </div>

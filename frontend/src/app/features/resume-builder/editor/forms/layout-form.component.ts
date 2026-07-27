@@ -2,38 +2,39 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { TemplateType, SectionConfig, SectionTypography } from '../../models/resume-builder.models';
 import { FONT_FAMILIES } from '../../data/font-families';
 
 const TEMPLATES: { type: TemplateType; label: string; description: string }[] = [
-  { type: 'classic', label: 'Classic', description: 'Two-column with dark sidebar' },
-  { type: 'modern', label: 'Modern (1-col)', description: 'Clean single-column layout' },
-  { type: 'modern-2col', label: 'Modern (2-col)', description: 'Dark left column' },
-  { type: 'minimal', label: 'Minimal', description: 'Minimalist with timeline' },
-  { type: 'executive', label: 'Executive', description: 'Executive with header band' },
-  { type: 'creative', label: 'Creative', description: 'Colorful accent style' },
+  { type: 'classic', label: 'resumeBuilder.layout.tpl.classic.label', description: 'resumeBuilder.layout.tpl.classic.description' },
+  { type: 'modern', label: 'resumeBuilder.layout.tpl.modern.label', description: 'resumeBuilder.layout.tpl.modern.description' },
+  { type: 'modern-2col', label: 'resumeBuilder.layout.tpl.modern2col.label', description: 'resumeBuilder.layout.tpl.modern2col.description' },
+  { type: 'minimal', label: 'resumeBuilder.layout.tpl.minimal.label', description: 'resumeBuilder.layout.tpl.minimal.description' },
+  { type: 'executive', label: 'resumeBuilder.layout.tpl.executive.label', description: 'resumeBuilder.layout.tpl.executive.description' },
+  { type: 'creative', label: 'resumeBuilder.layout.tpl.creative.label', description: 'resumeBuilder.layout.tpl.creative.description' },
 ];
 
 /** Sections that can carry typography overrides (matches rbSection tags in the layouts). */
 const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
-  { id: 'header', label: 'Header / contact' },
-  { id: 'summary', label: 'Summary' },
-  { id: 'experience', label: 'Experience' },
-  { id: 'education', label: 'Education' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'languages', label: 'Languages' },
-  { id: 'certifications', label: 'Certifications' },
-  { id: 'strengths', label: 'Strengths' },
-  { id: 'socials', label: 'Socials' },
-  { id: 'custom', label: 'Custom sections' },
+  { id: 'header', label: 'resumeBuilder.layout.typoSection.header' },
+  { id: 'summary', label: 'resumeBuilder.layout.typoSection.summary' },
+  { id: 'experience', label: 'resumeBuilder.layout.typoSection.experience' },
+  { id: 'education', label: 'resumeBuilder.layout.typoSection.education' },
+  { id: 'projects', label: 'resumeBuilder.layout.typoSection.projects' },
+  { id: 'skills', label: 'resumeBuilder.layout.typoSection.skills' },
+  { id: 'languages', label: 'resumeBuilder.layout.typoSection.languages' },
+  { id: 'certifications', label: 'resumeBuilder.layout.typoSection.certifications' },
+  { id: 'strengths', label: 'resumeBuilder.layout.typoSection.strengths' },
+  { id: 'socials', label: 'resumeBuilder.layout.typoSection.socials' },
+  { id: 'custom', label: 'resumeBuilder.layout.typoSection.custom' },
 ];
 
 @Component({
   selector: 'app-layout-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, TranslateModule],
   templateUrl: './layout-form.component.html',
 })
 export class LayoutFormComponent {

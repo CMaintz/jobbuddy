@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { ResumeStateService } from './services/resume-state.service';
 import { ResumeEditorComponent } from './editor/resume-editor.component';
@@ -12,7 +13,7 @@ import { JobsApiService } from '../../core/api/jobs.api';
 @Component({
   selector: 'app-resume-builder',
   standalone: true,
-  imports: [CommonModule, ResumeEditorComponent, ResumePreviewComponent],
+  imports: [CommonModule, TranslateModule, ResumeEditorComponent, ResumePreviewComponent],
   templateUrl: './resume-builder.component.html',
 })
 export class ResumeBuilderComponent implements OnInit {

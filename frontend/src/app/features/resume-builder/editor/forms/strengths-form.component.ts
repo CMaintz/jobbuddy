@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { IconPickerComponent } from '../../shared/icon-picker.component';
 import { getStrengthIcon } from '../../data/strength-icons';
@@ -9,7 +10,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-strengths-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, IconPickerComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent],
   templateUrl: './strengths-form.component.html',
 })
 export class StrengthsFormComponent {

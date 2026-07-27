@@ -2,13 +2,14 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeEducation } from '../../models/resume-builder.models';
 import { MonthYearPickerComponent } from '../../shared/month-year-picker.component';
 
 @Component({
   selector: 'app-education-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, MonthYearPickerComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, MonthYearPickerComponent],
   templateUrl: './education-form.component.html',
 })
 export class EducationFormComponent {

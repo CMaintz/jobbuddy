@@ -1,26 +1,28 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { ResumeCustomSectionItem } from '../../models/resume-builder.models';
 
 const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 'bullets' }[] = [
-  { label: 'About Me', heading: 'About Me', style: 'paragraph' },
-  { label: 'Awards & Recognition', heading: 'Awards & Recognition', style: 'bullets' },
-  { label: 'Volunteer Work', heading: 'Volunteer Work', style: 'bullets' },
-  { label: 'Publications', heading: 'Publications', style: 'bullets' },
-  { label: 'Blank', heading: '', style: 'paragraph' },
+  { label: 'resumeBuilder.custom.starter.aboutMe', heading: 'resumeBuilder.custom.starter.aboutMe', style: 'paragraph' },
+  { label: 'resumeBuilder.custom.starter.awards', heading: 'resumeBuilder.custom.starter.awards', style: 'bullets' },
+  { label: 'resumeBuilder.custom.starter.volunteer', heading: 'resumeBuilder.custom.starter.volunteer', style: 'bullets' },
+  { label: 'resumeBuilder.custom.starter.publications', heading: 'resumeBuilder.custom.starter.publications', style: 'bullets' },
+  { label: 'resumeBuilder.custom.starter.blank', heading: '', style: 'paragraph' },
 ];
 
 @Component({
   selector: 'app-custom-sections-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RichTextEditorComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent],
   templateUrl: './custom-sections-form.component.html',
 })
 export class CustomSectionsFormComponent {
   readonly stateService = inject(ResumeStateService);
+  private translate = inject(TranslateService);
   readonly starterTemplates = STARTER_TEMPLATES;
 
   addingSection = signal(false);
@@ -28,7 +30,7 @@ export class CustomSectionsFormComponent {
   newStyle: 'paragraph' | 'bullets' = 'paragraph';
 
   applyTemplate(t: typeof STARTER_TEMPLATES[0]): void {
-    this.newHeading = t.heading;
+    this.newHeading = t.heading ? this.translate.instant(t.heading) : '';
     this.newStyle = t.style;
   }
 

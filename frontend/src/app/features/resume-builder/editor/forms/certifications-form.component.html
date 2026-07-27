@@ -3,18 +3,18 @@
       @for (cert of certifications; track cert.id) {
         <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
-            <span class="text-sm font-medium text-jb-text">{{ cert.name || 'New Certification' }}</span>
-            <button class="rb-remove" (click)="remove(cert.id)">Remove</button>
+            <span class="text-sm font-medium text-jb-text">{{ cert.name || ('resumeBuilder.form.newCert' | translate) }}</span>
+            <button class="rb-remove" (click)="remove(cert.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
-          <label class="label">Name</label>
+          <label class="label">{{ 'resumeBuilder.form.name' | translate }}</label>
           <input class="input" [value]="cert.name" (input)="update(cert.id, 'name', $any($event.target).value)" placeholder="AWS Certified Developer" />
-          <label class="label">Issuer</label>
+          <label class="label">{{ 'resumeBuilder.form.issuer' | translate }}</label>
           <input class="input" [value]="cert.issuer" (input)="update(cert.id, 'issuer', $any($event.target).value)" placeholder="Amazon Web Services" />
-          <label class="label">Date</label>
+          <label class="label">{{ 'resumeBuilder.form.date' | translate }}</label>
           <input class="input" [value]="cert.date" (input)="update(cert.id, 'date', $any($event.target).value)" placeholder="2024-06" />
-          <label class="label">Credential URL</label>
+          <label class="label">{{ 'resumeBuilder.form.certUrl' | translate }}</label>
           <input class="input" [value]="cert.link ?? ''" (input)="update(cert.id, 'link', $any($event.target).value)" placeholder="https://credly.com/..." />
         </div>
       }
-      <button class="rb-add" (click)="add()">+ Add Certification</button>
+      <button class="rb-add" (click)="add()">{{ 'resumeBuilder.form.addCert' | translate }}</button>
     </div>

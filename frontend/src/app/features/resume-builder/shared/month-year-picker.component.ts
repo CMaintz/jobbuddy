@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-month-year-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './month-year-picker.component.html',
 })
 export class MonthYearPickerComponent implements OnInit {
@@ -16,12 +17,12 @@ export class MonthYearPickerComponent implements OnInit {
   selectedYear = '';
 
   months = [
-    { value: '01', label: 'January' }, { value: '02', label: 'February' },
-    { value: '03', label: 'March' }, { value: '04', label: 'April' },
-    { value: '05', label: 'May' }, { value: '06', label: 'June' },
-    { value: '07', label: 'July' }, { value: '08', label: 'August' },
-    { value: '09', label: 'September' }, { value: '10', label: 'October' },
-    { value: '11', label: 'November' }, { value: '12', label: 'December' },
+    { value: '01', label: 'resumeBuilder.monthPicker.months.jan' }, { value: '02', label: 'resumeBuilder.monthPicker.months.feb' },
+    { value: '03', label: 'resumeBuilder.monthPicker.months.mar' }, { value: '04', label: 'resumeBuilder.monthPicker.months.apr' },
+    { value: '05', label: 'resumeBuilder.monthPicker.months.may' }, { value: '06', label: 'resumeBuilder.monthPicker.months.jun' },
+    { value: '07', label: 'resumeBuilder.monthPicker.months.jul' }, { value: '08', label: 'resumeBuilder.monthPicker.months.aug' },
+    { value: '09', label: 'resumeBuilder.monthPicker.months.sep' }, { value: '10', label: 'resumeBuilder.monthPicker.months.oct' },
+    { value: '11', label: 'resumeBuilder.monthPicker.months.nov' }, { value: '12', label: 'resumeBuilder.monthPicker.months.dec' },
   ];
 
   years: number[] = [];
