@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -28,13 +29,14 @@ interface TaskRow {
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit {
   private remindersApi = inject(RemindersApiService);
   private appsApi = inject(ApplicationsApiService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   loading = signal(true);
   toast = signal('');
@@ -49,18 +51,18 @@ export class TasksComponent implements OnInit {
   newDue = '';
 
   groups: { key: Group; label: string }[] = [
-    { key: 'overdue', label: 'Overdue' },
-    { key: 'today', label: 'Today' },
-    { key: 'tomorrow', label: 'Tomorrow' },
-    { key: 'week', label: 'This week' },
-    { key: 'later', label: 'Later' },
+    { key: 'overdue', label: 'tasks.group.overdue' },
+    { key: 'today', label: 'tasks.group.today' },
+    { key: 'tomorrow', label: 'tasks.group.tomorrow' },
+    { key: 'week', label: 'tasks.group.week' },
+    { key: 'later', label: 'tasks.group.later' },
   ];
 
   kindFilter = signal<'all' | Kind>('all');
   kindChips: { key: 'all' | Kind; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'followup', label: 'Follow-ups' },
-    { key: 'interview', label: 'Interviews' },
+    { key: 'all', label: 'tasks.kind.all' },
+    { key: 'followup', label: 'tasks.kind.followups' },
+    { key: 'interview', label: 'tasks.kind.interviews' },
   ];
 
   kindCount(kind: 'all' | Kind): number {
@@ -88,7 +90,7 @@ export class TasksComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set('Could not load reminders');
+        this.toast.set(this.translate.instant('tasks.toast.loadFailed'));
       }
     });
   }
@@ -106,14 +108,14 @@ export class TasksComponent implements OnInit {
     else if (dayDiff <= 7) group = 'week';
     else group = 'later';
 
-    const dueLabel = dayDiff < 0 ? `${-dayDiff}d overdue`
-      : dayDiff === 0 ? 'today'
-      : dayDiff === 1 ? 'tomorrow'
+    const dueLabel = dayDiff < 0 ? this.translate.instant('tasks.due.overdue', { n: -dayDiff })
+      : dayDiff === 0 ? this.translate.instant('tasks.due.today')
+      : dayDiff === 1 ? this.translate.instant('tasks.due.tomorrow')
       : due.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 
     return {
       reminder,
-      company: app?.jobCompanyName ?? 'Unknown',
+      company: app?.jobCompanyName ?? this.translate.instant('tasks.unknown'),
       role: app?.jobTitle ?? '',
       group,
       kind: (reminder.note ?? '').toLowerCase().startsWith('interview') ? 'interview' : 'followup',
@@ -142,14 +144,14 @@ export class TasksComponent implements OnInit {
         this.rows.update(rows => rows.filter(r => r.reminder.id !== row.reminder.id));
         this.doneToday.update(n => n + 1);
       },
-      error: () => this.toast.set('Could not complete the reminder')
+      error: () => this.toast.set(this.translate.instant('tasks.toast.completeFailed'))
     });
   }
 
   remove(row: TaskRow): void {
     this.remindersApi.delete(row.reminder.id).subscribe({
       next: () => this.rows.update(rows => rows.filter(r => r.reminder.id !== row.reminder.id)),
-      error: () => this.toast.set('Could not delete the reminder')
+      error: () => this.toast.set(this.translate.instant('tasks.toast.deleteFailed'))
     });
   }
 
@@ -167,7 +169,7 @@ export class TasksComponent implements OnInit {
         this.newDue = '';
         this.load();
       },
-      error: () => this.toast.set('Could not create the reminder')
+      error: () => this.toast.set(this.translate.instant('tasks.toast.createFailed'))
     });
   }
 }
