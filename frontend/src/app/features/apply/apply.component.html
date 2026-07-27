@@ -2,14 +2,14 @@
       <!-- Topbar -->
       <div class="flex items-center gap-2.5 px-[18px] h-11 border-b border-jb-border flex-[0_0_auto]">
         <a routerLink="/pipeline" class="inline-flex items-center gap-[5px] p-[5px_9px] rounded bg-transparent border border-jb-border text-jb-text-mid text-sm no-underline">
-          <jb-icon name="arrow-left" [size]="11" /> Pipeline
+          <jb-icon name="arrow-left" [size]="11" /> {{ 'nav.pipeline' | translate }}
         </a>
         <span class="text-sm text-jb-text-dim">/</span>
-        <span class="text-base text-jb-text-mid">New application</span>
+        <span class="text-base text-jb-text-mid">{{ 'nav.newApplication' | translate }}</span>
         <div class="ml-auto flex gap-1.5 items-center">
           <jb-button [primary]="true" icon="sparkle" (clicked)="generate()"
             [style.opacity]="isReady() ? '1' : '0.5'"
-            [style.cursor]="isReady() ? 'pointer' : 'not-allowed'">Generate</jb-button>
+            [style.cursor]="isReady() ? 'pointer' : 'not-allowed'">{{ 'common.generate' | translate }}</jb-button>
         </div>
       </div>
 
@@ -17,16 +17,16 @@
         <div class="mx-6 mt-4 p-3 flex items-center gap-3 bg-jb-accent-soft border border-jb-accent-border rounded-md">
           <jb-icon name="clock" [size]="14" class="text-jb-accent" />
           <div class="flex-1 text-sm text-jb-text">
-            You already started an application for this role — pick up where you left off, or generate a fresh document below.
+            {{ 'apply.resumeBanner' | translate }}
           </div>
-          <jb-button small [primary]="true" icon="arrow-right" (clicked)="resume()">Resume</jb-button>
+          <jb-button small [primary]="true" icon="arrow-right" (clicked)="resume()">{{ 'apply.resume' | translate }}</jb-button>
         </div>
       }
 
       @if (generateError() && phase() === 'input') {
         <div class="mx-6 mt-4 p-3 flex items-center gap-3 rounded-md bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.35)]">
           <jb-icon name="x-circle" [size]="14" class="text-jb-danger" />
-          <div class="flex-1 text-sm text-jb-text">{{ generateError() }}</div>
+          <div class="flex-1 text-sm text-jb-text">{{ generateError() | translate }}</div>
         </div>
       }
 
@@ -34,7 +34,7 @@
         <div class="mx-6 mt-4 p-3 flex items-center gap-3 bg-jb-accent-soft border border-jb-accent-border rounded-md">
           <jb-icon name="link" [size]="14" class="text-jb-accent" />
           <div class="flex-1 text-sm text-jb-text">
-            Captured from <span class="font-medium">{{ capturedFrom() }}</span> — check the fields below, pick a format, and hit Generate.
+            {{ 'apply.capturedFromLabel' | translate }} <span class="font-medium">{{ capturedFrom() | translate }}</span> {{ 'apply.capturedHint' | translate }}
           </div>
         </div>
       }
@@ -47,8 +47,8 @@
           <!-- Source picker -->
           <div class="card p-3.5">
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-xs text-jb-text-dim tracking-widest uppercase font-medium">1 · Source</span>
-              <span class="ml-auto text-xs text-jb-text-dim">Paste a description, a link, or type it by hand.</span>
+              <span class="text-xs text-jb-text-dim tracking-widest uppercase font-medium">{{ 'apply.step1Source' | translate }}</span>
+              <span class="ml-auto text-xs text-jb-text-dim">{{ 'apply.sourceHint' | translate }}</span>
             </div>
             <div class="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               @for (opt of sourceOptions; track opt.mode) {
@@ -59,9 +59,9 @@
                     <jb-icon [name]="opt.icon" [size]="13"
                       [style.color]="mode() === opt.mode ? 'var(--jb-accent)' : 'var(--jb-text-mid)'" />
                     <div class="text-base font-medium"
-                      [style.color]="mode() === opt.mode ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ opt.label }}</div>
+                      [style.color]="mode() === opt.mode ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ opt.label | translate }}</div>
                   </div>
-                  <div class="text-xs text-jb-text-dim">{{ opt.sub }}</div>
+                  <div class="text-xs text-jb-text-dim">{{ opt.sub | translate }}</div>
                 </button>
               }
             </div>
@@ -72,7 +72,7 @@
                   class="w-full bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-base mono p-[9px_10px_9px_30px]" />
               </div>
               <div class="mt-2 text-xs text-jb-text-dim">
-                If the link matches a job in your feed we reuse it — otherwise fill in the role and paste the description below.
+                {{ 'apply.urlHint' | translate }}
               </div>
             }
           </div>
@@ -80,25 +80,25 @@
           <!-- Company / Role / Location -->
           <div class="card p-3.5">
             <div class="flex justify-between items-center mb-3">
-              <span class="text-xs text-jb-text-dim tracking-widest uppercase font-medium">2 · The role</span>
+              <span class="text-xs text-jb-text-dim tracking-widest uppercase font-medium">{{ 'apply.step2Role' | translate }}</span>
               @if (mode() !== 'manual') {
                 <span class="flex items-center gap-[5px] text-xs text-jb-text-dim">
-                  <jb-icon name="sparkle" [size]="11" class="text-jb-accent" /> Auto-filled from the {{ mode() === 'url' ? 'link' : 'JD' }} · edit if wrong
+                  <jb-icon name="sparkle" [size]="11" class="text-jb-accent" /> {{ 'apply.autoFilled' | translate:{ source: (mode() === 'url' ? ('apply.sourceLink' | translate) : ('apply.sourceJd' | translate)) } }}
                 </span>
               }
             </div>
             <div class="grid gap-2.5 grid-cols-1 sm:grid-cols-[1.1fr_1.3fr_1fr]">
               <label class="flex flex-col gap-[5px]">
-                <span class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">Company *</span>
-                <input [(ngModel)]="company" placeholder="e.g. Anthropic" class="input" />
+                <span class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ 'apply.company' | translate }} *</span>
+                <input [(ngModel)]="company" [placeholder]="'apply.companyPlaceholder' | translate" class="input" />
               </label>
               <label class="flex flex-col gap-[5px]">
-                <span class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">Role *</span>
-                <input [(ngModel)]="role" placeholder="e.g. Design Engineer" class="input" />
+                <span class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ 'apply.role' | translate }} *</span>
+                <input [(ngModel)]="role" [placeholder]="'apply.rolePlaceholder' | translate" class="input" />
               </label>
               <label class="flex flex-col gap-[5px]">
-                <span class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">Location</span>
-                <input [(ngModel)]="location" placeholder="e.g. Remote · EU" class="input" />
+                <span class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ 'apply.location' | translate }}</span>
+                <input [(ngModel)]="location" [placeholder]="'apply.locationPlaceholder' | translate" class="input" />
               </label>
             </div>
           </div>
@@ -107,22 +107,20 @@
           <div class="card p-3.5">
             <div class="flex justify-between items-center mb-3">
               <span class="text-xs text-jb-text-dim tracking-widest uppercase font-medium">
-                {{ mode() === 'unsolicited' ? '3 · About the company & what you\'re after (optional)' : '3 · Job description' }}
+                {{ (mode() === 'unsolicited' ? 'apply.step3Unsolicited' : 'apply.step3Jd') | translate }}
               </span>
               <div class="flex gap-1.5 items-center">
-                <span class="mono text-xs text-jb-text-dim">{{ jd.length }} chars · ~{{ wordCount }} words</span>
+                <span class="mono text-xs text-jb-text-dim">{{ 'apply.charsWords' | translate:{ chars: jd.length, words: wordCount } }}</span>
                 @if (jd) {
-                  <jb-button small ghost icon="x" (clicked)="jd = ''">Clear</jb-button>
+                  <jb-button small ghost icon="x" (clicked)="jd = ''">{{ 'common.clear' | translate }}</jb-button>
                 }
               </div>
             </div>
             <textarea [(ngModel)]="jd"
-              [placeholder]="mode() === 'unsolicited'
-                ? 'What does the company do, why them, and what kind of role are you after?\n\nAnything you know about their stack, products, or plans makes the letter sharper — but you can leave this empty and let your master CV carry it.'
-                : 'Paste the full job description here...\n\nMost roles work best with the whole listing — responsibilities, requirements, and the nice-to-haves. We\'ll pull out the keywords and tailor your CV around them.'"
+              [placeholder]="(mode() === 'unsolicited' ? 'apply.unsolicitedPlaceholder' : 'apply.jdPlaceholder') | translate"
               class="w-full min-h-[240px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text resize-y jb-scroll mono text-[11.5px] leading-[1.6]"></textarea>
             @if (mode() !== 'unsolicited' && jd.trim().length > 0 && jd.trim().length <= 40) {
-              <div class="mt-2 text-xs text-jb-danger">That looks a bit short — paste the full listing for better tailoring.</div>
+              <div class="mt-2 text-xs text-jb-danger">{{ 'apply.tooShort' | translate }}</div>
             }
           </div>
         </div>
@@ -132,11 +130,11 @@
           <div class="card p-3.5">
             <div class="flex items-center gap-2 mb-3">
               <jb-icon name="sparkle" [size]="13" class="text-jb-accent" />
-              <span class="text-base font-semibold">Generate from this JD</span>
+              <span class="text-base font-semibold">{{ 'apply.generateFromJd' | translate }}</span>
             </div>
 
             <!-- Format -->
-            <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Format</div>
+            <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'apply.format' | translate }}</div>
             <div class="flex flex-wrap gap-[5px] mb-3.5">
               @for (fmt of formats; track fmt.key) {
                 <button (click)="selectedFormat.set(fmt.key)"
@@ -144,14 +142,14 @@
                   [style.background]="selectedFormat() === fmt.key ? 'var(--jb-surface-3)' : 'transparent'"
                   [style.border]="'1px solid ' + (selectedFormat() === fmt.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
                   [style.color]="selectedFormat() === fmt.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
-                  {{ fmt.label }}
+                  {{ fmt.label | translate }}
                 </button>
               }
             </div>
 
             <!-- Voice / Language -->
             <div class="pt-3.5 border-t border-jb-border">
-              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ selectedFormat() === 'cv' ? 'Language' : 'Voice · Language' }}</div>
+              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ (selectedFormat() === 'cv' ? 'apply.language' : 'apply.voiceLanguage') | translate }}</div>
               @if (selectedFormat() !== 'cv') {
                 <div class="grid gap-1 mb-1.5 grid-cols-[repeat(3,1fr)]">
                   @for (v of voices; track v) {
@@ -159,7 +157,7 @@
                       class="p-[5px_8px] rounded cursor-pointer text-[11.5px] font-medium"
                       [style.background]="selectedVoice() === v ? 'var(--jb-surface-3)' : 'transparent'"
                       [style.border]="'1px solid ' + (selectedVoice() === v ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
-                      [style.color]="selectedVoice() === v ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ v }}</button>
+                      [style.color]="selectedVoice() === v ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ ('apply.voice.' + v.toLowerCase()) | translate }}</button>
                   }
                 </div>
               }
@@ -176,46 +174,46 @@
 
             <!-- Prompt template + custom instructions -->
             <div class="mt-3.5 pt-3.5 border-t border-jb-border">
-              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Prompt</div>
+              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'apply.prompt' | translate }}</div>
               @if (relevantPromptTemplates.length > 0) {
                 <select class="input mb-2" [ngModel]="selectedPromptId()" (ngModelChange)="selectedPromptId.set($event || null)">
-                  <option [ngValue]="null">Default prompt</option>
+                  <option [ngValue]="null">{{ 'apply.defaultPrompt' | translate }}</option>
                   @for (tpl of relevantPromptTemplates; track tpl.id) {
                     <option [ngValue]="tpl.id">{{ tpl.name }}</option>
                   }
                 </select>
               }
               <textarea [(ngModel)]="customInstructions" rows="3" class="input resize-y text-xs leading-normal"
-                placeholder="Extra instructions — e.g. emphasise my open-source work, mention I can start in August..."></textarea>
+                [placeholder]="'apply.instructionsPlaceholder' | translate"></textarea>
             </div>
 
             <!-- Generate steps -->
             <div class="mt-3.5 pt-3.5 border-t border-jb-border">
-              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">Generate · in order</div>
+              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'apply.generateInOrder' | translate }}</div>
               <div class="flex flex-col gap-2">
                 <div class="flex items-center gap-[9px] p-[8px_10px] bg-jb-surface-2 border border-jb-accent-border rounded-md">
                   <div class="w-[18px] h-[18px] rounded-full shrink-0 text-[10px] font-semibold flex items-center justify-center bg-jb-accent" style="color:#1c1004;">1</div>
                   <div class="flex-1">
-                    <div class="text-base font-medium">{{ selectedFormatLabel }}</div>
-                    <div class="text-xs text-jb-text-dim">{{ company || 'Company' }} · {{ role || 'role' }}</div>
+                    <div class="text-base font-medium">{{ selectedFormatLabel | translate }}</div>
+                    <div class="text-xs text-jb-text-dim">{{ company || ('apply.companyFallback' | translate) }} · {{ role || ('apply.roleFallback' | translate) }}</div>
                   </div>
                   <jb-icon name="arrow-right" [size]="12" class="text-jb-accent" />
                 </div>
                 <div class="flex items-center gap-[9px] p-[8px_10px] border border-jb-border rounded-md opacity-[0.85]">
                   <div class="w-[18px] h-[18px] rounded-full shrink-0 text-[10px] font-semibold flex items-center justify-center border border-jb-border-strong text-jb-text-dim">2</div>
                   <div class="flex-1">
-                    <div class="text-base font-medium text-jb-text-mid">{{ selectedFormat() === 'cv' ? 'Application & letters' : 'Tailored CV' }}</div>
-                    <div class="text-xs text-jb-text-dim">Next — from the {{ selectedFormat() === 'cv' ? 'CV' : 'application' }} screen</div>
+                    <div class="text-base font-medium text-jb-text-mid">{{ (selectedFormat() === 'cv' ? 'apply.appAndLetters' : 'apply.tailoredCv') | translate }}</div>
+                    <div class="text-xs text-jb-text-dim">{{ 'apply.nextFrom' | translate:{ source: (selectedFormat() === 'cv' ? ('apply.cvWord' | translate) : ('apply.applicationWord' | translate)) } }}</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <jb-button block primary icon="sparkle" class="mt-3.5" [disabled]="!isReady()" (clicked)="generate()">
-              {{ selectedFormat() === 'cv' ? 'Set up tailored CV' : 'Generate ' + selectedFormatLabel.toLowerCase() }}
+              {{ selectedFormat() === 'cv' ? ('apply.setupCv' | translate) : ('apply.generateFormat' | translate:{ format: (selectedFormatLabel | translate | lowercase) }) }}
             </jb-button>
             <div class="mt-2.5 text-xs text-jb-text-dim">
-              {{ selectedFormat() === 'cv' ? 'Pick the focus & generate on the next screen.' : 'Then tailor your CV in one click.' }}
+              {{ (selectedFormat() === 'cv' ? 'apply.cvHint' : 'apply.letterHint') | translate }}
             </div>
           </div>
         </aside>
@@ -227,7 +225,7 @@
       <div class="flex items-center gap-2.5 px-[18px] h-11 border-b border-jb-border flex-[0_0_auto]">
         <span class="text-base text-jb-text-mid">{{ company }} · {{ role }}</span>
         <div class="ml-auto">
-          <jb-button small (clicked)="cancelGenerating()">{{ generateError() ? 'Back' : 'Cancel' }}</jb-button>
+          <jb-button small (clicked)="cancelGenerating()">{{ (generateError() ? 'common.back' : 'common.cancel') | translate }}</jb-button>
         </div>
       </div>
       <div class="flex-1 overflow-auto p-[40px_60px] flex flex-col items-center gap-7 jb-scroll">
@@ -235,10 +233,10 @@
           <div class="flex items-center gap-3 max-w-[640px] w-full p-4 rounded-md bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.35)]">
             <jb-icon name="x-circle" [size]="18" class="text-jb-danger" />
             <div class="flex-1">
-              <div class="text-base font-medium">Generation failed</div>
-              <div class="text-sm text-jb-text-dim">{{ generateError() }}</div>
+              <div class="text-base font-medium">{{ 'apply.generationFailed' | translate }}</div>
+              <div class="text-sm text-jb-text-dim">{{ generateError() | translate }}</div>
             </div>
-            <jb-button small [primary]="true" (clicked)="generate()">Retry</jb-button>
+            <jb-button small [primary]="true" (clicked)="generate()">{{ 'common.retry' | translate }}</jb-button>
           </div>
         } @else {
           <div class="flex items-center gap-3">
@@ -247,8 +245,8 @@
               <jb-icon name="sparkle" [size]="22" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-jb-accent" />
             </div>
             <div>
-              <div class="text-[15px] font-medium">Drafting your application...</div>
-              <div class="text-sm text-jb-text-dim">Reading the JD and matching it against your master CV.</div>
+              <div class="text-[15px] font-medium">{{ 'apply.drafting' | translate }}</div>
+              <div class="text-sm text-jb-text-dim">{{ 'apply.draftingSub' | translate }}</div>
             </div>
           </div>
         }
@@ -270,7 +268,7 @@
                   }
                 </div>
                 <div class="text-base"
-                  [style.color]="i <= activeStep() ? 'var(--jb-text)' : 'var(--jb-text-dim)'">{{ step.label }}</div>
+                  [style.color]="i <= activeStep() ? 'var(--jb-text)' : 'var(--jb-text-dim)'">{{ step.label | translate }}</div>
                 <div class="mono text-xs text-jb-text-dim">{{ step.note }}</div>
               </div>
             }
@@ -283,7 +281,7 @@
               <div class="shimmer-line w-[85%]"></div>
             </div>
             <div class="mt-2.5 text-xs text-jb-text-dim">
-              <jb-icon name="sparkle" [size]="10" class="text-jb-accent" /> Writing...
+              <jb-icon name="sparkle" [size]="10" class="text-jb-accent" /> {{ 'apply.writing' | translate }}
             </div>
           </div>
         </div>
