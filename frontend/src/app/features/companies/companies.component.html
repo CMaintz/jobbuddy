@@ -1,11 +1,11 @@
-    <jb-topbar title="Companies">
+    <jb-topbar [title]="'nav.companies' | translate">
       <div class="hidden sm:flex flex-1 max-w-[300px] items-center gap-2 py-[5px] px-2.5 ml-3 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
         <jb-icon name="search" [size]="12" />
-        <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)" placeholder="Search companies…"
+        <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)" [placeholder]="'companies.searchPlaceholder' | translate"
           class="border-none bg-none outline-none text-jb-text text-sm flex-1" />
       </div>
       <ng-container jb-topbar-actions>
-        <div class="text-xs text-jb-text-dim">{{ companies().length }} companies</div>
+        <div class="text-xs text-jb-text-dim">{{ 'companies.count' | translate:{ count: companies().length } }}</div>
       </ng-container>
     </jb-topbar>
 
@@ -13,10 +13,10 @@
       <!-- List -->
       <div class="overflow-y-auto border-r border-jb-border jb-scroll">
         @if (loading()) {
-          <div class="py-12 px-6 text-center text-jb-text-dim text-base">Loading companies…</div>
+          <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'companies.loading' | translate }}</div>
         } @else if (companies().length === 0) {
           <div class="py-12 px-6 text-center text-jb-text-dim text-base">
-            No companies yet — they appear as jobs get crawled and enriched.
+            {{ 'companies.empty' | translate }}
           </div>
         } @else {
           @for (c of companies(); track c.id) {
@@ -30,8 +30,8 @@
                   {{ c.industry || '—' }}{{ c.country ? ' · ' + c.country : '' }}{{ c.sizeRange ? ' · ' + c.sizeRange : '' }}
                 </div>
               </div>
-              @if (c.isConsulting) { <jb-pill tone="violet">consulting</jb-pill> }
-              @if (c.isRecruitingAgency) { <jb-pill tone="info">agency</jb-pill> }
+              @if (c.isConsulting) { <jb-pill tone="violet">{{ 'companies.consulting' | translate }}</jb-pill> }
+              @if (c.isRecruitingAgency) { <jb-pill tone="info">{{ 'companies.agency' | translate }}</jb-pill> }
             </div>
           }
         }
@@ -54,12 +54,12 @@
 
           <div class="card p-3.5">
             <div class="grid grid-cols-2 gap-2.5">
-              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Size</div><div class="text-sm mt-0.5">{{ c.sizeRange || '—' }}</div></div>
-              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Country</div><div class="text-sm mt-0.5">{{ c.country || '—' }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'companies.size' | translate }}</div><div class="text-sm mt-0.5">{{ c.sizeRange || '—' }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'companies.country' | translate }}</div><div class="text-sm mt-0.5">{{ c.country || '—' }}</div></div>
               <div class="col-span-2">
-                <div class="text-2xs text-jb-text-dim uppercase tracking-widest">Links</div>
+                <div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'companies.links' | translate }}</div>
                 <div class="text-sm mt-1 flex flex-col gap-1">
-                  @if (c.website) { <a class="jb-link self-start" [href]="c.website" target="_blank" rel="noopener">Website</a> }
+                  @if (c.website) { <a class="jb-link self-start" [href]="c.website" target="_blank" rel="noopener">{{ 'companies.website' | translate }}</a> }
                   @if (c.linkedinUrl) { <a class="jb-link self-start" [href]="c.linkedinUrl" target="_blank" rel="noopener">LinkedIn</a> }
                   @if (!c.website && !c.linkedinUrl) { <span class="text-jb-text-dim">—</span> }
                 </div>
@@ -69,7 +69,7 @@
         } @else {
           <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">
             <jb-icon name="building" [size]="24" class="mb-2" />
-            <div class="text-base">Select a company</div>
+            <div class="text-base">{{ 'companies.selectCompany' | translate }}</div>
           </div>
         }
       </div>

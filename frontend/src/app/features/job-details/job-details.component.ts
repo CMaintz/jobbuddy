@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
@@ -18,9 +19,9 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'OFFER'];
 
 const STAGE_LABELS: Record<string, string> = {
-  SAVED: 'Saved', PREPARING: 'Preparing', APPLIED: 'Applied',
-  RECRUITER_CONTACT: 'Screen', INTERVIEW: 'Interview', TECHNICAL_TEST: 'Technical',
-  FINAL_ROUND: 'Final', OFFER: 'Offer', REJECTED: 'Rejected', ARCHIVED: 'Archived'
+  SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.preparing', APPLIED: 'pipeline.stage.applied',
+  RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview', TECHNICAL_TEST: 'pipeline.stage.technical',
+  FINAL_ROUND: 'pipeline.stage.final', OFFER: 'pipeline.stage.offer', REJECTED: 'pipeline.stage.rejected', ARCHIVED: 'pipeline.stage.archived'
 };
 
 const STAGE_TONES: Record<string, string> = {
@@ -32,7 +33,7 @@ const STAGE_TONES: Record<string, string> = {
 @Component({
   selector: 'app-job-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
+  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
   templateUrl: './job-details.component.html'
 })
 export class JobDetailsComponent implements OnInit {
@@ -41,6 +42,7 @@ export class JobDetailsComponent implements OnInit {
   private jobsApi = inject(JobsApiService);
   private appsApi = inject(ApplicationsApiService);
   private notesApi = inject(NotesApiService);
+  private translate = inject(TranslateService);
 
   loading = true;
   job: Job | null = null;
@@ -58,18 +60,18 @@ export class JobDetailsComponent implements OnInit {
   stageFlow = STAGE_FLOW;
 
   tabs = [
-    { key: 'jd' as const, label: 'Job description' },
-    { key: 'activity' as const, label: 'Activity', count: 0 },
-    { key: 'notes' as const, label: 'Notes', count: 0 },
+    { key: 'jd' as const, label: 'jobDetails.tab.jd' },
+    { key: 'activity' as const, label: 'jobDetails.tab.activity', count: 0 },
+    { key: 'notes' as const, label: 'jobDetails.tab.notes', count: 0 },
   ];
 
   openingCv = false;
 
   generateActions = [
-    { label: 'Application', icon: 'layers', format: 'application' },
-    { label: 'Cover letter', icon: 'doc', format: 'cover-letter' },
-    { label: 'Short pitch', icon: 'mail', format: 'short-pitch' },
-    { label: 'Tailored CV', icon: 'target', format: 'cv' },
+    { label: 'apply.fmt.application', icon: 'layers', format: 'application' },
+    { label: 'apply.fmt.coverLetter', icon: 'doc', format: 'cover-letter' },
+    { label: 'apply.fmt.shortPitch', icon: 'mail', format: 'short-pitch' },
+    { label: 'apply.fmt.tailoredCv', icon: 'target', format: 'cv' },
   ];
 
   activityEvents: { time: string; what: string; who: string; dot: string }[] = [];
@@ -79,7 +81,7 @@ export class JobDetailsComponent implements OnInit {
     const cur = this.job.currency || '';
     if (this.job.salaryMin && this.job.salaryMax) return `${cur}${this.job.salaryMin}–${this.job.salaryMax}`;
     if (this.job.salaryMin) return `${cur}${this.job.salaryMin}+`;
-    return `Up to ${cur}${this.job!.salaryMax}`;
+    return this.translate.instant('jobDetails.upTo', { amount: `${cur}${this.job!.salaryMax}` });
   }
 
   get keywords(): string[] {
@@ -159,7 +161,7 @@ export class JobDetailsComponent implements OnInit {
               });
             } else {
               // Build a synthetic job from application data
-              this.job = { id: app.id, title: app.jobTitle || 'Untitled', companyName: app.jobCompanyName, url: '' };
+              this.job = { id: app.id, title: app.jobTitle || this.translate.instant('jobDetails.untitled'), companyName: app.jobCompanyName, url: '' };
               this.loading = false;
             }
           },
@@ -260,12 +262,12 @@ export class JobDetailsComponent implements OnInit {
 
   docTypeLabel(docType: string): string {
     const labels: Record<string, string> = {
-      CV: 'Tailored CV',
-      APPLICATION_TEXT: 'Application',
-      COVER_LETTER: 'Cover letter',
-      UNSOLICITED_APPLICATION: 'Unsolicited',
-      RECRUITER_MESSAGE: 'Short pitch',
-      FOLLOW_UP_MESSAGE: 'Follow-up',
+      CV: 'documents.type.cv',
+      APPLICATION_TEXT: 'documents.type.application',
+      COVER_LETTER: 'documents.type.coverLetter',
+      UNSOLICITED_APPLICATION: 'documents.type.unsolicited',
+      RECRUITER_MESSAGE: 'documents.type.shortPitch',
+      FOLLOW_UP_MESSAGE: 'documents.type.followUp',
     };
     return labels[docType] ?? docType;
   }
@@ -301,13 +303,13 @@ export class JobDetailsComponent implements OnInit {
     if (this.note) {
       if (content === this.note.content) return;
       this.notesApi.update(this.job.id, this.note.id, content).subscribe({
-        next: note => { this.note = note; this.flashNotesStatus('saved'); },
-        error: () => this.flashNotesStatus('save failed')
+        next: note => { this.note = note; this.flashNotesStatus('jobDetails.notesSaved'); },
+        error: () => this.flashNotesStatus('jobDetails.notesSaveFailed')
       });
     } else if (content) {
       this.notesApi.create(this.job.id, content).subscribe({
-        next: note => { this.note = note; this.flashNotesStatus('saved'); },
-        error: () => this.flashNotesStatus('save failed')
+        next: note => { this.note = note; this.flashNotesStatus('jobDetails.notesSaved'); },
+        error: () => this.flashNotesStatus('jobDetails.notesSaveFailed')
       });
     }
   }
@@ -324,9 +326,11 @@ export class JobDetailsComponent implements OnInit {
    */
   get contactMailto(): string {
     const to = this.application?.recruiterEmail ?? '';
-    const subject = encodeURIComponent(`Question about the ${this.job?.title ?? 'open'} role at ${this.job?.companyName ?? 'your company'}`);
-    const body = encodeURIComponent(
-      `Hi,\n\nI came across the ${this.job?.title ?? ''} opening and have a quick question before applying.\n\n`);
+    const subject = encodeURIComponent(this.translate.instant('jobDetails.mailto.subject', {
+      role: this.job?.title ?? this.translate.instant('jobDetails.mailto.openRole'),
+      company: this.job?.companyName ?? this.translate.instant('jobDetails.mailto.yourCompany'),
+    }));
+    const body = encodeURIComponent(this.translate.instant('jobDetails.mailto.body', { role: this.job?.title ?? '' }));
     return `mailto:${to}?subject=${subject}&body=${body}`;
   }
 
@@ -338,20 +342,19 @@ export class JobDetailsComponent implements OnInit {
     if (!dateStr) return '—';
     const diff = Date.now() - new Date(dateStr).getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'today';
-    if (days === 1) return '1d ago';
-    if (days < 7) return `${days}d ago`;
-    if (days < 30) return `${Math.floor(days / 7)}w ago`;
-    return `${Math.floor(days / 30)}mo ago`;
+    if (days === 0) return this.translate.instant('time.today');
+    if (days < 7) return this.translate.instant('time.daysAgo', { n: days });
+    if (days < 30) return this.translate.instant('time.weeksAgo', { n: Math.floor(days / 7) });
+    return this.translate.instant('time.monthsAgo', { n: Math.floor(days / 30) });
   }
 
   private buildActivity(): void {
     const events: { time: string; what: string; who: string; dot: string }[] = [];
     if (this.application) {
       if (this.application.appliedAt) {
-        events.push({ time: this.ageLabel(this.application.appliedAt), what: 'Application sent', who: 'Via ' + (this.job?.source || 'platform'), dot: 'var(--jb-info)' });
+        events.push({ time: this.ageLabel(this.application.appliedAt), what: this.translate.instant('jobDetails.activity.applicationSent'), who: this.translate.instant('jobDetails.activity.via', { source: this.job?.source || this.translate.instant('jobDetails.activity.platform') }), dot: 'var(--jb-info)' });
       }
-      events.push({ time: this.ageLabel(this.application.createdAt), what: 'Saved to pipeline', who: 'You', dot: 'var(--jb-text-dim)' });
+      events.push({ time: this.ageLabel(this.application.createdAt), what: this.translate.instant('jobDetails.activity.savedToPipeline'), who: this.translate.instant('jobDetails.activity.you'), dot: 'var(--jb-text-dim)' });
     }
     this.activityEvents = events;
     this.tabs[1].count = events.length;
