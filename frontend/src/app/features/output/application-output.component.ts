@@ -2,6 +2,7 @@ import { Component, ViewChild, inject, signal, OnInit, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
@@ -22,12 +23,13 @@ import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_T
 @Component({
   selector: 'app-application-output',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbDropdownComponent, DiffViewerComponent, LetterPaperComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbDropdownComponent, DiffViewerComponent, LetterPaperComponent],
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {
   @ViewChild(LetterPaperComponent) paper?: LetterPaperComponent;
 
+  private translate = inject(TranslateService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private aiApi = inject(AiApiService);
@@ -65,18 +67,18 @@ export class ApplicationOutputComponent implements OnInit {
 
   templates = LETTER_TEMPLATES;
   formats: { key: FormatKey; label: string }[] = [
-    { key: 'app', label: 'Application' },
-    { key: 'cl', label: 'Cover letter' },
-    { key: 'ua', label: 'Unsolicited' },
-    { key: 'dm', label: 'Short pitch' },
-    { key: 'fu', label: 'Follow-up' },
+    { key: 'app', label: 'documents.type.application' },
+    { key: 'cl', label: 'documents.type.coverLetter' },
+    { key: 'ua', label: 'documents.type.unsolicited' },
+    { key: 'dm', label: 'documents.type.shortPitch' },
+    { key: 'fu', label: 'documents.type.followUp' },
   ];
 
   revisePrompts = [
-    'Make the second paragraph tighter',
-    'Sound less like a job ad',
-    'Shorter by 50 words',
-    'More concrete, fewer adjectives',
+    'output.revise.tighter',
+    'output.revise.lessAd',
+    'output.revise.shorter',
+    'output.revise.concrete',
   ];
 
   /** Latest document per format, newest first. */
@@ -113,9 +115,9 @@ export class ApplicationOutputComponent implements OnInit {
     if (!this.activeDoc()) return '';
     const [lo, hi] = WORD_TARGETS[this.format()];
     const n = this.wordCount();
-    if (n < lo) return `On the short side — ${lo}–${hi} words usually lands better here.`;
-    if (n > hi) return `Running long — ${lo}–${hi} words is the sweet spot for this format.`;
-    return `Good length — within the ${lo}–${hi} word sweet spot.`;
+    if (n < lo) return this.translate.instant('output.wordShort', { lo, hi });
+    if (n > hi) return this.translate.instant('output.wordLong', { lo, hi });
+    return this.translate.instant('output.wordGood', { lo, hi });
   });
 
   /** Identity from the structured payload of the active document, if present. */
@@ -160,7 +162,7 @@ export class ApplicationOutputComponent implements OnInit {
   }
 
   formatLabel(): string {
-    return this.formats.find(f => f.key === this.format())?.label ?? 'Application';
+    return this.formats.find(f => f.key === this.format())?.label ?? 'documents.type.application';
   }
 
   readingTime(): string {
@@ -174,19 +176,19 @@ export class ApplicationOutputComponent implements OnInit {
     if (!iso) return '';
     const diffMs = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diffMs / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1) return this.translate.instant('time.justNow');
+    if (mins < 60) return this.translate.instant('time.minutesAgo', { n: mins });
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 24) return this.translate.instant('time.hoursAgo', { n: hours });
+    return this.translate.instant('time.daysAgo', { n: Math.floor(hours / 24) });
   }
 
   stats() {
     return [
-      { label: 'Words', value: `${this.wordCount()}` },
-      { label: 'Reading', value: this.readingTime() },
-      { label: 'Versions', value: `${this.docCountForFormat(this.format())}` },
-      { label: 'Model', value: this.activeDoc()?.modelUsed?.split('-').slice(0, 2).join('-') ?? '—' },
+      { label: 'output.stat.words', value: `${this.wordCount()}` },
+      { label: 'output.stat.reading', value: this.readingTime() },
+      { label: 'output.stat.versions', value: `${this.docCountForFormat(this.format())}` },
+      { label: 'output.stat.model', value: this.activeDoc()?.modelUsed?.split('-').slice(0, 2).join('-') ?? '—' },
     ];
   }
 
@@ -196,7 +198,7 @@ export class ApplicationOutputComponent implements OnInit {
 
     const appId = this.route.snapshot.paramMap.get('id');
     if (!appId) {
-      this.loadError.set('No application selected.');
+      this.loadError.set(this.translate.instant('output.noAppSelected'));
       this.loading.set(false);
       return;
     }
@@ -210,7 +212,7 @@ export class ApplicationOutputComponent implements OnInit {
         });
       },
       error: () => {
-        this.loadError.set('Could not load this application.');
+        this.loadError.set(this.translate.instant('output.loadAppFailed'));
         this.loading.set(false);
       }
     });
@@ -230,7 +232,7 @@ export class ApplicationOutputComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.loadError.set('Could not load the generated documents.');
+        this.loadError.set(this.translate.instant('output.loadDocsFailed'));
         this.loading.set(false);
       }
     });
@@ -288,7 +290,8 @@ export class ApplicationOutputComponent implements OnInit {
     });
   }
 
-  refineWith(prompt: string): void {
+  refineWith(promptOrKey: string): void {
+    const prompt = this.translate.instant(promptOrKey);
     const doc = this.activeDoc();
     if (!prompt?.trim() || this.refining() || !doc?.content) return;
     this.originalText.set(this.plainText());
@@ -397,7 +400,8 @@ export class ApplicationOutputComponent implements OnInit {
 
   private exportFilename(): string {
     const app = this.application();
-    return app ? `${app.jobCompanyName ?? 'application'} - ${this.formatLabel()}` : this.formatLabel();
+    const label = this.translate.instant(this.formatLabel());
+    return app ? `${app.jobCompanyName ?? 'application'} - ${label}` : label;
   }
 
   goToCv(): void {

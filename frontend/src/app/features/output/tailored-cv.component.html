@@ -2,22 +2,22 @@
       <!-- Topbar -->
       <header class="flex items-center justify-between px-5 h-11 border-b border-jb-border flex-shrink-0">
         <div class="flex items-center gap-2">
-          <button class="text-jb-text-dim text-sm hover:text-jb-text" (click)="goBack()">&larr; Back</button>
+          <button class="text-jb-text-dim text-sm hover:text-jb-text" (click)="goBack()">&larr; {{ 'common.back' | translate }}</button>
           <span class="text-jb-text-faint">/</span>
-          <span class="text-md font-medium">Tailored CV</span>
+          <span class="text-md font-medium">{{ 'documents.type.cv' | translate }}</span>
           @if (application(); as app) {
             <span class="text-sm text-jb-text-dim">· {{ app.jobCompanyName }} — {{ app.jobTitle }}</span>
           }
         </div>
         <div class="flex items-center gap-2">
-          <jb-button small icon="doc" (clicked)="goToLetters()">Application & letters</jb-button>
+          <jb-button small icon="doc" (clicked)="goToLetters()">{{ 'apply.appAndLetters' | translate }}</jb-button>
         </div>
       </header>
 
       <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
       @if (loading()) {
-        <div class="flex-1 flex items-center justify-center text-jb-text-dim">Loading…</div>
+        <div class="flex-1 flex items-center justify-center text-jb-text-dim">{{ 'common.loading' | translate }}</div>
       } @else if (loadError()) {
         <div class="flex-1 flex items-center justify-center text-jb-text-dim">{{ loadError() }}</div>
       } @else {
@@ -27,7 +27,7 @@
             <!-- Existing drafts: the builder is where CVs live -->
             @if (drafts().length > 0) {
               <div class="card p-4">
-                <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">Your drafts for this job</div>
+                <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">{{ 'tailoredCv.yourDrafts' | translate }}</div>
                 <div class="flex flex-col gap-1.5">
                   @for (draft of drafts(); track draft.id) {
                     <button class="jb-row flex items-center gap-2.5 p-2.5 rounded-md border border-jb-border bg-jb-surface text-left cursor-pointer"
@@ -35,7 +35,7 @@
                       <jb-icon name="edit" [size]="13" class="text-jb-accent flex-shrink-0" />
                       <span class="flex-1 min-w-0">
                         <span class="block text-base font-medium truncate">{{ draft.name }}</span>
-                        <span class="block text-xs text-jb-text-dim">Open in the CV Builder — layout, styling & per-section AI</span>
+                        <span class="block text-xs text-jb-text-dim">{{ 'tailoredCv.openInBuilder' | translate }}</span>
                       </span>
                       <jb-icon name="arrow-right" [size]="12" class="text-jb-text-dim" />
                     </button>
@@ -48,24 +48,24 @@
             <div class="card p-4">
               <div class="flex items-center justify-between mb-3">
                 <span class="text-xs text-jb-text-dim tracking-widest uppercase">
-                  {{ versionCount() > 0 ? 'Generate a new version' : 'Generate your tailored CV' }}
+                  {{ (versionCount() > 0 ? 'tailoredCv.newVersion' : 'tailoredCv.generateCta') | translate }}
                 </span>
                 @if (versionCount() > 0) {
-                  <span class="mono text-xs text-jb-text-dim">{{ versionCount() }} version{{ versionCount() === 1 ? '' : 's' }} generated</span>
+                  <span class="mono text-xs text-jb-text-dim">{{ (versionCount() === 1 ? 'tailoredCv.versionOne' : 'tailoredCv.versionOther') | translate:{ n: versionCount() } }}</span>
                 }
               </div>
 
               @if (promptTemplates.length > 0) {
-                <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Prompt</div>
+                <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">{{ 'apply.prompt' | translate }}</div>
                 <select class="input mb-3" [ngModel]="selectedPromptId()" (ngModelChange)="selectedPromptId.set($event || null)">
-                  <option [ngValue]="null">Default prompt</option>
+                  <option [ngValue]="null">{{ 'apply.defaultPrompt' | translate }}</option>
                   @for (tpl of promptTemplates; track tpl.id) {
                     <option [ngValue]="tpl.id">{{ tpl.name }}</option>
                   }
                 </select>
               }
 
-              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Language</div>
+              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">{{ 'apply.language' | translate }}</div>
               <div class="flex gap-1.5 mb-3">
                 @for (lang of languages; track lang) {
                   <button (click)="selectedLanguage.set(lang)"
@@ -76,24 +76,24 @@
                 }
               </div>
 
-              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Focus</div>
+              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">{{ 'tailoredCv.focus' | translate }}</div>
               <div class="flex flex-wrap gap-1.5 mb-2">
                 @for (prompt of tailorPrompts; track prompt) {
                   <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-border rounded-full text-jb-text-mid text-xs cursor-pointer"
                     (click)="addTailorPrompt(prompt)">
-                    + {{ prompt }}
+                    + {{ prompt | translate }}
                   </button>
                 }
               </div>
               <textarea [(ngModel)]="customInstructions" rows="3" class="input resize-y text-xs leading-normal"
-                placeholder="Focus instructions — e.g. emphasise leadership, drop anything older than 2018…"></textarea>
+                [placeholder]="'tailoredCv.focusPlaceholder' | translate"></textarea>
 
               <div class="flex items-center justify-between mt-3.5">
                 <div class="text-xs text-jb-text-dim">
-                  Template & styling are chosen in the CV Builder — switch anytime without regenerating.
+                  {{ 'tailoredCv.templateHint' | translate }}
                 </div>
                 <jb-button [primary]="true" icon="sparkle" [disabled]="generating()" (clicked)="generate()">
-                  {{ generating() ? 'Generating… (up to a minute)' : 'Generate & open in Builder' }}
+                  {{ (generating() ? 'tailoredCv.generatingLong' : 'tailoredCv.generateOpen') | translate }}
                 </jb-button>
               </div>
             </div>
@@ -103,10 +103,10 @@
               <div class="card p-4 flex items-center gap-3">
                 <jb-icon name="clock" [size]="14" class="text-jb-accent flex-shrink-0" />
                 <div class="flex-1 text-sm text-jb-text-mid">
-                  A generated CV for this job already exists — open it in the Builder without regenerating.
+                  {{ 'tailoredCv.latestHint' | translate }}
                 </div>
                 <jb-button small icon="edit" [disabled]="opening()" (clicked)="useLatest()">
-                  {{ opening() ? 'Opening…' : 'Use latest' }}
+                  {{ (opening() ? 'tailoredCv.opening' : 'tailoredCv.useLatest') | translate }}
                 </jb-button>
               </div>
             }

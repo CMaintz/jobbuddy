@@ -19,19 +19,19 @@ export interface LetterTemplate {
 
 export const LETTER_TEMPLATES: LetterTemplate[] = [
   {
-    key: 'editorial', label: 'Editorial', sub: 'Calm serif headers - cream paper',
+    key: 'editorial', label: 'output.tpl.editorial.label', sub: 'output.tpl.editorial.sub',
     bg: '#f6f3ec', fg: '#1a1714', muted: '#6b6660', divider: '#d9d2c4',
     font: '"Geist", ui-sans-serif, system-ui', size: 12.5, lineH: 1.65,
     headerStyle: 'columns', rail: false, swatchBg: '#f6f3ec', swatchAccent: '#1a1714',
   },
   {
-    key: 'classic', label: 'Classic', sub: 'Serif body - centered header',
+    key: 'classic', label: 'output.tpl.classic.label', sub: 'output.tpl.classic.sub',
     bg: '#fbfaf6', fg: '#1c1a16', muted: '#5a554e', divider: '#cfc8b9',
     font: '"Source Serif Pro", Charter, Cambria, Georgia, serif', size: 13, lineH: 1.78,
     headerStyle: 'centered', rail: false, swatchBg: '#fbfaf6', swatchAccent: '#5a554e',
   },
   {
-    key: 'bold', label: 'Bold', sub: 'White paper - amber rail accent',
+    key: 'bold', label: 'output.tpl.bold.label', sub: 'output.tpl.bold.sub',
     bg: '#ffffff', fg: '#0e0e0e', muted: '#5a5a5a', divider: '#e5e0d4',
     font: '"Geist", ui-sans-serif, system-ui', size: 12.5, lineH: 1.62,
     headerStyle: 'rail', rail: true, swatchBg: '#ffffff', swatchAccent: '#f5a623',

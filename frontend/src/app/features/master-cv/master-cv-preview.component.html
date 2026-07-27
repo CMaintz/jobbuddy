@@ -1,7 +1,7 @@
 <div class="rounded-md self-start w-full bg-[#f6f3ec] text-[#1a1714] p-[56px_64px] shadow-[0_18px_60px_rgba(0,0,0,0.45)] max-w-[600px] text-[12.5px] leading-[1.65]">
   <div class="mb-8">
-    <div class="text-[18px] font-medium tracking-[-0.01em] text-[#1a1714]">{{ privateInfo.fullName || 'Your Name' }}</div>
-    <div class="text-[11.5px] text-[#6b6660]">{{ profile.headline || 'Your Title' }}</div>
+    <div class="text-[18px] font-medium tracking-[-0.01em] text-[#1a1714]">{{ privateInfo.fullName || ('masterCv.yourName' | translate) }}</div>
+    <div class="text-[11.5px] text-[#6b6660]">{{ profile.headline || ('masterCv.yourTitle' | translate) }}</div>
     <div class="text-[11px] text-[#6b6660]">{{ privateInfo.contactEmail }} {{ privateInfo.phone ? '· ' + privateInfo.phone : '' }} {{ privateInfo.location ? '· ' + privateInfo.location : '' }}</div>
     @if (socials.length > 0) {
       <div class="text-[10.5px] text-[#6b6660] mt-[2px]">
@@ -13,13 +13,13 @@
   </div>
   @if (profile.summary) {
     <div class="mb-5 pb-3.5 border-b border-[#d9d2c4]">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Profile</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.profile' | translate }}</div>
       <div class="text-[12px] leading-[1.6]">{{ profile.summary }}</div>
     </div>
   }
   @if (strengths.length > 0) {
     <div class="mb-5">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Strengths</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.strengths' | translate }}</div>
       <div class="text-[11px]">
         @for (s of strengths; track s.id || $index) {
           <span>{{ s.title }}{{ !$last ? ' · ' : '' }}</span>
@@ -29,24 +29,24 @@
   }
   @if (experience.length > 0) {
     <div class="mb-5">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-2">Experience</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-2">{{ 'masterCv.section.experience' | translate }}</div>
       @for (exp of experience; track exp.id || $index) {
         <div class="mb-3">
-          <div class="text-[12.5px] font-medium">{{ exp.title }} at {{ exp.companyName }}</div>
-          <div class="text-[10.5px] text-[#6b6660]">{{ exp.startDate }} – {{ exp.isCurrent ? 'Present' : exp.endDate }}</div>
+          <div class="text-[12.5px] font-medium">{{ exp.title }} {{ 'masterCv.at' | translate }} {{ exp.companyName }}</div>
+          <div class="text-[10.5px] text-[#6b6660]">{{ exp.startDate }} – {{ exp.isCurrent ? ('masterCv.present' | translate) : exp.endDate }}</div>
         </div>
       }
     </div>
   }
   @if (skills.length > 0 || technologies.length > 0) {
     <div class="mb-5">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Skills</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.skills' | translate }}</div>
       <div class="text-[11px] text-[#1a1714]">{{ skills.concat(technologies).join(' · ') }}</div>
     </div>
   }
   @if (projects.length > 0) {
     <div class="mb-5">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Projects</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.projects' | translate }}</div>
       @for (proj of projects; track proj.id || $index) {
         <div class="text-[12px] mb-1"><b class="font-medium">{{ proj.name }}</b>{{ proj.description ? ' — ' + proj.description : '' }}</div>
       }
@@ -54,7 +54,7 @@
   }
   @if (education.length > 0) {
     <div class="mb-5">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Education</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.education' | translate }}</div>
       @for (edu of education; track edu.id || $index) {
         <div class="text-[12px]">{{ edu.degree }} — {{ edu.institution }}</div>
       }
@@ -62,7 +62,7 @@
   }
   @if (certifications.length > 0) {
     <div class="mb-5">
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Certifications</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.certifications' | translate }}</div>
       @for (cert of certifications; track cert.id || $index) {
         <div class="text-[12px]">{{ cert.name }}{{ cert.issuer ? ' — ' + cert.issuer : '' }}</div>
       }
@@ -70,7 +70,7 @@
   }
   @if (languages.length > 0) {
     <div>
-      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">Languages</div>
+      <div class="text-[10.5px] text-[#6b6660] tracking-[0.06em] uppercase mb-1.5">{{ 'masterCv.section.languages' | translate }}</div>
       <div class="text-[11px]">
         @for (lang of languages; track lang.id || $index) {
           <span>{{ lang.language }} ({{ lang.proficiency | titlecase }}){{ !$last ? ' · ' : '' }}</span>

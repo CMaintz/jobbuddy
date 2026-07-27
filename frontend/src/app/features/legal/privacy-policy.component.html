@@ -1,90 +1,61 @@
 
     <div class="min-h-screen overflow-auto">
       <div class="max-w-[720px] mx-auto p-[32px_20px_64px]">
-        <a routerLink="/" class="jb-link text-sm">← Back to Jobbuddy</a>
+        <a routerLink="/" class="jb-link text-sm">{{ 'legal.back' | translate }}</a>
 
-        <h1 class="text-2xl font-semibold tracking-tight mt-6 mb-1">Privacy policy</h1>
-        <p class="text-sm text-jb-text-dim mb-8">Last updated: {{ lastUpdated }}</p>
+        <h1 class="text-2xl font-semibold tracking-tight mt-6 mb-1">{{ 'legal.title' | translate }}</h1>
+        <p class="text-sm text-jb-text-dim mb-8">{{ 'legal.lastUpdated' | translate:{ date: lastUpdated } }}</p>
 
         <div class="flex flex-col gap-6 text-base leading-relaxed">
           <section>
-            <h2 class="text-lg font-medium mb-2">Who we are</h2>
-            <p>
-              Jobbuddy helps you find roles and write job applications. We are based in the EU and act as
-              the data controller for the personal data described below. Questions and requests:
-              contact us via the email address on your account page.
-            </p>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.whoTitle' | translate }}</h2>
+            <p>{{ 'legal.whoBody' | translate }}</p>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">What we store</h2>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.storeTitle' | translate }}</h2>
             <ul class="list-disc pl-5 flex flex-col gap-1">
-              <li><strong>Account data</strong> — your email address and sign-in method (email/password, Google, or LinkedIn), managed through Firebase Authentication.</li>
-              <li><strong>Career profile</strong> — the CV content, work history, skills, photo, and contact details you add or import.</li>
-              <li><strong>Applications and documents</strong> — the jobs you save, the applications you track, and the documents generated for you (including notes, recruiter details, and outcomes you record).</li>
-              <li><strong>Writing style</strong> — the style rules you write or derive from writing samples you provide.</li>
-              <li><strong>Preferences</strong> — matching preferences, generation defaults, and notification settings.</li>
+              <li [innerHTML]="'legal.store.account' | translate"></li>
+              <li [innerHTML]="'legal.store.profile' | translate"></li>
+              <li [innerHTML]="'legal.store.apps' | translate"></li>
+              <li [innerHTML]="'legal.store.style' | translate"></li>
+              <li [innerHTML]="'legal.store.prefs' | translate"></li>
             </ul>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">AI processing</h2>
-            <p>
-              Document generation and analysis use OpenAI as a processor. Your name, email address,
-              phone number, photo, and profile links are <strong>never</strong> included in the career
-              profile sent to the AI provider — identity details are added to documents on our servers
-              after generation. Text you explicitly submit for processing (pasted CVs, job descriptions,
-              writing samples) is sent as provided, with obvious contact lines stripped from writing
-              samples first. AI requests are not used by us to train models.
-            </p>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.aiTitle' | translate }}</h2>
+            <p [innerHTML]="'legal.aiBody' | translate"></p>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">Cookies and local storage</h2>
-            <p>
-              Jobbuddy sets <strong>no tracking or advertising cookies</strong> and uses no analytics
-              trackers. Your browser's local storage holds only what the app needs to function: your
-              sign-in session (Firebase), theme choice, unsaved form drafts, and display preferences.
-              This storage is strictly necessary, so no consent banner is required; you can clear it at
-              any time via your browser.
-            </p>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.cookiesTitle' | translate }}</h2>
+            <p [innerHTML]="'legal.cookiesBody' | translate"></p>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">Legal basis and retention</h2>
-            <p>
-              We process your data to provide the service you signed up for (GDPR art. 6(1)(b)) and,
-              for optional features like email digests, based on your settings (art. 6(1)(a), withdrawable
-              anytime). Your data is kept until you delete it or your account; deleting your account
-              permanently removes your profile, applications, documents, and preferences.
-            </p>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.legalBasisTitle' | translate }}</h2>
+            <p>{{ 'legal.legalBasisBody' | translate }}</p>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">Your rights</h2>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.rightsTitle' | translate }}</h2>
             <ul class="list-disc pl-5 flex flex-col gap-1">
-              <li><strong>Access & portability</strong> — export everything as JSON under Settings → Privacy &amp; data.</li>
-              <li><strong>Rectification</strong> — all profile data is directly editable in the app.</li>
-              <li><strong>Erasure</strong> — delete your account under Settings → Privacy &amp; data; this is immediate and irreversible.</li>
-              <li><strong>Complaint</strong> — you can lodge a complaint with your local data protection authority (in Denmark: Datatilsynet).</li>
+              <li [innerHTML]="'legal.rights.access' | translate"></li>
+              <li [innerHTML]="'legal.rights.rectification' | translate"></li>
+              <li [innerHTML]="'legal.rights.erasure' | translate"></li>
+              <li [innerHTML]="'legal.rights.complaint' | translate"></li>
             </ul>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">International transfers</h2>
-            <p>
-              AI processing by OpenAI may involve transfers to the United States, safeguarded under the
-              EU–US Data Privacy Framework and standard contractual clauses. All other data is stored
-              within the EU.
-            </p>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.transfersTitle' | translate }}</h2>
+            <p>{{ 'legal.transfersBody' | translate }}</p>
           </section>
 
           <section>
-            <h2 class="text-lg font-medium mb-2">Changes</h2>
-            <p>
-              We will update this page when our data practices change and adjust the date above.
-              Material changes will be announced in the app.
-            </p>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.changesTitle' | translate }}</h2>
+            <p>{{ 'legal.changesBody' | translate }}</p>
           </section>
         </div>
       </div>

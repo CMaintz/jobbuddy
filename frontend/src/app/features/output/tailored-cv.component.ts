@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
@@ -18,10 +19,10 @@ import { INITIAL_SETTINGS, ResumeDraft } from '../resume-builder/models/resume-b
 import { loadGenDefaults } from '../settings/settings.component';
 
 const TAILOR_PROMPTS = [
-  'More technical depth',
-  'Lead with motion / craft',
-  'Quantify everything',
-  'Shorter — aim for one page',
+  'tailoredCv.tailor.depth',
+  'tailoredCv.tailor.craft',
+  'tailoredCv.tailor.quantify',
+  'tailoredCv.tailor.shorter',
 ];
 
 /**
@@ -33,10 +34,11 @@ const TAILOR_PROMPTS = [
 @Component({
   selector: 'app-tailored-cv',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, JbToastComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbToastComponent],
   templateUrl: './tailored-cv.component.html',
 })
 export class TailoredCvComponent implements OnInit {
+  private translate = inject(TranslateService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private aiApi = inject(AiApiService);
@@ -80,7 +82,7 @@ export class TailoredCvComponent implements OnInit {
 
     const appId = this.route.snapshot.paramMap.get('id');
     if (!appId) {
-      this.loadError.set('No application selected.');
+      this.loadError.set(this.translate.instant('output.noAppSelected'));
       this.loading.set(false);
       return;
     }
@@ -90,7 +92,7 @@ export class TailoredCvComponent implements OnInit {
         this.loadExisting(app.jobId);
       },
       error: () => {
-        this.loadError.set('Could not load this application.');
+        this.loadError.set(this.translate.instant('output.loadAppFailed'));
         this.loading.set(false);
       }
     });
@@ -118,7 +120,8 @@ export class TailoredCvComponent implements OnInit {
     });
   }
 
-  addTailorPrompt(prompt: string): void {
+  addTailorPrompt(promptOrKey: string): void {
+    const prompt = this.translate.instant(promptOrKey);
     this.customInstructions = this.customInstructions
       ? `${this.customInstructions.trim().replace(/\.?$/, '.')} ${prompt}.`
       : `${prompt}.`;
@@ -139,7 +142,7 @@ export class TailoredCvComponent implements OnInit {
       next: doc => this.createDraftAndOpen(doc, app),
       error: err => {
         this.generating.set(false);
-        this.toast.set(err?.error?.message ?? 'CV generation failed — check your master CV and try again.');
+        this.toast.set(err?.error?.message ?? this.translate.instant('tailoredCv.toast.genFailed'));
       }
     });
   }
@@ -159,7 +162,7 @@ export class TailoredCvComponent implements OnInit {
 
   private createDraftAndOpen(doc: StructuredDocument, app: Application): void {
     this.draftApi.createDraft({
-      name: `Tailored CV — ${app.jobCompanyName ?? 'job'}`,
+      name: this.translate.instant('tailoredCv.draftName', { company: app.jobCompanyName ?? this.translate.instant('tailoredCv.jobFallback') }),
       jobId: app.jobId,
       applicationId: app.id,
       resumeData: structuredDocToResumeData(doc),
@@ -169,7 +172,7 @@ export class TailoredCvComponent implements OnInit {
       error: () => {
         this.generating.set(false);
         this.opening.set(false);
-        this.toast.set('Generated, but the draft could not be created — try again');
+        this.toast.set(this.translate.instant('tailoredCv.toast.draftFailed'));
       }
     });
   }
@@ -177,11 +180,11 @@ export class TailoredCvComponent implements OnInit {
   ageLabel(iso?: string): string {
     if (!iso) return '';
     const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1) return this.translate.instant('time.justNow');
+    if (mins < 60) return this.translate.instant('time.minutesAgo', { n: mins });
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 24) return this.translate.instant('time.hoursAgo', { n: hours });
+    return this.translate.instant('time.daysAgo', { n: Math.floor(hours / 24) });
   }
 
   goBack(): void {
