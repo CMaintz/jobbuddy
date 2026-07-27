@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, inject, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../jb-button/jb-button.component';
@@ -35,12 +36,13 @@ interface ParsedCvResponse {
 @Component({
   selector: 'jb-cv-import-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   templateUrl: './cv-import-panel.component.html',
 })
 export class CvImportPanelComponent {
   private http = inject(HttpClient);
   private aiApi = inject(AiApiService);
+  private translate = inject(TranslateService);
 
   /** Tighter spacing for embedded contexts like onboarding. */
   @Input() compact = false;
@@ -57,9 +59,9 @@ export class CvImportPanelComponent {
   pastedText = '';
 
   importOptions = [
-    { key: 'pdf' as const, icon: 'upload', label: 'Upload PDF', description: 'Upload an existing CV and we\'ll parse it into structured sections.' },
-    { key: 'paste' as const, icon: 'copy', label: 'Paste text', description: 'Paste your CV text and we\'ll extract the structure.' },
-    { key: 'linkedin' as const, icon: 'link', label: 'LinkedIn', description: 'Upload your LinkedIn profile PDF export to auto-import.' },
+    { key: 'pdf' as const, icon: 'upload', label: 'cvImport.pdf.label', description: 'cvImport.pdf.desc' },
+    { key: 'paste' as const, icon: 'copy', label: 'cvImport.paste.label', description: 'cvImport.paste.desc' },
+    { key: 'linkedin' as const, icon: 'link', label: 'cvImport.linkedin.label', description: 'cvImport.linkedin.desc' },
   ];
 
   onCvPdfSelected(event: Event): void {
@@ -87,7 +89,7 @@ export class CvImportPanelComponent {
 
   parsePastedText(): void {
     if (this.pastedText.trim().length < 80) {
-      this.failed.emit('Paste your full CV text first (at least a few lines)');
+      this.failed.emit(this.translate.instant('cvImport.error.pasteFirst'));
       return;
     }
     this.parse(this.aiApi.parseCv(this.pastedText));
@@ -111,7 +113,7 @@ export class CvImportPanelComponent {
       },
       error: () => {
         this.parsing.set(false);
-        this.failed.emit('Parsing failed — check the file/text and try again');
+        this.failed.emit(this.translate.instant('cvImport.error.parseFailed'));
       }
     });
   }
@@ -139,7 +141,7 @@ export class CvImportPanelComponent {
       },
       error: () => {
         this.applying.set(false);
-        this.failed.emit('Could not apply the import — try again');
+        this.failed.emit(this.translate.instant('cvImport.error.applyFailed'));
       }
     });
   }

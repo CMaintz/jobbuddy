@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { Subject, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { SkillsApiService } from '../../../core/api/skills.api';
 import { SkillTaxonomy } from '../../../core/models/skill-taxonomy.model';
@@ -8,7 +9,7 @@ import { SkillTaxonomy } from '../../../core/models/skill-taxonomy.model';
 @Component({
   selector: 'app-skill-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './skill-picker.component.html'
 })
 export class SkillPickerComponent {
@@ -16,8 +17,8 @@ export class SkillPickerComponent {
   private search$ = new Subject<string>();
 
   @Input() selected: SkillTaxonomy[] = [];
-  @Input() label = 'Skills';
-  @Input() placeholder = 'Search skills to link...';
+  @Input() label = 'skillPicker.label';
+  @Input() placeholder = 'skillPicker.placeholder';
   @Output() selectedChange = new EventEmitter<SkillTaxonomy[]>();
   @Output() createRequested = new EventEmitter<string>();
 

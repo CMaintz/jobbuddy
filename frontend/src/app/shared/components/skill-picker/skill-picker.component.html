@@ -1,13 +1,13 @@
     <div>
       @if (label) {
-        <label class="block text-xs font-medium text-gray-700">{{ label }}</label>
+        <label class="block text-xs font-medium text-gray-700">{{ label | translate }}</label>
       }
       <div class="relative mt-1">
         <input [(ngModel)]="query"
                [ngModelOptions]="{standalone: true}"
                (ngModelChange)="onQueryChange($event)"
                (blur)="hideDropdownDelayed()"
-               [placeholder]="placeholder"
+               [placeholder]="placeholder | translate"
                class="w-full border rounded px-2 py-1.5 text-sm" />
         @if (showDropdown) {
           <div class="absolute z-10 top-full left-0 right-0 bg-white border rounded shadow-lg mt-0.5 max-h-48 overflow-y-auto">
@@ -23,7 +23,7 @@
               <button type="button"
                       (mousedown)="createRequested.emit(query.trim()); clearSearch()"
                       class="w-full text-left px-3 py-2 text-sm hover:bg-green-50 text-green-700">
-                + Create "{{ query }}"
+                {{ 'skillPicker.create' | translate:{ query: query } }}
               </button>
             }
           </div>
