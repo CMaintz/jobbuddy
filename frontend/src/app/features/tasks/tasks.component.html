@@ -1,6 +1,6 @@
-    <jb-topbar title="Tasks">
+    <jb-topbar [title]="'nav.tasks' | translate">
       <ng-container jb-topbar-actions>
-        <jb-button small icon="plus" (clicked)="showForm.set(!showForm())">Add follow-up</jb-button>
+        <jb-button small icon="plus" (clicked)="showForm.set(!showForm())">{{ 'tasks.addFollowUp' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
@@ -11,23 +11,23 @@
       <div class="max-w-[800px]">
         @if (showForm()) {
           <div class="card p-3.5 mb-4">
-            <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">New follow-up reminder</div>
+            <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">{{ 'tasks.newReminder' | translate }}</div>
             <div class="grid gap-2 grid-cols-[1.4fr_1.6fr_1fr_auto]">
               <select [(ngModel)]="newAppId" class="input">
-                <option value="" disabled>Application…</option>
+                <option value="" disabled>{{ 'tasks.applicationPlaceholder' | translate }}</option>
                 @for (app of applications; track app.id) {
                   <option [value]="app.id">{{ app.jobCompanyName }} — {{ app.jobTitle }}</option>
                 }
               </select>
-              <input [(ngModel)]="newNote" class="input" placeholder="What to do — e.g. Send follow-up email" />
+              <input [(ngModel)]="newNote" class="input" [placeholder]="'tasks.notePlaceholder' | translate" />
               <input [(ngModel)]="newDue" type="date" class="input mono" />
-              <jb-button small [primary]="true" (clicked)="createReminder()">Add</jb-button>
+              <jb-button small [primary]="true" (clicked)="createReminder()">{{ 'common.add' | translate }}</jb-button>
             </div>
           </div>
         }
 
         @if (loading()) {
-          <div class="p-10 text-center text-jb-text-dim">Loading reminders…</div>
+          <div class="p-10 text-center text-jb-text-dim">{{ 'tasks.loading' | translate }}</div>
         } @else {
           <!-- Kind filter chips -->
           <div class="flex gap-1.5 mb-3">
@@ -37,7 +37,7 @@
                 [style.background]="kindFilter() === chip.key ? 'var(--jb-surface-3)' : 'transparent'"
                 [style.border]="'1px solid ' + (kindFilter() === chip.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
                 [style.color]="kindFilter() === chip.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
-                {{ chip.label }}
+                {{ chip.label | translate }}
                 <span class="mono text-xs text-jb-text-dim">{{ kindCount(chip.key) }}</span>
               </button>
             }
@@ -47,27 +47,27 @@
           <div class="flex gap-4 mb-4">
             <div class="flex items-center gap-1.5 text-sm">
               <span class="text-jb-danger font-semibold">{{ overdueCount }}</span>
-              <span class="text-jb-text-dim">Overdue</span>
+              <span class="text-jb-text-dim">{{ 'tasks.group.overdue' | translate }}</span>
             </div>
             <div class="flex items-center gap-1.5 text-sm">
               <span class="text-jb-accent-2 font-semibold">{{ todayCount }}</span>
-              <span class="text-jb-text-dim">Due today</span>
+              <span class="text-jb-text-dim">{{ 'tasks.dueToday' | translate }}</span>
             </div>
             <div class="flex items-center gap-1.5 text-sm">
               <span class="font-semibold">{{ weekCount }}</span>
-              <span class="text-jb-text-dim">This week</span>
+              <span class="text-jb-text-dim">{{ 'tasks.group.week' | translate }}</span>
             </div>
             <div class="flex items-center gap-1.5 text-sm">
               <span class="text-jb-success font-semibold">{{ doneToday() }}</span>
-              <span class="text-jb-text-dim">Done today</span>
+              <span class="text-jb-text-dim">{{ 'tasks.doneToday' | translate }}</span>
             </div>
           </div>
 
           @if (rows().length === 0) {
             <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md">
               <jb-icon name="check-circle" [size]="20" class="text-jb-success" />
-              <div class="text-base text-jb-text-mid mt-2">All caught up — no open follow-ups.</div>
-              <div class="text-xs text-jb-text-dim mt-1">Add one from an application, or with the button above.</div>
+              <div class="text-base text-jb-text-mid mt-2">{{ 'tasks.allCaughtUp' | translate }}</div>
+              <div class="text-xs text-jb-text-dim mt-1">{{ 'tasks.allCaughtUpDesc' | translate }}</div>
             </div>
           }
 
@@ -77,12 +77,12 @@
               <div class="mb-5">
                 <div class="text-xs font-medium uppercase tracking-widest py-[6px] mb-[4px]"
                   [style.color]="group.key === 'overdue' ? 'var(--jb-danger)' : 'var(--jb-text-dim)'">
-                  {{ group.label }}
+                  {{ group.label | translate }}
                 </div>
                 @for (row of tasksForGroup(group.key); track row.reminder.id) {
                   <div class="jb-row grid items-center gap-2.5 p-[10px_8px] border-b border-jb-border-faint grid-cols-[24px_28px_1fr_auto_auto_auto_auto]">
                     <!-- Complete checkbox -->
-                    <button (click)="complete(row)" title="Mark done"
+                    <button (click)="complete(row)" [title]="'tasks.markDone' | translate"
                       class="w-4 h-4 rounded flex items-center justify-center bg-transparent cursor-pointer" style="border:1.5px solid var(--jb-border-strong);">
                     </button>
 
@@ -92,7 +92,7 @@
                     <!-- Content -->
                     <div class="min-w-0 cursor-pointer" (click)="openApplication(row)">
                       <div class="text-base font-medium flex items-center gap-1.5">
-                        {{ row.reminder.note || 'Follow up' }}
+                        {{ row.reminder.note || ('tasks.followUpFallback' | translate) }}
                         @if (row.kind === 'interview') {
                           <jb-icon name="briefcase" [size]="11" class="text-jb-accent" />
                         }
@@ -107,14 +107,14 @@
                     <jb-button small [primary]="group.key === 'overdue' || group.key === 'today'"
                       [icon]="row.kind === 'interview' ? 'briefcase' : 'sparkle'"
                       (clicked)="contextAction(row)">
-                      {{ row.kind === 'interview' ? 'Prep' : 'Draft' }}
+                      {{ (row.kind === 'interview' ? 'tasks.prep' : 'tasks.draft') | translate }}
                     </jb-button>
 
                     <!-- Open application -->
-                    <jb-button small (clicked)="openApplication(row)">Open</jb-button>
+                    <jb-button small (clicked)="openApplication(row)">{{ 'tasks.open' | translate }}</jb-button>
 
                     <!-- Delete -->
-                    <button class="icon-btn" title="Delete" (click)="remove(row)"><jb-icon name="x" [size]="12" /></button>
+                    <button class="icon-btn" [title]="'common.delete' | translate" (click)="remove(row)"><jb-icon name="x" [size]="12" /></button>
                   </div>
                 }
               </div>

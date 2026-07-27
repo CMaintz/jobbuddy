@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -13,9 +14,9 @@ import { AiApiService } from '../../core/api/ai.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
 const STAGE_LABEL: Record<string, string> = {
-  SAVED: 'Saved', PREPARING: 'Preparing', APPLIED: 'Applied',
-  RECRUITER_CONTACT: 'Screen', INTERVIEW: 'Interview', TECHNICAL_TEST: 'Technical',
-  FINAL_ROUND: 'Final', OFFER: 'Offer', REJECTED: 'Rejected', ARCHIVED: 'Archived'
+  SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.preparing', APPLIED: 'pipeline.stage.applied',
+  RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview', TECHNICAL_TEST: 'pipeline.stage.technical',
+  FINAL_ROUND: 'pipeline.stage.final', OFFER: 'pipeline.stage.offer', REJECTED: 'pipeline.stage.rejected', ARCHIVED: 'pipeline.stage.archived'
 };
 const STAGE_TONE: Record<string, PillTone> = {
   SAVED: 'neutral', PREPARING: 'neutral', APPLIED: 'info',
@@ -26,12 +27,13 @@ const STAGE_TONE: Record<string, PillTone> = {
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent, JbDropdownComponent],
+  imports: [CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent, JbDropdownComponent],
   templateUrl: './applications-list.component.html'
 })
 export class ApplicationsListComponent implements OnInit {
   private api = inject(ApplicationsApiService);
   private aiApi = inject(AiApiService);
+  private translate = inject(TranslateService);
 
   applications: Application[] = [];
   loading = true;
@@ -55,10 +57,10 @@ export class ApplicationsListComponent implements OnInit {
   private updateFilterCounts(): void {
     const apps = this.applications;
     this.filters = [
-      { key: 'all', label: 'All', count: apps.length },
-      { key: 'active', label: 'Active', count: apps.filter(a => !['REJECTED', 'ARCHIVED', 'SAVED'].includes(a.status)).length },
-      { key: 'drafts', label: 'Drafts', count: apps.filter(a => a.status === 'SAVED' || a.status === 'PREPARING').length },
-      { key: 'closed', label: 'Closed', count: apps.filter(a => a.status === 'REJECTED' || a.status === 'ARCHIVED').length },
+      { key: 'all', label: 'applications.filter.all', count: apps.length },
+      { key: 'active', label: 'applications.filter.active', count: apps.filter(a => !['REJECTED', 'ARCHIVED', 'SAVED'].includes(a.status)).length },
+      { key: 'drafts', label: 'applications.filter.drafts', count: apps.filter(a => a.status === 'SAVED' || a.status === 'PREPARING').length },
+      { key: 'closed', label: 'applications.filter.closed', count: apps.filter(a => a.status === 'REJECTED' || a.status === 'ARCHIVED').length },
     ];
   }
 
@@ -83,11 +85,10 @@ export class ApplicationsListComponent implements OnInit {
     if (!dateStr) return '—';
     const diff = Date.now() - new Date(dateStr).getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'today';
-    if (days === 1) return '1d ago';
-    if (days < 7) return `${days}d ago`;
-    if (days < 30) return `${Math.floor(days / 7)}w ago`;
-    return `${Math.floor(days / 30)}mo ago`;
+    if (days === 0) return this.translate.instant('time.today');
+    if (days < 7) return this.translate.instant('time.daysAgo', { n: days });
+    if (days < 30) return this.translate.instant('time.weeksAgo', { n: Math.floor(days / 7) });
+    return this.translate.instant('time.monthsAgo', { n: Math.floor(days / 30) });
   }
 
   // ── Export all ────────────────────────────────────────────────

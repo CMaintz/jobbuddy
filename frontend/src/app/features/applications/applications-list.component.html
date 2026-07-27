@@ -1,26 +1,26 @@
-    <jb-topbar title="Applications">
+    <jb-topbar [title]="'nav.applications' | translate">
       <ng-container jb-topbar-actions>
         <!-- Export all -->
         <jb-dropdown #exportDd>
           <jb-button jb-trigger small icon="download">
-            {{ exporting() ? 'Exporting…' : 'Export all' }}
+            {{ (exporting() ? 'applications.exporting' : 'applications.exportAll') | translate }}
           </jb-button>
           <button class="jb-menu-item" (click)="exportCsv(); exportDd.close()">
             <jb-icon name="doc" [size]="13" class="text-jb-accent mt-0.5" />
             <span>
-              <span class="block text-sm font-medium">Spreadsheet (CSV)</span>
-              <span class="block text-xs text-jb-text-dim">Pipeline overview — one row per application</span>
+              <span class="block text-sm font-medium">{{ 'applications.exportCsv' | translate }}</span>
+              <span class="block text-xs text-jb-text-dim">{{ 'applications.exportCsvDesc' | translate }}</span>
             </span>
           </button>
           <button class="jb-menu-item" (click)="exportJson(); exportDd.close()">
             <jb-icon name="layers" [size]="13" class="text-jb-accent mt-0.5" />
             <span>
-              <span class="block text-sm font-medium">Full bundle (JSON)</span>
-              <span class="block text-xs text-jb-text-dim">Applications + every generated CV & letter</span>
+              <span class="block text-sm font-medium">{{ 'applications.exportJson' | translate }}</span>
+              <span class="block text-xs text-jb-text-dim">{{ 'applications.exportJsonDesc' | translate }}</span>
             </span>
           </button>
         </jb-dropdown>
-        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">{{ 'nav.newApplication' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
@@ -32,28 +32,28 @@
           [style.background]="activeFilter() === f.key ? 'var(--jb-surface-3)' : 'transparent'"
           [style.border]="'1px solid ' + (activeFilter() === f.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
           [style.color]="activeFilter() === f.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
-          {{ f.label }}
+          {{ f.label | translate }}
           <span class="mono text-xs text-jb-text-dim">{{ f.count }}</span>
         </button>
       }
       <div class="ml-auto text-[11.5px] text-jb-text-dim">
-        {{ filteredApps().length }} of {{ applications.length }} · sorted by date
+        {{ 'applications.summary' | translate:{ shown: filteredApps().length, total: applications.length } }}
       </div>
     </div>
 
     <!-- Column headers -->
     <div class="hidden md:grid gap-3 p-[8px_18px] text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint grid-cols-[24px_1.7fr_0.7fr_0.7fr_80px_110px_50px]">
       <span></span>
-      <span>Role · Company</span>
-      <span>Stage</span>
-      <span>Fit</span>
-      <span>Docs</span>
-      <span>Date</span>
+      <span>{{ 'applications.colRole' | translate }}</span>
+      <span>{{ 'applications.colStage' | translate }}</span>
+      <span>{{ 'applications.colFit' | translate }}</span>
+      <span>{{ 'applications.colDocs' | translate }}</span>
+      <span>{{ 'applications.colDate' | translate }}</span>
       <span></span>
     </div>
 
     @if (loading) {
-      <div class="p-12 text-center text-jb-text-dim">Loading applications...</div>
+      <div class="p-12 text-center text-jb-text-dim">{{ 'applications.loading' | translate }}</div>
     } @else {
       <div class="flex-1 overflow-y-auto jb-scroll">
         @for (app of filteredApps(); track app.id) {
@@ -68,11 +68,11 @@
               <div class="flex items-center gap-2.5 min-w-0">
                 <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="26" />
                 <div class="min-w-0">
-                  <div class="text-md font-medium overflow-hidden text-ellipsis whitespace-nowrap">{{ app.jobTitle || 'Untitled role' }}</div>
-                  <div class="text-[11.5px] text-jb-text-dim">{{ app.jobCompanyName || 'Unknown' }}</div>
+                  <div class="text-md font-medium overflow-hidden text-ellipsis whitespace-nowrap">{{ app.jobTitle || ('pipeline.untitledRole' | translate) }}</div>
+                  <div class="text-[11.5px] text-jb-text-dim">{{ app.jobCompanyName || ('pipeline.unknown' | translate) }}</div>
                 </div>
               </div>
-              <div><jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) }}</jb-pill></div>
+              <div><jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) | translate }}</jb-pill></div>
               <div><jb-fit-bar [value]="app.matchScore ?? 0" /></div>
               <div class="mono text-sm text-jb-text-mid">—</div>
               <div class="mono text-xs text-jb-text-dim">{{ ageLabel(app.createdAt) }}</div>
@@ -88,8 +88,8 @@
                   class="grid gap-2.5 items-center p-[8px_12px_8px_48px] border-t border-jb-border-faint cursor-pointer no-underline text-inherit grid-cols-[22px_1fr_auto]">
                   <jb-icon name="doc" [size]="12" class="text-jb-text-mid" />
                   <div class="flex items-center gap-2 min-w-0">
-                    <span class="mono p-[1px_6px] rounded bg-jb-surface-2 text-[9.5px] text-jb-text-dim tracking-[0.04em] uppercase">Application</span>
-                    <span class="text-base font-medium">View application</span>
+                    <span class="mono p-[1px_6px] rounded bg-jb-surface-2 text-[9.5px] text-jb-text-dim tracking-[0.04em] uppercase">{{ 'documents.type.application' | translate }}</span>
+                    <span class="text-base font-medium">{{ 'applications.viewApplication' | translate }}</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <jb-icon name="arrow-right" [size]="11" class="text-jb-text-dim" />
@@ -102,7 +102,7 @@
 
         @if (filteredApps().length === 0) {
           <div class="p-12 text-center text-jb-text-dim text-base">
-            No applications match this filter.
+            {{ 'applications.noMatch' | translate }}
           </div>
         }
       </div>
