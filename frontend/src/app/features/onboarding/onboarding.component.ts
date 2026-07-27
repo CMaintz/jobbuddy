@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -19,7 +20,7 @@ interface Step {
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
   templateUrl: './onboarding.component.html'
 })
 export class OnboardingComponent {
@@ -27,6 +28,7 @@ export class OnboardingComponent {
   private http = inject(HttpClient);
   private profilePrivateApi = inject(ProfilePrivateApiService);
   private authService = inject(AuthService);
+  private translate = inject(TranslateService);
 
   currentStep = signal(0);
   saving = signal(false);
@@ -86,12 +88,12 @@ export class OnboardingComponent {
   onImportApplied(preview: ImportPreview): void {
     this.error.set('');
     const bits: string[] = [];
-    if (preview.headline) bits.push(`headline "${preview.headline}"`);
-    if (preview.skills.length) bits.push(`${preview.skills.length} skills`);
-    if (preview.technologies.length) bits.push(`${preview.technologies.length} technologies`);
+    if (preview.headline) bits.push(this.translate.instant('onboarding.import.headline', { value: preview.headline }));
+    if (preview.skills.length) bits.push(this.translate.instant('onboarding.import.skills', { n: preview.skills.length }));
+    if (preview.technologies.length) bits.push(this.translate.instant('onboarding.import.technologies', { n: preview.technologies.length }));
     this.importedSummary = bits.length
-      ? `Imported ${bits.join(', ')} into your master CV.`
-      : 'Import applied to your master CV.';
+      ? this.translate.instant('onboarding.import.summary', { items: bits.join(', ') })
+      : this.translate.instant('onboarding.import.applied');
     if (!this.targetRoles && preview.headline) this.targetRoles = preview.headline;
     if (!this.title && preview.headline) this.title = preview.headline;
     if (!this.name && preview.fullName) this.name = preview.fullName;
@@ -113,7 +115,7 @@ export class OnboardingComponent {
       },
       error: () => {
         this.saving.set(false);
-        this.error.set('Failed to save profile. Please try again.');
+        this.error.set('onboarding.error.profile');
       }
     });
   }
@@ -139,7 +141,7 @@ export class OnboardingComponent {
       },
       error: () => {
         this.saving.set(false);
-        this.error.set('Failed to save preferences. Please try again.');
+        this.error.set('onboarding.error.preferences');
       }
     });
   }
