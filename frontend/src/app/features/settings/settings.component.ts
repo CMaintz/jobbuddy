@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -40,14 +41,14 @@ export function loadGenDefaults(): GenDefaults {
 }
 
 const INDUSTRY_OPTIONS: { key: string; label: string }[] = [
-  { key: 'SOFTWARE_IT', label: 'Software & IT' },
-  { key: 'DATA_ANALYTICS', label: 'Data & Analytics' },
-  { key: 'DESIGN_UX', label: 'Design & UX' },
-  { key: 'ENGINEERING', label: 'Engineering' },
-  { key: 'FINANCE', label: 'Finance' },
-  { key: 'MARKETING', label: 'Marketing' },
-  { key: 'MANAGEMENT', label: 'Management' },
-  { key: 'CREATIVE_MEDIA', label: 'Creative & Media' },
+  { key: 'SOFTWARE_IT', label: 'settings.industry.softwareIt' },
+  { key: 'DATA_ANALYTICS', label: 'settings.industry.dataAnalytics' },
+  { key: 'DESIGN_UX', label: 'settings.industry.designUx' },
+  { key: 'ENGINEERING', label: 'settings.industry.engineering' },
+  { key: 'FINANCE', label: 'settings.industry.finance' },
+  { key: 'MARKETING', label: 'settings.industry.marketing' },
+  { key: 'MANAGEMENT', label: 'settings.industry.management' },
+  { key: 'CREATIVE_MEDIA', label: 'settings.industry.creativeMedia' },
 ];
 
 const SENIORITY_MAP: Record<string, string[]> = {
@@ -59,11 +60,11 @@ const SENIORITY_MAP: Record<string, string[]> = {
 
 /** Document types worth analyzing for voice — prose the user may have edited, not CVs. */
 const ANALYZABLE_DOC_TYPES: Record<string, string> = {
-  COVER_LETTER: 'Cover letter',
-  APPLICATION_TEXT: 'Application',
-  UNSOLICITED_APPLICATION: 'Unsolicited application',
-  RECRUITER_MESSAGE: 'Recruiter message',
-  FOLLOW_UP_MESSAGE: 'Follow-up',
+  COVER_LETTER: 'settings.docType.coverLetter',
+  APPLICATION_TEXT: 'settings.docType.application',
+  UNSOLICITED_APPLICATION: 'settings.docType.unsolicited',
+  RECRUITER_MESSAGE: 'settings.docType.recruiterMessage',
+  FOLLOW_UP_MESSAGE: 'settings.docType.followUp',
 };
 
 /** Form values captured before an analysis proposal is applied, so it can be reviewed/undone. */
@@ -81,7 +82,7 @@ interface StyleSnapshot {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
@@ -91,6 +92,7 @@ export class SettingsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);
   private aiApi = inject(AiApiService);
+  private translate = inject(TranslateService);
   Math = Math;
 
   activeSection = signal<Section>('match');
@@ -105,11 +107,11 @@ export class SettingsComponent implements OnInit {
   sendingReset = signal(false);
 
   sections: { key: Section; label: string; icon: string }[] = [
-    { key: 'match', label: 'Match preferences', icon: 'target' },
-    { key: 'gen', label: 'Generation defaults', icon: 'wand' },
-    { key: 'style', label: 'Writing style', icon: 'edit' },
-    { key: 'account', label: 'Account', icon: 'user' },
-    { key: 'privacy', label: 'Privacy & data', icon: 'key' },
+    { key: 'match', label: 'settings.section.match', icon: 'target' },
+    { key: 'gen', label: 'settings.section.gen', icon: 'wand' },
+    { key: 'style', label: 'settings.section.style', icon: 'edit' },
+    { key: 'account', label: 'settings.section.account', icon: 'user' },
+    { key: 'privacy', label: 'settings.section.privacy', icon: 'key' },
   ];
 
   // Match settings (persisted as UserPreferences)
@@ -172,7 +174,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set('Could not load preferences');
+        this.toast.set(this.translate.instant('settings.toast.loadFailed'));
       }
     });
 
@@ -231,11 +233,11 @@ export class SettingsComponent implements OnInit {
         this.prefs = prefs;
         this.saving.set(false);
         this.dirty.set(false);
-        this.toast.set('Settings saved');
+        this.toast.set(this.translate.instant('settings.toast.saved'));
       },
       error: () => {
         this.saving.set(false);
-        this.toast.set('Could not save settings');
+        this.toast.set(this.translate.instant('settings.toast.saveFailed'));
       }
     });
 
@@ -259,7 +261,7 @@ export class SettingsComponent implements OnInit {
         this.analyzedAt.set(saved.lastAnalyzedAt);
         this.analysisBaseline = null;
       },
-      error: () => this.toast.set('Could not save your writing style')
+      error: () => this.toast.set(this.translate.instant('settings.toast.styleSaveFailed'))
     });
   }
 
@@ -310,7 +312,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.analyzing.set(false);
-        this.toast.set('Analysis failed — check your samples and try again');
+        this.toast.set(this.translate.instant('settings.toast.analysisFailed'));
       }
     });
   }
@@ -376,17 +378,17 @@ export class SettingsComponent implements OnInit {
   }
 
   get providerLabel(): string {
-    if (this.provider === 'google.com') return 'Google';
-    if (this.provider === 'password') return 'Email & password';
-    return 'LinkedIn';
+    if (this.provider === 'google.com') return 'settings.provider.google';
+    if (this.provider === 'password') return 'settings.provider.password';
+    return 'settings.provider.linkedin';
   }
 
   resendVerification(): void {
     if (this.sendingVerification()) return;
     this.sendingVerification.set(true);
     this.auth.resendVerification()
-      .then(() => this.toast.set('Verification email sent — check your inbox'))
-      .catch(() => this.toast.set('Could not send the verification email'))
+      .then(() => this.toast.set(this.translate.instant('settings.toast.verificationSent')))
+      .catch(() => this.toast.set(this.translate.instant('settings.toast.verificationFailed')))
       .finally(() => this.sendingVerification.set(false));
   }
 
@@ -394,8 +396,8 @@ export class SettingsComponent implements OnInit {
     if (this.sendingReset()) return;
     this.sendingReset.set(true);
     this.auth.sendPasswordReset()
-      .then(() => this.toast.set(`Password-reset email sent to ${this.userEmail}`))
-      .catch(() => this.toast.set('Could not send the reset email'))
+      .then(() => this.toast.set(this.translate.instant('settings.toast.resetSent', { email: this.userEmail })))
+      .catch(() => this.toast.set(this.translate.instant('settings.toast.resetFailed')))
       .finally(() => this.sendingReset.set(false));
   }
 
@@ -413,17 +415,16 @@ export class SettingsComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(a.href);
       },
-      error: () => this.toast.set('Export failed')
+      error: () => this.toast.set(this.translate.instant('settings.toast.exportFailed'))
     });
   }
 
   deleteAccount(): void {
-    const confirmed = window.confirm(
-      'This permanently deletes your account and ALL data (profile, CV, applications, documents). This cannot be undone. Continue?');
+    const confirmed = window.confirm(this.translate.instant('settings.deleteConfirm'));
     if (!confirmed) return;
     this.http.delete('/api/v1/users/me').subscribe({
       next: () => this.auth.logout(),
-      error: () => this.toast.set('Account deletion failed')
+      error: () => this.toast.set(this.translate.instant('settings.toast.deleteFailed'))
     });
   }
 }

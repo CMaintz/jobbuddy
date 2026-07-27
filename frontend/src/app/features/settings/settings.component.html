@@ -1,9 +1,9 @@
-    <jb-topbar title="Settings">
+    <jb-topbar [title]="'nav.settings' | translate">
       <ng-container jb-topbar-actions>
         <span class="text-xs mono" [style.color]="dirty() ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
-          {{ saving() ? 'saving…' : dirty() ? 'unsaved changes' : 'saved' }}
+          {{ (saving() ? 'settings.status.saving' : dirty() ? 'settings.status.unsaved' : 'settings.status.saved') | translate }}
         </span>
-        <jb-button small [primary]="dirty()" icon="check" [disabled]="saving() || !dirty()" (clicked)="save()">Save</jb-button>
+        <jb-button small [primary]="dirty()" icon="check" [disabled]="saving() || !dirty()" (clicked)="save()">{{ 'common.save' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
@@ -17,7 +17,7 @@
           [style.background]="activeSection() === s.key ? 'var(--jb-surface-3)' : 'transparent'"
           [style.border]="'1px solid ' + (activeSection() === s.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
           [style.color]="activeSection() === s.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
-          {{ s.label }}
+          {{ s.label | translate }}
         </button>
       }
     </div>
@@ -33,7 +33,7 @@
             [style.color]="activeSection() === s.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
             [style.font-weight]="activeSection() === s.key ? '500' : '400'">
             <jb-icon [name]="s.icon" [size]="14" />
-            {{ s.label }}
+            {{ s.label | translate }}
           </button>
         }
 
@@ -41,7 +41,7 @@
         <div class="mt-auto p-[8px_10px]">
           <div class="flex items-center gap-[9px] text-sm text-jb-text-mid">
             <jb-icon [name]="theme.theme() === 'dark' ? 'moon' : 'sun'" [size]="14" />
-            <span>{{ theme.theme() === 'dark' ? 'Dark' : 'Light' }} mode</span>
+            <span>{{ (theme.theme() === 'dark' ? 'settings.themeDark' : 'settings.themeLight') | translate }}</span>
             <jb-toggle [on]="theme.theme() === 'dark'" (toggled)="theme.toggle()" class="ml-auto" />
           </div>
         </div>
@@ -51,37 +51,37 @@
       <div class="overflow-auto p-[24px_28px_48px] jb-scroll">
         <div class="max-w-[640px]">
           @if (loading()) {
-            <div class="p-10 text-center text-jb-text-dim">Loading settings…</div>
+            <div class="p-10 text-center text-jb-text-dim">{{ 'settings.loading' | translate }}</div>
           } @else {
 
           @if (activeSection() === 'match') {
-            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Match preferences</h2>
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.match' | translate }}</h2>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
-              What Jobbuddy uses to score and recommend roles in your feed. Skills themselves come from your master CV.
+              {{ 'settings.match.intro' | translate }}
             </p>
 
             <!-- Boost keywords -->
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Boost keywords</div>
+              <div class="text-base font-medium mb-[4px]">{{ 'settings.match.boost' | translate }}</div>
               <div class="text-xs text-jb-text-dim mb-2">
-                Roles whose description mentions these score higher.
+                {{ 'settings.match.boostDesc' | translate }}
               </div>
-              <jb-tag-input [value]="boostKeywords" (valueChange)="boostKeywords = $event; markDirty()" placeholder="e.g. design systems, greenfield…" />
+              <jb-tag-input [value]="boostKeywords" (valueChange)="boostKeywords = $event; markDirty()" [placeholder]="'settings.match.boostPlaceholder' | translate" />
             </div>
 
             <!-- Avoid keywords -->
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Avoid keywords</div>
+              <div class="text-base font-medium mb-[4px]">{{ 'settings.match.avoid' | translate }}</div>
               <div class="text-xs text-jb-text-dim mb-2">
-                Roles mentioning these get pushed down.
+                {{ 'settings.match.avoidDesc' | translate }}
               </div>
-              <jb-tag-input [value]="avoidKeywords" (valueChange)="avoidKeywords = $event; markDirty()" placeholder="e.g. on-call, gambling…" />
+              <jb-tag-input [value]="avoidKeywords" (valueChange)="avoidKeywords = $event; markDirty()" [placeholder]="'settings.match.avoidPlaceholder' | translate" />
             </div>
 
             <!-- Industries -->
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px]">Industries</div>
-              <div class="text-xs text-jb-text-dim mb-2.5">We prioritise roles in these sectors. Nothing selected = everything.</div>
+              <div class="text-base font-medium mb-[4px]">{{ 'settings.match.industries' | translate }}</div>
+              <div class="text-xs text-jb-text-dim mb-2.5">{{ 'settings.match.industriesDesc' | translate }}</div>
               <div class="flex flex-wrap gap-1.5">
                 @for (ind of industryOptions; track ind.key) {
                   <button (click)="toggleIndustry(ind.key)"
@@ -90,7 +90,7 @@
                     [style.border]="'1px solid ' + (industries.has(ind.key) ? 'var(--jb-accent-border)' : 'var(--jb-border)')"
                     [style.color]="industries.has(ind.key) ? 'var(--jb-accent-2)' : 'var(--jb-text-mid)'">
                     @if (industries.has(ind.key)) { <jb-icon name="check" [size]="9" [strokeWidth]="3" /> }
-                    {{ ind.label }}
+                    {{ ind.label | translate }}
                   </button>
                 }
               </div>
@@ -99,21 +99,21 @@
             <!-- Seniority -->
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
               <div class="flex-1">
-                <div class="text-base font-medium">Seniority</div>
-                <div class="text-xs text-jb-text-dim mt-[1px]">The level you want surfaced</div>
+                <div class="text-base font-medium">{{ 'settings.match.seniority' | translate }}</div>
+                <div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.match.seniorityDesc' | translate }}</div>
               </div>
               <jb-segmented [options]="seniorityOptions" [value]="seniority" (changed)="seniority = $event; markDirty()" />
             </div>
 
             <!-- Remote -->
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Open to remote</div><div class="text-xs text-jb-text-dim mt-[1px]">Off = only on-site & hybrid roles are surfaced</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.match.remote' | translate }}</div><div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.match.remoteDesc' | translate }}</div></div>
               <jb-toggle [on]="remote" (toggled)="remote = $event; markDirty()" />
             </div>
 
             <!-- Min match slider -->
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Minimum match score</div><div class="text-xs text-jb-text-dim mt-[1px]">Hide roles below this in the feed</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.match.minScore' | translate }}</div><div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.match.minScoreDesc' | translate }}</div></div>
               <div class="flex items-center gap-2.5 w-[200px]">
                 <input type="range" [min]="50" [max]="95" [(ngModel)]="minMatch" (ngModelChange)="markDirty()" class="flex-1" style="accent-color:var(--jb-accent);" />
                 <span class="mono text-sm text-jb-accent-2 min-w-[26px]">{{ minMatch }}</span>
@@ -122,7 +122,7 @@
 
             <!-- Weekly goal -->
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Weekly application goal</div><div class="text-xs text-jb-text-dim mt-[1px]">Drives your streak + dashboard</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.match.weeklyGoal' | translate }}</div><div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.match.weeklyGoalDesc' | translate }}</div></div>
               <div class="flex items-center gap-2">
                 <button (click)="weeklyGoal = Math.max(1, weeklyGoal - 1); markDirty()" class="w-[26px] h-[26px] rounded bg-jb-surface-2 border border-jb-border text-jb-text cursor-pointer text-xl">–</button>
                 <span class="mono text-xl min-w-[22px] text-center">{{ weeklyGoal }}</span>
@@ -132,41 +132,40 @@
 
             <!-- Weekly digest email -->
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Weekly email digest</div><div class="text-xs text-jb-text-dim mt-[1px]">Your top new matches in your inbox every Monday</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.match.digest' | translate }}</div><div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.match.digestDesc' | translate }}</div></div>
               <jb-toggle [on]="digestEmail" (toggled)="digestEmail = $event; markDirty()" />
             </div>
           }
 
           @if (activeSection() === 'gen') {
-            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Generation defaults</h2>
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.gen' | translate }}</h2>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
-              The defaults applied each time you generate — override per application. Stored on this device.
+              {{ 'settings.gen.intro' | translate }}
             </p>
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Default voice</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.gen.voice' | translate }}</div></div>
               <jb-segmented [options]="['Direct', 'Warm', 'Formal']" [value]="gen.voice" (changed)="gen.voice = $event; markDirty()" />
             </div>
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Default language</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.gen.language' | translate }}</div></div>
               <jb-segmented [options]="['English', 'Dansk']" [value]="gen.lang" (changed)="gen.lang = $event; markDirty()" />
             </div>
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Default length</div></div>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.gen.length' | translate }}</div></div>
               <jb-segmented [options]="['Short', 'Standard', 'Detailed']" [value]="gen.length" (changed)="gen.length = $event; markDirty()" />
             </div>
           }
 
           @if (activeSection() === 'style') {
             <div class="flex items-center justify-between gap-3 m-[0_0_4px]">
-              <h2 class="text-[16px] font-medium tracking-tight m-0">Writing style</h2>
-              <jb-button small icon="sparkle" (clicked)="openAnalyze()">Analyze my writing</jb-button>
+              <h2 class="text-[16px] font-medium tracking-tight m-0">{{ 'settings.section.style' | translate }}</h2>
+              <jb-button small icon="sparkle" (clicked)="openAnalyze()">{{ 'settings.style.analyze' | translate }}</jb-button>
             </div>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_6px]">
-              How the AI should sound when it writes for you. Every generated letter, message, and tailored CV follows these rules.
-              Write them yourself, or let an analysis of your own texts propose them.
+              {{ 'settings.style.intro' | translate }}
             </p>
             @if (analyzedAt()) {
-              <div class="text-xs text-jb-text-dim mono m-[0_0_14px]">analyzed from your writing · {{ analyzedAt() | date:'d MMM y' }}</div>
+              <div class="text-xs text-jb-text-dim mono m-[0_0_14px]">{{ 'settings.style.analyzedFrom' | translate }} · {{ analyzedAt() | date:'d MMM y' }}</div>
             } @else {
               <div class="m-[0_0_8px]"></div>
             }
@@ -176,67 +175,67 @@
                    style="background:var(--jb-accent-soft);border:1px solid var(--jb-accent-border);">
                 <jb-icon name="sparkle" [size]="14" style="color:var(--jb-accent-2);" />
                 <div class="flex-1 text-sm" style="color:var(--jb-accent-2);">
-                  Analysis applied — marked fields changed; new rules were added to the end of each list. Review, tweak, then Save.
+                  {{ 'settings.style.analysisApplied' | translate }}
                 </div>
-                <jb-button small (clicked)="undoAnalysis()">Undo</jb-button>
+                <jb-button small (clicked)="undoAnalysis()">{{ 'settings.style.undo' | translate }}</jb-button>
               </div>
             }
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Tone
-                @if (changed('tone')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">{{ 'settings.style.tone' | translate }}
+                @if (changed('tone')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">{{ 'settings.style.changed' | translate }}</span> }
               </div>
-              <div class="text-xs text-jb-text-dim mb-2">A sentence or two — e.g. "confident but understated, never salesy".</div>
+              <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.style.toneDesc' | translate }}</div>
               <input type="text" [(ngModel)]="styleTone" (ngModelChange)="markStyleDirty()"
-                class="input" placeholder="e.g. warm and direct, lightly informal" />
+                class="input" [placeholder]="'settings.style.tonePlaceholder' | translate" />
               @if (changed('tone') && analysisBaseline?.tone) {
                 <div class="mt-2"><jb-diff-viewer [before]="analysisBaseline?.tone ?? ''" [after]="styleTone" /></div>
               }
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Vocabulary
-                @if (changed('vocabulary')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">{{ 'settings.style.vocabulary' | translate }}
+                @if (changed('vocabulary')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">{{ 'settings.style.changed' | translate }}</span> }
               </div>
-              <div class="text-xs text-jb-text-dim mb-2">Words you lean on, words you'd never use.</div>
+              <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.style.vocabularyDesc' | translate }}</div>
               <textarea rows="2" [(ngModel)]="styleVocabulary" (ngModelChange)="markStyleDirty()"
-                class="input resize-y text-sm leading-relaxed" placeholder="e.g. plain verbs; say 'built' not 'spearheaded'"></textarea>
+                class="input resize-y text-sm leading-relaxed" [placeholder]="'settings.style.vocabularyPlaceholder' | translate"></textarea>
               @if (changed('vocabulary') && analysisBaseline?.vocabulary) {
                 <div class="mt-2"><jb-diff-viewer [before]="analysisBaseline?.vocabulary ?? ''" [after]="styleVocabulary" /></div>
               }
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Preferred phrases
-                @if (changed('phrases')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">{{ 'settings.style.phrases' | translate }}
+                @if (changed('phrases')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">{{ 'settings.style.changed' | translate }}</span> }
               </div>
-              <div class="text-xs text-jb-text-dim mb-2">Turns of phrase that sound like you.</div>
-              <jb-tag-input [value]="stylePhrases" (valueChange)="stylePhrases = $event; markStyleDirty()" placeholder="Add a phrase…" />
+              <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.style.phrasesDesc' | translate }}</div>
+              <jb-tag-input [value]="stylePhrases" (valueChange)="stylePhrases = $event; markStyleDirty()" [placeholder]="'settings.style.phrasesPlaceholder' | translate" />
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Always do
-                @if (changed('dos')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">{{ 'settings.style.dos' | translate }}
+                @if (changed('dos')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">{{ 'settings.style.changed' | translate }}</span> }
               </div>
-              <div class="text-xs text-jb-text-dim mb-2">Rules the AI must follow — e.g. "lead with the outcome".</div>
-              <jb-tag-input [value]="styleDos" (valueChange)="styleDos = $event; markStyleDirty()" placeholder="Add a rule…" />
+              <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.style.dosDesc' | translate }}</div>
+              <jb-tag-input [value]="styleDos" (valueChange)="styleDos = $event; markStyleDirty()" [placeholder]="'settings.style.dosPlaceholder' | translate" />
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Never do
-                @if (changed('donts')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">{{ 'settings.style.donts' | translate }}
+                @if (changed('donts')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">{{ 'settings.style.changed' | translate }}</span> }
               </div>
-              <div class="text-xs text-jb-text-dim mb-2">Banned phrases and habits — e.g. "no 'I am writing to apply'".</div>
-              <jb-tag-input [value]="styleDonts" (valueChange)="styleDonts = $event; markStyleDirty()" placeholder="Add a rule…" />
+              <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.style.dontsDesc' | translate }}</div>
+              <jb-tag-input [value]="styleDonts" (valueChange)="styleDonts = $event; markStyleDirty()" [placeholder]="'settings.style.dontsPlaceholder' | translate" />
             </div>
 
             <div class="py-3.5 border-b border-jb-border-faint">
-              <div class="text-base font-medium mb-[4px] flex items-center gap-2">Structure
-                @if (changed('structure')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">changed</span> }
+              <div class="text-base font-medium mb-[4px] flex items-center gap-2">{{ 'settings.style.structure' | translate }}
+                @if (changed('structure')) { <span class="pill" style="background:var(--jb-accent-soft);border-color:var(--jb-accent-border);color:var(--jb-accent-2);">{{ 'settings.style.changed' | translate }}</span> }
               </div>
-              <div class="text-xs text-jb-text-dim mb-2">How documents should be built — paragraph order, length, sign-off.</div>
+              <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.style.structureDesc' | translate }}</div>
               <textarea rows="3" [(ngModel)]="styleStructure" (ngModelChange)="markStyleDirty()"
-                class="input resize-y text-sm leading-relaxed" placeholder="e.g. hook → why this company → proof → short close; max one page; sign off with 'Best regards'"></textarea>
+                class="input resize-y text-sm leading-relaxed" [placeholder]="'settings.style.structurePlaceholder' | translate"></textarea>
               @if (changed('structure') && analysisBaseline?.structure) {
                 <div class="mt-2"><jb-diff-viewer [before]="analysisBaseline?.structure ?? ''" [after]="styleStructure" /></div>
               }
@@ -244,8 +243,8 @@
           }
 
           @if (activeSection() === 'account') {
-            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Account</h2>
-            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">Your login and identity.</p>
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.account' | translate }}</h2>
+            <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">{{ 'settings.account.intro' | translate }}</p>
 
             <div class="flex items-center gap-3.5 py-3.5 border-b border-jb-border-faint">
               <div class="w-[48px] h-[48px] rounded-full bg-jb-surface-3 border border-jb-border-strong flex items-center justify-center text-[16px] font-semibold">
@@ -255,68 +254,67 @@
                 <div class="flex items-center gap-2">
                   <span class="text-sm">{{ userEmail || '—' }}</span>
                   @if (emailVerified) {
-                    <span class="pill pill-success">verified</span>
+                    <span class="pill pill-success">{{ 'settings.account.verified' | translate }}</span>
                   } @else {
-                    <span class="pill pill-neutral">unverified</span>
+                    <span class="pill pill-neutral">{{ 'settings.account.unverified' | translate }}</span>
                   }
                 </div>
-                <div class="text-xs text-jb-text-dim mt-1">Name, photo & contact details live in your <a class="jb-link" href="/cv">Master CV header</a>.</div>
+                <div class="text-xs text-jb-text-dim mt-1">{{ 'settings.account.detailsPre' | translate }} <a class="jb-link" href="/cv">{{ 'settings.account.masterCvHeader' | translate }}</a>.</div>
               </div>
             </div>
 
             @if (!emailVerified) {
               <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
                 <div class="flex-1">
-                  <div class="text-base font-medium">Verify your email</div>
-                  <div class="text-xs text-jb-text-dim mt-[1px]">We'll send a fresh verification link to {{ userEmail }}</div>
+                  <div class="text-base font-medium">{{ 'settings.account.verifyEmail' | translate }}</div>
+                  <div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.account.verifyDesc' | translate:{ email: userEmail } }}</div>
                 </div>
                 <jb-button small icon="mail" [disabled]="sendingVerification()" (clicked)="resendVerification()">
-                  {{ sendingVerification() ? 'Sending…' : 'Resend link' }}
+                  {{ (sendingVerification() ? 'settings.account.sending' : 'settings.account.resendLink') | translate }}
                 </jb-button>
               </div>
             }
 
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
               <div class="flex-1">
-                <div class="text-base font-medium">Sign-in method</div>
-                <div class="text-xs text-jb-text-dim mt-[1px]">{{ providerLabel }}</div>
+                <div class="text-base font-medium">{{ 'settings.account.signInMethod' | translate }}</div>
+                <div class="text-xs text-jb-text-dim mt-[1px]">{{ providerLabel | translate }}</div>
               </div>
             </div>
 
             @if (provider === 'password') {
               <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
                 <div class="flex-1">
-                  <div class="text-base font-medium">Change password</div>
-                  <div class="text-xs text-jb-text-dim mt-[1px]">We'll email you a secure reset link — no old password needed</div>
+                  <div class="text-base font-medium">{{ 'settings.account.changePassword' | translate }}</div>
+                  <div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.account.changePasswordDesc' | translate }}</div>
                 </div>
                 <jb-button small icon="key" [disabled]="sendingReset()" (clicked)="sendPasswordReset()">
-                  {{ sendingReset() ? 'Sending…' : 'Send reset link' }}
+                  {{ (sendingReset() ? 'settings.account.sending' : 'settings.account.sendResetLink') | translate }}
                 </jb-button>
               </div>
             }
 
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
               <div class="flex-1">
-                <div class="text-base font-medium">Sign out</div>
-                <div class="text-xs text-jb-text-dim mt-[1px]">Ends this session on this device</div>
+                <div class="text-base font-medium">{{ 'settings.account.signOut' | translate }}</div>
+                <div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.account.signOutDesc' | translate }}</div>
               </div>
-              <jb-button small icon="arrow-right" (clicked)="signOut()">Sign out</jb-button>
+              <jb-button small icon="arrow-right" (clicked)="signOut()">{{ 'settings.account.signOut' | translate }}</jb-button>
             </div>
           }
 
           @if (activeSection() === 'privacy') {
-            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">Privacy & data</h2>
+            <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.privacy' | translate }}</h2>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
-              Your CV and applications live in your workspace. Your name and contact details are never sent to the AI provider.
-              Full details in our <a href="/privacy" class="jb-link">privacy policy</a>.
+              {{ 'settings.privacy.intro' | translate }} {{ 'settings.privacy.fullDetailsPre' | translate }} <a href="/privacy" class="jb-link">{{ 'auth.privacyPolicyLower' | translate }}</a>.
             </p>
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Export all data</div><div class="text-xs text-jb-text-dim mt-[1px]">Download everything as JSON (GDPR data portability)</div></div>
-              <jb-button small icon="download" (clicked)="exportData()">Export</jb-button>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.privacy.export' | translate }}</div><div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.privacy.exportDesc' | translate }}</div></div>
+              <jb-button small icon="download" (clicked)="exportData()">{{ 'settings.privacy.exportBtn' | translate }}</jb-button>
             </div>
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1"><div class="text-base font-medium">Delete account</div><div class="text-xs text-jb-text-dim mt-[1px]">Permanently remove everything — irreversible</div></div>
-              <jb-button small class="text-jb-danger" style="border-color:rgba(248,113,113,0.3);" (clicked)="deleteAccount()">Delete</jb-button>
+              <div class="flex-1"><div class="text-base font-medium">{{ 'settings.privacy.deleteAccount' | translate }}</div><div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.privacy.deleteDesc' | translate }}</div></div>
+              <jb-button small class="text-jb-danger" style="border-color:rgba(248,113,113,0.3);" (clicked)="deleteAccount()">{{ 'common.delete' | translate }}</jb-button>
             </div>
           }
           }
@@ -328,35 +326,33 @@
       <jb-modal [width]="620" (closed)="showAnalyze.set(false)">
         <ng-container jb-modal-header>
           <jb-icon name="sparkle" [size]="15" />
-          <span class="text-base font-medium">Analyze my writing</span>
+          <span class="text-base font-medium">{{ 'settings.style.analyze' | translate }}</span>
         </ng-container>
 
         <p class="text-sm text-jb-text-dim leading-relaxed m-0">
-          Paste 1–3 texts you actually wrote — an old cover letter, a long email — and/or pick generated
-          documents you've edited into your own voice. We'll propose style rules from them; nothing is
-          saved until you've reviewed the result and hit Save.
+          {{ 'settings.analyze.intro' | translate }}
         </p>
 
         @for (s of analyzeSamples; track $index) {
           <div>
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-jb-text-dim">Sample {{ $index + 1 }}</span>
+              <span class="text-xs text-jb-text-dim">{{ 'settings.analyze.sample' | translate:{ n: $index + 1 } }}</span>
               @if (analyzeSamples.length > 1) {
-                <button (click)="removeSample($index)" class="bg-transparent border-none text-xs text-jb-text-dim cursor-pointer p-0 hover:text-jb-text">remove</button>
+                <button (click)="removeSample($index)" class="bg-transparent border-none text-xs text-jb-text-dim cursor-pointer p-0 hover:text-jb-text">{{ 'settings.analyze.remove' | translate }}</button>
               }
             </div>
             <textarea rows="5" [(ngModel)]="analyzeSamples[$index]"
-              class="input resize-y text-sm leading-relaxed" placeholder="Paste a text you wrote yourself…"></textarea>
+              class="input resize-y text-sm leading-relaxed" [placeholder]="'settings.analyze.samplePlaceholder' | translate"></textarea>
           </div>
         }
         @if (analyzeSamples.length < 3) {
-          <div><jb-button small icon="plus" (clicked)="addSample()">Add another sample</jb-button></div>
+          <div><jb-button small icon="plus" (clicked)="addSample()">{{ 'settings.analyze.addSample' | translate }}</jb-button></div>
         }
 
         @if (pickerDocs().length) {
           <div>
-            <div class="text-base font-medium mb-[4px]">Or pick from your generated documents</div>
-            <div class="text-xs text-jb-text-dim mb-2">Best when you've edited them until they sound like you.</div>
+            <div class="text-base font-medium mb-[4px]">{{ 'settings.analyze.orPick' | translate }}</div>
+            <div class="text-xs text-jb-text-dim mb-2">{{ 'settings.analyze.orPickDesc' | translate }}</div>
             <div class="flex flex-col gap-1 max-h-[180px] overflow-auto jb-scroll">
               @for (d of pickerDocs(); track d.id) {
                 <label class="flex items-center gap-2.5 p-[7px_10px] rounded-md border cursor-pointer"
@@ -364,7 +360,7 @@
                   [style.border-color]="selectedDocIds.has(d.id) ? 'var(--jb-accent-border)' : 'var(--jb-border)'">
                   <input type="checkbox" [checked]="selectedDocIds.has(d.id)" (change)="toggleDoc(d.id)"
                     style="accent-color:var(--jb-accent);" />
-                  <span class="text-sm">{{ docTypeLabel(d.documentType) }}</span>
+                  <span class="text-sm">{{ docTypeLabel(d.documentType) | translate }}</span>
                   <span class="text-xs text-jb-text-dim ml-auto mono">{{ d.createdAt | date:'d MMM y' }}</span>
                 </label>
               }
@@ -373,10 +369,10 @@
         }
 
         <ng-container jb-modal-footer>
-          <span class="text-xs text-jb-text-dim mr-auto">Contact details are stripped before analysis.</span>
-          <jb-button (clicked)="showAnalyze.set(false)">Cancel</jb-button>
+          <span class="text-xs text-jb-text-dim mr-auto">{{ 'settings.analyze.stripped' | translate }}</span>
+          <jb-button (clicked)="showAnalyze.set(false)">{{ 'common.cancel' | translate }}</jb-button>
           <jb-button primary icon="sparkle" [disabled]="!canAnalyze() || analyzing()" (clicked)="runAnalysis()">
-            {{ analyzing() ? 'Analyzing…' : 'Analyze' }}
+            {{ (analyzing() ? 'settings.analyze.analyzing' : 'settings.style.analyze') | translate }}
           </jb-button>
         </ng-container>
       </jb-modal>

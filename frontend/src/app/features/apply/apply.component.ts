@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit, effect, signal, inject } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of, switchMap, catchError, map, tap } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -67,7 +68,7 @@ interface ApplyDraft {
 @Component({
   selector: 'app-apply',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JbIconComponent, JbButtonComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent],
   templateUrl: './apply.component.html',
   styleUrls: ['./apply.component.css']
 })
@@ -113,27 +114,27 @@ export class ApplyComponent implements OnInit {
   customInstructions = '';
 
   sourceOptions = [
-    { mode: 'paste' as const, icon: 'copy', label: 'Paste JD text', sub: 'Paste from clipboard' },
-    { mode: 'url' as const, icon: 'link', label: 'Paste URL', sub: 'We look it up in your feed' },
-    { mode: 'manual' as const, icon: 'edit', label: 'Enter manually', sub: 'Type company, role & JD' },
-    { mode: 'unsolicited' as const, icon: 'mail', label: 'Unsolicited', sub: 'No posting — pitch the company' },
+    { mode: 'paste' as const, icon: 'copy', label: 'apply.source.paste.label', sub: 'apply.source.paste.sub' },
+    { mode: 'url' as const, icon: 'link', label: 'apply.source.url.label', sub: 'apply.source.url.sub' },
+    { mode: 'manual' as const, icon: 'edit', label: 'apply.source.manual.label', sub: 'apply.source.manual.sub' },
+    { mode: 'unsolicited' as const, icon: 'mail', label: 'apply.source.unsolicited.label', sub: 'apply.source.unsolicited.sub' },
   ];
 
   formats = [
-    { key: 'application', label: 'Application' },
-    { key: 'cover-letter', label: 'Cover letter' },
-    { key: 'short-pitch', label: 'Short pitch' },
-    { key: 'cv', label: 'Tailored CV' },
+    { key: 'application', label: 'apply.fmt.application' },
+    { key: 'cover-letter', label: 'apply.fmt.coverLetter' },
+    { key: 'short-pitch', label: 'apply.fmt.shortPitch' },
+    { key: 'cv', label: 'apply.fmt.tailoredCv' },
   ];
 
   voices = ['Direct', 'Warm', 'Formal'];
   languages = ['English', 'Dansk'];
 
   generatingSteps = [
-    { label: 'Prepare job', note: '' },
-    { label: 'Create application', note: '' },
-    { label: 'Draft document', note: '' },
-    { label: 'Finish up', note: '' },
+    { label: 'apply.step.prepareJob', note: '' },
+    { label: 'apply.step.createApplication', note: '' },
+    { label: 'apply.step.draftDocument', note: '' },
+    { label: 'apply.step.finishUp', note: '' },
   ];
 
   get wordCount(): number {
@@ -141,7 +142,7 @@ export class ApplyComponent implements OnInit {
   }
 
   get selectedFormatLabel(): string {
-    return this.formats.find(f => f.key === this.selectedFormat())?.label ?? 'Application';
+    return this.formats.find(f => f.key === this.selectedFormat())?.label ?? 'apply.fmt.application';
   }
 
   constructor() {
@@ -250,9 +251,9 @@ export class ApplyComponent implements OnInit {
       this.jd = capture.description ?? '';
       this.jobUrl = capture.url ?? '';
       try {
-        this.capturedFrom.set(capture.url ? new URL(capture.url).hostname : 'your browser');
+        this.capturedFrom.set(capture.url ? new URL(capture.url).hostname : 'apply.yourBrowser');
       } catch {
-        this.capturedFrom.set('your browser');
+        this.capturedFrom.set('apply.yourBrowser');
       }
       return true;
     } catch {
@@ -272,7 +273,7 @@ export class ApplyComponent implements OnInit {
         // Danish job listing? Default output language to Dansk
         if (job.languages?.some(l => l.toLowerCase().startsWith('da'))) this.selectedLanguage.set('Dansk');
       },
-      error: () => this.generateError.set('Could not load the selected job — you can still paste the description.')
+      error: () => this.generateError.set('apply.error.loadJob')
     });
 
     this.appsApi.getAll().subscribe({
@@ -342,7 +343,7 @@ export class ApplyComponent implements OnInit {
       error: (err) => {
         this.busy.set(false);
         this.generateError.set(err?.error?.message
-          ?? 'Generation failed. Check that your master CV has content and try again.');
+          ?? 'apply.error.generateFailed');
       }
     });
   }
