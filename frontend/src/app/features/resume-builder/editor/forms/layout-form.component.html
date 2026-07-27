@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-[18px]">
       <!-- Template picker -->
       <div>
-        <label class="label">Template</label>
+        <label class="label">{{ 'resumeBuilder.layout.template' | translate }}</label>
         <div class="grid grid-cols-2 gap-2">
           @for (tpl of templates; track tpl.type) {
             <button
@@ -10,8 +10,8 @@
               [class.active]="settings.template === tpl.type"
               (click)="selectTemplate(tpl.type)"
             >
-              <p class="text-sm font-semibold text-jb-text">{{ tpl.label }}</p>
-              <p class="text-xs text-jb-text-faint mt-[2px]">{{ tpl.description }}</p>
+              <p class="text-sm font-semibold text-jb-text">{{ tpl.label | translate }}</p>
+              <p class="text-xs text-jb-text-faint mt-[2px]">{{ tpl.description | translate }}</p>
             </button>
           }
         </div>
@@ -19,7 +19,7 @@
 
       <!-- Left column sections -->
       <div>
-        <label class="label">Main Sections — drag to reorder</label>
+        <label class="label">{{ 'resumeBuilder.layout.mainSections' | translate }}</label>
         <div class="flex flex-col gap-1" cdkDropList (cdkDropListDropped)="drop('leftColumn', $event)">
           @for (section of leftColumn; track section.id; let i = $index) {
             <div class="rb-section-row" cdkDrag>
@@ -29,7 +29,7 @@
                 class="text-xs p-[2px_8px] rounded-sm border-none cursor-pointer bg-transparent"
                 [style.color]="section.visible ? 'var(--jb-success)' : 'var(--jb-text-faint)'"
                 (click)="toggleSection('leftColumn', i)"
-              >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
+              >{{ (section.visible ? 'resumeBuilder.layout.visible' : 'resumeBuilder.layout.hidden') | translate }}</button>
             </div>
           }
         </div>
@@ -37,7 +37,7 @@
 
       <!-- Right column sections -->
       <div>
-        <label class="label">Sidebar Sections — drag to reorder</label>
+        <label class="label">{{ 'resumeBuilder.layout.sidebarSections' | translate }}</label>
         <div class="flex flex-col gap-1" cdkDropList (cdkDropListDropped)="drop('rightColumn', $event)">
           @for (section of rightColumn; track section.id; let i = $index) {
             <div class="rb-section-row" cdkDrag>
@@ -47,7 +47,7 @@
                 class="text-xs p-[2px_8px] rounded-sm border-none cursor-pointer bg-transparent"
                 [style.color]="section.visible ? 'var(--jb-success)' : 'var(--jb-text-faint)'"
                 (click)="toggleSection('rightColumn', i)"
-              >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
+              >{{ (section.visible ? 'resumeBuilder.layout.visible' : 'resumeBuilder.layout.hidden') | translate }}</button>
             </div>
           }
         </div>
@@ -55,16 +55,16 @@
 
       <!-- Per-section typography -->
       <div>
-        <label class="label">Section Typography</label>
+        <label class="label">{{ 'resumeBuilder.layout.sectionTypography' | translate }}</label>
         <div class="text-2xs text-jb-text-dim mb-1.5">
-          Overrides the document defaults for one section. Selection-level formatting lives in the text editors.
+          {{ 'resumeBuilder.layout.typographyHint' | translate }}
         </div>
         <div class="flex flex-col gap-1">
           @for (sec of typographySections; track sec.id) {
             <div class="border border-jb-border rounded-md overflow-hidden">
               <button class="w-full flex items-center gap-1.5 p-[6px_8px] bg-jb-surface-2 border-none cursor-pointer text-xs text-jb-text"
                 (click)="expandedTypo.set(expandedTypo() === sec.id ? null : sec.id)">
-                <span class="flex-1 text-left">{{ sec.label }}</span>
+                <span class="flex-1 text-left">{{ sec.label | translate }}</span>
                 @if (hasOverrides(sec.id)) {
                   <span class="w-1.5 h-1.5 rounded-full bg-jb-accent"></span>
                 }
@@ -74,14 +74,14 @@
                 <div class="p-2 flex flex-col gap-2">
                   <select class="input" [ngModel]="typo(sec.id).fontFamily ?? ''"
                     (ngModelChange)="setTypo(sec.id, { fontFamily: $event || undefined })">
-                    <option value="">Document font</option>
+                    <option value="">{{ 'resumeBuilder.layout.documentFont' | translate }}</option>
                     @for (font of fonts; track font.value) {
                       <option [value]="font.value">{{ font.label }}</option>
                     }
                   </select>
                   <div>
                     <div class="text-[10px] text-jb-text-dim mb-[2px]">
-                      Text size — {{ ((typo(sec.id).sizeScale ?? 1) * 100).toFixed(0) }}%
+                      {{ 'resumeBuilder.layout.textSize' | translate }} — {{ ((typo(sec.id).sizeScale ?? 1) * 100).toFixed(0) }}%
                     </div>
                     <input type="range" min="0.7" max="1.4" step="0.05" class="w-full" style="accent-color:var(--jb-accent);"
                       [ngModel]="typo(sec.id).sizeScale ?? 1"
@@ -94,7 +94,7 @@
                       [value]="typo(sec.id).color ?? '#1f2937'"
                       (input)="setTypo(sec.id, { color: $any($event.target).value })" />
                     <button class="ml-auto text-2xs text-jb-text-dim bg-transparent border-none cursor-pointer"
-                      (click)="resetTypo(sec.id)">Reset</button>
+                      (click)="resetTypo(sec.id)">{{ 'resumeBuilder.layout.reset' | translate }}</button>
                   </div>
                 </div>
               }

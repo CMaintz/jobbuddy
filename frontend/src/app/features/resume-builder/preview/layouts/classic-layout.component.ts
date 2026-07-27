@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
 import { SectionTypographyDirective } from '../../shared/section-typography.directive';
@@ -12,7 +13,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-classic-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
+  imports: [CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
   templateUrl: './classic-layout.component.html',
   styleUrls: ['./classic-layout.component.css'],
 })

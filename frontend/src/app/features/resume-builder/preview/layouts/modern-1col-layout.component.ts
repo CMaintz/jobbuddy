@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
 import { SectionTypographyDirective } from '../../shared/section-typography.directive';
@@ -11,7 +12,7 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 @Component({
   selector: 'app-modern-1col-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
+  imports: [CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
   templateUrl: './modern-1col-layout.component.html',
 })
 export class Modern1ColLayoutComponent {

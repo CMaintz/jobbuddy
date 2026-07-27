@@ -3,32 +3,32 @@
       @for (edu of education; track edu.id) {
         <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
-            <span class="text-sm font-medium text-jb-text">{{ edu.degree || 'New Education' }}</span>
-            <button class="rb-remove" (click)="remove(edu.id)">Remove</button>
+            <span class="text-sm font-medium text-jb-text">{{ edu.degree || ('resumeBuilder.form.newEducation' | translate) }}</span>
+            <button class="rb-remove" (click)="remove(edu.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
-          <label class="label">Degree</label>
+          <label class="label">{{ 'resumeBuilder.form.degree' | translate }}</label>
           <input class="input" [value]="edu.degree" (input)="update(edu.id, 'degree', $any($event.target).value)" placeholder="Bachelor of Science" />
-          <label class="label">School</label>
+          <label class="label">{{ 'resumeBuilder.form.school' | translate }}</label>
           <input class="input" [value]="edu.school" (input)="update(edu.id, 'school', $any($event.target).value)" placeholder="MIT" />
-          <label class="label">Location</label>
+          <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>
           <input class="input" [value]="edu.location" (input)="update(edu.id, 'location', $any($event.target).value)" placeholder="Cambridge, MA" />
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="label">Start Date</label>
+              <label class="label">{{ 'resumeBuilder.form.startDate' | translate }}</label>
               <app-month-year-picker [value]="edu.startDate" (valueChange)="update(edu.id, 'startDate', $event)" />
             </div>
             <div>
-              <label class="label">End Date</label>
+              <label class="label">{{ 'resumeBuilder.form.endDate' | translate }}</label>
               <app-month-year-picker [value]="edu.endDate" (valueChange)="update(edu.id, 'endDate', $event)" />
             </div>
           </div>
           <div class="flex items-center gap-2">
             <input type="checkbox" [id]="'current-edu-' + edu.id" [checked]="edu.current" (change)="update(edu.id, 'current', $any($event.target).checked)" style="border-radius:3px;" />
-            <label [for]="'current-edu-' + edu.id" class="text-xs text-jb-text-dim">Currently studying</label>
+            <label [for]="'current-edu-' + edu.id" class="text-xs text-jb-text-dim">{{ 'resumeBuilder.form.currentlyStudying' | translate }}</label>
           </div>
-          <label class="label">Skills (comma separated)</label>
+          <label class="label">{{ 'resumeBuilder.form.skillsComma' | translate }}</label>
           <input class="input" [value]="(edu.skills ?? []).join(', ')" (change)="updateSkills(edu.id, $any($event.target).value)" placeholder="Java, Python, Data Structures" />
         </div>
       }
-      <button class="rb-add" (click)="add()">+ Add Education</button>
+      <button class="rb-add" (click)="add()">{{ 'resumeBuilder.form.addEducation' | translate }}</button>
     </div>

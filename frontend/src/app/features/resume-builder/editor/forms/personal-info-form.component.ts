@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { PersonalInfo } from '../../models/resume-builder.models';
+import { TranslateModule } from '@ngx-translate/core';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.component';
@@ -10,7 +11,7 @@ import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.compone
 @Component({
   selector: 'app-personal-info-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RichTextEditorComponent, PhotoCropDialogComponent, AiRefineMenuComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent, AiRefineMenuComponent],
   templateUrl: './personal-info-form.component.html',
 })
 export class PersonalInfoFormComponent {

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { structuredDocToResumeData } from '../../services/structured-doc-mapper';
 import { AiApiService } from '../../../../core/api/ai.api';
@@ -13,10 +14,10 @@ import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/d
 import { JbButtonComponent } from '../../../../shared/components/jb-button/jb-button.component';
 
 const TAILOR_PROMPTS = [
-  'More technical depth',
-  'Lead with motion / craft',
-  'Quantify everything',
-  'Shorter — aim for one page',
+  'tailoredCv.tailor.depth',
+  'tailoredCv.tailor.craft',
+  'tailoredCv.tailor.quantify',
+  'tailoredCv.tailor.shorter',
 ];
 
 /**
@@ -27,11 +28,12 @@ const TAILOR_PROMPTS = [
 @Component({
   selector: 'app-ai-tailor-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, DiffViewerComponent, JbButtonComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent],
   templateUrl: './ai-tailor-form.component.html',
 })
 export class AiTailorFormComponent implements OnInit {
   protected state = inject(ResumeStateService);
+  private translate = inject(TranslateService);
   private aiApi = inject(AiApiService);
   private jobsApi = inject(JobsApiService);
   private promptApi = inject(PromptApiService);
@@ -77,7 +79,8 @@ export class AiTailorFormComponent implements OnInit {
     });
   }
 
-  addTailorPrompt(prompt: string): void {
+  addTailorPrompt(promptOrKey: string): void {
+    const prompt = this.translate.instant(promptOrKey);
     this.instructions = this.instructions
       ? `${this.instructions.trim().replace(/\.?$/, '.')} ${prompt}.`
       : `${prompt}.`;
@@ -103,7 +106,7 @@ export class AiTailorFormComponent implements OnInit {
       },
       error: err => {
         this.generating.set(false);
-        this.error.set(err?.error?.message ?? 'Generation failed — check your master CV and try again.');
+        this.error.set(err?.error?.message ?? this.translate.instant('resumeBuilder.aiTailor.genFailed'));
       }
     });
   }

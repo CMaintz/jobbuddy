@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeExperience } from '../../models/resume-builder.models';
+import { TranslateModule } from '@ngx-translate/core';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 import { MonthYearPickerComponent } from '../../shared/month-year-picker.component';
@@ -10,7 +11,7 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
 @Component({
   selector: 'app-experience-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RichTextEditorComponent, MonthYearPickerComponent, AiRefineMenuComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, MonthYearPickerComponent, AiRefineMenuComponent],
   templateUrl: './experience-form.component.html',
 })
 export class ExperienceFormComponent {

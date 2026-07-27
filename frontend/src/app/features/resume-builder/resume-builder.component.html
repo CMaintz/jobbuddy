@@ -3,22 +3,22 @@
       <!-- Wizard context banner -->
       @if (wizardJobId()) {
         <div class="bg-jb-accent text-[#1c1004] p-[8px_16px] flex items-center justify-between text-md">
-          <span>Step 2 of 4 — Review and edit your tailored CV</span>
+          <span>{{ 'resumeBuilder.wizardStep' | translate }}</span>
           <button
             class="bg-[rgba(0,0,0,0.15)] text-[#1c1004] font-semibold p-[4px_14px] rounded-md border-none cursor-pointer text-sm"
             (click)="continueToWizard()"
-          >Continue to Cover Letter &rarr;</button>
+          >{{ 'resumeBuilder.continueCover' | translate }} &rarr;</button>
         </div>
       }
       <!-- Header -->
       <header class="flex items-center justify-between px-4 h-11 border-b border-jb-border flex-[0_0_auto]">
         <div class="flex items-center gap-3">
-          <h1 class="text-md font-medium">CV Builder</h1>
+          <h1 class="text-md font-medium">{{ 'nav.cvBuilder' | translate }}</h1>
           @if (state.isDirty()) {
-            <span class="pill pill-accent text-xs">Unsaved changes</span>
+            <span class="pill pill-accent text-xs">{{ 'resumeBuilder.unsavedChanges' | translate }}</span>
           }
           @if (state.isSaving()) {
-            <span class="pill pill-info text-xs">Saving...</span>
+            <span class="pill pill-info text-xs">{{ 'onboarding.saving' | translate }}</span>
           }
         </div>
         <!-- Mobile tabs -->
@@ -26,11 +26,11 @@
           <button (click)="activeTab = 'editor'"
             class="p-[3px_8px] border-none rounded-[3px] cursor-pointer text-sm font-medium"
             [style.background]="activeTab === 'editor' ? 'var(--jb-surface)' : 'transparent'"
-            [style.color]="activeTab === 'editor' ? 'var(--jb-text)' : 'var(--jb-text-dim)'">Editor</button>
+            [style.color]="activeTab === 'editor' ? 'var(--jb-text)' : 'var(--jb-text-dim)'">{{ 'resumeBuilder.editorTab' | translate }}</button>
           <button (click)="activeTab = 'preview'"
             class="p-[3px_8px] border-none rounded-[3px] cursor-pointer text-sm font-medium"
             [style.background]="activeTab === 'preview' ? 'var(--jb-surface)' : 'transparent'"
-            [style.color]="activeTab === 'preview' ? 'var(--jb-text)' : 'var(--jb-text-dim)'">Preview</button>
+            [style.color]="activeTab === 'preview' ? 'var(--jb-text)' : 'var(--jb-text-dim)'">{{ 'resumeBuilder.previewTab' | translate }}</button>
         </div>
       </header>
 

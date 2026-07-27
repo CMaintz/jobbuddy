@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AiApiService } from '../../../core/api/ai.api';
 import { DiffViewerComponent } from '../../../shared/components/diff-viewer/diff-viewer.component';
 import { toHtml } from './rich-text-editor.component';
@@ -12,7 +13,7 @@ const SUGGESTIONS = [
   'Fix grammar and awkward phrasing only',
 ];
 
-const SUGGESTION_LABELS = ['Quantify', 'Tighten', 'More impact', 'Fix grammar'];
+const SUGGESTION_LABELS = ['resumeBuilder.refine.label.quantify', 'resumeBuilder.refine.label.tighten', 'resumeBuilder.refine.label.impact', 'resumeBuilder.refine.label.grammar'];
 
 /**
  * Small AI popover for a single resume field: suggestion chips + free-text ask.
@@ -22,38 +23,38 @@ const SUGGESTION_LABELS = ['Quantify', 'Tighten', 'More impact', 'Fix grammar'];
 @Component({
   selector: 'app-ai-refine-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, DiffViewerComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent],
   template: `
     <div class="relative inline-block">
-      <button type="button" class="airm-trigger" (click)="open.set(!open())" title="Improve with AI">
-        ✦ AI
+      <button type="button" class="airm-trigger" (click)="open.set(!open())" [title]="'resumeBuilder.refine.improveTitle' | translate">
+        ✦ {{ 'resumeBuilder.refine.ai' | translate }}
       </button>
       @if (open()) {
         <div class="fixed inset-0 z-[90]" (click)="open.set(false)"></div>
         <div class="airm-panel">
           @if (!preview()) {
-            <div class="airm-label">Improve this text</div>
+            <div class="airm-label">{{ 'resumeBuilder.refine.improveText' | translate }}</div>
             @for (label of labels; track label; let i = $index) {
-              <button type="button" class="airm-item" [disabled]="busy()" (click)="run(suggestions[i])">{{ label }}</button>
+              <button type="button" class="airm-item" [disabled]="busy()" (click)="run(suggestions[i])">{{ label | translate }}</button>
             }
             <div class="airm-custom">
-              <input [(ngModel)]="customAsk" [disabled]="busy()" placeholder="Or ask for something…"
+              <input [(ngModel)]="customAsk" [disabled]="busy()" [placeholder]="'resumeBuilder.refine.askPlaceholder' | translate"
                 (keydown.enter)="run(customAsk)" />
             </div>
             @if (busy()) {
-              <div class="airm-busy">Refining…</div>
+              <div class="airm-busy">{{ 'resumeBuilder.refine.refining' | translate }}</div>
             }
             @if (error()) {
               <div class="airm-error">{{ error() }}</div>
             }
           } @else {
-            <div class="airm-label">Suggested change</div>
+            <div class="airm-label">{{ 'resumeBuilder.refine.suggestedChange' | translate }}</div>
             <div class="airm-preview">
               <jb-diff-viewer [before]="plainContent()" [after]="preview()!" />
             </div>
             <div class="airm-actions">
-              <button type="button" class="airm-item" (click)="preview.set(null)">Discard</button>
-              <button type="button" class="airm-item airm-apply" (click)="apply()">Apply</button>
+              <button type="button" class="airm-item" (click)="preview.set(null)">{{ 'resumeBuilder.refine.discard' | translate }}</button>
+              <button type="button" class="airm-item airm-apply" (click)="apply()">{{ 'resumeBuilder.refine.apply' | translate }}</button>
             </div>
           }
         </div>
@@ -83,6 +84,7 @@ const SUGGESTION_LABELS = ['Quantify', 'Tighten', 'More impact', 'Fix grammar'];
 })
 export class AiRefineMenuComponent {
   private aiApi = inject(AiApiService);
+  private translate = inject(TranslateService);
 
   /** Current field content — HTML from the rich editor or plain text. */
   @Input() content = '';
@@ -119,7 +121,7 @@ export class AiRefineMenuComponent {
       },
       error: () => {
         this.busy.set(false);
-        this.error.set('Refinement failed — try again');
+        this.error.set(this.translate.instant('resumeBuilder.refine.failed'));
       }
     });
   }

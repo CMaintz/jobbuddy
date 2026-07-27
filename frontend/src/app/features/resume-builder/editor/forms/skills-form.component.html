@@ -2,12 +2,12 @@
     <div class="flex flex-col gap-2.5">
       @for (skill of skills; track skill.id) {
         <div class="flex items-center gap-2">
-          <input class="input" style="flex:1;" [value]="skill.name" (input)="update(skill.id, 'name', $any($event.target).value)" placeholder="Skill name" />
+          <input class="input" style="flex:1;" [value]="skill.name" (input)="update(skill.id, 'name', $any($event.target).value)" [placeholder]="'resumeBuilder.form.skillName' | translate" />
           <select class="input w-auto" style="width:72px;"
             [value]="skill.level ?? ''"
             (change)="update(skill.id, 'level', $any($event.target).value ? +$any($event.target).value : undefined)"
           >
-            <option value="">Level</option>
+            <option value="">{{ 'resumeBuilder.form.level' | translate }}</option>
             <option [value]="1">1</option>
             <option [value]="2">2</option>
             <option [value]="3">3</option>
@@ -17,6 +17,6 @@
           <button class="rb-remove" (click)="remove(skill.id)">✕</button>
         </div>
       }
-      <button class="rb-add" (click)="add()">+ Add Skill</button>
-      <p class="text-xs text-jb-text-faint">Level 1–5 shown as dots in templates that support it. Toggle visibility in Settings.</p>
+      <button class="rb-add" (click)="add()">{{ 'resumeBuilder.form.addSkill' | translate }}</button>
+      <p class="text-xs text-jb-text-faint">{{ 'resumeBuilder.form.skillsHint' | translate }}</p>
     </div>
