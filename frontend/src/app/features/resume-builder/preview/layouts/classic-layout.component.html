@@ -16,7 +16,7 @@
         <!-- Summary -->
         @if (pi.summary) {
           <section rbSection="summary">
-            <h2 class="section-heading" [style.color]="themeColor">Summary</h2>
+            <h2 class="section-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.summary' | translate }}</h2>
             <div class="text-sm leading-relaxed text-gray-700" [innerHTML]="pi.summary | richText"></div>
           </section>
         }
@@ -24,7 +24,7 @@
         <!-- Experience -->
         @if (experience.length > 0) {
           <section rbSection="experience">
-            <h2 class="section-heading" [style.color]="themeColor">Experience</h2>
+            <h2 class="section-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.experience' | translate }}</h2>
             <div class="flex flex-col gap-4">
               @for (exp of experience; track exp.id) {
                 <div>
@@ -34,7 +34,7 @@
                       <p class="text-xs text-gray-500">{{ exp.company }}@if (exp.location) { · {{ exp.location }} }</p>
                     </div>
                     <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
-                      {{ exp.startDate }} – {{ exp.current ? 'Present' : exp.endDate }}
+                      {{ exp.startDate }} – {{ exp.current ? ('resumeBuilder.cv.present' | translate) : exp.endDate }}
                     </span>
                   </div>
                   @if (exp.description) {
@@ -50,7 +50,7 @@
         <!-- Education -->
         @if (education.length > 0) {
           <section rbSection="education">
-            <h2 class="section-heading" [style.color]="themeColor">Education</h2>
+            <h2 class="section-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.education' | translate }}</h2>
             <div class="flex flex-col gap-3">
               @for (edu of education; track edu.id) {
                 <div>
@@ -60,7 +60,7 @@
                       <p class="text-xs text-gray-500">{{ edu.school }}@if (edu.location) { · {{ edu.location }} }</p>
                     </div>
                     <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
-                      {{ edu.startDate }} – {{ edu.current ? 'Present' : edu.endDate }}
+                      {{ edu.startDate }} – {{ edu.current ? ('resumeBuilder.cv.present' | translate) : edu.endDate }}
                     </span>
                   </div>
                   <app-skill-chip-list [skills]="edu.skills ?? []" />
@@ -73,7 +73,7 @@
         <!-- Projects -->
         @if (projects.length > 0) {
           <section rbSection="projects">
-            <h2 class="section-heading" [style.color]="themeColor">Projects</h2>
+            <h2 class="section-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.projects' | translate }}</h2>
             <div class="flex flex-col gap-3">
               @for (proj of projects; track proj.id) {
                 <div>
@@ -114,7 +114,7 @@
           <div class="flex justify-center">
             <img rbResumePhoto
               [src]="pi.photoUrl"
-              alt="Profile photo"
+              [alt]="'resumeBuilder.cv.profilePhoto' | translate"
               class="w-24 h-24 object-cover"
               [class.rounded-full]="photoStyle === 'circle'"
               [class.rounded-xl]="photoStyle === 'rounded'"
@@ -125,7 +125,7 @@
         <!-- Skills -->
         @if (skills.length > 0) {
           <section rbSection="skills">
-            <h2 class="sidebar-heading" [style.color]="themeColor">Skills</h2>
+            <h2 class="sidebar-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.skills' | translate }}</h2>
             <div class="flex flex-col gap-1.5">
               @for (skill of skills; track skill.id) {
                 <div class="flex items-center justify-between">
@@ -149,7 +149,7 @@
         <!-- Languages -->
         @if (languages.length > 0) {
           <section rbSection="languages">
-            <h2 class="sidebar-heading" [style.color]="themeColor">Languages</h2>
+            <h2 class="sidebar-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.languages' | translate }}</h2>
             <div class="flex flex-col gap-1">
               @for (lang of languages; track lang.id) {
                 <div class="flex justify-between items-center">
@@ -164,7 +164,7 @@
         <!-- Certifications -->
         @if (certifications.length > 0) {
           <section rbSection="certifications">
-            <h2 class="sidebar-heading" [style.color]="themeColor">Certifications</h2>
+            <h2 class="sidebar-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.certifications' | translate }}</h2>
             <div class="flex flex-col gap-2">
               @for (cert of certifications; track cert.id) {
                 <div>
@@ -180,7 +180,7 @@
         <!-- Strengths -->
         @if (strengths.length > 0) {
           <section rbSection="strengths">
-            <h2 class="sidebar-heading" [style.color]="themeColor">Strengths</h2>
+            <h2 class="sidebar-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.strengths' | translate }}</h2>
             <div class="flex flex-col gap-2">
               @for (s of strengths; track s.id) {
                 <div>
@@ -198,7 +198,7 @@
         <!-- Socials -->
         @if (socials.length > 0) {
           <section rbSection="socials">
-            <h2 class="sidebar-heading" [style.color]="themeColor">Links</h2>
+            <h2 class="sidebar-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.links' | translate }}</h2>
             <div class="flex flex-col gap-1.5">
               @for (s of socials; track s.id) {
                 <div class="flex items-center gap-1.5">

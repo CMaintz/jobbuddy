@@ -5,7 +5,7 @@
         @if (pi.photoUrl) {
           <img rbResumePhoto
             [src]="pi.photoUrl"
-            alt="Photo"
+            [alt]="'resumeBuilder.cv.photo' | translate"
             class="w-20 h-20 object-cover flex-shrink-0"
             [class.rounded-full]="photoStyle === 'circle'"
             [class.rounded-lg]="photoStyle === 'rounded'"
@@ -35,7 +35,7 @@
       <!-- Experience -->
       @if (experience.length > 0) {
         <section rbSection="experience">
-          <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">Experience</h2>
+          <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.experience' | translate }}</h2>
           <div class="flex flex-col gap-4">
             @for (exp of experience; track exp.id) {
               <div>
@@ -52,7 +52,7 @@
       <!-- Education -->
       @if (education.length > 0) {
         <section rbSection="education">
-          <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">Education</h2>
+          <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.education' | translate }}</h2>
           <div class="flex flex-col gap-3">
             @for (edu of education; track edu.id) {
               <div>
@@ -68,7 +68,7 @@
       <!-- Skills -->
       @if (skills.length > 0) {
         <section rbSection="skills">
-          <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">Skills</h2>
+          <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.skills' | translate }}</h2>
           <div class="flex flex-wrap gap-2">
             @for (skill of skills; track skill.id) {
               <span class="px-2 py-0.5 rounded-full text-xs border" [style.border-color]="themeColor" [style.color]="themeColor">{{ skill.name }}</span>

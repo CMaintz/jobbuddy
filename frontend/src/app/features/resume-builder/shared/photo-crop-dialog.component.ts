@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 const VIEWPORT = 280;
 const OUTPUT = 400;
@@ -12,12 +13,12 @@ const OUTPUT = 400;
 @Component({
   selector: 'app-photo-crop-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   template: `
     <div class="fixed inset-0 z-[300] flex items-center justify-center" style="background:rgba(0,0,0,0.6);" (click)="cancelled.emit()">
       <div class="bg-jb-surface border border-jb-border-strong rounded-[10px] p-4 flex flex-col gap-3"
            style="box-shadow:0 28px 80px rgba(0,0,0,0.5);" (click)="$event.stopPropagation()">
-        <div class="text-md font-medium">Crop photo — drag to move, slide to zoom</div>
+        <div class="text-md font-medium">{{ 'resumeBuilder.crop.title' | translate }}</div>
 
         <div #viewport class="relative overflow-hidden select-none bg-black/40 touch-none"
              [style.width.px]="viewportSize" [style.height.px]="viewportSize"
@@ -36,14 +37,14 @@ const OUTPUT = 400;
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="text-xs text-jb-text-dim">Zoom</span>
+          <span class="text-xs text-jb-text-dim">{{ 'resumeBuilder.crop.zoom' | translate }}</span>
           <input type="range" min="1" max="3" step="0.02" class="flex-1" style="accent-color:var(--jb-accent);"
             [ngModel]="zoom()" (ngModelChange)="setZoom(+$event)" />
         </div>
 
         <div class="flex justify-end gap-2">
-          <button class="btn btn-sm" (click)="cancelled.emit()">Cancel</button>
-          <button class="btn btn-primary btn-sm" (click)="apply()">Apply crop</button>
+          <button class="btn btn-sm" (click)="cancelled.emit()">{{ 'common.cancel' | translate }}</button>
+          <button class="btn btn-primary btn-sm" (click)="apply()">{{ 'resumeBuilder.crop.applyCrop' | translate }}</button>
         </div>
       </div>
     </div>

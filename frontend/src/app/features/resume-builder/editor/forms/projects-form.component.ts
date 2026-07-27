@@ -3,13 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeProject } from '../../models/resume-builder.models';
+import { TranslateModule } from '@ngx-translate/core';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 
 @Component({
   selector: 'app-projects-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RichTextEditorComponent, AiRefineMenuComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, AiRefineMenuComponent],
   templateUrl: './projects-form.component.html',
 })
 export class ProjectsFormComponent {

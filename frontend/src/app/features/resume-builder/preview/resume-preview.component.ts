@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { PdfExportService } from '../services/pdf-export.service';
 import { AtsPdfService, resumeDataToAts } from '../../../shared/services/ats-pdf.service';
@@ -16,6 +17,7 @@ import { JbButtonComponent } from '../../../shared/components/jb-button/jb-butto
   standalone: true,
   imports: [
     CommonModule,
+    TranslateModule,
     JbButtonComponent,
     ClassicLayoutComponent,
     Modern1ColLayoutComponent,

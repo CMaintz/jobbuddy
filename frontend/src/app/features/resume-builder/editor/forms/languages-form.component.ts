@@ -2,13 +2,14 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeLanguage } from '../../models/resume-builder.models';
 import { LANGUAGE_PROFICIENCIES } from '../../data/language-proficiencies';
 
 @Component({
   selector: 'app-languages-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './languages-form.component.html',
 })
 export class LanguagesFormComponent {

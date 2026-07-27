@@ -6,8 +6,8 @@
         <span class="text-2xl font-semibold num"
           [style.color]="ats.score >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ ats.score }}</span>
         <div>
-          <div class="text-sm font-semibold">ATS score</div>
-          <div class="text-xs text-jb-text-dim">{{ ats.keywordCoverage }}% keyword coverage</div>
+          <div class="text-sm font-semibold">{{ 'resumeBuilder.aiTailor.atsScore' | translate }}</div>
+          <div class="text-xs text-jb-text-dim">{{ 'resumeBuilder.aiTailor.keywordCoverage' | translate:{ pct: ats.keywordCoverage } }}</div>
         </div>
       </div>
       @if (ats.matchedKeywords.length > 0) {
@@ -18,7 +18,7 @@
         </div>
       }
       @if (ats.missingKeywords.length > 0) {
-        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1">Missing</div>
+        <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1">{{ 'resumeBuilder.aiTailor.missing' | translate }}</div>
         <div class="flex flex-wrap gap-1">
           @for (kw of ats.missingKeywords; track kw) {
             <span class="pill pill-danger">{{ kw }}</span>
@@ -32,9 +32,9 @@
     <!-- Re-tailor config -->
     @if (promptTemplates.length > 0) {
       <div>
-        <label class="label">Prompt</label>
+        <label class="label">{{ 'apply.prompt' | translate }}</label>
         <select class="input" [(ngModel)]="selectedPromptId">
-          <option [ngValue]="null">Default prompt</option>
+          <option [ngValue]="null">{{ 'apply.defaultPrompt' | translate }}</option>
           @for (tpl of promptTemplates; track tpl.id) {
             <option [ngValue]="tpl.id">{{ tpl.name }}</option>
           }
@@ -43,24 +43,24 @@
     }
 
     <div>
-      <label class="label">Focus</label>
+      <label class="label">{{ 'tailoredCv.focus' | translate }}</label>
       <div class="flex flex-col gap-1.5 mb-2">
         @for (prompt of tailorPrompts; track prompt) {
           <button type="button" (click)="addTailorPrompt(prompt)"
             class="px-2.5 py-[6px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs text-left cursor-pointer">
-            + {{ prompt }}
+            + {{ prompt | translate }}
           </button>
         }
       </div>
       <textarea [(ngModel)]="instructions" rows="3" class="input" style="resize:vertical;"
-        placeholder="e.g. emphasise leadership, drop anything older than 2018…"></textarea>
+        [placeholder]="'resumeBuilder.aiTailor.instrPlaceholder' | translate"></textarea>
     </div>
 
     <jb-button block primary [disabled]="generating()" (clicked)="regenerate()">
-      {{ generating() ? 'Re-tailoring… (up to a minute)' : 'Re-tailor this CV' }}
+      {{ (generating() ? 'resumeBuilder.aiTailor.retailoring' : 'resumeBuilder.aiTailor.retailorCta') | translate }}
     </jb-button>
     <div class="text-xs text-jb-text-dim">
-      Regenerates the content from your master CV for this job. Your template, layout and styling stay as they are.
+      {{ 'resumeBuilder.aiTailor.retailorHint' | translate }}
     </div>
     @if (error()) {
       <div class="text-xs text-jb-danger">{{ error() }}</div>
@@ -68,19 +68,19 @@
   } @else {
     <!-- Diff review before the new content replaces the draft -->
     <div>
-      <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">Profile summary — what changed</div>
+      <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">{{ 'resumeBuilder.aiTailor.summaryChanged' | translate }}</div>
       @if (summaryBefore() !== summaryAfter()) {
         <jb-diff-viewer [before]="summaryBefore()" [after]="summaryAfter()" />
       } @else {
-        <div class="text-xs text-jb-text-dim">The summary is unchanged — experience and skill selections may still differ.</div>
+        <div class="text-xs text-jb-text-dim">{{ 'resumeBuilder.aiTailor.summaryUnchanged' | translate }}</div>
       }
     </div>
     <div class="flex gap-2 justify-end">
-      <button type="button" class="btn btn-sm" (click)="discardPending()">Discard</button>
-      <button type="button" class="btn btn-sm btn-primary" (click)="applyPending()">Apply to draft</button>
+      <button type="button" class="btn btn-sm" (click)="discardPending()">{{ 'resumeBuilder.aiTailor.discard' | translate }}</button>
+      <button type="button" class="btn btn-sm btn-primary" (click)="applyPending()">{{ 'resumeBuilder.aiTailor.applyToDraft' | translate }}</button>
     </div>
     <div class="text-xs text-jb-text-dim">
-      Applying replaces the draft's content with the regenerated version. Layout & styling are kept.
+      {{ 'resumeBuilder.aiTailor.applyHint' | translate }}
     </div>
   }
 </div>

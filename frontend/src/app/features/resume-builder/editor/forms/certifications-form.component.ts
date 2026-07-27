@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeCertification } from '../../models/resume-builder.models';
 
 @Component({
   selector: 'app-certifications-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './certifications-form.component.html',
 })
 export class CertificationsFormComponent {

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeSettings } from '../../models/resume-builder.models';
 import { FONT_FAMILIES } from '../../data/font-families';
 import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-toggle.component';
@@ -9,7 +10,7 @@ import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-to
 @Component({
   selector: 'app-settings-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbToggleComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbToggleComponent],
   templateUrl: './settings-form.component.html',
 })
 export class SettingsFormComponent {

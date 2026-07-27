@@ -9,12 +9,12 @@
               class="text-md font-medium bg-transparent border-none outline-none flex-1 text-jb-text"
               [value]="section.heading"
               (change)="updateHeading(section.id, $any($event.target).value)"
-              placeholder="Section heading"
+              [placeholder]="'resumeBuilder.custom.sectionHeadingPlaceholder' | translate"
             />
             <button
               class="text-jb-text-faint ml-2 flex-shrink-0 bg-transparent border-none cursor-pointer"
               (click)="stateService.removeCustomSection(section.id)"
-              title="Remove section"
+              [title]="'resumeBuilder.custom.removeSection' | translate"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -24,7 +24,7 @@
           <div class="p-[8px_12px_12px]">
             @if (section.body !== undefined || (!section.items || section.items.length === 0)) {
               <app-rich-text-editor
-                placeholder="Write a paragraph..."
+                [placeholder]="'resumeBuilder.custom.paragraphPlaceholder' | translate"
                 [value]="section.body ?? ''"
                 (debouncedChange)="updateBody(section.id, $event)"
               />
@@ -37,7 +37,7 @@
                       class="input flex-1"
                       [value]="item.text"
                       (change)="updateItem(section.id, item.id, $any($event.target).value)"
-                      placeholder="Bullet item"
+                      [placeholder]="'resumeBuilder.custom.bulletPlaceholder' | translate"
                     />
                     <button class="text-jb-text-faint flex-shrink-0 bg-transparent border-none cursor-pointer"
                             (click)="removeItem(section.id, item.id)">
@@ -48,7 +48,7 @@
                   </div>
                 }
                 <button class="text-xs text-jb-accent bg-transparent border-none cursor-pointer text-left mt-[2px]"
-                        (click)="addItem(section.id)">+ Add item</button>
+                        (click)="addItem(section.id)">{{ 'resumeBuilder.custom.addItem' | translate }}</button>
               </div>
             }
           </div>
@@ -58,29 +58,29 @@
       <!-- Add section form -->
       @if (addingSection()) {
         <div class="border border-jb-accent rounded-lg p-3 bg-[rgba(245,166,35,0.06)] flex flex-col gap-3">
-          <p class="text-xs font-medium text-jb-text">Quick-fill templates</p>
+          <p class="text-xs font-medium text-jb-text">{{ 'resumeBuilder.custom.quickFill' | translate }}</p>
           <div class="flex flex-wrap gap-1.5">
             @for (t of starterTemplates; track t.label) {
               <button
                 class="rb-chip"
-                [class.active]="newHeading === t.heading && newStyle === t.style"
+                [class.active]="newHeading === (t.heading ? (t.heading | translate) : '') && newStyle === t.style"
                 (click)="applyTemplate(t)"
-              >{{ t.label }}</button>
+              >{{ t.label | translate }}</button>
             }
           </div>
           <input
             class="input"
             [(ngModel)]="newHeading"
-            placeholder="Section heading (required)"
+            [placeholder]="'resumeBuilder.custom.headingRequiredPlaceholder' | translate"
           />
           <div class="flex gap-3 text-xs text-jb-text-dim">
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="newStyle" value="paragraph" [(ngModel)]="newStyle" />
-              Paragraph
+              {{ 'resumeBuilder.custom.paragraph' | translate }}
             </label>
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="newStyle" value="bullets" [(ngModel)]="newStyle" />
-              Bullet list
+              {{ 'resumeBuilder.custom.bulletList' | translate }}
             </label>
           </div>
           <div class="flex gap-2">
@@ -89,13 +89,13 @@
               [style.opacity]="newHeading.trim() ? '1' : '0.5'"
               [disabled]="!newHeading.trim()"
               (click)="confirmAdd()"
-            >Add section</button>
-            <button class="text-sm text-jb-text-dim bg-transparent border-none cursor-pointer p-[6px_8px]" (click)="addingSection.set(false)">Cancel</button>
+            >{{ 'resumeBuilder.custom.addSection' | translate }}</button>
+            <button class="text-sm text-jb-text-dim bg-transparent border-none cursor-pointer p-[6px_8px]" (click)="addingSection.set(false)">{{ 'common.cancel' | translate }}</button>
           </div>
         </div>
       } @else {
         <button class="rb-add"
           (click)="addingSection.set(true)"
-        >+ Add custom section</button>
+        >{{ 'resumeBuilder.custom.addCustomSection' | translate }}</button>
       }
     </div>

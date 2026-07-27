@@ -2,10 +2,10 @@
     <div class="flex flex-col items-center gap-4">
       <!-- PDF controls -->
       <div class="flex gap-2 w-full max-w-[794px]">
-        <jb-button primary icon="download" (clicked)="downloadPdf()">PDF — Designed</jb-button>
-        <jb-button icon="doc" title="Text-based single-column PDF — selectable text, parseable by applicant tracking systems"
-          (clicked)="downloadAtsPdf()">PDF — ATS</jb-button>
-        <jb-button icon="copy" (clicked)="printResume()">Print</jb-button>
+        <jb-button primary icon="download" (clicked)="downloadPdf()">{{ 'resumeBuilder.preview.pdfDesigned' | translate }}</jb-button>
+        <jb-button icon="doc" [title]="'resumeBuilder.preview.atsTitle' | translate"
+          (clicked)="downloadAtsPdf()">{{ 'resumeBuilder.preview.pdfAts' | translate }}</jb-button>
+        <jb-button icon="copy" (clicked)="printResume()">{{ 'resumeBuilder.preview.print' | translate }}</jb-button>
       </div>
 
       <!-- Preview container -->

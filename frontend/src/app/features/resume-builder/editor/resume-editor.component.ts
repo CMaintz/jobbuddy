@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { AiTailorFormComponent } from './forms/ai-tailor-form.component';
 import { PersonalInfoFormComponent } from './forms/personal-info-form.component';
@@ -27,6 +28,7 @@ interface EditorSection {
   standalone: true,
   imports: [
     CommonModule,
+    TranslateModule,
     AiTailorFormComponent,
     PersonalInfoFormComponent,
     ExperienceFormComponent,
@@ -54,18 +56,18 @@ export class ResumeEditorComponent {
   }
 
   sections: EditorSection[] = [
-    { id: 'ai-tailor', label: 'AI Tailoring & ATS', icon: '✦', open: true },
-    { id: 'personal', label: 'Personal Info', icon: '👤', open: true },
-    { id: 'experience', label: 'Work Experience', icon: '💼', open: false },
-    { id: 'education', label: 'Education', icon: '🎓', open: false },
-    { id: 'skills', label: 'Skills', icon: '⚡', open: false },
-    { id: 'projects', label: 'Projects', icon: '🚀', open: false },
-    { id: 'languages', label: 'Languages', icon: '🌍', open: false },
-    { id: 'certifications', label: 'Certifications', icon: '🏅', open: false },
-    { id: 'strengths', label: 'Strengths', icon: '💪', open: false },
-    { id: 'socials', label: 'Social Links', icon: '🔗', open: false },
-    { id: 'settings', label: 'Settings', icon: '⚙️', open: false },
-    { id: 'layout', label: 'Layout & Template', icon: '🎨', open: false },
-    { id: 'custom', label: 'Custom Sections', icon: '✏️', open: false },
+    { id: 'ai-tailor', label: 'resumeBuilder.section.aiTailor', icon: '✦', open: true },
+    { id: 'personal', label: 'resumeBuilder.section.personal', icon: '👤', open: true },
+    { id: 'experience', label: 'resumeBuilder.section.experience', icon: '💼', open: false },
+    { id: 'education', label: 'resumeBuilder.section.education', icon: '🎓', open: false },
+    { id: 'skills', label: 'resumeBuilder.section.skills', icon: '⚡', open: false },
+    { id: 'projects', label: 'resumeBuilder.section.projects', icon: '🚀', open: false },
+    { id: 'languages', label: 'resumeBuilder.section.languages', icon: '🌍', open: false },
+    { id: 'certifications', label: 'resumeBuilder.section.certifications', icon: '🏅', open: false },
+    { id: 'strengths', label: 'resumeBuilder.section.strengths', icon: '💪', open: false },
+    { id: 'socials', label: 'resumeBuilder.section.socials', icon: '🔗', open: false },
+    { id: 'settings', label: 'resumeBuilder.section.settings', icon: '⚙️', open: false },
+    { id: 'layout', label: 'resumeBuilder.section.layout', icon: '🎨', open: false },
+    { id: 'custom', label: 'resumeBuilder.section.custom', icon: '✏️', open: false },
   ];
 }
