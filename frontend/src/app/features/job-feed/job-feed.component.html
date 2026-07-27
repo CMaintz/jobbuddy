@@ -1,20 +1,20 @@
-    <jb-topbar title="Job feed">
-      <jb-pill tone="accent">{{ filteredJobs().length }} {{ searchMode() ? 'results' : 'matches' }}</jb-pill>
+    <jb-topbar [title]="'nav.jobFeed' | translate">
+      <jb-pill tone="accent">{{ filteredJobs().length }} {{ (searchMode() ? 'jobFeed.results' : 'jobFeed.matches') | translate }}</jb-pill>
       <div class="hidden sm:flex flex-1 max-w-[340px] items-center gap-2 py-[5px] px-2.5 ml-3 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
         <jb-icon name="search" [size]="12" />
         <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)"
-          [placeholder]="semanticMode ? 'Describe the role you want…' : 'Company, role, or keywords…'"
+          [placeholder]="(semanticMode ? 'jobFeed.searchSemanticPlaceholder' : 'jobFeed.searchPlaceholder') | translate"
           class="border-none bg-none outline-none text-jb-text text-sm flex-1" />
-        <button (click)="toggleSemanticMode()" title="Toggle semantic search — rank by meaning instead of keywords"
+        <button (click)="toggleSemanticMode()" [title]="'jobFeed.semanticTooltip' | translate"
           class="flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer text-2xs border"
           [style.background]="semanticMode ? 'var(--jb-accent-soft)' : 'transparent'"
           [style.border-color]="semanticMode ? 'var(--jb-accent-border)' : 'var(--jb-border)'"
           [style.color]="semanticMode ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
-          <jb-icon name="sparkle" [size]="10" /> meaning
+          <jb-icon name="sparkle" [size]="10" /> {{ 'jobFeed.meaning' | translate }}
         </button>
       </div>
       <ng-container jb-topbar-actions>
-        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">New application</jb-button>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">{{ 'nav.newApplication' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
@@ -26,34 +26,34 @@
       <aside class="hidden lg:flex border-r border-jb-border p-[14px_12px] overflow-y-auto flex-col gap-4 jb-scroll">
         <!-- Sort -->
         <div>
-          <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Sort by</div>
+          <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.sortBy' | translate }}</div>
           @for (opt of sortOptions; track opt.value) {
             <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer">
               <input type="radio" name="sortBy" [value]="opt.value" [(ngModel)]="sortBy"
                 style="accent-color:var(--jb-accent);" class="w-3 h-3" />
-              {{ opt.label }}
+              {{ opt.label | translate }}
             </label>
           }
         </div>
 
         <!-- Deadline filter -->
         <div>
-          <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Deadline</div>
+          <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.deadline' | translate }}</div>
           <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer">
             <input type="checkbox" [(ngModel)]="hideExpired"
               style="accent-color:var(--jb-accent);" class="w-3 h-3" />
-            Hide expired
+            {{ 'jobFeed.hideExpired' | translate }}
           </label>
         </div>
 
         <!-- Location filter -->
         <div>
-          <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Location</div>
+          <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.locationLabel' | translate }}</div>
           @for (loc of locationFilters; track loc.label) {
             <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer">
               <input type="radio" name="location" [value]="loc.value" [(ngModel)]="locationFilter"
                 style="accent-color:var(--jb-accent);" class="w-3 h-3" />
-              {{ loc.label }}
+              {{ loc.label | translate }}
             </label>
           }
         </div>
@@ -61,7 +61,7 @@
         <!-- Min match -->
         @if (!searchMode()) {
           <div>
-            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Min match</div>
+            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.minMatch' | translate }}</div>
             <div class="flex items-center gap-2">
               <input type="range" [min]="50" [max]="95" [(ngModel)]="minMatch" class="flex-1" style="accent-color:var(--jb-accent);" />
               <span class="mono text-xs text-jb-accent-2">{{ minMatch }}</span>
@@ -72,7 +72,7 @@
         <!-- Seniority checkboxes -->
         @if (seniorityFilters.length > 1) {
           <div>
-            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Seniority</div>
+            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.seniority' | translate }}</div>
             @for (level of seniorityFilters; track level) {
               <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer">
                 <input type="checkbox" [checked]="activeSeniorities.has(level)" (change)="toggleSeniority(level)"
@@ -86,7 +86,7 @@
         <!-- Category checkboxes -->
         @if (categoryFilters.length > 1) {
           <div>
-            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Category</div>
+            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.category' | translate }}</div>
             @for (cat of categoryFilters; track cat) {
               <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer capitalize">
                 <input type="checkbox" [checked]="activeCategories.has(cat)" (change)="toggleCategory(cat)"
@@ -100,7 +100,7 @@
         <!-- Source checkboxes -->
         @if (sourceFilters.length > 1) {
           <div>
-            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">Source</div>
+            <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.source' | translate }}</div>
             @for (src of sourceFilters; track src) {
               <label class="flex items-center gap-2 py-1 text-sm text-jb-text-mid cursor-pointer">
                 <input type="checkbox" [checked]="activeSources.has(src)" (change)="toggleSource(src)"
@@ -116,7 +116,7 @@
       <div class="overflow-y-auto border-r border-jb-border jb-scroll md:!block"
            [class.hidden]="mobilePanel() === 'detail'">
         @if (loading()) {
-          <div class="py-12 px-6 text-center text-jb-text-dim text-base">Loading roles…</div>
+          <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'jobFeed.loadingRoles' | translate }}</div>
         } @else {
           @for (job of filteredJobs(); track job.id) {
             <div (click)="selectedJob.set(job); mobilePanel.set('detail')"
@@ -140,7 +140,7 @@
                   <div class="text-xs text-jb-text-dim mt-0.5">
                     {{ job.company }} · {{ job.location }}
                     @if (job.deadline) {
-                      <span class="mono" [class.text-jb-danger]="job.deadlinePassed"> · {{ job.deadline }}</span>
+                      <span class="mono" [class.text-jb-danger]="job.deadlinePassed"> · {{ 'jobFeed.deadline' | translate }} {{ job.deadline }}</span>
                     }
                   </div>
                   <div class="flex flex-wrap gap-1 mt-1.5">
@@ -157,9 +157,9 @@
           @if (filteredJobs().length === 0) {
             <div class="py-12 px-6 text-center text-jb-text-dim text-base">
               @if (searchMode()) {
-                No roles match your search.
+                {{ 'jobFeed.noSearchResults' | translate }}
               } @else {
-                No recommendations yet. Fill in your master CV skills & technologies — matching runs on those — or search the whole index above.
+                {{ 'jobFeed.noRecommendations' | translate }}
               }
             </div>
           }
@@ -172,7 +172,7 @@
         <!-- Mobile back button -->
         <button class="flex md:hidden items-center gap-1.5 mb-3 text-sm text-jb-text-dim"
                 (click)="mobilePanel.set('list'); $event.stopPropagation()">
-          <jb-icon name="arrow-left" [size]="12" /> Back to feed
+          <jb-icon name="arrow-left" [size]="12" /> {{ 'jobFeed.backToFeed' | translate }}
         </button>
         @if (selectedJob(); as job) {
           <div class="flex items-center gap-3 mb-4">
@@ -189,7 +189,7 @@
               <div class="flex items-center gap-2 mb-2.5">
                 <span class="text-[24px] font-semibold num"
                   [style.color]="job.matchScore >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ job.matchScore }}</span>
-                <span class="text-sm text-jb-text-dim">match score</span>
+                <span class="text-sm text-jb-text-dim">{{ 'jobFeed.matchScore' | translate }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 @for (reason of job.matchReasons; track reason) {
@@ -205,13 +205,13 @@
           <!-- Facts -->
           <div class="card p-3.5 mb-3">
             <div class="grid grid-cols-2 gap-2.5">
-              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Location</div><div class="text-sm mt-0.5">{{ job.location }}</div></div>
-              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Salary</div><div class="text-sm mt-0.5">{{ job.salary || '—' }}</div></div>
-              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Source</div><div class="text-sm mt-0.5">{{ job.source | titlecase }}</div></div>
-              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Posted</div><div class="text-sm mt-0.5">{{ job.posted }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'jobFeed.locationLabel' | translate }}</div><div class="text-sm mt-0.5">{{ job.location }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'jobFeed.salary' | translate }}</div><div class="text-sm mt-0.5">{{ job.salary || '—' }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'jobFeed.source' | translate }}</div><div class="text-sm mt-0.5">{{ job.source | titlecase }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'jobFeed.posted' | translate }}</div><div class="text-sm mt-0.5">{{ job.posted }}</div></div>
               @if (job.deadline) {
-                <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">Deadline</div>
-                  <div class="text-sm mt-0.5" [class.text-jb-danger]="job.deadlinePassed">{{ job.deadline.replace('Deadline ', '') }}{{ job.deadlinePassed ? ' (passed)' : '' }}</div></div>
+                <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'jobFeed.deadline' | translate }}</div>
+                  <div class="text-sm mt-0.5" [class.text-jb-danger]="job.deadlinePassed">{{ job.deadline }}{{ job.deadlinePassed ? (' ' + ('jobFeed.passed' | translate)) : '' }}</div></div>
               }
             </div>
           </div>
@@ -219,7 +219,7 @@
           <!-- Keywords -->
           @if (job.keywords.length > 0) {
             <div class="card p-3.5 mb-3">
-              <div class="text-xs font-medium mb-2">Keywords</div>
+              <div class="text-xs font-medium mb-2">{{ 'jobFeed.keywords' | translate }}</div>
               <div class="flex flex-wrap gap-1">
                 @for (kw of job.keywords; track kw) {
                   <span class="pill pill-neutral">{{ kw }}</span>
@@ -230,15 +230,15 @@
 
           <!-- Actions -->
           <div class="flex gap-2 flex-wrap">
-            <jb-button icon="bookmark" (clicked)="saveJob(job)">{{ savedIds().has(job.id) ? 'Saved' : 'Save' }}</jb-button>
-            <jb-button icon="external" [routerLink]="['/jobs', job.id]">Details</jb-button>
-            <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">Generate application</jb-button>
-            <jb-button ghost icon="x" (clicked)="hideJob(job)">Hide</jb-button>
+            <jb-button icon="bookmark" (clicked)="saveJob(job)">{{ (savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate }}</jb-button>
+            <jb-button icon="external" [routerLink]="['/jobs', job.id]">{{ 'jobFeed.details' | translate }}</jb-button>
+            <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">{{ 'jobFeed.generateApplication' | translate }}</jb-button>
+            <jb-button ghost icon="x" (clicked)="hideJob(job)">{{ 'jobFeed.hide' | translate }}</jb-button>
           </div>
         } @else {
           <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">
             <jb-icon name="compass" [size]="24" class="mb-2" />
-            <div class="text-base">Select a role from the feed</div>
+            <div class="text-base">{{ 'jobFeed.selectRole' | translate }}</div>
           </div>
         }
       </div>
