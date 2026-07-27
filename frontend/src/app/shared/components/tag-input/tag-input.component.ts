@@ -1,18 +1,19 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-tag-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent],
   templateUrl: './tag-input.component.html',
   styleUrls: ['./tag-input.component.css']
 })
 export class TagInputComponent {
   @Input() value: string[] = [];
-  @Input() placeholder = 'Add...';
+  @Input() placeholder = 'shared.addTag';
   @Input() suggestions: string[] = [];
   @Output() valueChange = new EventEmitter<string[]>();
 
