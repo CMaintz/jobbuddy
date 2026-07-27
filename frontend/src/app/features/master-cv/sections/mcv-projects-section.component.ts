@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
 import { AiRefineMenuComponent } from '../../resume-builder/shared/ai-refine-menu.component';
@@ -10,7 +11,7 @@ import { Project } from '../../../core/models/profile-section.model';
 @Component({
   selector: 'app-mcv-projects-section',
   standalone: true,
-  imports: [CommonModule, FormsModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
   template: `
     <div class="flex flex-col gap-3">
       @for (proj of list; track proj.id || $index) {
@@ -18,34 +19,34 @@ import { Project } from '../../../core/models/profile-section.model';
           <div class="flex gap-2 items-start">
             <div class="flex-1 grid gap-2 grid-cols-[1fr_1.6fr]">
               <label class="flex flex-col gap-[5px]">
-                <span class="label">Project</span>
-                <input [(ngModel)]="proj.name" class="input" placeholder="Project name" />
+                <span class="label">{{ 'masterCv.form.project' | translate }}</span>
+                <input [(ngModel)]="proj.name" class="input" [placeholder]="'masterCv.form.projectPlaceholder' | translate" />
               </label>
               <div class="flex flex-col gap-[5px]">
                 <div class="flex items-center justify-between">
-                  <span class="label">Description</span>
+                  <span class="label">{{ 'masterCv.form.description' | translate }}</span>
                   <app-ai-refine-menu [plainOutput]="true" [content]="proj.description || ''"
                     (refined)="proj.description = $event; dirty.emit()" />
                 </div>
-                <input [(ngModel)]="proj.description" class="input" placeholder="Short description" />
+                <input [(ngModel)]="proj.description" class="input" [placeholder]="'masterCv.form.descShortPlaceholder' | translate" />
               </div>
               <label class="flex flex-col gap-[5px]">
-                <span class="label">GitHub</span>
+                <span class="label">{{ 'masterCv.form.github' | translate }}</span>
                 <input [(ngModel)]="proj.githubUrl" class="input mono" placeholder="https://github.com/..." />
               </label>
               <label class="flex flex-col gap-[5px]">
-                <span class="label">Live URL</span>
+                <span class="label">{{ 'masterCv.form.liveUrl' | translate }}</span>
                 <input [(ngModel)]="proj.liveUrl" class="input mono" placeholder="https://..." />
               </label>
             </div>
-            <button class="icon-btn mt-5" title="Remove" (click)="removeAt.emit($index)"><jb-icon name="x" [size]="12" /></button>
+            <button class="icon-btn mt-5" [title]="'common.remove' | translate" (click)="removeAt.emit($index)"><jb-icon name="x" [size]="12" /></button>
           </div>
         </div>
       }
       @if (list.length === 0) {
-        <div class="p-8 text-center text-jb-text-dim text-base">No projects yet.</div>
+        <div class="p-8 text-center text-jb-text-dim text-base">{{ 'masterCv.form.noProjects' | translate }}</div>
       }
-      <jb-button small icon="plus" (clicked)="add.emit()">Add project</jb-button>
+      <jb-button small icon="plus" (clicked)="add.emit()">{{ 'masterCv.form.addProject' | translate }}</jb-button>
     </div>
   `,
 })

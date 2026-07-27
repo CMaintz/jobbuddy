@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { Profile, ProfilePrivateInfo } from '../../core/models/user.model';
 import {
   WorkExperience, Education, Project, Certification,
@@ -10,7 +11,7 @@ import {
 @Component({
   selector: 'app-master-cv-preview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './master-cv-preview.component.html',
 })
 export class MasterCvPreviewComponent {

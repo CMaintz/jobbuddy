@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 /**
  * Public privacy policy page (GDPR art. 13/14 information duties).
@@ -9,7 +10,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-privacy-policy',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   templateUrl: './privacy-policy.component.html',
 })
 export class PrivacyPolicyComponent {
