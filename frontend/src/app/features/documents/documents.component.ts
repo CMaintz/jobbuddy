@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -11,13 +12,13 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { Application } from '../../core/models/application.model';
 
 const TYPE_LABELS: Record<string, string> = {
-  CV: 'Tailored CV',
-  COVER_LETTER: 'Cover letter',
-  APPLICATION_TEXT: 'Application',
-  UNSOLICITED_APPLICATION: 'Unsolicited',
-  RECRUITER_MESSAGE: 'Short pitch',
-  FOLLOW_UP_MESSAGE: 'Follow-up',
-  CV_ANALYSIS_REPORT: 'CV analysis',
+  CV: 'documents.type.cv',
+  COVER_LETTER: 'documents.type.coverLetter',
+  APPLICATION_TEXT: 'documents.type.application',
+  UNSOLICITED_APPLICATION: 'documents.type.unsolicited',
+  RECRUITER_MESSAGE: 'documents.type.shortPitch',
+  FOLLOW_UP_MESSAGE: 'documents.type.followUp',
+  CV_ANALYSIS_REPORT: 'documents.type.cvAnalysis',
 };
 
 const TYPE_TONES: Record<string, 'accent' | 'info' | 'violet' | 'success' | 'neutral'> = {
@@ -40,13 +41,14 @@ interface DocRow {
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, JbIconComponent, JbTopbarComponent, JbPillComponent],
+  imports: [CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent],
   templateUrl: './documents.component.html'
 })
 export class DocumentsComponent implements OnInit {
   private aiApi = inject(AiApiService);
   private appsApi = inject(ApplicationsApiService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   loading = signal(true);
   loadError = signal(false);
@@ -120,10 +122,10 @@ export class DocumentsComponent implements OnInit {
 
   ageLabel(iso: string): string {
     const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-    if (days === 0) return 'today';
-    if (days < 7) return `${days}d ago`;
-    if (days < 30) return `${Math.floor(days / 7)}w ago`;
-    return `${Math.floor(days / 30)}mo ago`;
+    if (days === 0) return this.translate.instant('time.today');
+    if (days < 7) return this.translate.instant('time.daysAgo', { n: days });
+    if (days < 30) return this.translate.instant('time.weeksAgo', { n: Math.floor(days / 7) });
+    return this.translate.instant('time.monthsAgo', { n: Math.floor(days / 30) });
   }
 
   preview(content: string): string {

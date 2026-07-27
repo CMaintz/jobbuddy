@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -21,13 +22,14 @@ interface JobOption {
 @Component({
   selector: 'app-cv-analysis',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, JbIconComponent, JbButtonComponent, JbToastComponent, GoalRingComponent, JbPillComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbToastComponent, GoalRingComponent, JbPillComponent],
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {
   private aiApi = inject(AiApiService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
+  private translate = inject(TranslateService);
 
   toast = signal('');
   analyzing = signal(false);
@@ -41,10 +43,10 @@ export class CvAnalysisComponent implements OnInit {
   jobOptions: JobOption[] = [];
 
   targets = [
-    { key: 'general' as const, label: 'General strength', hint: 'Clarity, achievements, ATS readiness' },
-    { key: 'job' as const, label: 'Against a job', hint: 'Pick from saved roles & applications' },
-    { key: 'paste' as const, label: 'Against a pasted JD', hint: 'Paste any job description' },
-    { key: 'pipeline' as const, label: 'Across my pipeline', hint: 'Skill gaps vs saved, applied & matched roles' },
+    { key: 'general' as const, label: 'analysis.target.general.label', hint: 'analysis.target.general.hint' },
+    { key: 'job' as const, label: 'analysis.target.job.label', hint: 'analysis.target.job.hint' },
+    { key: 'paste' as const, label: 'analysis.target.paste.label', hint: 'analysis.target.paste.hint' },
+    { key: 'pipeline' as const, label: 'analysis.target.pipeline.label', hint: 'analysis.target.pipeline.hint' },
   ];
 
   ngOnInit(): void {
@@ -91,7 +93,7 @@ export class CvAnalysisComponent implements OnInit {
         },
         error: () => {
           this.analyzing.set(false);
-          this.toast.set('Skill-gap analysis failed — try again');
+          this.toast.set(this.translate.instant('analysis.toast.gapFailed'));
         }
       });
       return;
@@ -107,7 +109,7 @@ export class CvAnalysisComponent implements OnInit {
       },
       error: () => {
         this.analyzing.set(false);
-        this.toast.set('Analysis failed — make sure your master CV has content, then try again');
+        this.toast.set(this.translate.instant('analysis.toast.analyzeFailed'));
       }
     });
   }
@@ -129,10 +131,10 @@ export class CvAnalysisComponent implements OnInit {
   /** Weights match the server-side overall: 30/25/15/30; location is a veto, shown separately. */
   dimensionRows(d: AnalysisDimensions): { label: string; value: number }[] {
     return [
-      { label: 'Technical skills', value: d.technicalSkills ?? 0 },
-      { label: 'Experience', value: d.experience ?? 0 },
-      { label: 'Culture fit', value: d.cultureFit ?? 0 },
-      { label: 'Career alignment', value: d.careerAlignment ?? 0 },
+      { label: 'analysis.dim.technical', value: d.technicalSkills ?? 0 },
+      { label: 'analysis.dim.experience', value: d.experience ?? 0 },
+      { label: 'analysis.dim.culture', value: d.cultureFit ?? 0 },
+      { label: 'analysis.dim.career', value: d.careerAlignment ?? 0 },
     ];
   }
 }

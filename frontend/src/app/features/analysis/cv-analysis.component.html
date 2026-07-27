@@ -1,6 +1,6 @@
-    <jb-topbar title="CV analysis">
+    <jb-topbar [title]="'nav.cvAnalysis' | translate">
       <ng-container jb-topbar-actions>
-        <jb-button small icon="edit" routerLink="/cv">Edit master CV</jb-button>
+        <jb-button small icon="edit" routerLink="/cv">{{ 'analysis.editMasterCv' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
@@ -11,15 +11,15 @@
 
         <!-- Config -->
         <div class="card p-4">
-          <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">1 · What to judge against</div>
+          <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">{{ 'analysis.step1' | translate }}</div>
           <div class="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             @for (t of targets; track t.key) {
               <button (click)="target.set(t.key)" class="p-3 rounded-md text-left cursor-pointer flex flex-col gap-1"
                 [style.background]="target() === t.key ? 'var(--jb-surface-2)' : 'transparent'"
                 [style.border]="'1px solid ' + (target() === t.key ? 'var(--jb-accent-border)' : 'var(--jb-border)')">
                 <div class="text-base font-medium"
-                  [style.color]="target() === t.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ t.label }}</div>
-                <div class="text-xs text-jb-text-dim">{{ t.hint }}</div>
+                  [style.color]="target() === t.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ t.label | translate }}</div>
+                <div class="text-xs text-jb-text-dim">{{ t.hint | translate }}</div>
               </button>
             }
           </div>
@@ -33,7 +33,7 @@
                   }
                 </select>
               } @else {
-                <div class="text-sm text-jb-text-dim">No saved roles or applications yet — save a role first, or paste a JD instead.</div>
+                <div class="text-sm text-jb-text-dim">{{ 'analysis.noJobs' | translate }}</div>
               }
             </div>
           }
@@ -41,12 +41,12 @@
           @if (target() === 'paste') {
             <textarea [(ngModel)]="pastedJd" rows="6" class="input resize-y mt-3 text-sm leading-relaxed"
               style="font-family:var(--font-mono,JetBrains Mono,monospace);"
-              placeholder="Paste the job description to judge your master CV against…"></textarea>
+              [placeholder]="'analysis.pastePlaceholder' | translate"></textarea>
           }
 
           <div class="flex justify-end mt-3.5">
             <jb-button [primary]="true" icon="sparkle" [disabled]="!canAnalyze()" (clicked)="analyze()">
-              {{ analyzing() ? 'Analyzing… (up to a minute)' : target() === 'pipeline' ? 'Find my skill gaps' : 'Analyze my master CV' }}
+              {{ (analyzing() ? 'analysis.analyzingLong' : target() === 'pipeline' ? 'analysis.findGaps' : 'analysis.analyzeCta') | translate }}
             </jb-button>
           </div>
         </div>
@@ -55,14 +55,14 @@
         @if (gapReport(); as report) {
           <div class="card p-5">
             <div class="flex items-baseline justify-between mb-2">
-              <div class="text-xs text-jb-text-dim tracking-widest uppercase">Skill gaps</div>
-              <div class="text-2xs text-jb-text-dim">{{ report.jobsAnalyzed }} postings analyzed</div>
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase">{{ 'analysis.skillGaps' | translate }}</div>
+              <div class="text-2xs text-jb-text-dim">{{ 'analysis.postingsAnalyzed' | translate:{ count: report.jobsAnalyzed } }}</div>
             </div>
             @if (report.summary) {
               <div class="text-base leading-relaxed mb-4">{{ report.summary }}</div>
             }
             @if (report.gaps.length === 0) {
-              <div class="text-sm text-jb-text-dim">No meaningful gaps found — your profile covers what these roles ask for.</div>
+              <div class="text-sm text-jb-text-dim">{{ 'analysis.noGaps' | translate }}</div>
             } @else {
               <div class="flex flex-col gap-3">
                 @for (gap of report.gaps; track gap.skill) {
@@ -71,8 +71,8 @@
                       <div class="text-sm font-medium">{{ gap.skill }}</div>
                       <div class="bar"><i [style.width]="gapWidth(report, gap) + '%'"></i></div>
                       <div class="flex items-center gap-2">
-                        <span class="mono text-2xs text-jb-text-dim">{{ gap.demand }}× demanded</span>
-                        <jb-pill [tone]="gapTone(gap.priority)">{{ gap.priority | lowercase }}</jb-pill>
+                        <span class="mono text-2xs text-jb-text-dim">{{ 'analysis.demanded' | translate:{ count: gap.demand } }}</span>
+                        <jb-pill [tone]="gapTone(gap.priority)">{{ ('analysis.priority.' + gap.priority.toLowerCase()) | translate }}</jb-pill>
                       </div>
                     </div>
                     @if (gap.why) {
@@ -99,12 +99,12 @@
             <div class="card p-5 flex flex-col items-center justify-center gap-2 text-center">
               <jb-goal-ring [current]="r.score" [goal]="100" [size]="110" [strokeW]="8" />
               <div class="text-3xl font-medium tracking-tight" [style.color]="scoreColor(r.score)">{{ r.score }}</div>
-              <div class="text-xs text-jb-text-dim uppercase tracking-widest">Overall score</div>
+              <div class="text-xs text-jb-text-dim uppercase tracking-widest">{{ 'analysis.overallScore' | translate }}</div>
             </div>
 
             <!-- Summary -->
             <div class="card p-5">
-              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">Verdict</div>
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'analysis.verdict' | translate }}</div>
               <div class="text-base leading-relaxed">{{ r.summary || (r.suggestions[0] ?? '') }}</div>
             </div>
           </div>
@@ -112,11 +112,11 @@
           <!-- Fit breakdown (job-targeted analyses only) -->
           @if (r.dimensions; as d) {
             <div class="card p-4">
-              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">Fit breakdown</div>
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">{{ 'analysis.fitBreakdown' | translate }}</div>
               <div class="flex flex-col gap-2.5">
                 @for (dim of dimensionRows(d); track dim.label) {
                   <div class="grid items-center gap-3 grid-cols-[130px_1fr_34px]">
-                    <div class="text-sm text-jb-text-mid">{{ dim.label }}</div>
+                    <div class="text-sm text-jb-text-mid">{{ dim.label | translate }}</div>
                     <div class="bar"><i [style.width]="dim.value + '%'" [style.background]="scoreColor(dim.value)"></i></div>
                     <div class="mono text-xs text-right" [style.color]="scoreColor(dim.value)">{{ dim.value }}</div>
                   </div>
@@ -125,7 +125,7 @@
               @if (d.location) {
                 <div class="flex items-center gap-2 mt-3 pt-3 border-t border-jb-border-faint text-sm">
                   <jb-pill [tone]="d.location === 'PASS' ? 'success' : d.location === 'FAIL' ? 'danger' : 'accent'">
-                    Location {{ d.location | lowercase }}
+                    {{ 'analysis.location' | translate }} {{ d.location | lowercase }}
                   </jb-pill>
                   @if (d.locationNote) {
                     <span class="text-jb-text-dim text-xs">{{ d.locationNote }}</span>
@@ -139,7 +139,7 @@
             <!-- Strengths -->
             @if (r.strengths?.length) {
               <div class="card p-4">
-                <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">What works</div>
+                <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">{{ 'analysis.whatWorks' | translate }}</div>
                 <div class="flex flex-col gap-2">
                   @for (s of r.strengths; track s) {
                     <div class="flex items-start gap-2 text-sm">
@@ -154,7 +154,7 @@
             <!-- Gaps -->
             @if (r.gaps?.length) {
               <div class="card p-4">
-                <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">Gaps & risks</div>
+                <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">{{ 'analysis.gapsRisks' | translate }}</div>
                 <div class="flex flex-col gap-2">
                   @for (g of r.gaps; track g) {
                     <div class="flex items-start gap-2 text-sm">
@@ -170,7 +170,7 @@
           <!-- Suggestions -->
           @if (r.suggestions.length) {
             <div class="card p-4">
-              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">Suggested improvements</div>
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2.5">{{ 'analysis.suggestions' | translate }}</div>
               <div class="flex flex-col">
                 @for (s of r.suggestions; track s; let last = $last) {
                   <div class="flex items-start gap-2.5 py-2.5 text-sm"
@@ -181,15 +181,15 @@
                 }
               </div>
               <div class="flex justify-end mt-3">
-                <jb-button small [primary]="true" icon="edit" routerLink="/cv">Apply in Master CV</jb-button>
+                <jb-button small [primary]="true" icon="edit" routerLink="/cv">{{ 'analysis.applyInCv' | translate }}</jb-button>
               </div>
             </div>
           }
         } @else if (!analyzing() && !gapReport()) {
           <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md">
             <jb-icon name="target" [size]="22" class="text-jb-accent" />
-            <div class="text-base text-jb-text-mid mt-2">Get an honest score on your master CV</div>
-            <div class="text-xs text-jb-text-dim mt-1">Strengths, gaps, and concrete fixes — generally or against a specific role.</div>
+            <div class="text-base text-jb-text-mid mt-2">{{ 'analysis.emptyTitle' | translate }}</div>
+            <div class="text-xs text-jb-text-dim mt-1">{{ 'analysis.emptyDesc' | translate }}</div>
           </div>
         }
       </div>

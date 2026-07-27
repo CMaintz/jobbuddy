@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -17,8 +18,8 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
 const INTERVIEW_STAGES: ApplicationStatus[] = ['RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'];
 
 const STAGE_LABELS: Record<string, string> = {
-  RECRUITER_CONTACT: 'Screen', INTERVIEW: 'Interview',
-  TECHNICAL_TEST: 'Technical', FINAL_ROUND: 'Final round',
+  RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview',
+  TECHNICAL_TEST: 'pipeline.stage.technical', FINAL_ROUND: 'interviews.stage.finalRound',
 };
 
 const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> = {
@@ -28,7 +29,7 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
 @Component({
   selector: 'app-interviews',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, JbModalComponent],
+  imports: [CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, JbModalComponent],
   templateUrl: './interviews.component.html'
 })
 export class InterviewsComponent implements OnInit {
@@ -36,6 +37,7 @@ export class InterviewsComponent implements OnInit {
   private prepApi = inject(InterviewPrepApiService);
   private remindersApi = inject(RemindersApiService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   loading = signal(true);
   toast = signal('');
@@ -58,10 +60,10 @@ export class InterviewsComponent implements OnInit {
   logWhen = '';
   logNote = '';
   logStages: { key: ApplicationStatus; label: string }[] = [
-    { key: 'RECRUITER_CONTACT', label: 'Screen / recruiter call' },
-    { key: 'INTERVIEW', label: 'Interview' },
-    { key: 'TECHNICAL_TEST', label: 'Technical / case' },
-    { key: 'FINAL_ROUND', label: 'Final round' },
+    { key: 'RECRUITER_CONTACT', label: 'interviews.logStage.screen' },
+    { key: 'INTERVIEW', label: 'interviews.logStage.interview' },
+    { key: 'TECHNICAL_TEST', label: 'interviews.logStage.technical' },
+    { key: 'FINAL_ROUND', label: 'interviews.logStage.finalRound' },
   ];
 
   exportingIcs = signal(false);
@@ -88,7 +90,7 @@ export class InterviewsComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set('Could not load applications');
+        this.toast.set(this.translate.instant('interviews.toast.loadFailed'));
       }
     });
   }
@@ -110,7 +112,8 @@ export class InterviewsComponent implements OnInit {
     this.logSaving.set(true);
     const dueAt = new Date(this.logWhen).toISOString();
     const app = this.allApps.find(a => a.id === this.logAppId);
-    const note = `Interview — ${this.logStages.find(s => s.key === this.logStage)?.label ?? 'Interview'}`
+    const stageLabel = this.translate.instant(this.logStages.find(s => s.key === this.logStage)?.label ?? 'interviews.logStage.interview');
+    const note = `${this.translate.instant('interviews.reminderPrefix')} ${stageLabel}`
       + (this.logNote.trim() ? `: ${this.logNote.trim()}` : '');
 
     this.appsApi.updateStatus(this.logAppId, this.logStage).subscribe({
@@ -119,12 +122,12 @@ export class InterviewsComponent implements OnInit {
           next: () => {
             this.logSaving.set(false);
             this.logOpen.set(false);
-            this.toast.set(`Interview logged for ${app?.jobCompanyName ?? 'the role'}`);
+            this.toast.set(this.translate.instant('interviews.toast.logged', { company: app?.jobCompanyName ?? this.translate.instant('interviews.theRole') }));
             this.refreshInterviews(updated);
           },
           error: () => {
             this.logSaving.set(false);
-            this.toast.set('Stage updated, but the reminder could not be created');
+            this.toast.set(this.translate.instant('interviews.toast.reminderFailed'));
             this.logOpen.set(false);
             this.refreshInterviews(updated);
           }
@@ -132,7 +135,7 @@ export class InterviewsComponent implements OnInit {
       },
       error: () => {
         this.logSaving.set(false);
-        this.toast.set('Could not update the application stage');
+        this.toast.set(this.translate.instant('interviews.toast.stageFailed'));
       }
     });
   }
@@ -158,14 +161,14 @@ export class InterviewsComponent implements OnInit {
         this.exportingIcs.set(false);
         const upcoming = reminders.filter(r => new Date(r.dueAt).getTime() > Date.now() - 86400000);
         if (upcoming.length === 0) {
-          this.toast.set('No upcoming reminders or interviews to export');
+          this.toast.set(this.translate.instant('interviews.toast.noExport'));
           return;
         }
         const appById = new Map(this.allApps.map(a => [a.id, a]));
         const events = upcoming.map(r => {
           const app = appById.get(r.applicationId);
           const where = app ? `${app.jobCompanyName ?? ''} — ${app.jobTitle ?? ''}` : '';
-          return icsEvent(r.id, new Date(r.dueAt), r.note || 'Follow up', where);
+          return icsEvent(r.id, new Date(r.dueAt), r.note || this.translate.instant('interviews.followUpFallback'), where);
         });
         const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Jobbuddy//EN', ...events, 'END:VCALENDAR'].join('\r\n');
         const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
@@ -178,7 +181,7 @@ export class InterviewsComponent implements OnInit {
       },
       error: () => {
         this.exportingIcs.set(false);
-        this.toast.set('Could not load reminders for the export');
+        this.toast.set(this.translate.instant('interviews.toast.exportLoadFailed'));
       }
     });
   }
@@ -215,7 +218,7 @@ export class InterviewsComponent implements OnInit {
       },
       error: () => {
         this.generating.set(false);
-        this.toast.set('Prep pack generation failed — try again');
+        this.toast.set(this.translate.instant('interviews.toast.prepFailed'));
       }
     });
   }
@@ -235,7 +238,7 @@ export class InterviewsComponent implements OnInit {
     if (!app || answer === (q.starAnswer ?? '')) return;
     this.prepApi.updateQuestion(app.jobId, q.id, { starAnswer: answer }).subscribe({
       next: () => this.questions.update(qs => qs.map(x => x.id === q.id ? { ...x, starAnswer: answer } : x)),
-      error: () => this.toast.set('Could not save the answer')
+      error: () => this.toast.set(this.translate.instant('interviews.toast.answerFailed'))
     });
   }
 
@@ -261,7 +264,7 @@ export class InterviewsComponent implements OnInit {
       error: () => {
         this.roleplayBusy.set(false);
         this.roleplayOpen.set(false);
-        this.toast.set('Could not start the mock interview');
+        this.toast.set(this.translate.instant('interviews.toast.mockFailed'));
       }
     });
   }
@@ -280,7 +283,7 @@ export class InterviewsComponent implements OnInit {
       },
       error: () => {
         this.roleplayBusy.set(false);
-        this.toast.set('The interviewer did not respond — try sending again');
+        this.toast.set(this.translate.instant('interviews.toast.noResponse'));
       }
     });
   }
@@ -301,7 +304,7 @@ export class InterviewsComponent implements OnInit {
       },
       error: () => {
         this.roleplayBusy.set(false);
-        this.toast.set('Could not get feedback — try again');
+        this.toast.set(this.translate.instant('interviews.toast.feedbackFailed'));
       }
     });
   }
