@@ -1,12 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
@@ -45,10 +46,10 @@ export class LoginComponent {
     switch (code) {
       case 'auth/invalid-credential':
       case 'auth/wrong-password':
-      case 'auth/user-not-found': return 'Invalid email or password.';
-      case 'auth/user-disabled': return 'This account has been disabled.';
-      case 'auth/too-many-requests': return 'Too many attempts. Please try again later.';
-      default: return 'Sign in failed. Please try again.';
+      case 'auth/user-not-found': return 'auth.error.invalidCredentials';
+      case 'auth/user-disabled': return 'auth.error.userDisabled';
+      case 'auth/too-many-requests': return 'auth.error.tooManyRequests';
+      default: return 'auth.error.signInFailed';
     }
   }
 }
