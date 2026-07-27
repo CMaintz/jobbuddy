@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, of, catchError } from 'rxjs';
 import { DashboardApiService, DetailedMetrics, WeeklyTrend } from '../../core/api/dashboard.api';
@@ -25,11 +26,11 @@ const HEATMAP_WEEKS = 14;
 
 type PeriodKey = '4w' | '3m' | '6m' | 'all';
 
-const PERIODS: { key: PeriodKey; label: string; days: number; weeks: number }[] = [
-  { key: '4w', label: '4 weeks', days: 28, weeks: 4 },
-  { key: '3m', label: '3 months', days: 91, weeks: 13 },
-  { key: '6m', label: '6 months', days: 182, weeks: 26 },
-  { key: 'all', label: 'All time', days: Infinity, weeks: 26 },
+const PERIODS: { key: PeriodKey; labelKey: string; days: number; weeks: number }[] = [
+  { key: '4w', labelKey: 'dashboard.period.4w', days: 28, weeks: 4 },
+  { key: '3m', labelKey: 'dashboard.period.3m', days: 91, weeks: 13 },
+  { key: '6m', labelKey: 'dashboard.period.6m', days: 182, weeks: 26 },
+  { key: 'all', labelKey: 'dashboard.period.all', days: Infinity, weeks: 26 },
 ];
 
 /** Statuses that mean the company replied in some form. */
@@ -41,16 +42,16 @@ const SENT_STATUSES = new Set([
 ]);
 
 const STATUS_FEED: Record<string, { what: string; color: string }> = {
-  SAVED: { what: 'Saved to pipeline', color: 'var(--jb-text-dim)' },
-  PREPARING: { what: 'Preparing application', color: 'var(--jb-accent)' },
-  APPLIED: { what: 'Applied', color: 'var(--jb-info)' },
-  RECRUITER_CONTACT: { what: 'Recruiter contact', color: 'var(--jb-violet)' },
-  INTERVIEW: { what: 'Interview stage', color: 'var(--jb-accent)' },
-  TECHNICAL_TEST: { what: 'Technical test', color: 'var(--jb-accent)' },
-  FINAL_ROUND: { what: 'Final round', color: 'var(--jb-accent)' },
-  OFFER: { what: 'Offer received', color: 'var(--jb-success)' },
-  REJECTED: { what: 'Rejected', color: 'var(--jb-danger)' },
-  ARCHIVED: { what: 'Archived', color: 'var(--jb-text-dim)' },
+  SAVED: { what: 'dashboard.status.saved', color: 'var(--jb-text-dim)' },
+  PREPARING: { what: 'dashboard.status.preparing', color: 'var(--jb-accent)' },
+  APPLIED: { what: 'dashboard.status.applied', color: 'var(--jb-info)' },
+  RECRUITER_CONTACT: { what: 'dashboard.status.recruiterContact', color: 'var(--jb-violet)' },
+  INTERVIEW: { what: 'dashboard.status.interview', color: 'var(--jb-accent)' },
+  TECHNICAL_TEST: { what: 'dashboard.status.technicalTest', color: 'var(--jb-accent)' },
+  FINAL_ROUND: { what: 'dashboard.status.finalRound', color: 'var(--jb-accent)' },
+  OFFER: { what: 'dashboard.status.offer', color: 'var(--jb-success)' },
+  REJECTED: { what: 'dashboard.status.rejected', color: 'var(--jb-danger)' },
+  ARCHIVED: { what: 'dashboard.status.archived', color: 'var(--jb-text-dim)' },
 };
 
 interface QueueItem {
@@ -79,7 +80,7 @@ interface SavedPreview {
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
+    CommonModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
     StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,
   ],
   templateUrl: './dashboard.component.html'
@@ -91,6 +92,7 @@ export class DashboardComponent implements OnInit {
   private nudgesApi = inject(NudgesApiService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
+  private translate = inject(TranslateService);
 
   layout = signal<'dense' | 'editorial'>('dense');
   period = signal<PeriodKey>((localStorage.getItem('jb-dash-period') as PeriodKey) || '4w');
@@ -123,7 +125,10 @@ export class DashboardComponent implements OnInit {
 
   get greeting(): string {
     const hour = new Date().getHours();
-    return hour < 5 ? 'Up late.' : hour < 12 ? 'Good morning.' : hour < 18 ? 'Good afternoon.' : 'Good evening.';
+    return hour < 5 ? 'dashboard.greeting.late'
+      : hour < 12 ? 'dashboard.greeting.morning'
+      : hour < 18 ? 'dashboard.greeting.afternoon'
+      : 'dashboard.greeting.evening';
   }
 
   ngOnInit(): void {
@@ -234,10 +239,10 @@ export class DashboardComponent implements OnInit {
       const app = appMap.get(r.applicationId);
       const overdue = new Date(r.dueAt).getTime() < now;
       return {
-        time: overdue ? 'now' : new Date(r.dueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        what: r.note || 'Follow up',
+        time: overdue ? 'dashboard.queue.now' : new Date(r.dueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        what: r.note || 'dashboard.queue.followUp',
         detail: app ? `${app.jobCompanyName ?? ''} · ${app.jobTitle ?? ''}` : '',
-        tag: 'follow-up',
+        tag: 'dashboard.tag.followUp',
         tone: overdue ? 'danger' : 'info',
         hot: overdue,
       };
@@ -252,19 +257,19 @@ export class DashboardComponent implements OnInit {
     if (n.type === 'DEADLINE_SOON') {
       const daysLeft = Math.max(0, Math.ceil((new Date(n.deadline ?? '').getTime() - Date.now()) / 86400000));
       return {
-        time: daysLeft === 0 ? 'today' : `${daysLeft}d left`,
-        what: 'Apply before the deadline',
+        time: daysLeft === 0 ? 'dashboard.queue.today' : `${daysLeft}d`,
+        what: 'dashboard.queue.applyDeadline',
         detail,
-        tag: 'deadline',
+        tag: 'dashboard.tag.deadline',
         tone: daysLeft <= 2 ? 'danger' : 'info',
         hot: daysLeft <= 2,
       };
     }
     return {
       time: `${n.daysSinceApplied}d`,
-      what: 'No reply yet — send a follow-up',
+      what: 'dashboard.queue.noReply',
       detail,
-      tag: 'no reply',
+      tag: 'dashboard.tag.noReply',
       tone: 'violet',
       hot: false,
     };
@@ -273,11 +278,11 @@ export class DashboardComponent implements OnInit {
   ageLabel(iso?: string): string {
     if (!iso) return '—';
     const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-    if (mins < 60) return `${Math.max(mins, 1)}m`;
+    if (mins < 60) return this.translate.instant('time.compact.minutes', { n: Math.max(mins, 1) });
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h`;
+    if (hours < 24) return this.translate.instant('time.compact.hours', { n: hours });
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d`;
-    return `${Math.floor(days / 7)}w`;
+    if (days < 7) return this.translate.instant('time.compact.days', { n: days });
+    return this.translate.instant('time.compact.weeks', { n: Math.floor(days / 7) });
   }
 }
