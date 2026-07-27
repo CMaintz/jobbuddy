@@ -1,8 +1,10 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
 import { ThemeService } from './core/theme.service';
+import { LanguageService } from './core/language.service';
 import { JbIconComponent } from './shared/components/jb-icon/jb-icon.component';
 import { Subscription, filter } from 'rxjs';
 
@@ -21,12 +23,13 @@ interface NavItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, JbIconComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, TranslateModule, JbIconComponent],
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   theme = inject(ThemeService);
+  language = inject(LanguageService);
   private router = inject(Router);
   private userSub?: Subscription;
 
@@ -37,27 +40,27 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // ── Navigation definitions ──────────────────────────
   mainNav: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard',       icon: 'dashboard', route: '/dashboard',  kbd: 'G D' },
-    { id: 'jobfeed',   label: 'Job feed',        icon: 'compass',   route: '/jobs/feed',  kbd: 'G F' },
-    { id: 'pipeline',  label: 'Pipeline',        icon: 'pipeline',  route: '/pipeline',   kbd: 'G P' },
-    { id: 'addjob',    label: 'New application', icon: 'sparkle',   route: '/apply',      kbd: 'N', accent: true },
+    { id: 'dashboard', label: 'nav.dashboard',      icon: 'dashboard', route: '/dashboard',  kbd: 'G D' },
+    { id: 'jobfeed',   label: 'nav.jobFeed',        icon: 'compass',   route: '/jobs/feed',  kbd: 'G F' },
+    { id: 'pipeline',  label: 'nav.pipeline',       icon: 'pipeline',  route: '/pipeline',   kbd: 'G P' },
+    { id: 'addjob',    label: 'nav.newApplication', icon: 'sparkle',   route: '/apply',      kbd: 'N', accent: true },
   ];
 
   trackNav: NavItem[] = [
-    { id: 'tasks',      label: 'Tasks',      icon: 'bell',      route: '/tasks' },
-    { id: 'interviews', label: 'Interviews', icon: 'briefcase', route: '/interviews' },
+    { id: 'tasks',      label: 'nav.tasks',      icon: 'bell',      route: '/tasks' },
+    { id: 'interviews', label: 'nav.interviews', icon: 'briefcase', route: '/interviews' },
   ];
 
   libraryNav: NavItem[] = [
-    { id: 'master',       label: 'Master CV',      icon: 'doc',       route: '/cv' },
-    { id: 'applications', label: 'Applications',   icon: 'layers',    route: '/applications' },
-    { id: 'documents',    label: 'Documents',      icon: 'clipboard', route: '/documents' },
-    { id: 'saved',        label: 'Saved roles',    icon: 'bookmark',  route: '/jobs/saved' },
-    { id: 'prompts',      label: 'Prompts',        icon: 'lightbulb', route: '/prompts' },
-    { id: 'resume',       label: 'CV Builder', icon: 'edit',      route: '/resume-builder' },
-    { id: 'analysis',     label: 'CV analysis',    icon: 'target',    route: '/analysis' },
-    { id: 'analytics',    label: 'Analytics',      icon: 'chart-up',  route: '/analytics' },
-    { id: 'companies',    label: 'Companies',      icon: 'building',  route: '/companies' },
+    { id: 'master',       label: 'nav.masterCv',    icon: 'doc',       route: '/cv' },
+    { id: 'applications', label: 'nav.applications', icon: 'layers',   route: '/applications' },
+    { id: 'documents',    label: 'nav.documents',   icon: 'clipboard', route: '/documents' },
+    { id: 'saved',        label: 'nav.savedRoles',  icon: 'bookmark',  route: '/jobs/saved' },
+    { id: 'prompts',      label: 'nav.prompts',     icon: 'lightbulb', route: '/prompts' },
+    { id: 'resume',       label: 'nav.cvBuilder',   icon: 'edit',      route: '/resume-builder' },
+    { id: 'analysis',     label: 'nav.cvAnalysis',  icon: 'target',    route: '/analysis' },
+    { id: 'analytics',    label: 'nav.analytics',   icon: 'chart-up',  route: '/analytics' },
+    { id: 'companies',    label: 'nav.companies',   icon: 'building',  route: '/companies' },
   ];
 
   oldFrontendNav = [
