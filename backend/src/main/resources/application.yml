@@ -46,6 +46,23 @@ app:
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}
+    # ── Job connector (public jobs-guest endpoints). Personal, low-volume use only. ──
+    enabled: ${LINKEDIN_SCRAPER_ENABLED:true}
+    # Pipe-separated LinkedIn place strings (comma is part of a place name, so it can't be the separator).
+    locations: ${LINKEDIN_LOCATIONS:Denmark}
+    job-age-days: 14          # only pull postings from the last N days (recency filter)
+    max-pages-per-query: 2    # 10 results per page
+    queries-per-run: 10       # rotate a subset of (keyword × location) searches each run
+    max-jobs-per-run: 40      # hard ceiling on new detail fetches per run — the main volume guard
+    min-delay-ms: 4000        # randomised pause between requests, lower bound
+    max-delay-ms: 9000        # …upper bound
+    schedule:
+      cron: "0 0 9,13,18 * * *"   # a few times a day; the connector, not the cron, bounds volume
+      jitter-max-minutes: 50      # random pre-run delay so runs don't land on a fixed tick
+    plan:
+      staleness-days: 14       # regenerate a user's keyword plan once it's older than this
+      max-keywords: 30         # hard ceiling on keywords per profile (the "wide" budget)
+      default-breadth: wide    # narrow | normal | wide
   careerjet:
     affiliate-id: ${CAREERJET_AFFILIATE_ID:}
   greenhouse:

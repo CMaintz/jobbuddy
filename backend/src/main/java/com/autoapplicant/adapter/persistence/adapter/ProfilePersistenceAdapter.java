@@ -45,6 +45,11 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
         return repo.findByUserId(userId).map(this::toDomain);
     }
 
+    @Override
+    public List<Profile> findAll() {
+        return repo.findAll().stream().map(this::toDomain).toList();
+    }
+
     private Profile toDomain(ProfileEntity e) {
         return new Profile(e.getId(), e.getUserId(), e.getHeadline(),
                 e.getSummary(), e.getYearsExperience(),
