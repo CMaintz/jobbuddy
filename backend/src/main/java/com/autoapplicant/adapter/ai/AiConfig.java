@@ -48,8 +48,19 @@ public class AiConfig {
             @Qualifier("openAiHttpClient") OpenAIClient openAi,
             @Qualifier("geminiHttpClient") OpenAIClient gemini,
             AppProperties props) {
-        return "gemini".equalsIgnoreCase(props.getAi().getGenerationProvider())
+        String provider = props.getAi().getGenerationProvider();
+        if (isCliProvider(provider)) {
+            return new CliAgentAdapter(props);
+        }
+        return "gemini".equalsIgnoreCase(provider)
                 ? new GeminiAdapter(gemini, props)
                 : new OpenAiAdapter(openAi, props);
+    }
+
+    /** CLI-agent generation (Claude Code / Codex) — cheap flat-fee path. Never used for embeddings. */
+    private static boolean isCliProvider(String provider) {
+        return provider != null && (provider.equalsIgnoreCase("claude-cli")
+                || provider.equalsIgnoreCase("cli")
+                || provider.equalsIgnoreCase("codex"));
     }
 }

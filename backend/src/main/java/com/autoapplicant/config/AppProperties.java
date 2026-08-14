@@ -32,10 +32,33 @@ public class AppProperties {
     public static class Ai {
         private String enrichmentProvider = "gemini";
         private String generationProvider = "openai";
+        private Cli cli = new Cli();
         public String getEnrichmentProvider() { return enrichmentProvider; }
         public void setEnrichmentProvider(String enrichmentProvider) { this.enrichmentProvider = enrichmentProvider; }
         public String getGenerationProvider() { return generationProvider; }
         public void setGenerationProvider(String generationProvider) { this.generationProvider = generationProvider; }
+        public Cli getCli() { return cli; }
+        public void setCli(Cli cli) { this.cli = cli; }
+    }
+
+    /**
+     * Local CLI-agent generation provider (Claude Code / Codex). Used when
+     * {@code app.ai.generation-provider} is {@code claude-cli}/{@code codex}/{@code cli}: prompts are
+     * piped to the agent's stdin so generation runs on a flat-fee subscription instead of API calls.
+     * Embeddings are never produced here — keep a real API provider for enrichment.
+     */
+    public static class Cli {
+        /** Command + fixed args; the prompt is piped to stdin. e.g. "claude -p" or "codex exec". */
+        private String command = "claude -p";
+        private int timeoutSeconds = 120;
+        /** Label reported as the model name for provenance in saved documents. */
+        private String modelLabel = "cli-agent";
+        public String getCommand() { return command; }
+        public void setCommand(String command) { this.command = command; }
+        public int getTimeoutSeconds() { return timeoutSeconds; }
+        public void setTimeoutSeconds(int timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
+        public String getModelLabel() { return modelLabel; }
+        public void setModelLabel(String modelLabel) { this.modelLabel = modelLabel; }
     }
 
     public static class Openai {

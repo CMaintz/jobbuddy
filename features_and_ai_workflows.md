@@ -2,15 +2,14 @@
 
 # Job Sources
 
-Initial sources:
+Implemented crawler connectors (feed the shared ingestion pipeline):
 
-- LinkedIn Jobs
-- Jobindex
-- IT Jobbank
-- The Hub
-- Ofir
-- WorkinDenmark
-- company career pages
+- Jobindex, Jobnet, IT-Jobbank, Jobdanmark (Danish boards, RSS/JSON)
+- ATS boards: Greenhouse, Lever, Teamtailor, Cornerstone OnDemand
+- Careerjet (aggregator)
+- **LinkedIn Jobs** — personal-use, low-volume connector over the public `jobs-guest` endpoints (`LinkedInConnector`). Kept off the shared 4-hour schedule; runs on its own jittered `LinkedInCrawlScheduler`. Search keywords come from per-user **LLM-generated query plans** (`linkedin_query_plan`), crossed with configured locations, rotated per run, recency-filtered, with randomized delays and a per-run cap.
+
+Planned / not yet implemented: The Hub, Ofir, WorkinDenmark, generic company career pages.
 
 ---
 
@@ -211,6 +210,48 @@ The AI should emphasize the most relevant projects per role.
 - editable application text
 - recruiter outreach message
 - follow-up messages
+
+---
+
+# Automatic Reviewer Loop
+
+After generation, a fresh-context **reviewer pass** critiques the draft (a "demanding hiring
+manager") against the posting and the user's writing profile — missed keywords, weak/generic
+framing, overreaching claims, style mismatches — then returns a revised version plus a critique
+list. Wired into document generation (`AiService.generateDocument`), config-gated:
+
+- `app.ai.auto-review.enabled` (default `true`) — each pass is one extra LLM call.
+- `app.ai.auto-review.max-iterations` (default `1`) — loop stops early once a pass reports no further critique.
+
+Also available as a manual on-demand endpoint (`ReviewDocumentUseCase`). This realizes part of
+the "optimization loops" idea from Future Features.
+
+---
+
+# Prompt Safety & Anti-Fabrication
+
+Fixed, server-side guardrails on every generation/analysis prompt (not user-editable):
+
+- **No fabrication** of skills, experience, credentials, or outcomes — frame adjacent experience or leave the gap visible.
+- **No tool-of-trade conflation** — using a technology is not building it; never claim the candidate authored a project/tool unless the profile attributes it.
+- **Silence beats invention** — omit details not in the profile rather than manufacture them.
+- **Untrusted-input guard** — scraped/posted job text (incl. crawled LinkedIn/board HTML) is treated as data to evaluate, never as instructions (prompt-injection defense).
+- **Privacy** — identity fields (name, contact, photo, links) are never sent to the AI.
+
+---
+
+# AI Provider Options
+
+Generation is provider-pluggable via `app.ai.generation-provider`:
+
+- `openai` (default) / `gemini` — API providers.
+- `claude-cli` / `codex` / `cli` — a **local CLI agent** (Claude Code / Codex): prompts are piped to
+  the agent's stdin (`app.ai.cli.command`, default `claude -p`), so generation runs on a flat-fee
+  subscription instead of per-token API cost.
+
+Embeddings (`app.ai.enrichment-provider`) must remain a real API — CLI agents produce text, not
+vectors. The split (generation → CLI, embeddings → cheap API) captures the cost savings while
+keeping semantic search working. Best for on-demand generation, not high-throughput bulk enrichment.
 
 ---
 
