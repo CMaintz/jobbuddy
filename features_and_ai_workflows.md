@@ -238,6 +238,18 @@ Fixed, server-side guardrails on every generation/analysis prompt (not user-edit
 - **Untrusted-input guard** — scraped/posted job text (incl. crawled LinkedIn/board HTML) is treated as data to evaluate, never as instructions (prompt-injection defense).
 - **Privacy** — identity fields (name, contact, photo, links) are never sent to the AI.
 
+## Deterministic Fact Gate
+
+A model-free backstop (`DocumentFactGuard`, ported from career-ops' `verify-cv-facts.mjs`):
+after generation it extracts metric-like claims — percentages, currency figures, multipliers,
+and `<number> <metric-noun>` counts — from the document and flags any not supported by the
+source career profile, catching invented or inflated numbers at **zero token cost**. Digit-folding
+(multilingual) and thousands-separator normalization are applied symmetrically to document and
+source, so a truthful number never false-fails. Config: `app.ai.fact-guard.enabled` (default `true`),
+`app.ai.fact-guard.mode` = `warn` (log, default) | `block` (fail generation). Complements the LLM
+reviewer loop — the reviewer's honesty rules are the first line of defense, the fact gate is the
+deterministic net.
+
 ---
 
 # AI Provider Options

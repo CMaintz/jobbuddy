@@ -19,6 +19,7 @@ import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.DocumentFactGuard;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final BuildApplicationDocumentPort buildApplicationDocument;
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
     private final ApplicationRepositoryPort applicationRepo;
+    private final DocumentFactGuard factGuard;
     private final ObjectMapper objectMapper;
 
     /** When true, generateDocument runs a reviewer critique/revise pass on the draft before assembling. */
@@ -55,6 +57,14 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     /** Max reviewer passes; the loop also stops early once a pass reports no further critique. */
     @org.springframework.beans.factory.annotation.Value("${app.ai.auto-review.max-iterations:1}")
     private int autoReviewMaxIterations;
+
+    /** When true, a deterministic fact gate checks generated metrics against the source profile. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.fact-guard.enabled:true}")
+    private boolean factGuardEnabled;
+
+    /** {@code warn} logs unsupported metrics; {@code block} fails generation when any are found. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.fact-guard.mode:warn}")
+    private String factGuardMode;
 
     public AiService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
@@ -66,6 +76,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      BuildApplicationDocumentPort buildApplicationDocument,
                      PersistGeneratedDocumentPort persistGeneratedDocument,
                      ApplicationRepositoryPort applicationRepo,
+                     DocumentFactGuard factGuard,
                      ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.jobRepo = jobRepo;
@@ -77,6 +88,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.buildApplicationDocument = buildApplicationDocument;
         this.persistGeneratedDocument = persistGeneratedDocument;
         this.applicationRepo = applicationRepo;
+        this.factGuard = factGuard;
         this.objectMapper = objectMapper;
     }
 
@@ -286,6 +298,9 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             // original pass is retained — the reviewer is instructed never to drop keywords.
             String body = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
 
+            // Deterministic fact gate: flag (or block on) metric claims not supported by the profile.
+            applyFactGuard(body, contactFreeJson, documentType);
+
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                     userId, type, body, templateId,
@@ -324,6 +339,24 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             }
         }
         return current;
+    }
+
+    /**
+     * Runs the deterministic fact gate on the generated body against the source profile.
+     * In {@code warn} mode (default) unsupported metric claims are logged; in {@code block}
+     * mode their presence fails generation. The reviewer loop's honesty rules are the first
+     * line of defence — this is the model-free backstop that catches invented/inflated numbers.
+     */
+    private void applyFactGuard(String body, String sourceProfileJson, String documentType) {
+        if (!factGuardEnabled) return;
+        DocumentFactGuard.FactAudit audit = factGuard.audit(body, sourceProfileJson);
+        if (audit.clean()) return;
+        String msg = "Fact guard: metric claim(s) not supported by the profile in "
+                + (documentType != null ? documentType : "document") + ": " + audit.inventedMetrics();
+        if ("block".equalsIgnoreCase(factGuardMode)) {
+            throw new IllegalStateException(msg + " — generation blocked (app.ai.fact-guard.mode=block)");
+        }
+        log.warn(msg);
     }
 
     private static void validateApplicationResponse(ApplicationDocumentAiResponse response) {
