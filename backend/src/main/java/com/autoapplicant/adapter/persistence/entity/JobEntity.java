@@ -119,6 +119,10 @@ public class JobEntity {
     @Column(name = "url_check_failures", nullable = false)
     private int urlCheckFailures = 0;
 
+    /** 64-bit SimHash of the description for cross-listing dedup; entity-only (not on the domain record). */
+    @Column(name = "content_fingerprint")
+    private Long contentFingerprint;
+
     @PrePersist void prePersist() {
         if (scrapedAt == null) scrapedAt = Instant.now();
         createdAt = updatedAt = Instant.now();
@@ -197,4 +201,6 @@ public class JobEntity {
     public void setLastUrlCheckAt(Instant lastUrlCheckAt) { this.lastUrlCheckAt = lastUrlCheckAt; }
     public int getUrlCheckFailures() { return urlCheckFailures; }
     public void setUrlCheckFailures(int urlCheckFailures) { this.urlCheckFailures = urlCheckFailures; }
+    public Long getContentFingerprint() { return contentFingerprint; }
+    public void setContentFingerprint(Long contentFingerprint) { this.contentFingerprint = contentFingerprint; }
 }

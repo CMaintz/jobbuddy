@@ -45,4 +45,12 @@ public interface JobRepositoryPort {
      * Returns the affected job ids so the search index can be updated.
      */
     List<UUID> deactivateDeadlineExpiredJobs(java.time.LocalDate before);
+
+    // ── Content-fingerprint dedup (cross-listing detection) ──────────────
+    /** An active job (other than {@code excludeId}) sharing this SimHash fingerprint, if any. */
+    Optional<Job> findActiveDuplicateByFingerprint(long fingerprint, UUID excludeId);
+    /** Store a job's content fingerprint (entity-only field). */
+    void assignContentFingerprint(UUID jobId, long fingerprint);
+    /** Cluster a job into a duplicate group. */
+    void assignDuplicateGroup(UUID jobId, UUID duplicateGroupId);
 }

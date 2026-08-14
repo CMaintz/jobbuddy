@@ -26,6 +26,17 @@ Crawler
 → Matching Engine
 ```
 
+## Deduplication & Liveness
+
+- **Exact dedup** — by `source` + `sourceJobId` (re-crawls refresh `lastSeenAt` instead of re-inserting).
+- **Cross-listing dedup** — a 64-bit **SimHash** content fingerprint (`SimHash`, from an external reference implementation)
+  of the cleaned description clusters the same role re-listed under a different company/URL (the
+  agency-repost case) via a shared `duplicate_group_id`. Flag-only — jobs are grouped, never dropped.
+- **Liveness (3-state)** — `JobUrlProbePort` classifies postings as ALIVE / INCONCLUSIVE / GONE /
+  GONE_SOFT. Only 404/410 (and, after two sightings, "no longer available" markers incl. Danish)
+  deactivate a posting; 403/429/5xx are treated as inconclusive (bot protection), **never** as
+  proof the job is gone. Complements crawl-presence staleness expiry.
+
 ---
 
 # Search & Filtering
