@@ -5,9 +5,12 @@ An AI-powered job application platform that helps candidates go from job posting
 ## Features
 
 - **Career profile management** — structured profile with experience, education, skills, and projects; can be bootstrapped by parsing an existing CV
-- **Job discovery** — job posting crawler and full-text/semantic search powered by Typesense
-- **AI document generation** — tailored CVs and cover letters generated with OpenAI (`gpt-4o`), matched against a specific job posting
+- **Job discovery** — multi-source job crawler (Jobindex, Jobnet, IT-Jobbank, Jobdanmark, + ATS boards) and full-text/semantic search powered by Typesense
+- **LinkedIn job connector** — personal-use, low-volume connector over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated per-user keyword plans; runs on its own jittered schedule off the shared crawl (see `db.md` / `application.yml` `app.linkedin.*`)
+- **AI document generation** — tailored CVs and cover letters generated against a specific posting, with a configurable **automatic drafter→reviewer loop** that critiques and revises each draft before assembly
 - **ATS reports** — automated analysis of how well a generated document matches the target posting
+- **Prompt-safety hardening** — anti-fabrication rules (incl. tool-of-trade conflation), and a prompt-injection guard treating scraped/posted job text as untrusted data, never instructions
+- **Pluggable AI providers** — OpenAI, Gemini, or a **local CLI-agent** (Claude Code / Codex) for generation to run on a flat-fee subscription instead of API calls; embeddings always use a real API
 - **Structured document pipeline** — all AI output is structured JSON (never raw text blobs), assembled server-side into a `StructuredDocument` with identity, sections, and rendering options
 - **PDF export** — ATS-friendly and designed templates rendered server-side
 - **Privacy by design** — personally identifying fields (name, email, phone, photo, links) are *never* sent to the AI provider; identity is merged into documents after the AI call
@@ -23,7 +26,7 @@ An AI-powered job application platform that helps candidates go from job posting
 | Frontend | Angular (standalone components, lazy-loaded routes) |
 | Database | PostgreSQL with Flyway migrations |
 | Search | Typesense (keyword + vector search, `text-embedding-3-small`) |
-| AI | OpenAI API (`gpt-4o`, embeddings) |
+| AI | OpenAI / Gemini API, or a local CLI agent (Claude Code / Codex) for generation |
 | Auth | Firebase Authentication (JWT), optional LinkedIn OAuth |
 | Docs | Springdoc OpenAPI / Swagger UI |
 | Infra | Docker Compose (Postgres, Typesense, backend, frontend) |
@@ -84,6 +87,13 @@ cd frontend; npm install; npm run start:local
 - Firebase service account JSON at `.secrets/firebase-service-account.json`
 
 Optional: `DB_*`, `TYPESENSE_*`, `LINKEDIN_CLIENT_ID`/`SECRET`, `ALLOWED_ORIGINS` (all have local defaults).
+
+AI provider / feature toggles (all optional, sensible defaults):
+
+- `GENERATION_AI_PROVIDER` — `openai` (default) · `gemini` · `claude-cli` / `codex` / `cli` (local agent). `ENRICHMENT_AI_PROVIDER` must stay a real API (produces embeddings).
+- `AI_CLI_COMMAND` — CLI invoked for generation when using a local agent (default `claude -p`; prompt piped to stdin).
+- `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
+- `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (see `app.linkedin.*` in `application.yml`).
 
 ## Tests
 
