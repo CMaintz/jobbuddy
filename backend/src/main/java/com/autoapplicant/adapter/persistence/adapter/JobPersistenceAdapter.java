@@ -27,12 +27,18 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public Job save(Job job) {
         var entity = JobMapper.toEntity(job);
-        // URL-check state lives only on the entity; carry it over so crawl
-        // re-saves don't reset the probe schedule.
+        // URL-check state and the content fingerprint live only on the entity; carry them
+        // over so crawl/enrichment re-saves don't reset them. The duplicate group is on the
+        // domain but only the dedup pass sets it — preserve an existing group when the
+        // incoming domain object doesn't carry one.
         if (job.id() != null) {
             repo.findById(job.id()).ifPresent(existing -> {
                 entity.setLastUrlCheckAt(existing.getLastUrlCheckAt());
                 entity.setUrlCheckFailures(existing.getUrlCheckFailures());
+                entity.setContentFingerprint(existing.getContentFingerprint());
+                if (entity.getDuplicateGroupId() == null && existing.getDuplicateGroupId() != null) {
+                    entity.setDuplicateGroupId(existing.getDuplicateGroupId());
+                }
             });
         }
         return JobMapper.toDomain(repo.save(entity));
@@ -142,6 +148,24 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
             repo.save(e);
             return deactivate;
         }).orElse(false);
+    }
+
+    @Override
+    public Optional<Job> findActiveDuplicateByFingerprint(long fingerprint, UUID excludeId) {
+        return repo.findActiveByContentFingerprint(fingerprint, excludeId, PageRequest.of(0, 1))
+                .stream().findFirst().map(JobMapper::toDomain);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void assignContentFingerprint(UUID jobId, long fingerprint) {
+        repo.updateContentFingerprint(jobId, fingerprint);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void assignDuplicateGroup(UUID jobId, UUID duplicateGroupId) {
+        repo.updateDuplicateGroup(jobId, duplicateGroupId);
     }
 
     @Override

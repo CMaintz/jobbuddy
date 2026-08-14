@@ -52,6 +52,23 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j.id FROM JobEntity j WHERE j.isActive = true AND j.applicationDeadline < :before")
     List<UUID> findActiveWithDeadlineBefore(@Param("before") java.time.LocalDate before);
 
+    @Query("""
+            SELECT j FROM JobEntity j
+            WHERE j.contentFingerprint = :fp AND j.isActive = true AND j.id <> :excludeId
+            ORDER BY j.createdAt ASC
+            """)
+    List<JobEntity> findActiveByContentFingerprint(@Param("fp") long fp,
+                                                   @Param("excludeId") UUID excludeId,
+                                                   Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE JobEntity j SET j.contentFingerprint = :fp WHERE j.id = :id")
+    void updateContentFingerprint(@Param("id") UUID id, @Param("fp") long fp);
+
+    @Modifying
+    @Query("UPDATE JobEntity j SET j.duplicateGroupId = :groupId WHERE j.id = :id")
+    void updateDuplicateGroup(@Param("id") UUID id, @Param("groupId") UUID groupId);
+
     @Modifying
     @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.applicationDeadline < :before")
     int deactivateDeadlineExpired(@Param("before") java.time.LocalDate before);

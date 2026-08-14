@@ -6,6 +6,7 @@ import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.job.JobCategoryClassifier;
 import com.autoapplicant.domain.job.RawJobData;
+import com.autoapplicant.domain.job.SimHash;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
@@ -93,6 +94,10 @@ public class IngestionPipeline {
 
             Job saved = jobRepo.save(draft);
 
+            // Cross-listing dedup: fingerprint the description and cluster verbatim re-posts
+            // (same role re-listed under a different company/URL) via duplicate_group_id.
+            fingerprintAndCluster(saved, cleanText);
+
             // Async: AI enrichment
             enrichJob.enrich(saved).thenAccept(enriched -> {
                 jobRepo.save(enriched);
@@ -109,6 +114,29 @@ public class IngestionPipeline {
 
         } catch (Exception e) {
             log.error("Ingestion failed for raw job from {}: {}", raw.source(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Fingerprints the cleaned description (SimHash) and, when an existing active job shares
+     * the fingerprint, clusters both under a shared duplicate_group_id — catching agency
+     * re-posts of the same role under a different company/URL that source+id dedup misses.
+     * Flag-only (never drops a job); best-effort so a failure never breaks ingestion.
+     */
+    private void fingerprintAndCluster(Job saved, String cleanText) {
+        try {
+            long fp = SimHash.fingerprint(cleanText);
+            if (fp == 0L) return; // too little content to fingerprint reliably
+            jobRepo.findActiveDuplicateByFingerprint(fp, saved.id()).ifPresent(other -> {
+                UUID group = other.duplicateGroupId() != null ? other.duplicateGroupId() : UUID.randomUUID();
+                if (other.duplicateGroupId() == null) jobRepo.assignDuplicateGroup(other.id(), group);
+                jobRepo.assignDuplicateGroup(saved.id(), group);
+                log.info("Cross-listing detected: job {} ({}) duplicates {} — group {}",
+                        saved.id(), saved.source(), other.id(), group);
+            });
+            jobRepo.assignContentFingerprint(saved.id(), fp);
+        } catch (Exception e) {
+            log.warn("Fingerprint/dedup failed for job {}: {}", saved.id(), e.getMessage());
         }
     }
 
