@@ -38,9 +38,11 @@ public class AiConfig {
             @Qualifier("openAiHttpClient") OpenAIClient openAi,
             @Qualifier("geminiHttpClient") OpenAIClient gemini,
             AppProperties props) {
-        return "gemini".equalsIgnoreCase(props.getAi().getEnrichmentProvider())
-                ? new GeminiAdapter(gemini, props)
-                : new OpenAiAdapter(openAi, props);
+        String provider = props.getAi().getEnrichmentProvider();
+        String tier = props.getAi().getEnrichmentTier();
+        return "gemini".equalsIgnoreCase(provider)
+                ? new GeminiAdapter(gemini, props, tierModel("gemini", tier, props))
+                : new OpenAiAdapter(openAi, props, tierModel("openai", tier, props));
     }
 
     @Bean("generationAiProvider")
@@ -52,9 +54,10 @@ public class AiConfig {
         if (isCliProvider(provider)) {
             return new CliAgentAdapter(props);
         }
+        String tier = props.getAi().getGenerationTier();
         return "gemini".equalsIgnoreCase(provider)
-                ? new GeminiAdapter(gemini, props)
-                : new OpenAiAdapter(openAi, props);
+                ? new GeminiAdapter(gemini, props, tierModel("gemini", tier, props))
+                : new OpenAiAdapter(openAi, props, tierModel("openai", tier, props));
     }
 
     /** CLI-agent generation (Claude Code / Codex) — cheap flat-fee path. Never used for embeddings. */
@@ -62,5 +65,33 @@ public class AiConfig {
         return provider != null && (provider.equalsIgnoreCase("claude-cli")
                 || provider.equalsIgnoreCase("cli")
                 || provider.equalsIgnoreCase("codex"));
+    }
+
+    /**
+     * Resolves the chat model for a provider + spend tier (economy/standard/premium),
+     * falling back to the provider's default {@code model} when a tier model is unset.
+     */
+    private static String tierModel(String provider, String tier, AppProperties props) {
+        String t = tier == null ? "standard" : tier.trim().toLowerCase();
+        if ("openai".equalsIgnoreCase(provider)) {
+            var o = props.getOpenai();
+            String tierModel = switch (t) {
+                case "economy" -> o.getEconomyModel();
+                case "premium" -> o.getPremiumModel();
+                default -> o.getStandardModel();
+            };
+            return firstNonBlank(tierModel, o.getModel());
+        }
+        var g = props.getGemini();
+        String tierModel = switch (t) {
+            case "economy" -> g.getEconomyModel();
+            case "premium" -> g.getPremiumModel();
+            default -> g.getStandardModel();
+        };
+        return firstNonBlank(tierModel, g.getModel());
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        return (a != null && !a.isBlank()) ? a : b;
     }
 }

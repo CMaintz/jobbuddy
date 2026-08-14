@@ -301,6 +301,12 @@ Embeddings (`app.ai.enrichment-provider`) must remain a real API — CLI agents 
 vectors. The split (generation → CLI, embeddings → cheap API) captures the cost savings while
 keeping semantic search working. Best for on-demand generation, not high-throughput bulk enrichment.
 
+**Spend tiers** — each operation class routes to a model tier: `app.ai.enrichment-tier` (default
+`economy`) and `app.ai.generation-tier` (default `standard`), each resolving to the provider's
+`economy-model` / `standard-model` / `premium-model` (falling back to `model`). So bulk enrichment
+runs on the cheap/fast model while on-demand generation can be dialled up to premium — a single knob
+for cost vs quality. Defaults preserve the current models (no behaviour change).
+
 ---
 
 # Document Types

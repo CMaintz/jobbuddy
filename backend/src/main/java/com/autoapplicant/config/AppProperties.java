@@ -32,11 +32,18 @@ public class AppProperties {
     public static class Ai {
         private String enrichmentProvider = "gemini";
         private String generationProvider = "openai";
+        /** Spend tier per operation class: economy | standard | premium. Resolves to a model via the provider's tier map. */
+        private String enrichmentTier = "economy";
+        private String generationTier = "standard";
         private Cli cli = new Cli();
         public String getEnrichmentProvider() { return enrichmentProvider; }
         public void setEnrichmentProvider(String enrichmentProvider) { this.enrichmentProvider = enrichmentProvider; }
         public String getGenerationProvider() { return generationProvider; }
         public void setGenerationProvider(String generationProvider) { this.generationProvider = generationProvider; }
+        public String getEnrichmentTier() { return enrichmentTier; }
+        public void setEnrichmentTier(String enrichmentTier) { this.enrichmentTier = enrichmentTier; }
+        public String getGenerationTier() { return generationTier; }
+        public void setGenerationTier(String generationTier) { this.generationTier = generationTier; }
         public Cli getCli() { return cli; }
         public void setCli(Cli cli) { this.cli = cli; }
     }
@@ -65,24 +72,43 @@ public class AppProperties {
         private String apiKey;
         private String model;
         private String embeddingModel;
+        // Per-tier chat models; blank falls back to `model`.
+        private String economyModel;
+        private String standardModel;
+        private String premiumModel;
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
         public String getModel() { return model; }
         public void setModel(String model) { this.model = model; }
         public String getEmbeddingModel() { return embeddingModel; }
         public void setEmbeddingModel(String embeddingModel) { this.embeddingModel = embeddingModel; }
+        public String getEconomyModel() { return economyModel; }
+        public void setEconomyModel(String economyModel) { this.economyModel = economyModel; }
+        public String getStandardModel() { return standardModel; }
+        public void setStandardModel(String standardModel) { this.standardModel = standardModel; }
+        public String getPremiumModel() { return premiumModel; }
+        public void setPremiumModel(String premiumModel) { this.premiumModel = premiumModel; }
     }
 
     public static class Gemini {
         private String apiKey = "";
         private String model = "gemini-2.5-flash";
         private String embeddingModel = "gemini-embedding-001";
+        private String economyModel;
+        private String standardModel;
+        private String premiumModel;
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
         public String getModel() { return model; }
         public void setModel(String model) { this.model = model; }
         public String getEmbeddingModel() { return embeddingModel; }
         public void setEmbeddingModel(String embeddingModel) { this.embeddingModel = embeddingModel; }
+        public String getEconomyModel() { return economyModel; }
+        public void setEconomyModel(String economyModel) { this.economyModel = economyModel; }
+        public String getStandardModel() { return standardModel; }
+        public void setStandardModel(String standardModel) { this.standardModel = standardModel; }
+        public String getPremiumModel() { return premiumModel; }
+        public void setPremiumModel(String premiumModel) { this.premiumModel = premiumModel; }
     }
 
     public static class Typesense {

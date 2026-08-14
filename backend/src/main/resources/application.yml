@@ -31,6 +31,10 @@ app:
     # generation-provider: openai | gemini | claude-cli | codex | cli
     # claude-cli/codex/cli pipe prompts to a local agent CLI (flat-fee subscription) instead of an API.
     generation-provider: ${GENERATION_AI_PROVIDER:openai}
+    # Spend tier per operation class (economy | standard | premium) -> resolves to the provider's tier model.
+    # Bulk enrichment runs cheap; generation can be dialled up to premium. Defaults keep current models.
+    enrichment-tier: ${ENRICHMENT_AI_TIER:economy}
+    generation-tier: ${GENERATION_AI_TIER:standard}
     cli:
       command: ${AI_CLI_COMMAND:claude -p}   # e.g. "claude -p" or "codex exec"; prompt piped to stdin
       timeout-seconds: 120
@@ -49,10 +53,16 @@ app:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o-mini
     embedding-model: text-embedding-3-small
+    economy-model: gpt-4o-mini
+    standard-model: gpt-4o-mini
+    premium-model: gpt-4o
   gemini:
     api-key: ${GEMINI_API_KEY:}
     model: gemini-2.5-flash
     embedding-model: gemini-embedding-001
+    economy-model: gemini-2.5-flash
+    standard-model: gemini-2.5-flash
+    premium-model: gemini-2.5-pro
   typesense:
     api-key: ${TYPESENSE_API_KEY:local-dev-key}
     host: ${TYPESENSE_HOST:localhost}
