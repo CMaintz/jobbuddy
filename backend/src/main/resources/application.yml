@@ -40,6 +40,11 @@ app:
       # Each pass is one extra LLM call — disable to halve generation cost.
       enabled: ${AUTO_REVIEW_ENABLED:true}
       max-iterations: 1
+    fact-guard:
+      # Deterministic (model-free) check that generated metrics trace to the profile.
+      # warn = log unsupported numbers; block = fail generation when any are found.
+      enabled: ${FACT_GUARD_ENABLED:true}
+      mode: ${FACT_GUARD_MODE:warn}
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o-mini
