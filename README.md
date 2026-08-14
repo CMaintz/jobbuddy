@@ -9,7 +9,7 @@ An AI-powered job application platform that helps candidates go from job posting
 - **LinkedIn job connector** — personal-use, low-volume connector over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated per-user keyword plans; runs on its own jittered schedule off the shared crawl (see `db.md` / `application.yml` `app.linkedin.*`)
 - **AI document generation** — tailored CVs and cover letters generated against a specific posting, with a configurable **automatic drafter→reviewer loop** that critiques and revises each draft before assembly
 - **ATS reports** — automated analysis of how well a generated document matches the target posting
-- **Prompt-safety hardening** — anti-fabrication rules (incl. tool-of-trade conflation), and a prompt-injection guard treating scraped/posted job text as untrusted data, never instructions
+- **Prompt-safety hardening** — anti-fabrication rules (incl. tool-of-trade conflation), a prompt-injection guard treating scraped/posted job text as untrusted data, and a **deterministic fact gate** that flags invented/inflated metrics not supported by the profile (model-free, zero token cost)
 - **Pluggable AI providers** — OpenAI, Gemini, or a **local CLI-agent** (Claude Code / Codex) for generation to run on a flat-fee subscription instead of API calls; embeddings always use a real API
 - **Structured document pipeline** — all AI output is structured JSON (never raw text blobs), assembled server-side into a `StructuredDocument` with identity, sections, and rendering options
 - **PDF export** — ATS-friendly and designed templates rendered server-side
@@ -93,6 +93,7 @@ AI provider / feature toggles (all optional, sensible defaults):
 - `GENERATION_AI_PROVIDER` — `openai` (default) · `gemini` · `claude-cli` / `codex` / `cli` (local agent). `ENRICHMENT_AI_PROVIDER` must stay a real API (produces embeddings).
 - `AI_CLI_COMMAND` — CLI invoked for generation when using a local agent (default `claude -p`; prompt piped to stdin).
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
+- `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE` — deterministic fact gate on generated metrics (`warn` default, or `block`).
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (see `app.linkedin.*` in `application.yml`).
 
 ## Tests
