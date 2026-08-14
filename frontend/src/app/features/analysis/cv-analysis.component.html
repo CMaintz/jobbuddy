@@ -135,6 +135,44 @@
             </div>
           }
 
+          <!-- Posting/employer risk — separate from the fit score -->
+          @if (r.risk; as risk) {
+            <div class="card p-4">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">{{ 'analysis.postingRisk' | translate }}</div>
+              <div class="flex flex-wrap items-center gap-2">
+                @if (risk.legitimacy && risk.legitimacy !== 'NOT_ASSESSED') {
+                  <jb-pill [tone]="risk.legitimacy === 'HIGH_CONFIDENCE' ? 'success' : risk.legitimacy === 'SUSPICIOUS' ? 'danger' : 'accent'">
+                    {{ ('analysis.legitimacy.' + risk.legitimacy.toLowerCase()) | translate }}
+                  </jb-pill>
+                }
+                @if (risk.compensationReliability && risk.compensationReliability !== 'UNKNOWN') {
+                  <jb-pill [tone]="risk.compensationReliability === 'HIGH' ? 'success' : risk.compensationReliability === 'LOW' ? 'danger' : 'accent'">
+                    {{ 'analysis.payReliability' | translate }}: {{ risk.compensationReliability | lowercase }}
+                  </jb-pill>
+                }
+              </div>
+              @if (risk.legitimacyNote) {
+                <div class="text-xs text-jb-text-dim mt-2">{{ risk.legitimacyNote }}</div>
+              }
+              @if (risk.compensationNote) {
+                <div class="text-xs text-jb-text-dim mt-1">{{ risk.compensationNote }}</div>
+              }
+              @if (risk.signals?.length) {
+                <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-jb-border-faint">
+                  @for (sig of risk.signals; track sig.label) {
+                    <div class="flex items-start gap-2 text-sm">
+                      <jb-pill [tone]="sig.severity === 'HIGH' ? 'danger' : 'accent'">{{ sig.severity | lowercase }}</jb-pill>
+                      <div>
+                        <span class="text-jb-text-mid">{{ sig.label }}</span>
+                        @if (sig.note) { <span class="text-jb-text-dim text-xs"> - {{ sig.note }}</span> }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <div class="grid gap-4 grid-cols-1 md:grid-cols-2">
             <!-- Strengths -->
             @if (r.strengths?.length) {

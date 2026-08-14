@@ -65,6 +65,23 @@ export interface AnalysisDimensions {
   locationNote?: string;
 }
 
+export interface RiskSignal {
+  label: string;
+  /** LOW | MEDIUM | HIGH */
+  severity: string;
+  note?: string;
+}
+
+export interface RiskAssessment {
+  /** HIGH_CONFIDENCE | CAUTION | SUSPICIOUS | NOT_ASSESSED */
+  legitimacy?: string;
+  legitimacyNote?: string;
+  signals?: RiskSignal[];
+  /** HIGH | MEDIUM | LOW | UNKNOWN */
+  compensationReliability?: string;
+  compensationNote?: string;
+}
+
 export interface AnalysisResponse {
   suggestions: string[];
   score: number;
@@ -74,6 +91,8 @@ export interface AnalysisResponse {
   gaps?: string[];
   /** Present only for job-targeted analyses. */
   dimensions?: AnalysisDimensions;
+  /** Posting/employer risk — separate from the score; job-targeted analyses only. */
+  risk?: RiskAssessment;
 }
 
 export interface AnalyzeRequest {
