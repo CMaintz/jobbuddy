@@ -113,6 +113,7 @@ public class PromptCompositionBuilder {
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + buildOutcomeLearnings(outcomeLessons)
                 + "\n\n" + HONESTY_RULES
+                + "\n\n" + TARGETING_RULES
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -182,6 +183,7 @@ public class PromptCompositionBuilder {
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
                 + "\n\n" + HONESTY_RULES
+                + "\n\n" + TARGETING_RULES
                 + "\n- When content must be condensed, drop the bullets with the lowest combination of "
                 + "relevance to this posting's keywords and uniqueness within the document — not simply "
                 + "the oldest ones. A dated bullet that hits posting keywords outranks a recent one that does not."
@@ -212,6 +214,23 @@ public class PromptCompositionBuilder {
             it. Reformulate and reframe what the profile supports; never invent to fill a gap.
             - Mirror the posting's exact terminology for skills the profile genuinely supports (ATS \
             scanners match literal keywords), but never stuff keywords the profile cannot back up.""";
+
+    /**
+     * Targeting discipline — archetype-aware framing and metrics precedence. Sharpens
+     * generic output and enforces that quantified claims trace to the profile.
+     * (Archetype detection + metrics precedence borrowed from an external reference implementation.)
+     */
+    private static final String TARGETING_RULES = """
+            ## Targeting & Proof Rules
+            - Detect the posting's dominant role archetype (e.g. platform/backend, AI/ML \
+            implementation, data, product, design, marketing/communications) from its language, and \
+            frame the profile FOR that archetype: lead with the experience, projects, and skills most \
+            central to it and mirror its vocabulary. A generic, archetype-agnostic document is a failure.
+            - Quantified achievements and measurable outcomes ALREADY IN the profile are the \
+            authoritative proof points — surface the ones most relevant to this posting first. Never \
+            invent, round up, or embellish a metric that is not in the profile.
+            - Ground every specific match claim in a concrete profile item (a named role, project, or \
+            skill), never a vague assertion.""";
 
     /**
      * Prompt-injection guard for scraped/posted job text. Appended to every prompt that
