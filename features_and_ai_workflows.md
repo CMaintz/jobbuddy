@@ -189,6 +189,17 @@ The AI should emphasize the most relevant projects per role.
 - readability improvements
 - role-specific tailoring
 
+## ATS Render Hardening
+
+At PDF render time (`PdfRenderingService`, techniques from an external reference implementation):
+- **Unicode→ASCII text-layer normalization** — smart quotes, en/em dashes, ellipses,
+  non-breaking/thin spaces, and zero-width characters are folded to plain ASCII so ATS
+  parsers (which read the embedded text, not the glyphs) extract clean keywords. Models
+  routinely emit these characters; decorative separators are left intact.
+- **Post-render page-budget check** — measures the true page count of the rendered PDF
+  (CV ≤ 2 pages, other documents ≤ 1) and warns, or fails when
+  `app.pdf.page-budget.strict=true`. Layout is never silently mutated to fit.
+
 ---
 
 # AI Application Generation
