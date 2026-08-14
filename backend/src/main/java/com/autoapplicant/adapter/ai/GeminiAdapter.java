@@ -15,10 +15,22 @@ public class GeminiAdapter implements AiProviderPort {
 
     private final OpenAIClient client;
     private final AppProperties props;
+    /** Tier-resolved chat model; when set, overrides the provider's default {@code model}. */
+    private final String modelOverride;
 
     public GeminiAdapter(OpenAIClient client, AppProperties props) {
+        this(client, props, null);
+    }
+
+    public GeminiAdapter(OpenAIClient client, AppProperties props, String modelOverride) {
         this.client = client;
         this.props = props;
+        this.modelOverride = modelOverride;
+    }
+
+    private String resolveChatModel() {
+        if (modelOverride != null && !modelOverride.isBlank()) return modelOverride;
+        return props.getGemini().getModel();
     }
 
     @Override
@@ -33,7 +45,7 @@ public class GeminiAdapter implements AiProviderPort {
 
     private String complete(PromptComposition composition, boolean jsonObject) {
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
-                .model(props.getGemini().getModel());
+                .model(resolveChatModel());
 
         if (composition.systemPrompt() != null && !composition.systemPrompt().isBlank()) {
             builder.addSystemMessage(composition.systemPrompt());
@@ -55,7 +67,7 @@ public class GeminiAdapter implements AiProviderPort {
 
     @Override
     public String chatModelName() {
-        return props.getGemini().getModel();
+        return resolveChatModel();
     }
 
     @Override
