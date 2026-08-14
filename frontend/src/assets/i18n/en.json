@@ -748,6 +748,13 @@
     "location": "Location",
     "whatWorks": "What works",
     "gapsRisks": "Gaps & risks",
+    "postingRisk": "Posting risk",
+    "payReliability": "Pay reliability",
+    "legitimacy": {
+      "high_confidence": "Legit: high confidence",
+      "caution": "Legit: caution",
+      "suspicious": "Legit: suspicious"
+    },
     "suggestions": "Suggested improvements",
     "applyInCv": "Apply in Master CV",
     "emptyTitle": "Get an honest score on your master CV",
