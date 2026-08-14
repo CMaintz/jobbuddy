@@ -173,5 +173,13 @@ Required:
 Optional (all have local defaults):
 - `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD`
 - `TYPESENSE_API_KEY`, `TYPESENSE_HOST`, `TYPESENSE_PORT`
-- `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`
+- `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)
 - `ALLOWED_ORIGINS` (CORS)
+
+AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app.linkedin.*`):
+- `GENERATION_AI_PROVIDER` — `openai` (default) | `gemini` | `claude-cli` | `codex` | `cli`. The
+  `*-cli`/`codex` values pipe prompts to a local agent CLI (flat-fee subscription) instead of an API.
+- `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
+- `AI_CLI_COMMAND` — CLI invoked for local-agent generation (default `claude -p`; prompt on stdin).
+- `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
+- `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (personal-use, low-volume).

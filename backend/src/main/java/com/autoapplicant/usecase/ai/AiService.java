@@ -48,6 +48,14 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final ApplicationRepositoryPort applicationRepo;
     private final ObjectMapper objectMapper;
 
+    /** When true, generateDocument runs a reviewer critique/revise pass on the draft before assembling. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.auto-review.enabled:true}")
+    private boolean autoReviewEnabled;
+
+    /** Max reviewer passes; the loop also stops early once a pass reports no further critique. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.auto-review.max-iterations:1}")
+    private int autoReviewMaxIterations;
+
     public AiService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
                      CvVersionRepositoryPort cvRepo,
@@ -86,7 +94,9 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     : rawJobDescription;
             String prompt = buildAnalysisPrompt(cvContent, jobDesc);
             PromptComposition composition = new PromptComposition(
-                    "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only.",
+                    "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
+                    + "Never assume skills or experience the CV does not state.\n\n"
+                    + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT,
                     prompt, "", "", "", "", prompt);
             String response = sanitizeAiText(aiProvider.generateJson(composition));
             return CompletableFuture.completedFuture(parseAnalysis(response));
@@ -166,62 +176,77 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         }
     }
 
-    /**
-     * Drafter→reviewer pass: a fresh context critiques the draft against the
-     * posting and the user's writing profile, then returns a revised version.
-     * The reviewer prompt lives server-side on purpose — it is not user-editable.
-     */
     @Override
     @Async("aiTaskExecutor")
     public CompletableFuture<ReviewDocumentResult> review(ReviewDocumentRequest request) {
         try {
-            WritingProfile writingProfile = writingProfileRepo.findByUserId(request.userId()).orElse(null);
+            ReviewOutcome outcome = reviewContent(request.userId(), request.documentType(),
+                    request.currentContent(), request.jobDescription(), request.targetLanguage());
+            return CompletableFuture.completedFuture(
+                    new ReviewDocumentResult(outcome.revised(), outcome.critique(), aiProvider.chatModelName()));
+        } catch (Exception e) {
+            log.error("Document review failed: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
 
-            StringBuilder systemPrompt = new StringBuilder("""
-                    You are a demanding hiring manager reviewing a candidate's application document \
-                    with fresh eyes. Critique it against the job posting: missed keywords, weak or \
-                    generic framing, claims that overreach what a candidate could defend in an \
-                    interview, and mismatches with the requested writing style. Then produce a \
-                    revised version that fixes what you flagged. Never invent skills or experience \
-                    the draft does not already claim. Respond with ONLY valid JSON.""");
-            if (request.targetLanguage() != null && !request.targetLanguage().isBlank()) {
-                systemPrompt.append(" Write the revised document in ").append(request.targetLanguage()).append(".");
-            }
+    /** Carrier for one reviewer pass: the revised draft plus what the reviewer changed/flagged. */
+    private record ReviewOutcome(String revised, List<String> critique) {}
 
-            StringBuilder userPrompt = new StringBuilder();
-            userPrompt.append("## Draft (").append(request.documentType() != null ? request.documentType() : "document")
-                    .append(")\n").append(request.currentContent()).append("\n\n");
-            if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
-                userPrompt.append("## Job Description\n").append(request.jobDescription()).append("\n\n");
-            }
-            String styleMemory = compositionBuilder.buildStyleMemory(writingProfile);
-            if (!styleMemory.isBlank()) {
-                userPrompt.append(styleMemory).append("\n\n");
-            }
-            userPrompt.append("""
-                    Return only valid JSON in exactly this shape:
-                    {
-                      "revisedContent": "<the full revised document text>",
-                      "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"]
-                    }""");
+    /**
+     * Drafter→reviewer pass: a fresh context critiques the draft against the posting and
+     * the user's writing profile, then returns a revised version. Shared by the public
+     * review endpoint and the automatic post-generation loop in {@link #generateDocument}.
+     * The reviewer prompt lives server-side on purpose — it is not user-editable.
+     */
+    private ReviewOutcome reviewContent(UUID userId, String documentType, String currentContent,
+                                        String jobDescription, String targetLanguage) {
+        WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
 
-            PromptComposition composition = new PromptComposition(
-                    systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
+        StringBuilder systemPrompt = new StringBuilder("""
+                You are a demanding hiring manager reviewing a candidate's application document \
+                with fresh eyes. Critique it against the job posting: missed keywords, weak or \
+                generic framing, claims that overreach what a candidate could defend in an \
+                interview, and mismatches with the requested writing style. Then produce a \
+                revised version that fixes what you flagged. Never invent skills or experience \
+                the draft does not already claim, and never claim the candidate built a tool they \
+                merely used. Respond with ONLY valid JSON.""");
+        systemPrompt.append("\n\n").append(PromptCompositionBuilder.UNTRUSTED_JOB_INPUT);
+        if (targetLanguage != null && !targetLanguage.isBlank()) {
+            systemPrompt.append(" Write the revised document in ").append(targetLanguage).append(".");
+        }
+
+        StringBuilder userPrompt = new StringBuilder();
+        userPrompt.append("## Draft (").append(documentType != null ? documentType : "document")
+                .append(")\n").append(currentContent).append("\n\n");
+        if (jobDescription != null && !jobDescription.isBlank()) {
+            userPrompt.append("## Job Description\n").append(jobDescription).append("\n\n");
+        }
+        String styleMemory = compositionBuilder.buildStyleMemory(writingProfile);
+        if (!styleMemory.isBlank()) {
+            userPrompt.append(styleMemory).append("\n\n");
+        }
+        userPrompt.append("""
+                Return only valid JSON in exactly this shape:
+                {
+                  "revisedContent": "<the full revised document text>",
+                  "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"]
+                }""");
+
+        PromptComposition composition = new PromptComposition(
+                systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
+        try {
             var node = objectMapper.readTree(AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition))));
-
             String revised = node.path("revisedContent").asText(null);
             if (revised == null || revised.isBlank()) {
                 throw new IllegalStateException("Reviewer returned no revised content");
             }
             List<String> critique = new java.util.ArrayList<>();
             node.path("critique").forEach(c -> critique.add(c.asText()));
-
-            return CompletableFuture.completedFuture(
-                    new ReviewDocumentResult(revised, critique, aiProvider.chatModelName()));
+            return new ReviewOutcome(revised, critique);
         } catch (Exception e) {
-            log.error("Document review failed: {}", e.getMessage(), e);
-            return CompletableFuture.failedFuture(e);
+            throw new IllegalStateException("Document review failed: " + e.getMessage(), e);
         }
     }
 
@@ -255,9 +280,15 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     objectMapper.readValue(json, ApplicationDocumentAiResponse.class);
             validateApplicationResponse(aiResponse);
 
+            // Automatic drafter→reviewer loop: a fresh reviewer critiques and revises the
+            // body before assembly. Config-gated (each pass is one extra LLM call); stops
+            // early once a pass reports no further critique. Keyword metadata from the
+            // original pass is retained — the reviewer is instructed never to drop keywords.
+            String body = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
+
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
-                    userId, type, aiResponse.body(), templateId,
+                    userId, type, body, templateId,
                     aiResponse.keywordCoverage(), aiResponse.matchedKeywords(),
                     aiResponse.missingKeywords(), showProfileImage, theme);
 
@@ -267,6 +298,32 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             log.error("Structured document generation failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    /**
+     * Runs up to {@code autoReviewMaxIterations} reviewer passes on the draft body when
+     * auto-review is enabled, returning the improved text. A failed pass is non-fatal —
+     * it logs and returns the best draft so far, so generation never breaks on the reviewer.
+     */
+    private String maybeReview(UUID userId, String documentType, String body,
+                               String jobDescription, String targetLanguage) {
+        if (!autoReviewEnabled) return body;
+        String current = body;
+        int passes = Math.max(1, autoReviewMaxIterations);
+        for (int i = 1; i <= passes; i++) {
+            try {
+                ReviewOutcome outcome = reviewContent(userId, documentType, current, jobDescription, targetLanguage);
+                if (outcome.revised() != null && !outcome.revised().isBlank()) {
+                    current = outcome.revised();
+                }
+                log.info("Auto-review pass {}/{}: {} change(s) flagged", i, passes, outcome.critique().size());
+                if (outcome.critique().isEmpty()) break; // reviewer found nothing more to fix
+            } catch (Exception e) {
+                log.warn("Auto-review pass {} failed, keeping current draft: {}", i, e.getMessage());
+                break;
+            }
+        }
+        return current;
     }
 
     private static void validateApplicationResponse(ApplicationDocumentAiResponse response) {
