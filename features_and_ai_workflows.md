@@ -403,6 +403,15 @@ Saved
 
 ---
 
+# Funnel Velocity
+
+Every application status change writes an immutable row to an append-only ledger
+(`application_status_event`). `GET /api/v1/analytics/funnel-velocity` derives the **average
+time-in-stage** between consecutive transitions (e.g. how long roles sit in "applied" before
+"interview"), enabling velocity / rejection-latency analytics beyond the current status alone.
+
+---
+
 # Dashboard Widgets
 
 - recommended jobs
