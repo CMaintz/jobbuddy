@@ -748,6 +748,13 @@
     "location": "Placering",
     "whatWorks": "Hvad fungerer",
     "gapsRisks": "Huller & risici",
+    "postingRisk": "Opslagsrisiko",
+    "payReliability": "Lønpålidelighed",
+    "legitimacy": {
+      "high_confidence": "Ægte: høj tillid",
+      "caution": "Ægte: vær opmærksom",
+      "suspicious": "Ægte: mistænkelig"
+    },
     "suggestions": "Foreslåede forbedringer",
     "applyInCv": "Anvend i master-CV",
     "emptyTitle": "Få en ærlig score på dit master-CV",

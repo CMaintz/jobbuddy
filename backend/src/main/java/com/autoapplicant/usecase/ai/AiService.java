@@ -138,10 +138,39 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
             return new AiAnalysisResult(suggestions, score, response,
                     node.path("summary").asText(null),
-                    strengths, gaps, dimensions);
+                    strengths, gaps, dimensions, parseRisk(node.path("risk")));
         } catch (Exception e) {
             log.warn("Analysis response was not valid JSON — returning raw text: {}", e.getMessage());
             return AiAnalysisResult.unstructured(response);
+        }
+    }
+
+    /** Parses the posting/employer risk block (job-targeted analyses only); null when absent. */
+    private static RiskAssessment parseRisk(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null || !node.isObject()) return null;
+        List<RiskAssessment.RiskSignal> signals = new java.util.ArrayList<>();
+        for (var s : node.path("signals")) {
+            String label = s.path("label").asText(null);
+            if (label == null || label.isBlank()) continue;
+            signals.add(new RiskAssessment.RiskSignal(
+                    label, s.path("severity").asText("LOW"), s.path("note").asText(null)));
+        }
+        return new RiskAssessment(
+                enumOrDefault(node.path("legitimacy").asText(null),
+                        RiskAssessment.Legitimacy.class, RiskAssessment.Legitimacy.NOT_ASSESSED),
+                node.path("legitimacyNote").asText(null),
+                signals,
+                enumOrDefault(node.path("compensationReliability").asText(null),
+                        RiskAssessment.CompensationReliability.class, RiskAssessment.CompensationReliability.UNKNOWN),
+                node.path("compensationNote").asText(null));
+    }
+
+    private static <E extends Enum<E>> E enumOrDefault(String value, Class<E> type, E fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        try {
+            return Enum.valueOf(type, value.trim().toUpperCase().replace(' ', '_').replace('-', '_'));
+        } catch (IllegalArgumentException e) {
+            return fallback;
         }
     }
 
@@ -401,8 +430,21 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                         "careerAlignment": <0-100 — growth path and motivation fit for this role>,
                         "location": "PASS|FLAG|FAIL — commute/remote/relocation feasibility",
                         "locationNote": "<one sentence explaining the location verdict, or null>"
+                      },
+                      "risk": {
+                        "legitimacy": "HIGH_CONFIDENCE|CAUTION|SUSPICIOUS - is this a real, active opening?",
+                        "legitimacyNote": "<one sentence on the legitimacy verdict>",
+                        "signals": [{"label":"<short risk label>","severity":"LOW|MEDIUM|HIGH","note":"<one sentence>"}],
+                        "compensationReliability": "HIGH|MEDIUM|LOW|UNKNOWN - trust in advertised pay as real base",
+                        "compensationNote": "<one sentence, or null>"
                       }
                     }
+                    Assess "risk" (posting legitimacy, risk signals, compensation reliability) SEPARATELY
+                    from the score - it must NEVER change the score or any dimension. Surface signals,
+                    never accuse; note legitimate explanations. Use ghost-posting cues (stale or vague
+                    posting, contradictory or unrealistic requirements, no concrete team or role detail),
+                    and classify how far the advertised comp is trustworthy base pay vs variable / "up to" /
+                    commission. Give 0-4 risk signals; omit the array if none.
                     Score each dimension independently; do not average them yourself.
                     Be honest about gaps — never assume skills the CV does not state.
                     Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");

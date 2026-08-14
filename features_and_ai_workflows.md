@@ -200,6 +200,20 @@ The AI should emphasize the most relevant projects per role.
 - readability improvements
 - role-specific tailoring
 
+## Posting Risk Assessment
+
+The CV-vs-job analysis (`/api/v1/ai/analyze`) returns a **risk block kept strictly separate
+from the fit score** (`RiskAssessment`, framing from an external reference implementation):
+- **Legitimacy** — HIGH_CONFIDENCE / CAUTION / SUSPICIOUS / NOT_ASSESSED (ghost-posting cues:
+  stale/vague postings, contradictory or unrealistic requirements, no concrete team/role detail).
+- **Risk signals** — a short list of `{label, severity, note}` items.
+- **Compensation reliability** — HIGH / MEDIUM / LOW / UNKNOWN (how far advertised pay is real
+  base vs variable / "up to" / commission).
+
+Risk **never** adjusts the 0-100 score or its dimensions. The prompt is instructed to surface
+signals, never accuse, and note legitimate explanations — the human decides. Surfaced in the
+analysis UI as its own card (legitimacy + pay-reliability pills, signal list).
+
 ## ATS Render Hardening
 
 At PDF render time (`PdfRenderingService`, techniques from an external reference implementation):
