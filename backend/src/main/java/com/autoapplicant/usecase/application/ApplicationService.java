@@ -3,12 +3,14 @@ package com.autoapplicant.usecase.application;
 import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
 import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
+import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,13 +28,16 @@ public class ApplicationService implements
 
     private final ApplicationRepositoryPort repo;
     private final ResponseMetricRepositoryPort responseMetricRepo;
+    private final ApplicationStatusEventRepositoryPort statusEventRepo;
     private final PersistGeneratedDocumentUseCase structuredGeneratedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
                               ResponseMetricRepositoryPort responseMetricRepo,
+                              ApplicationStatusEventRepositoryPort statusEventRepo,
                               PersistGeneratedDocumentUseCase structuredGeneratedDocuments) {
         this.repo = repo;
         this.responseMetricRepo = responseMetricRepo;
+        this.statusEventRepo = statusEventRepo;
         this.structuredGeneratedDocuments = structuredGeneratedDocuments;
     }
 
@@ -127,6 +132,10 @@ public class ApplicationService implements
                 existing.createdAt(), java.time.Instant.now(),
                 existing.outcomeFeedback(), existing.outcomeLessons());
         Application saved = repo.save(updated);
+
+        // Append-only transition ledger — every change, for funnel-velocity analytics.
+        statusEventRepo.save(new ApplicationStatusEvent(
+                null, applicationId, existing.userId(), existing.status(), newStatus, Instant.now()));
 
         String eventType = switch (newStatus) {
             case RECRUITER_CONTACT -> "RECRUITER_CONTACT";

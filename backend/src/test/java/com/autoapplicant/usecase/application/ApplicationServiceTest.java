@@ -28,6 +28,7 @@ class ApplicationServiceTest {
 
     @Mock ApplicationRepositoryPort repo;
     @Mock ResponseMetricRepositoryPort responseMetricRepo;
+    @Mock com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort statusEventRepo;
     @Mock StructuredGeneratedDocumentService structuredGeneratedDocuments;
 
     ApplicationService service;
@@ -38,7 +39,7 @@ class ApplicationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ApplicationService(repo, responseMetricRepo, structuredGeneratedDocuments);
+        service = new ApplicationService(repo, responseMetricRepo, statusEventRepo, structuredGeneratedDocuments);
     }
 
     // ── createApplication ─────────────────────────────────────────────────────
