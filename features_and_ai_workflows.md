@@ -396,6 +396,18 @@ Generate applications that sound authentic.
 
 ---
 
+# Interview Story Bank & Integrity Gates
+
+- **STAR+R story bank** (`interview_story`, `/api/v1/interview/stories`) — reusable Situation /
+  Task / Action / Result / **Reflection** stories (the "+R" is the junior-vs-senior differentiator).
+  The interview analogue of the writing-style memory: `InterviewPrepService` folds the candidate's
+  stories into prep-pack generation, mapping behavioral questions to their real stories.
+- **Retracted-claims gate** (`retracted_claim`, `/api/v1/profile/retracted-claims`) — claims the
+  user explicitly disowns; `RetractedClaimsGuard` checks every generated document body so a
+  retracted claim can never resurface (`app.ai.retracted-claims.mode` = `warn` | `block`).
+
+---
+
 # Application Tracking
 
 ```text
