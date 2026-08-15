@@ -45,19 +45,38 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
     private final JobRepositoryPort jobRepo;
     private final GeneratedDocumentRepositoryPort documentRepo;
     private final CareerProfileContextService careerProfileContext;
+    private final com.autoapplicant.port.out.user.InterviewStoryRepositoryPort storyRepo;
 
     public InterviewPrepService(InterviewQuestionRepositoryPort repo,
                                 @Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                 ObjectMapper objectMapper,
                                 JobRepositoryPort jobRepo,
                                 GeneratedDocumentRepositoryPort documentRepo,
-                                CareerProfileContextService careerProfileContext) {
+                                CareerProfileContextService careerProfileContext,
+                                com.autoapplicant.port.out.user.InterviewStoryRepositoryPort storyRepo) {
         this.repo = repo;
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
         this.jobRepo = jobRepo;
         this.documentRepo = documentRepo;
         this.careerProfileContext = careerProfileContext;
+        this.storyRepo = storyRepo;
+    }
+
+    /** Renders the candidate's STAR+R story bank as a prompt block; empty when there are none. */
+    private String buildStoryBank(UUID userId) {
+        var stories = storyRepo.findByUserId(userId);
+        if (stories.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("\n## Candidate's STAR+R story bank (map behavioral questions to these real stories)\n");
+        stories.stream().limit(12).forEach(s -> {
+            sb.append("\n### ").append(s.title()).append('\n');
+            if (s.situation() != null && !s.situation().isBlank()) sb.append("Situation: ").append(s.situation()).append('\n');
+            if (s.task() != null && !s.task().isBlank()) sb.append("Task: ").append(s.task()).append('\n');
+            if (s.action() != null && !s.action().isBlank()) sb.append("Action: ").append(s.action()).append('\n');
+            if (s.result() != null && !s.result().isBlank()) sb.append("Result: ").append(s.result()).append('\n');
+            if (s.reflection() != null && !s.reflection().isBlank()) sb.append("Reflection: ").append(s.reflection()).append('\n');
+        });
+        return sb.toString();
     }
 
     @Override
@@ -133,18 +152,20 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 }
                 Give 8-10 questions targeting the posting's requirements and the candidate's weakest
                 coverage of them; 3-6 consistency-brief entries (omit the field's entries if no documents
-                are provided); and 4-6 questions to ask.
+                are provided); and 4-6 questions to ask. When a story bank is provided, prefer behavioral
+                questions the candidate's existing STAR+R stories can answer, and never contradict them.
 
                 ## Job (%s at %s)
                 %s
 
                 ## Candidate profile (contact-free)
                 %s
-                %s""".formatted(
+                %s%s""".formatted(
                 job.title(), job.companyName() != null ? job.companyName() : "unknown company",
                 jobDescription,
                 profileJson,
-                sentDocuments.isBlank() ? "" : "\n## Documents the candidate submitted\n" + sentDocuments);
+                sentDocuments.isBlank() ? "" : "\n## Documents the candidate submitted\n" + sentDocuments,
+                buildStoryBank(userId));
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
