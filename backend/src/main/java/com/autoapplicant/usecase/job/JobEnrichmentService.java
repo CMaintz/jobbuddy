@@ -190,16 +190,18 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 catch (java.time.format.DateTimeParseException ignored) {}
             }
 
-            return new Job(job.id(), job.source(), job.sourceJobId(), job.url(), job.title(),
-                    job.companyId(), job.companyName(), job.descriptionRaw(), descriptionClean,
-                    employmentType, job.seniority(), remoteType,
-                    job.location(), municipality, job.region(), job.country(),
-                    salaryMin, salaryMax, currency,
-                    mergedTech, mergedSkills, job.languages(),
-                    job.postedAt(), job.scrapedAt(),
-                    summary, tags, aiSeniority,
-                    job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt(),
-                    shortDescription, job.lastSeenAt(), applicationDeadline);
+            return job.toBuilder()
+                    .descriptionClean(descriptionClean)
+                    .employmentType(employmentType)
+                    .remoteType(remoteType)
+                    .municipality(municipality)
+                    .salaryMin(salaryMin).salaryMax(salaryMax).currency(currency)
+                    .technologies(mergedTech).skills(mergedSkills)
+                    .aiSummary(summary).aiTags(tags).aiSeniorityEstimate(aiSeniority)
+                    .jobCategory(jobCategory)
+                    .shortDescription(shortDescription)
+                    .applicationDeadline(applicationDeadline)
+                    .build();
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
             return job;

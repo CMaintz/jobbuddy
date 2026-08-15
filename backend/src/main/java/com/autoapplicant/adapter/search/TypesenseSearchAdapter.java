@@ -164,18 +164,18 @@ public class TypesenseSearchAdapter implements JobSearchPort {
             try { jobCategory = com.autoapplicant.domain.job.JobCategory.valueOf(rawCategory); }
             catch (IllegalArgumentException ignored) {}
         }
-        return new Job(id, null, null,
-                (String) doc.getOrDefault("url", ""),
-                (String) doc.getOrDefault("title", ""),
-                null, (String) doc.getOrDefault("company_name", ""),
-                null, (String) doc.getOrDefault("description_clean", ""),
-                null, null, null,
-                (String) doc.getOrDefault("location", ""),
-                (String) doc.getOrDefault("municipality", ""),
-                null, null, null, null, null,
-                (List<String>) doc.getOrDefault("technologies", List.of()),
-                (List<String>) doc.getOrDefault("skills", List.of()),
-                List.of(), null, null, null, List.of(), null, null, true, jobCategory, null, null, null, null, null);
+        return Job.builder()
+                .id(id)
+                .url((String) doc.getOrDefault("url", ""))
+                .title((String) doc.getOrDefault("title", ""))
+                .companyName((String) doc.getOrDefault("company_name", ""))
+                .descriptionClean((String) doc.getOrDefault("description_clean", ""))
+                .location((String) doc.getOrDefault("location", ""))
+                .municipality((String) doc.getOrDefault("municipality", ""))
+                .technologies((List<String>) doc.getOrDefault("technologies", List.of()))
+                .skills((List<String>) doc.getOrDefault("skills", List.of()))
+                .isActive(true).jobCategory(jobCategory)
+                .build();
     }
 
     private JobSearchResult emptyResult(JobSearchQuery query) {
