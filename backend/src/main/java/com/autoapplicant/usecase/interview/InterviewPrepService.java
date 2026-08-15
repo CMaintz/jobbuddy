@@ -10,7 +10,7 @@ import com.autoapplicant.port.in.interview.GenerateInterviewPrepUseCase;
 import com.autoapplicant.port.in.interview.GenerateInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.ManageInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.MockInterviewUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.interview.InterviewQuestionRepositoryPort;
@@ -40,14 +40,14 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
             """;
 
     private final InterviewQuestionRepositoryPort repo;
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
     private final JobRepositoryPort jobRepo;
     private final GeneratedDocumentRepositoryPort documentRepo;
     private final CareerProfileContextService careerProfileContext;
 
     public InterviewPrepService(InterviewQuestionRepositoryPort repo,
-                                @Qualifier("generationAiProvider") AiProviderPort aiProvider,
+                                @Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                 ObjectMapper objectMapper,
                                 JobRepositoryPort jobRepo,
                                 GeneratedDocumentRepositoryPort documentRepo,

@@ -2,7 +2,7 @@ package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.document.PromptComposition;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * call spawns a process (seconds of latency), this is meant for on-demand generation, not
  * high-throughput bulk enrichment.
  */
-public class CliAgentAdapter implements AiProviderPort {
+public class CliAgentAdapter implements ChatProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(CliAgentAdapter.class);
 
@@ -113,18 +113,6 @@ public class CliAgentAdapter implements AiProviderPort {
                     + "no markdown code fences.");
         }
         return sb.toString();
-    }
-
-    @Override
-    public float[] embed(String text) {
-        throw new UnsupportedOperationException(
-                "CLI agent provider cannot produce embeddings. Keep a real embeddings provider "
-                + "(openai/gemini) as app.ai.enrichment-provider — only generation should use the CLI.");
-    }
-
-    @Override
-    public String embeddingModelName() {
-        return "cli-none";
     }
 
     @Override
