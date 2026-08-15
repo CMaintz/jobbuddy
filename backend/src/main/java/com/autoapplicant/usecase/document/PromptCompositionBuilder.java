@@ -225,7 +225,9 @@ public class PromptCompositionBuilder {
             - Detect the posting's dominant role archetype (e.g. platform/backend, AI/ML \
             implementation, data, product, design, marketing/communications) from its language, and \
             frame the profile FOR that archetype: lead with the experience, projects, and skills most \
-            central to it and mirror its vocabulary. A generic, archetype-agnostic document is a failure.
+            central to it and mirror its vocabulary. A generic, archetype-agnostic document is a failure. \
+            If the profile declares targetArchetypes or a northStar, prefer that framing when it aligns \
+            with the posting.
             - Quantified achievements and measurable outcomes ALREADY IN the profile are the \
             authoritative proof points — surface the ones most relevant to this posting first. Never \
             invent, round up, or embellish a metric that is not in the profile.

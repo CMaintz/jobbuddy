@@ -28,6 +28,7 @@ public class CareerProfileContextService {
     private final ProfileSkillRepositoryPort skillRepo;
     private final SpokenLanguageRepositoryPort languageRepo;
     private final ProfileStrengthRepositoryPort strengthRepo;
+    private final CareerTargetRepositoryPort careerTargetRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -38,6 +39,7 @@ public class CareerProfileContextService {
                                        ProfileSkillRepositoryPort skillRepo,
                                        SpokenLanguageRepositoryPort languageRepo,
                                        ProfileStrengthRepositoryPort strengthRepo,
+                                       CareerTargetRepositoryPort careerTargetRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;
@@ -47,6 +49,7 @@ public class CareerProfileContextService {
         this.skillRepo = skillRepo;
         this.languageRepo = languageRepo;
         this.strengthRepo = strengthRepo;
+        this.careerTargetRepo = careerTargetRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -74,6 +77,8 @@ public class CareerProfileContextService {
                         : s.title())
                 .toList();
 
+        CareerTarget target = careerTargetRepo.findByUserId(userId).orElse(null);
+
         return new CareerProfileForAi(
                 profile != null ? profile.headline() : null,
                 profile != null ? profile.summary() : null,
@@ -85,7 +90,10 @@ public class CareerProfileContextService {
                 projectRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 certRepo.findByUserId(userId).stream().map(this::toItem).toList(),
-                strengths
+                strengths,
+                target != null ? listOrEmpty(target.targetArchetypes()) : List.of(),
+                target != null ? target.northStar() : null,
+                target != null ? target.narrative() : null
         );
     }
 
