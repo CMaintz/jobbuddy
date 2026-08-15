@@ -4,7 +4,7 @@ import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -14,12 +14,12 @@ import java.util.List;
 @Service
 public class TailoredCvGenerator {
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
     private final PromptCompositionBuilder promptBuilder;
 
     public TailoredCvGenerator(
-            @Qualifier("generationAiProvider") AiProviderPort aiProvider,
+            @Qualifier("generationAiProvider") ChatProviderPort aiProvider,
             ObjectMapper objectMapper,
             PromptCompositionBuilder promptBuilder) {
         this.aiProvider = aiProvider;

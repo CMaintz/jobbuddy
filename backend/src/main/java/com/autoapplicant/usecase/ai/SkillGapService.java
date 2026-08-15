@@ -6,7 +6,7 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.port.in.ai.AnalyzeSkillGapsUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -46,7 +46,7 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
     private static final int MAX_MATCHED_JOBS = 10;
     private static final int DESCRIPTION_CHARS = 1_200;
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final CareerProfileContextService careerProfileContext;
     private final SavedJobRepositoryPort savedJobRepo;
     private final ApplicationRepositoryPort applicationRepo;
@@ -55,7 +55,7 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
     private final ObjectMapper objectMapper;
 
-    public SkillGapService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
+    public SkillGapService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                            CareerProfileContextService careerProfileContext,
                            SavedJobRepositoryPort savedJobRepo,
                            ApplicationRepositoryPort applicationRepo,

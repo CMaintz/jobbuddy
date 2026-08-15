@@ -9,7 +9,7 @@ import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
@@ -37,7 +37,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final JobRepositoryPort jobRepo;
     private final CvVersionRepositoryPort cvRepo;
     private final PromptTemplateRepositoryPort promptTemplateRepo;
@@ -67,7 +67,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     @org.springframework.beans.factory.annotation.Value("${app.ai.fact-guard.mode:warn}")
     private String factGuardMode;
 
-    public AiService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
+    public AiService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
                      CvVersionRepositoryPort cvRepo,
                      PromptTemplateRepositoryPort promptTemplateRepo,
