@@ -48,6 +48,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
     private final ApplicationRepositoryPort applicationRepo;
     private final DocumentFactGuard factGuard;
+    private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
 
     /** When true, generateDocument runs a reviewer critique/revise pass on the draft before assembling. */
@@ -77,6 +78,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      PersistGeneratedDocumentPort persistGeneratedDocument,
                      ApplicationRepositoryPort applicationRepo,
                      DocumentFactGuard factGuard,
+                     AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.jobRepo = jobRepo;
@@ -89,6 +91,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.persistGeneratedDocument = persistGeneratedDocument;
         this.applicationRepo = applicationRepo;
         this.factGuard = factGuard;
+        this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
     }
 
@@ -111,82 +114,11 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT,
                     prompt, "", "", "", "", prompt);
             String response = sanitizeAiText(aiProvider.generateJson(composition));
-            return CompletableFuture.completedFuture(parseAnalysis(response));
+            return CompletableFuture.completedFuture(analysisParser.parse(response));
         } catch (Exception e) {
             log.error("CV analysis failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
-    }
-
-    /** Parses the structured analysis; falls back to the raw text when the JSON is broken. */
-    private AiAnalysisResult parseAnalysis(String response) {
-        try {
-            var node = objectMapper.readTree(AiResponseParser.extractJsonObject(response));
-            List<String> suggestions = new java.util.ArrayList<>();
-            node.path("suggestions").forEach(s -> suggestions.add(s.asText()));
-            List<String> strengths = new java.util.ArrayList<>();
-            node.path("strengths").forEach(s -> strengths.add(s.asText()));
-            List<String> gaps = new java.util.ArrayList<>();
-            node.path("gaps").forEach(s -> gaps.add(s.asText()));
-
-            // Dimensional scores (job-targeted analyses). When complete, the overall
-            // score is computed server-side from the fixed weights, not trusted from the model.
-            AnalysisDimensions dimensions = parseDimensions(node.path("dimensions"));
-            int score = dimensions != null && dimensions.isComplete()
-                    ? dimensions.weightedScore()
-                    : Math.max(0, Math.min(100, node.path("score").asInt(0)));
-
-            return new AiAnalysisResult(suggestions, score, response,
-                    node.path("summary").asText(null),
-                    strengths, gaps, dimensions, parseRisk(node.path("risk")));
-        } catch (Exception e) {
-            log.warn("Analysis response was not valid JSON — returning raw text: {}", e.getMessage());
-            return AiAnalysisResult.unstructured(response);
-        }
-    }
-
-    /** Parses the posting/employer risk block (job-targeted analyses only); null when absent. */
-    private static RiskAssessment parseRisk(com.fasterxml.jackson.databind.JsonNode node) {
-        if (node == null || !node.isObject()) return null;
-        List<RiskAssessment.RiskSignal> signals = new java.util.ArrayList<>();
-        for (var s : node.path("signals")) {
-            String label = s.path("label").asText(null);
-            if (label == null || label.isBlank()) continue;
-            signals.add(new RiskAssessment.RiskSignal(
-                    label, s.path("severity").asText("LOW"), s.path("note").asText(null)));
-        }
-        return new RiskAssessment(
-                enumOrDefault(node.path("legitimacy").asText(null),
-                        RiskAssessment.Legitimacy.class, RiskAssessment.Legitimacy.NOT_ASSESSED),
-                node.path("legitimacyNote").asText(null),
-                signals,
-                enumOrDefault(node.path("compensationReliability").asText(null),
-                        RiskAssessment.CompensationReliability.class, RiskAssessment.CompensationReliability.UNKNOWN),
-                node.path("compensationNote").asText(null));
-    }
-
-    private static <E extends Enum<E>> E enumOrDefault(String value, Class<E> type, E fallback) {
-        if (value == null || value.isBlank()) return fallback;
-        try {
-            return Enum.valueOf(type, value.trim().toUpperCase().replace(' ', '_').replace('-', '_'));
-        } catch (IllegalArgumentException e) {
-            return fallback;
-        }
-    }
-
-    private static AnalysisDimensions parseDimensions(com.fasterxml.jackson.databind.JsonNode node) {
-        if (node == null || !node.isObject()) return null;
-        return new AnalysisDimensions(
-                intOrNull(node, "technicalSkills"),
-                intOrNull(node, "experience"),
-                intOrNull(node, "cultureFit"),
-                intOrNull(node, "careerAlignment"),
-                node.path("location").asText(null),
-                node.path("locationNote").asText(null));
-    }
-
-    private static Integer intOrNull(com.fasterxml.jackson.databind.JsonNode node, String field) {
-        return node.path(field).isNumber() ? node.path(field).asInt() : null;
     }
 
     @Override
