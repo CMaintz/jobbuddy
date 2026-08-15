@@ -48,6 +48,11 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
 
     @Override
     public UrlProbeOutcome probe(String url) {
+        // SSRF guard: never fetch a posting URL that resolves to internal infrastructure.
+        if (!UrlSafetyValidator.isSafeHttpUrl(url)) {
+            log.warn("URL probe refused unsafe/non-public URL: {}", url);
+            return UrlProbeOutcome.INCONCLUSIVE;
+        }
         try {
             HttpResponse<String> response = send(url);
 

@@ -36,6 +36,8 @@ Crawler
   GONE_SOFT. Only 404/410 (and, after two sightings, "no longer available" markers incl. Danish)
   deactivate a posting; 403/429/5xx are treated as inconclusive (bot protection), **never** as
   proof the job is gone. Complements crawl-presence staleness expiry.
+- **SSRF guard** — `UrlSafetyValidator` requires http(s) and rejects URLs resolving to loopback /
+  private / link-local addresses before the probe fetches an (untrusted, crawled) posting URL.
 
 ---
 
