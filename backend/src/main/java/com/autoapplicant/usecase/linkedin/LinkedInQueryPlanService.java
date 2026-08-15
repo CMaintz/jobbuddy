@@ -4,7 +4,7 @@ import com.autoapplicant.domain.linkedin.LinkedInQueryPlan;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.linkedin.GenerateLinkedInQueryPlanUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.linkedin.LinkedInQueryPlanRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
@@ -38,7 +38,7 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
 
     private static final Logger log = LoggerFactory.getLogger(LinkedInQueryPlanService.class);
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ProfileRepositoryPort profileRepo;
     private final LinkedInQueryPlanRepositoryPort planRepo;
     private final ObjectMapper objectMapper;
@@ -55,7 +55,7 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
     @Value("${app.linkedin.plan.default-breadth:wide}")
     private String defaultBreadth;
 
-    public LinkedInQueryPlanService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
+    public LinkedInQueryPlanService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                     ProfileRepositoryPort profileRepo,
                                     LinkedInQueryPlanRepositoryPort planRepo,
                                     ObjectMapper objectMapper) {

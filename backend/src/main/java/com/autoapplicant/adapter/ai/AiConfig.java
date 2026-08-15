@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,7 +47,7 @@ public class AiConfig {
     }
 
     @Bean("generationAiProvider")
-    public AiProviderPort generationAiProvider(
+    public ChatProviderPort generationAiProvider(
             @Qualifier("openAiHttpClient") OpenAIClient openAi,
             @Qualifier("geminiHttpClient") OpenAIClient gemini,
             AppProperties props) {

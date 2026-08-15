@@ -5,7 +5,7 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.port.in.document.AnalyzeWritingStyleUseCase;
 import com.autoapplicant.port.in.document.ManageWritingProfileUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -44,12 +44,12 @@ public class WritingProfileService implements ManageWritingProfileUseCase, Analy
 
     private final WritingProfileRepositoryPort repo;
     private final GeneratedDocumentRepositoryPort documentRepo;
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
 
     public WritingProfileService(WritingProfileRepositoryPort repo,
                                  GeneratedDocumentRepositoryPort documentRepo,
-                                 @Qualifier("generationAiProvider") AiProviderPort aiProvider,
+                                 @Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                  ObjectMapper objectMapper) {
         this.repo = repo;
         this.documentRepo = documentRepo;
