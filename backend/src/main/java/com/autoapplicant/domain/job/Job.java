@@ -43,4 +43,114 @@ public record Job(
         Instant lastSeenAt,
         /** Application deadline stated by the posting. Null when unknown or "ASAP". */
         java.time.LocalDate applicationDeadline
-) {}
+) {
+
+    /** A fresh builder. Prefer {@link #toBuilder()} for copy-with-changes. */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder pre-populated from this job — the canonical way to copy a job with a few
+     * fields changed. Keeps the 35-arg constructor in one place: a copy site sets only what
+     * it changes, and a new field added to the record is carried over automatically.
+     */
+    public Builder toBuilder() {
+        return new Builder()
+                .id(id).source(source).sourceJobId(sourceJobId).url(url).title(title)
+                .companyId(companyId).companyName(companyName)
+                .descriptionRaw(descriptionRaw).descriptionClean(descriptionClean)
+                .employmentType(employmentType).seniority(seniority).remoteType(remoteType)
+                .location(location).municipality(municipality).region(region).country(country)
+                .salaryMin(salaryMin).salaryMax(salaryMax).currency(currency)
+                .technologies(technologies).skills(skills).languages(languages)
+                .postedAt(postedAt).scrapedAt(scrapedAt)
+                .aiSummary(aiSummary).aiTags(aiTags).aiSeniorityEstimate(aiSeniorityEstimate)
+                .duplicateGroupId(duplicateGroupId).isActive(isActive).jobCategory(jobCategory)
+                .createdAt(createdAt).updatedAt(updatedAt).shortDescription(shortDescription)
+                .lastSeenAt(lastSeenAt).applicationDeadline(applicationDeadline);
+    }
+
+    public static final class Builder {
+        private UUID id;
+        private JobSource source;
+        private String sourceJobId;
+        private String url;
+        private String title;
+        private UUID companyId;
+        private String companyName;
+        private String descriptionRaw;
+        private String descriptionClean;
+        private EmploymentType employmentType;
+        private Seniority seniority;
+        private RemoteType remoteType;
+        private String location;
+        private String municipality;
+        private String region;
+        private String country;
+        private Integer salaryMin;
+        private Integer salaryMax;
+        private String currency;
+        private List<String> technologies = List.of();
+        private List<String> skills = List.of();
+        private List<String> languages = List.of();
+        private Instant postedAt;
+        private Instant scrapedAt;
+        private String aiSummary;
+        private List<String> aiTags = List.of();
+        private String aiSeniorityEstimate;
+        private UUID duplicateGroupId;
+        private boolean isActive = true;
+        private JobCategory jobCategory;
+        private Instant createdAt;
+        private Instant updatedAt;
+        private String shortDescription;
+        private Instant lastSeenAt;
+        private java.time.LocalDate applicationDeadline;
+
+        public Builder id(UUID v) { this.id = v; return this; }
+        public Builder source(JobSource v) { this.source = v; return this; }
+        public Builder sourceJobId(String v) { this.sourceJobId = v; return this; }
+        public Builder url(String v) { this.url = v; return this; }
+        public Builder title(String v) { this.title = v; return this; }
+        public Builder companyId(UUID v) { this.companyId = v; return this; }
+        public Builder companyName(String v) { this.companyName = v; return this; }
+        public Builder descriptionRaw(String v) { this.descriptionRaw = v; return this; }
+        public Builder descriptionClean(String v) { this.descriptionClean = v; return this; }
+        public Builder employmentType(EmploymentType v) { this.employmentType = v; return this; }
+        public Builder seniority(Seniority v) { this.seniority = v; return this; }
+        public Builder remoteType(RemoteType v) { this.remoteType = v; return this; }
+        public Builder location(String v) { this.location = v; return this; }
+        public Builder municipality(String v) { this.municipality = v; return this; }
+        public Builder region(String v) { this.region = v; return this; }
+        public Builder country(String v) { this.country = v; return this; }
+        public Builder salaryMin(Integer v) { this.salaryMin = v; return this; }
+        public Builder salaryMax(Integer v) { this.salaryMax = v; return this; }
+        public Builder currency(String v) { this.currency = v; return this; }
+        public Builder technologies(List<String> v) { this.technologies = v; return this; }
+        public Builder skills(List<String> v) { this.skills = v; return this; }
+        public Builder languages(List<String> v) { this.languages = v; return this; }
+        public Builder postedAt(Instant v) { this.postedAt = v; return this; }
+        public Builder scrapedAt(Instant v) { this.scrapedAt = v; return this; }
+        public Builder aiSummary(String v) { this.aiSummary = v; return this; }
+        public Builder aiTags(List<String> v) { this.aiTags = v; return this; }
+        public Builder aiSeniorityEstimate(String v) { this.aiSeniorityEstimate = v; return this; }
+        public Builder duplicateGroupId(UUID v) { this.duplicateGroupId = v; return this; }
+        public Builder isActive(boolean v) { this.isActive = v; return this; }
+        public Builder jobCategory(JobCategory v) { this.jobCategory = v; return this; }
+        public Builder createdAt(Instant v) { this.createdAt = v; return this; }
+        public Builder updatedAt(Instant v) { this.updatedAt = v; return this; }
+        public Builder shortDescription(String v) { this.shortDescription = v; return this; }
+        public Builder lastSeenAt(Instant v) { this.lastSeenAt = v; return this; }
+        public Builder applicationDeadline(java.time.LocalDate v) { this.applicationDeadline = v; return this; }
+
+        public Job build() {
+            return new Job(id, source, sourceJobId, url, title, companyId, companyName,
+                    descriptionRaw, descriptionClean, employmentType, seniority, remoteType,
+                    location, municipality, region, country, salaryMin, salaryMax, currency,
+                    technologies, skills, languages, postedAt, scrapedAt, aiSummary, aiTags,
+                    aiSeniorityEstimate, duplicateGroupId, isActive, jobCategory, createdAt,
+                    updatedAt, shortDescription, lastSeenAt, applicationDeadline);
+        }
+    }
+}

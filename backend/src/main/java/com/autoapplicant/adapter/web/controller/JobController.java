@@ -224,15 +224,17 @@ public class JobController {
     @ApiResponse(responseCode = "201", description = "Job created")
     @PostMapping("/manual")
     public ResponseEntity<JobResponse> addManually(@Valid @RequestBody ManualJobRequest req) {
-        Job job = new Job(null, JobSource.MANUAL, null, req.url(),
-                req.title(), null, req.companyName(),
-                req.description(), req.description(),
-                req.employmentType() != null ? EmploymentType.valueOf(req.employmentType()) : null,
-                null, req.remoteType() != null ? RemoteType.valueOf(req.remoteType()) : null,
-                req.location(), null, null, null,
-                req.salaryMin(), req.salaryMax(), req.currency() != null ? req.currency() : "DKK",
-                List.of(), List.of(), List.of(),
-                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null, null, null, Instant.now(), null);
+        Job job = Job.builder()
+                .source(JobSource.MANUAL).url(req.url()).title(req.title()).companyName(req.companyName())
+                .descriptionRaw(req.description()).descriptionClean(req.description())
+                .employmentType(req.employmentType() != null ? EmploymentType.valueOf(req.employmentType()) : null)
+                .remoteType(req.remoteType() != null ? RemoteType.valueOf(req.remoteType()) : null)
+                .location(req.location())
+                .salaryMin(req.salaryMin()).salaryMax(req.salaryMax())
+                .currency(req.currency() != null ? req.currency() : "DKK")
+                .postedAt(Instant.now()).scrapedAt(Instant.now())
+                .isActive(true).lastSeenAt(Instant.now())
+                .build();
         Job saved = createManualJob.createManualJob(job);
         return ResponseEntity.created(URI.create("/api/v1/jobs/" + saved.id())).body(JobResponse.from(saved));
     }
