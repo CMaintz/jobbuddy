@@ -64,16 +64,10 @@ public class IngestionPipeline {
                     Job seen = existing.get();
                     var deadline = raw.applicationDeadline() != null
                             ? raw.applicationDeadline() : seen.applicationDeadline();
-                    jobRepo.save(new Job(seen.id(), seen.source(), seen.sourceJobId(), seen.url(),
-                            seen.title(), seen.companyId(), seen.companyName(), seen.descriptionRaw(),
-                            seen.descriptionClean(), seen.employmentType(), seen.seniority(), seen.remoteType(),
-                            seen.location(), seen.municipality(), seen.region(), seen.country(),
-                            seen.salaryMin(), seen.salaryMax(), seen.currency(), seen.technologies(),
-                            seen.skills(), seen.languages(), seen.postedAt(), seen.scrapedAt(),
-                            seen.aiSummary(), seen.aiTags(), seen.aiSeniorityEstimate(),
-                            seen.duplicateGroupId(), seen.isActive(), seen.jobCategory(),
-                            seen.createdAt(), seen.updatedAt(), seen.shortDescription(), Instant.now(),
-                            deadline));
+                    jobRepo.save(seen.toBuilder()
+                            .lastSeenAt(Instant.now())
+                            .applicationDeadline(deadline)
+                            .build());
                     log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
                     return;
                 }
@@ -84,13 +78,16 @@ public class IngestionPipeline {
             JobCategory category = categoryClassifier.classify(raw.rawCategories(), title, cleanText);
             UUID companyId = resolveCompany(raw);
 
-            Job draft = new Job(null, raw.source(), raw.sourceJobId(), raw.url(),
-                    title, companyId, raw.companyName(), raw.rawHtml(), cleanText,
-                    null, null, null, raw.location(), null, null, "DK",
-                    null, null, "DKK", List.of(), List.of(), List.of(),
-                    raw.postedAt(), raw.scrapedAt(), null, List.of(), null, null,
-                    true, category, null, null, raw.shortDescription(), Instant.now(),
-                    raw.applicationDeadline());
+            Job draft = Job.builder()
+                    .source(raw.source()).sourceJobId(raw.sourceJobId()).url(raw.url())
+                    .title(title).companyId(companyId).companyName(raw.companyName())
+                    .descriptionRaw(raw.rawHtml()).descriptionClean(cleanText)
+                    .location(raw.location()).country("DK").currency("DKK")
+                    .postedAt(raw.postedAt()).scrapedAt(raw.scrapedAt())
+                    .isActive(true).jobCategory(category)
+                    .shortDescription(raw.shortDescription()).lastSeenAt(Instant.now())
+                    .applicationDeadline(raw.applicationDeadline())
+                    .build();
 
             Job saved = jobRepo.save(draft);
 
