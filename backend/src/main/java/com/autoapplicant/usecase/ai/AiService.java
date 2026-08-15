@@ -48,6 +48,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
     private final ApplicationRepositoryPort applicationRepo;
     private final DocumentFactGuard factGuard;
+    private final RetractedClaimsGuard retractedClaimsGuard;
     private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
 
@@ -67,6 +68,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     @org.springframework.beans.factory.annotation.Value("${app.ai.fact-guard.mode:warn}")
     private String factGuardMode;
 
+    /** {@code warn} logs a resurfaced retracted claim; {@code block} fails generation. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.retracted-claims.mode:warn}")
+    private String retractedClaimsMode;
+
     public AiService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
                      CvVersionRepositoryPort cvRepo,
@@ -78,6 +83,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      PersistGeneratedDocumentPort persistGeneratedDocument,
                      ApplicationRepositoryPort applicationRepo,
                      DocumentFactGuard factGuard,
+                     RetractedClaimsGuard retractedClaimsGuard,
                      AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
@@ -91,6 +97,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.persistGeneratedDocument = persistGeneratedDocument;
         this.applicationRepo = applicationRepo;
         this.factGuard = factGuard;
+        this.retractedClaimsGuard = retractedClaimsGuard;
         this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
     }
@@ -261,6 +268,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
             // Deterministic fact gate: flag (or block on) metric claims not supported by the profile.
             applyFactGuard(body, contactFreeJson, documentType);
+            // Integrity gate: a claim the user has retracted must never resurface.
+            applyRetractedClaimsGuard(userId, body, documentType);
 
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
@@ -316,6 +325,21 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 + (documentType != null ? documentType : "document") + ": " + audit.inventedMetrics();
         if ("block".equalsIgnoreCase(factGuardMode)) {
             throw new IllegalStateException(msg + " — generation blocked (app.ai.fact-guard.mode=block)");
+        }
+        log.warn(msg);
+    }
+
+    /**
+     * Fails or warns when generated content resurfaces a claim the user has explicitly retracted.
+     * {@code block} (recommended for this integrity gate) fails generation; {@code warn} logs.
+     */
+    private void applyRetractedClaimsGuard(UUID userId, String body, String documentType) {
+        List<String> violations = retractedClaimsGuard.findViolations(userId, body);
+        if (violations.isEmpty()) return;
+        String msg = "Retracted claim(s) resurfaced in "
+                + (documentType != null ? documentType : "document") + ": " + violations;
+        if ("block".equalsIgnoreCase(retractedClaimsMode)) {
+            throw new IllegalStateException(msg + " — generation blocked (app.ai.retracted-claims.mode=block)");
         }
         log.warn(msg);
     }
