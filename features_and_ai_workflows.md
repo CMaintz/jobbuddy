@@ -173,6 +173,16 @@ Users maintain:
 
 The AI should generate tailored outputs from this structured profile.
 
+## Career Targeting (archetypes / North-Star)
+
+A `career_target` record (`GET`/`PUT /api/v1/profile/career-target`) stores the identity-free
+targeting layer behind archetype-aware generation: **target archetypes** (declared role-types),
+a **North-Star** statement, a positioning **narrative** (distinct from the CV summary), and
+**culture requirements**. These are folded into the contact-free AI context (`CareerProfileForAi`),
+so generation leads with the candidate's declared archetypes/North-Star when they align with the
+posting. (Compensation expectations and document style already exist as `Profile.desiredSalary*`
+and `DocumentTheme`.)
+
 ---
 
 # Project-Centric AI Grounding
