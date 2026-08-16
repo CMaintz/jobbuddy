@@ -29,6 +29,8 @@ public interface JobRepositoryPort {
     // ── URL health checks (takedown detection) ──────────────────
     /** Active non-manual jobs whose URL hasn't been probed since the cutoff, oldest check first. */
     List<Job> findUrlCheckCandidates(java.time.Instant recheckCutoff, int limit);
+    /** Re-crawl of an existing posting: bump lastSeenAt (and pick up a changed deadline). */
+    void refreshLastSeen(UUID jobId, java.time.Instant lastSeenAt, java.time.LocalDate applicationDeadline);
     /** Probe confirmed the posting is live: reset failures and refresh lastSeenAt. */
     void markUrlAlive(UUID jobId);
     /** Probe couldn't tell (bot-blocked, server error): just record the attempt. */
