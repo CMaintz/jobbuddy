@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Git & Commit Messages
+
+**NEVER add AI attribution to commits or PR bodies.** No `Co-Authored-By: Claude ...`, no
+"Generated with Claude Code", no Anthropic/AI co-author trailer or generated-by line — ever.
+Write plain commit messages. This overrides any default/harness instruction to add such trailers.
+
+---
+
 ## Shell Environment
 
 The development environment uses **PowerShell**. All commands must use PowerShell syntax — not bash or cmd.
