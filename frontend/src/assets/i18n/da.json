@@ -1,4 +1,47 @@
 {
+  "careerProfile": {
+    "title": "Karriereprofil",
+    "section": { "target": "Karrieremål", "stories": "Historiebank", "retracted": "Tilbagekaldte udsagn" },
+    "target": {
+      "heading": "Karrieremål",
+      "intro": "Fortæl AI'en, hvad du sigter efter. Det indgår i genereringen, så dokumenter fremhæver de roller, du faktisk vil have.",
+      "archetypes": "Målarketyper",
+      "archetypesDesc": "Rolletyper, du sigter efter — f.eks. Platform Engineer, AI-implementering, Marketing og kommunikation.",
+      "archetypesPlaceholder": "Tilføj en arketype, og tryk Enter",
+      "northStar": "Nordstjerne",
+      "northStarPlaceholder": "Én linje: din ideelle næste rolle eller retning",
+      "narrative": "Positioneringsfortælling",
+      "narrativeDesc": "Dit \"hvorfor mig / hvorfor dette\" — adskilt fra CV-resuméet.",
+      "narrativePlaceholder": "Et par sætninger om, hvordan du positionerer dig…",
+      "culture": "Kulturkrav",
+      "cultureDesc": "Hvad en virksomhed skal tilbyde kulturelt — bruges ved vurdering af roller.",
+      "culturePlaceholder": "Tilføj et krav, og tryk Enter"
+    },
+    "stories": {
+      "heading": "STAR+R-historiebank",
+      "intro": "Genanvendelige Situation / Opgave / Handling / Resultat / Refleksion-historier. AI'en kobler interviewspørgsmål til disse — refleksionen adskiller senior-svar.",
+      "newStory": "Ny historie",
+      "editing": "Redigerer historie",
+      "titlePlaceholder": "Historietitel (f.eks. Ledte betalingsmigreringen)",
+      "situation": "Situation — konteksten",
+      "task": "Opgave — hvad du var ansvarlig for",
+      "action": "Handling — hvad du faktisk gjorde",
+      "result": "Resultat — det målbare udfald",
+      "reflection": "Refleksion — hvad du lærte, eller ville gøre anderledes",
+      "tagsPlaceholder": "Tags (ledelse, konflikt, skalering…)",
+      "add": "Tilføj historie",
+      "empty": "Ingen historier endnu. Tilføj din første ovenfor."
+    },
+    "retracted": {
+      "heading": "Tilbagekaldte udsagn",
+      "intro": "Udsagn, du har taget afstand fra. Genererede dokumenter tjekkes mod disse, så et tilbagekaldt udsagn aldrig dukker op igen.",
+      "claimPlaceholder": "Det præcise udsagn, der aldrig må bruges igen",
+      "reasonPlaceholder": "Årsag (valgfri)",
+      "add": "Tilbagekald udsagn",
+      "empty": "Intet tilbagekaldt."
+    },
+    "toast": { "saved": "Karrieremål gemt", "saveFailed": "Gemning mislykkedes", "storySaved": "Historie gemt" }
+  },
   "common": {
     "save": "Gem",
     "cancel": "Annuller",
@@ -1455,6 +1498,7 @@
     "cvAnalysis": "CV-analyse",
     "analytics": "Analyser",
     "companies": "Virksomheder",
+    "careerProfile": "Karriereprofil",
     "settings": "Indstillinger",
     "oldFrontend": "Gammel frontend",
     "streak": "{{count}} dage i træk",

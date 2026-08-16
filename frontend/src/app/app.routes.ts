@@ -143,6 +143,10 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       },
+      {
+        path: 'career-profile',
+        loadComponent: () => import('./features/career-profile/career-profile.component').then(m => m.CareerProfileComponent)
+      },
 
       // Resume Builder (kept intact)
       {
