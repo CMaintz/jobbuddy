@@ -49,6 +49,17 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void backfillWebsite(UUID companyId, String website) {
+        repo.findById(companyId).ifPresent(e -> {
+            if (e.getWebsite() == null || e.getWebsite().isBlank()) {
+                e.setWebsite(website);
+                repo.save(e);
+            }
+        });
+    }
+
+    @Override
     public List<Company> search(String query, int page, int size) {
         return repo.findByNameContainingIgnoreCase(query, PageRequest.of(page, size))
                 .stream()
