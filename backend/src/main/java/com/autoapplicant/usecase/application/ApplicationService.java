@@ -74,15 +74,13 @@ public class ApplicationService implements
         GeneratedDocument document = structuredGeneratedDocuments.attachToApplication(userId, generatedDocumentId, applicationId);
         Application withContent = applyGeneratedContent(existing, document, generatedContent);
         ApplicationStatus targetStatus = status != null ? status : withContent.status();
-        Application updated = new Application(
-                withContent.id(), withContent.userId(), withContent.jobId(), targetStatus,
-                targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null ? Instant.now() : withContent.appliedAt(),
-                withContent.recruiterName(), withContent.recruiterEmail(),
-                withContent.coverLetterText(), withContent.applicationText(), withContent.recruiterMessage(),
-                withContent.recruiterReply(), withContent.cvVersionId(), withContent.promptTemplateId(), withContent.matchScore(),
-                notes != null ? notes : withContent.notes(),
-                withContent.createdAt(), Instant.now(),
-                withContent.outcomeFeedback(), withContent.outcomeLessons());
+        Application updated = withContent.toBuilder()
+                .status(targetStatus)
+                .appliedAt(targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null
+                        ? Instant.now() : withContent.appliedAt())
+                .notes(notes != null ? notes : withContent.notes())
+                .updatedAt(Instant.now())
+                .build();
         return repo.save(updated);
     }
 
@@ -103,13 +101,11 @@ public class ApplicationService implements
             }
         }
 
-        return new Application(
-                application.id(), application.userId(), application.jobId(), application.status(),
-                application.appliedAt(), application.recruiterName(), application.recruiterEmail(),
-                coverLetterText, applicationText, recruiterMessage,
-                application.recruiterReply(), application.cvVersionId(), application.promptTemplateId(), application.matchScore(),
-                application.notes(), application.createdAt(), application.updatedAt(),
-                application.outcomeFeedback(), application.outcomeLessons());
+        return application.toBuilder()
+                .coverLetterText(coverLetterText)
+                .applicationText(applicationText)
+                .recruiterMessage(recruiterMessage)
+                .build();
     }
 
     @Override
@@ -122,15 +118,12 @@ public class ApplicationService implements
                     + existing.status() + " -> " + newStatus);
         }
 
-        Application updated = new Application(
-                existing.id(), existing.userId(), existing.jobId(), newStatus,
-                newStatus == ApplicationStatus.APPLIED ? java.time.Instant.now() : existing.appliedAt(),
-                existing.recruiterName(), existing.recruiterEmail(),
-                existing.coverLetterText(), existing.applicationText(), existing.recruiterMessage(),
-                existing.recruiterReply(), existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
-                notes != null ? notes : existing.notes(),
-                existing.createdAt(), java.time.Instant.now(),
-                existing.outcomeFeedback(), existing.outcomeLessons());
+        Application updated = existing.toBuilder()
+                .status(newStatus)
+                .appliedAt(newStatus == ApplicationStatus.APPLIED ? Instant.now() : existing.appliedAt())
+                .notes(notes != null ? notes : existing.notes())
+                .updatedAt(Instant.now())
+                .build();
         Application saved = repo.save(updated);
 
         // Append-only transition ledger — every change, for funnel-velocity analytics.
@@ -160,17 +153,13 @@ public class ApplicationService implements
                                            String recruiterMessage, String recruiterReply) {
         Application existing = repo.findByIdAndUserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Application not found"));
-        Application updated = new Application(
-                existing.id(), existing.userId(), existing.jobId(), existing.status(),
-                existing.appliedAt(),
-                recruiterName    != null ? recruiterName    : existing.recruiterName(),
-                recruiterEmail   != null ? recruiterEmail   : existing.recruiterEmail(),
-                existing.coverLetterText(), existing.applicationText(),
-                recruiterMessage != null ? recruiterMessage : existing.recruiterMessage(),
-                recruiterReply   != null ? recruiterReply   : existing.recruiterReply(),
-                existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
-                existing.notes(), existing.createdAt(), Instant.now(),
-                existing.outcomeFeedback(), existing.outcomeLessons());
+        Application updated = existing.toBuilder()
+                .recruiterName(recruiterName    != null ? recruiterName    : existing.recruiterName())
+                .recruiterEmail(recruiterEmail   != null ? recruiterEmail   : existing.recruiterEmail())
+                .recruiterMessage(recruiterMessage != null ? recruiterMessage : existing.recruiterMessage())
+                .recruiterReply(recruiterReply   != null ? recruiterReply   : existing.recruiterReply())
+                .updatedAt(Instant.now())
+                .build();
         return repo.save(updated);
     }
 
@@ -178,14 +167,11 @@ public class ApplicationService implements
     public Application updateOutcome(UUID applicationId, UUID userId, String outcomeFeedback, String outcomeLessons) {
         Application existing = repo.findByIdAndUserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Application not found"));
-        Application updated = new Application(
-                existing.id(), existing.userId(), existing.jobId(), existing.status(),
-                existing.appliedAt(), existing.recruiterName(), existing.recruiterEmail(),
-                existing.coverLetterText(), existing.applicationText(), existing.recruiterMessage(),
-                existing.recruiterReply(), existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
-                existing.notes(), existing.createdAt(), Instant.now(),
-                outcomeFeedback != null ? outcomeFeedback : existing.outcomeFeedback(),
-                outcomeLessons  != null ? outcomeLessons  : existing.outcomeLessons());
+        Application updated = existing.toBuilder()
+                .outcomeFeedback(outcomeFeedback != null ? outcomeFeedback : existing.outcomeFeedback())
+                .outcomeLessons(outcomeLessons  != null ? outcomeLessons  : existing.outcomeLessons())
+                .updatedAt(Instant.now())
+                .build();
         return repo.save(updated);
     }
 

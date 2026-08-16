@@ -121,6 +121,16 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void refreshLastSeen(UUID jobId, Instant lastSeenAt, java.time.LocalDate applicationDeadline) {
+        repo.findById(jobId).ifPresent(e -> {
+            e.setLastSeenAt(lastSeenAt);
+            e.setApplicationDeadline(applicationDeadline);
+            repo.save(e);
+        });
+    }
+
+    @Override
     public void markUrlAlive(UUID jobId) {
         repo.findById(jobId).ifPresent(e -> {
             e.setUrlCheckFailures(0);

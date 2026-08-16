@@ -64,10 +64,8 @@ public class IngestionPipeline {
                     Job seen = existing.get();
                     var deadline = raw.applicationDeadline() != null
                             ? raw.applicationDeadline() : seen.applicationDeadline();
-                    jobRepo.save(seen.toBuilder()
-                            .lastSeenAt(Instant.now())
-                            .applicationDeadline(deadline)
-                            .build());
+                    // Targeted update in the adapter (like markUrlAlive) — no whole-Job rebuild.
+                    jobRepo.refreshLastSeen(seen.id(), Instant.now(), deadline);
                     log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
                     return;
                 }
@@ -149,11 +147,8 @@ public class IngestionPipeline {
             String website = raw.companyWebsiteUrl();
             if (website != null && !website.isBlank()
                     && (company.website() == null || company.website().isBlank())) {
-                companyRepo.save(new Company(company.id(), company.name(), company.slug(),
-                        website.trim(), company.linkedinUrl(), company.description(), company.logoUrl(),
-                        company.sizeRange(), company.industry(), company.country(),
-                        company.isConsulting(), company.isRecruitingAgency(),
-                        company.createdAt(), company.updatedAt()));
+                // Targeted single-field backfill in the adapter — no whole-Company rebuild.
+                companyRepo.backfillWebsite(company.id(), website.trim());
             }
             return company.id();
         } catch (Exception e) {
