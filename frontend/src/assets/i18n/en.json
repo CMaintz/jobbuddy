@@ -1,4 +1,47 @@
 {
+  "careerProfile": {
+    "title": "Career Profile",
+    "section": { "target": "Career target", "stories": "Story bank", "retracted": "Retracted claims" },
+    "target": {
+      "heading": "Career target",
+      "intro": "Tell the AI what you're aiming for. This is folded into generation so documents lead with the roles you actually want.",
+      "archetypes": "Target archetypes",
+      "archetypesDesc": "Role types you're aiming for — e.g. Platform Engineer, AI Implementation, Marketing Communications.",
+      "archetypesPlaceholder": "Add an archetype and press Enter",
+      "northStar": "North-Star",
+      "northStarPlaceholder": "One line: your ideal next role or direction",
+      "narrative": "Positioning narrative",
+      "narrativeDesc": "Your \"why me / why this\" — distinct from the CV summary.",
+      "narrativePlaceholder": "A few sentences on how you position yourself…",
+      "culture": "Culture requirements",
+      "cultureDesc": "What a company must offer culturally — used when evaluating roles.",
+      "culturePlaceholder": "Add a requirement and press Enter"
+    },
+    "stories": {
+      "heading": "STAR+R story bank",
+      "intro": "Reusable Situation / Task / Action / Result / Reflection stories. The AI maps interview questions to these — the Reflection is what sets senior answers apart.",
+      "newStory": "New story",
+      "editing": "Editing story",
+      "titlePlaceholder": "Story title (e.g. Led the payments migration)",
+      "situation": "Situation — the context",
+      "task": "Task — what you were responsible for",
+      "action": "Action — what you actually did",
+      "result": "Result — the measurable outcome",
+      "reflection": "Reflection — what you learned or would do differently",
+      "tagsPlaceholder": "Tags (leadership, conflict, scaling…)",
+      "add": "Add story",
+      "empty": "No stories yet. Add your first above."
+    },
+    "retracted": {
+      "heading": "Retracted claims",
+      "intro": "Claims you've disowned. Generated documents are checked against these so a retracted claim can never resurface.",
+      "claimPlaceholder": "The exact claim to never use again",
+      "reasonPlaceholder": "Reason (optional)",
+      "add": "Retract claim",
+      "empty": "Nothing retracted."
+    },
+    "toast": { "saved": "Career target saved", "saveFailed": "Save failed", "storySaved": "Story saved" }
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -1455,6 +1498,7 @@
     "cvAnalysis": "CV analysis",
     "analytics": "Analytics",
     "companies": "Companies",
+    "careerProfile": "Career Profile",
     "settings": "Settings",
     "oldFrontend": "Old frontend",
     "streak": "{{count}}-day streak",

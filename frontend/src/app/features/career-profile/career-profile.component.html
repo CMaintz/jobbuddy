@@ -1,0 +1,147 @@
+<jb-topbar [title]="'careerProfile.title' | translate">
+  <ng-container jb-topbar-actions>
+    @if (activeSection() === 'target') {
+      <jb-button small [primary]="targetDirty()" icon="check" [disabled]="savingTarget() || !targetDirty()" (clicked)="saveTarget()">{{ 'common.save' | translate }}</jb-button>
+    }
+  </ng-container>
+</jb-topbar>
+
+<jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+<!-- Section tabs -->
+<div class="flex items-center gap-1.5 px-4 py-2 border-b border-jb-border overflow-x-auto flex-shrink-0">
+  @for (s of sections; track s.key) {
+    <button (click)="activeSection.set(s.key)"
+      class="px-3 py-1.5 rounded-full cursor-pointer whitespace-nowrap text-sm font-medium flex items-center gap-1.5"
+      [style.background]="activeSection() === s.key ? 'var(--jb-surface-3)' : 'transparent'"
+      [style.color]="activeSection() === s.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+      [style.border]="'1px solid ' + (activeSection() === s.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')">
+      <jb-icon [name]="s.icon" [size]="13" /> {{ s.label | translate }}
+    </button>
+  }
+</div>
+
+<div class="flex-1 min-h-0 overflow-auto p-[24px_28px_48px] jb-scroll">
+  <div class="max-w-[680px]">
+
+    <!-- ── Career target ─────────────────────────────────── -->
+    @if (activeSection() === 'target') {
+      <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'careerProfile.target.heading' | translate }}</h2>
+      <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_16px]">{{ 'careerProfile.target.intro' | translate }}</p>
+
+      <div class="py-3.5 border-b border-jb-border-faint">
+        <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.archetypes' | translate }}</div>
+        <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.archetypesDesc' | translate }}</div>
+        <jb-tag-input [value]="archetypes" (valueChange)="archetypes = $event; markTargetDirty()" [placeholder]="'careerProfile.target.archetypesPlaceholder' | translate" />
+      </div>
+
+      <div class="py-3.5 border-b border-jb-border-faint">
+        <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.northStar' | translate }}</div>
+        <input type="text" [(ngModel)]="northStar" (ngModelChange)="markTargetDirty()"
+          [placeholder]="'careerProfile.target.northStarPlaceholder' | translate"
+          class="w-full border border-jb-border rounded-md px-3 py-2 text-base" style="background: var(--jb-surface-2)" />
+      </div>
+
+      <div class="py-3.5 border-b border-jb-border-faint">
+        <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.narrative' | translate }}</div>
+        <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.narrativeDesc' | translate }}</div>
+        <textarea rows="4" [(ngModel)]="narrative" (ngModelChange)="markTargetDirty()"
+          [placeholder]="'careerProfile.target.narrativePlaceholder' | translate"
+          class="w-full border border-jb-border rounded-md px-3 py-2 text-base resize-y" style="background: var(--jb-surface-2)"></textarea>
+      </div>
+
+      <div class="py-3.5">
+        <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.culture' | translate }}</div>
+        <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.cultureDesc' | translate }}</div>
+        <jb-tag-input [value]="culture" (valueChange)="culture = $event; markTargetDirty()" [placeholder]="'careerProfile.target.culturePlaceholder' | translate" />
+      </div>
+    }
+
+    <!-- ── Story bank ────────────────────────────────────── -->
+    @if (activeSection() === 'stories') {
+      <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'careerProfile.stories.heading' | translate }}</h2>
+      <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_16px]">{{ 'careerProfile.stories.intro' | translate }}</p>
+
+      <!-- Editor -->
+      <div class="rounded-lg border border-jb-border p-4 mb-5" style="background: var(--jb-surface-2)">
+        <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">
+          {{ (editingStoryId() ? 'careerProfile.stories.editing' : 'careerProfile.stories.newStory') | translate }}
+        </div>
+        <input type="text" [(ngModel)]="storyForm.title" [placeholder]="'careerProfile.stories.titlePlaceholder' | translate"
+          class="w-full border border-jb-border rounded-md px-3 py-2 text-base mb-2.5" style="background: var(--jb-surface-1)" />
+        <div class="grid gap-2.5">
+          <textarea rows="2" [(ngModel)]="storyForm.situation" [placeholder]="'careerProfile.stories.situation' | translate" class="w-full border border-jb-border rounded-md px-3 py-2 text-sm resize-y" style="background: var(--jb-surface-1)"></textarea>
+          <textarea rows="2" [(ngModel)]="storyForm.task" [placeholder]="'careerProfile.stories.task' | translate" class="w-full border border-jb-border rounded-md px-3 py-2 text-sm resize-y" style="background: var(--jb-surface-1)"></textarea>
+          <textarea rows="2" [(ngModel)]="storyForm.action" [placeholder]="'careerProfile.stories.action' | translate" class="w-full border border-jb-border rounded-md px-3 py-2 text-sm resize-y" style="background: var(--jb-surface-1)"></textarea>
+          <textarea rows="2" [(ngModel)]="storyForm.result" [placeholder]="'careerProfile.stories.result' | translate" class="w-full border border-jb-border rounded-md px-3 py-2 text-sm resize-y" style="background: var(--jb-surface-1)"></textarea>
+          <textarea rows="2" [(ngModel)]="storyForm.reflection" [placeholder]="'careerProfile.stories.reflection' | translate" class="w-full border border-jb-border rounded-md px-3 py-2 text-sm resize-y" style="background: var(--jb-surface-1)"></textarea>
+          <jb-tag-input [value]="storyForm.tags ?? []" (valueChange)="storyForm.tags = $event" [placeholder]="'careerProfile.stories.tagsPlaceholder' | translate" />
+        </div>
+        <div class="flex items-center gap-2 mt-3">
+          <jb-button small [primary]="true" icon="check" [disabled]="savingStory() || !storyForm.title.trim()" (clicked)="saveStory()">
+            {{ (editingStoryId() ? 'common.save' : 'careerProfile.stories.add') | translate }}
+          </jb-button>
+          @if (editingStoryId()) {
+            <jb-button small icon="x" (clicked)="newStory()">{{ 'common.cancel' | translate }}</jb-button>
+          }
+        </div>
+      </div>
+
+      <!-- List -->
+      @if (stories().length === 0) {
+        <div class="text-sm text-jb-text-dim">{{ 'careerProfile.stories.empty' | translate }}</div>
+      } @else {
+        <div class="flex flex-col gap-2.5">
+          @for (s of stories(); track s.id) {
+            <div class="rounded-lg border border-jb-border p-3.5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="text-base font-medium">{{ s.title }}</div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <jb-button small icon="edit" (clicked)="editStory(s)">{{ 'common.edit' | translate }}</jb-button>
+                  <jb-button small icon="trash" (clicked)="deleteStory(s.id)">{{ 'common.delete' | translate }}</jb-button>
+                </div>
+              </div>
+              @if (s.result) { <div class="text-xs text-jb-text-dim mt-1.5 line-clamp-2">{{ s.result }}</div> }
+              @if (s.tags?.length) {
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  @for (t of s.tags; track t) { <span class="text-2xs px-2 py-0.5 rounded-full border border-jb-border text-jb-text-dim">{{ t }}</span> }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- ── Retracted claims ──────────────────────────────── -->
+    @if (activeSection() === 'retracted') {
+      <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'careerProfile.retracted.heading' | translate }}</h2>
+      <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_16px]">{{ 'careerProfile.retracted.intro' | translate }}</p>
+
+      <div class="rounded-lg border border-jb-border p-4 mb-5" style="background: var(--jb-surface-2)">
+        <input type="text" [(ngModel)]="newClaim" [placeholder]="'careerProfile.retracted.claimPlaceholder' | translate"
+          class="w-full border border-jb-border rounded-md px-3 py-2 text-base mb-2.5" style="background: var(--jb-surface-1)" />
+        <input type="text" [(ngModel)]="newReason" [placeholder]="'careerProfile.retracted.reasonPlaceholder' | translate"
+          class="w-full border border-jb-border rounded-md px-3 py-2 text-sm mb-3" style="background: var(--jb-surface-1)" />
+        <jb-button small [primary]="true" icon="plus" [disabled]="addingClaim() || !newClaim.trim()" (clicked)="addClaim()">{{ 'careerProfile.retracted.add' | translate }}</jb-button>
+      </div>
+
+      @if (claims().length === 0) {
+        <div class="text-sm text-jb-text-dim">{{ 'careerProfile.retracted.empty' | translate }}</div>
+      } @else {
+        <div class="flex flex-col gap-2">
+          @for (c of claims(); track c.id) {
+            <div class="flex items-start justify-between gap-3 rounded-lg border border-jb-border p-3">
+              <div>
+                <div class="text-base">{{ c.claim }}</div>
+                @if (c.reason) { <div class="text-xs text-jb-text-dim mt-0.5">{{ c.reason }}</div> }
+              </div>
+              <jb-button small icon="trash" (clicked)="removeClaim(c.id)">{{ 'common.delete' | translate }}</jb-button>
+            </div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+</div>
