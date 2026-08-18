@@ -286,6 +286,21 @@ Fixed, server-side guardrails on every generation/analysis prompt (not user-edit
 - **Untrusted-input guard** — scraped/posted job text (incl. crawled LinkedIn/board HTML) is treated as data to evaluate, never as instructions (prompt-injection defense).
 - **Privacy** — identity fields (name, contact, photo, links) are never sent to the AI.
 
+## Company Grounding
+
+Cover-letter accuracy's biggest risk is fabricated company praise ("I admire your work on X").
+`CompanyGroundingService` addresses it: on generation it supplies **verified company facts** to the
+prompt, extracted from the company's **own website** (never a URL from the untrusted posting).
+
+- **Cached in the DB** (`companies.researched_facts` / `facts_researched_at`, V060) — fetched and
+  extracted once, reused until stale (`app.ai.company-grounding.staleness-days`, default 60), so no
+  needless re-scraping. Extraction uses the cheap enrichment-tier model.
+- **SSRF-guarded fetch** (`WebPageFetchPort` + `UrlSafetyValidator`); the page text is capped.
+- The facts appear in a **"Verified Company Facts"** prompt block marked as trustworthy and distinct
+  from the untrusted posting; a HONESTY rule requires any company reference to be grounded in it.
+- Best-effort and cached — if there's no known website or the fetch fails, generation just proceeds
+  without the block. Config: `app.ai.company-grounding.enabled` (default true).
+
 ## Deterministic Fact Gate
 
 A model-free backstop (`DocumentFactGuard`, ported from career-ops' `verify-cv-facts.mjs`):

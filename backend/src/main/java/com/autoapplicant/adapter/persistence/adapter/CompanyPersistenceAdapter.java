@@ -72,6 +72,24 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
         return repo.findBySlug(slug).map(this::toDomain);
     }
 
+    @Override
+    public Optional<com.autoapplicant.domain.company.CompanyFacts> findFacts(UUID companyId) {
+        return repo.findById(companyId)
+                .filter(e -> e.getResearchedFacts() != null && !e.getResearchedFacts().isBlank())
+                .map(e -> new com.autoapplicant.domain.company.CompanyFacts(
+                        e.getResearchedFacts(), e.getFactsResearchedAt()));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void saveFacts(UUID companyId, String facts) {
+        repo.findById(companyId).ifPresent(e -> {
+            e.setResearchedFacts(facts);
+            e.setFactsResearchedAt(java.time.Instant.now());
+            repo.save(e);
+        });
+    }
+
     private Company toDomain(CompanyEntity e) {
         CompanySize size = e.getSizeRange() != null
                 ? CompanySize.valueOf(e.getSizeRange()) : null;

@@ -49,6 +49,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final ApplicationRepositoryPort applicationRepo;
     private final DocumentFactGuard factGuard;
     private final RetractedClaimsGuard retractedClaimsGuard;
+    private final CompanyGroundingService companyGrounding;
     private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
 
@@ -84,6 +85,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      ApplicationRepositoryPort applicationRepo,
                      DocumentFactGuard factGuard,
                      RetractedClaimsGuard retractedClaimsGuard,
+                     CompanyGroundingService companyGrounding,
                      AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
@@ -98,6 +100,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.applicationRepo = applicationRepo;
         this.factGuard = factGuard;
         this.retractedClaimsGuard = retractedClaimsGuard;
+        this.companyGrounding = companyGrounding;
         this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
     }
@@ -237,10 +240,13 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             String templateId, UUID promptTemplateId, String customInstructions,
             String motivationText, String targetLanguage, boolean showProfileImage, DocumentTheme theme) {
         try {
-            String jobDescription = jobId != null
-                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse(rawJobDescription)
-                    : rawJobDescription;
+            Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+            String jobDescription = job != null && job.descriptionClean() != null
+                    ? job.descriptionClean() : rawJobDescription;
             String contactFreeJson = careerProfileContext.buildJson(userId);
+            // Grounded company facts (cached; from the company's own site) so company references
+            // in cover letters are accurate rather than parroted from the untrusted posting.
+            String companyFacts = job != null ? companyGrounding.factsFor(job.companyId()) : null;
 
             PromptTemplate styleTemplate = promptTemplateId != null
                     ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
@@ -251,7 +257,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     documentType, contactFreeJson, jobDescription,
                     customInstructions, motivationText, targetLanguage, styleTemplate,
                     writingProfileRepo.findByUserId(userId).orElse(null),
-                    applicationRepo.findRecentOutcomeLessons(userId, 5));
+                    applicationRepo.findRecentOutcomeLessons(userId, 5),
+                    companyFacts);
 
             String json = AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition)).trim());
