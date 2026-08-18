@@ -53,6 +53,11 @@ app:
       # Ensures a claim the user has disowned never resurfaces in generated content.
       # warn = log; block = fail generation when a retracted claim appears.
       mode: ${RETRACTED_CLAIMS_MODE:warn}
+    company-grounding:
+      # Fetch the company's own website (cached in DB) and extract verified facts to ground
+      # cover-letter references, instead of parroting the untrusted posting.
+      enabled: ${COMPANY_GROUNDING_ENABLED:true}
+      staleness-days: 60
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o-mini
