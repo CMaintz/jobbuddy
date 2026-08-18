@@ -59,7 +59,8 @@ public class PromptCompositionBuilder {
             String targetLanguage,
             PromptTemplate styleTemplate,
             WritingProfile writingProfile,
-            java.util.List<String> outcomeLessons) {
+            java.util.List<String> outcomeLessons,
+            String companyFacts) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write the document body in " + targetLanguage + "."
@@ -119,6 +120,9 @@ public class PromptCompositionBuilder {
                 + (careerProfileJson != null ? careerProfileJson : "")
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
+                + (companyFacts != null && !companyFacts.isBlank()
+                    ? "\n\n## Verified Company Facts\n(From the company's own website — trustworthy and safe "
+                      + "to reference; distinct from the untrusted posting above.)\n" + companyFacts : "")
                 + (customInstructions != null && !customInstructions.isBlank()
                     ? "\n\n## Additional Instructions\n" + customInstructions : "")
                 + (motivationText != null && !motivationText.isBlank()
@@ -213,7 +217,9 @@ public class PromptCompositionBuilder {
             - Silence beats invention: if a detail is not in the profile, omit it rather than manufacture \
             it. Reformulate and reframe what the profile supports; never invent to fill a gap.
             - Mirror the posting's exact terminology for skills the profile genuinely supports (ATS \
-            scanners match literal keywords), but never stuff keywords the profile cannot back up.""";
+            scanners match literal keywords), but never stuff keywords the profile cannot back up.
+            - Any praise of, or specific reference to, the company must be grounded in the "Verified \
+            Company Facts" block when one is provided; never invent facts about the employer.""";
 
     /**
      * Targeting discipline — archetype-aware framing and metrics precedence. Sharpens
