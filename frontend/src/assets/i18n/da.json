@@ -1277,7 +1277,10 @@
       "intro": "Standarderne, der anvendes hver gang du genererer — kan tilsidesættes per ansøgning. Gemmes på denne enhed.",
       "voice": "Standardtone",
       "language": "Standardsprog",
-      "length": "Standardlængde"
+      "length": "Standardlængde",
+      "cvTemplate": "CV-skabelon til hurtig ansøgning",
+      "cvTemplateHint": "Skabelon brugt til det tilpassede CV i Hurtig ansøgning.",
+      "cvTemplateDefault": "Systemstandard"
     },
     "style": {
       "analyze": "Analysér min skrivning",

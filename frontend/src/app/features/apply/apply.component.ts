@@ -376,6 +376,7 @@ export class ApplyComponent implements OnInit {
       switchMap(app => forkJoin([
         this.aiApi.generateStructuredCv({
           jobId: app.jobId, targetLanguage: lang,
+          templateId: loadGenDefaults().cvTemplate || undefined,
           customInstructions: instructions || undefined,
         }),
         this.aiApi.generateDocument({
