@@ -44,6 +44,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final TailoredCvGenerator tailoredCvGenerator;
     private final AtsReportBuilder atsReportBuilder;
     private final ApplicationRepositoryPort applicationRepo;
+    private final GeneratedContentGuards contentGuards;
 
     public StructuredDocumentService(UserRepositoryPort userRepo,
                                      ProfileRepositoryPort profileRepo,
@@ -56,7 +57,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
                                      AtsReportBuilder atsReportBuilder,
-                                     ApplicationRepositoryPort applicationRepo) {
+                                     ApplicationRepositoryPort applicationRepo,
+                                     GeneratedContentGuards contentGuards) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.privateInfoRepo = privateInfoRepo;
@@ -69,6 +71,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.tailoredCvGenerator = tailoredCvGenerator;
         this.atsReportBuilder = atsReportBuilder;
         this.applicationRepo = applicationRepo;
+        this.contentGuards = contentGuards;
     }
 
     public StructuredDocument buildCv(UUID userId, String templateId) {
@@ -179,9 +182,34 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                 source, jobDescription, customInstructions, targetLanguage, promptTemplate,
                 writingProfileRepo.findByUserId(userId).orElse(null),
                 applicationRepo.findRecentOutcomeLessons(userId, 5));
+        // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
+        contentGuards.verify(userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
                 showProfileImage, resolveTheme(theme));
+    }
+
+    /** Flattens the tailored CV's rewritten text so the guards can check it like a letter body. */
+    private static String cvText(TailoredCvContent t) {
+        StringBuilder sb = new StringBuilder();
+        if (t.selectedProfile() != null) sb.append(t.selectedProfile()).append('\n');
+        if (t.selectedSkills() != null) sb.append(String.join(", ", t.selectedSkills())).append('\n');
+        appendItems(sb, t.experience());
+        appendItems(sb, t.projects());
+        appendItems(sb, t.education());
+        appendItems(sb, t.certifications());
+        return sb.toString();
+    }
+
+    private static void appendItems(StringBuilder sb,
+                                    List<com.autoapplicant.domain.document.structured.StructuredDocumentItem> items) {
+        if (items == null) return;
+        for (var it : items) {
+            if (it.title() != null) sb.append(it.title()).append(' ');
+            if (it.subtitle() != null) sb.append(it.subtitle()).append(' ');
+            if (it.description() != null) sb.append(it.description()).append('\n');
+            if (it.bullets() != null) for (String b : it.bullets()) sb.append(b).append('\n');
+        }
     }
 
     /** Loads the prompt template by explicit ID, or falls back to the system default for the category. */
