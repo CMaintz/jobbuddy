@@ -1277,7 +1277,10 @@
       "intro": "The defaults applied each time you generate — override per application. Stored on this device.",
       "voice": "Default voice",
       "language": "Default language",
-      "length": "Default length"
+      "length": "Default length",
+      "cvTemplate": "Quick-apply CV template",
+      "cvTemplateHint": "Template used for the tailored CV in Quick apply.",
+      "cvTemplateDefault": "System default"
     },
     "style": {
       "analyze": "Analyze my writing",

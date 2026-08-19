@@ -19,6 +19,8 @@ import { UserPreferences } from '../../core/models/user.model';
 import { WritingProfileApiService, WritingProfile } from '../../core/api/writing-profile.api';
 import { AiApiService } from '../../core/api/ai.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
+import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
+import { DocumentTemplateOption } from '../../core/models/structured-document.model';
 
 type Section = 'match' | 'gen' | 'style' | 'account' | 'privacy';
 
@@ -27,6 +29,8 @@ export interface GenDefaults {
   voice: string;
   lang: string;
   length: string;
+  /** Default CV template id used by Quick apply (undefined = system default). */
+  cvTemplate?: string;
 }
 
 const GEN_DEFAULTS_KEY = 'jb-gen-defaults';
@@ -92,7 +96,11 @@ export class SettingsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);
   private aiApi = inject(AiApiService);
+  private templatesApi = inject(StructuredDocumentTemplatesApiService);
   private translate = inject(TranslateService);
+
+  /** CV templates available for the Quick-apply default picker. */
+  cvTemplates = signal<DocumentTemplateOption[]>([]);
   Math = Math;
 
   activeSection = signal<Section>('match');
@@ -189,6 +197,12 @@ export class SettingsComponent implements OnInit {
         this.styleStructure = wp.structureNotes ?? '';
         this.analyzedAt.set(wp.lastAnalyzedAt);
       },
+      error: () => {}
+    });
+
+    this.templatesApi.getActive().subscribe({
+      next: templates => this.cvTemplates.set(templates.filter(t =>
+        !t.documentTypes || t.documentTypes.length === 0 || t.documentTypes.some(d => String(d) === 'CV'))),
       error: () => {}
     });
   }
