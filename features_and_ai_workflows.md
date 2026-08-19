@@ -313,6 +313,13 @@ source, so a truthful number never false-fails. Config: `app.ai.fact-guard.enabl
 reviewer loop — the reviewer's honesty rules are the first line of defense, the fact gate is the
 deterministic net.
 
+**Coverage:** the fact gate and the retracted-claims gate run on **both cover letters/application
+docs AND tailored CVs**, via a shared `GeneratedContentGuards` service (so the two paths can never
+drift). The CV's rewritten text (profile + bullets) is flattened and checked exactly like a letter
+body. Note: the LLM drafter→reviewer loop currently runs on the letter path only — it reviews a text
+body, whereas the CV is structured JSON, so a structured CV reviewer is a separate follow-up. The CV
+path still carries the prompt-level honesty/anti-fabrication + targeting rules.
+
 ---
 
 # AI Provider Options
