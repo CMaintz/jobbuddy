@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, of, switchMap, catchError, map, tap } from 'rxjs';
+import { Observable, of, switchMap, catchError, map, tap, forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { AiApiService, GenerateDocumentRequest } from '../../core/api/ai.api';
@@ -352,6 +352,49 @@ export class ApplyComponent implements OnInit {
     this.busy.set(false);
     this.phase.set('input');
     this.generateError.set('');
+  }
+
+  /**
+   * One-shot: generate a tailored CV AND a cover letter (with defaults) in parallel, then land on
+   * the combined pack review. Reuses the same job/application resolution as generate().
+   */
+  quickApply(): void {
+    if (!this.isReady() || this.busy()) return;
+    this.busy.set(true);
+    this.generateError.set('');
+    this.phase.set('generating');
+    this.activeStep.set(0);
+
+    const lang = this.selectedLanguage() === 'Dansk' ? 'da' : 'en';
+    const instructions = this.buildInstructions();
+    const coverType = this.mode() === 'unsolicited' ? 'UNSOLICITED_APPLICATION' : 'COVER_LETTER';
+
+    this.resolveJob().pipe(
+      tap(() => this.activeStep.set(1)),
+      switchMap(job => this.resolveApplication(job)),
+      tap(() => this.activeStep.set(2)),
+      switchMap(app => forkJoin([
+        this.aiApi.generateStructuredCv({
+          jobId: app.jobId, targetLanguage: lang,
+          customInstructions: instructions || undefined,
+        }),
+        this.aiApi.generateDocument({
+          jobId: app.jobId, documentType: coverType, targetLanguage: lang,
+          customInstructions: instructions || undefined,
+        }),
+      ]).pipe(map(() => app))),
+      tap(() => this.activeStep.set(3)),
+    ).subscribe({
+      next: app => {
+        this.activeStep.set(4);
+        this.clearDraft();
+        this.router.navigate(['/applications', app.id, 'pack'], { queryParams: { jobId: app.jobId } });
+      },
+      error: (err) => {
+        this.busy.set(false);
+        this.generateError.set(err?.error?.message ?? 'apply.error.generateFailed');
+      }
+    });
   }
 
   /** Letter formats become an unsolicited letter when there is no posting; pitch/CV stay as-is. */

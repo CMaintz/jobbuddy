@@ -42,6 +42,17 @@
     },
     "toast": { "saved": "Career target saved", "saveFailed": "Save failed", "storySaved": "Story saved" }
   },
+  "pack": {
+    "title": "Application pack",
+    "intro": "Your tailored CV and cover letter, generated together. Open either to edit or export.",
+    "loading": "Loading your documents…",
+    "tailoredCv": "Tailored CV",
+    "coverLetter": "Cover letter",
+    "openEdit": "Open & edit",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "notReady": "Not generated yet."
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -1389,6 +1400,8 @@
     "generateFormat": "Generate {{format}}",
     "cvHint": "Pick the focus & generate on the next screen.",
     "letterHint": "Then tailor your CV in one click.",
+    "quickApply": "Quick apply — CV + cover letter",
+    "quickApplyHint": "Generates a tailored CV and a cover letter together, then shows them side by side.",
     "generationFailed": "Generation failed",
     "drafting": "Drafting your application...",
     "draftingSub": "Reading the JD and matching it against your master CV.",

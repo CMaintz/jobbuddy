@@ -42,6 +42,17 @@
     },
     "toast": { "saved": "Karrieremål gemt", "saveFailed": "Gemning mislykkedes", "storySaved": "Historie gemt" }
   },
+  "pack": {
+    "title": "Ansøgningspakke",
+    "intro": "Dit tilpassede CV og følgebrev, genereret sammen. Åbn et af dem for at redigere eller eksportere.",
+    "loading": "Indlæser dine dokumenter…",
+    "tailoredCv": "Tilpasset CV",
+    "coverLetter": "Følgebrev",
+    "openEdit": "Åbn & rediger",
+    "copy": "Kopiér",
+    "copied": "Kopieret til udklipsholder",
+    "notReady": "Ikke genereret endnu."
+  },
   "common": {
     "save": "Gem",
     "cancel": "Annuller",
@@ -1389,6 +1400,8 @@
     "generateFormat": "Generér {{format}}",
     "cvHint": "Vælg fokus & generér på næste skærm.",
     "letterHint": "Tilpas derefter dit CV med ét klik.",
+    "quickApply": "Hurtig ansøgning — CV + følgebrev",
+    "quickApplyHint": "Genererer et tilpasset CV og et følgebrev sammen og viser dem side om side.",
     "generationFailed": "Generering mislykkedes",
     "drafting": "Skriver din ansøgning...",
     "draftingSub": "Læser opslaget og matcher det mod dit master-CV.",
