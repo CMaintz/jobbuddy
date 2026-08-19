@@ -85,6 +85,10 @@ export const routes: Routes = [
         path: 'applications/:id/cv',
         loadComponent: () => import('./features/output/tailored-cv.component').then(m => m.TailoredCvComponent)
       },
+      {
+        path: 'applications/:id/pack',
+        loadComponent: () => import('./features/output/application-pack.component').then(m => m.ApplicationPackComponent)
+      },
 
       // Master CV
       {
