@@ -154,6 +154,19 @@
               <div class="flex-1"><div class="text-base font-medium">{{ 'settings.gen.length' | translate }}</div></div>
               <jb-segmented [options]="['Short', 'Standard', 'Detailed']" [value]="gen.length" (changed)="gen.length = $event; markDirty()" />
             </div>
+            <div class="flex items-center gap-4 py-3">
+              <div class="flex-1">
+                <div class="text-base font-medium">{{ 'settings.gen.cvTemplate' | translate }}</div>
+                <div class="text-xs text-jb-text-dim mt-0.5">{{ 'settings.gen.cvTemplateHint' | translate }}</div>
+              </div>
+              <select [(ngModel)]="gen.cvTemplate" (ngModelChange)="markDirty()"
+                class="border border-jb-border rounded-md px-3 py-2 text-base min-w-[200px]" style="background: var(--jb-surface-2)">
+                <option [ngValue]="undefined">{{ 'settings.gen.cvTemplateDefault' | translate }}</option>
+                @for (t of cvTemplates(); track t.id) {
+                  <option [ngValue]="t.id">{{ t.name || t.label }}</option>
+                }
+              </select>
+            </div>
           }
 
           @if (activeSection() === 'style') {
