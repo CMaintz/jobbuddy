@@ -19,7 +19,7 @@ import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
-import com.autoapplicant.usecase.document.DocumentFactGuard;
+import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -47,8 +47,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final BuildApplicationDocumentPort buildApplicationDocument;
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
     private final ApplicationRepositoryPort applicationRepo;
-    private final DocumentFactGuard factGuard;
-    private final RetractedClaimsGuard retractedClaimsGuard;
+    private final GeneratedContentGuards contentGuards;
     private final CompanyGroundingService companyGrounding;
     private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
@@ -61,18 +60,6 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     @org.springframework.beans.factory.annotation.Value("${app.ai.auto-review.max-iterations:1}")
     private int autoReviewMaxIterations;
 
-    /** When true, a deterministic fact gate checks generated metrics against the source profile. */
-    @org.springframework.beans.factory.annotation.Value("${app.ai.fact-guard.enabled:true}")
-    private boolean factGuardEnabled;
-
-    /** {@code warn} logs unsupported metrics; {@code block} fails generation when any are found. */
-    @org.springframework.beans.factory.annotation.Value("${app.ai.fact-guard.mode:warn}")
-    private String factGuardMode;
-
-    /** {@code warn} logs a resurfaced retracted claim; {@code block} fails generation. */
-    @org.springframework.beans.factory.annotation.Value("${app.ai.retracted-claims.mode:warn}")
-    private String retractedClaimsMode;
-
     public AiService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
                      CvVersionRepositoryPort cvRepo,
@@ -83,8 +70,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      BuildApplicationDocumentPort buildApplicationDocument,
                      PersistGeneratedDocumentPort persistGeneratedDocument,
                      ApplicationRepositoryPort applicationRepo,
-                     DocumentFactGuard factGuard,
-                     RetractedClaimsGuard retractedClaimsGuard,
+                     GeneratedContentGuards contentGuards,
                      CompanyGroundingService companyGrounding,
                      AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
@@ -98,8 +84,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.buildApplicationDocument = buildApplicationDocument;
         this.persistGeneratedDocument = persistGeneratedDocument;
         this.applicationRepo = applicationRepo;
-        this.factGuard = factGuard;
-        this.retractedClaimsGuard = retractedClaimsGuard;
+        this.contentGuards = contentGuards;
         this.companyGrounding = companyGrounding;
         this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
@@ -273,10 +258,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             // original pass is retained — the reviewer is instructed never to drop keywords.
             String body = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
 
-            // Deterministic fact gate: flag (or block on) metric claims not supported by the profile.
-            applyFactGuard(body, contactFreeJson, documentType);
-            // Integrity gate: a claim the user has retracted must never resurface.
-            applyRetractedClaimsGuard(userId, body, documentType);
+            // Deterministic backstops (fact gate + retracted claims), shared with the CV path.
+            contentGuards.verify(userId, body, contactFreeJson, documentType);
 
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
@@ -316,39 +299,6 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             }
         }
         return current;
-    }
-
-    /**
-     * Runs the deterministic fact gate on the generated body against the source profile.
-     * In {@code warn} mode (default) unsupported metric claims are logged; in {@code block}
-     * mode their presence fails generation. The reviewer loop's honesty rules are the first
-     * line of defence — this is the model-free backstop that catches invented/inflated numbers.
-     */
-    private void applyFactGuard(String body, String sourceProfileJson, String documentType) {
-        if (!factGuardEnabled) return;
-        DocumentFactGuard.FactAudit audit = factGuard.audit(body, sourceProfileJson);
-        if (audit.clean()) return;
-        String msg = "Fact guard: metric claim(s) not supported by the profile in "
-                + (documentType != null ? documentType : "document") + ": " + audit.inventedMetrics();
-        if ("block".equalsIgnoreCase(factGuardMode)) {
-            throw new IllegalStateException(msg + " — generation blocked (app.ai.fact-guard.mode=block)");
-        }
-        log.warn(msg);
-    }
-
-    /**
-     * Fails or warns when generated content resurfaces a claim the user has explicitly retracted.
-     * {@code block} (recommended for this integrity gate) fails generation; {@code warn} logs.
-     */
-    private void applyRetractedClaimsGuard(UUID userId, String body, String documentType) {
-        List<String> violations = retractedClaimsGuard.findViolations(userId, body);
-        if (violations.isEmpty()) return;
-        String msg = "Retracted claim(s) resurfaced in "
-                + (documentType != null ? documentType : "document") + ": " + violations;
-        if ("block".equalsIgnoreCase(retractedClaimsMode)) {
-            throw new IllegalStateException(msg + " — generation blocked (app.ai.retracted-claims.mode=block)");
-        }
-        log.warn(msg);
     }
 
     private static void validateApplicationResponse(ApplicationDocumentAiResponse response) {
