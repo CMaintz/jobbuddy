@@ -3,6 +3,7 @@
     "title": "Karriereprofil",
     "section": { "target": "Karrieremål", "stories": "Historiebank", "retracted": "Tilbagekaldte udsagn" , "skills": "Kompetencer"},
     "skills": {"heading": "Kompetencer værd at tilføje", "intro": "Forslag fra de opslag, du reelt matcher, og fra det, der ligger tæt på dine nuværende kompetencer. Intet tilføjes, før du siger til.", "empty": "Ingen forslag lige nu. Gem eller søg et par stillinger, så der er et marked at sammenligne med.", "inPostings": "i {{count}} af dine matchede opslag", "relatedTo": "Ligger tæt på din {{skills}}", "usedInProduction": "Brugt i produktion", "usedIt": "Har brugt det", "notMine": "Ikke mig", "later": "Senere", "added": "{{name}} tilføjet til din profil", "failed": "Kunne ikke gemme — prøv igen"},
+    "evidence": {"heading": "Dokumentér det, du skriver", "intro": "Disse kompetencer står på din profil og i de opslag, du matcher, men intet i din historiebank underbygger dem — den hyppigste grund til at en dansk ansøgning bliver fravalgt.", "add": "Tilføj dokumentation", "situation": "Hvor? (fx platformsteamet hos Acme)", "action": "Hvad gjorde du?", "result": "Hvad var anderledes bagefter?", "saved": "Dokumentation gemt for {{name}}"},
     "target": {
       "heading": "Karrieremål",
       "intro": "Fortæl AI'en, hvad du sigter efter. Det indgår i genereringen, så dokumenter fremhæver de roller, du faktisk vil have.",
@@ -548,6 +549,7 @@
     "refinementDiff": "Finpudsningsdiff",
     "accept": "Accepter",
     "guardFindings": "Fund fra kontrol",
+    "evidence": {"heading": "Tynd på dokumentation", "body": "Dette brev fik {{score}}/100 på konkret dokumentation — det argumenterer uden at henvise til dit faktiske arbejde. To spørgsmål om et projekt ville give det næste noget at pege på.", "cta": "Tilføj dokumentation for dine kompetencer"},
     "jdKeywords": "Opslagets nøgleord",
     "covered": "{{matched}}/{{total}} dækket",
     "notMentioned": "Ikke nævnt",

@@ -3,6 +3,7 @@
     "title": "Career Profile",
     "section": { "target": "Career target", "stories": "Story bank", "retracted": "Retracted claims" , "skills": "Skills"},
     "skills": {"heading": "Skills worth adding", "intro": "Suggestions from the postings you actually match and from what sits next to your existing skills. Nothing is added until you say so.", "empty": "Nothing to suggest right now. Save or apply to a few roles so there is a market to compare against.", "inPostings": "in {{count}} of your matched postings", "relatedTo": "Next to your {{skills}}", "usedInProduction": "Used in production", "usedIt": "Used it", "notMine": "Not mine", "later": "Later", "added": "{{name}} added to your profile", "failed": "Could not save that — try again"},
+    "evidence": {"heading": "Prove what you claim", "intro": "These skills are on your profile and in the postings you match, but nothing in your story bank backs them up — the most common reason a Danish application is rejected.", "add": "Add evidence", "situation": "Where? (e.g. platform team at Acme)", "action": "What did you do?", "result": "What was different afterwards?", "saved": "Evidence saved for {{name}}"},
     "target": {
       "heading": "Career target",
       "intro": "Tell the AI what you're aiming for. This is folded into generation so documents lead with the roles you actually want.",
@@ -548,6 +549,7 @@
     "refinementDiff": "Refinement diff",
     "accept": "Accept",
     "guardFindings": "Guard findings",
+    "evidence": {"heading": "Thin on evidence", "body": "This letter scored {{score}}/100 on concrete proof — it argues without citing much of your actual work. Two questions about a project would give the next one something to point at.", "cta": "Add evidence for your skills"},
     "jdKeywords": "JD keywords",
     "covered": "{{matched}}/{{total}} covered",
     "notMentioned": "Not mentioned",

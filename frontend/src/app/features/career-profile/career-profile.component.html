@@ -29,6 +29,47 @@
       <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'careerProfile.skills.heading' | translate }}</h2>
       <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_16px]">{{ 'careerProfile.skills.intro' | translate }}</p>
 
+      <!-- Evidence gaps: claimed, in demand, and unproven — the Danish market's top rejection reason -->
+      @if (gaps().length) {
+        <div class="card p-3.5 mb-4">
+          <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1">{{ 'careerProfile.evidence.heading' | translate }}</div>
+          <div class="text-xs text-jb-text-mid leading-relaxed mb-2.5">{{ 'careerProfile.evidence.intro' | translate }}</div>
+          @for (g of gaps(); track g.skillName) {
+            <div class="border-t border-jb-border-faint pt-2.5 mt-2.5 first:border-t-0 first:pt-0 first:mt-0">
+              <div class="flex items-center gap-2">
+                <span class="text-base font-medium">{{ g.skillName }}</span>
+                <span class="text-xs text-jb-text-dim">{{ 'careerProfile.skills.inPostings' | translate:{ count: g.marketFrequency } }}</span>
+                @if (openGap() !== g.skillName) {
+                  <button class="ml-auto px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
+                    (click)="openEvidenceForm(g)">{{ 'careerProfile.evidence.add' | translate }}</button>
+                }
+              </div>
+              @if (openGap() === g.skillName) {
+                <div class="text-xs text-jb-text-dim mt-1.5 mb-2">{{ g.question }}</div>
+                <div class="flex flex-col gap-2">
+                  <input type="text" [(ngModel)]="evidenceSituation"
+                    [placeholder]="'careerProfile.evidence.situation' | translate"
+                    class="w-full border border-jb-border rounded-md px-3 py-2 text-sm" style="background: var(--jb-surface-2)" />
+                  <input type="text" [(ngModel)]="evidenceAction"
+                    [placeholder]="'careerProfile.evidence.action' | translate"
+                    class="w-full border border-jb-border rounded-md px-3 py-2 text-sm" style="background: var(--jb-surface-2)" />
+                  <input type="text" [(ngModel)]="evidenceResult"
+                    [placeholder]="'careerProfile.evidence.result' | translate"
+                    class="w-full border border-jb-border rounded-md px-3 py-2 text-sm" style="background: var(--jb-surface-2)" />
+                  <div class="flex items-center gap-2">
+                    <jb-button small primary [disabled]="!canSaveEvidence || savingEvidence()" (clicked)="saveEvidence(g)">
+                      {{ 'common.save' | translate }}
+                    </jb-button>
+                    <button class="px-2.5 py-[5px] bg-transparent border-none text-jb-text-dim text-xs cursor-pointer"
+                      (click)="openGap.set(null)">{{ 'common.cancel' | translate }}</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       @if (candidatesLoading()) {
         <div class="py-8 text-center text-jb-text-dim text-base">{{ 'common.loading' | translate }}</div>
       } @else if (candidates().length === 0) {

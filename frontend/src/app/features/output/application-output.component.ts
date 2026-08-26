@@ -17,6 +17,7 @@ import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { AtsCheck, DocumentIdentity, StructuredDocument } from '../../core/models/structured-document.model';
+import { DocumentApiService } from '../../core/api/document.api';
 
 import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_TARGETS } from './letter-templates';
 
@@ -32,6 +33,7 @@ export class ApplicationOutputComponent implements OnInit {
   private translate = inject(TranslateService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private documentApi = inject(DocumentApiService);
   private aiApi = inject(AiApiService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
@@ -109,6 +111,33 @@ export class ApplicationOutputComponent implements OnInit {
     for (const kw of keywords) (text.includes(kw.toLowerCase()) ? matched : missing).push(kw);
     return { matched, missing };
   });
+
+  /**
+   * The evidence shortfall on the most recent generation, when there is one.
+   *
+   * <p>This is the moment the elicitation design is aimed at: a letter that could not cite
+   * anything concrete is the one time a user will happily answer two questions about their own
+   * work. Null when the score is healthy or unknown, so the nudge never appears without cause.
+   */
+  evidenceShortfall = signal<number | null>(null);
+
+  /** Below this, a letter is arguing without proof — the top Danish rejection reason. */
+  private static readonly EVIDENCE_FLOOR = 60;
+
+  private loadEvidenceShortfall(): void {
+    this.documentApi.getQualityScores(1).subscribe({
+      next: scores => {
+        const evidence = scores[0]?.score?.dimensions?.find(d => d.code === 'evidence');
+        this.evidenceShortfall.set(
+          evidence && evidence.score < ApplicationOutputComponent.EVIDENCE_FLOOR ? evidence.score : null);
+      },
+      error: () => this.evidenceShortfall.set(null),
+    });
+  }
+
+  goToEvidence(): void {
+    this.router.navigate(['/career-profile']);
+  }
 
   /**
    * Findings the deterministic guards recorded on this document (unsupported metrics, filler
@@ -211,6 +240,8 @@ export class ApplicationOutputComponent implements OnInit {
   ngOnInit(): void {
     const fmt = this.route.snapshot.queryParamMap.get('format');
     if (fmt === 'cl' || fmt === 'dm' || fmt === 'fu') this.format.set(fmt);
+
+    this.loadEvidenceShortfall();
 
     const appId = this.route.snapshot.paramMap.get('id');
     if (!appId) {
