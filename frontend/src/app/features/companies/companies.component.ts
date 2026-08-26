@@ -7,7 +7,8 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
-import { CompaniesApiService, Company } from '../../core/api/companies.api';
+import { Router } from '@angular/router';
+import { CompaniesApiService, Company, OutreachTarget } from '../../core/api/companies.api';
 
 @Component({
   selector: 'app-companies',
@@ -17,11 +18,18 @@ import { CompaniesApiService, Company } from '../../core/api/companies.api';
 })
 export class CompaniesComponent implements OnInit, OnDestroy {
   private companiesApi = inject(CompaniesApiService);
+  private router = inject(Router);
 
   loading = signal(true);
   companies = signal<Company[]>([]);
   selected = signal<Company | null>(null);
   query = '';
+
+  /** 'all' browses every known company; 'targets' ranks them for unsolicited applications. */
+  view = signal<'all' | 'targets'>('all');
+  targets = signal<OutreachTarget[]>([]);
+  targetsLoading = signal(false);
+  includeHiringNow = false;
 
   private search$ = new Subject<string>();
   private sub?: Subscription;
@@ -46,6 +54,27 @@ export class CompaniesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+  }
+
+  setView(view: 'all' | 'targets'): void {
+    this.view.set(view);
+    if (view === 'targets' && this.targets().length === 0) this.loadTargets();
+  }
+
+  loadTargets(): void {
+    this.targetsLoading.set(true);
+    this.companiesApi.outreachTargets(20, this.includeHiringNow).subscribe({
+      next: targets => {
+        this.targets.set(targets);
+        this.targetsLoading.set(false);
+      },
+      error: () => this.targetsLoading.set(false),
+    });
+  }
+
+  /** Straight into the unsolicited flow with the company filled in — there is no posting to paste. */
+  writeUnsolicited(target: OutreachTarget): void {
+    this.router.navigate(['/apply'], { queryParams: { unsolicitedCompany: target.companyName } });
   }
 
   onQueryChange(q: string): void {

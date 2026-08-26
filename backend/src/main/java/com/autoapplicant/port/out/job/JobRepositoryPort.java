@@ -26,6 +26,14 @@ public interface JobRepositoryPort {
     long count();
     long countActive();
 
+    /**
+     * Per-company hiring aggregates over postings seen since the cutoff — the raw material for
+     * ranking unsolicited-application targets. Bounded internally; companies with no postings in
+     * the window are absent rather than zero-valued.
+     */
+    List<com.autoapplicant.domain.company.CompanyHiringSignal> findCompanyHiringSignals(
+            java.time.Instant since);
+
     // ── URL health checks (takedown detection) ──────────────────
     /** Active non-manual jobs whose URL hasn't been probed since the cutoff, oldest check first. */
     List<Job> findUrlCheckCandidates(java.time.Instant recheckCutoff, int limit);

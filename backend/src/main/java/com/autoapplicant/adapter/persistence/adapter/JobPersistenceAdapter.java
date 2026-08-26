@@ -18,10 +18,52 @@ import java.util.stream.Collectors;
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
 
+    /**
+     * Ceiling on postings pulled for the company-hiring aggregate. Generous for a personal-scale
+     * jobs table, and bounded so the query can never turn into a full-table load.
+     */
+    private static final int AGGREGATION_LIMIT = 5000;
+
     private final JobJpaRepository repo;
 
     public JobPersistenceAdapter(JobJpaRepository repo) {
         this.repo = repo;
+    }
+
+    @Override
+    public List<com.autoapplicant.domain.company.CompanyHiringSignal> findCompanyHiringSignals(
+            java.time.Instant since) {
+        var postings = repo.findForCompanyAggregation(since,
+                org.springframework.data.domain.PageRequest.of(0, AGGREGATION_LIMIT));
+
+        java.util.Map<java.util.UUID, java.util.List<com.autoapplicant.adapter.persistence.entity.JobEntity>> byCompany =
+                new java.util.LinkedHashMap<>();
+        for (var job : postings) {
+            byCompany.computeIfAbsent(job.getCompanyId(), k -> new java.util.ArrayList<>()).add(job);
+        }
+
+        java.util.List<com.autoapplicant.domain.company.CompanyHiringSignal> signals = new java.util.ArrayList<>();
+        byCompany.forEach((companyId, jobs) -> {
+            java.util.Set<String> technologies = new java.util.LinkedHashSet<>();
+            int active = 0;
+            java.time.Instant lastPosted = null;
+            String companyName = null;
+            for (var job : jobs) {
+                if (job.getTechnologies() != null) {
+                    for (String tech : job.getTechnologies()) {
+                        if (tech != null && !tech.isBlank()) technologies.add(tech.strip());
+                    }
+                }
+                if (job.isActive()) active++;
+                java.time.Instant posted = job.getPostedAt() != null ? job.getPostedAt() : job.getCreatedAt();
+                if (posted != null && (lastPosted == null || posted.isAfter(lastPosted))) lastPosted = posted;
+                if (companyName == null && job.getCompanyName() != null) companyName = job.getCompanyName();
+            }
+            signals.add(new com.autoapplicant.domain.company.CompanyHiringSignal(
+                    companyId, companyName, jobs.size(), active, lastPosted,
+                    java.util.List.copyOf(technologies)));
+        });
+        return signals;
     }
 
     @Override

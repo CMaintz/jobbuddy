@@ -1082,6 +1082,8 @@
     }
   },
   "companies": {
+    "view": {"all": "All", "targets": "Outreach targets"},
+    "targets": {"intro": "Companies that hire people with your skills. Around half of Danish vacancies are never advertised — these are the ones worth an unsolicited application.", "includeHiringNow": "Include companies hiring right now", "empty": "No targets yet. Add skills and technologies to your profile, and let the crawler build up some hiring history.", "write": "Write unsolicited"},
     "searchPlaceholder": "Search companies…",
     "count": "{{count}} companies",
     "loading": "Loading companies…",
