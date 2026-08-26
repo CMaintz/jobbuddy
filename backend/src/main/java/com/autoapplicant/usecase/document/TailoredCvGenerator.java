@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
@@ -32,21 +33,20 @@ public class TailoredCvGenerator {
      *
      * @param styleTemplate optional {@link PromptTemplate} to customise AI persona and approach;
      *                      pass {@code null} to use the built-in default
-     * @param jobCountry    the posting's country, selecting market conventions; may be {@code null}
+     * @param posting       the posting's text, country, and named contact; may be {@link PostingContext#EMPTY}
      */
-    public TailoredCvContent generate(CareerProfileForAi source, String jobDescription,
+    public TailoredCvContent generate(CareerProfileForAi source, PostingContext posting,
                                       String customInstructions, String targetLanguage,
                                       PromptTemplate styleTemplate, WritingProfile writingProfile,
-                                      List<String> outcomeLessons, String lengthPreference,
-                                      String jobCountry) {
+                                      List<String> outcomeLessons, String lengthPreference) {
         try {
             String sourceJson = objectMapper.writeValueAsString(source);
             String json = AiResponseParser.extractJsonObject(
                     AiResponseParser.sanitize(aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
-                                    sourceJson, jobDescription, customInstructions,
+                                    sourceJson, posting, customInstructions,
                                     targetLanguage, styleTemplate, writingProfile, outcomeLessons,
-                                    lengthPreference, jobCountry))
+                                    lengthPreference))
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {

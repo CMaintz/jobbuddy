@@ -42,7 +42,9 @@ public record Job(
         /** When this job was last seen during a crawl. Used for staleness detection. */
         Instant lastSeenAt,
         /** Application deadline stated by the posting. Null when unknown or "ASAP". */
-        java.time.LocalDate applicationDeadline
+        java.time.LocalDate applicationDeadline,
+        /** Contact person the posting names, or null when it names nobody. */
+        JobContact contact
 ) {
 
     /** A fresh builder. Prefer {@link #toBuilder()} for copy-with-changes. */
@@ -68,7 +70,7 @@ public record Job(
                 .aiSummary(aiSummary).aiTags(aiTags).aiSeniorityEstimate(aiSeniorityEstimate)
                 .duplicateGroupId(duplicateGroupId).isActive(isActive).jobCategory(jobCategory)
                 .createdAt(createdAt).updatedAt(updatedAt).shortDescription(shortDescription)
-                .lastSeenAt(lastSeenAt).applicationDeadline(applicationDeadline);
+                .lastSeenAt(lastSeenAt).applicationDeadline(applicationDeadline).contact(contact);
     }
 
     public static final class Builder {
@@ -107,6 +109,7 @@ public record Job(
         private String shortDescription;
         private Instant lastSeenAt;
         private java.time.LocalDate applicationDeadline;
+        private JobContact contact;
 
         public Builder id(UUID v) { this.id = v; return this; }
         public Builder source(JobSource v) { this.source = v; return this; }
@@ -143,6 +146,7 @@ public record Job(
         public Builder shortDescription(String v) { this.shortDescription = v; return this; }
         public Builder lastSeenAt(Instant v) { this.lastSeenAt = v; return this; }
         public Builder applicationDeadline(java.time.LocalDate v) { this.applicationDeadline = v; return this; }
+        public Builder contact(JobContact v) { this.contact = v; return this; }
 
         public Job build() {
             return new Job(id, source, sourceJobId, url, title, companyId, companyName,
@@ -150,7 +154,7 @@ public record Job(
                     location, municipality, region, country, salaryMin, salaryMax, currency,
                     technologies, skills, languages, postedAt, scrapedAt, aiSummary, aiTags,
                     aiSeniorityEstimate, duplicateGroupId, isActive, jobCategory, createdAt,
-                    updatedAt, shortDescription, lastSeenAt, applicationDeadline);
+                    updatedAt, shortDescription, lastSeenAt, applicationDeadline, contact);
         }
     }
 }

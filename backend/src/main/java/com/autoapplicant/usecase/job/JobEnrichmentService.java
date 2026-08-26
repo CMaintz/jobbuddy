@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.job;
 
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
+import com.autoapplicant.domain.job.JobContact;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -99,6 +100,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                   "currency": null,
                   "municipality": "primary Danish municipality name or null",
                   "applicationDeadline": "YYYY-MM-DD or null",
+                  "contact": {"name": "...", "title": "...", "email": "...", "phone": "..."},
                   "jobCategory": "SOFTWARE_IT|DATA_ANALYTICS|DESIGN_UX|MARKETING|SALES|FINANCE|HR|ENGINEERING|OPERATIONS_LOGISTICS|CUSTOMER_SERVICE|LEGAL|HEALTHCARE|MANAGEMENT|EDUCATION|CREATIVE_MEDIA|OTHER"
                 }
 
@@ -110,6 +112,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 - Only include salary if numbers are explicitly stated in the posting
                 - municipality: match to a known Danish kommune name (e.g. "København", "Aarhus", "Odense")
                 - applicationDeadline: the stated application deadline (e.g. "Ansøgningsfrist"); null when not stated or "as soon as possible"
+                - contact: the person the posting names to answer questions about the role (Danish                 postings usually do: "Har du spørgsmål, så kontakt …"). Copy the name, their stated job                 title, and any email or phone given FOR THAT PERSON. Use null for the whole "contact"                 object when the posting names no individual — a generic jobs@ address or "HR" is NOT a                 contact person. Never guess a name, never carry one over from page chrome or another                 vacancy on the page.
                 - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits.
 
                 Job title: %s
@@ -183,6 +186,14 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 }
             }
 
+            // Contact person: extraction only fills a gap, so a crawler that already parsed one wins.
+            JobContact contact = job.contact();
+            if (contact == null && parsed.get("contact") instanceof Map<?, ?> rawContact) {
+                contact = JobContact.ofNullable(
+                        str(rawContact, "name"), str(rawContact, "title"),
+                        str(rawContact, "email"), str(rawContact, "phone"));
+            }
+
             // Crawler-provided deadline wins; the AI extraction is the fallback
             java.time.LocalDate applicationDeadline = job.applicationDeadline();
             if (applicationDeadline == null && parsed.get("applicationDeadline") instanceof String rawDeadline) {
@@ -201,6 +212,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                     .jobCategory(jobCategory)
                     .shortDescription(shortDescription)
                     .applicationDeadline(applicationDeadline)
+                    .contact(contact)
                     .build();
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
@@ -238,6 +250,11 @@ public class JobEnrichmentService implements EnrichJobUseCase {
         cleaned = cleaned.replaceAll(",\\s*([}\\]])", "$1");
 
         return cleaned;
+    }
+
+    /** A string field from a nested JSON object, or null when absent or not a string. */
+    private static String str(Map<?, ?> map, String key) {
+        return map.get(key) instanceof String s && !s.isBlank() ? s : null;
     }
 
     @SuppressWarnings("unchecked")

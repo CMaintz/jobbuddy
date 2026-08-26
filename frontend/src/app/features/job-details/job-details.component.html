@@ -305,6 +305,34 @@
             </div>
           </div>
 
+          <!-- Contact person named by the posting: in Denmark, calling before applying is expected -->
+          @if (job.contact?.name || job.contact?.phone || job.contact?.email) {
+            <div class="p-4 border-t border-jb-border">
+              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">{{ 'jobDetails.contact' | translate }}</div>
+              @if (job.contact?.name) {
+                <div class="text-sm font-medium">{{ job.contact?.name }}</div>
+              }
+              @if (job.contact?.title) {
+                <div class="text-xs text-jb-text-dim mb-1.5">{{ job.contact?.title }}</div>
+              }
+              <div class="flex flex-col gap-1 mt-1.5">
+                @if (job.contact?.phone) {
+                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'tel:' + job.contact?.phone">
+                    <jb-icon name="phone" [size]="11" />{{ job.contact?.phone }}
+                  </a>
+                }
+                @if (job.contact?.email) {
+                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'mailto:' + job.contact?.email">
+                    <jb-icon name="mail" [size]="11" />{{ job.contact?.email }}
+                  </a>
+                }
+              </div>
+              @if (job.contact?.phone) {
+                <div class="text-xs text-jb-text-dim leading-relaxed mt-2">{{ 'jobDetails.contactNudge' | translate }}</div>
+              }
+            </div>
+          }
+
           <!-- Similar roles (embedding nearest-neighbors) -->
           @if (similarJobs().length) {
             <div class="p-4 border-t border-jb-border">

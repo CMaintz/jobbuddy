@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
@@ -43,17 +44,17 @@ public class TailoredCvReviewer {
     }
 
     /** Critiques and revises the tailored CV; returns the draft unchanged when disabled or on error. */
-    public TailoredCvContent review(TailoredCvContent draft, String jobDescription,
-                                    WritingProfile writingProfile, String targetLanguage,
-                                    String jobCountry) {
+    public TailoredCvContent review(TailoredCvContent draft, PostingContext posting,
+                                    WritingProfile writingProfile, String targetLanguage) {
         if (!autoReviewEnabled || draft == null) return draft;
         try {
             String draftJson = objectMapper.writeValueAsString(draft);
+            String jobDescription = posting != null ? posting.description() : null;
             // Same language/market resolution as the drafting prompt, so the reviewer cannot
             // quietly switch language or drop the market conventions the draft was written to.
             String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
-            String marketRules = MarketConventions.cvRules(
-                    MarketConventions.resolve(resolvedLanguage, jobCountry));
+            String marketRules = MarketConventions.cvRules(MarketConventions.resolve(
+                    resolvedLanguage, posting != null ? posting.country() : null));
 
             String system = """
                     You are a demanding hiring manager reviewing a candidate's tailored CV with fresh \

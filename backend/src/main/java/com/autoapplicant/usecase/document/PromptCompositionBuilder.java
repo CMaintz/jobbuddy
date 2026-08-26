@@ -53,7 +53,7 @@ public class PromptCompositionBuilder {
     public PromptComposition composeStructuredApplicationPrompt(
             String documentType,
             String careerProfileJson,
-            String jobDescription,
+            PostingContext posting,
             String customInstructions,
             String motivationText,
             String targetLanguage,
@@ -61,8 +61,10 @@ public class PromptCompositionBuilder {
             WritingProfile writingProfile,
             java.util.List<String> outcomeLessons,
             String companyFacts,
-            String lengthPreference,
-            String jobCountry) {
+            String lengthPreference) {
+
+        String jobDescription = posting != null ? posting.description() : null;
+        String jobCountry = posting != null ? posting.country() : null;
 
         // Resolve the output language deterministically instead of asking the model to guess:
         // the user's explicit choice wins, otherwise the posting's detected language. The result
@@ -130,6 +132,14 @@ public class PromptCompositionBuilder {
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
         String marketRules = MarketConventions.letterRules(market);
         String marketBlock = marketRules.isBlank() ? "" : "\n\n" + marketRules;
+        // A posting-supplied contact is the one named recipient the letter may address. Everything
+        // else about the recipient stays unnamed, per the structure block.
+        String contactBlock = posting != null && posting.hasContactPerson()
+                ? "\n\n## Named Contact\nThe posting names " + posting.contactPerson()
+                  + " as the person to contact about this role. Address the letter to them by name, "
+                  + "spelled exactly as given. Do not invent any other recipient, title, or detail "
+                  + "about them."
+                : "";
 
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
@@ -138,6 +148,7 @@ public class PromptCompositionBuilder {
                 + "\n\n" + HONESTY_RULES
                 + "\n\n" + TARGETING_RULES
                 + marketBlock
+                + contactBlock
                 + structure
                 + lengthGuidance
                 + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
@@ -168,15 +179,16 @@ public class PromptCompositionBuilder {
      */
     public PromptComposition composeCvTailoringPrompt(
             String careerProfileJson,
-            String jobDescription,
+            PostingContext posting,
             String customInstructions,
             String targetLanguage,
             PromptTemplate styleTemplate,
             WritingProfile writingProfile,
             java.util.List<String> outcomeLessons,
-            String lengthPreference,
-            String jobCountry) {
+            String lengthPreference) {
 
+        String jobDescription = posting != null ? posting.description() : null;
+        String jobCountry = posting != null ? posting.country() : null;
         String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
         String languageInstruction = resolvedLanguage != null
                 ? "Write all rewritten text in " + resolvedLanguage + "."
