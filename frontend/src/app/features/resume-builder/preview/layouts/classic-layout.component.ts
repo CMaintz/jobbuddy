@@ -25,6 +25,7 @@ export class ClassicLayoutComponent {
   get education() { return this.stateService.education(); }
   get projects() { return this.stateService.projects(); }
   get skills() { return this.stateService.skills(); }
+  get skillGroups() { return this.stateService.skillGroups(); }
   get languages() { return this.stateService.languages(); }
   get certifications() { return this.stateService.certifications(); }
   get strengths() { return this.stateService.strengths(); }

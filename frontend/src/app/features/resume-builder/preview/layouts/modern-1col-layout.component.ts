@@ -21,6 +21,7 @@ export class Modern1ColLayoutComponent {
   get experience() { return this.svc.experience(); }
   get education() { return this.svc.education(); }
   get skills() { return this.svc.skills(); }
+  get skillGroups() { return this.svc.skillGroups(); }
   get languages() { return this.svc.languages(); }
   get certifications() { return this.svc.certifications(); }
   get socials() { return this.svc.displaySocials(); }

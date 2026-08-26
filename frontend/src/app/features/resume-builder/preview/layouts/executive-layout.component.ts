@@ -21,6 +21,7 @@ export class ExecutiveLayoutComponent {
   get experience() { return this.svc.experience(); }
   get education() { return this.svc.education(); }
   get skills() { return this.svc.skills(); }
+  get skillGroups() { return this.svc.skillGroups(); }
   get socials() { return this.svc.displaySocials(); }
   get customSections() { return this.svc.customSections(); }
   get themeColor() { return this.svc.settings().themeColor; }

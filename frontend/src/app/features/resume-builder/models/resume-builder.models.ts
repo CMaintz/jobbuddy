@@ -49,6 +49,8 @@ export interface ResumeSkill {
   id: string;
   name: string;
   level?: number; // 1-5
+  /** Optional grouping label (e.g. "Languages", "Frameworks", "Tools"). */
+  category?: string;
 }
 
 export interface ResumeLanguage {
