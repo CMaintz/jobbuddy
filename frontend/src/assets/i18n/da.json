@@ -1,7 +1,8 @@
 {
   "careerProfile": {
     "title": "Karriereprofil",
-    "section": { "target": "Karrieremål", "stories": "Historiebank", "retracted": "Tilbagekaldte udsagn" },
+    "section": { "target": "Karrieremål", "stories": "Historiebank", "retracted": "Tilbagekaldte udsagn" , "skills": "Kompetencer"},
+    "skills": {"heading": "Kompetencer værd at tilføje", "intro": "Forslag fra de opslag, du reelt matcher, og fra det, der ligger tæt på dine nuværende kompetencer. Intet tilføjes, før du siger til.", "empty": "Ingen forslag lige nu. Gem eller søg et par stillinger, så der er et marked at sammenligne med.", "inPostings": "i {{count}} af dine matchede opslag", "relatedTo": "Ligger tæt på din {{skills}}", "usedInProduction": "Brugt i produktion", "usedIt": "Har brugt det", "notMine": "Ikke mig", "later": "Senere", "added": "{{name}} tilføjet til din profil", "failed": "Kunne ikke gemme — prøv igen"},
     "target": {
       "heading": "Karrieremål",
       "intro": "Fortæl AI'en, hvad du sigter efter. Det indgår i genereringen, så dokumenter fremhæver de roller, du faktisk vil have.",

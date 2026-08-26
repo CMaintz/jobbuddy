@@ -10,8 +10,9 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { CareerTargetApiService, CareerTarget, CareerStage } from '../../core/api/career-target.api';
 import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retracted-claims.api';
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
+import { SkillsApiService, SkillCandidate, SkillConfirmation } from '../../core/api/skills.api';
 
-type Section = 'target' | 'stories' | 'retracted';
+type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
 @Component({
   selector: 'app-career-profile',
@@ -25,6 +26,7 @@ export class CareerProfileComponent implements OnInit {
   private targetApi = inject(CareerTargetApiService);
   private claimsApi = inject(RetractedClaimsApiService);
   private storyApi = inject(StoryBankApiService);
+  private skillsApi = inject(SkillsApiService);
   private translate = inject(TranslateService);
 
   activeSection = signal<Section>('target');
@@ -32,6 +34,7 @@ export class CareerProfileComponent implements OnInit {
 
   sections: { key: Section; label: string; icon: string }[] = [
     { key: 'target', label: 'careerProfile.section.target', icon: 'target' },
+    { key: 'skills', label: 'careerProfile.section.skills', icon: 'bolt' },
     { key: 'stories', label: 'careerProfile.section.stories', icon: 'edit' },
     { key: 'retracted', label: 'careerProfile.section.retracted', icon: 'key' },
   ];
@@ -73,6 +76,7 @@ export class CareerProfileComponent implements OnInit {
     this.targetApi.get().subscribe({ next: t => this.applyTarget(t), error: () => {} });
     this.reloadStories();
     this.reloadClaims();
+    this.loadCandidates();
   }
 
   // ── Career target ──
@@ -84,6 +88,47 @@ export class CareerProfileComponent implements OnInit {
     this.careerStage = t.careerStage ?? '';
     this.noticePeriod = t.noticePeriod ?? '';
     this.earliestStartDate = t.earliestStartDate ?? '';
+  }
+
+  // ── Skill candidates ───────────────────────────────────────
+  candidates = signal<SkillCandidate[]>([]);
+  candidatesLoading = signal(false);
+  /** Names answered in this round, so a row can disappear the moment it is answered. */
+  private answered = new Set<string>();
+
+  loadCandidates(): void {
+    this.candidatesLoading.set(true);
+    this.answered.clear();
+    this.skillsApi.getSkillCandidates(12).subscribe({
+      next: rows => { this.candidates.set(rows); this.candidatesLoading.set(false); },
+      error: () => this.candidatesLoading.set(false),
+    });
+  }
+
+  /**
+   * Answers one suggestion. Sent immediately rather than batched behind a save button: each row is
+   * an independent decision, and a half-finished round should still keep what was decided.
+   */
+  answer(candidate: SkillCandidate, decision: SkillConfirmation['decision'],
+         usedInProduction = false): void {
+    if (this.answered.has(candidate.name)) return;
+    this.answered.add(candidate.name);
+    this.candidates.set(this.candidates().filter(c => c.name !== candidate.name));
+
+    const confirmation: SkillConfirmation = { name: candidate.name, decision, usedInProduction };
+    this.skillsApi.confirmSkillCandidates([confirmation]).subscribe({
+      next: added => {
+        if (added.length) {
+          this.toast.set(this.translate.instant('careerProfile.skills.added', { name: candidate.name }));
+        }
+      },
+      // Put the row back rather than silently losing the answer.
+      error: () => {
+        this.answered.delete(candidate.name);
+        this.candidates.set([candidate, ...this.candidates()]);
+        this.toast.set(this.translate.instant('careerProfile.skills.failed'));
+      },
+    });
   }
 
   markTargetDirty(): void { this.targetDirty.set(true); }

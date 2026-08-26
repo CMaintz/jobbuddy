@@ -24,6 +24,48 @@
 <div class="flex-1 min-h-0 overflow-auto p-[24px_28px_48px] jb-scroll">
   <div class="max-w-[680px]">
 
+    <!-- ── Skill candidates ──────────────────────────────── -->
+    @if (activeSection() === 'skills') {
+      <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'careerProfile.skills.heading' | translate }}</h2>
+      <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_16px]">{{ 'careerProfile.skills.intro' | translate }}</p>
+
+      @if (candidatesLoading()) {
+        <div class="py-8 text-center text-jb-text-dim text-base">{{ 'common.loading' | translate }}</div>
+      } @else if (candidates().length === 0) {
+        <div class="py-8 text-center text-jb-text-dim text-base leading-relaxed">
+          {{ 'careerProfile.skills.empty' | translate }}
+        </div>
+      } @else {
+        <div class="flex flex-col gap-2">
+          @for (c of candidates(); track c.name) {
+            <div class="card p-3.5 flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-base font-medium">{{ c.name }}</span>
+                @if (c.marketFrequency > 0) {
+                  <span class="text-xs text-jb-accent">{{ 'careerProfile.skills.inPostings' | translate:{ count: c.marketFrequency } }}</span>
+                }
+              </div>
+              @if (c.relatedSkills.length) {
+                <div class="text-xs text-jb-text-dim">
+                  {{ 'careerProfile.skills.relatedTo' | translate:{ skills: c.relatedSkills.join(', ') } }}
+                </div>
+              }
+              <div class="flex flex-wrap gap-2 mt-0.5">
+                <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
+                  (click)="answer(c, 'YES', true)">{{ 'careerProfile.skills.usedInProduction' | translate }}</button>
+                <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs cursor-pointer"
+                  (click)="answer(c, 'YES', false)">{{ 'careerProfile.skills.usedIt' | translate }}</button>
+                <button class="px-2.5 py-[5px] bg-transparent border border-jb-border rounded-md text-jb-text-dim text-xs cursor-pointer"
+                  (click)="answer(c, 'NO')">{{ 'careerProfile.skills.notMine' | translate }}</button>
+                <button class="px-2.5 py-[5px] bg-transparent border-none text-jb-text-dim text-xs cursor-pointer"
+                  (click)="answer(c, 'SKIP')">{{ 'careerProfile.skills.later' | translate }}</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
     <!-- ── Career target ─────────────────────────────────── -->
     @if (activeSection() === 'target') {
       <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'careerProfile.target.heading' | translate }}</h2>
