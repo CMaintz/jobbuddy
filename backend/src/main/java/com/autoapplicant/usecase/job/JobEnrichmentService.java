@@ -126,7 +126,9 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     }
 
     @SuppressWarnings("unchecked")
-    private Job applyEnrichment(Job job, String jsonResponse) {
+    // Package-private so the contact-extraction rules can be driven with realistic model
+    // responses without a live provider.
+    Job applyEnrichment(Job job, String jsonResponse) {
         try {
             String cleaned = sanitizeJsonResponse(jsonResponse);
             Map<String, Object> parsed = objectMapper.readValue(cleaned, new TypeReference<>() {});
@@ -189,9 +191,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
             // Contact person: extraction only fills a gap, so a crawler that already parsed one wins.
             JobContact contact = job.contact();
             if (contact == null && parsed.get("contact") instanceof Map<?, ?> rawContact) {
-                contact = JobContact.ofNullable(
-                        str(rawContact, "name"), str(rawContact, "title"),
-                        str(rawContact, "email"), str(rawContact, "phone"));
+                contact = toContactPerson(rawContact);
             }
 
             // Crawler-provided deadline wins; the AI extraction is the fallback
@@ -250,6 +250,39 @@ public class JobEnrichmentService implements EnrichJobUseCase {
         cleaned = cleaned.replaceAll(",\\s*([}\\]])", "$1");
 
         return cleaned;
+    }
+
+    /**
+     * The extracted contact, or null when what came back is not a person.
+     *
+     * <p>The prompt already says a shared inbox is not a contact, but a model will sometimes hand
+     * one back anyway, and a letter addressed to "jobs@" is worse than one addressed to nobody. So
+     * the rule is enforced here too: with no name, the contact must offer a channel that reaches a
+     * human — a direct phone number counts, a role address does not.
+     */
+    private static JobContact toContactPerson(Map<?, ?> raw) {
+        JobContact contact = JobContact.ofNullable(
+                str(raw, "name"), str(raw, "title"), str(raw, "email"), str(raw, "phone"));
+        if (contact == null) return null;
+        if (contact.hasName()) return contact;
+        boolean reachesAPerson = contact.phone() != null
+                || (contact.email() != null && !isRoleAddress(contact.email()));
+        return reachesAPerson ? contact : null;
+    }
+
+    /** Local parts that address a function rather than a person. */
+    private static final java.util.Set<String> ROLE_ADDRESS_LOCAL_PARTS = java.util.Set.of(
+            "job", "jobs", "hr", "career", "careers", "karriere", "rekruttering", "recruitment",
+            "recruiting", "ansoegning", "ansøgning", "ansogning", "info", "kontakt", "contact",
+            "mail", "post", "office", "admin", "hello", "hej", "apply", "application");
+
+    private static boolean isRoleAddress(String email) {
+        int at = email.indexOf('@');
+        if (at <= 0) return true;   // not an address we can reason about; treat as unusable
+        String local = email.substring(0, at).toLowerCase(java.util.Locale.ROOT);
+        // "jobs.dk", "hr-denmark" and similar decorations still address a function.
+        String base = local.split("[.\\-_+]")[0];
+        return ROLE_ADDRESS_LOCAL_PARTS.contains(local) || ROLE_ADDRESS_LOCAL_PARTS.contains(base);
     }
 
     /** A string field from a nested JSON object, or null when absent or not a string. */
