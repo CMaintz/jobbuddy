@@ -8,6 +8,7 @@ import com.autoapplicant.domain.user.CareerTarget;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.company.FindOutreachTargetsUseCase;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
+import com.autoapplicant.port.out.company.OutreachContactRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.user.CareerTargetRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -53,14 +54,17 @@ public class OutreachTargetService implements FindOutreachTargetsUseCase {
 
     private final JobRepositoryPort jobRepo;
     private final CompanyRepositoryPort companyRepo;
+    private final OutreachContactRepositoryPort outreachRepo;
     private final ProfileRepositoryPort profileRepo;
     private final CareerTargetRepositoryPort careerTargetRepo;
 
     public OutreachTargetService(JobRepositoryPort jobRepo, CompanyRepositoryPort companyRepo,
+                                 OutreachContactRepositoryPort outreachRepo,
                                  ProfileRepositoryPort profileRepo,
                                  CareerTargetRepositoryPort careerTargetRepo) {
         this.jobRepo = jobRepo;
         this.companyRepo = companyRepo;
+        this.outreachRepo = outreachRepo;
         this.profileRepo = profileRepo;
         this.careerTargetRepo = careerTargetRepo;
     }
@@ -70,9 +74,17 @@ public class OutreachTargetService implements FindOutreachTargetsUseCase {
         Set<String> candidateTerms = candidateTerms(userId);
         if (candidateTerms.isEmpty()) return List.of();
 
+        // Already-tracked companies live on the outreach list now; re-suggesting them would ask
+        // the user to decide something they have already decided.
+        Set<UUID> alreadyTracked = outreachRepo.findByUserId(userId).stream()
+                .map(com.autoapplicant.domain.company.OutreachContact::companyId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+
         Instant now = Instant.now();
         List<OutreachTarget> targets = new ArrayList<>();
         for (CompanyHiringSignal signal : jobRepo.findCompanyHiringSignals(now.minus(WINDOW))) {
+            if (signal.companyId() != null && alreadyTracked.contains(signal.companyId())) continue;
             List<String> matched = overlap(signal.technologies(), candidateTerms);
             if (matched.size() < MIN_TECHNOLOGY_OVERLAP) continue;
 

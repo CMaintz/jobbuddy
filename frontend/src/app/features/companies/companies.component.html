@@ -12,14 +12,60 @@
           <button class="px-2.5 py-[5px] rounded-md text-xs border cursor-pointer"
             [class]="view() === 'targets' ? 'border-jb-accent-border text-jb-text bg-jb-surface-2' : 'border-jb-border text-jb-text-dim bg-transparent'"
             (click)="setView('targets')">{{ 'companies.view.targets' | translate }}</button>
+          <button class="px-2.5 py-[5px] rounded-md text-xs border cursor-pointer"
+            [class]="view() === 'tracked' ? 'border-jb-accent-border text-jb-text bg-jb-surface-2' : 'border-jb-border text-jb-text-dim bg-transparent'"
+            (click)="setView('tracked')">{{ 'companies.view.tracked' | translate }}</button>
         </div>
         <div class="text-xs text-jb-text-dim">{{ 'companies.count' | translate:{ count: view() === 'targets' ? targets().length : companies().length } }}</div>
       </ng-container>
     </jb-topbar>
 
     <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_340px]">
-      <!-- Outreach targets: companies worth an unsolicited application -->
-      @if (view() === 'targets') {
+      <!-- Tracked outreach: what is actually under way, follow-ups first -->
+      @if (view() === 'tracked') {
+        <div class="overflow-y-auto border-r border-jb-border jb-scroll">
+          @if (trackedLoading()) {
+            <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'companies.loading' | translate }}</div>
+          } @else if (tracked().length === 0) {
+            <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'companies.outreach.empty' | translate }}</div>
+          } @else {
+            @for (c of tracked(); track c.id) {
+              <div class="p-[12px_16px] border-b border-jb-border-faint">
+                <div class="flex items-center gap-3">
+                  <jb-company-mark [name]="c.companyName" [size]="32" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-base font-medium truncate">{{ c.companyName }}</div>
+                    <div class="text-xs text-jb-text-dim truncate">
+                      {{ ('companies.outreach.status.' + c.status) | translate }}
+                      @if (c.contactName) { · {{ c.contactName }} }
+                      @if (c.followUpDue) {
+                        · <span [class.text-jb-danger]="isFollowUpDue(c)">
+                          {{ 'companies.outreach.followUp' | translate }} {{ c.followUpDue | date:'d MMM' }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                  @if (isFollowUpDue(c)) {
+                    <jb-pill tone="danger">{{ 'companies.outreach.due' | translate }}</jb-pill>
+                  }
+                </div>
+                <div class="flex flex-wrap items-center gap-2 mt-2 ml-[44px]">
+                  <select class="px-2 py-[4px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-xs"
+                    [ngModel]="c.status" (ngModelChange)="setStatus(c, $event)">
+                    @for (s of outreachStatuses; track s) {
+                      <option [value]="s">{{ ('companies.outreach.status.' + s) | translate }}</option>
+                    }
+                  </select>
+                  <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
+                    (click)="writeUnsolicited(c)">{{ 'companies.targets.write' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-transparent border border-jb-border rounded-md text-jb-text-dim text-xs cursor-pointer"
+                    (click)="untrack(c)">{{ 'companies.outreach.untrack' | translate }}</button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      } @else if (view() === 'targets') {
         <div class="overflow-y-auto border-r border-jb-border jb-scroll">
           <div class="p-[12px_16px] border-b border-jb-border-faint">
             <div class="text-xs text-jb-text-mid leading-relaxed mb-2">{{ 'companies.targets.intro' | translate }}</div>
@@ -56,6 +102,8 @@
                 <div class="flex items-center gap-2 mt-2 ml-[44px]">
                   <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
                     (click)="writeUnsolicited(t)">{{ 'companies.targets.write' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-transparent border border-jb-border rounded-md text-jb-text-mid text-xs cursor-pointer"
+                    (click)="track(t)">{{ 'companies.outreach.track' | translate }}</button>
                   @if (t.website) {
                     <a class="jb-link text-xs" [href]="t.website" target="_blank" rel="noopener">{{ 'companies.website' | translate }}</a>
                   }
