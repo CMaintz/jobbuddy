@@ -30,6 +30,18 @@
       <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_16px]">{{ 'careerProfile.target.intro' | translate }}</p>
 
       <div class="py-3.5 border-b border-jb-border-faint">
+        <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.stage' | translate }}</div>
+        <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.stageDesc' | translate }}</div>
+        <select [(ngModel)]="careerStage" (ngModelChange)="markTargetDirty()"
+          class="w-full border border-jb-border rounded-md px-3 py-2 text-base" style="background: var(--jb-surface-2)">
+          <option value="">{{ 'careerProfile.stage.unset' | translate }}</option>
+          @for (s of careerStages; track s.value) {
+            <option [value]="s.value">{{ s.label | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="py-3.5 border-b border-jb-border-faint">
         <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.archetypes' | translate }}</div>
         <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.archetypesDesc' | translate }}</div>
         <jb-tag-input [value]="archetypes" (valueChange)="archetypes = $event; markTargetDirty()" [placeholder]="'careerProfile.target.archetypesPlaceholder' | translate" />

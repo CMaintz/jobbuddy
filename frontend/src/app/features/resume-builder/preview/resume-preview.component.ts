@@ -66,7 +66,8 @@ export class ResumePreviewComponent {
   /** Text-based single-column PDF — selectable text, safe for ATS parsers. */
   async downloadAtsPdf(): Promise<void> {
     const pi = this.state.displayPersonalInfo();
-    const model = resumeDataToAts({ ...this.state.resumeData(), socials: this.state.displaySocials() }, pi);
+    const model = resumeDataToAts(
+      { ...this.state.resumeData(), socials: this.state.displaySocials() }, pi, this.state.settings());
     await this.atsPdf.downloadResume(model, `${pi.fullName || 'resume'} - ATS`);
   }
 

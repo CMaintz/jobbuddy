@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.CareerTargetEntity;
 import com.autoapplicant.adapter.persistence.repository.CareerTargetJpaRepository;
+import com.autoapplicant.domain.user.CareerStage;
 import com.autoapplicant.domain.user.CareerTarget;
 import com.autoapplicant.port.out.user.CareerTargetRepositoryPort;
 import org.springframework.stereotype.Component;
@@ -33,12 +34,20 @@ public class CareerTargetPersistenceAdapter implements CareerTargetRepositoryPor
         e.setNorthStar(target.northStar());
         e.setNarrative(target.narrative());
         e.setCultureRequirements(toArray(target.cultureRequirements()));
+        e.setCareerStage(target.careerStage() != null ? target.careerStage().name() : null);
         return toDomain(repo.save(e));
     }
 
     private CareerTarget toDomain(CareerTargetEntity e) {
         return new CareerTarget(e.getUserId(), toList(e.getTargetArchetypes()), e.getNorthStar(),
-                e.getNarrative(), toList(e.getCultureRequirements()), e.getUpdatedAt());
+                e.getNarrative(), toList(e.getCultureRequirements()), parseStage(e.getCareerStage()),
+                e.getUpdatedAt());
+    }
+
+    private static CareerStage parseStage(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { return CareerStage.valueOf(value); }
+        catch (IllegalArgumentException ex) { return null; }
     }
 
     private static List<String> toList(String[] arr) { return arr != null ? Arrays.asList(arr) : List.of(); }

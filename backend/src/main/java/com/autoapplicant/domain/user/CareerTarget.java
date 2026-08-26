@@ -13,6 +13,8 @@ import java.util.UUID;
  * @param northStar           a one-line statement of the ideal next role / direction
  * @param narrative           positioning narrative distinct from the CV summary (the "why me / why this")
  * @param cultureRequirements company-culture criteria used in job evaluation
+ * @param careerStage         self-declared career stage driving stage-appropriate framing and the
+ *                            default CV section order; {@code null} = unset (treated as mid-career)
  */
 public record CareerTarget(
         UUID userId,
@@ -20,5 +22,6 @@ public record CareerTarget(
         String northStar,
         String narrative,
         List<String> cultureRequirements,
+        CareerStage careerStage,
         Instant updatedAt
 ) {}
