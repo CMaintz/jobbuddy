@@ -70,8 +70,11 @@ cd frontend; npm run build        # production Angular build
 # Prompt evaluation harness (offline; scores fixture letters, prints the per-dimension table)
 ./gradlew :backend:test --tests "*PromptEvalHarnessTest*" --info
 
-# Frontend tests
+# Frontend tests (watch mode, opens a browser)
 cd frontend; npm test
+
+# Frontend tests, headless — what CI runs
+cd frontend; npm run test:ci
 ```
 
 ### Lint
