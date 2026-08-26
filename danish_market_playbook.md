@@ -91,16 +91,16 @@ catch regressions, not to certify quality.
 
 ## Not yet done (ranked)
 
-1. **Outreach targets are ranked but not tracked.** A saved target has no pipeline state of its
-   own until an application exists, so there is no record of who you contacted unsolicited or when
-   to follow up — and following up is most of what makes unsolicited contact work.
-2. **The quality score is logged, not stored.** Comparing two prompt revisions on real output means
-   reading logs. Persisting the score per generated document would make the trend visible in-app.
-3. **Contact extraction is unverified against real postings.** The rules are strict and the
-   fixtures are synthetic; the failure mode to watch is a name lifted from page chrome or from a
-   different vacancy on the same page.
-4. **No frontend test runner.** `ng test` is declared but no runner is configured, so the mapper
-   and export logic are covered only by the production build.
+1. **The follow-up is manual.** `outreach_contact.follow_up_due` is set and shown, and due items
+   sort to the top, but nothing notifies — the user has to open the screen. The reminder
+   infrastructure (`domain/reminder`) already exists to hook into.
+2. **The quality trend has an endpoint but no chart.** `GET /api/v1/documents/quality-scores`
+   returns the history; nothing plots it yet, though `sparkline` and `stat-card` exist.
+3. **Contact extraction is still unverified against live postings.** The adversarial cases are
+   covered (role addresses, malformed blocks, crawler precedence) but on synthetic input; the
+   remaining failure mode is a name lifted from page chrome or a neighbouring vacancy, which only
+   real crawled pages will show.
+4. **Skill capture is import-only.** See the elicitation design below.
 
 [ballisager]: https://ballisager.com/den-gode-ansoegning
 [jobmail-guide]: https://jobmail.dk/blog/ansogning-guide

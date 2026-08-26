@@ -26,15 +26,18 @@ class OutreachTargetServiceTest {
             Mockito.mock(com.autoapplicant.port.out.job.JobRepositoryPort.class);
     private final com.autoapplicant.port.out.company.CompanyRepositoryPort companyRepo =
             Mockito.mock(com.autoapplicant.port.out.company.CompanyRepositoryPort.class);
+    private final com.autoapplicant.port.out.company.OutreachContactRepositoryPort outreachRepo =
+            Mockito.mock(com.autoapplicant.port.out.company.OutreachContactRepositoryPort.class);
     private final com.autoapplicant.port.out.user.ProfileRepositoryPort profileRepo =
             Mockito.mock(com.autoapplicant.port.out.user.ProfileRepositoryPort.class);
     private final com.autoapplicant.port.out.user.CareerTargetRepositoryPort careerTargetRepo =
             Mockito.mock(com.autoapplicant.port.out.user.CareerTargetRepositoryPort.class);
 
     private final OutreachTargetService service =
-            new OutreachTargetService(jobRepo, companyRepo, profileRepo, careerTargetRepo);
+            new OutreachTargetService(jobRepo, companyRepo, outreachRepo, profileRepo, careerTargetRepo);
 
     private void profileWith(String... technologies) {
+        when(outreachRepo.findByUserId(USER)).thenReturn(List.of());
         when(profileRepo.findByUserId(USER)).thenReturn(Optional.of(new Profile(
                 UUID.randomUUID(), USER, null, null, null, List.of(), List.of(technologies),
                 List.of(), List.of(), null, null, null, null, null, null, null)));
@@ -64,7 +67,24 @@ class OutreachTargetServiceTest {
     }
 
     @Test
+    void anAlreadyTrackedCompanyIsNotSuggestedAgain() {
+        profileWith("Java");
+        UUID companyId = UUID.randomUUID();
+        when(jobRepo.findCompanyHiringSignals(any())).thenReturn(List.of(
+                new CompanyHiringSignal(companyId, "Tracked A/S", 3, 0, daysAgo(5), List.of("Java"))));
+        when(companyRepo.findById(any())).thenReturn(Optional.empty());
+        // Once it is on the outreach list, re-suggesting it asks the user to decide again.
+        when(outreachRepo.findByUserId(USER)).thenReturn(List.of(new com.autoapplicant.domain.company
+                .OutreachContact(UUID.randomUUID(), USER, companyId, "Tracked A/S",
+                com.autoapplicant.domain.company.OutreachStatus.SAVED, null, null, null, null, null,
+                null, null)));
+
+        assertThat(service.findOutreachTargets(USER, 10, false)).isEmpty();
+    }
+
+    @Test
     void aProfileWithNoSkillsYieldsNothingRatherThanEverything() {
+        when(outreachRepo.findByUserId(USER)).thenReturn(List.of());
         when(profileRepo.findByUserId(USER)).thenReturn(Optional.empty());
         when(careerTargetRepo.findByUserId(USER)).thenReturn(Optional.empty());
         assertThat(service.findOutreachTargets(USER, 10, false)).isEmpty();

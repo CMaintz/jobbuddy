@@ -1082,8 +1082,9 @@
     }
   },
   "companies": {
-    "view": {"all": "Alle", "targets": "Uopfordret"},
+    "view": {"all": "Alle", "targets": "Uopfordret", "tracked": "Igangværende"},
     "targets": {"intro": "Virksomheder der ansætter folk med dine kompetencer. Omkring halvdelen af danske stillinger bliver aldrig slået op — det er dem her, en uopfordret ansøgning er til.", "includeHiringNow": "Vis også virksomheder der søger lige nu", "empty": "Ingen emner endnu. Tilføj kompetencer og teknologier til din profil, og lad crawleren opbygge lidt ansættelseshistorik.", "write": "Skriv uopfordret", "reason": {"skillOverlap": "Ansætter inden for {{skills}}", "skillOverlapMore": "Ansætter inden for {{skills}} og {{count}} af dine øvrige kompetencer", "hiringRecent": "Har ansat inden for de seneste tre måneder", "hiringSemiRecent": "Har ansat inden for det seneste halve år", "repeatHirer": "Har slået {{count}} stillinger op det seneste år — ansætter jævnligt", "postedTwice": "Har slået to stillinger op det seneste år", "nothingOpen": "Intet slået op lige nu — præcis dét hul en uopfordret ansøgning er til", "hasOpenRoles": "Har {{count}} stilling(er) slået op nu: søg dem først", "consultancy": "Konsulenthus — udstationering frem for arbejde in-house"}},
+    "outreach": {"track": "Følg op", "untrack": "Stop opfølgning", "empty": "Ingen igangværende endnu. Gem et emne fra listen for at komme i gang.", "followUp": "opfølgning", "due": "Forfalden", "status": {"SAVED": "Gemt", "CONTACTED": "Kontaktet", "REPLIED": "Svar modtaget", "MEETING": "Møde", "CLOSED": "Afsluttet"}},
     "searchPlaceholder": "Søg virksomheder…",
     "count": "{{count}} virksomheder",
     "loading": "Indlæser virksomheder…",
