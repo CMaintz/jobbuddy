@@ -158,6 +158,15 @@ All document generation goes through `StructuredDocument` — a record containin
 - **Cover letters / application text:** `AiService.generateDocument()` → AI returns `ApplicationDocumentAiResponse` (structured JSON) → assembled by `StructuredDocumentService.buildApplicationDocument()`
 - **Template = format:** `exportMode` (`ATS` / `DESIGNED`) is derived from `templateId` via `exportModeFromTemplate()`. It is never a separate user input.
 
+### Market Conventions
+
+Generation prompts carry a market-conventions block chosen by `MarketConventions.resolve(language,
+jobCountry)` — the posting's country wins over its language, so a Copenhagen employer posting in
+English still gets Danish conventions. The output language itself is resolved deterministically by
+`JobLanguageDetector` (user's explicit choice → detected posting language → model's own judgement),
+not left to the model. Adding a market means adding a constant plus a branch in `resolve` — never
+editing the prompt builder. The research behind the Danish rules lives in `danish_market_playbook.md`.
+
 ### Privacy Invariant
 
 `CareerProfileForAi` intentionally excludes `name`, `email`, `phone`, `photoUrl`, `linkedinUrl`, `githubUrl`, `websiteUrl`. These fields must never be sent to the AI provider. Identity is assembled server-side after the AI call in `CvDocumentAssembler.buildIdentity()`.
@@ -190,4 +199,7 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
 - `AI_CLI_COMMAND` — CLI invoked for local-agent generation (default `claude -p`; prompt on stdin).
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
+- `CLICHE_GUARD_ENABLED` / `CLICHE_GUARD_MODE` — deterministic Danish-floskel / AI-tell phrase check
+  on generated documents (`warn` logs, `block` fails generation). Findings are also fed back into
+  the reviewer pass to be rewritten. See `danish_market_playbook.md`.
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (personal-use, low-volume).

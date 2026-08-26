@@ -49,6 +49,12 @@ app:
       # warn = log unsupported numbers; block = fail generation when any are found.
       enabled: ${FACT_GUARD_ENABLED:true}
       mode: ${FACT_GUARD_MODE:warn}
+    cliche-guard:
+      # Deterministic (model-free) check for Danish application cliches ("floskler") and the
+      # English filler that reads as AI-generated. Findings are fed back to the reviewer pass.
+      # warn = log surviving phrases; block = fail generation when any survive.
+      enabled: ${CLICHE_GUARD_ENABLED:true}
+      mode: ${CLICHE_GUARD_MODE:warn}
     retracted-claims:
       # Ensures a claim the user has disowned never resurfaces in generated content.
       # warn = log; block = fail generation when a retracted claim appears.

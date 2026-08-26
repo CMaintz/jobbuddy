@@ -32,11 +32,13 @@ public class TailoredCvGenerator {
      *
      * @param styleTemplate optional {@link PromptTemplate} to customise AI persona and approach;
      *                      pass {@code null} to use the built-in default
+     * @param jobCountry    the posting's country, selecting market conventions; may be {@code null}
      */
     public TailoredCvContent generate(CareerProfileForAi source, String jobDescription,
                                       String customInstructions, String targetLanguage,
                                       PromptTemplate styleTemplate, WritingProfile writingProfile,
-                                      List<String> outcomeLessons, String lengthPreference) {
+                                      List<String> outcomeLessons, String lengthPreference,
+                                      String jobCountry) {
         try {
             String sourceJson = objectMapper.writeValueAsString(source);
             String json = AiResponseParser.extractJsonObject(
@@ -44,7 +46,7 @@ public class TailoredCvGenerator {
                             promptBuilder.composeCvTailoringPrompt(
                                     sourceJson, jobDescription, customInstructions,
                                     targetLanguage, styleTemplate, writingProfile, outcomeLessons,
-                                    lengthPreference))
+                                    lengthPreference, jobCountry))
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {

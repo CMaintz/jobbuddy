@@ -61,11 +61,17 @@ public class PromptCompositionBuilder {
             WritingProfile writingProfile,
             java.util.List<String> outcomeLessons,
             String companyFacts,
-            String lengthPreference) {
+            String lengthPreference,
+            String jobCountry) {
 
-        String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
-                ? "Write the document body in " + targetLanguage + "."
+        // Resolve the output language deterministically instead of asking the model to guess:
+        // the user's explicit choice wins, otherwise the posting's detected language. The result
+        // also selects the market conventions and the banned-phrase list below.
+        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
+        String languageInstruction = resolvedLanguage != null
+                ? "Write the document body in " + resolvedLanguage + "."
                 : "Write in the same language as the job description when clear, otherwise Danish.";
+        MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, jobCountry);
 
         String docLabel = switch (documentType != null ? documentType.toUpperCase() : "") {
             case "COVER_LETTER" -> "a compelling cover letter";
@@ -74,7 +80,12 @@ public class PromptCompositionBuilder {
                     + "applying speculatively, there is NO posted vacancy. State early and clearly what "
                     + "kind of role the candidate is looking for, show genuine knowledge of or interest "
                     + "in the company, and make a concrete case for the value they would add. Do not "
-                    + "reference 'the position' or 'the posting'";
+                    + "reference 'the position' or 'the posting'. Around half of Danish vacancies are "
+                    + "never advertised, so this letter is read as a proposal, not an application: lead "
+                    + "with a specific problem or opportunity the candidate could take off the reader's "
+                    + "hands, name the concrete evidence they have done it before, and keep it shorter "
+                    + "than a posted-vacancy letter. Close by proposing a short conversation, and state "
+                    + "that the candidate will follow up — never ask to be kept 'on file'";
             case "RECRUITER_MESSAGE" -> "a brief, personalized recruiter message (under 150 words)";
             case "FOLLOW_UP_MESSAGE" -> "a polite follow-up message (under 100 words)";
             default -> "a professional document";
@@ -117,6 +128,8 @@ public class PromptCompositionBuilder {
                 || type.equals("UNSOLICITED_APPLICATION");
         String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
+        String marketRules = MarketConventions.letterRules(market);
+        String marketBlock = marketRules.isBlank() ? "" : "\n\n" + marketRules;
 
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
@@ -124,8 +137,10 @@ public class PromptCompositionBuilder {
                 + buildOutcomeLearnings(outcomeLessons)
                 + "\n\n" + HONESTY_RULES
                 + "\n\n" + TARGETING_RULES
+                + marketBlock
                 + structure
                 + lengthGuidance
+                + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -159,11 +174,15 @@ public class PromptCompositionBuilder {
             PromptTemplate styleTemplate,
             WritingProfile writingProfile,
             java.util.List<String> outcomeLessons,
-            String lengthPreference) {
+            String lengthPreference,
+            String jobCountry) {
 
-        String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
-                ? "Write all rewritten text in " + targetLanguage + "."
+        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
+        String languageInstruction = resolvedLanguage != null
+                ? "Write all rewritten text in " + resolvedLanguage + "."
                 : "Write rewritten text in the same language as the job description when clear.";
+        MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, jobCountry);
+        String marketRules = MarketConventions.cvRules(market);
 
         String baseSystem = styleTemplate != null && styleTemplate.systemPrompt() != null
                 ? styleTemplate.systemPrompt()
@@ -207,7 +226,9 @@ public class PromptCompositionBuilder {
                 + "\n- When content must be condensed, drop the bullets with the lowest combination of "
                 + "relevance to this posting's keywords and uniqueness within the document — not simply "
                 + "the oldest ones. A dated bullet that hits posting keywords outranks a recent one that does not."
+                + (marketRules.isBlank() ? "" : "\n\n" + marketRules)
                 + "\n\n## Length\n" + cvLengthGuidance(lengthPreference)
+                + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
