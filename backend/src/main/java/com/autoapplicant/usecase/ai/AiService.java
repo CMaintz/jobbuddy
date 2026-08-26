@@ -3,6 +3,7 @@ package com.autoapplicant.usecase.ai;
 import com.autoapplicant.domain.ai.*;
 import com.autoapplicant.domain.document.*;
 import com.autoapplicant.domain.document.QualityScore;
+import com.autoapplicant.domain.document.RecordedQualityScore;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -16,6 +17,7 @@ import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
+import com.autoapplicant.port.out.document.QualityScoreRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -56,6 +58,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final GeneratedContentGuards contentGuards;
     private final ClicheGuard clicheGuard;
     private final DocumentQualityEvaluator qualityEvaluator;
+    private final QualityScoreRepositoryPort qualityScoreRepo;
     private final CompanyGroundingService companyGrounding;
     private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
@@ -81,6 +84,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      GeneratedContentGuards contentGuards,
                      ClicheGuard clicheGuard,
                      DocumentQualityEvaluator qualityEvaluator,
+                     QualityScoreRepositoryPort qualityScoreRepo,
                      CompanyGroundingService companyGrounding,
                      AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
@@ -97,6 +101,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.contentGuards = contentGuards;
         this.clicheGuard = clicheGuard;
         this.qualityEvaluator = qualityEvaluator;
+        this.qualityScoreRepo = qualityScoreRepo;
         this.companyGrounding = companyGrounding;
         this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
@@ -331,15 +336,16 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             List<String> missing = reviewed.missingKeywords() != null
                     ? reviewed.missingKeywords() : aiResponse.missingKeywords();
 
-            logQualityScore(documentType, body, contactFreeJson, job, lengthPreference);
-
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                     userId, type, body, templateId,
                     coverage, matched, missing, showProfileImage, theme, guardFindings);
 
-            return CompletableFuture.completedFuture(
-                    persistGeneratedDocument.save(userId, jobId, doc, aiProvider.chatModelName()));
+            StructuredDocument saved = persistGeneratedDocument.save(
+                    userId, jobId, doc, aiProvider.chatModelName());
+            recordQualityScore(userId, saved, documentType, body, contactFreeJson, job, lengthPreference);
+
+            return CompletableFuture.completedFuture(saved);
         } catch (Exception e) {
             log.error("Structured document generation failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
@@ -347,15 +353,16 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     }
 
     /**
-     * Scores the delivered document and logs the result, so prompt changes are observable on real
-     * output rather than only on test fixtures. Deterministic and cheap — no model call — and
-     * never allowed to break generation: a scoring failure is a lost metric, not a lost document.
+     * Scores the delivered document, logs it, and records it against the saved document, so prompt
+     * changes are observable on real output rather than only on test fixtures. Deterministic and
+     * cheap — no model call — and never allowed to break generation: a scoring failure is a lost
+     * metric, not a lost document.
      *
      * <p>Only prose letters are scored; the short recruiter and follow-up messages carry their own
      * word caps and would be measured against the wrong target.
      */
-    private void logQualityScore(String documentType, String body, String profileJson,
-                                 Job job, String lengthPreference) {
+    private void recordQualityScore(UUID userId, StructuredDocument saved, String documentType,
+                                    String body, String profileJson, Job job, String lengthPreference) {
         if (!PromptCompositionBuilder.isProseLetter(documentType)) return;
         try {
             List<String> keywords = new java.util.ArrayList<>();
@@ -369,6 +376,9 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     score.dimensions().stream()
                             .map(d -> d.code() + "=" + d.score())
                             .collect(java.util.stream.Collectors.joining(" ")));
+            qualityScoreRepo.save(new RecordedQualityScore(null, userId,
+                    saved != null ? saved.generatedDocumentId() : null,
+                    documentType, score, null));
         } catch (Exception e) {
             log.debug("Quality scoring failed (non-fatal): {}", e.getMessage());
         }
