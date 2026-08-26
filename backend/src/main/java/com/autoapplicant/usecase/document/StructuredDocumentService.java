@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.*;
@@ -187,16 +188,15 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         // conventions the prompts should follow.
         Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
         String jobDescription = job != null ? job.descriptionClean() : rawJobDescription;
-        String jobCountry = job != null ? job.country() : null;
+        PostingContext posting = new PostingContext(jobDescription,
+                job != null ? job.country() : null, null);
         PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
-                source, jobDescription, customInstructions, targetLanguage, promptTemplate,
-                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference,
-                jobCountry);
+                source, posting, customInstructions, targetLanguage, promptTemplate,
+                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
         // Drafter→reviewer pass on the structured CV (config-gated); non-fatal on failure.
-        tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage,
-                jobCountry);
+        tailored = tailoredCvReviewer.review(tailored, posting, writingProfile, targetLanguage);
         // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
         ContentGuardFindings findings = contentGuards.verify(
                 userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");

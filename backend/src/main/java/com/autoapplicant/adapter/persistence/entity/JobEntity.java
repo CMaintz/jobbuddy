@@ -113,6 +113,18 @@ public class JobEntity {
     @Column(name = "application_deadline")
     private java.time.LocalDate applicationDeadline;
 
+    @Column(name = "contact_name", columnDefinition = "text")
+    private String contactName;
+
+    @Column(name = "contact_title", columnDefinition = "text")
+    private String contactTitle;
+
+    @Column(name = "contact_email", columnDefinition = "text")
+    private String contactEmail;
+
+    @Column(name = "contact_phone", columnDefinition = "text")
+    private String contactPhone;
+
     @Column(name = "last_url_check_at")
     private Instant lastUrlCheckAt;
 
@@ -197,6 +209,14 @@ public class JobEntity {
     public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
     public java.time.LocalDate getApplicationDeadline() { return applicationDeadline; }
     public void setApplicationDeadline(java.time.LocalDate applicationDeadline) { this.applicationDeadline = applicationDeadline; }
+    public String getContactName() { return contactName; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
+    public String getContactTitle() { return contactTitle; }
+    public void setContactTitle(String contactTitle) { this.contactTitle = contactTitle; }
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
     public Instant getLastUrlCheckAt() { return lastUrlCheckAt; }
     public void setLastUrlCheckAt(Instant lastUrlCheckAt) { this.lastUrlCheckAt = lastUrlCheckAt; }
     public int getUrlCheckFailures() { return urlCheckFailures; }

@@ -285,12 +285,17 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     : promptTemplateRepo.findSystemDefault(documentType).orElse(null);
             if (styleTemplate != null) promptTemplateRepo.incrementUsage(styleTemplate.id());
 
+            PostingContext posting = new PostingContext(jobDescription,
+                    job != null ? job.country() : null,
+                    job != null && job.contact() != null && job.contact().hasName()
+                            ? job.contact().display() : null);
+
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
-                    documentType, contactFreeJson, jobDescription,
+                    documentType, contactFreeJson, posting,
                     customInstructions, motivationText, targetLanguage, styleTemplate,
                     writingProfileRepo.findByUserId(userId).orElse(null),
                     applicationRepo.findRecentOutcomeLessons(userId, 5),
-                    companyFacts, lengthPreference, job != null ? job.country() : null);
+                    companyFacts, lengthPreference);
 
             String json = AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition)).trim());

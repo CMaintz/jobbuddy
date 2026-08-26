@@ -46,7 +46,9 @@ public final class JobMapper {
                 e.getUpdatedAt(),
                 e.getShortDescription(),
                 e.getLastSeenAt(),
-                e.getApplicationDeadline()
+                e.getApplicationDeadline(),
+                JobContact.ofNullable(e.getContactName(), e.getContactTitle(),
+                        e.getContactEmail(), e.getContactPhone())
         );
     }
 
@@ -85,6 +87,11 @@ public final class JobMapper {
         e.setShortDescription(d.shortDescription());
         e.setLastSeenAt(d.lastSeenAt());
         e.setApplicationDeadline(d.applicationDeadline());
+        JobContact contact = d.contact();
+        e.setContactName(contact != null ? contact.name() : null);
+        e.setContactTitle(contact != null ? contact.title() : null);
+        e.setContactEmail(contact != null ? contact.email() : null);
+        e.setContactPhone(contact != null ? contact.phone() : null);
         return e;
     }
 

@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import org.junit.jupiter.api.Test;
 
@@ -27,13 +28,17 @@ class PromptCompositionBuilderTest {
             an informal workplace with skilled colleagues and good opportunities for growth.""";
 
     private PromptComposition letter(String posting, String targetLanguage, String country) {
+        return letter(new PostingContext(posting, country, null), targetLanguage);
+    }
+
+    private PromptComposition letter(PostingContext posting, String targetLanguage) {
         return builder.composeStructuredApplicationPrompt("COVER_LETTER", "{}", posting, null, null,
-                targetLanguage, null, null, List.of(), null, "STANDARD", country);
+                targetLanguage, null, null, List.of(), null, "STANDARD");
     }
 
     private PromptComposition cv(String posting, String targetLanguage, String country) {
-        return builder.composeCvTailoringPrompt("{}", posting, null, targetLanguage, null, null,
-                List.of(), "STANDARD", country);
+        return builder.composeCvTailoringPrompt("{}", new PostingContext(posting, country, null),
+                null, targetLanguage, null, null, List.of(), "STANDARD");
     }
 
     @Test
@@ -86,6 +91,23 @@ class PromptCompositionBuilderTest {
                 .contains("## Banned Phrases");
         assertThat(cv(ENGLISH_POSTING, null, "Germany").userPromptTemplate())
                 .doesNotContain("## Danish Market Conventions");
+    }
+
+    @Test
+    void namedContactIsAddressedWhenThePostingGaveOne() {
+        PromptComposition c = letter(
+                new PostingContext(DANISH_POSTING, "Denmark", "Mette Hansen, afdelingsleder"), null);
+        assertThat(c.userPromptTemplate()).contains("## Named Contact")
+                .contains("Mette Hansen, afdelingsleder");
+    }
+
+    @Test
+    void noContactBlockWhenThePostingNamesNobody() {
+        assertThat(letter(DANISH_POSTING, null, null).userPromptTemplate())
+                .doesNotContain("## Named Contact");
+        // …and the standing instruction not to invent a recipient still holds.
+        assertThat(letter(DANISH_POSTING, null, null).userPromptTemplate())
+                .contains("Do not invent a named recipient");
     }
 
     @Test

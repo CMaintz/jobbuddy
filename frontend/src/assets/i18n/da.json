@@ -754,6 +754,8 @@
     "via": "via {{source}}",
     "fit": "Match",
     "postedAge": "Slået op {{age}}",
+    "contact": "Kontaktperson",
+    "contactNudge": "Danske opslag angiver en kontaktperson af en grund — et kort opkald inden du søger er forventet, ikke anmassende, og giver dig noget konkret at skrive om.",
     "passed": "udløbet",
     "hideDetails": "Skjul detaljer",
     "docsActions": "Dokumenter & handlinger",

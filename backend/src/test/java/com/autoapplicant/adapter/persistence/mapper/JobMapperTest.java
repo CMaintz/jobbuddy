@@ -122,12 +122,15 @@ class JobMapperTest {
                 List.of("Python", "Django"), List.of("Problem Solving"), List.of("Danish"),
                 Instant.now(), Instant.now(), "AI summary",
                 List.of("ml", "nlp"), "SENIOR",
-                null, true, null, Instant.now(), Instant.now(), null, null, null);
+                null, true, null, Instant.now(), Instant.now(), null, null, null,
+                JobContact.ofNullable("Mette Hansen", "afdelingsleder", "mh@example.dk", "12345678"));
 
         Job roundTripped = JobMapper.toDomain(JobMapper.toEntity(job));
 
         assertThat(roundTripped.source()).isEqualTo(JobSource.MANUAL);
         assertThat(roundTripped.employmentType()).isEqualTo(EmploymentType.PART_TIME);
+        assertThat(roundTripped.contact()).isEqualTo(
+                new JobContact("Mette Hansen", "afdelingsleder", "mh@example.dk", "12345678"));
         assertThat(roundTripped.seniority()).isEqualTo(Seniority.SENIOR);
         assertThat(roundTripped.remoteType()).isEqualTo(RemoteType.REMOTE);
         assertThat(roundTripped.technologies()).containsExactly("Python", "Django");
@@ -144,7 +147,7 @@ class JobMapperTest {
                 null, null, null, null, null, null, null,
                 null, null, null,
                 null, null, null,
-                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null, null, null);
+                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null, null, null, null);
 
         JobEntity entity = JobMapper.toEntity(job);
 

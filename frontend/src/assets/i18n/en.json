@@ -754,6 +754,8 @@
     "via": "via {{source}}",
     "fit": "Fit",
     "postedAge": "Posted {{age}}",
+    "contact": "Contact person",
+    "contactNudge": "Danish postings name a contact for a reason — a short call before you apply is expected here, not pushy, and gives you something specific to write about.",
     "passed": "passed",
     "hideDetails": "Hide details",
     "docsActions": "Documents & actions",
