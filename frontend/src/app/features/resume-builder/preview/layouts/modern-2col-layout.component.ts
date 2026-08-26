@@ -23,6 +23,7 @@ export class Modern2ColLayoutComponent {
   get education() { return this.svc.education(); }
   get projects() { return this.svc.projects(); }
   get skills() { return this.svc.skills(); }
+  get skillGroups() { return this.svc.skillGroups(); }
   get languages() { return this.svc.languages(); }
   get certifications() { return this.svc.certifications(); }
   get strengths() { return this.svc.strengths(); }

@@ -21,17 +21,22 @@
           <section rbSection="skills">
             <h2 class="text-xs font-bold uppercase tracking-widest mb-2" [style.color]="themeColor">{{ 'resumeBuilder.cv.skills' | translate }}</h2>
             <div class="flex flex-col gap-1.5">
-              @for (s of skills; track s.id) {
-                <div>
-                  <span class="text-xs text-gray-700">{{ s.name }}</span>
-                  @if (showSkillLevel && s.level) {
-                    <div class="flex gap-0.5 mt-0.5">
-                      @for (d of [1,2,3,4,5]; track d) {
-                        <div class="h-1 flex-1 rounded-full" [style.background-color]="d <= (s.level ?? 0) ? themeColor : '#e5e7eb'"></div>
-                      }
-                    </div>
-                  }
-                </div>
+              @for (group of skillGroups; track group.category) {
+                @if (group.category) {
+                  <div class="text-2xs font-semibold uppercase tracking-widest mt-1" [style.color]="themeColor">{{ group.category }}</div>
+                }
+                @for (s of group.skills; track s.id) {
+                  <div>
+                    <span class="text-xs text-gray-700">{{ s.name }}</span>
+                    @if (showSkillLevel && s.level) {
+                      <div class="flex gap-0.5 mt-0.5">
+                        @for (d of [1,2,3,4,5]; track d) {
+                          <div class="h-1 flex-1 rounded-full" [style.background-color]="d <= (s.level ?? 0) ? themeColor : '#e5e7eb'"></div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
               }
             </div>
           </section>

@@ -3,6 +3,7 @@
       @for (skill of skills; track skill.id) {
         <div class="flex items-center gap-2">
           <input class="input" style="flex:1;" [value]="skill.name" (input)="update(skill.id, 'name', $any($event.target).value)" [placeholder]="'resumeBuilder.form.skillName' | translate" />
+          <input class="input" style="width:120px;" [value]="skill.category ?? ''" (input)="update(skill.id, 'category', $any($event.target).value)" [placeholder]="'resumeBuilder.form.skillCategory' | translate" [attr.list]="'rb-skill-categories'" />
           <select class="input w-auto" style="width:72px;"
             [value]="skill.level ?? ''"
             (change)="update(skill.id, 'level', $any($event.target).value ? +$any($event.target).value : undefined)"
@@ -17,6 +18,14 @@
           <button class="rb-remove" (click)="remove(skill.id)">✕</button>
         </div>
       }
+      <datalist id="rb-skill-categories">
+        <option value="Languages"></option>
+        <option value="Frameworks"></option>
+        <option value="Tools"></option>
+        <option value="Cloud"></option>
+        <option value="Databases"></option>
+        <option value="Practices"></option>
+      </datalist>
       <button class="rb-add" (click)="add()">{{ 'resumeBuilder.form.addSkill' | translate }}</button>
       <p class="text-xs text-jb-text-faint">{{ 'resumeBuilder.form.skillsHint' | translate }}</p>
     </div>

@@ -127,20 +127,25 @@
           <section rbSection="skills">
             <h2 class="sidebar-heading" [style.color]="themeColor">{{ 'resumeBuilder.cv.skills' | translate }}</h2>
             <div class="flex flex-col gap-1.5">
-              @for (skill of skills; track skill.id) {
-                <div class="flex items-center justify-between">
-                  <span class="text-xs text-gray-700">{{ skill.name }}</span>
-                  @if (showSkillLevel && skill.level) {
-                    <div class="flex gap-0.5">
-                      @for (dot of [1,2,3,4,5]; track dot) {
-                        <div
-                          class="w-2 h-2 rounded-full"
-                          [style.background-color]="dot <= (skill.level ?? 0) ? themeColor : '#d1d5db'"
-                        ></div>
-                      }
-                    </div>
-                  }
-                </div>
+              @for (group of skillGroups; track group.category) {
+                @if (group.category) {
+                  <div class="text-2xs font-semibold uppercase tracking-wide text-gray-500 mt-1">{{ group.category }}</div>
+                }
+                @for (skill of group.skills; track skill.id) {
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-700">{{ skill.name }}</span>
+                    @if (showSkillLevel && skill.level) {
+                      <div class="flex gap-0.5">
+                        @for (dot of [1,2,3,4,5]; track dot) {
+                          <div
+                            class="w-2 h-2 rounded-full"
+                            [style.background-color]="dot <= (skill.level ?? 0) ? themeColor : '#d1d5db'"
+                          ></div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
               }
             </div>
           </section>

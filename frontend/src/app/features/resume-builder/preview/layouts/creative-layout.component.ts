@@ -23,6 +23,7 @@ export class CreativeLayoutComponent {
   get education() { return this.svc.education(); }
   get projects() { return this.svc.projects(); }
   get skills() { return this.svc.skills(); }
+  get skillGroups() { return this.svc.skillGroups(); }
   get languages() { return this.svc.languages(); }
   get strengths() { return this.svc.strengths(); }
   get socials() { return this.svc.displaySocials(); }
