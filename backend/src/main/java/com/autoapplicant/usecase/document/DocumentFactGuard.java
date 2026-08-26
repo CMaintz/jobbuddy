@@ -27,8 +27,13 @@ import java.util.regex.Pattern;
 @Service
 public class DocumentFactGuard {
 
-    /** Nouns a bare number is allowed to count. A claim needs one of these to be extracted. */
+    /**
+     * Nouns a bare number is allowed to count. A claim needs one of these to be extracted.
+     * Danish nouns are included because the default output language is Danish — without them a
+     * fabricated Danish count ("500 brugere", "3 års erfaring") would slip past the COUNT gate.
+     */
     private static final List<String> METRIC_NOUNS = List.of(
+            // English
             "users", "customers", "clients", "employees", "engineers", "teams", "companies",
             "partners", "organizations", "organisations", "brands", "countries",
             "hours", "days", "weeks", "months", "years", "minutes", "seconds",
@@ -38,11 +43,24 @@ public class DocumentFactGuard {
             "certificates", "sessions", "responses", "surveys", "cohorts",
             "commits", "contributions", "repositories", "repos", "modules", "tools",
             "servers", "guides", "articles", "datasets", "examples", "deployments",
-            "services", "downloads", "stars", "lines", "projects", "integrations", "tests");
+            "services", "downloads", "stars", "lines", "projects", "integrations", "tests",
+            // Danish
+            "brugere", "kunder", "medarbejdere", "udviklere", "ingeniører", "teams",
+            "virksomheder", "partnere", "organisationer", "lande", "brancher",
+            "timer", "dage", "uger", "måneder", "år", "års", "minutter", "sekunder",
+            "anmodninger", "dokumenter", "ansøgninger", "tilbud", "rapporter",
+            "kurser", "certificeringer", "certifikater", "sessioner", "svar",
+            "deltagere", "besøgende", "projekter", "integrationer", "servere",
+            "artikler", "vejledninger", "datasæt", "eksempler", "moduler", "værktøjer",
+            "commits", "bidrag", "repositorier", "tjenester", "linjer");
 
-    private static final Map<String, String> NOUN_SYNONYMS = Map.of(
-            "repos", "repositories", "enrolments", "enrollments", "organisations", "organizations",
-            "cvs", "resumes", "certificates", "certifications", "articles", "guides");
+    private static final Map<String, String> NOUN_SYNONYMS = Map.ofEntries(
+            Map.entry("repos", "repositories"), Map.entry("enrolments", "enrollments"),
+            Map.entry("organisations", "organizations"), Map.entry("cvs", "resumes"),
+            Map.entry("certificates", "certifications"), Map.entry("articles", "guides"),
+            // Danish → canonical (fold to a shared key so "3 years"/"3 år" don't both need listing)
+            Map.entry("års", "år"), Map.entry("repositorier", "repositories"),
+            Map.entry("certifikater", "certificeringer"));
 
     /** Up to this many alphabetic modifiers may sit between a number and the noun it counts. */
     private static final int MODIFIER_WINDOW = 4;
@@ -52,9 +70,9 @@ public class DocumentFactGuard {
             Pattern.compile("(?<![\\w$€£])[$€£]\\s?\\d[\\d,.]*(?:\\s?[kKmMbB])?");
     private static final Pattern MULTIPLIER = Pattern.compile("\\b\\d+(?:\\.\\d+)?\\s?x\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern COUNT = Pattern.compile(
-            "\\b(\\d[\\d,.]*(?:[kKmMbB]\\b)?)\\s*\\+?\\s*(?:[A-Za-z][A-Za-z-]*\\s+){0," + MODIFIER_WINDOW + "}("
+            "\\b(\\d[\\d,.]*(?:[kKmMbB]\\b)?)\\s*\\+?\\s*(?:[\\p{L}][\\p{L}-]*\\s+){0," + MODIFIER_WINDOW + "}("
                     + String.join("|", METRIC_NOUNS) + ")\\b",
-            Pattern.CASE_INSENSITIVE);
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS);
 
     private static final Pattern THOUSANDS = Pattern.compile("(\\d)[,.\\s\\u00a0\\u202f](?=\\d{3}(?!\\d))");
     private static final Pattern SPACE_GROUP = Pattern.compile("(?<!\\d)(\\d{1,3})[\\s\\u00a0\\u202f](?=\\d{3}(?!\\d))");
