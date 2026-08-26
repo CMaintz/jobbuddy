@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.usecase.ai.RetractedClaimsGuard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,33 +48,40 @@ public class GeneratedContentGuards {
         this.clicheGuard = clicheGuard;
     }
 
-    /** Runs the fact, retracted-claims, and filler gates over generated text. Warns or blocks per config. */
-    public void verify(UUID userId, String body, String sourceProfileJson, String documentType) {
-        applyFactGuard(body, sourceProfileJson, documentType);
-        applyRetractedClaimsGuard(userId, body, documentType);
-        applyClicheGuard(body, documentType);
+    /**
+     * Runs the fact, retracted-claims, and filler gates over generated text. Warns or blocks per
+     * config, and returns what was found so the caller can put it in the document's ATS report —
+     * a finding the user never sees is a finding that never gets fixed.
+     */
+    public ContentGuardFindings verify(UUID userId, String body, String sourceProfileJson, String documentType) {
+        return new ContentGuardFindings(
+                applyFactGuard(body, sourceProfileJson, documentType),
+                applyRetractedClaimsGuard(userId, body, documentType),
+                applyClicheGuard(body, documentType));
     }
 
-    private void applyFactGuard(String body, String sourceProfileJson, String documentType) {
-        if (!factGuardEnabled) return;
+    private List<String> applyFactGuard(String body, String sourceProfileJson, String documentType) {
+        if (!factGuardEnabled) return List.of();
         DocumentFactGuard.FactAudit audit = factGuard.audit(body, sourceProfileJson);
-        if (audit.clean()) return;
+        if (audit.clean()) return List.of();
         String msg = "Fact guard: metric claim(s) not supported by the profile in "
                 + label(documentType) + ": " + audit.inventedMetrics();
         if ("block".equalsIgnoreCase(factGuardMode)) {
             throw new IllegalStateException(msg + " — generation blocked (app.ai.fact-guard.mode=block)");
         }
         log.warn(msg);
+        return audit.inventedMetrics();
     }
 
-    private void applyRetractedClaimsGuard(UUID userId, String body, String documentType) {
+    private List<String> applyRetractedClaimsGuard(UUID userId, String body, String documentType) {
         List<String> violations = retractedClaimsGuard.findViolations(userId, body);
-        if (violations.isEmpty()) return;
+        if (violations.isEmpty()) return List.of();
         String msg = "Retracted claim(s) resurfaced in " + label(documentType) + ": " + violations;
         if ("block".equalsIgnoreCase(retractedClaimsMode)) {
             throw new IllegalStateException(msg + " — generation blocked (app.ai.retracted-claims.mode=block)");
         }
         log.warn(msg);
+        return violations;
     }
 
     /**
@@ -81,16 +89,17 @@ public class GeneratedContentGuards {
      * a quality signal, not a correctness failure, and blocking on one would fail a document the
      * user could still edit.
      */
-    private void applyClicheGuard(String body, String documentType) {
-        if (!clicheGuardEnabled) return;
+    private List<String> applyClicheGuard(String body, String documentType) {
+        if (!clicheGuardEnabled) return List.of();
         ClicheGuard.ClicheAudit audit = clicheGuard.audit(body);
-        if (audit.clean()) return;
+        if (audit.clean()) return List.of();
         String msg = "Cliche guard: filler phrase(s) survived review in "
                 + label(documentType) + ": " + audit.phrases();
         if ("block".equalsIgnoreCase(clicheGuardMode)) {
             throw new IllegalStateException(msg + " — generation blocked (app.ai.cliche-guard.mode=block)");
         }
         log.warn(msg);
+        return audit.phrases();
     }
 
     private static String label(String documentType) {

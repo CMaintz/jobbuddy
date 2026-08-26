@@ -16,7 +16,7 @@ import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
-import { DocumentIdentity, StructuredDocument } from '../../core/models/structured-document.model';
+import { AtsCheck, DocumentIdentity, StructuredDocument } from '../../core/models/structured-document.model';
 
 import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_TARGETS } from './letter-templates';
 
@@ -108,6 +108,22 @@ export class ApplicationOutputComponent implements OnInit {
     const missing: string[] = [];
     for (const kw of keywords) (text.includes(kw.toLowerCase()) ? matched : missing).push(kw);
     return { matched, missing };
+  });
+
+  /**
+   * Findings the deterministic guards recorded on this document (unsupported metrics, filler
+   * phrases, retracted claims). Only the ones that need action — a wall of green PASS lines is
+   * not worth the space here, where the user is reading the letter itself.
+   */
+  guardFindings = computed<AtsCheck[]>(() => {
+    const raw = this.activeDoc()?.structuredContent;
+    if (!raw) return [];
+    try {
+      const doc = JSON.parse(raw) as StructuredDocument;
+      return (doc.atsReport?.checks ?? []).filter(c => c.status === 'WARN' || c.status === 'FAIL');
+    } catch {
+      return [];   // a document saved before checks existed, or malformed JSON
+    }
   });
 
   /** Length guidance for the current format. */

@@ -1,6 +1,7 @@
 package com.autoapplicant.port.out.document;
 
 import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 
@@ -14,5 +15,6 @@ public interface BuildApplicationDocumentPort {
                                                 List<String> matchedKeywords,
                                                 List<String> missingKeywords,
                                                 boolean showProfileImage,
-                                                DocumentTheme theme);
+                                                DocumentTheme theme,
+                                                ContentGuardFindings guardFindings);
 }
