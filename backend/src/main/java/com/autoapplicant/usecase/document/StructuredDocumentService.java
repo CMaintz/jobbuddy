@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.PromptTemplate;
+import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.user.Profile;
@@ -42,6 +43,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final CareerProfileContextService careerProfileContext;
     private final CvDocumentAssembler cvAssembler;
     private final TailoredCvGenerator tailoredCvGenerator;
+    private final TailoredCvReviewer tailoredCvReviewer;
     private final AtsReportBuilder atsReportBuilder;
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
@@ -56,6 +58,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      CareerProfileContextService careerProfileContext,
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
+                                     TailoredCvReviewer tailoredCvReviewer,
                                      AtsReportBuilder atsReportBuilder,
                                      ApplicationRepositoryPort applicationRepo,
                                      GeneratedContentGuards contentGuards) {
@@ -69,6 +72,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.careerProfileContext = careerProfileContext;
         this.cvAssembler = cvAssembler;
         this.tailoredCvGenerator = tailoredCvGenerator;
+        this.tailoredCvReviewer = tailoredCvReviewer;
         this.atsReportBuilder = atsReportBuilder;
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
@@ -155,21 +159,22 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                                  String customInstructions, String targetLanguage,
                                                  String templateId) {
         return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage,
-                templateId, null, false, DocumentTheme.defaults());
+                templateId, null, false, DocumentTheme.defaults(), null);
     }
 
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
                                                  String templateId, boolean showProfileImage) {
         return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage,
-                templateId, null, showProfileImage, DocumentTheme.defaults());
+                templateId, null, showProfileImage, DocumentTheme.defaults(), null);
     }
 
     @Override
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
                                                  String templateId, UUID promptTemplateId,
-                                                 boolean showProfileImage, DocumentTheme theme) {
+                                                 boolean showProfileImage, DocumentTheme theme,
+                                                 String lengthPreference) {
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
         ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
         List<ProfileSocial> socials = socialRepo.findByUserId(userId);
@@ -178,10 +183,12 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
         String jobDescription = resolveJobDescription(jobId, rawJobDescription);
         PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
+        WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
                 source, jobDescription, customInstructions, targetLanguage, promptTemplate,
-                writingProfileRepo.findByUserId(userId).orElse(null),
-                applicationRepo.findRecentOutcomeLessons(userId, 5));
+                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
+        // Drafter→reviewer pass on the structured CV (config-gated); non-fatal on failure.
+        tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage);
         // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
         contentGuards.verify(userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,

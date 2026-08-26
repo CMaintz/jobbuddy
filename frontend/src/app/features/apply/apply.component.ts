@@ -319,6 +319,7 @@ export class ApplyComponent implements OnInit {
           targetLanguage: this.selectedLanguage() === 'Dansk' ? 'da' : 'en',
           promptTemplateId: this.selectedPromptId() ?? undefined,
           customInstructions: this.buildInstructions(),
+          lengthPreference: loadGenDefaults().length?.toUpperCase(),
         };
         return this.aiApi.generateDocument(req).pipe(map(() => app));
       }),
@@ -367,6 +368,7 @@ export class ApplyComponent implements OnInit {
 
     const lang = this.selectedLanguage() === 'Dansk' ? 'da' : 'en';
     const instructions = this.buildInstructions();
+    const length = loadGenDefaults().length?.toUpperCase();
     const coverType = this.mode() === 'unsolicited' ? 'UNSOLICITED_APPLICATION' : 'COVER_LETTER';
 
     this.resolveJob().pipe(
@@ -378,10 +380,12 @@ export class ApplyComponent implements OnInit {
           jobId: app.jobId, targetLanguage: lang,
           templateId: loadGenDefaults().cvTemplate || undefined,
           customInstructions: instructions || undefined,
+          lengthPreference: length,
         }),
         this.aiApi.generateDocument({
           jobId: app.jobId, documentType: coverType, targetLanguage: lang,
           customInstructions: instructions || undefined,
+          lengthPreference: length,
         }),
       ]).pipe(map(() => app))),
       tap(() => this.activeStep.set(3)),

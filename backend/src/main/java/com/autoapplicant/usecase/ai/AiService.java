@@ -158,8 +158,19 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         }
     }
 
-    /** Carrier for one reviewer pass: the revised draft plus what the reviewer changed/flagged. */
-    private record ReviewOutcome(String revised, List<String> critique) {}
+    /**
+     * Carrier for one reviewer pass: the revised draft, what the reviewer changed/flagged, and
+     * the keyword coverage recomputed against the REVISED text (so the ATS report the user sees
+     * describes what was actually delivered, not the pre-review draft). Coverage fields are null
+     * when the reviewer did not supply them.
+     */
+    private record ReviewOutcome(String revised, List<String> critique,
+                                 Integer keywordCoverage, List<String> matchedKeywords,
+                                 List<String> missingKeywords) {}
+
+    /** The reviewed body plus the coverage metadata that describes it (null coverage = unchanged). */
+    private record ReviewedBody(String body, Integer keywordCoverage,
+                                List<String> matchedKeywords, List<String> missingKeywords) {}
 
     /**
      * Drafter→reviewer pass: a fresh context critiques the draft against the posting and
@@ -198,8 +209,13 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 Return only valid JSON in exactly this shape:
                 {
                   "revisedContent": "<the full revised document text>",
-                  "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"]
-                }""");
+                  "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"],
+                  "keywordCoverage": <0-100 integer — recompute for the REVISED text against the posting>,
+                  "matchedKeywords": ["<posting keyword the revised text genuinely supports>"],
+                  "missingKeywords": ["<posting keyword still not covered>"]
+                }
+                Recompute the keyword fields for your revised text; never drop a keyword the draft
+                genuinely supports just to shorten it.""");
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
@@ -212,7 +228,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             }
             List<String> critique = new java.util.ArrayList<>();
             node.path("critique").forEach(c -> critique.add(c.asText()));
-            return new ReviewOutcome(revised, critique);
+            Integer coverage = node.has("keywordCoverage") && node.path("keywordCoverage").isNumber()
+                    ? node.path("keywordCoverage").asInt() : null;
+            return new ReviewOutcome(revised, critique, coverage,
+                    textList(node, "matchedKeywords"), textList(node, "missingKeywords"));
         } catch (Exception e) {
             throw new IllegalStateException("Document review failed: " + e.getMessage(), e);
         }
@@ -223,7 +242,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     public CompletableFuture<StructuredDocument> generateDocument(
             UUID userId, String documentType, UUID jobId, String rawJobDescription,
             String templateId, UUID promptTemplateId, String customInstructions,
-            String motivationText, String targetLanguage, boolean showProfileImage, DocumentTheme theme) {
+            String motivationText, String targetLanguage, boolean showProfileImage, DocumentTheme theme,
+            String lengthPreference) {
         try {
             Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
             String jobDescription = job != null && job.descriptionClean() != null
@@ -243,7 +263,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     customInstructions, motivationText, targetLanguage, styleTemplate,
                     writingProfileRepo.findByUserId(userId).orElse(null),
                     applicationRepo.findRecentOutcomeLessons(userId, 5),
-                    companyFacts);
+                    companyFacts, lengthPreference);
 
             String json = AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition)).trim());
@@ -256,16 +276,25 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             // body before assembly. Config-gated (each pass is one extra LLM call); stops
             // early once a pass reports no further critique. Keyword metadata from the
             // original pass is retained — the reviewer is instructed never to drop keywords.
-            String body = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
+            ReviewedBody reviewed = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
+            String body = reviewed.body();
 
             // Deterministic backstops (fact gate + retracted claims), shared with the CV path.
             contentGuards.verify(userId, body, contactFreeJson, documentType);
 
+            // Prefer the reviewer's recomputed coverage (it describes the delivered text); fall
+            // back to the drafter's metadata when the reviewer didn't revise or supply it.
+            Integer coverage = reviewed.keywordCoverage() != null
+                    ? reviewed.keywordCoverage() : aiResponse.keywordCoverage();
+            List<String> matched = reviewed.matchedKeywords() != null
+                    ? reviewed.matchedKeywords() : aiResponse.matchedKeywords();
+            List<String> missing = reviewed.missingKeywords() != null
+                    ? reviewed.missingKeywords() : aiResponse.missingKeywords();
+
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                     userId, type, body, templateId,
-                    aiResponse.keywordCoverage(), aiResponse.matchedKeywords(),
-                    aiResponse.missingKeywords(), showProfileImage, theme);
+                    coverage, matched, missing, showProfileImage, theme);
 
             return CompletableFuture.completedFuture(
                     persistGeneratedDocument.save(userId, jobId, doc, aiProvider.chatModelName()));
@@ -277,19 +306,28 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
     /**
      * Runs up to {@code autoReviewMaxIterations} reviewer passes on the draft body when
-     * auto-review is enabled, returning the improved text. A failed pass is non-fatal —
-     * it logs and returns the best draft so far, so generation never breaks on the reviewer.
+     * auto-review is enabled, returning the improved text together with the keyword coverage the
+     * last successful pass recomputed for it (so the ATS report matches the delivered text). A
+     * failed pass is non-fatal — it logs and returns the best draft so far, so generation never
+     * breaks on the reviewer.
      */
-    private String maybeReview(UUID userId, String documentType, String body,
-                               String jobDescription, String targetLanguage) {
-        if (!autoReviewEnabled) return body;
+    private ReviewedBody maybeReview(UUID userId, String documentType, String body,
+                                     String jobDescription, String targetLanguage) {
+        if (!autoReviewEnabled) return new ReviewedBody(body, null, null, null);
         String current = body;
+        Integer coverage = null;
+        List<String> matched = null;
+        List<String> missing = null;
         int passes = Math.max(1, autoReviewMaxIterations);
         for (int i = 1; i <= passes; i++) {
             try {
                 ReviewOutcome outcome = reviewContent(userId, documentType, current, jobDescription, targetLanguage);
                 if (outcome.revised() != null && !outcome.revised().isBlank()) {
                     current = outcome.revised();
+                    // Adopt the reviewer's recomputed coverage only when it also revised the body.
+                    if (outcome.keywordCoverage() != null) coverage = outcome.keywordCoverage();
+                    if (outcome.matchedKeywords() != null) matched = outcome.matchedKeywords();
+                    if (outcome.missingKeywords() != null) missing = outcome.missingKeywords();
                 }
                 log.info("Auto-review pass {}/{}: {} change(s) flagged", i, passes, outcome.critique().size());
                 if (outcome.critique().isEmpty()) break; // reviewer found nothing more to fix
@@ -298,7 +336,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 break;
             }
         }
-        return current;
+        return new ReviewedBody(current, coverage, matched, missing);
     }
 
     private static void validateApplicationResponse(ApplicationDocumentAiResponse response) {
@@ -318,6 +356,18 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
     private static String sanitizeAiText(String text) {
         return AiResponseParser.sanitize(text);
+    }
+
+    /** Reads a JSON string array into a list, or {@code null} when the field is absent/not an array. */
+    private static List<String> textList(com.fasterxml.jackson.databind.JsonNode node, String field) {
+        com.fasterxml.jackson.databind.JsonNode arr = node.get(field);
+        if (arr == null || !arr.isArray()) return null;
+        List<String> out = new java.util.ArrayList<>();
+        arr.forEach(n -> {
+            String v = n.asText(null);
+            if (v != null && !v.isBlank()) out.add(v.strip());
+        });
+        return out;
     }
 
     private static String buildAnalysisPrompt(String cvContent, String jobDescription) {

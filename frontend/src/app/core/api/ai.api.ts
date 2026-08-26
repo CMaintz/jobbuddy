@@ -14,6 +14,8 @@ export interface StructuredCvGenerateRequest {
   promptTemplateId?: string;
   showProfileImage?: boolean;
   theme?: DocumentTheme;
+  /** SHORT | STANDARD | DETAILED — controls the CV's page/bullet budget. */
+  lengthPreference?: string;
 }
 
 export interface GenerateDocumentRequest {
@@ -28,6 +30,8 @@ export interface GenerateDocumentRequest {
   targetLanguage?: string;
   showProfileImage?: boolean;
   theme?: DocumentTheme;
+  /** SHORT | STANDARD | DETAILED — controls the letter's word/paragraph target. */
+  lengthPreference?: string;
 }
 
 export interface RefineRequest {
