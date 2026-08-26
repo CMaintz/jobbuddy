@@ -13,14 +13,15 @@ import java.util.UUID;
  * letter; this is the missing half, which is knowing who to send it to.
  *
  * @param score   0–100, comparable only within one result set
- * @param reasons human-readable justification, so the ranking is arguable rather than magic
+ * @param reasons why it was picked, as translatable codes — so the ranking is arguable rather
+ *                than magic, and arguable in the reader's own language
  */
 public record OutreachTarget(
         UUID companyId,
         String companyName,
         String website,
         int score,
-        List<String> reasons,
+        List<OutreachReason> reasons,
         Instant lastPostedAt,
         List<String> matchedTechnologies,
         boolean hasOpenRole) {}

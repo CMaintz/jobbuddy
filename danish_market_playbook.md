@@ -75,6 +75,11 @@ above:
 A dimension that cannot be judged (an empty document) takes weight 0 rather than full marks, so an
 absent letter cannot score well for containing no mistakes.
 
+It also runs on real generations: `AiService` scores every prose letter it delivers and logs the
+total with its dimension breakdown, so a prompt change can be watched on live output. The word
+target comes from `PromptCompositionBuilder.letterWordTarget`, the same value the prompt asks for,
+so instruction and measurement cannot drift apart.
+
 `PromptEvalHarnessTest` runs it over fixtures in `backend/src/test/resources/prompt-eval/` — each a
 (profile, posting, good output, weak output) set. It asserts the composed prompt still carries the
 blocks that fixture needs, that a good output clears 80, and that good and weak stay at least 30
@@ -86,15 +91,16 @@ catch regressions, not to certify quality.
 
 ## Not yet done (ranked)
 
-1. **Score real generations, not just fixtures.** The evaluator is a Spring bean but nothing calls
-   it in the generation path. Logging the score per generation would turn it into a live metric.
-2. **Guard findings and ATS checks are English-only strings**, built server-side. A Danish user
-   reading a Danish letter gets English diagnostics.
-3. **Interests and references do not survive the resume-builder round-trip.** Both render in the
-   structured document and the ATS export, but `ResumeData` has no field for them, so opening a
-   tailored CV as an editable draft drops them.
-4. **Outreach targets are ranked but not tracked.** A saved target has no pipeline state of its
-   own until an application exists.
+1. **Outreach targets are ranked but not tracked.** A saved target has no pipeline state of its
+   own until an application exists, so there is no record of who you contacted unsolicited or when
+   to follow up — and following up is most of what makes unsolicited contact work.
+2. **The quality score is logged, not stored.** Comparing two prompt revisions on real output means
+   reading logs. Persisting the score per generated document would make the trend visible in-app.
+3. **Contact extraction is unverified against real postings.** The rules are strict and the
+   fixtures are synthetic; the failure mode to watch is a name lifted from page chrome or from a
+   different vacancy on the same page.
+4. **No frontend test runner.** `ng test` is declared but no runner is configured, so the mapper
+   and export logic are covered only by the production build.
 
 [ballisager]: https://ballisager.com/den-gode-ansoegning
 [jobmail-guide]: https://jobmail.dk/blog/ansogning-guide

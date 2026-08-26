@@ -17,13 +17,19 @@ export interface Company {
   isRecruitingAgency: boolean;
 }
 
+/** One ranking reason: a translation key under `companies.targets.reason.` plus its arguments. */
+export interface OutreachReason {
+  code: string;
+  args: Record<string, string>;
+}
+
 /** A company worth an unsolicited application, with the reasons it was ranked where it was. */
 export interface OutreachTarget {
   companyId: string;
   companyName: string;
   website: string | null;
   score: number;
-  reasons: string[];
+  reasons: OutreachReason[];
   lastPostedAt: string | null;
   matchedTechnologies: string[];
   hasOpenRole: boolean;
