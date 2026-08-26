@@ -29,6 +29,9 @@ public class CareerTargetEntity {
     @Column(name = "culture_requirements", columnDefinition = "text[]")
     private String[] cultureRequirements;
 
+    @Column(name = "career_stage")
+    private String careerStage;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
@@ -45,6 +48,8 @@ public class CareerTargetEntity {
     public void setNarrative(String narrative) { this.narrative = narrative; }
     public String[] getCultureRequirements() { return cultureRequirements; }
     public void setCultureRequirements(String[] cultureRequirements) { this.cultureRequirements = cultureRequirements; }
+    public String getCareerStage() { return careerStage; }
+    public void setCareerStage(String careerStage) { this.careerStage = careerStage; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

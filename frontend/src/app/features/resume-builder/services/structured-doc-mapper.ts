@@ -1,5 +1,30 @@
 import { StructuredDocument } from '../../../core/models/structured-document.model';
-import { ResumeData } from '../models/resume-builder.models';
+import {
+  ResumeData, ResumeSettings, SectionConfig, DEFAULT_LEFT_COLUMN,
+} from '../models/resume-builder.models';
+
+/** Section ids that live in the resume-builder's main (left) column. */
+const MAIN_SECTION_IDS = DEFAULT_LEFT_COLUMN.map(c => c.id);
+
+/**
+ * Derives the builder's default main-column order from the backend document's section order.
+ * The backend orders sections by the candidate's career stage (new grads lead with education +
+ * projects), so that stage-aware ordering becomes the initial layout — the user can still drag
+ * to reorder. Only the main column is derived; the sidebar keeps its default order.
+ */
+export function structuredDocToLayout(doc: StructuredDocument): Pick<ResumeSettings, 'leftColumn'> {
+  const docOrder = (doc.sections ?? []).map(s => (s.type === 'profile' ? 'summary' : s.type));
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+  for (const id of docOrder) {
+    if (MAIN_SECTION_IDS.includes(id) && !seen.has(id)) { ordered.push(id); seen.add(id); }
+  }
+  for (const c of DEFAULT_LEFT_COLUMN) if (!seen.has(c.id)) ordered.push(c.id);
+  const byId = new Map(DEFAULT_LEFT_COLUMN.map(c => [c.id, c]));
+  const leftColumn: SectionConfig[] = ordered.map(
+    id => byId.get(id) ?? { id, name: id, visible: true });
+  return { leftColumn };
+}
 
 /**
  * Maps an AI-generated structured CV onto the resume builder's data model so
@@ -54,9 +79,10 @@ export function structuredDocToResumeData(doc: StructuredDocument): ResumeData {
       skills:      item.skills ?? item.technologies ?? [],
     })),
     skills: (find('skills')?.items ?? []).map(item => ({
-      id:    crypto.randomUUID(),
-      name:  item.title ?? '',
-      level: 3,
+      id:       crypto.randomUUID(),
+      name:     item.title ?? '',
+      level:    3,
+      category: item.category,
     })),
     languages: (find('languages')?.items ?? []).map(item => ({
       id:          crypto.randomUUID(),

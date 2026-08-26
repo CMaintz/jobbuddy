@@ -2,12 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export type CareerStage =
+  | 'STUDENT' | 'NEW_GRAD' | 'EARLY_CAREER' | 'MID_CAREER' | 'SENIOR' | 'LEAD' | 'CAREER_CHANGER';
+
 export interface CareerTarget {
   userId?: string;
   targetArchetypes?: string[];
   northStar?: string;
   narrative?: string;
   cultureRequirements?: string[];
+  careerStage?: CareerStage;
   updatedAt?: string;
 }
 
