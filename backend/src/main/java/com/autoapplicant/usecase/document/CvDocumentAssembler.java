@@ -26,7 +26,8 @@ public class CvDocumentAssembler {
     public StructuredDocument assemble(User user, Profile profile, ProfilePrivateInfo privateInfo,
                                         List<ProfileSocial> socials, CareerProfileForAi source,
                                         TailoredCvContent tailored, String exportMode, String templateId,
-                                        boolean showProfileImage, DocumentTheme theme) {
+                                        boolean showProfileImage, DocumentTheme theme,
+                                        ContentGuardFindings guardFindings) {
         List<String> selectedSkills = tailored != null && tailored.selectedSkills() != null && !tailored.selectedSkills().isEmpty()
                 ? validateSkills(tailored.selectedSkills(), source)
                 : merge(source.skills(), source.technologies());
@@ -76,9 +77,10 @@ public class CvDocumentAssembler {
                             .toList()));
         }
 
+        ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
         AtsReport report = tailored != null
-                ? atsReportBuilder.forTailored(tailored, exportMode)
-                : atsReportBuilder.basic(null, exportMode);
+                ? atsReportBuilder.forTailored(tailored, exportMode, findings)
+                : atsReportBuilder.basic(null, exportMode, findings);
 
         return new StructuredDocument(
                 null,

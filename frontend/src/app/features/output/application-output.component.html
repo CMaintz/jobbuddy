@@ -261,6 +261,25 @@
         </div>
       }
 
+      <!-- Deterministic guard findings (unsupported metrics, filler phrases, retracted claims) -->
+      @if (guardFindings().length) {
+        <div class="p-4 border-b border-jb-border">
+          <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">{{ 'output.guardFindings' | translate }}</div>
+          <div class="flex flex-col gap-2">
+            @for (check of guardFindings(); track check.code) {
+              <div class="flex items-start gap-1.5 text-xs">
+                <jb-icon [name]="check.status === 'FAIL' ? 'x-circle' : 'lightbulb'" [size]="11"
+                  [style.color]="check.status === 'FAIL' ? 'var(--jb-danger)' : 'var(--jb-accent-2)'"
+                  class="mt-[1px] flex-shrink-0" />
+                <span class="leading-relaxed text-jb-text-mid">
+                  <span class="text-jb-text font-medium">{{ check.label }}:</span> {{ check.detail }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- JD keyword coverage -->
       @if (keywordStats(); as kw) {
         <div class="p-4 border-b border-jb-border">

@@ -25,6 +25,20 @@
           }
         </div>
       }
+      @if (ats.checks?.length) {
+        <div class="mt-2.5 pt-2.5 border-t border-jb-border flex flex-col gap-1.5">
+          @for (check of ats.checks; track check.code) {
+            <div class="flex items-start gap-1.5 text-xs">
+              <jb-icon [name]="check.status === 'PASS' ? 'check-circle' : (check.status === 'FAIL' ? 'x-circle' : 'lightbulb')"
+                [size]="11" class="mt-[1px] flex-shrink-0"
+                [style.color]="check.status === 'PASS' ? 'var(--jb-success)' : (check.status === 'FAIL' ? 'var(--jb-danger)' : 'var(--jb-accent-2)')" />
+              <span class="leading-relaxed text-jb-text-mid">
+                <span class="text-jb-text font-medium">{{ check.label }}:</span> {{ check.detail }}
+              </span>
+            </div>
+          }
+        </div>
+      }
     </div>
   }
 

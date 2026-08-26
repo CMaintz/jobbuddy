@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.ai;
 
 import com.autoapplicant.domain.ai.*;
 import com.autoapplicant.domain.document.*;
+import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.job.Job;
@@ -306,8 +307,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     targetLanguage, job != null ? job.country() : null);
             String body = reviewed.body();
 
-            // Deterministic backstops (fact gate + retracted claims), shared with the CV path.
-            contentGuards.verify(userId, body, contactFreeJson, documentType);
+            // Deterministic backstops (fact gate + retracted claims + filler), shared with the CV
+            // path. The findings ride along into the ATS report so the user sees them.
+            ContentGuardFindings guardFindings =
+                    contentGuards.verify(userId, body, contactFreeJson, documentType);
 
             // Prefer the reviewer's recomputed coverage (it describes the delivered text); fall
             // back to the drafter's metadata when the reviewer didn't revise or supply it.
@@ -321,7 +324,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                     userId, type, body, templateId,
-                    coverage, matched, missing, showProfileImage, theme);
+                    coverage, matched, missing, showProfileImage, theme, guardFindings);
 
             return CompletableFuture.completedFuture(
                     persistGeneratedDocument.save(userId, jobId, doc, aiProvider.chatModelName()));

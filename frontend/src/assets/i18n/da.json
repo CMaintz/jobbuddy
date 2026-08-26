@@ -543,6 +543,7 @@
     "refining": "Finpudser...",
     "refinementDiff": "Finpudsningsdiff",
     "accept": "Accepter",
+    "guardFindings": "Fund fra kontrol",
     "jdKeywords": "Opslagets nøgleord",
     "covered": "{{matched}}/{{total}} dækket",
     "notMentioned": "Ikke nævnt",

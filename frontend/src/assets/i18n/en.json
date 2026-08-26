@@ -543,6 +543,7 @@
     "refining": "Refining...",
     "refinementDiff": "Refinement diff",
     "accept": "Accept",
+    "guardFindings": "Guard findings",
     "jdKeywords": "JD keywords",
     "covered": "{{matched}}/{{total}} covered",
     "notMentioned": "Not mentioned",

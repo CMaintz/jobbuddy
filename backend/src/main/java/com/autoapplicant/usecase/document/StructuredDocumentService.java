@@ -95,7 +95,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, null,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme));
+                showProfileImage, resolveTheme(theme), ContentGuardFindings.NONE);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
@@ -112,7 +112,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId, boolean showProfileImage,
                                                        DocumentTheme theme) {
-        return buildApplicationDocument(userId, type, content, templateId, null, null, null, showProfileImage, theme);
+        return buildApplicationDocument(userId, type, content, templateId, null, null, null,
+                showProfileImage, theme, ContentGuardFindings.NONE);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
@@ -122,7 +123,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                                        List<String> missingKeywords,
                                                        boolean showProfileImage) {
         return buildApplicationDocument(userId, type, content, templateId, keywordCoverage, matchedKeywords,
-                missingKeywords, showProfileImage, DocumentTheme.defaults());
+                missingKeywords, showProfileImage, DocumentTheme.defaults(), ContentGuardFindings.NONE);
     }
 
     @Override
@@ -132,12 +133,14 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                                        List<String> matchedKeywords,
                                                        List<String> missingKeywords,
                                                        boolean showProfileImage,
-                                                       DocumentTheme theme) {
+                                                       DocumentTheme theme,
+                                                       ContentGuardFindings guardFindings) {
         String resolvedTemplate = resolveTemplate(templateId, "application-modern");
         String exportMode = exportModeFromTemplate(resolvedTemplate);
+        ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
         AtsReport atsReport = keywordCoverage != null && keywordCoverage > 0
-                ? atsReportBuilder.forCoverage(keywordCoverage, matchedKeywords, missingKeywords, exportMode)
-                : atsReportBuilder.basic(content, exportMode);
+                ? atsReportBuilder.forCoverage(keywordCoverage, matchedKeywords, missingKeywords, exportMode, findings)
+                : atsReportBuilder.basic(content, exportMode, findings);
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
         ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
         List<ProfileSocial> socials = socialRepo.findByUserId(userId);
@@ -195,10 +198,11 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage,
                 jobCountry);
         // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
-        contentGuards.verify(userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
+        ContentGuardFindings findings = contentGuards.verify(
+                userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme));
+                showProfileImage, resolveTheme(theme), findings);
     }
 
     /** Flattens the tailored CV's rewritten text so the guards can check it like a letter body. */
