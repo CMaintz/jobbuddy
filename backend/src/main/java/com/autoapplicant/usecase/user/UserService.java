@@ -69,6 +69,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                 merged(profile.skills(), existing, Profile::skills),
                 merged(profile.technologies(), existing, Profile::technologies),
                 merged(profile.languages(), existing, Profile::languages),
+                merged(profile.interests(), existing, Profile::interests),
                 merged(profile.desiredSalaryMin(), existing, Profile::desiredSalaryMin),
                 merged(profile.desiredSalaryMax(), existing, Profile::desiredSalaryMax),
                 merged(profile.desiredCurrency(), existing, Profile::desiredCurrency),

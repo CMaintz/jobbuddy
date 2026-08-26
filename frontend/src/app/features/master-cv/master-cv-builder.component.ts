@@ -92,6 +92,7 @@ export class MasterCvBuilderComponent implements OnInit {
 
   get skillsList(): string[] { return this.profile.skills ?? []; }
   get technologiesList(): string[] { return this.profile.technologies ?? []; }
+  get interestsList(): string[] { return this.profile.interests ?? []; }
 
   get coverage(): number {
     const checks = [
@@ -265,6 +266,11 @@ export class MasterCvBuilderComponent implements OnInit {
 
   onTechnologiesChange(value: string[]): void {
     this.profile.technologies = value;
+    this.markDirty();
+  }
+
+  onInterestsChange(value: string[]): void {
+    this.profile.interests = value;
     this.markDirty();
   }
 

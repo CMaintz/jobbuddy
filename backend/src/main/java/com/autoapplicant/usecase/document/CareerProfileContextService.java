@@ -93,6 +93,7 @@ public class CareerProfileContextService {
                 listOrEmpty(profile != null ? profile.technologies() : null),
                 listOrEmpty(profile != null ? profile.languages() : null),
                 spokenLanguages,
+                listOrEmpty(profile != null ? profile.interests() : null),
                 workExpRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 projectRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),

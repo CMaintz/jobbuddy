@@ -96,7 +96,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, null,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme), ContentGuardFindings.NONE);
+                showProfileImage, resolveTheme(theme), ContentGuardFindings.NONE, null);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
@@ -202,7 +202,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                 userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme), findings);
+                showProfileImage, resolveTheme(theme), findings,
+                JobLanguageDetector.resolve(targetLanguage, jobDescription));
     }
 
     /** Flattens the tailored CV's rewritten text so the guards can check it like a letter body. */

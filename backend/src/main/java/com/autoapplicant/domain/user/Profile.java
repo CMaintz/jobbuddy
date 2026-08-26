@@ -16,6 +16,8 @@ public record Profile(
         List<String> skills,
         List<String> technologies,
         List<String> languages,
+        /** Leisure interests — the closing section of a Danish CV. Empty when the user gave none. */
+        List<String> interests,
         Integer desiredSalaryMin,
         Integer desiredSalaryMax,
         String desiredCurrency,

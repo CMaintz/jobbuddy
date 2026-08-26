@@ -9,6 +9,8 @@ public record CareerProfileForAi(
         List<String> technologies,
         List<String> languages,
         List<String> spokenLanguages,
+        /** Leisure interests, rendered verbatim on the CV rather than tailored. */
+        List<String> interests,
         List<StructuredDocumentItem> experience,
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,
