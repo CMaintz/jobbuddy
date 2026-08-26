@@ -31,8 +31,10 @@ public class AtsReportBuilder {
     }
 
     public AtsReport basic(String content, String exportMode) {
+        // No keyword coverage to score against (e.g. a plain document): report a neutral
+        // "not measured" score rather than a reassuringly high one.
         int wordCount = content != null && !content.isBlank() ? content.trim().split("\\s+").length : 0;
-        int score = wordCount > 0 ? 72 : 80;
+        int score = wordCount > 0 ? 60 : 50;
         return new AtsReport(score, 0, List.of(), List.of(), checks(exportMode, List.of()));
     }
 
@@ -54,9 +56,15 @@ public class AtsReportBuilder {
         return result;
     }
 
+    /**
+     * Maps keyword coverage (0–100) to a diagnostic ATS score. The score tracks coverage closely
+     * so a weak match reads as weak — a small base (3) keeps a near-zero match from looking like a
+     * hard zero, and the ceiling (98) leaves headroom below "perfect". Previously this floored at
+     * 65, which made every document look reassuringly strong regardless of the actual match.
+     */
     static int scoreFromCoverage(Integer coverage) {
         int value = clamp(coverage);
-        return Math.min(96, 65 + Math.round(value * 0.31f));
+        return Math.min(98, 3 + Math.round(value * 0.95f));
     }
 
     static int clamp(Integer value) {
