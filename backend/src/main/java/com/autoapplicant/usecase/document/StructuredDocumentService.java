@@ -139,9 +139,13 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String resolvedTemplate = resolveTemplate(templateId, "application-modern");
         String exportMode = exportModeFromTemplate(resolvedTemplate);
         ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
+        // The letter knows its own language: detect it from the delivered body rather than
+        // threading yet another parameter through four overloads and the port.
+        String documentLanguage = JobLanguageDetector.detect(content);
         AtsReport atsReport = keywordCoverage != null && keywordCoverage > 0
-                ? atsReportBuilder.forCoverage(keywordCoverage, matchedKeywords, missingKeywords, exportMode, findings)
-                : atsReportBuilder.basic(content, exportMode, findings);
+                ? atsReportBuilder.forCoverage(keywordCoverage, matchedKeywords, missingKeywords,
+                        exportMode, findings, documentLanguage)
+                : atsReportBuilder.basic(content, exportMode, findings, documentLanguage);
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
         ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
         List<ProfileSocial> socials = socialRepo.findByUserId(userId);

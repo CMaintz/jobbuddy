@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.ai;
 
 import com.autoapplicant.domain.ai.*;
 import com.autoapplicant.domain.document.*;
+import com.autoapplicant.domain.document.QualityScore;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -25,6 +26,7 @@ import com.autoapplicant.usecase.document.JobLanguageDetector;
 import com.autoapplicant.usecase.document.MarketConventions;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
+import com.autoapplicant.usecase.eval.DocumentQualityEvaluator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +55,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
     private final ClicheGuard clicheGuard;
+    private final DocumentQualityEvaluator qualityEvaluator;
     private final CompanyGroundingService companyGrounding;
     private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
@@ -77,6 +80,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      ApplicationRepositoryPort applicationRepo,
                      GeneratedContentGuards contentGuards,
                      ClicheGuard clicheGuard,
+                     DocumentQualityEvaluator qualityEvaluator,
                      CompanyGroundingService companyGrounding,
                      AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
@@ -92,6 +96,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
         this.clicheGuard = clicheGuard;
+        this.qualityEvaluator = qualityEvaluator;
         this.companyGrounding = companyGrounding;
         this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
@@ -326,6 +331,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             List<String> missing = reviewed.missingKeywords() != null
                     ? reviewed.missingKeywords() : aiResponse.missingKeywords();
 
+            logQualityScore(documentType, body, contactFreeJson, job, lengthPreference);
+
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                     userId, type, body, templateId,
@@ -336,6 +343,34 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         } catch (Exception e) {
             log.error("Structured document generation failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /**
+     * Scores the delivered document and logs the result, so prompt changes are observable on real
+     * output rather than only on test fixtures. Deterministic and cheap — no model call — and
+     * never allowed to break generation: a scoring failure is a lost metric, not a lost document.
+     *
+     * <p>Only prose letters are scored; the short recruiter and follow-up messages carry their own
+     * word caps and would be measured against the wrong target.
+     */
+    private void logQualityScore(String documentType, String body, String profileJson,
+                                 Job job, String lengthPreference) {
+        if (!PromptCompositionBuilder.isProseLetter(documentType)) return;
+        try {
+            List<String> keywords = new java.util.ArrayList<>();
+            if (job != null) {
+                if (job.technologies() != null) keywords.addAll(job.technologies());
+                if (job.skills() != null) keywords.addAll(job.skills());
+            }
+            QualityScore score = qualityEvaluator.evaluate(body, profileJson, keywords,
+                    PromptCompositionBuilder.letterWordTarget(lengthPreference));
+            log.info("Quality score for {}: {} [{}]", documentType, score.total(),
+                    score.dimensions().stream()
+                            .map(d -> d.code() + "=" + d.score())
+                            .collect(java.util.stream.Collectors.joining(" ")));
+        } catch (Exception e) {
+            log.debug("Quality scoring failed (non-fatal): {}", e.getMessage());
         }
     }
 

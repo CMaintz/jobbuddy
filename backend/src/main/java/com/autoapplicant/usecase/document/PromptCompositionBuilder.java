@@ -125,9 +125,7 @@ public class PromptCompositionBuilder {
 
         // Structural scaffolding for prose letters (not the short recruiter/follow-up messages,
         // which carry their own word caps in docLabel).
-        String type = documentType != null ? documentType.toUpperCase() : "";
-        boolean isLetter = type.equals("COVER_LETTER") || type.equals("APPLICATION_TEXT")
-                || type.equals("UNSOLICITED_APPLICATION");
+        boolean isLetter = isProseLetter(documentType);
         String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
         String marketRules = MarketConventions.letterRules(market);
@@ -271,12 +269,39 @@ public class PromptCompositionBuilder {
             Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.
             If — and only if — the profile carries an "availability" value, state it as one short             factual clause near the close (employers routinely ask, and a candidate who volunteers             it reads as someone who has thought the move through). Never invent a notice period or             start date the profile does not state.""";
 
+    /**
+     * The document types that get prose-letter treatment (structure, length target, market
+     * conventions) — as opposed to the short recruiter and follow-up messages, which carry their
+     * own word caps. Public so the quality evaluator scores exactly the documents this shapes.
+     */
+    public static boolean isProseLetter(String documentType) {
+        String type = documentType != null ? documentType.toUpperCase() : "";
+        return type.equals("COVER_LETTER") || type.equals("APPLICATION_TEXT")
+                || type.equals("UNSOLICITED_APPLICATION");
+    }
+
+    /**
+     * The word target for a prose letter. Single source of truth: the prompt asks for this number
+     * and the evaluator scores against it, so instruction and measurement cannot drift apart.
+     */
+    public static int letterWordTarget(String lengthPreference) {
+        return switch (normalizeLength(lengthPreference)) {
+            case "SHORT" -> 200;
+            case "DETAILED" -> 380;
+            default -> 300;
+        };
+    }
+
     /** Word/paragraph target for prose letters, by the user's length preference. */
     private static String letterLengthGuidance(String pref) {
+        int target = letterWordTarget(pref);
         return switch (normalizeLength(pref)) {
-            case "SHORT" -> "Keep it tight — about 200 words across 3 short paragraphs. One page maximum.";
-            case "DETAILED" -> "You may go fuller — about 380 words across 4 paragraphs — but never exceed one page.";
-            default -> "Aim for about 300 words across 3–4 short paragraphs. One page maximum.";
+            case "SHORT" -> "Keep it tight — about " + target
+                    + " words across 3 short paragraphs. One page maximum.";
+            case "DETAILED" -> "You may go fuller — about " + target
+                    + " words across 4 paragraphs — but never exceed one page.";
+            default -> "Aim for about " + target
+                    + " words across 3–4 short paragraphs. One page maximum.";
         };
     }
 

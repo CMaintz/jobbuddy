@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.company;
 
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanyHiringSignal;
+import com.autoapplicant.domain.company.OutreachReason;
 import com.autoapplicant.domain.company.OutreachTarget;
 import com.autoapplicant.domain.user.CareerTarget;
 import com.autoapplicant.domain.user.Profile;
@@ -31,7 +32,8 @@ import java.util.UUID;
  * discovery here is not a niche feature, it addresses the larger half of the market.
  *
  * <p>The ranking is deterministic and explainable: every target carries the reasons it was picked,
- * because a recommendation the user cannot argue with is one they cannot trust. No AI call.
+ * because a recommendation the user cannot argue with is one they cannot trust. Reasons are
+ * emitted as translatable codes, not English prose. No AI call.
  *
  * <p>The central inversion: a company with a matching role open right now is a WORSE unsolicited
  * target, not a better one — the right move there is to apply to the posting. What you want is a
@@ -94,40 +96,43 @@ public class OutreachTargetService implements FindOutreachTargetsUseCase {
 
     private OutreachTarget score(CompanyHiringSignal signal, Company company, List<String> matched,
                                  boolean hasOpenRole, Instant now) {
-        List<String> reasons = new ArrayList<>();
+        List<OutreachReason> reasons = new ArrayList<>();
         int score = Math.min(60, matched.size() * 15);
-        reasons.add("Hires for " + String.join(", ", matched.stream().limit(4).toList())
-                + (matched.size() > 4 ? " and " + (matched.size() - 4) + " more of your skills" : ""));
+        String named = String.join(", ", matched.stream().limit(4).toList());
+        reasons.add(matched.size() > 4
+                ? new OutreachReason("skillOverlapMore",
+                        java.util.Map.of("skills", named, "count", String.valueOf(matched.size() - 4)))
+                : OutreachReason.of("skillOverlap", "skills", named));
 
         Instant lastPosted = signal.lastPostedAt();
         if (lastPosted != null && lastPosted.isAfter(now.minus(RECENT))) {
             score += 15;
-            reasons.add("Hiring activity in the last three months");
+            reasons.add(OutreachReason.of("hiringRecent"));
         } else if (lastPosted != null && lastPosted.isAfter(now.minus(SEMI_RECENT))) {
             score += 8;
-            reasons.add("Hiring activity in the last six months");
+            reasons.add(OutreachReason.of("hiringSemiRecent"));
         }
 
         if (signal.postingCount() >= 3) {
             score += 15;
-            reasons.add("Posted " + signal.postingCount() + " roles in the past year — a repeat hirer");
+            reasons.add(OutreachReason.of("repeatHirer", "count", signal.postingCount()));
         } else if (signal.postingCount() == 2) {
             score += 8;
-            reasons.add("Posted twice in the past year");
+            reasons.add(OutreachReason.of("postedTwice"));
         }
 
         if (!hasOpenRole) {
             score += 10;
-            reasons.add("Nothing open right now — the window an unsolicited application is for");
+            reasons.add(OutreachReason.of("nothingOpen"));
         } else {
-            reasons.add("Has " + signal.activeCount() + " role(s) open now: apply to those first");
+            reasons.add(OutreachReason.of("hasOpenRoles", "count", signal.activeCount()));
         }
 
         // Consultancies hire constantly and place people on client projects; a real signal, but a
         // weaker one than an employer hiring for itself.
         if (company != null && company.isConsulting()) {
             score -= 20;
-            reasons.add("Consultancy — placement rather than in-house work");
+            reasons.add(OutreachReason.of("consultancy"));
         }
 
         return new OutreachTarget(

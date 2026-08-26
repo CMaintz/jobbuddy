@@ -13,49 +13,50 @@ import java.util.List;
 public class AtsReportBuilder {
 
     public AtsReport forTailored(TailoredCvContent tailored, String exportMode,
-                                 ContentGuardFindings findings) {
+                                 ContentGuardFindings findings, String documentLanguage) {
         return new AtsReport(
                 scoreFromCoverage(tailored.keywordCoverage()),
                 clamp(tailored.keywordCoverage()),
                 listOrEmpty(tailored.matchedKeywords()),
                 listOrEmpty(tailored.missingKeywords()),
-                checks(exportMode, tailored.notes(), findings));
+                checks(exportMode, tailored.notes(), findings, documentLanguage));
     }
 
     public AtsReport forCoverage(Integer keywordCoverage, List<String> matchedKeywords,
                                   List<String> missingKeywords, String exportMode,
-                                  ContentGuardFindings findings) {
+                                  ContentGuardFindings findings, String documentLanguage) {
         return new AtsReport(
                 scoreFromCoverage(keywordCoverage),
                 clamp(keywordCoverage),
                 listOrEmpty(matchedKeywords),
                 listOrEmpty(missingKeywords),
-                checks(exportMode, List.of(), findings));
+                checks(exportMode, List.of(), findings, documentLanguage));
     }
 
-    public AtsReport basic(String content, String exportMode, ContentGuardFindings findings) {
+    public AtsReport basic(String content, String exportMode, ContentGuardFindings findings,
+                           String documentLanguage) {
         // No keyword coverage to score against (e.g. a plain document): report a neutral
         // "not measured" score rather than a reassuringly high one.
         int wordCount = content != null && !content.isBlank() ? content.trim().split("\\s+").length : 0;
         int score = wordCount > 0 ? 60 : 50;
-        return new AtsReport(score, 0, List.of(), List.of(), checks(exportMode, List.of(), findings));
+        return new AtsReport(score, 0, List.of(), List.of(),
+                checks(exportMode, List.of(), findings, documentLanguage));
     }
 
-    public List<AtsCheck> checks(String exportMode, List<String> notes, ContentGuardFindings findings) {
+    public List<AtsCheck> checks(String exportMode, List<String> notes, ContentGuardFindings findings,
+                                 String documentLanguage) {
+        AtsCheckMessages msg = AtsCheckMessages.forLanguage(documentLanguage);
         List<AtsCheck> result = new ArrayList<>();
-        result.add(new AtsCheck("real_text", "Real text rendering", "PASS",
-                "Rendered as selectable text rather than an image."));
-        result.add(new AtsCheck("standard_sections", "Standard CV headings", "PASS",
-                "Uses predictable section headings for CV parsing."));
-        result.add(new AtsCheck("contact_privacy", "Contact privacy", "PASS",
-                "Name and contact details are inserted after AI tailoring."));
+        result.add(new AtsCheck("real_text", msg.realTextLabel(), "PASS", msg.realTextDetail()));
+        result.add(new AtsCheck("standard_sections", msg.headingsLabel(), "PASS", msg.headingsDetail()));
+        result.add(new AtsCheck("contact_privacy", msg.privacyLabel(), "PASS", msg.privacyDetail()));
         if ("DESIGNED".equalsIgnoreCase(exportMode)) {
-            result.add(new AtsCheck("layout_complexity", "Designed layout", "WARN",
-                    "Designed templates may parse less reliably than ATS mode."));
+            result.add(new AtsCheck("layout_complexity", msg.designedLabel(), "WARN", msg.designedDetail()));
         }
-        result.addAll(guardChecks(findings != null ? findings : ContentGuardFindings.NONE));
+        result.addAll(guardChecks(findings != null ? findings : ContentGuardFindings.NONE, msg));
         for (String note : listOrEmpty(notes)) {
-            result.add(new AtsCheck("ai_note", "Tailoring note", "INFO", note));
+            // The note itself comes from the model, already in the document's language.
+            result.add(new AtsCheck("ai_note", msg.noteLabel(), "INFO", note));
         }
         return result;
     }
@@ -66,32 +67,21 @@ public class AtsReportBuilder {
      * retracted claims only appear when violated, since most users have none and a permanent PASS
      * for a feature they never used is noise.
      */
-    private static List<AtsCheck> guardChecks(ContentGuardFindings findings) {
+    private static List<AtsCheck> guardChecks(ContentGuardFindings findings, AtsCheckMessages msg) {
         List<AtsCheck> result = new ArrayList<>();
         result.add(findings.unsupportedMetrics().isEmpty()
-                ? new AtsCheck("fact_guard", "Metric claims", "PASS",
-                        "Every number in the document traces back to your profile.")
-                : new AtsCheck("fact_guard", "Metric claims", "FAIL",
-                        "Not supported by your profile: " + join(findings.unsupportedMetrics())
-                        + ". Correct or remove before sending — you would have to defend these in an interview."));
+                ? new AtsCheck("fact_guard", msg.metricsLabel(), "PASS", msg.metricsPass())
+                : new AtsCheck("fact_guard", msg.metricsLabel(), "FAIL",
+                        msg.metricsFail(findings.unsupportedMetrics())));
         result.add(findings.fillerPhrases().isEmpty()
-                ? new AtsCheck("filler_phrases", "Filler phrases", "PASS",
-                        "No known application clichés or AI-tell phrasing.")
-                : new AtsCheck("filler_phrases", "Filler phrases", "WARN",
-                        "Reads as boilerplate: " + join(findings.fillerPhrases())
-                        + ". Replace with something concrete to this role."));
+                ? new AtsCheck("filler_phrases", msg.fillerLabel(), "PASS", msg.fillerPass())
+                : new AtsCheck("filler_phrases", msg.fillerLabel(), "WARN",
+                        msg.fillerWarn(findings.fillerPhrases())));
         if (!findings.retractedClaims().isEmpty()) {
-            result.add(new AtsCheck("retracted_claims", "Retracted claims", "FAIL",
-                    "Claims you previously disowned reappeared: " + join(findings.retractedClaims()) + "."));
+            result.add(new AtsCheck("retracted_claims", msg.retractedLabel(), "FAIL",
+                    msg.retractedFail(findings.retractedClaims())));
         }
         return result;
-    }
-
-    /** Quotes and joins findings for display; caps the list so one bad generation can't flood the panel. */
-    private static String join(List<String> values) {
-        String joined = values.stream().limit(5).map(v -> "\"" + v + "\"")
-                .collect(java.util.stream.Collectors.joining(", "));
-        return values.size() > 5 ? joined + " (+" + (values.size() - 5) + " more)" : joined;
     }
 
     /**

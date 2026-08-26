@@ -144,6 +144,31 @@ class PromptEvalHarnessTest {
     }
 
     @Test
+    void theHarnessScoresAgainstTheSameTargetThePromptAsksFor() {
+        // The prompt's word target and the evaluator's are one value; if they ever drift, a letter
+        // could follow its instructions exactly and still be marked down for length.
+        assertThat(PromptCompositionBuilder.letterWordTarget("SHORT")).isEqualTo(200);
+        assertThat(PromptCompositionBuilder.letterWordTarget("STANDARD")).isEqualTo(300);
+        assertThat(PromptCompositionBuilder.letterWordTarget("DETAILED")).isEqualTo(380);
+        assertThat(PromptCompositionBuilder.letterWordTarget(null)).isEqualTo(300);
+
+        PromptComposition c = promptBuilder.composeStructuredApplicationPrompt(
+                "COVER_LETTER", "{}", PostingContext.ofDescription("posting text"), null, null,
+                null, null, null, List.of(), null, "SHORT");
+        assertThat(c.userPromptTemplate()).contains("about 200 words");
+    }
+
+    @Test
+    void onlyProseLettersAreScored() {
+        // Recruiter and follow-up messages carry their own word caps; scoring them against the
+        // letter target would measure the wrong thing.
+        assertThat(PromptCompositionBuilder.isProseLetter("COVER_LETTER")).isTrue();
+        assertThat(PromptCompositionBuilder.isProseLetter("UNSOLICITED_APPLICATION")).isTrue();
+        assertThat(PromptCompositionBuilder.isProseLetter("RECRUITER_MESSAGE")).isFalse();
+        assertThat(PromptCompositionBuilder.isProseLetter(null)).isFalse();
+    }
+
+    @Test
     void anEmptyDocumentScoresBadlyRatherThanThrowing() {
         QualityScore score = evaluator.evaluate("", "{}", List.of("Java"), 300);
         assertThat(score.total()).isLessThan(WEAK_CEILING);

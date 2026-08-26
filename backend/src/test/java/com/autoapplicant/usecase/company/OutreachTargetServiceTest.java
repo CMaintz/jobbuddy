@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.company;
 
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanyHiringSignal;
+import com.autoapplicant.domain.company.OutreachReason;
 import com.autoapplicant.domain.company.OutreachTarget;
 import com.autoapplicant.domain.user.Profile;
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,7 @@ class OutreachTargetServiceTest {
         List<OutreachTarget> included = service.findOutreachTargets(USER, 10, true);
         assertThat(included).hasSize(1);
         assertThat(included.getFirst().hasOpenRole()).isTrue();
-        assertThat(included.getFirst().reasons()).anyMatch(r -> r.contains("apply to those first"));
+        assertThat(included.getFirst().reasons()).extracting(OutreachReason::code).contains("hasOpenRoles");
     }
 
     @Test
@@ -135,9 +136,11 @@ class OutreachTargetServiceTest {
         profileWith("Java");
         signals(signal("Explainable A/S", 3, 0, daysAgo(10), "Java"));
         OutreachTarget target = service.findOutreachTargets(USER, 10, false).getFirst();
-        assertThat(target.reasons()).isNotEmpty()
-                .anyMatch(r -> r.contains("Java"))
-                .anyMatch(r -> r.contains("Nothing open right now"));
+        // Reasons are translatable codes plus arguments, never prose baked in one language.
+        assertThat(target.reasons()).extracting(OutreachReason::code)
+                .contains("skillOverlap", "nothingOpen");
+        assertThat(target.reasons()).filteredOn(r -> r.code().equals("skillOverlap"))
+                .singleElement().extracting(r -> r.args().get("skills")).isEqualTo("Java");
         assertThat(target.score()).isBetween(1, 100);
     }
 

@@ -46,10 +46,10 @@
                   <span class="mono text-sm" [style.color]="t.score >= 70 ? 'var(--jb-success)' : 'var(--jb-text-dim)'">{{ t.score }}</span>
                 </div>
                 <div class="flex flex-col gap-1 mt-2 ml-[44px]">
-                  @for (reason of t.reasons; track reason) {
+                  @for (reason of t.reasons; track reason.code) {
                     <div class="flex items-start gap-1.5 text-xs text-jb-text-mid">
                       <jb-icon name="check-circle" [size]="10" class="text-jb-accent mt-[2px] flex-shrink-0" />
-                      <span class="leading-relaxed">{{ reason }}</span>
+                      <span class="leading-relaxed">{{ ('companies.targets.reason.' + reason.code) | translate:reason.args }}</span>
                     </div>
                   }
                 </div>

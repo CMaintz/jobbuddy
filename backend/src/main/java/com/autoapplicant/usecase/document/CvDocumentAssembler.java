@@ -96,8 +96,8 @@ public class CvDocumentAssembler {
 
         ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
         AtsReport report = tailored != null
-                ? atsReportBuilder.forTailored(tailored, exportMode, findings)
-                : atsReportBuilder.basic(null, exportMode, findings);
+                ? atsReportBuilder.forTailored(tailored, exportMode, findings, documentLanguage)
+                : atsReportBuilder.basic(null, exportMode, findings, documentLanguage);
 
         return new StructuredDocument(
                 null,
