@@ -19,6 +19,9 @@ import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.ClicheGuard;
+import com.autoapplicant.usecase.document.JobLanguageDetector;
+import com.autoapplicant.usecase.document.MarketConventions;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +51,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
+    private final ClicheGuard clicheGuard;
     private final CompanyGroundingService companyGrounding;
     private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
@@ -71,6 +75,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                      PersistGeneratedDocumentPort persistGeneratedDocument,
                      ApplicationRepositoryPort applicationRepo,
                      GeneratedContentGuards contentGuards,
+                     ClicheGuard clicheGuard,
                      CompanyGroundingService companyGrounding,
                      AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
@@ -85,6 +90,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         this.persistGeneratedDocument = persistGeneratedDocument;
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
+        this.clicheGuard = clicheGuard;
         this.companyGrounding = companyGrounding;
         this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
@@ -149,7 +155,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     public CompletableFuture<ReviewDocumentResult> review(ReviewDocumentRequest request) {
         try {
             ReviewOutcome outcome = reviewContent(request.userId(), request.documentType(),
-                    request.currentContent(), request.jobDescription(), request.targetLanguage());
+                    request.currentContent(), request.jobDescription(), request.targetLanguage(), null);
             return CompletableFuture.completedFuture(
                     new ReviewDocumentResult(outcome.revised(), outcome.critique(), aiProvider.chatModelName()));
         } catch (Exception e) {
@@ -179,8 +185,16 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
      * The reviewer prompt lives server-side on purpose — it is not user-editable.
      */
     private ReviewOutcome reviewContent(UUID userId, String documentType, String currentContent,
-                                        String jobDescription, String targetLanguage) {
+                                        String jobDescription, String targetLanguage, String jobCountry) {
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
+        // Resolve language and market exactly as the drafting prompt did, so a review pass can
+        // neither switch language nor lose the market conventions the draft was written to.
+        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
+        String marketRules = MarketConventions.letterRules(
+                MarketConventions.resolve(resolvedLanguage, jobCountry));
+        // Deterministic filler findings are handed to the reviewer as concrete work: it is far
+        // better at removing a phrase it has been shown than at avoiding one in the abstract.
+        List<String> flaggedPhrases = clicheGuard.audit(currentContent).phrases();
 
         StringBuilder systemPrompt = new StringBuilder("""
                 You are a demanding hiring manager reviewing a candidate's application document \
@@ -191,8 +205,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 the draft does not already claim, and never claim the candidate built a tool they \
                 merely used. Respond with ONLY valid JSON.""");
         systemPrompt.append("\n\n").append(PromptCompositionBuilder.UNTRUSTED_JOB_INPUT);
-        if (targetLanguage != null && !targetLanguage.isBlank()) {
-            systemPrompt.append(" Write the revised document in ").append(targetLanguage).append(".");
+        if (resolvedLanguage != null) {
+            systemPrompt.append(" Write the revised document in ").append(resolvedLanguage).append(".");
         }
 
         StringBuilder userPrompt = new StringBuilder();
@@ -205,6 +219,18 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         if (!styleMemory.isBlank()) {
             userPrompt.append(styleMemory).append("\n\n");
         }
+        if (!marketRules.isBlank()) {
+            userPrompt.append(marketRules).append("\n\n");
+        }
+        if (!flaggedPhrases.isEmpty()) {
+            userPrompt.append("## Flagged Filler Phrases\n")
+                    .append("A deterministic check found these phrases in the draft. Rewrite every one "
+                            + "of them into something concrete and specific to this candidate and "
+                            + "posting — do not simply delete the sentence if it carried a real point:\n");
+            flaggedPhrases.forEach(phrase -> userPrompt.append("- \"").append(phrase).append("\"\n"));
+            userPrompt.append('\n');
+        }
+        userPrompt.append(ClicheGuard.promptBlock(resolvedLanguage)).append("\n\n");
         userPrompt.append("""
                 Return only valid JSON in exactly this shape:
                 {
@@ -263,7 +289,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     customInstructions, motivationText, targetLanguage, styleTemplate,
                     writingProfileRepo.findByUserId(userId).orElse(null),
                     applicationRepo.findRecentOutcomeLessons(userId, 5),
-                    companyFacts, lengthPreference);
+                    companyFacts, lengthPreference, job != null ? job.country() : null);
 
             String json = AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition)).trim());
@@ -276,7 +302,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             // body before assembly. Config-gated (each pass is one extra LLM call); stops
             // early once a pass reports no further critique. Keyword metadata from the
             // original pass is retained — the reviewer is instructed never to drop keywords.
-            ReviewedBody reviewed = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
+            ReviewedBody reviewed = maybeReview(userId, documentType, aiResponse.body(), jobDescription,
+                    targetLanguage, job != null ? job.country() : null);
             String body = reviewed.body();
 
             // Deterministic backstops (fact gate + retracted claims), shared with the CV path.
@@ -312,7 +339,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
      * breaks on the reviewer.
      */
     private ReviewedBody maybeReview(UUID userId, String documentType, String body,
-                                     String jobDescription, String targetLanguage) {
+                                     String jobDescription, String targetLanguage, String jobCountry) {
         if (!autoReviewEnabled) return new ReviewedBody(body, null, null, null);
         String current = body;
         Integer coverage = null;
@@ -321,7 +348,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         int passes = Math.max(1, autoReviewMaxIterations);
         for (int i = 1; i <= passes; i++) {
             try {
-                ReviewOutcome outcome = reviewContent(userId, documentType, current, jobDescription, targetLanguage);
+                ReviewOutcome outcome = reviewContent(userId, documentType, current, jobDescription,
+                        targetLanguage, jobCountry);
                 if (outcome.revised() != null && !outcome.revised().isBlank()) {
                     current = outcome.revised();
                     // Adopt the reviewer's recomputed coverage only when it also revised the body.

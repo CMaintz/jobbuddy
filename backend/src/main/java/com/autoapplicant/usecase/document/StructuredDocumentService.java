@@ -24,7 +24,6 @@ import com.autoapplicant.port.out.user.UserRepositoryPort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -181,14 +180,20 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         User user = userRepo.findById(userId).orElse(null);
         CareerProfileForAi source = careerProfileContext.build(userId);
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
-        String jobDescription = resolveJobDescription(jobId, rawJobDescription);
+        // One lookup: the posting supplies both the description and the country whose hiring
+        // conventions the prompts should follow.
+        Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+        String jobDescription = job != null ? job.descriptionClean() : rawJobDescription;
+        String jobCountry = job != null ? job.country() : null;
         PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
                 source, jobDescription, customInstructions, targetLanguage, promptTemplate,
-                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
+                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference,
+                jobCountry);
         // Drafter→reviewer pass on the structured CV (config-gated); non-fatal on failure.
-        tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage);
+        tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage,
+                jobCountry);
         // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
         contentGuards.verify(userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
@@ -226,16 +231,6 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                 : promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
         if (resolved != null) promptTemplateRepo.incrementUsage(resolved.id());
         return resolved;
-    }
-
-    private String resolveJobDescription(UUID jobId, String rawJobDescription) {
-        if (jobId != null) {
-            Optional<Job> job = jobRepo.findById(jobId);
-            if (job.isPresent()) {
-                return job.get().descriptionClean();
-            }
-        }
-        return rawJobDescription;
     }
 
     private static String resolveTemplate(String templateId, String defaultTemplate) {
