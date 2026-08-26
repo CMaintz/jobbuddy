@@ -6,6 +6,7 @@ import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
 import com.autoapplicant.port.out.user.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,7 @@ public class CareerProfileContextService {
     private final SpokenLanguageRepositoryPort languageRepo;
     private final ProfileStrengthRepositoryPort strengthRepo;
     private final CareerTargetRepositoryPort careerTargetRepo;
+    private final InterviewStoryRepositoryPort storyRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -40,6 +42,7 @@ public class CareerProfileContextService {
                                        SpokenLanguageRepositoryPort languageRepo,
                                        ProfileStrengthRepositoryPort strengthRepo,
                                        CareerTargetRepositoryPort careerTargetRepo,
+                                       InterviewStoryRepositoryPort storyRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;
@@ -50,6 +53,7 @@ public class CareerProfileContextService {
         this.languageRepo = languageRepo;
         this.strengthRepo = strengthRepo;
         this.careerTargetRepo = careerTargetRepo;
+        this.storyRepo = storyRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -99,6 +103,7 @@ public class CareerProfileContextService {
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 certRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 strengths,
+                proofPoints(userId),
                 target != null ? listOrEmpty(target.targetArchetypes()) : List.of(),
                 target != null ? target.northStar() : null,
                 target != null ? target.narrative() : null,
@@ -106,6 +111,31 @@ public class CareerProfileContextService {
                 skillCategories,
                 formatAvailability(target)
         );
+    }
+
+    /**
+     * The story bank rendered as proof points: "Kubernetes — moved 30 services onto it. Deploys
+     * went from 40 minutes to 9."
+     *
+     * <p>This is the payoff of evidence elicitation. Until the stories reach the prompt, recording
+     * them changes nothing about what gets written — and the evaluator's evidence dimension only
+     * counts terms that are in the profile, so an uncited story cannot even be measured.
+     */
+    private List<String> proofPoints(UUID userId) {
+        return storyRepo.findByUserId(userId).stream()
+                .map(CareerProfileContextService::renderStory)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private static String renderStory(com.autoapplicant.domain.user.InterviewStory story) {
+        List<String> parts = new ArrayList<>();
+        if (story.situation() != null && !story.situation().isBlank()) parts.add(story.situation().strip());
+        if (story.action() != null && !story.action().isBlank()) parts.add(story.action().strip());
+        if (story.result() != null && !story.result().isBlank()) parts.add(story.result().strip());
+        if (parts.isEmpty()) return null;
+        String label = story.title() != null && !story.title().isBlank() ? story.title().strip() : null;
+        return label != null ? label + " — " + String.join(". ", parts) : String.join(". ", parts);
     }
 
     /**

@@ -1,16 +1,19 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.adapter.web.dto.user.DraftEvidenceRequest;
 import com.autoapplicant.adapter.web.dto.user.RecordEvidenceRequest;
 import com.autoapplicant.adapter.web.dto.user.SkillConfirmationRequest;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.InterviewStory;
+import com.autoapplicant.domain.skill.EvidenceDraft;
 import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.SkillCandidate;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.in.skills.GetSkillGapUseCase;
 import com.autoapplicant.port.in.skills.GetSkillTaxonomyUseCase;
 import com.autoapplicant.port.in.skills.ManageProfileSkillsUseCase;
+import com.autoapplicant.port.in.skills.ElicitEvidenceUseCase;
 import com.autoapplicant.port.in.skills.GetEvidenceGapsUseCase;
 import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,17 +35,20 @@ public class SkillController {
     private final GetSkillGapUseCase skillGap;
     private final SuggestSkillCandidatesUseCase skillCandidates;
     private final GetEvidenceGapsUseCase evidenceGaps;
+    private final ElicitEvidenceUseCase elicitEvidence;
     private final SecurityContextHelper secCtx;
 
     public SkillController(GetSkillTaxonomyUseCase taxonomy, ManageProfileSkillsUseCase profileSkills,
                            GetSkillGapUseCase skillGap, SuggestSkillCandidatesUseCase skillCandidates,
                            GetEvidenceGapsUseCase evidenceGaps,
+                           ElicitEvidenceUseCase elicitEvidence,
                            SecurityContextHelper secCtx) {
         this.taxonomy = taxonomy;
         this.profileSkills = profileSkills;
         this.skillGap = skillGap;
         this.skillCandidates = skillCandidates;
         this.evidenceGaps = evidenceGaps;
+        this.elicitEvidence = elicitEvidence;
         this.secCtx = secCtx;
     }
 
@@ -53,6 +59,26 @@ public class SkillController {
     @GetMapping("/api/v1/skills/evidence-gaps")
     public ResponseEntity<List<EvidenceGap>> evidenceGaps(@RequestParam(defaultValue = "5") int limit) {
         return ResponseEntity.ok(evidenceGaps.evidenceGaps(secCtx.getCurrentUserId(), limit));
+    }
+
+    @Operation(summary = "Evidence gaps with questions tailored to this profile",
+            description = "One model call for the batch. Falls back to the template questions when "
+                    + "the AI is disabled or unavailable, so the flow always works.")
+    @GetMapping("/api/v1/skills/evidence-gaps/tailored")
+    public ResponseEntity<List<EvidenceGap>> tailoredGaps(@RequestParam(defaultValue = "5") int limit) {
+        java.util.UUID userId = secCtx.getCurrentUserId();
+        return ResponseEntity.ok(elicitEvidence.tailorQuestions(userId,
+                evidenceGaps.evidenceGaps(userId, limit)));
+    }
+
+    @Operation(summary = "Restructure a free-text answer into situation / action / result",
+            description = "Returns a draft for the user to confirm — nothing is saved. The draft is "
+                    + "checked against the user's own words: any figure it contains that they did "
+                    + "not write is reported back rather than quietly kept.")
+    @PostMapping("/api/v1/skills/evidence/draft")
+    public ResponseEntity<EvidenceDraft> draftEvidence(@RequestBody DraftEvidenceRequest req) {
+        return ResponseEntity.ok(elicitEvidence.draftFromAnswer(
+                secCtx.getCurrentUserId(), req.skillName(), req.answer()));
     }
 
     @Operation(summary = "Record evidence for one claimed skill",

@@ -49,6 +49,17 @@ class DocumentFactGuardTest {
     }
 
     @Test
+    void anExpandedAbbreviationIsNotAFabrication() {
+        // People type "40 min"; a model writing it out as "40 minutes" has invented nothing.
+        assertThat(guard.audit("Deploys went from 40 minutes to 9", "deploys went from 40 min to 9")
+                .clean()).isTrue();
+        assertThat(guard.audit("3 years of it", "3 yrs of it").clean()).isTrue();
+        // …and the check still bites when the number itself changed.
+        assertThat(guard.audit("Deploys went from 90 minutes to 9", "deploys went from 40 min to 9")
+                .inventedMetrics()).isNotEmpty();
+    }
+
+    @Test
     void ordinaryYearIsIgnored() {
         assertThat(guard.audit("Joined the team in 2013", SOURCE).clean()).isTrue();
     }

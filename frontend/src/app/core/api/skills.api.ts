@@ -28,6 +28,16 @@ export interface EvidenceGap {
   question: string;
 }
 
+/** A free-text answer restructured for confirmation — never saved until the user accepts it. */
+export interface EvidenceDraft {
+  skillName: string;
+  situation: string | null;
+  action: string | null;
+  result: string | null;
+  /** Figures the draft contains that the user did not write. Should be empty. */
+  unsupportedFigures: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class SkillsApiService {
   private http = inject(HttpClient);
@@ -60,6 +70,16 @@ export class SkillsApiService {
 
   getEvidenceGaps(limit = 5): Observable<EvidenceGap[]> {
     return this.http.get<EvidenceGap[]>('/api/v1/skills/evidence-gaps', { params: { limit } });
+  }
+
+  /** Gaps with questions tailored to this profile; falls back to templates server-side. */
+  getTailoredEvidenceGaps(limit = 5): Observable<EvidenceGap[]> {
+    return this.http.get<EvidenceGap[]>('/api/v1/skills/evidence-gaps/tailored', { params: { limit } });
+  }
+
+  /** Restructures what the user typed into STAR fields for them to confirm. Saves nothing. */
+  draftEvidence(skillName: string, answer: string): Observable<EvidenceDraft> {
+    return this.http.post<EvidenceDraft>('/api/v1/skills/evidence/draft', { skillName, answer });
   }
 
   /** Stores evidence as a STAR story tagged with the skill; the gap closes immediately. */

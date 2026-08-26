@@ -37,6 +37,9 @@ public class DocumentFactGuard {
             "users", "customers", "clients", "employees", "engineers", "teams", "companies",
             "partners", "organizations", "organisations", "brands", "countries",
             "hours", "days", "weeks", "months", "years", "minutes", "seconds",
+            // Abbreviations people actually type. Without these, a user writing "40 min" and a
+            // model expanding it to "40 minutes" reads as a fabricated figure.
+            "min", "mins", "hr", "hrs", "sec", "secs", "yr", "yrs", "wk", "wks", "mo", "mos",
             "requests", "tokens", "documents", "workflows", "pipelines", "agents",
             "interviews", "applications", "offers", "reports", "cvs", "resumes",
             "enrollments", "enrolments", "completions", "courses", "certifications",
@@ -55,6 +58,12 @@ public class DocumentFactGuard {
             "commits", "bidrag", "repositorier", "tjenester", "linjer");
 
     private static final Map<String, String> NOUN_SYNONYMS = Map.ofEntries(
+            Map.entry("min", "minutes"), Map.entry("mins", "minutes"),
+            Map.entry("hr", "hours"), Map.entry("hrs", "hours"),
+            Map.entry("sec", "seconds"), Map.entry("secs", "seconds"),
+            Map.entry("yr", "years"), Map.entry("yrs", "years"),
+            Map.entry("wk", "weeks"), Map.entry("wks", "weeks"),
+            Map.entry("mo", "months"), Map.entry("mos", "months"),
             Map.entry("repos", "repositories"), Map.entry("enrolments", "enrollments"),
             Map.entry("organisations", "organizations"), Map.entry("cvs", "resumes"),
             Map.entry("certificates", "certifications"), Map.entry("articles", "guides"),

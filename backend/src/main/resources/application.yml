@@ -59,6 +59,11 @@ app:
       # Ensures a claim the user has disowned never resurfaces in generated content.
       # warn = log; block = fail generation when a retracted claim appears.
       mode: ${RETRACTED_CLAIMS_MODE:warn}
+    evidence-elicitation:
+      # AI assist for skill-evidence capture: tailored follow-up questions, and restructuring a
+      # free-text answer into STAR fields. Disabling it falls back to template questions and the
+      # user's raw text — the feature still works, with less polish.
+      enabled: ${EVIDENCE_ELICITATION_ENABLED:true}
     company-grounding:
       # Fetch the company's own website (cached in DB) and extract verified facts to ground
       # cover-letter references, instead of parroting the untrusted posting.
