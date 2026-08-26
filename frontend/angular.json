@@ -109,7 +109,8 @@
               "src/styles/document-render.css",
               "src/styles/resume-forms.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "karmaConfig": "karma.conf.cjs"
           }
         },
         "lint": {
