@@ -36,14 +36,15 @@ public class TailoredCvGenerator {
     public TailoredCvContent generate(CareerProfileForAi source, String jobDescription,
                                       String customInstructions, String targetLanguage,
                                       PromptTemplate styleTemplate, WritingProfile writingProfile,
-                                      List<String> outcomeLessons) {
+                                      List<String> outcomeLessons, String lengthPreference) {
         try {
             String sourceJson = objectMapper.writeValueAsString(source);
             String json = AiResponseParser.extractJsonObject(
                     AiResponseParser.sanitize(aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
                                     sourceJson, jobDescription, customInstructions,
-                                    targetLanguage, styleTemplate, writingProfile, outcomeLessons))
+                                    targetLanguage, styleTemplate, writingProfile, outcomeLessons,
+                                    lengthPreference))
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {

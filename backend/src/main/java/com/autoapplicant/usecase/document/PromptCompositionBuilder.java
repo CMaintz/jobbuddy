@@ -60,7 +60,8 @@ public class PromptCompositionBuilder {
             PromptTemplate styleTemplate,
             WritingProfile writingProfile,
             java.util.List<String> outcomeLessons,
-            String companyFacts) {
+            String companyFacts,
+            String lengthPreference) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write the document body in " + targetLanguage + "."
@@ -109,12 +110,22 @@ public class PromptCompositionBuilder {
 
         String styleMemory = buildStyleMemory(writingProfile);
 
+        // Structural scaffolding for prose letters (not the short recruiter/follow-up messages,
+        // which carry their own word caps in docLabel).
+        String type = documentType != null ? documentType.toUpperCase() : "";
+        boolean isLetter = type.equals("COVER_LETTER") || type.equals("APPLICATION_TEXT")
+                || type.equals("UNSOLICITED_APPLICATION");
+        String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
+        String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
+
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + buildOutcomeLearnings(outcomeLessons)
                 + "\n\n" + HONESTY_RULES
                 + "\n\n" + TARGETING_RULES
+                + structure
+                + lengthGuidance
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -147,7 +158,8 @@ public class PromptCompositionBuilder {
             String targetLanguage,
             PromptTemplate styleTemplate,
             WritingProfile writingProfile,
-            java.util.List<String> outcomeLessons) {
+            java.util.List<String> outcomeLessons,
+            String lengthPreference) {
 
         String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
                 ? "Write all rewritten text in " + targetLanguage + "."
@@ -180,7 +192,11 @@ public class PromptCompositionBuilder {
         String styleMemory = buildStyleMemory(writingProfile);
 
         String userPrompt = "Tailor the CV content from the contact-free master career profile below "
-                + "to best match the job description." + styleGuidance
+                + "to best match the job description. Your job is to SELECT and REWRITE the content "
+                + "WITHIN each section (which profile text, which bullets, which skills, and how they "
+                + "are phrased) — you do NOT control section order or placement, which the app decides "
+                + "from the candidate's career stage and layout choices. Return the sections as named "
+                + "in the schema; do not attempt to reorder them." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + buildOutcomeLearnings(outcomeLessons)
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
@@ -191,6 +207,7 @@ public class PromptCompositionBuilder {
                 + "\n- When content must be condensed, drop the bullets with the lowest combination of "
                 + "relevance to this posting's keywords and uniqueness within the document — not simply "
                 + "the oldest ones. A dated bullet that hits posting keywords outranks a recent one that does not."
+                + "\n\n## Length\n" + cvLengthGuidance(lengthPreference)
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -203,6 +220,52 @@ public class PromptCompositionBuilder {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Soft paragraph scaffolding for prose letters. Danish-market convention: a focused one-page
+     * letter that opens specifically, proves value with a concrete example, connects to the
+     * company, and closes confidently. Guidance, not a rigid template.
+     */
+    private static final String LETTER_STRUCTURE = """
+            ## Structure
+            Write it as a flowing letter (no headings, no bullet lists in the body):
+            - Open with a specific hook — why THIS role at THIS company, not a generic greeting line.
+            - One evidence paragraph that proves fit with a concrete, NAMED role or project from the \
+            profile and its most relevant quantified outcome — depth over a list.
+            - A short company-fit paragraph connecting the candidate's direction to the employer; \
+            ground any company reference in the Verified Company Facts when provided.
+            - Close with a brief, confident call to action.
+            Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.""";
+
+    /** Word/paragraph target for prose letters, by the user's length preference. */
+    private static String letterLengthGuidance(String pref) {
+        return switch (normalizeLength(pref)) {
+            case "SHORT" -> "Keep it tight — about 200 words across 3 short paragraphs. One page maximum.";
+            case "DETAILED" -> "You may go fuller — about 380 words across 4 paragraphs — but never exceed one page.";
+            default -> "Aim for about 300 words across 3–4 short paragraphs. One page maximum.";
+        };
+    }
+
+    /** Page/bullet budget for the tailored CV, by the user's length preference. */
+    private static String cvLengthGuidance(String pref) {
+        String base = "Match the length to the candidate's careerStage: a student or new grad should "
+                + "fit one page; an experienced candidate may use up to two. Keep the most recent and "
+                + "most relevant roles to 4–5 bullets each and older roles shorter; ";
+        return base + switch (normalizeLength(pref)) {
+            case "SHORT" -> "err toward a lean one-page CV, cutting the least relevant material first.";
+            case "DETAILED" -> "a fuller two-page CV is acceptable when the experience genuinely supports it.";
+            default -> "prefer concision — every line should earn its place against this posting.";
+        };
+    }
+
+    /** SHORT | STANDARD | DETAILED, defaulting to STANDARD for null/blank/unknown input. */
+    private static String normalizeLength(String pref) {
+        if (pref == null || pref.isBlank()) return "STANDARD";
+        return switch (pref.trim().toUpperCase()) {
+            case "SHORT", "STANDARD", "DETAILED" -> pref.trim().toUpperCase();
+            default -> "STANDARD";
+        };
+    }
 
     /** Fixed guardrails appended to every generation prompt — never user-editable. */
     private static final String HONESTY_RULES = """
@@ -238,7 +301,13 @@ public class PromptCompositionBuilder {
             authoritative proof points — surface the ones most relevant to this posting first. Never \
             invent, round up, or embellish a metric that is not in the profile.
             - Ground every specific match claim in a concrete profile item (a named role, project, or \
-            skill), never a vague assertion.""";
+            skill), never a vague assertion.
+            - If the profile declares a careerStage, frame for it. For STUDENT / NEW_GRAD / \
+            CAREER_CHANGER: lead with education, academic and personal projects, internships, and \
+            transferable skills; treat substantial academic or self-directed projects as real, \
+            defensible work; and NEVER imply years of professional experience the profile does not \
+            show. For SENIOR / LEAD: lead with scope, impact, and ownership. When the stage is unset, \
+            infer a reasonable stage from the profile's experience.""";
 
     /**
      * Prompt-injection guard for scraped/posted job text. Appended to every prompt that

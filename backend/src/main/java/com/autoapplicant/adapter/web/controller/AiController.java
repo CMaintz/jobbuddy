@@ -114,7 +114,8 @@ public class AiController {
                         req.templateId(),
                         req.promptTemplateId(),
                         Boolean.TRUE.equals(req.showProfileImage()),
-                        req.theme() != null ? req.theme().toTheme() : null))
+                        req.theme() != null ? req.theme().toTheme() : null,
+                        req.lengthPreference()))
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(
                         persistedDocuments.save(userId, req.jobId(), r, null))))
                 .exceptionally(e -> {
@@ -144,7 +145,8 @@ public class AiController {
                         req.motivationText(),
                         req.targetLanguage(),
                         Boolean.TRUE.equals(req.showProfileImage()),
-                        req.theme() != null ? req.theme().toTheme() : null)
+                        req.theme() != null ? req.theme().toTheme() : null,
+                        req.lengthPreference())
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);
