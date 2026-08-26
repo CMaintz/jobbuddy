@@ -54,21 +54,44 @@
 | Floskler and AI-tells | `ClicheGuard` — one phrase list used twice: as a prompt ban list, and as a post-generation check whose findings are fed back to the reviewer pass to be rewritten |
 | Hidden job market | `UNSOLICITED_APPLICATION` guidance in `PromptCompositionBuilder` — framed as a proposal to a named person, not an application |
 
+## Measuring prompt changes
+
+`DocumentQualityEvaluator` scores a generated letter model-free, so two prompt revisions can be
+compared on a number instead of an impression. Six dimensions, each one a failure mode named
+above:
+
+| Dimension | Weight | What it measures |
+|---|---|---|
+| `filler` | 5 | Floskler and AI-tells (reuses `ClicheGuard`). Weighted highest — an instant reject, not a blemish |
+| `evidence` | 3 | Profile terms and figures actually referenced. Reference *density*, not quality |
+| `facts` | 3 | Figures with no support in the profile (reuses `DocumentFactGuard`) |
+| `keywords` | 2 | Share of the posting's keywords covered |
+| `cv_echo` | 2 | Sentences that merely restate the CV — the trap Danish advisers name most often |
+| `length` | 1 | Drift from the word target the prompt asked for |
+
+A dimension that cannot be judged (an empty document) takes weight 0 rather than full marks, so an
+absent letter cannot score well for containing no mistakes.
+
+`PromptEvalHarnessTest` runs it over fixtures in `backend/src/test/resources/prompt-eval/` — each a
+(profile, posting, good output, weak output) set. It asserts the composed prompt still carries the
+blocks that fixture needs, that a good output clears 80, and that good and weak stay at least 30
+points apart. Adding a fixture is a JSON file, no code change. Current baseline: 95 vs 56 (Danish)
+and 95 vs 47 (English). Everything runs offline — no API calls in CI.
+
+The evaluator scores mechanics, not merit: a document can score 95 and still be dull. Use it to
+catch regressions, not to certify quality.
+
 ## Not yet done (ranked)
 
-1. **Surface guard findings in the UI.** `ClicheGuard`/`DocumentFactGuard` findings are logged
-   server-side only. They belong in the `AtsReport` as `INFO`/`WARN` checks so the user sees
-   *"this phrase reads as filler"* next to the draft.
-2. **A prompt evaluation harness.** There is currently no way to tell whether a prompt change
-   helps. A fixture set of (profile, posting) pairs plus a rubric scorer would make prompt work
-   measurable instead of anecdotal.
-3. **Danish section headings and CV furniture.** Section labels, `Referencer oplyses efter aftale`,
-   and a leisure-interests section are Danish reader expectations the assembler does not model.
-4. **Contact-person extraction.** Danish postings almost always name a contact and invite a call;
-   extracting that person during enrichment would power both a "ring inden du søger" nudge and a
-   correctly addressed letter.
-5. **Notice period (`opsigelsesvarsel`) and start date** as profile fields — routinely asked for
-   in Danish applications, currently unmodelled.
+1. **Score real generations, not just fixtures.** The evaluator is a Spring bean but nothing calls
+   it in the generation path. Logging the score per generation would turn it into a live metric.
+2. **Guard findings and ATS checks are English-only strings**, built server-side. A Danish user
+   reading a Danish letter gets English diagnostics.
+3. **Interests and references do not survive the resume-builder round-trip.** Both render in the
+   structured document and the ATS export, but `ResumeData` has no field for them, so opening a
+   tailored CV as an editable draft drops them.
+4. **Outreach targets are ranked but not tracked.** A saved target has no pipeline state of its
+   own until an application exists.
 
 [ballisager]: https://ballisager.com/den-gode-ansoegning
 [jobmail-guide]: https://jobmail.dk/blog/ansogning-guide

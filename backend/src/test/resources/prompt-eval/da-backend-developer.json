@@ -1,0 +1,13 @@
+{
+  "name": "Danish backend developer, new grad",
+  "language": "Danish",
+  "country": "Denmark",
+  "targetWords": 160,
+  "postingKeywords": ["Java", "Spring Boot", "PostgreSQL", "Kubernetes"],
+  "posting": "Vi søger en backend-udvikler til vores team i København. Du kommer til at arbejde med Java og Spring Boot, og du får ansvaret for at udvikle og vedligeholde vores services på Kubernetes med PostgreSQL som database. Vi tilbyder en uformel arbejdsplads med dygtige kolleger og gode muligheder for faglig udvikling. Har du spørgsmål til stillingen, er du velkommen til at kontakte teamlead Mette Hansen.",
+  "profileJson": "{\"headline\":\"Backend-udvikler\",\"careerStage\":\"NEW_GRAD\",\"skills\":[\"Java\",\"Spring Boot\",\"PostgreSQL\",\"Docker\"],\"projects\":[{\"title\":\"Jobindex ingest-pipeline\",\"description\":\"Byggede en ingest-pipeline i Java og Spring Boot der behandler 40000 opslag om ugen mod PostgreSQL.\"}],\"education\":[{\"title\":\"Datalogi\",\"subtitle\":\"Aarhus Universitet\"}]}",
+  "outputs": {
+    "good": "Min ingest-pipeline hos Jobindex flytter 40000 opslag om ugen gennem Java og Spring Boot til PostgreSQL — og det er præcis den slags drift jeres team står med, når services skal køre stabilt på Kubernetes.\n\nJeg byggede pipelinen som mit afsluttende projekt på datalogi ved Aarhus Universitet og drev den videre bagefter. Den lærte mig, hvad der går galt, når en kø vokser hurtigere end forbruget, og hvordan man får en Spring Boot-service til at fejle forudsigeligt i stedet for larmende. Docker og PostgreSQL har jeg brugt dagligt siden.\n\nJeg er nyuddannet, og det er der ingen grund til at pakke ind: I får en udvikler med ét stort projekt bag sig og en vane for at læse logs, før jeg gætter. Til gengæld kender jeg jeres stak fra den side, hvor den bliver holdt kørende.\n\nJeg tager gerne en kort snak om, hvordan I arbejder med Kubernetes i dag.\n\nMed venlig hilsen",
+    "weak": "Jeg søger hermed stillingen som backend-udvikler hos jer. Jeg er en teamplayer, der brænder for udvikling, og jeg er god til at holde mange bolde i luften. Jeg er nyuddannet datalog fra Aarhus Universitet, hvor jeg lærte Java, Spring Boot, PostgreSQL og Docker. Jeg byggede en ingest-pipeline i Java og Spring Boot der behandler 40000 opslag om ugen mod PostgreSQL. Jeg arbejder både selvstændigt og i team, og jeg er struktureret og målrettet. Jeg mener, at jeg er den rette til jobbet, og jeg glæder mig til at høre fra jer."
+  }
+}

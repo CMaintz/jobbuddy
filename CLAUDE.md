@@ -67,6 +67,9 @@ cd frontend; npm run build        # production Angular build
 # Single test class
 ./gradlew :backend:test --tests "com.autoapplicant.usecase.user.UserServiceTest"
 
+# Prompt evaluation harness (offline; scores fixture letters, prints the per-dimension table)
+./gradlew :backend:test --tests "*PromptEvalHarnessTest*" --info
+
 # Frontend tests
 cd frontend; npm test
 ```
