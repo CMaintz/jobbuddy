@@ -19,5 +19,6 @@ public interface GenerateDocumentUseCase {
             String motivationText,
             String targetLanguage,
             boolean showProfileImage,
-            DocumentTheme theme);
+            DocumentTheme theme,
+            String lengthPreference);
 }
