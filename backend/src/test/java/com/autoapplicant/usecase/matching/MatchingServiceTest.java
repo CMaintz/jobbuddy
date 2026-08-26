@@ -182,7 +182,7 @@ class MatchingServiceTest {
     private Profile profile(UUID userId, String headline, String summary,
                             List<String> skills, List<String> technologies) {
         return new Profile(UUID.randomUUID(), userId, headline, summary,
-                null, skills, technologies, List.of(),
+                null, skills, technologies, List.of(), List.of(),
                 null, null, null, null, null,
                 null, null);
     }

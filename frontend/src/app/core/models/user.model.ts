@@ -14,6 +14,8 @@ export interface Profile {
   skills?: string[];
   technologies?: string[];
   languages?: string[];
+  /** Leisure interests — the closing section of a Danish CV ("fritidsinteresser"). */
+  interests?: string[];
   desiredSalaryMin?: number;
   desiredSalaryMax?: number;
   desiredCurrency?: string;

@@ -189,6 +189,11 @@
                   <jb-tag-input [value]="technologiesList" (valueChange)="onTechnologiesChange($event)" [placeholder]="'masterCv.addTech' | translate" />
                   <div class="text-xs text-jb-text-dim">{{ 'masterCv.techHint' | translate }}</div>
                 </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'masterCv.interests' | translate }}</span>
+                  <jb-tag-input [value]="interestsList" (valueChange)="onInterestsChange($event)" [placeholder]="'masterCv.addInterest' | translate" />
+                  <div class="text-xs text-jb-text-dim">{{ 'masterCv.interestsHint' | translate }}</div>
+                </label>
               </div>
             }
 

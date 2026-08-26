@@ -27,7 +27,9 @@ public class CvDocumentAssembler {
                                         List<ProfileSocial> socials, CareerProfileForAi source,
                                         TailoredCvContent tailored, String exportMode, String templateId,
                                         boolean showProfileImage, DocumentTheme theme,
-                                        ContentGuardFindings guardFindings) {
+                                        ContentGuardFindings guardFindings,
+                                        String documentLanguage) {
+        CvSectionLabels labels = CvSectionLabels.forLanguage(documentLanguage);
         List<String> selectedSkills = tailored != null && tailored.selectedSkills() != null && !tailored.selectedSkills().isEmpty()
                 ? validateSkills(tailored.selectedSkills(), source)
                 : merge(source.skills(), source.technologies());
@@ -38,11 +40,11 @@ public class CvDocumentAssembler {
 
         List<StructuredDocumentSection> sections = new ArrayList<>();
         if (selectedProfile != null && !selectedProfile.isBlank()) {
-            sections.add(new StructuredDocumentSection("profile", "profile", "Profile", selectedProfile, List.of()));
+            sections.add(new StructuredDocumentSection("profile", "profile", labels.profile(), selectedProfile, List.of()));
         }
         if (!selectedSkills.isEmpty()) {
             Map<String, String> skillCategory = categoryLookup(source.skillCategories());
-            sections.add(new StructuredDocumentSection("skills", "skills", "Skills", null,
+            sections.add(new StructuredDocumentSection("skills", "skills", labels.skills(), null,
                     selectedSkills.stream()
                             .map(skill -> new StructuredDocumentItem(null, skill, null, null, null, null,
                                     List.of(), List.of(), List.of(), List.of(),
@@ -60,21 +62,36 @@ public class CvDocumentAssembler {
         List<StructuredDocumentItem> educationItems =
                 validateItems(tailored != null ? tailored.education() : null, source.education());
         if (isEarlyStage(source.careerStage())) {
-            addSection(sections, "education", "education", "Education", educationItems);
-            addSection(sections, "projects", "projects", "Projects", projectItems);
-            addSection(sections, "experience", "experience", "Experience", experienceItems);
+            addSection(sections, "education", "education", labels.education(), educationItems);
+            addSection(sections, "projects", "projects", labels.projects(), projectItems);
+            addSection(sections, "experience", "experience", labels.experience(), experienceItems);
         } else {
-            addSection(sections, "experience", "experience", "Experience", experienceItems);
-            addSection(sections, "projects", "projects", "Projects", projectItems);
-            addSection(sections, "education", "education", "Education", educationItems);
+            addSection(sections, "experience", "experience", labels.experience(), experienceItems);
+            addSection(sections, "projects", "projects", labels.projects(), projectItems);
+            addSection(sections, "education", "education", labels.education(), educationItems);
         }
-        addSection(sections, "certifications", "certifications", "Certifications",
+        addSection(sections, "certifications", "certifications", labels.certifications(),
                 validateItems(tailored != null ? tailored.certifications() : null, source.certifications()));
         if (source.spokenLanguages() != null && !source.spokenLanguages().isEmpty()) {
-            sections.add(new StructuredDocumentSection("languages", "languages", "Languages", null,
+            sections.add(new StructuredDocumentSection("languages", "languages", labels.languages(), null,
                     source.spokenLanguages().stream()
                             .map(lang -> new StructuredDocumentItem(null, lang, null, null, null, null, List.of(), List.of(), List.of(), List.of(), null))
                             .toList()));
+        }
+
+        // Fritidsinteresser: a standard closing section on a Danish CV, rendered verbatim from the
+        // user's own data — never AI-selected, since there is nothing to tailor about a hobby.
+        if (source.interests() != null && !source.interests().isEmpty()) {
+            sections.add(new StructuredDocumentSection("interests", "interests", labels.interests(), null,
+                    source.interests().stream()
+                            .map(interest -> new StructuredDocumentItem(null, interest, null, null, null,
+                                    null, List.of(), List.of(), List.of(), List.of(), null))
+                            .toList()));
+        }
+        String referencesNote = labels.referencesNote();
+        if (referencesNote != null) {
+            sections.add(new StructuredDocumentSection("references", "references", labels.references(),
+                    referencesNote, List.of()));
         }
 
         ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;

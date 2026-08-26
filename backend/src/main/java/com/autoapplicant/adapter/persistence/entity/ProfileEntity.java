@@ -39,6 +39,10 @@ public class ProfileEntity {
     @Column(columnDefinition = "text[]")
     private String[] languages;
 
+    @Type(StringArrayType.class)
+    @Column(name = "interests", columnDefinition = "text[]")
+    private String[] interests;
+
     @Column(name = "desired_salary_min")
     private Integer desiredSalaryMin;
 
@@ -79,6 +83,8 @@ public class ProfileEntity {
     public void setTechnologies(String[] technologies) { this.technologies = technologies; }
     public String[] getLanguages() { return languages; }
     public void setLanguages(String[] languages) { this.languages = languages; }
+    public String[] getInterests() { return interests; }
+    public void setInterests(String[] interests) { this.interests = interests; }
     public Integer getDesiredSalaryMin() { return desiredSalaryMin; }
     public void setDesiredSalaryMin(Integer desiredSalaryMin) { this.desiredSalaryMin = desiredSalaryMin; }
     public Integer getDesiredSalaryMax() { return desiredSalaryMax; }
