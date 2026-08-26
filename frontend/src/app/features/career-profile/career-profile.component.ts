@@ -7,7 +7,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
-import { CareerTargetApiService, CareerTarget } from '../../core/api/career-target.api';
+import { CareerTargetApiService, CareerTarget, CareerStage } from '../../core/api/career-target.api';
 import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retracted-claims.api';
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
 
@@ -41,8 +41,19 @@ export class CareerProfileComponent implements OnInit {
   northStar = '';
   narrative = '';
   culture: string[] = [];
+  careerStage: CareerStage | '' = '';
   savingTarget = signal(false);
   targetDirty = signal(false);
+
+  readonly careerStages: { value: CareerStage; label: string }[] = [
+    { value: 'STUDENT', label: 'careerProfile.stage.student' },
+    { value: 'NEW_GRAD', label: 'careerProfile.stage.newGrad' },
+    { value: 'EARLY_CAREER', label: 'careerProfile.stage.earlyCareer' },
+    { value: 'MID_CAREER', label: 'careerProfile.stage.midCareer' },
+    { value: 'SENIOR', label: 'careerProfile.stage.senior' },
+    { value: 'LEAD', label: 'careerProfile.stage.lead' },
+    { value: 'CAREER_CHANGER', label: 'careerProfile.stage.careerChanger' },
+  ];
 
   // ── Story bank ─────────────────────────────────────────────
   stories = signal<InterviewStory[]>([]);
@@ -68,6 +79,7 @@ export class CareerProfileComponent implements OnInit {
     this.northStar = t.northStar ?? '';
     this.narrative = t.narrative ?? '';
     this.culture = t.cultureRequirements ?? [];
+    this.careerStage = t.careerStage ?? '';
   }
 
   markTargetDirty(): void { this.targetDirty.set(true); }
@@ -80,6 +92,7 @@ export class CareerProfileComponent implements OnInit {
       northStar: this.northStar.trim() || undefined,
       narrative: this.narrative.trim() || undefined,
       cultureRequirements: this.culture,
+      careerStage: this.careerStage || undefined,
     }).subscribe({
       next: t => {
         this.applyTarget(t);

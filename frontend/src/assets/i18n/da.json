@@ -5,6 +5,8 @@
     "target": {
       "heading": "Karrieremål",
       "intro": "Fortæl AI'en, hvad du sigter efter. Det indgår i genereringen, så dokumenter fremhæver de roller, du faktisk vil have.",
+      "stage": "Karrieretrin",
+      "stageDesc": "Styrer trin-passende vinkling (en nyuddannet fremhæver uddannelse og projekter og påstår aldrig erfaring, de ikke har) og standardrækkefølgen af CV-sektioner.",
       "archetypes": "Målarketyper",
       "archetypesDesc": "Rolletyper, du sigter efter — f.eks. Platform Engineer, AI-implementering, Marketing og kommunikation.",
       "archetypesPlaceholder": "Tilføj en arketype, og tryk Enter",
@@ -39,6 +41,16 @@
       "reasonPlaceholder": "Årsag (valgfri)",
       "add": "Tilbagekald udsagn",
       "empty": "Intet tilbagekaldt."
+    },
+    "stage": {
+      "unset": "Ikke angivet",
+      "student": "Studerende",
+      "newGrad": "Nyuddannet",
+      "earlyCareer": "Tidlig karriere (1–3 år)",
+      "midCareer": "Midt i karrieren (3–8 år)",
+      "senior": "Senior (8+ år)",
+      "lead": "Lead / leder",
+      "careerChanger": "Karriereskifter"
     },
     "toast": { "saved": "Karrieremål gemt", "saveFailed": "Gemning mislykkedes", "storySaved": "Historie gemt" }
   },
@@ -267,6 +279,7 @@
       "currentlyStudying": "Studerer i øjeblikket",
       "addEducation": "+ Tilføj uddannelse",
       "skillName": "Færdighedsnavn",
+      "skillCategory": "Kategori",
       "level": "Niveau",
       "addSkill": "+ Tilføj færdighed",
       "skillsHint": "Niveau 1-5 vises som prikker i skabeloner, der understøtter det. Skift synlighed i Indstillinger.",

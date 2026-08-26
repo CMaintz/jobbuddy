@@ -5,6 +5,8 @@
     "target": {
       "heading": "Career target",
       "intro": "Tell the AI what you're aiming for. This is folded into generation so documents lead with the roles you actually want.",
+      "stage": "Career stage",
+      "stageDesc": "Drives stage-appropriate framing (a new grad leads with education & projects and never claims years they don't have) and the default CV section order.",
       "archetypes": "Target archetypes",
       "archetypesDesc": "Role types you're aiming for — e.g. Platform Engineer, AI Implementation, Marketing Communications.",
       "archetypesPlaceholder": "Add an archetype and press Enter",
@@ -39,6 +41,16 @@
       "reasonPlaceholder": "Reason (optional)",
       "add": "Retract claim",
       "empty": "Nothing retracted."
+    },
+    "stage": {
+      "unset": "Not set",
+      "student": "Student",
+      "newGrad": "New graduate",
+      "earlyCareer": "Early career (1–3 yrs)",
+      "midCareer": "Mid career (3–8 yrs)",
+      "senior": "Senior (8+ yrs)",
+      "lead": "Lead / manager",
+      "careerChanger": "Career changer"
     },
     "toast": { "saved": "Career target saved", "saveFailed": "Save failed", "storySaved": "Story saved" }
   },
@@ -267,6 +279,7 @@
       "currentlyStudying": "Currently studying",
       "addEducation": "+ Add Education",
       "skillName": "Skill name",
+      "skillCategory": "Category",
       "level": "Level",
       "addSkill": "+ Add Skill",
       "skillsHint": "Level 1–5 shown as dots in templates that support it. Toggle visibility in Settings.",

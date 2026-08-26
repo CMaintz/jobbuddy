@@ -33,6 +33,7 @@ public class CareerTargetController {
     @PutMapping
     public ResponseEntity<CareerTarget> upsert(@Valid @RequestBody CareerTargetRequest req) {
         return ResponseEntity.ok(useCase.upsert(secCtx.getCurrentUserId(),
-                req.targetArchetypes(), req.northStar(), req.narrative(), req.cultureRequirements()));
+                req.targetArchetypes(), req.northStar(), req.narrative(), req.cultureRequirements(),
+                req.careerStage()));
     }
 }

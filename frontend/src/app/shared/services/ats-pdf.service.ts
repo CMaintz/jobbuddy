@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import type { jsPDF } from 'jspdf';
-import { ResumeData } from '../../features/resume-builder/models/resume-builder.models';
+import { ResumeData, ResumeSettings, ResumeSkill } from '../../features/resume-builder/models/resume-builder.models';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 
 /**
@@ -173,17 +173,21 @@ export class AtsPdfService {
 // ── Mappers ─────────────────────────────────────────────────────
 
 /** CV Builder draft → ATS model. Pass the display (possibly anonymised) personal info. */
-export function resumeDataToAts(data: ResumeData, pi = data.personalInfo): AtsResumeModel {
+export function resumeDataToAts(
+  data: ResumeData, pi = data.personalInfo, settings?: ResumeSettings,
+): AtsResumeModel {
   const contact = [pi.email, pi.phone, pi.location].filter(Boolean).join('  ·  ');
   const links = [pi.linkedin, pi.github, pi.website, ...data.socials.map(s => s.url)]
     .filter(Boolean).join('  ·  ');
-  const sections: AtsSection[] = [];
+  // Build each section tagged with its layout id, then order/filter by the builder's column
+  // config so the ATS export matches the layout the user arranged (was hard-coded before).
+  const built: { id: string; section: AtsSection }[] = [];
 
   if (data.strengths.length) {
-    sections.push({ heading: 'Strengths', lines: [data.strengths.map(s => s.title).filter(Boolean).join('  ·  ')] });
+    built.push({ id: 'strengths', section: { heading: 'Strengths', lines: [data.strengths.map(s => s.title).filter(Boolean).join('  ·  ')] } });
   }
   if (data.experience.length) {
-    sections.push({
+    built.push({ id: 'experience', section: {
       heading: 'Experience',
       items: data.experience.map(e => ({
         title: [e.title, e.company].filter(Boolean).join(' — '),
@@ -192,48 +196,50 @@ export function resumeDataToAts(data: ResumeData, pi = data.personalInfo): AtsRe
         body: stripHtml(e.description),
         bullets: [],
       })),
-    });
+    } });
   }
-  const skillLine = data.skills.map(s => s.name).filter(Boolean).join('  ·  ');
-  if (skillLine) sections.push({ heading: 'Skills', lines: [skillLine] });
+  const skillLines = groupedSkillLines(data.skills);
+  if (skillLines.length) built.push({ id: 'skills', section: { heading: 'Skills', lines: skillLines } });
   if (data.projects.length) {
-    sections.push({
+    built.push({ id: 'projects', section: {
       heading: 'Projects',
       items: data.projects.map(p => ({
         title: p.name,
         meta: [p.date, p.link].filter(Boolean).join('  ·  '),
         body: stripHtml(p.description),
       })),
-    });
+    } });
   }
   if (data.education.length) {
-    sections.push({
+    built.push({ id: 'education', section: {
       heading: 'Education',
       items: data.education.map(e => ({
         title: [e.degree, e.school].filter(Boolean).join(' — '),
         meta: `${e.startDate || ''} – ${e.current ? 'Present' : e.endDate || ''}`.trim(),
       })),
-    });
+    } });
   }
   if (data.certifications.length) {
-    sections.push({
+    built.push({ id: 'certifications', section: {
       heading: 'Certifications',
       lines: data.certifications.map(c => [c.name, c.issuer, c.date].filter(Boolean).join(' — ')),
-    });
+    } });
   }
   if (data.languages.length) {
-    sections.push({
+    built.push({ id: 'languages', section: {
       heading: 'Languages',
       lines: [data.languages.map(l => `${l.name} (${l.proficiency})`).join('  ·  ')],
-    });
+    } });
   }
-  for (const custom of data.customSections ?? []) {
+  data.customSections?.forEach((custom, idx) => {
     const lines = [
       ...(custom.body?.trim() ? [stripHtml(custom.body)!] : []),
       ...(custom.items ?? []).map(i => `•  ${i.text}`),
     ];
-    if (lines.length) sections.push({ heading: custom.heading, lines });
-  }
+    if (lines.length) built.push({ id: `custom-${idx}`, section: { heading: custom.heading, lines } });
+  });
+
+  const sections = orderAtsSections(built, settings);
 
   return {
     name: pi.fullName || 'Curriculum Vitae',
@@ -256,6 +262,12 @@ export function structuredDocToAts(doc: StructuredDocument): AtsResumeModel {
   for (const section of doc.sections ?? []) {
     if (section.type === 'profile' && section.body) {
       summary = section.body;
+      continue;
+    }
+    if (section.type === 'skills' && section.items?.length) {
+      const lines = groupedSkillLines(
+        section.items.map(i => ({ id: '', name: i.title ?? '', category: i.category })));
+      if (lines.length) sections.push({ heading: section.heading, lines });
       continue;
     }
     if (section.items?.length) {
@@ -281,6 +293,44 @@ export function structuredDocToAts(doc: StructuredDocument): AtsResumeModel {
     summary,
     sections,
   };
+}
+
+/**
+ * Orders and filters ATS sections to match the resume-builder's column layout: sections follow
+ * the combined leftColumn+rightColumn order and hidden sections are dropped. Sections not present
+ * in the config (e.g. custom sections) keep their build order at the end. Without settings, the
+ * build order is used unchanged.
+ */
+function orderAtsSections(
+  built: { id: string; section: AtsSection }[], settings?: ResumeSettings,
+): AtsSection[] {
+  if (!settings) return built.map(b => b.section);
+  const config = [...(settings.leftColumn ?? []), ...(settings.rightColumn ?? [])];
+  const rank = new Map(config.map((c, i) => [c.id, i]));
+  const hidden = new Set(config.filter(c => !c.visible).map(c => c.id));
+  return built
+    .filter(b => !hidden.has(b.id))
+    .map((b, i) => ({ b, i }))
+    .sort((a, z) => (rank.get(a.b.id) ?? 900 + a.i) - (rank.get(z.b.id) ?? 900 + z.i))
+    .map(({ b }) => b.section);
+}
+
+/**
+ * Renders skills as one line per category (e.g. "Languages:  Java  ·  Kotlin"), categorised groups
+ * first and uncategorised skills on a trailing line. A single uncategorised group collapses to the
+ * previous flat single-line behaviour.
+ */
+function groupedSkillLines(skills: ResumeSkill[]): string[] {
+  const groups = new Map<string, string[]>();
+  const order: string[] = [];
+  for (const s of skills) {
+    if (!s.name) continue;
+    const key = s.category?.trim() || '';
+    if (!groups.has(key)) { groups.set(key, []); order.push(key); }
+    groups.get(key)!.push(s.name);
+  }
+  order.sort((a, b) => (a === '' ? 1 : 0) - (b === '' ? 1 : 0));
+  return order.map(k => (k ? `${k}:  ` : '') + groups.get(k)!.join('  ·  '));
 }
 
 function stripHtml(value?: string): string | undefined {

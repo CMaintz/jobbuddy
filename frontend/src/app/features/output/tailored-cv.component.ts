@@ -14,7 +14,7 @@ import { Application } from '../../core/models/application.model';
 import { PromptTemplate } from '../../core/models/prompt-template.model';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 import { ResumeDraftApiService } from '../resume-builder/services/resume-draft-api.service';
-import { structuredDocToResumeData } from '../resume-builder/services/structured-doc-mapper';
+import { structuredDocToResumeData, structuredDocToLayout } from '../resume-builder/services/structured-doc-mapper';
 import { INITIAL_SETTINGS, ResumeDraft } from '../resume-builder/models/resume-builder.models';
 import { loadGenDefaults } from '../settings/settings.component';
 
@@ -138,6 +138,7 @@ export class TailoredCvComponent implements OnInit {
       customInstructions: this.customInstructions.trim() || undefined,
       targetLanguage: this.selectedLanguage() === 'Dansk' ? 'da' : 'en',
       showProfileImage: true, // master CV photo carries onto tailored CVs automatically
+      lengthPreference: loadGenDefaults().length?.toUpperCase(),
     }).subscribe({
       next: doc => this.createDraftAndOpen(doc, app),
       error: err => {
@@ -166,7 +167,8 @@ export class TailoredCvComponent implements OnInit {
       jobId: app.jobId,
       applicationId: app.id,
       resumeData: structuredDocToResumeData(doc),
-      settings: { ...INITIAL_SETTINGS },
+      // Career-stage-aware section order chosen server-side becomes the draft's default layout.
+      settings: { ...INITIAL_SETTINGS, ...structuredDocToLayout(doc) },
     }).subscribe({
       next: draft => this.router.navigate(['/resume-builder', draft.id]),
       error: () => {
