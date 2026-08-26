@@ -30,6 +30,8 @@ export interface StructuredDocumentItem {
   technologies?: string[];
   links?: string[];
   skills?: string[];
+  /** Grouping label for skill items (e.g. "Languages"); absent for other item types. */
+  category?: string;
 }
 
 export interface StructuredDocumentSection {

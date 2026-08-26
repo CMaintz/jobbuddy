@@ -69,9 +69,16 @@
       @if (skills.length > 0) {
         <section rbSection="skills">
           <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-3 border-b pb-1" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.skills' | translate }}</h2>
-          <div class="flex flex-wrap gap-2">
-            @for (skill of skills; track skill.id) {
-              <span class="px-2 py-0.5 rounded-full text-xs border" [style.border-color]="themeColor" [style.color]="themeColor">{{ skill.name }}</span>
+          <div class="flex flex-col gap-2">
+            @for (group of skillGroups; track group.category) {
+              @if (group.category) {
+                <div class="text-2xs font-semibold uppercase tracking-wide opacity-70" [style.color]="themeColor">{{ group.category }}</div>
+              }
+              <div class="flex flex-wrap gap-2">
+                @for (skill of group.skills; track skill.id) {
+                  <span class="px-2 py-0.5 rounded-full text-xs border" [style.border-color]="themeColor" [style.color]="themeColor">{{ skill.name }}</span>
+                }
+              </div>
             }
           </div>
         </section>
