@@ -26,6 +26,12 @@ public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryP
     }
 
     @Override
+    public List<SkillTaxonomy> findByParentIds(java.util.Collection<java.util.UUID> parentIds) {
+        if (parentIds == null || parentIds.isEmpty()) return List.of();
+        return repo.findByParentIdIn(parentIds).stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<SkillTaxonomy> findByCategory(String category) {
         return repo.findByCategoryOrderByName(category).stream().map(this::toDomain).toList();
     }

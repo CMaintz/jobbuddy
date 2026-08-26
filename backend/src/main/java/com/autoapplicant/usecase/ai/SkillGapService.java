@@ -1,19 +1,14 @@
 package com.autoapplicant.usecase.ai;
 
 import com.autoapplicant.domain.ai.SkillGapReport;
-import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.job.Job;
-import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.port.in.ai.AnalyzeSkillGapsUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.job.MarketCorpusService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -23,7 +18,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,34 +36,20 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(SkillGapService.class);
 
-    private static final int MAX_PIPELINE_JOBS = 15;
-    private static final int MAX_MATCHED_JOBS = 10;
     private static final int DESCRIPTION_CHARS = 1_200;
 
     private final ChatProviderPort aiProvider;
     private final CareerProfileContextService careerProfileContext;
-    private final SavedJobRepositoryPort savedJobRepo;
-    private final ApplicationRepositoryPort applicationRepo;
-    private final JobRepositoryPort jobRepo;
-    private final JobEmbeddingRepositoryPort jobEmbeddingRepo;
-    private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
+    private final MarketCorpusService marketCorpus;
     private final ObjectMapper objectMapper;
 
     public SkillGapService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                            CareerProfileContextService careerProfileContext,
-                           SavedJobRepositoryPort savedJobRepo,
-                           ApplicationRepositoryPort applicationRepo,
-                           JobRepositoryPort jobRepo,
-                           JobEmbeddingRepositoryPort jobEmbeddingRepo,
-                           ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
+                           MarketCorpusService marketCorpus,
                            ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.careerProfileContext = careerProfileContext;
-        this.savedJobRepo = savedJobRepo;
-        this.applicationRepo = applicationRepo;
-        this.jobRepo = jobRepo;
-        this.jobEmbeddingRepo = jobEmbeddingRepo;
-        this.profileEmbeddingRepo = profileEmbeddingRepo;
+        this.marketCorpus = marketCorpus;
         this.objectMapper = objectMapper;
     }
 
@@ -77,7 +57,7 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
     @Async("aiTaskExecutor")
     public CompletableFuture<SkillGapReport> analyzeSkillGaps(UUID userId) {
         try {
-            List<Job> jobs = collectCorpus(userId);
+            List<Job> jobs = marketCorpus.collect(userId, true);
             if (jobs.isEmpty()) {
                 return CompletableFuture.completedFuture(
                         new SkillGapReport(List.of(), "No jobs to analyze yet — save roles or apply to a few first.", 0));
@@ -113,30 +93,6 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
             log.error("Skill-gap analysis failed for user {}: {}", userId, e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
-    }
-
-    /** Pipeline jobs first (explicit interest), then embedding-matched market jobs. */
-    private List<Job> collectCorpus(UUID userId) {
-        Set<UUID> ids = new LinkedHashSet<>();
-        applicationRepo.findByUserId(userId).stream()
-                .map(Application::jobId)
-                .filter(java.util.Objects::nonNull)
-                .limit(MAX_PIPELINE_JOBS)
-                .forEach(ids::add);
-        savedJobRepo.findJobIdsByUserId(userId).stream()
-                .limit(MAX_PIPELINE_JOBS)
-                .forEach(ids::add);
-
-        profileEmbeddingRepo.findByUserId(userId)
-                .map(ProfileEmbedding::embedding)
-                .ifPresent(vector -> jobEmbeddingRepo
-                        .findNearestNeighborJobIds(vector, MAX_MATCHED_JOBS)
-                        .forEach(ids::add));
-
-        return jobRepo.findByIds(new ArrayList<>(ids)).stream()
-                .filter(j -> j.descriptionClean() != null && !j.descriptionClean().isBlank())
-                .limit(MAX_PIPELINE_JOBS + MAX_MATCHED_JOBS)
-                .toList();
     }
 
     private static String buildPrompt(String profileJson, List<Job> jobs) {

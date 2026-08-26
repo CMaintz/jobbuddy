@@ -1,11 +1,14 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.adapter.web.dto.user.SkillConfirmationRequest;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.skill.SkillCandidate;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.in.skills.GetSkillGapUseCase;
 import com.autoapplicant.port.in.skills.GetSkillTaxonomyUseCase;
 import com.autoapplicant.port.in.skills.ManageProfileSkillsUseCase;
+import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,14 +26,36 @@ public class SkillController {
     private final GetSkillTaxonomyUseCase taxonomy;
     private final ManageProfileSkillsUseCase profileSkills;
     private final GetSkillGapUseCase skillGap;
+    private final SuggestSkillCandidatesUseCase skillCandidates;
     private final SecurityContextHelper secCtx;
 
     public SkillController(GetSkillTaxonomyUseCase taxonomy, ManageProfileSkillsUseCase profileSkills,
-                           GetSkillGapUseCase skillGap, SecurityContextHelper secCtx) {
+                           GetSkillGapUseCase skillGap, SuggestSkillCandidatesUseCase skillCandidates,
+                           SecurityContextHelper secCtx) {
         this.taxonomy = taxonomy;
         this.profileSkills = profileSkills;
         this.skillGap = skillGap;
+        this.skillCandidates = skillCandidates;
         this.secCtx = secCtx;
+    }
+
+    @Operation(summary = "Skills worth asking the user about, best first",
+            description = "Deterministic — no AI call. Candidates come from the seeded taxonomy "
+                    + "(neighbours of skills the user already has) and from the postings the user "
+                    + "actually matches, ranked by how many of those postings name them. A skill "
+                    + "nobody is hiring for is not worth a question.")
+    @GetMapping("/api/v1/skills/candidates")
+    public ResponseEntity<List<SkillCandidate>> candidates(@RequestParam(defaultValue = "12") int limit) {
+        return ResponseEntity.ok(skillCandidates.suggest(secCtx.getCurrentUserId(), limit));
+    }
+
+    @Operation(summary = "Answer a round of skill suggestions",
+            description = "Accepted skills are added to the profile, declined ones are never "
+                    + "offered again, skipped ones return next time. Returns the skills added.")
+    @PostMapping("/api/v1/skills/candidates/confirm")
+    public ResponseEntity<List<ProfileSkill>> confirmCandidates(@RequestBody SkillConfirmationRequest req) {
+        return ResponseEntity.ok(
+                skillCandidates.confirm(secCtx.getCurrentUserId(), req.confirmations()));
     }
 
     public record CreateSkillRequest(String name, String category) {}
