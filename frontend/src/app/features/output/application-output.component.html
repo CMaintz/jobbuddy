@@ -261,6 +261,22 @@
         </div>
       }
 
+      <!-- Evidence shortfall: the one moment a user will happily answer questions about their work -->
+      @if (evidenceShortfall(); as score) {
+        <div class="p-4 border-b border-jb-border">
+          <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">{{ 'output.evidence.heading' | translate }}</div>
+          <div class="text-xs text-jb-text-mid leading-relaxed mb-2">
+            {{ 'output.evidence.body' | translate:{ score: score } }}
+          </div>
+          <button class="w-full flex items-center gap-2 px-2.5 py-[7px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs text-left cursor-pointer"
+            (click)="goToEvidence()">
+            <jb-icon name="bolt" [size]="11" class="text-jb-accent" />
+            <span>{{ 'output.evidence.cta' | translate }}</span>
+            <jb-icon name="arrow-right" [size]="11" class="ml-auto text-jb-text-dim" />
+          </button>
+        </div>
+      }
+
       <!-- Deterministic guard findings (unsupported metrics, filler phrases, retracted claims) -->
       @if (guardFindings().length) {
         <div class="p-4 border-b border-jb-border">

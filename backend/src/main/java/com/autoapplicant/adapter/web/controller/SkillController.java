@@ -1,13 +1,17 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.adapter.web.dto.user.RecordEvidenceRequest;
 import com.autoapplicant.adapter.web.dto.user.SkillConfirmationRequest;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.user.InterviewStory;
+import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.SkillCandidate;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.in.skills.GetSkillGapUseCase;
 import com.autoapplicant.port.in.skills.GetSkillTaxonomyUseCase;
 import com.autoapplicant.port.in.skills.ManageProfileSkillsUseCase;
+import com.autoapplicant.port.in.skills.GetEvidenceGapsUseCase;
 import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,16 +31,37 @@ public class SkillController {
     private final ManageProfileSkillsUseCase profileSkills;
     private final GetSkillGapUseCase skillGap;
     private final SuggestSkillCandidatesUseCase skillCandidates;
+    private final GetEvidenceGapsUseCase evidenceGaps;
     private final SecurityContextHelper secCtx;
 
     public SkillController(GetSkillTaxonomyUseCase taxonomy, ManageProfileSkillsUseCase profileSkills,
                            GetSkillGapUseCase skillGap, SuggestSkillCandidatesUseCase skillCandidates,
+                           GetEvidenceGapsUseCase evidenceGaps,
                            SecurityContextHelper secCtx) {
         this.taxonomy = taxonomy;
         this.profileSkills = profileSkills;
         this.skillGap = skillGap;
         this.skillCandidates = skillCandidates;
+        this.evidenceGaps = evidenceGaps;
         this.secCtx = secCtx;
+    }
+
+    @Operation(summary = "Claimed, in-demand skills with nothing to prove them",
+            description = "The skills the candidate lists, the postings they match ask for, and no "
+                    + "story in the bank supports. Derived on demand, so a gap closes the moment "
+                    + "evidence is written. Deterministic — no AI call.")
+    @GetMapping("/api/v1/skills/evidence-gaps")
+    public ResponseEntity<List<EvidenceGap>> evidenceGaps(@RequestParam(defaultValue = "5") int limit) {
+        return ResponseEntity.ok(evidenceGaps.evidenceGaps(secCtx.getCurrentUserId(), limit));
+    }
+
+    @Operation(summary = "Record evidence for one claimed skill",
+            description = "Stored as a STAR story tagged with the skill, so generation and "
+                    + "interview prep both draw on it.")
+    @PostMapping("/api/v1/skills/evidence")
+    public ResponseEntity<InterviewStory> recordEvidence(@RequestBody RecordEvidenceRequest req) {
+        return ResponseEntity.ok(evidenceGaps.recordEvidence(secCtx.getCurrentUserId(),
+                req.skillName(), req.situation(), req.action(), req.result()));
     }
 
     @Operation(summary = "Skills worth asking the user about, best first",

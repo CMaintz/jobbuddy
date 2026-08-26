@@ -21,6 +21,13 @@ export interface SkillConfirmation {
   yearsExperience?: number | null;
 }
 
+/** A claimed, in-demand skill with nothing in the profile to prove it. */
+export interface EvidenceGap {
+  skillName: string;
+  marketFrequency: number;
+  question: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SkillsApiService {
   private http = inject(HttpClient);
@@ -49,6 +56,15 @@ export class SkillsApiService {
   /** Answers a round of suggestions; returns the skills that were added. */
   confirmSkillCandidates(confirmations: SkillConfirmation[]): Observable<ProfileSkill[]> {
     return this.http.post<ProfileSkill[]>('/api/v1/skills/candidates/confirm', { confirmations });
+  }
+
+  getEvidenceGaps(limit = 5): Observable<EvidenceGap[]> {
+    return this.http.get<EvidenceGap[]>('/api/v1/skills/evidence-gaps', { params: { limit } });
+  }
+
+  /** Stores evidence as a STAR story tagged with the skill; the gap closes immediately. */
+  recordEvidence(skillName: string, situation: string, action: string, result: string): Observable<unknown> {
+    return this.http.post('/api/v1/skills/evidence', { skillName, situation, action, result });
   }
 
   getProfileSkills(): Observable<ProfileSkill[]> {

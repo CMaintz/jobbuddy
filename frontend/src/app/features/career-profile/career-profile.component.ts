@@ -10,7 +10,7 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { CareerTargetApiService, CareerTarget, CareerStage } from '../../core/api/career-target.api';
 import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retracted-claims.api';
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
-import { SkillsApiService, SkillCandidate, SkillConfirmation } from '../../core/api/skills.api';
+import { SkillsApiService, EvidenceGap, SkillCandidate, SkillConfirmation } from '../../core/api/skills.api';
 
 type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
@@ -77,6 +77,7 @@ export class CareerProfileComponent implements OnInit {
     this.reloadStories();
     this.reloadClaims();
     this.loadCandidates();
+    this.loadGaps();
   }
 
   // ── Career target ──
@@ -126,6 +127,53 @@ export class CareerProfileComponent implements OnInit {
       error: () => {
         this.answered.delete(candidate.name);
         this.candidates.set([candidate, ...this.candidates()]);
+        this.toast.set(this.translate.instant('careerProfile.skills.failed'));
+      },
+    });
+  }
+
+  // ── Evidence gaps ──────────────────────────────────────────
+  gaps = signal<EvidenceGap[]>([]);
+  /** The gap currently being answered; only one form is open at a time. */
+  openGap = signal<string | null>(null);
+  evidenceSituation = '';
+  evidenceAction = '';
+  evidenceResult = '';
+  savingEvidence = signal(false);
+
+  loadGaps(): void {
+    this.skillsApi.getEvidenceGaps(5).subscribe({
+      next: rows => this.gaps.set(rows),
+      error: () => this.gaps.set([]),
+    });
+  }
+
+  openEvidenceForm(gap: EvidenceGap): void {
+    this.openGap.set(gap.skillName);
+    this.evidenceSituation = '';
+    this.evidenceAction = '';
+    this.evidenceResult = '';
+  }
+
+  /** Evidence needs substance: context alone proves nothing a letter could cite. */
+  get canSaveEvidence(): boolean {
+    return this.evidenceAction.trim().length > 0 || this.evidenceResult.trim().length > 0;
+  }
+
+  saveEvidence(gap: EvidenceGap): void {
+    if (!this.canSaveEvidence || this.savingEvidence()) return;
+    this.savingEvidence.set(true);
+    this.skillsApi.recordEvidence(gap.skillName, this.evidenceSituation,
+      this.evidenceAction, this.evidenceResult).subscribe({
+      next: () => {
+        this.savingEvidence.set(false);
+        this.openGap.set(null);
+        this.gaps.set(this.gaps().filter(g => g.skillName !== gap.skillName));
+        this.reloadStories();   // it lands in the story bank too
+        this.toast.set(this.translate.instant('careerProfile.evidence.saved', { name: gap.skillName }));
+      },
+      error: () => {
+        this.savingEvidence.set(false);
         this.toast.set(this.translate.instant('careerProfile.skills.failed'));
       },
     });
