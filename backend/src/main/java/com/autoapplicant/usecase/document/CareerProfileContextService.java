@@ -102,9 +102,29 @@ public class CareerProfileContextService {
                 target != null ? target.northStar() : null,
                 target != null ? target.narrative() : null,
                 target != null && target.careerStage() != null ? target.careerStage().name() : null,
-                skillCategories
+                skillCategories,
+                formatAvailability(target)
         );
     }
+
+    /**
+     * Notice period and earliest start date as one line for the prompt, or null when the user
+     * stated neither — an absent line is the signal to the model that it must not claim any
+     * availability at all.
+     */
+    private static String formatAvailability(CareerTarget target) {
+        if (target == null) return null;
+        List<String> parts = new ArrayList<>();
+        if (target.noticePeriod() != null && !target.noticePeriod().isBlank()) {
+            parts.add("Notice period: " + target.noticePeriod().strip());
+        }
+        if (target.earliestStartDate() != null) {
+            parts.add("available from " + target.earliestStartDate().format(DATE_FORMAT));
+        }
+        return parts.isEmpty() ? null : String.join("; ", parts);
+    }
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH);
 
     private static String formatProficiency(LanguageProficiency p) {
         if (p == null) return "";

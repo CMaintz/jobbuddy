@@ -32,8 +32,6 @@ public class CareerTargetController {
     @Operation(summary = "Create or update the current user's career target")
     @PutMapping
     public ResponseEntity<CareerTarget> upsert(@Valid @RequestBody CareerTargetRequest req) {
-        return ResponseEntity.ok(useCase.upsert(secCtx.getCurrentUserId(),
-                req.targetArchetypes(), req.northStar(), req.narrative(), req.cultureRequirements(),
-                req.careerStage()));
+        return ResponseEntity.ok(useCase.upsert(secCtx.getCurrentUserId(), req.toDraft()));
     }
 }

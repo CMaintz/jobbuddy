@@ -42,6 +42,8 @@ export class CareerProfileComponent implements OnInit {
   narrative = '';
   culture: string[] = [];
   careerStage: CareerStage | '' = '';
+  noticePeriod = '';
+  earliestStartDate = '';
   savingTarget = signal(false);
   targetDirty = signal(false);
 
@@ -80,6 +82,8 @@ export class CareerProfileComponent implements OnInit {
     this.narrative = t.narrative ?? '';
     this.culture = t.cultureRequirements ?? [];
     this.careerStage = t.careerStage ?? '';
+    this.noticePeriod = t.noticePeriod ?? '';
+    this.earliestStartDate = t.earliestStartDate ?? '';
   }
 
   markTargetDirty(): void { this.targetDirty.set(true); }
@@ -93,6 +97,8 @@ export class CareerProfileComponent implements OnInit {
       narrative: this.narrative.trim() || undefined,
       cultureRequirements: this.culture,
       careerStage: this.careerStage || undefined,
+      noticePeriod: this.noticePeriod.trim() || undefined,
+      earliestStartDate: this.earliestStartDate || undefined,
     }).subscribe({
       next: t => {
         this.applyTarget(t);

@@ -42,6 +42,18 @@
       </div>
 
       <div class="py-3.5 border-b border-jb-border-faint">
+        <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.availability' | translate }}</div>
+        <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.availabilityDesc' | translate }}</div>
+        <div class="flex gap-2">
+          <input type="text" [(ngModel)]="noticePeriod" (ngModelChange)="markTargetDirty()"
+            [placeholder]="'careerProfile.target.noticePeriodPlaceholder' | translate"
+            class="flex-1 border border-jb-border rounded-md px-3 py-2 text-base" style="background: var(--jb-surface-2)" />
+          <input type="date" [(ngModel)]="earliestStartDate" (ngModelChange)="markTargetDirty()"
+            class="flex-1 border border-jb-border rounded-md px-3 py-2 text-base" style="background: var(--jb-surface-2)" />
+        </div>
+      </div>
+
+      <div class="py-3.5 border-b border-jb-border-faint">
         <div class="text-base font-medium mb-[4px]">{{ 'careerProfile.target.archetypes' | translate }}</div>
         <div class="text-xs text-jb-text-dim mb-2">{{ 'careerProfile.target.archetypesDesc' | translate }}</div>
         <jb-tag-input [value]="archetypes" (valueChange)="archetypes = $event; markTargetDirty()" [placeholder]="'careerProfile.target.archetypesPlaceholder' | translate" />
