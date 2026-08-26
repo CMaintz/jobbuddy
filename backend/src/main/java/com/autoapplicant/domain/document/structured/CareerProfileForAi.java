@@ -16,6 +16,12 @@ public record CareerProfileForAi(
         List<StructuredDocumentItem> education,
         List<StructuredDocumentItem> certifications,
         List<String> strengths,
+        /**
+         * Concrete proof points from the story bank — what the candidate did and what changed —
+         * each prefixed with the skill it evidences. These are what the letter's proof rules cite;
+         * without them the model can only assert. Identity-free: work, never who.
+         */
+        List<String> proofPoints,
         /** Declared target role-archetypes to frame generation toward. Identity-free. */
         List<String> targetArchetypes,
         /** One-line statement of the ideal next role / direction. */

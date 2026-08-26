@@ -205,6 +205,9 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
 - `AI_CLI_COMMAND` — CLI invoked for local-agent generation (default `claude -p`; prompt on stdin).
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
+- `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
+  restructuring a free-text answer). Off = template questions and the user's raw text; the feature
+  still works. See `skill_elicitation_design.md`.
 - `CLICHE_GUARD_ENABLED` / `CLICHE_GUARD_MODE` — deterministic Danish-floskel / AI-tell phrase check
   on generated documents (`warn` logs, `block` fails generation). Findings are also fed back into
   the reviewer pass to be rewritten. See `danish_market_playbook.md`.

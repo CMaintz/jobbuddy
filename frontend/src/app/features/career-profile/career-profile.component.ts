@@ -10,7 +10,8 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { CareerTargetApiService, CareerTarget, CareerStage } from '../../core/api/career-target.api';
 import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retracted-claims.api';
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
-import { SkillsApiService, EvidenceGap, SkillCandidate, SkillConfirmation } from '../../core/api/skills.api';
+import { SkillsApiService, EvidenceDraft, EvidenceGap, SkillCandidate, SkillConfirmation }
+  from '../../core/api/skills.api';
 
 type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
@@ -142,9 +143,42 @@ export class CareerProfileComponent implements OnInit {
   savingEvidence = signal(false);
 
   loadGaps(): void {
-    this.skillsApi.getEvidenceGaps(5).subscribe({
+    // Tailored questions when the AI is available; the endpoint falls back to templates itself.
+    this.skillsApi.getTailoredEvidenceGaps(5).subscribe({
       next: rows => this.gaps.set(rows),
-      error: () => this.gaps.set([]),
+      error: () => this.skillsApi.getEvidenceGaps(5).subscribe({
+        next: rows => this.gaps.set(rows),
+        error: () => this.gaps.set([]),
+      }),
+    });
+  }
+
+  /** What the user typed before it was restructured — one box beats three. */
+  evidenceAnswer = '';
+  drafting = signal(false);
+  draftWarnings = signal<string[]>([]);
+
+  /**
+   * Turns the free-text answer into the three fields, which the user then edits and saves. The
+   * draft is never saved directly: the model reorganises their words, they decide it is right.
+   */
+  draftEvidence(gap: EvidenceGap): void {
+    const answer = this.evidenceAnswer.trim();
+    if (!answer || this.drafting()) return;
+    this.drafting.set(true);
+    this.skillsApi.draftEvidence(gap.skillName, answer).subscribe({
+      next: (draft: EvidenceDraft) => {
+        this.evidenceSituation = draft.situation ?? '';
+        this.evidenceAction = draft.action ?? '';
+        this.evidenceResult = draft.result ?? '';
+        this.draftWarnings.set(draft.unsupportedFigures ?? []);
+        this.drafting.set(false);
+      },
+      // Losing what they typed would be the worst outcome; keep it in the action field.
+      error: () => {
+        this.evidenceAction = answer;
+        this.drafting.set(false);
+      },
     });
   }
 
@@ -153,6 +187,8 @@ export class CareerProfileComponent implements OnInit {
     this.evidenceSituation = '';
     this.evidenceAction = '';
     this.evidenceResult = '';
+    this.evidenceAnswer = '';
+    this.draftWarnings.set([]);
   }
 
   /** Evidence needs substance: context alone proves nothing a letter could cite. */

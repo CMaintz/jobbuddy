@@ -46,6 +46,24 @@
               </div>
               @if (openGap() === g.skillName) {
                 <div class="text-xs text-jb-text-dim mt-1.5 mb-2">{{ g.question }}</div>
+
+                <!-- One box: the user answers in their own words, the model sorts it out -->
+                <div class="flex gap-2 mb-2">
+                  <input type="text" [(ngModel)]="evidenceAnswer"
+                    [placeholder]="'careerProfile.evidence.answerPlaceholder' | translate"
+                    (keydown.enter)="draftEvidence(g)"
+                    class="flex-1 border border-jb-border rounded-md px-3 py-2 text-sm" style="background: var(--jb-surface-2)" />
+                  <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer whitespace-nowrap"
+                    [disabled]="drafting()" (click)="draftEvidence(g)">
+                    {{ (drafting() ? 'careerProfile.evidence.drafting' : 'careerProfile.evidence.draft') | translate }}
+                  </button>
+                </div>
+                @if (draftWarnings().length) {
+                  <div class="text-xs text-jb-danger leading-relaxed mb-2">
+                    {{ 'careerProfile.evidence.addedFigures' | translate:{ figures: draftWarnings().join(', ') } }}
+                  </div>
+                }
+
                 <div class="flex flex-col gap-2">
                   <input type="text" [(ngModel)]="evidenceSituation"
                     [placeholder]="'careerProfile.evidence.situation' | translate"

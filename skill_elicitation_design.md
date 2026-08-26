@@ -104,11 +104,31 @@ Passes 1 and 2 are free (SQL and a taxonomy walk). Pass 3 batches 3–5 skills p
 per session, and is resumable — and runs against the local-CLI provider like every other generation
 path, so a flat-fee subscription covers it.
 
-## Recommended first slice
+## Status: built
 
-1. Passes 1 and 2 with **no AI at all**, writing to `profile_skill`. Immediately useful, and it
-   makes the empty columns real.
-2. The evaluator-triggered prompt from mitigation 2 — a single question after a low-evidence
-   generation, writing one `interview_story`.
-3. Only then the batched elicitation flow, once there is evidence in the fixtures that the score
-   actually moves.
+All three steps of the recommended slice are implemented.
+
+1. **Passes 1 and 2, no AI** — `SkillCandidateService` + `GET /api/v1/skills/candidates`, answered
+   in the career-profile Skills tab. Declines are remembered (V067); skips return.
+2. **Evidence gaps and the trigger** — `EvidenceGapService` derives claimed ∩ in-demand ∩ unproven
+   skills; the output screen offers the questions when a delivered letter scores under 60 on the
+   evidence dimension.
+3. **The AI pass** — `EvidenceElicitationService` tailors the questions (one call per batch) and
+   restructures a free-text answer into STAR fields for the user to confirm. Both degrade to
+   templates and raw text when the provider is off or failing.
+
+**The link that made it work:** recorded stories were not reaching generation at all.
+`CareerProfileForAi.proofPoints` now carries them, and the targeting rules prefer them over a
+rephrased bullet. Without that, elicitation would have changed nothing about what gets written.
+
+**The measurement**, from `EvidenceLoopTest`: holding one letter fixed and changing only the
+profile, the evidence dimension goes from **42 to 82** once the elicited story is in the profile,
+and the unsupported-figure finding clears. This is not tautological — `evidence` counts terms the
+document shares with the profile, so a letter naming a real project scores nothing for it until the
+profile can back it.
+
+**Guardrail worth knowing about:** the drafting step runs `DocumentFactGuard` over the model's
+output against the user's own answer, so a figure the model added is reported to the user rather
+than quietly saved. Fixing the first false positive it produced (a user typing "40 min", the model
+expanding it to "40 minutes") added abbreviation synonyms to the guard, which benefits the letter
+path too.

@@ -359,6 +359,9 @@ public class PromptCompositionBuilder {
             - Quantified achievements and measurable outcomes ALREADY IN the profile are the \
             authoritative proof points — surface the ones most relevant to this posting first. Never \
             invent, round up, or embellish a metric that is not in the profile.
+            - The profile's "proofPoints" are the candidate's own account of what they did and what \
+            changed. Prefer them over a rephrased bullet when one fits the posting: they are the \
+            most defensible material available, because the candidate wrote them to be asked about.
             - Ground every specific match claim in a concrete profile item (a named role, project, or \
             skill), never a vague assertion.
             - If the profile declares a careerStage, frame for it. For STUDENT / NEW_GRAD / \
