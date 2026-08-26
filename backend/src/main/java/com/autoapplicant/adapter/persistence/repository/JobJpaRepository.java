@@ -33,6 +33,18 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
 
     long countByIsActiveTrue();
 
+    /**
+     * Postings in the outreach window, newest first. Aggregation happens in the adapter rather
+     * than in SQL because the interesting column (technologies) is a text[] that JPQL cannot
+     * group over; the Pageable cap keeps that honest on a large jobs table.
+     */
+    @Query("""
+            SELECT j FROM JobEntity j
+            WHERE j.companyId IS NOT NULL AND (j.postedAt >= :since OR j.createdAt >= :since)
+            ORDER BY j.postedAt DESC NULLS LAST
+            """)
+    List<JobEntity> findForCompanyAggregation(@Param("since") Instant since, Pageable pageable);
+
     // Manual jobs are excluded: no crawler ever refreshes their lastSeenAt, so staleness means nothing for them.
     @Query("SELECT j.id FROM JobEntity j WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
     List<UUID> findStaleActiveJobIds(@Param("cutoff") Instant cutoff);

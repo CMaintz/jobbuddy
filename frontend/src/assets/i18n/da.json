@@ -1082,6 +1082,8 @@
     }
   },
   "companies": {
+    "view": {"all": "Alle", "targets": "Uopfordret"},
+    "targets": {"intro": "Virksomheder der ansætter folk med dine kompetencer. Omkring halvdelen af danske stillinger bliver aldrig slået op — det er dem her, en uopfordret ansøgning er til.", "includeHiringNow": "Vis også virksomheder der søger lige nu", "empty": "Ingen emner endnu. Tilføj kompetencer og teknologier til din profil, og lad crawleren opbygge lidt ansættelseshistorik.", "write": "Skriv uopfordret"},
     "searchPlaceholder": "Søg virksomheder…",
     "count": "{{count}} virksomheder",
     "loading": "Indlæser virksomheder…",

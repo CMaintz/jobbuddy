@@ -5,11 +5,67 @@
           class="border-none bg-none outline-none text-jb-text text-sm flex-1" />
       </div>
       <ng-container jb-topbar-actions>
-        <div class="text-xs text-jb-text-dim">{{ 'companies.count' | translate:{ count: companies().length } }}</div>
+        <div class="flex items-center gap-1 mr-2">
+          <button class="px-2.5 py-[5px] rounded-md text-xs border cursor-pointer"
+            [class]="view() === 'all' ? 'border-jb-accent-border text-jb-text bg-jb-surface-2' : 'border-jb-border text-jb-text-dim bg-transparent'"
+            (click)="setView('all')">{{ 'companies.view.all' | translate }}</button>
+          <button class="px-2.5 py-[5px] rounded-md text-xs border cursor-pointer"
+            [class]="view() === 'targets' ? 'border-jb-accent-border text-jb-text bg-jb-surface-2' : 'border-jb-border text-jb-text-dim bg-transparent'"
+            (click)="setView('targets')">{{ 'companies.view.targets' | translate }}</button>
+        </div>
+        <div class="text-xs text-jb-text-dim">{{ 'companies.count' | translate:{ count: view() === 'targets' ? targets().length : companies().length } }}</div>
       </ng-container>
     </jb-topbar>
 
     <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_340px]">
+      <!-- Outreach targets: companies worth an unsolicited application -->
+      @if (view() === 'targets') {
+        <div class="overflow-y-auto border-r border-jb-border jb-scroll">
+          <div class="p-[12px_16px] border-b border-jb-border-faint">
+            <div class="text-xs text-jb-text-mid leading-relaxed mb-2">{{ 'companies.targets.intro' | translate }}</div>
+            <label class="flex items-center gap-2 text-xs text-jb-text-dim cursor-pointer">
+              <input type="checkbox" [(ngModel)]="includeHiringNow" (ngModelChange)="loadTargets()" />
+              {{ 'companies.targets.includeHiringNow' | translate }}
+            </label>
+          </div>
+          @if (targetsLoading()) {
+            <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'companies.loading' | translate }}</div>
+          } @else if (targets().length === 0) {
+            <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'companies.targets.empty' | translate }}</div>
+          } @else {
+            @for (t of targets(); track t.companyId) {
+              <div class="p-[12px_16px] border-b border-jb-border-faint">
+                <div class="flex items-center gap-3">
+                  <jb-company-mark [name]="t.companyName" [size]="32" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-base font-medium truncate">{{ t.companyName }}</div>
+                    <div class="text-xs text-jb-text-dim truncate">
+                      {{ t.matchedTechnologies.join(' · ') }}
+                    </div>
+                  </div>
+                  <span class="mono text-sm" [style.color]="t.score >= 70 ? 'var(--jb-success)' : 'var(--jb-text-dim)'">{{ t.score }}</span>
+                </div>
+                <div class="flex flex-col gap-1 mt-2 ml-[44px]">
+                  @for (reason of t.reasons; track reason) {
+                    <div class="flex items-start gap-1.5 text-xs text-jb-text-mid">
+                      <jb-icon name="check-circle" [size]="10" class="text-jb-accent mt-[2px] flex-shrink-0" />
+                      <span class="leading-relaxed">{{ reason }}</span>
+                    </div>
+                  }
+                </div>
+                <div class="flex items-center gap-2 mt-2 ml-[44px]">
+                  <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
+                    (click)="writeUnsolicited(t)">{{ 'companies.targets.write' | translate }}</button>
+                  @if (t.website) {
+                    <a class="jb-link text-xs" [href]="t.website" target="_blank" rel="noopener">{{ 'companies.website' | translate }}</a>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      } @else {
+
       <!-- List -->
       <div class="overflow-y-auto border-r border-jb-border jb-scroll">
         @if (loading()) {
@@ -36,6 +92,7 @@
           }
         }
       </div>
+      }
 
       <!-- Detail -->
       <div class="hidden md:block overflow-y-auto p-5 jb-scroll">

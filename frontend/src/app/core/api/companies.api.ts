@@ -17,6 +17,18 @@ export interface Company {
   isRecruitingAgency: boolean;
 }
 
+/** A company worth an unsolicited application, with the reasons it was ranked where it was. */
+export interface OutreachTarget {
+  companyId: string;
+  companyName: string;
+  website: string | null;
+  score: number;
+  reasons: string[];
+  lastPostedAt: string | null;
+  matchedTechnologies: string[];
+  hasOpenRole: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CompaniesApiService {
   private http = inject(HttpClient);
@@ -27,6 +39,14 @@ export class CompaniesApiService {
       .set('page', page)
       .set('size', size);
     return this.http.get<Company[]>('/api/v1/companies', { params });
+  }
+
+  /** Ranked unsolicited-application targets. Companies hiring right now are excluded by default. */
+  outreachTargets(limit = 20, includeHiringNow = false): Observable<OutreachTarget[]> {
+    const params = new HttpParams()
+      .set('limit', limit)
+      .set('includeHiringNow', includeHiringNow);
+    return this.http.get<OutreachTarget[]>('/api/v1/companies/outreach-targets', { params });
   }
 
   getById(id: string): Observable<Company> {
