@@ -12,6 +12,10 @@ export interface CareerTarget {
   narrative?: string;
   cultureRequirements?: string[];
   careerStage?: CareerStage;
+  /** Free text as the user states it: "3 måneder", "1 month", "negotiable". */
+  noticePeriod?: string;
+  /** ISO date (yyyy-MM-dd) — the first day the candidate could start. */
+  earliestStartDate?: string;
   updatedAt?: string;
 }
 

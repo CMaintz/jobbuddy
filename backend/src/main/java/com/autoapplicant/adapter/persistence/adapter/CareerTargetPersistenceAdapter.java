@@ -35,13 +35,15 @@ public class CareerTargetPersistenceAdapter implements CareerTargetRepositoryPor
         e.setNarrative(target.narrative());
         e.setCultureRequirements(toArray(target.cultureRequirements()));
         e.setCareerStage(target.careerStage() != null ? target.careerStage().name() : null);
+        e.setNoticePeriod(target.noticePeriod());
+        e.setEarliestStartDate(target.earliestStartDate());
         return toDomain(repo.save(e));
     }
 
     private CareerTarget toDomain(CareerTargetEntity e) {
         return new CareerTarget(e.getUserId(), toList(e.getTargetArchetypes()), e.getNorthStar(),
                 e.getNarrative(), toList(e.getCultureRequirements()), parseStage(e.getCareerStage()),
-                e.getUpdatedAt());
+                e.getNoticePeriod(), e.getEarliestStartDate(), e.getUpdatedAt());
     }
 
     private static CareerStage parseStage(String value) {

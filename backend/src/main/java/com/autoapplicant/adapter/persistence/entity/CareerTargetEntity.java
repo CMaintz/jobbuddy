@@ -32,6 +32,12 @@ public class CareerTargetEntity {
     @Column(name = "career_stage")
     private String careerStage;
 
+    @Column(name = "notice_period", columnDefinition = "text")
+    private String noticePeriod;
+
+    @Column(name = "earliest_start_date")
+    private java.time.LocalDate earliestStartDate;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
@@ -50,6 +56,10 @@ public class CareerTargetEntity {
     public void setCultureRequirements(String[] cultureRequirements) { this.cultureRequirements = cultureRequirements; }
     public String getCareerStage() { return careerStage; }
     public void setCareerStage(String careerStage) { this.careerStage = careerStage; }
+    public String getNoticePeriod() { return noticePeriod; }
+    public void setNoticePeriod(String noticePeriod) { this.noticePeriod = noticePeriod; }
+    public java.time.LocalDate getEarliestStartDate() { return earliestStartDate; }
+    public void setEarliestStartDate(java.time.LocalDate earliestStartDate) { this.earliestStartDate = earliestStartDate; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

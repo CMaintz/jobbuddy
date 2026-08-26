@@ -23,5 +23,11 @@ public record CareerProfileForAi(
         /** Self-declared career stage (e.g. NEW_GRAD, SENIOR) driving stage-appropriate framing. */
         String careerStage,
         /** Skill name → category (e.g. "Java" → "Languages"), so the CV can group skills. */
-        java.util.Map<String, String> skillCategories
+        java.util.Map<String, String> skillCategories,
+        /**
+         * Notice period and/or earliest start date, pre-rendered as one line
+         * ("Notice period: 3 måneder; available from 1 Sep 2026"). Null when the user stated
+         * neither. Identity-free — it says when, never who.
+         */
+        String availability
 ) {}

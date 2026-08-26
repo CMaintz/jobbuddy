@@ -256,7 +256,8 @@ public class PromptCompositionBuilder {
             - A short company-fit paragraph connecting the candidate's direction to the employer; \
             ground any company reference in the Verified Company Facts when provided.
             - Close with a brief, confident call to action.
-            Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.""";
+            Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.
+            If — and only if — the profile carries an "availability" value, state it as one short             factual clause near the close (employers routinely ask, and a candidate who volunteers             it reads as someone who has thought the move through). Never invent a notice period or             start date the profile does not state.""";
 
     /** Word/paragraph target for prose letters, by the user's length preference. */
     private static String letterLengthGuidance(String pref) {
