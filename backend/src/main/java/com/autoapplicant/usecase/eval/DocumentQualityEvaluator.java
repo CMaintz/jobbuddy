@@ -160,10 +160,17 @@ public class DocumentQualityEvaluator {
         if (!judgeable(text)) {
             return new QualityScore.Dimension(FACTS, 0, 0, "Nothing to judge.");
         }
-        List<String> invented = factGuard.audit(text, profileJson != null ? profileJson : "").inventedMetrics();
-        int score = invented.isEmpty() ? 100 : Math.max(0, 100 - 50 * invented.size());
-        return new QualityScore.Dimension(FACTS, score, 3,
-                invented.isEmpty() ? "Every figure traces to the profile." : "Unsupported: " + invented);
+        DocumentFactGuard.FactAudit audit = factGuard.audit(text, profileJson != null ? profileJson : "");
+        List<String> invented = audit.inventedMetrics();
+        List<String> unverified = audit.unverifiedMetrics();
+        // A number the profile does not contain at all is a different failure from one it contains
+        // under another noun, and they should not cost the same.
+        int score = Math.max(0, 100 - 50 * invented.size() - 15 * unverified.size());
+        String detail = invented.isEmpty() && unverified.isEmpty()
+                ? "Every figure traces to the profile."
+                : (invented.isEmpty() ? "" : "Unsupported: " + invented + ". ")
+                  + (unverified.isEmpty() ? "" : "Counting something else: " + unverified + ".");
+        return new QualityScore.Dimension(FACTS, score, 3, detail.strip());
     }
 
     /** Distance from the requested word target; the band is generous, the falloff is not. */

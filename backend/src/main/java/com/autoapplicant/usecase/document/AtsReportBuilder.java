@@ -73,6 +73,10 @@ public class AtsReportBuilder {
                 ? new AtsCheck("fact_guard", msg.metricsLabel(), "PASS", msg.metricsPass())
                 : new AtsCheck("fact_guard", msg.metricsLabel(), "FAIL",
                         msg.metricsFail(findings.unsupportedMetrics())));
+        if (!findings.unverifiedMetrics().isEmpty()) {
+            result.add(new AtsCheck("unverified_metrics", msg.unverifiedLabel(), "WARN",
+                    msg.unverifiedWarn(findings.unverifiedMetrics())));
+        }
         result.add(findings.fillerPhrases().isEmpty()
                 ? new AtsCheck("filler_phrases", msg.fillerLabel(), "PASS", msg.fillerPass())
                 : new AtsCheck("filler_phrases", msg.fillerLabel(), "WARN",

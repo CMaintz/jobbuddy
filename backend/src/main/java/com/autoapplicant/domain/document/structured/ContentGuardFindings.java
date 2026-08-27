@@ -13,17 +13,25 @@ import java.util.List;
 public record ContentGuardFindings(
         List<String> unsupportedMetrics,
         List<String> retractedClaims,
-        List<String> fillerPhrases) {
+        List<String> fillerPhrases,
+        /**
+         * Figures whose number is in the profile but attached to something else — usually the
+         * model renaming what was counted. Worth showing, not worth failing on.
+         */
+        List<String> unverifiedMetrics) {
 
-    public static final ContentGuardFindings NONE = new ContentGuardFindings(List.of(), List.of(), List.of());
+    public static final ContentGuardFindings NONE =
+            new ContentGuardFindings(List.of(), List.of(), List.of(), List.of());
 
     public ContentGuardFindings {
         unsupportedMetrics = unsupportedMetrics != null ? List.copyOf(unsupportedMetrics) : List.of();
         retractedClaims = retractedClaims != null ? List.copyOf(retractedClaims) : List.of();
         fillerPhrases = fillerPhrases != null ? List.copyOf(fillerPhrases) : List.of();
+        unverifiedMetrics = unverifiedMetrics != null ? List.copyOf(unverifiedMetrics) : List.of();
     }
 
     public boolean clean() {
-        return unsupportedMetrics.isEmpty() && retractedClaims.isEmpty() && fillerPhrases.isEmpty();
+        return unsupportedMetrics.isEmpty() && retractedClaims.isEmpty() && fillerPhrases.isEmpty()
+                && unverifiedMetrics.isEmpty();
     }
 }

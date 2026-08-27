@@ -54,23 +54,34 @@ public class GeneratedContentGuards {
      * a finding the user never sees is a finding that never gets fixed.
      */
     public ContentGuardFindings verify(UUID userId, String body, String sourceProfileJson, String documentType) {
+        DocumentFactGuard.FactAudit factAudit = auditFacts(body, sourceProfileJson, documentType);
         return new ContentGuardFindings(
-                applyFactGuard(body, sourceProfileJson, documentType),
+                factAudit.inventedMetrics(),
                 applyRetractedClaimsGuard(userId, body, documentType),
-                applyClicheGuard(body, documentType));
+                applyClicheGuard(body, documentType),
+                factAudit.unverifiedMetrics());
     }
 
-    private List<String> applyFactGuard(String body, String sourceProfileJson, String documentType) {
-        if (!factGuardEnabled) return List.of();
+    /**
+     * Runs the fact gate. Only the invented tier can block: a figure the profile contains under a
+     * different noun is nearly always a rewording, and failing generation on one would make the
+     * strict mode unusable.
+     */
+    private DocumentFactGuard.FactAudit auditFacts(String body, String sourceProfileJson, String documentType) {
+        if (!factGuardEnabled) return new DocumentFactGuard.FactAudit(List.of(), List.of());
         DocumentFactGuard.FactAudit audit = factGuard.audit(body, sourceProfileJson);
-        if (audit.clean()) return List.of();
+        if (!audit.unverifiedMetrics().isEmpty()) {
+            log.info("Fact guard: figure(s) in {} counting something the profile attaches elsewhere: {}",
+                    label(documentType), audit.unverifiedMetrics());
+        }
+        if (audit.inventedMetrics().isEmpty()) return audit;
         String msg = "Fact guard: metric claim(s) not supported by the profile in "
                 + label(documentType) + ": " + audit.inventedMetrics();
         if ("block".equalsIgnoreCase(factGuardMode)) {
             throw new IllegalStateException(msg + " — generation blocked (app.ai.fact-guard.mode=block)");
         }
         log.warn(msg);
-        return audit.inventedMetrics();
+        return audit;
     }
 
     private List<String> applyRetractedClaimsGuard(UUID userId, String body, String documentType) {

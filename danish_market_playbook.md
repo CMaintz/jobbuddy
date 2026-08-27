@@ -89,6 +89,36 @@ and 95 vs 47 (English). Everything runs offline — no API calls in CI.
 The evaluator scores mechanics, not merit: a document can score 95 and still be dull. Use it to
 catch regressions, not to certify quality.
 
+## How the fact guard survives rewording
+
+The guard compares metric claims between the document and the profile. Everything below exists
+because a truthful sentence should never be flagged, and every one of these was a real false
+positive before it was fixed:
+
+| The model writes | The profile says | Why it used to fail |
+|---|---|---|
+| `50k users` | `50,000 users` | Magnitude suffixes are now expanded before comparison |
+| `40 minutes` | `40 min` | Abbreviations fold to the canonical unit |
+| `16.000 brugere` | `16,000 users` | Danish and English nouns fold to one token — the systematic one, since the profile is often English and the letter Danish |
+| `3 years` | `3 års erfaring` | Same folding, via `år`/`års` → `years` |
+| `30 services` | `thirty services` | Number words fold to digits **only when a metric noun follows directly**, so "one of the teams" never becomes a claim |
+| `550.000 kr.` | `DKK 550.000` | Danish currency is extracted at all now; it previously went unchecked in either direction |
+
+Comparison happens on the normalized form; **findings quote the document's own spelling**, so a
+user who wrote `50k users` is never told that `50000 users` is unsupported.
+
+Findings come in two tiers, because they are not the same failure:
+
+- **Invented** — the number appears nowhere in the profile. No innocent explanation; this is what
+  `fact-guard.mode=block` blocks and what the ATS report shows as FAIL.
+- **Unverified** — the number *is* in the profile but attached to something else ("30 teams" where
+  the profile says "30 services"). Usually a rewording, occasionally a real slip: shown as WARN,
+  never blocking, and a lighter penalty in the quality score.
+
+What it still cannot do: catch a rewording to a noun outside the list (`30 microservices` is simply
+not extracted). That direction fails safe — an unrecognised noun produces no claim and therefore no
+accusation — but it does mean the guard's coverage is only as wide as `METRIC_NOUNS`.
+
 ## Not yet done (ranked)
 
 1. **The follow-up is manual.** `outreach_contact.follow_up_due` is set and shown, and due items
