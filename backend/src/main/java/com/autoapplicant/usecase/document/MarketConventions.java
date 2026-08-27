@@ -46,6 +46,29 @@ public final class MarketConventions {
     }
 
     /**
+     * Conventions for short outreach — a recruiter message or a follow-up. Separate from the letter
+     * rules because the medium is different: there is no page to fill and no structure to follow,
+     * and the failure mode is sounding like sales rather than sounding generic.
+     */
+    public static String outreachRules(Market market) {
+        return market == Market.DENMARK ? DANISH_OUTREACH_RULES : "";
+    }
+
+    /** Conventions for interview preparation and mock interviews. */
+    public static String interviewRules(Market market) {
+        return market == Market.DENMARK ? DANISH_INTERVIEW_RULES : "";
+    }
+
+    /**
+     * How to read a posting from this market when judging fit. Danish postings separate what is
+     * required from what is merely welcome, in language that is easy to flatten into one list —
+     * and flattening it produces both false hope and false despair.
+     */
+    public static String jobReadingRules(Market market) {
+        return market == Market.DENMARK ? DANISH_JOB_READING_RULES : "";
+    }
+
+    /**
      * Danish letter conventions. Sourced from Danish career-advisory guidance (Ase, Djøf, HK,
      * Ballisager, WorkinDenmark): the screening is brutally fast, the opener and the
      * CV-retelling trap are the two most-cited rejection reasons, and the register is plainer
@@ -75,6 +98,56 @@ public final class MarketConventions {
             writing. When writing in Danish, sign off "Med venlig hilsen".
             - Hard ceiling: one A4 page (~350–400 words, about 2.500 characters). Danish readers treat \
             a longer letter as a failure to prioritise.""";
+
+    /**
+     * How a Danish posting encodes its requirements. The distinction is grammatical, not sectional:
+     * the must-haves and the nice-to-haves are often in the same bullet list.
+     */
+    private static final String DANISH_JOB_READING_RULES = """
+            ## Reading a Danish Posting
+            Separate what the posting requires from what it merely welcomes before judging fit:
+            - Requirements are phrased as "du skal", "det er et krav", "du har X års erfaring med", \
+            or a bare "du har".
+            - Preferences are phrased as "det er en fordel", "gerne", "vi ser gerne at", \
+            "erfaring med X er et plus", "kendskab til". These are not requirements, and a missing \
+            one is not a gap worth reporting as though it were.
+            Weight the score on the requirements. Report a missing preference as an opportunity, not \
+            a failure — treating both alike either scares a qualified candidate off or reassures an \
+            unqualified one.
+            Danish postings also frequently state the working language explicitly ("dansk er et krav", \
+            "we work in English"). When they do, treat it as a hard requirement and say so plainly.""";
+
+    /**
+     * Danish outreach conventions. The register that works in a Danish inbox is closer to a
+     * colleague's note than to a pitch: a Dane reads enthusiasm as selling and discounts it.
+     */
+    private static final String DANISH_OUTREACH_RULES = """
+            ## Danish Market Conventions
+            - Plain, direct, and short enough to read on a phone without scrolling. A Danish reader \
+            discounts enthusiasm and responds to something concrete.
+            - No opening pleasantries ("I hope this finds you well"), no apology for writing, and no \
+            praise of the company. Say why you are writing in the first line.
+            - Informal "du" — first names are normal at every level, and formality reads as distance.
+            - One concrete thing the candidate has done, with its result, beats a summary of their \
+            background. Where there is no result to give, say what became different.
+            - Propose a small, specific next step (a short call), not an open offer to "connect".""";
+
+    /**
+     * Danish interview conventions. The flat hierarchy changes what a good answer sounds like:
+     * pushing back is expected, and self-promotion that would land elsewhere reads as a warning.
+     */
+    private static final String DANISH_INTERVIEW_RULES = """
+            ## Danish Interview Conventions
+            - A Danish interview is a conversation between near-equals, not an examination. The \
+            candidate is expected to ask real questions back; asking none reads as disinterest.
+            - Flat hierarchy means disagreement is expected. A question about handling a manager or a \
+            colleague being wrong is testing whether the candidate would say so, not whether they comply.
+            - Answers should be concrete and modest. Claiming sole credit for team work is a warning \
+            sign here; "we", with a clear account of the candidate's own part, is the register that works.
+            - Everything in the application will be probed. Prepare the candidate to defend each \
+            specific claim they made, and to say plainly when something was a team result or a gap.
+            - Team, how decisions get made, and work-life balance are normal candidate questions in \
+            Denmark rather than red flags. So is asking about pay.""";
 
     /**
      * Danish CV conventions. Danish CVs are shorter, plainer, and more literal than the US resumes

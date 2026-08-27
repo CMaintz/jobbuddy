@@ -111,6 +111,19 @@ class PromptCompositionBuilderTest {
     }
 
     @Test
+    void shortOutreachGetsOutreachConventionsNotLetterOnes() {
+        PromptComposition recruiterMessage = builder.composeStructuredApplicationPrompt(
+                "RECRUITER_MESSAGE", "{}", new PostingContext(DANISH_POSTING, "Denmark", null),
+                null, null, null, null, null, List.of(), null, "STANDARD");
+
+        assertThat(recruiterMessage.userPromptTemplate())
+                .contains("## Danish Market Conventions")
+                // The medium is different: no page structure, and no one-page ceiling.
+                .contains("read on a phone")
+                .doesNotContain("## Structure");
+    }
+
+    @Test
     void fixedGuardrailsSurviveEveryPath() {
         for (PromptComposition c : List.of(letter(DANISH_POSTING, null, null), cv(DANISH_POSTING, null, null))) {
             assertThat(c.userPromptTemplate()).contains("## Honesty & ATS Rules", "## Targeting & Proof Rules");

@@ -28,8 +28,23 @@ class MarketConventionsTest {
 
     @Test
     void genericMarketContributesNoRules() {
-        assertThat(MarketConventions.letterRules(MarketConventions.Market.GENERIC)).isEmpty();
-        assertThat(MarketConventions.cvRules(MarketConventions.Market.GENERIC)).isEmpty();
+        // Every surface: a market with no rules must add nothing anywhere, not just to letters.
+        MarketConventions.Market generic = MarketConventions.Market.GENERIC;
+        assertThat(MarketConventions.letterRules(generic)).isEmpty();
+        assertThat(MarketConventions.cvRules(generic)).isEmpty();
+        assertThat(MarketConventions.outreachRules(generic)).isEmpty();
+        assertThat(MarketConventions.interviewRules(generic)).isEmpty();
+        assertThat(MarketConventions.jobReadingRules(generic)).isEmpty();
+    }
+
+    @Test
+    void everySurfaceHasDanishRules() {
+        MarketConventions.Market denmark = MarketConventions.Market.DENMARK;
+        assertThat(MarketConventions.outreachRules(denmark)).contains("du");
+        assertThat(MarketConventions.interviewRules(denmark)).contains("Flat hierarchy");
+        assertThat(MarketConventions.jobReadingRules(denmark))
+                .contains("du skal")            // the requirement phrasing
+                .contains("det er en fordel");  // …and the preference phrasing it is confused with
     }
 
     @Test
