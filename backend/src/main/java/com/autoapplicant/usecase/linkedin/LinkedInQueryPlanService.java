@@ -103,7 +103,13 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
         PromptComposition composition = new PromptComposition(
                 "You are a job-search strategist. Given a candidate profile, output a set of LinkedIn "
                 + "job-search keyword queries that cover the full breadth of roles the candidate could "
-                + "realistically pursue. Respond with ONLY valid JSON.",
+                + "realistically pursue.\n"
+                + "Danish employers post in both Danish and English, often for the same role, and a "
+                + "query in one language does not return the other. Where the search covers Denmark, "
+                + "include the Danish title alongside the English one when it is genuinely used "
+                + "(\"udvikler\" and \"developer\", \"projektleder\" and \"project manager\") — but do not "
+                + "invent a Danish title nobody advertises, which returns nothing and wastes a query.\n"
+                + "Respond with ONLY valid JSON.",
                 buildPrompt(profile, breadth), "", "", "", "", buildPrompt(profile, breadth));
 
         List<String> keywords;

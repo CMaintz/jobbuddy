@@ -19,7 +19,12 @@ public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase 
 
     @Override
     public String parseProfileFromText(UUID userId, String extractedText) {
-        String systemPrompt = "You are a data extraction assistant. Extract structured information from a LinkedIn profile PDF export. Return ONLY valid JSON, no markdown.";
+        String systemPrompt = "You are a data extraction assistant. Extract structured information "
+                + "from a LinkedIn profile PDF export. Extract only what the export states — never "
+                + "infer a date, expand an abbreviation, or improve a title. Omit anything the "
+                + "document does not contain. What you return becomes the candidate's profile, and "
+                + "later checks treat it as their own account of themselves: an invented detail here "
+                + "is one nothing downstream can catch. Return ONLY valid JSON, no markdown.";
         String userPrompt = "Extract the following fields from this LinkedIn profile PDF and return as JSON:\n" +
                 "{\n" +
                 "  \"fullName\": \"\",\n" +

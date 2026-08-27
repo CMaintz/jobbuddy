@@ -41,6 +41,14 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
             Example: [{"question":"Tell me about a time you led a team.","category":"BEHAVIORAL"}]
             """;
 
+    /** Questions are only useful if they are the ones this market actually asks. */
+    private String questionSystemPrompt(Job job) {
+        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
+                JobLanguageDetector.detect(job != null ? job.descriptionClean() : null),
+                job != null ? job.country() : null));
+        return marketRules.isBlank() ? SYSTEM_PROMPT : SYSTEM_PROMPT + "\n" + marketRules;
+    }
+
     private final InterviewQuestionRepositoryPort repo;
     private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
@@ -102,8 +110,9 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 "Generate %d interview questions for the following job. Focus on the specific skills, technologies, and responsibilities mentioned.\n\nJob description:\n%s",
                 count, jobDescription);
 
+        Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
         PromptComposition composition = new PromptComposition(
-                SYSTEM_PROMPT, userPrompt, "", "", "", "", userPrompt);
+                questionSystemPrompt(job), userPrompt, "", "", "", "", userPrompt);
 
         String json = aiProvider.generateJson(composition);
         List<InterviewQuestion> generated = parseQuestions(json, jobId, userId);
