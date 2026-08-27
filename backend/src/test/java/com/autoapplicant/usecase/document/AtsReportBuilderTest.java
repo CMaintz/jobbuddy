@@ -30,7 +30,7 @@ class AtsReportBuilderTest {
     @Test
     void unsupportedMetricsFailWithTheOffendingClaims() {
         AtsReport report = builder.forCoverage(50, List.of(), List.of(), "ATS",
-                new ContentGuardFindings(List.of("94772 users"), List.of(), List.of()), null);
+                new ContentGuardFindings(List.of("94772 users"), List.of(), List.of(), List.of()), null);
         assertThat(check(report, "fact_guard")).get().satisfies(c -> {
             assertThat(c.status()).isEqualTo("FAIL");
             assertThat(c.detail()).contains("94772 users");
@@ -40,7 +40,7 @@ class AtsReportBuilderTest {
     @Test
     void fillerPhrasesWarnRatherThanFail() {
         AtsReport report = builder.basic("body", "ATS",
-                new ContentGuardFindings(List.of(), List.of(), List.of("proven track record")), null);
+                new ContentGuardFindings(List.of(), List.of(), List.of("proven track record"), List.of()), null);
         assertThat(check(report, "filler_phrases")).get().satisfies(c -> {
             assertThat(c.status()).isEqualTo("WARN");
             assertThat(c.detail()).contains("proven track record");
@@ -50,14 +50,14 @@ class AtsReportBuilderTest {
     @Test
     void retractedClaimsAppearOnlyWhenViolated() {
         AtsReport report = builder.basic("body", "ATS",
-                new ContentGuardFindings(List.of(), List.of("led a team of 20"), List.of()), null);
+                new ContentGuardFindings(List.of(), List.of("led a team of 20"), List.of(), List.of()), null);
         assertThat(check(report, "retracted_claims")).get().extracting(AtsCheck::status).isEqualTo("FAIL");
     }
 
     @Test
     void findingListsAreCappedForDisplay() {
         List<String> many = List.of("a", "b", "c", "d", "e", "f", "g");
-        AtsReport report = builder.basic("body", "ATS", new ContentGuardFindings(many, List.of(), List.of()), null);
+        AtsReport report = builder.basic("body", "ATS", new ContentGuardFindings(many, List.of(), List.of(), List.of()), null);
         assertThat(check(report, "fact_guard")).get().extracting(AtsCheck::detail)
                 .asString().contains("(+2 more)").doesNotContain("\"g\"");
     }
@@ -65,13 +65,26 @@ class AtsReportBuilderTest {
     @Test
     void aDanishDocumentGetsDanishDiagnostics() {
         AtsReport danish = builder.basic("body", "ATS",
-                new ContentGuardFindings(List.of(), List.of(), List.of("teamplayer")), "Danish");
+                new ContentGuardFindings(List.of(), List.of(), List.of("teamplayer"), List.of()), "Danish");
         assertThat(check(danish, "filler_phrases")).get().satisfies(c -> {
             assertThat(c.label()).isEqualTo("Floskler");
             assertThat(c.detail()).contains("Læses som fyld").contains("teamplayer");
         });
         // The code is the identifier, not the copy — it stays stable across languages.
         assertThat(check(danish, "real_text")).get().extracting(AtsCheck::label).isEqualTo("Rigtig tekst");
+    }
+
+    @Test
+    void aFigureCountingSomethingElseWarnsRatherThanFails() {
+        // The number is in the profile, just attached to another noun — usually a rewording.
+        AtsReport report = builder.basic("body", "ATS",
+                new ContentGuardFindings(List.of(), List.of(), List.of(), List.of("30 teams")), null);
+        assertThat(check(report, "unverified_metrics")).get().satisfies(c -> {
+            assertThat(c.status()).isEqualTo("WARN");
+            assertThat(c.detail()).contains("30 teams");
+        });
+        // …and the hard check stays green, because nothing was fabricated.
+        assertThat(check(report, "fact_guard")).get().extracting(AtsCheck::status).isEqualTo("PASS");
     }
 
     @Test

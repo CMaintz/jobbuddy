@@ -72,6 +72,15 @@ final class AtsCheckMessages {
                   + ". Correct or remove before sending — you would have to defend these in an interview.";
     }
 
+    String unverifiedLabel() { return danish ? "Tal at tjekke" : "Figures to check"; }
+    String unverifiedWarn(List<String> findings) {
+        return danish
+                ? "Tallet står i din profil, men om noget andet: " + join(findings)
+                  + ". Tjek at det tæller det rigtige."
+                : "The number is in your profile, but counting something else: " + join(findings)
+                  + ". Check it refers to the right thing.";
+    }
+
     String fillerLabel()     { return danish ? "Floskler" : "Filler phrases"; }
     String fillerPass()      {
         return danish ? "Ingen kendte floskler eller AI-typiske vendinger."

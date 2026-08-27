@@ -150,7 +150,11 @@ public class EvidenceElicitationService implements ElicitEvidenceUseCase {
             // The model was told to add nothing. This is where that is checked rather than trusted:
             // any figure in the draft must appear in what the user actually wrote.
             String draftText = String.join(" ", orEmpty(situation), orEmpty(action), orEmpty(result));
-            List<String> unsupported = factGuard.audit(draftText, freeText).inventedMetrics();
+            DocumentFactGuard.FactAudit audit = factGuard.audit(draftText, freeText);
+            List<String> unsupported = new ArrayList<>(audit.inventedMetrics());
+            // Against the user's own answer, both tiers mean the same thing: the draft says
+            // something they did not.
+            unsupported.addAll(audit.unverifiedMetrics());
             if (!unsupported.isEmpty()) {
                 log.warn("Evidence draft added figures the answer did not contain: {}", unsupported);
             }
