@@ -130,24 +130,46 @@ public final class MarketConventions {
             - Informal "du" — first names are normal at every level, and formality reads as distance.
             - One concrete thing the candidate has done, with its result, beats a summary of their \
             background. Where there is no result to give, say what became different.
-            - Propose a small, specific next step (a short call), not an open offer to "connect".""";
+            - Propose a small, specific next step (a short call), not an open offer to "connect".
+            - Danish practice for unsolicited contact starts on the phone: ring the company, ask \
+            whether you may send an application, ask who to send it to and how they prefer to \
+            receive it. A letter that follows such a call should open by referring to it ("som \
+            aftalt") — but only when the candidate says the call happened. Never invent one.
+            - The candidate is expected to be the active party afterwards. Following up within a few \
+            working days is normal here, not pushy.""";
 
     /**
-     * Danish interview conventions. The flat hierarchy changes what a good answer sounds like:
-     * pushing back is expected, and self-promotion that would land elsewhere reads as a warning.
+     * Danish interview conventions.
+     *
+     * <p>Sourced from Ballisager's recruitment analysis and the union career services (Djof, HK,
+     * Lederne): what employers say they weigh, how the rounds are structured, and when pay comes
+     * up. The headline finding is that motivation and authenticity outrank polish — "vi ansaetter
+     * mennesker, ikke perfekte profiler" — close to the opposite of what a candidate rehearsing for
+     * a US-style interview prepares for.
      */
     private static final String DANISH_INTERVIEW_RULES = """
             ## Danish Interview Conventions
+            - What employers say they weigh most: being clear about your motivation (63% of firms), \
+            letting your personality show (52%), and visible preparation (45%). Authenticity beats a \
+            polished answer here — a rehearsed-sounding candidate loses to a real one.
+            - The process usually runs in rounds: a short screening, a first conversation with HR and \
+            the hiring manager about background and motivation, a second with a case or the team, and \
+            a final one where pay and terms are settled. Prepare for the round at hand, not all four.
             - A Danish interview is a conversation between near-equals, not an examination. The \
-            candidate is expected to ask real questions back; asking none reads as disinterest.
+            candidate is expected to ask real questions back — about the work, the team, the \
+            department's goals, how decisions get made — and asking none reads as disinterest. Asking \
+            about the process and timeline at the end is normal.
             - Flat hierarchy means disagreement is expected. A question about handling a manager or a \
             colleague being wrong is testing whether the candidate would say so, not whether they comply.
             - Answers should be concrete and modest. Claiming sole credit for team work is a warning \
             sign here; "we", with a clear account of the candidate's own part, is the register that works.
+            - The weakness question wants a real development area plus what the candidate is doing \
+            about it. A strength in disguise ("I work too hard") is read as evasion.
+            - Pay can come up at any point and is arriving earlier in the process than it used to. Be \
+            ready with a researched range from the start; leave the actual negotiation until the job \
+            has been offered.
             - Everything in the application will be probed. Prepare the candidate to defend each \
-            specific claim they made, and to say plainly when something was a team result or a gap.
-            - Team, how decisions get made, and work-life balance are normal candidate questions in \
-            Denmark rather than red flags. So is asking about pay.""";
+            specific claim they made, and to say plainly when something was a team result or a gap.""";
 
     /**
      * Danish CV conventions. Danish CVs are shorter, plainer, and more literal than the US resumes
@@ -166,5 +188,10 @@ public final class MarketConventions {
             - Keep the spoken-language entries and their proficiency levels when the profile has them: \
             Danish-language ability is frequently a real requirement and is read closely.
             - Use the ordinary section names a Danish reader expects; do not invent unusual headings or \
-            reorder the reader's expectations for effect.""";
+            reorder the reader's expectations for effect.
+            - Danish employers screen through applicant tracking systems before a human reads \
+            anything, and those systems match the posting's literal must-have terms. Mirror the \
+            posting's own wording for every requirement the profile genuinely supports, and include \
+            the common synonym where one exists (both "Kubernetes" and "K8s"), since a system \
+            matching on one term will not infer the other.""";
 }

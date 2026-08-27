@@ -20,6 +20,47 @@
   which raises the value of concrete, specific, un-generic text rather than lowering it.
   ([JobMail][jobmail-guide])
 
+## Screening: what actually happens before a human reads anything
+
+- Danish employers screen through applicant tracking systems that match the posting's literal
+  must-have terms; Danish sources put the share of CVs that never reach a recruiter at up to **75%**,
+  and note that a system matching on one term will not infer its synonym.
+  ([Rise&Hire][riseandhire-ats], [AJKS][ajks-ats])
+  → Mirror the posting's own wording, and include the common synonym where one exists
+  (`Kubernetes` *and* `K8s`).
+- Candidates who pass are typically invited to a short phone or video screening before anything
+  else. ([Virksomhedsguides][virksomhedsguides])
+
+## The interview, as Danish employers describe it
+
+- What firms say they weigh: **63%** clarity of motivation, **52%** letting personality show, **45%**
+  visible preparation. Ballisager's summary is "vi ansætter mennesker, ikke perfekte profiler" —
+  authenticity beats a polished answer. ([Ballisager][ballisager-interview], [CA][ca-trends])
+- The process runs in rounds: short screening → first conversation (HR + hiring manager, background
+  and motivation) → second (case or the team) → final, where pay and terms are settled.
+  ([Finansforbundet][finansforbundet], [Djøf][djoef-interview])
+- **Pay is arriving earlier** than it used to and can come up at any point; some employers now ask
+  for expectations before the first interview, which 78% of Danes consider unacceptable. Advice:
+  research the range beforehand, be ready from the start, leave the real negotiation until the job
+  is offered, and open high. ([Djøf][djoef-salary], [Djøfbladet][djoefbladet])
+- The weakness question wants a real development area plus what you are doing about it.
+  ([Djøf][djoef-salary])
+- Questions back are expected — work, team, department goals, leadership style — and asking about
+  the process and timeline at the end is normal. ([HK][hk-interview], [Lederne][lederne])
+
+## Unsolicited contact: the sequence starts on the phone
+
+This is the finding that most changes behaviour, and the app had it wrong:
+
+1. **Ring first.** Call reception, HR, or the manager of the department you want to join. Ask
+   whether you may send an application, who to send it to, and how they prefer to receive it. Open
+   with "am I disturbing you?" and, if so, ask when to call back. ([HK][hk-unsolicited],
+   [Krifa][krifa-unsolicited])
+2. **Send**, referring to the call ("som aftalt") when there was one.
+3. **Follow up after 2–3 working days** — not a week and a half. The candidate is expected to be the
+   active party: *høfligt påtrængende*. Wait longer only if the company said they have no need right
+   now. ([HK][hk-unsolicited], [Krifa][krifa-unsolicited])
+
 ## Cover letter (ansøgning)
 
 | Convention | Detail |
@@ -59,6 +100,9 @@
 | The default voice | The seeded system templates (V068) — a template's `system_prompt` **replaces** the built-in persona, so the seeds are the app's actual voice, not a fallback |
 | Short outreach | `MarketConventions.outreachRules` — a different medium from a letter, and it fails by sounding like sales rather than by sounding generic |
 | Interviews | `MarketConventions.interviewRules` — flat hierarchy changes what a good answer sounds like; the mock interviewer probes like a local one |
+| Screening reality | ATS synonym rule in `MarketConventions.cvRules` |
+| Call-first sequence | `outreachRules` + the unsolicited letter guidance; the outreach screen says it too |
+| Follow-up timing | `OutreachService.DEFAULT_FOLLOW_UP_DAYS` = 3 working days |
 | Reading a posting | `MarketConventions.jobReadingRules` — `du skal` is a requirement, `det er en fordel` is not, and scoring them alike either scares off a qualified candidate or reassures an unqualified one |
 
 ## Measuring prompt changes
@@ -174,3 +218,16 @@ punches a hole in MUST_CATCH, and the suite is where that shows up before a user
 [visualcv]: https://www.visualcv.com/international/denmark-cv/
 [krifa]: https://www.krifa.dk/jobsoegning/cv/opbygning-af-cv
 [riseandhire]: https://www.riseandhire.com/da/blog/foto-pa-cv-danmark-2026/
+[riseandhire-ats]: https://www.riseandhire.com/da/blog/ats-optimeret-cv-dansk-arbejdsmarked/
+[ajks-ats]: https://ajks.dk/nyhed/kaere-jobsoeger-er-du-bekendt-med-ats
+[virksomhedsguides]: https://virksomhedsguides.dk/hvad-er-rekruttering/
+[ballisager-interview]: https://ballisager.com/blog/virksomhedernes-bedste-raad-til-jobsamtalen
+[ca-trends]: https://www.ca.dk/nyheder/8-trends-der-praeger-fremtidens-rekruttering/
+[finansforbundet]: https://finansforbundet.dk/dk/arbejdsliv-og-udvikling/bliv-klar-til-jobsamtalen/
+[djoef-interview]: https://www.djoef.dk/jobsoegning/gode-raad-til-jobsamtalen
+[djoef-salary]: https://www.djoef.dk/aktuelt/saadan-tackler-du-loenspoergsmaalet-til-jobsamtalen
+[djoefbladet]: https://www.djoefbladet.dk/artikler/2025/03/loenkrav-inden-foerste-samtale
+[hk-interview]: https://www.hk.dk/karriere/jobsoegningen/gode-raad-til-jobsamtalen
+[lederne]: https://www.lederne.dk/lederne-a-kasse/-/media/files/guides/gode_raad_jobsamtalen_rgb_enkeltsider.pdf
+[hk-unsolicited]: https://www.hk.dk/karriere/jobsoegningen/uopfordret-ansoegning
+[krifa-unsolicited]: https://www.krifa.dk/jobsoegning/ansoegning/faa-succes-med-din-uopfordrede-ansoegning
