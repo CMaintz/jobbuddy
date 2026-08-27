@@ -212,3 +212,5 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
   on generated documents (`warn` logs, `block` fails generation). Findings are also fed back into
   the reviewer pass to be rewritten. See `danish_market_playbook.md`.
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (personal-use, low-volume).
+- `DUE_REMINDER_CRON` — daily "due today" email (default `0 0 7 * * *`). Sends only to users with
+  notifications enabled who actually have something due; nothing due means no mail.

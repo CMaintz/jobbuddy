@@ -184,12 +184,12 @@
       "followUp": "Follow up",
       "applyDeadline": "Apply before the deadline",
       "noReply": "No reply yet — send a follow-up"
-    },
+    , "outreachFollowUp": "Follow up on your unsolicited application"},
     "tag": {
       "followUp": "follow-up",
       "deadline": "deadline",
       "noReply": "no reply"
-    }
+    , "outreach": "Outreach"}
   },
   "shared": {
     "upload": "Upload",
