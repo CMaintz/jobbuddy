@@ -121,10 +121,7 @@ accusation — but it does mean the guard's coverage is only as wide as `METRIC_
 
 ## Not yet done (ranked)
 
-1. **The follow-up is manual.** `outreach_contact.follow_up_due` is set and shown, and due items
-   sort to the top, but nothing notifies — the user has to open the screen. The reminder
-   infrastructure (`domain/reminder`) already exists to hook into.
-2. **The quality trend has an endpoint but no chart.** `GET /api/v1/documents/quality-scores`
+1. **The quality trend has an endpoint but no chart.** `GET /api/v1/documents/quality-scores`
    returns the history; nothing plots it yet, though `sparkline` and `stat-card` exist.
 3. **Contact extraction is still unverified against live postings.** The adversarial cases are
    covered (role addresses, malformed blocks, crawler precedence) but on synthetic input; the

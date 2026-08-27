@@ -184,12 +184,12 @@
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
       "noReply": "Intet svar endnu — send en opfølgning"
-    },
+    , "outreachFollowUp": "Følg op på din uopfordrede ansøgning"},
     "tag": {
       "followUp": "opfølgning",
       "deadline": "frist",
       "noReply": "intet svar"
-    }
+    , "outreach": "Uopfordret"}
   },
   "shared": {
     "upload": "Upload",

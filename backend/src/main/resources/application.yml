@@ -88,6 +88,11 @@ app:
     host: ${TYPESENSE_HOST:localhost}
     port: ${TYPESENSE_PORT:8108}
     protocol: http
+  reminders:
+    # Daily "due today" email: reminders the user set and outreach follow-ups that have arrived.
+    # Users with nothing due are not mailed — a usually-empty daily email gets filtered, and then
+    # it is missing on the day it mattered.
+    cron: "${DUE_REMINDER_CRON:0 0 7 * * *}"
   crawler:
     cron: "0 0 */4 * * *"
   linkedin:
