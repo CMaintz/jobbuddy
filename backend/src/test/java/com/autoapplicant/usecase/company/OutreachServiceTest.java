@@ -81,6 +81,12 @@ class OutreachServiceTest {
     }
 
     @Test
+    void theDefaultFollowUpMatchesDanishPractice() {
+        // Danish advice is 2-3 working days, not the week-and-a-half a non-Danish eye assumes.
+        assertThat(OutreachService.DEFAULT_FOLLOW_UP_DAYS).isBetween(2, 3);
+    }
+
+    @Test
     void markingContactedStampsTheTimeAndSchedulesTheFollowUp() {
         OutreachContact saved = service.track(USER, UUID.randomUUID(), "Acme A/S", null);
         OutreachContact contacted = service.update(USER, saved.id(), OutreachStatus.CONTACTED,

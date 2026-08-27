@@ -24,10 +24,15 @@ import java.util.UUID;
 public class OutreachService implements ManageOutreachUseCase {
 
     /**
-     * Default follow-up window after making contact. Long enough not to read as pestering, short
-     * enough that the letter is still on the reader's desk.
+     * Default follow-up window after making contact.
+     *
+     * <p>Two to three working days, which is shorter than it looks to a non-Danish eye. HK and
+     * Krifa both advise ringing a couple of days after sending an unsolicited application, and the
+     * expectation is that the candidate is the active party — "høfligt påtrængende". A ten-day
+     * wait, which was the original guess here, is long enough for the application to have been
+     * forgotten.
      */
-    static final int DEFAULT_FOLLOW_UP_DAYS = 10;
+    static final int DEFAULT_FOLLOW_UP_DAYS = 3;
 
     private final OutreachContactRepositoryPort repo;
     private final Clock clock;

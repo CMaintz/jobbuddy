@@ -69,6 +69,7 @@
         <div class="overflow-y-auto border-r border-jb-border jb-scroll">
           <div class="p-[12px_16px] border-b border-jb-border-faint">
             <div class="text-xs text-jb-text-mid leading-relaxed mb-2">{{ 'companies.targets.intro' | translate }}</div>
+            <div class="text-xs text-jb-text-dim leading-relaxed mb-2">{{ 'companies.targets.callFirst' | translate }}</div>
             <label class="flex items-center gap-2 text-xs text-jb-text-dim cursor-pointer">
               <input type="checkbox" [(ngModel)]="includeHiringNow" (ngModelChange)="loadTargets()" />
               {{ 'companies.targets.includeHiringNow' | translate }}

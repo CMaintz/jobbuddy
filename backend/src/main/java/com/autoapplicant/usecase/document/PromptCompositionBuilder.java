@@ -87,7 +87,10 @@ public class PromptCompositionBuilder {
                     + "with a specific problem or opportunity the candidate could take off the reader's "
                     + "hands, name the concrete evidence they have done it before, and keep it shorter "
                     + "than a posted-vacancy letter. Close by proposing a short conversation, and state "
-                    + "that the candidate will follow up — never ask to be kept 'on file'";
+                    + "that the candidate will follow up — never ask to be kept 'on file'. If (and only "
+                    + "if) the instructions say the candidate has already phoned the company, open by "
+                    + "referring to that call, which is the normal Danish sequence; otherwise write as "
+                    + "a first approach and never imply a conversation that did not happen";
             case "RECRUITER_MESSAGE" -> "a brief, personalized recruiter message (under 150 words)";
             case "FOLLOW_UP_MESSAGE" -> "a polite follow-up message (under 100 words)";
             default -> "a professional document";
