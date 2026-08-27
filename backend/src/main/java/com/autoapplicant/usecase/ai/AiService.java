@@ -116,10 +116,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             String cvContent = cvVersionId != null
                     ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("")
                     : careerProfileContext.buildJson(userId);
-            String jobDesc = jobId != null
-                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse(rawJobDescription)
-                    : rawJobDescription;
-            String prompt = buildAnalysisPrompt(cvContent, jobDesc);
+            Job analysisJob = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+            String jobDesc = analysisJob != null ? analysisJob.descriptionClean() : rawJobDescription;
+            String prompt = buildAnalysisPrompt(cvContent, jobDesc,
+                    analysisJob != null ? analysisJob.country() : null);
             PromptComposition composition = new PromptComposition(
                     "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
                     + "Never assume skills or experience the CV does not state.\n\n"
@@ -451,13 +451,16 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         return out;
     }
 
-    private static String buildAnalysisPrompt(String cvContent, String jobDescription) {
+    private static String buildAnalysisPrompt(String cvContent, String jobDescription, String jobCountry) {
         StringBuilder sb = new StringBuilder();
         sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
         sb.append("## CV Content\n").append(cvContent).append("\n\n");
         if (jobDescription != null && !jobDescription.isBlank()) {
             sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
             sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
+            String marketRules = MarketConventions.jobReadingRules(MarketConventions.resolve(
+                    JobLanguageDetector.detect(jobDescription), jobCountry));
+            if (!marketRules.isBlank()) sb.append('\n').append(marketRules).append('\n');
             sb.append("""
 
                     Respond with ONLY a JSON object in exactly this shape:

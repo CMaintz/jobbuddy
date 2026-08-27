@@ -41,6 +41,10 @@ public class PromptTemplateEntity {
     @Column(name = "is_system", nullable = false)
     private boolean isSystem;
 
+    /** Exactly one per category: the persona used when the caller names no template. */
+    @Column(name = "is_default", nullable = false)
+    private boolean isDefault;
+
     @Column(name = "parent_template_id")
     private UUID parentTemplateId;
 
@@ -82,6 +86,8 @@ public class PromptTemplateEntity {
     public boolean isPublic() { return isPublic; }
     public void setPublic(boolean aPublic) { isPublic = aPublic; }
     public boolean isSystem() { return isSystem; }
+    public boolean isDefault() { return isDefault; }
+    public void setDefault(boolean isDefault) { this.isDefault = isDefault; }
     public void setSystem(boolean system) { isSystem = system; }
     public UUID getParentTemplateId() { return parentTemplateId; }
     public void setParentTemplateId(UUID parentTemplateId) { this.parentTemplateId = parentTemplateId; }

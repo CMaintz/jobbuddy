@@ -47,6 +47,15 @@ public class ClicheGuard {
             "jeg er resultatorienteret",
             "jeg er en person, der",
             "sidst men ikke mindst",
+            "jeg er meget interesseret i stillingen",
+            "jeg mener at kunne bidrage",
+            "det lyder som en spændende mulighed",
+            "en spændende og udfordrende stilling",
+            "jeg trives i et travlt miljø",
+            "jeg er hurtig til at lære nyt",
+            "jeg har altid været fascineret af",
+            "med min baggrund inden for",
+            "jeg søger nye udfordringer",
             "jeg vil være et stort aktiv",
             "det ville være en drøm",
             "jeg er meget begejstret for muligheden",
@@ -81,7 +90,14 @@ public class ClicheGuard {
             "look no further",
             "align with my values",
             "excited about the opportunity to contribute",
-            "last but not least");
+            "last but not least",
+            "i am reaching out because",
+            "a great opportunity to grow",
+            "i thrive in fast-paced",
+            "quick learner",
+            "i am seeking a new challenge",
+            "always been fascinated by",
+            "uniquely positioned to");
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 

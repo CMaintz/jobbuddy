@@ -56,6 +56,10 @@
 | Who to send one to | `OutreachTargetService` — ranks companies from crawled hiring history: skill overlap, repeat hiring, recency, agencies excluded, consultancies penalised, and a company with **nothing open right now** scored *up*, because an open role means you should just apply |
 | The contact to ring first | `JobContact`, extracted during enrichment; surfaced on job details and used to address the letter |
 | Availability | `CareerTarget.noticePeriod` / `earliestStartDate` → an `availability` line in the AI context, stated near the letter's close when present |
+| The default voice | The seeded system templates (V068) — a template's `system_prompt` **replaces** the built-in persona, so the seeds are the app's actual voice, not a fallback |
+| Short outreach | `MarketConventions.outreachRules` — a different medium from a letter, and it fails by sounding like sales rather than by sounding generic |
+| Interviews | `MarketConventions.interviewRules` — flat hierarchy changes what a good answer sounds like; the mock interviewer probes like a local one |
+| Reading a posting | `MarketConventions.jobReadingRules` — `du skal` is a requirement, `det er en fordel` is not, and scoring them alike either scares off a qualified candidate or reassures an unqualified one |
 
 ## Measuring prompt changes
 

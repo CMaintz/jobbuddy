@@ -16,6 +16,8 @@ import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.interview.InterviewQuestionRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.JobLanguageDetector;
+import com.autoapplicant.usecase.document.MarketConventions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -135,11 +137,15 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
         String profileJson = careerProfileContext.buildJson(userId);
 
+        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
+                JobLanguageDetector.detect(job.descriptionClean()), job.country()));
+
         String systemPrompt = """
                 You are an expert interview coach preparing a candidate for an interview.
                 Never invent experience the candidate does not have; where the profile shows a gap
                 against the posting, prepare the candidate to address it honestly.
-                Return ONLY valid JSON — no markdown, no commentary.""";
+                Return ONLY valid JSON — no markdown, no commentary."""
+                + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
 
         String userPrompt = """
                 Build an interview prep pack.
@@ -202,6 +208,11 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         String profileJson = careerProfileContext.buildJson(userId);
         String company = job.companyName() != null ? job.companyName() : "the company";
 
+        // The mock interviewer has to behave like a local one, or practising against it teaches
+        // the wrong register: a Danish hiring manager probes differently from an American one.
+        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
+                JobLanguageDetector.detect(job.descriptionClean()), job.country()));
+
         String systemPrompt = """
                 You are roleplaying as an experienced hiring manager at %s interviewing a candidate \
                 for the role of %s. Stay fully in character: professional, friendly but probing. \
@@ -209,7 +220,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 answer before moving on. Draw questions from the job description and dig into areas \
                 where the candidate's profile looks weakest against it. Keep each message under \
                 120 words. Never break character, never mention being an AI, and output plain \
-                conversational text only — no JSON, no markdown headers.""".formatted(company, job.title());
+                conversational text only — no JSON, no markdown headers.""".formatted(company, job.title())
+                + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
 
         StringBuilder convo = new StringBuilder();
         for (MockInterviewTurn turn : transcript) {

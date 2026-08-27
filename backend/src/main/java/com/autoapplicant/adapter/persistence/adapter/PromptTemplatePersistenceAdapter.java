@@ -57,7 +57,8 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
 
     @Override
     public Optional<PromptTemplate> findSystemDefault(String category) {
-        return repo.findFirstByCategoryAndIsSystemTrue(category).map(DocumentMapper::toDomain);
+        return repo.findFirstByCategoryAndIsSystemTrueOrderByIsDefaultDescCreatedAtAsc(category)
+                .map(DocumentMapper::toDomain);
     }
 
     @Override

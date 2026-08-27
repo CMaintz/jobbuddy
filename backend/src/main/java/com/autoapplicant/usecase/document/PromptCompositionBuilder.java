@@ -128,7 +128,11 @@ public class PromptCompositionBuilder {
         boolean isLetter = isProseLetter(documentType);
         String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
-        String marketRules = MarketConventions.letterRules(market);
+        // Short outreach gets its own conventions: same market, different medium, and the way it
+        // fails is sounding like sales rather than sounding generic.
+        String marketRules = isLetter
+                ? MarketConventions.letterRules(market)
+                : MarketConventions.outreachRules(market);
         String marketBlock = marketRules.isBlank() ? "" : "\n\n" + marketRules;
         // A posting-supplied contact is the one named recipient the letter may address. Everything
         // else about the recipient stays unnamed, per the structure block.
