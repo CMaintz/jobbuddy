@@ -26,6 +26,16 @@ public class ParseCvService implements ParseCvUseCase {
 
     private static final String SYSTEM_PROMPT = """
             You are a CV parser. Extract structured career information from the provided CV text.
+
+            Extract only. Never infer, complete, tidy up or translate a claim into a stronger one:
+            if the CV does not say it, omit the field. A parser that fills gaps is worse than one
+            that leaves them, because everything downstream treats this output as the candidate's
+            own account — including the check that decides whether a later document invented a fact.
+            An invented skill here becomes permanently "supported" everywhere else.
+
+            Keep the candidate's own wording for titles and skills rather than normalising it; the
+            posting-matching downstream compares literal terms.
+
             Return ONLY valid JSON matching this structure (omit null fields):
             {
               "fullName": "string",
@@ -37,8 +47,11 @@ public class ParseCvService implements ParseCvUseCase {
               "websiteUrl": "string",
               "skills": ["string"],
               "technologies": ["string"],
-              "languages": ["string"]
+              "languages": ["string"],
+              "interests": ["string"]
             }
+            "interests" is for leisure interests when the CV lists them — a standard closing section
+            on a Danish CV. Omit it when there are none; never guess at them.
             """;
 
     private final ChatProviderPort aiProvider;

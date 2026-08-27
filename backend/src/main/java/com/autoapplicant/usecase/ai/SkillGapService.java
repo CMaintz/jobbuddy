@@ -8,6 +8,8 @@ import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.JobLanguageDetector;
+import com.autoapplicant.usecase.document.MarketConventions;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,7 +66,14 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
             }
 
             String profileJson = careerProfileContext.buildJson(userId);
-            String prompt = buildPrompt(profileJson, jobs);
+            // Read the corpus the way a local recruiter would: a missing "det er en fordel" is an
+            // opportunity, not a gap, and reporting it as one sends the candidate off to learn
+            // something nobody required.
+            String marketRules = MarketConventions.jobReadingRules(MarketConventions.resolve(
+                    JobLanguageDetector.detect(jobs.isEmpty() ? null : jobs.getFirst().descriptionClean()),
+                    jobs.isEmpty() ? null : jobs.getFirst().country()));
+            String prompt = buildPrompt(profileJson, jobs)
+                    + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
             PromptComposition composition = new PromptComposition(
                     "You are a career development analyst. Compare a candidate profile against real job "
                     + "postings and identify concrete skill gaps. Never flag skills the profile already covers. "

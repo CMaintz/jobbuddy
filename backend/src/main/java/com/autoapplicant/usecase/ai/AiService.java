@@ -137,22 +137,43 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     @Async("aiTaskExecutor")
     public CompletableFuture<RefineDocumentResult> refine(RefineDocumentRequest request) {
         try {
+            // Refinement produces text the user sends. It was the one generation path with no
+            // honesty rules, no banned phrases, no market conventions and no guard on its output —
+            // so "make it stronger" was an unchecked invitation to invent.
+            String contactFreeJson = careerProfileContext.buildJson(request.userId());
+            String resolvedLanguage = JobLanguageDetector.resolve(
+                    request.targetLanguage(), request.jobDescription());
+            MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, null);
+            String marketRules = MarketConventions.letterRules(market);
+
             StringBuilder systemPrompt = new StringBuilder(
                     "You are a professional editor helping refine a job application document. "
                     + "The user will provide their current draft and a specific refinement request. "
+                    + "Edit what is there: you may cut, reorder, sharpen and rephrase, but you may "
+                    + "not add a fact the draft does not already contain. A request to make the "
+                    + "document stronger is a request to write better, never to claim more. "
                     + "Return ONLY the improved document text — no commentary, no explanations.");
-            if (request.targetLanguage() != null && !request.targetLanguage().isBlank()) {
-                systemPrompt.append(" Write in ").append(request.targetLanguage()).append(".");
+            systemPrompt.append("\n\n").append(PromptCompositionBuilder.UNTRUSTED_JOB_INPUT);
+            if (resolvedLanguage != null) {
+                systemPrompt.append("\nWrite in ").append(resolvedLanguage).append(".");
             }
+
             StringBuilder userPrompt = new StringBuilder();
             userPrompt.append("## Current Document\n").append(request.currentContent()).append("\n\n");
             if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
                 userPrompt.append("## Job Description Context\n").append(request.jobDescription()).append("\n\n");
             }
             userPrompt.append("## Refinement Request\n").append(request.userMessage());
+            if (!marketRules.isBlank()) userPrompt.append("\n\n").append(marketRules);
+            userPrompt.append("\n\n").append(ClicheGuard.promptBlock(resolvedLanguage));
+
             PromptComposition composition = new PromptComposition(
                     systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
             String refined = sanitizeAiText(aiProvider.generate(composition));
+
+            // Same backstops as generation: an edit can introduce a fabrication just as easily.
+            contentGuards.verify(request.userId(), refined, contactFreeJson, "REFINEMENT");
+
             return CompletableFuture.completedFuture(
                     new RefineDocumentResult(refined, aiProvider.chatModelName()));
         } catch (Exception e) {
@@ -167,6 +188,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         try {
             ReviewOutcome outcome = reviewContent(request.userId(), request.documentType(),
                     request.currentContent(), request.jobDescription(), request.targetLanguage(), null);
+            // The reviewer rewrites the whole document, so its output needs the same backstops as a
+            // first draft — it was previously handed back unchecked.
+            contentGuards.verify(request.userId(), outcome.revised(),
+                    careerProfileContext.buildJson(request.userId()), request.documentType());
             return CompletableFuture.completedFuture(
                     new ReviewDocumentResult(outcome.revised(), outcome.critique(), aiProvider.chatModelName()));
         } catch (Exception e) {

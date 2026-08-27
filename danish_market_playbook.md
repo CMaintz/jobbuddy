@@ -194,6 +194,27 @@ recall and false positives on every run. The asymmetry is deliberate:
 That is the rule to apply to any future change: loosening a rule to fix a false positive usually
 punches a hole in MUST_CATCH, and the suite is where that shows up before a user does.
 
+## Where the rules reach
+
+Every AI call in the app, and what governs it:
+
+| Call | Governed by |
+|---|---|
+| Cover letter / application text | Honesty, targeting, market conventions, banned phrases, length, named contact |
+| Tailored CV + its reviewer | Honesty, targeting, CV market conventions, ATS synonyms, banned phrases |
+| Letter reviewer | Same rules as drafting, plus the filler findings to rewrite |
+| **Refinement** | Same rules, plus an explicit "stronger means write better, never claim more" |
+| CV analysis | Danish posting-reading rules (`du skal` vs `det er en fordel`) |
+| Skill gaps | The same, so a missing nice-to-have is not reported as a gap |
+| Interview questions, prep pack, mock interviewer | Danish interview conventions |
+| Evidence questions + answer drafting | Fact guard against the user's own words |
+| CV parser, LinkedIn parser | Extract-only: these write the profile every other check trusts |
+| LinkedIn query plan | Danish and English titles for Danish searches |
+| Company grounding, writing-style analysis, job enrichment | Already scoped to their own source text |
+
+**Guarded output** (fact, retracted-claim and filler checks) covers generation, review and
+refinement. `GuardedPathsTest` asserts nobody adds a fourth path and forgets.
+
 ## Not yet done (ranked)
 
 1. **The quality trend has an endpoint but no chart.** `GET /api/v1/documents/quality-scores`
