@@ -166,7 +166,9 @@ public class DocumentFactGuard {
      */
     public FactAudit audit(String generatedText, String sourceText) {
         if (generatedText == null || generatedText.isBlank()) return new FactAudit(List.of(), List.of());
-        Set<String> allowed = metricClaims(sourceText == null ? "" : sourceText);
+        String source = sourceText == null ? "" : sourceText;
+        Set<String> allowed = new java.util.LinkedHashSet<>(metricClaims(source));
+        allowed.addAll(derivedDurationClaims(source));
         Set<String> allowedNumbers = allowed.stream()
                 .map(DocumentFactGuard::numberOf)
                 .filter(java.util.Objects::nonNull)
@@ -191,6 +193,74 @@ public class DocumentFactGuard {
         String unit = raw.toLowerCase().strip();
         return CURRENCY_SYNONYMS.getOrDefault(unit, unit);
     }
+
+    /** "Jan 2021 - Mar 2024" and "Feb 2019 - Present" as the profile writes them. */
+    private static final Pattern DATE_RANGE = Pattern.compile(
+            "\\b([A-Za-z]{3,})\\s+(\\d{4})\\s*[-–—]\\s*(?:([A-Za-z]{3,})\\s+(\\d{4})|present|nu|nuv[æa]rende)\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Durations the profile implies but never spells out.
+     *
+     * <p>"Three years at Netcompany" is a true statement about a profile that only contains
+     * "Jan 2021 - Mar 2024" — the number 3 appears nowhere in it. Without this the guard calls the
+     * most ordinary sentence in a cover letter a fabrication, which is the fastest way to teach
+     * someone to ignore it.
+     *
+     * <p>Both the per-role span and the total across roles are allowed, since a letter says either.
+     * Rounding is generous in both directions: a candidate describing 30 months as "two years" or
+     * "nearly three" is not lying, and the guard should not arbitrate that.
+     */
+    static Set<String> derivedDurationClaims(String sourceText) {
+        Set<String> claims = new java.util.LinkedHashSet<>();
+        if (sourceText == null || sourceText.isBlank()) return claims;
+
+        Matcher m = DATE_RANGE.matcher(stripMarkup(sourceText));
+        int totalMonths = 0;
+        while (m.find()) {
+            Integer startMonth = monthOf(m.group(1));
+            if (startMonth == null) continue;
+            int startYear = Integer.parseInt(m.group(2));
+            int endMonth;
+            int endYear;
+            if (m.group(3) != null) {
+                Integer parsed = monthOf(m.group(3));
+                if (parsed == null) continue;
+                endMonth = parsed;
+                endYear = Integer.parseInt(m.group(4));
+            } else {
+                java.time.LocalDate today = java.time.LocalDate.now();
+                endMonth = today.getMonthValue();
+                endYear = today.getYear();
+            }
+            int months = (endYear - startYear) * 12 + (endMonth - startMonth);
+            if (months <= 0) continue;
+            totalMonths += months;
+            addDurationClaims(claims, months);
+        }
+        if (totalMonths > 0) addDurationClaims(claims, totalMonths);
+        return claims;
+    }
+
+    /** Every rounding of a span a person might reasonably write, in both languages. */
+    private static void addDurationClaims(Set<String> claims, int months) {
+        claims.add(normalizeClaim(months + " months"));
+        int wholeYears = months / 12;
+        for (int years : new int[] {wholeYears, wholeYears + 1, Math.round(months / 12f)}) {
+            if (years > 0) claims.add(normalizeClaim(years + " years"));
+        }
+    }
+
+    private static Integer monthOf(String name) {
+        String key = name.length() >= 3 ? name.substring(0, 3).toLowerCase(java.util.Locale.ENGLISH) : name;
+        return MONTH_ABBREVIATIONS.get(key);
+    }
+
+    private static final Map<String, Integer> MONTH_ABBREVIATIONS = Map.ofEntries(
+            Map.entry("jan", 1), Map.entry("feb", 2), Map.entry("mar", 3), Map.entry("apr", 4),
+            Map.entry("may", 5), Map.entry("maj", 5), Map.entry("jun", 6), Map.entry("jul", 7),
+            Map.entry("aug", 8), Map.entry("sep", 9), Map.entry("oct", 10), Map.entry("okt", 10),
+            Map.entry("nov", 11), Map.entry("dec", 12));
 
     /** The numeric part of a normalized claim ("30 services" → "30"), or null when there is none. */
     private static String numberOf(String claim) {

@@ -104,6 +104,12 @@ positive before it was fixed:
 | `30 services` | `thirty services` | Number words fold to digits **only when a metric noun follows directly**, so "one of the teams" never becomes a claim |
 | `550.000 kr.` | `DKK 550.000` | Danish currency is extracted at all now; it previously went unchecked in either direction |
 
+It also derives what the profile implies but never spells out. "Three years at Netcompany" is true
+of a profile containing only `Jan 2021 - Mar 2024`, where the number 3 appears nowhere — durations
+are computed from date ranges (per role and totalled), with generous rounding in both directions,
+because a candidate calling 30 months "two years" or "nearly three" is not lying and the guard
+should not arbitrate that.
+
 Comparison happens on the normalized form; **findings quote the document's own spelling**, so a
 user who wrote `50k users` is never told that `50000 users` is unsupported.
 
@@ -118,6 +124,27 @@ Findings come in two tiers, because they are not the same failure:
 What it still cannot do: catch a rewording to a noun outside the list (`30 microservices` is simply
 not extracted). That direction fails safe — an unrecognised noun produces no claim and therefore no
 accusation — but it does mean the guard's coverage is only as wide as `METRIC_NOUNS`.
+
+### Why it is kept, and on what terms
+
+The case for deleting it is real: it is a regex over prose, its recall is bounded by a noun list,
+and the honesty rules plus the reviewer pass are already hunting for fabrications. What it has that
+they do not is that it is **deterministic and free** — it runs on every document, costs no tokens,
+cannot itself hallucinate, and produces something the *user* can see and check. A fabricated number
+is also the one error a candidate cannot talk their way out of in an interview, which is precisely
+the failure the Danish market punishes hardest.
+
+So it stays, on stated terms rather than vibes. `DocumentFactGuardContractTest` holds two lists:
+what it **must catch** (8 fabrications) and what it **must never flag** (16 truthful sentences,
+every one of which was a live false positive at some point). Both are asserted, and the test prints
+recall and false positives on every run. The asymmetry is deliberate:
+
+> Recall may be imperfect — the guard is a net, not a proof. **Precision may not.** One false
+> accusation costs more trust than one missed number costs safety, because two other mechanisms are
+> also looking for fabrications and neither of them is looking for false alarms.
+
+That is the rule to apply to any future change: loosening a rule to fix a false positive usually
+punches a hole in MUST_CATCH, and the suite is where that shows up before a user does.
 
 ## Not yet done (ranked)
 
