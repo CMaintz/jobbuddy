@@ -7,7 +7,9 @@ import com.autoapplicant.domain.skill.SkillConfirmation;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
@@ -58,17 +60,20 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
     private final SkillTaxonomyRepositoryPort taxonomyRepo;
     private final SkillCandidateDismissalRepositoryPort dismissalRepo;
     private final MarketCorpusService marketCorpus;
+    private final ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo;
 
     public SkillCandidateService(ProfileSkillRepositoryPort profileSkillRepo,
                                  ProfileRepositoryPort profileRepo,
                                  SkillTaxonomyRepositoryPort taxonomyRepo,
                                  SkillCandidateDismissalRepositoryPort dismissalRepo,
-                                 MarketCorpusService marketCorpus) {
+                                 MarketCorpusService marketCorpus,
+                                 ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo) {
         this.profileSkillRepo = profileSkillRepo;
         this.profileRepo = profileRepo;
         this.taxonomyRepo = taxonomyRepo;
         this.dismissalRepo = dismissalRepo;
         this.marketCorpus = marketCorpus;
+        this.parsedSuggestionRepo = parsedSuggestionRepo;
     }
 
     @Override
@@ -82,8 +87,24 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         Map<String, List<String>> adjacency = adjacent.relatedSkills();
 
         Map<String, SkillCandidate> candidates = new LinkedHashMap<>();
+
+        // Document inferences go in first, and win any collision: a skill the user's own CV
+        // evidences is a better-founded question than the same skill inferred from a neighbour or
+        // from what strangers are hiring for, and its quoted line is the reason the user can judge.
+        for (ParsedSkillSuggestion suggestion : parsedSuggestionRepo.findByUserId(userId)) {
+            String normalized = suggestion.normalizedName();
+            if (normalized == null || claimed.containsKey(normalized) || dismissed.contains(normalized)) continue;
+            candidates.put(normalized, new SkillCandidate(
+                    suggestion.skillName(), null,
+                    market.containsKey(normalized) ? market.get(normalized).count() : 0,
+                    adjacency.getOrDefault(normalized, List.of()),
+                    SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
+                    suggestion.evidence()));
+        }
+
         market.forEach((normalized, mention) -> {
-            if (claimed.containsKey(normalized) || dismissed.contains(normalized)) return;
+            if (claimed.containsKey(normalized) || dismissed.contains(normalized)
+                    || candidates.containsKey(normalized)) return;
             List<String> related = adjacency.getOrDefault(normalized, List.of());
             candidates.put(normalized, new SkillCandidate(mention.displayName(), null,
                     mention.count(), related,
@@ -100,7 +121,11 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
 
         List<SkillCandidate> ranked = candidates.values().stream()
                 .sorted(Comparator
-                        .comparingInt(SkillCandidate::marketFrequency).reversed()
+                        // A skill the user's own document evidences ranks above one merely in
+                        // demand: it is the one suggestion they can answer from memory.
+                        .comparing((SkillCandidate c) ->
+                                c.source() == SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED ? 0 : 1)
+                        .thenComparing(Comparator.comparingInt(SkillCandidate::marketFrequency).reversed())
                         .thenComparing(c -> -c.relatedSkills().size())
                         .thenComparing(SkillCandidate::name))
                 .toList();
@@ -111,7 +136,11 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         int undemanded = 0;
         for (SkillCandidate candidate : ranked) {
             if (result.size() >= Math.max(1, limit)) break;
-            if (candidate.marketFrequency() == 0 && ++undemanded > MAX_UNDEMANDED_CANDIDATES) continue;
+            // The no-demand cap exists to stop a tail of unexplained rows; a document inference
+            // always carries its own explanation, so it is never part of that tail.
+            if (candidate.source() != SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED
+                    && candidate.marketFrequency() == 0
+                    && ++undemanded > MAX_UNDEMANDED_CANDIDATES) continue;
             result.add(candidate);
         }
         return result;
@@ -130,15 +159,23 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
             String normalized = normalize(name);
 
             switch (confirmation.decision()) {
-                case NO -> dismissalRepo.dismiss(userId, normalized);
+                case NO -> {
+                    dismissalRepo.dismiss(userId, normalized);
+                    parsedSuggestionRepo.remove(userId, normalized);
+                }
                 case YES -> {
-                    // Confirming something already on the profile is a no-op, not a duplicate row.
-                    if (claimed.containsKey(normalized)) continue;
+                    // Confirming something already on the profile is a no-op, not a duplicate row —
+                    // but the question is answered either way, so it leaves the queue.
+                    if (claimed.containsKey(normalized)) {
+                        parsedSuggestionRepo.remove(userId, normalized);
+                        continue;
+                    }
                     ProfileSkill saved = profileSkillRepo.save(new ProfileSkill(
                             null, userId, name.strip(), taxonomyIdFor(normalized), null,
                             confirmation.yearsExperience(), confirmation.usedInProduction(),
                             displayOrder++, categoryFor(normalized)));
                     claimed.put(normalized, saved.skillName());
+                    parsedSuggestionRepo.remove(userId, normalized);
                     added.add(saved);
                 }
                 case SKIP -> { /* comes back next time, by design */ }

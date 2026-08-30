@@ -104,6 +104,12 @@
                   <span class="text-xs text-jb-accent">{{ 'careerProfile.skills.inPostings' | translate:{ count: c.marketFrequency } }}</span>
                 }
               </div>
+              @if (c.evidence) {
+                <div class="text-xs text-jb-text-dim border-l-2 border-jb-accent-border pl-2.5 italic">
+                  {{ 'careerProfile.skills.fromYourCv' | translate }}
+                  <span class="not-italic">&ldquo;{{ c.evidence }}&rdquo;</span>
+                </div>
+              }
               @if (c.relatedSkills.length) {
                 <div class="text-xs text-jb-text-dim">
                   {{ 'careerProfile.skills.relatedTo' | translate:{ skills: c.relatedSkills.join(', ') } }}
