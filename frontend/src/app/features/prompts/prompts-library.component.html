@@ -180,7 +180,7 @@
               @if (p.category) {
                 @if (p.isSelectedDefault) {
                   @if (!p.isDefault) {
-                    <jb-button small icon="rotate-ccw" (clicked)="resetDefault(p, $event)">
+                    <jb-button small icon="arrow-left" (clicked)="resetDefault(p, $event)">
                       {{ 'prompts.restoreAppDefault' | translate }}
                     </jb-button>
                   }

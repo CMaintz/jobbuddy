@@ -16,7 +16,9 @@ import { PromptTemplate, PromptCategory } from '../../core/models/prompt-templat
 const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: string }[] = [
   { key: 'APPLICATION', label: 'prompts.kind.application', icon: 'layers', color: 'var(--jb-accent)' },
   { key: 'COVER_LETTER', label: 'prompts.kind.coverLetter', icon: 'doc', color: 'var(--jb-info)' },
+  { key: 'UNSOLICITED_APPLICATION', label: 'prompts.kind.unsolicited', icon: 'compass', color: '#f2c97d' },
   { key: 'RECRUITER_MESSAGE', label: 'prompts.kind.recruiterEmail', icon: 'mail', color: '#7df2a8' },
+  { key: 'FOLLOW_UP_MESSAGE', label: 'prompts.kind.followUp', icon: 'clock', color: '#7dd3f2' },
   { key: 'CV_TAILORING', label: 'prompts.kind.tailoredCv', icon: 'doc', color: 'var(--jb-violet)' },
   { key: 'CV_ANALYSIS', label: 'prompts.kind.cvAnalysis', icon: 'doc', color: 'var(--jb-text-dim)' },
   { key: 'GENERAL', label: 'prompts.kind.general', icon: 'lightbulb', color: 'var(--jb-text-dim)' },

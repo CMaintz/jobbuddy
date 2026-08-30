@@ -1015,7 +1015,9 @@
       "recruiterEmail": "Recruiter email",
       "tailoredCv": "Tailored CV",
       "cvAnalysis": "CV analysis",
-      "general": "General"
+      "general": "General",
+      "unsolicited": "Unsolicited",
+      "followUp": "Follow-up"
     },
     "toast": {
       "updated": "Prompt updated",
