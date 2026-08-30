@@ -9,6 +9,8 @@ import com.autoapplicant.port.out.ai.ChatProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
+import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -48,24 +50,44 @@ public class ParseCvService implements ParseCvUseCase {
               "skills": ["string"],
               "technologies": ["string"],
               "languages": ["string"],
-              "interests": ["string"]
+              "interests": ["string"],
+              "impliedSkills": [{"skill": "string", "evidence": "string"}]
             }
             "interests" is for leisure interests when the CV lists them — a standard closing section
             on a Danish CV. Omit it when there are none; never guess at them.
+
+            "impliedSkills" is the one place where reading between the lines is wanted, and it is
+            kept separate for a reason: nothing in it reaches the profile. Each entry is put to the
+            candidate as a question they answer, so the cost of a wrong guess is one dismissed
+            suggestion rather than a fabricated skill.
+
+            Put a skill here when the CV describes doing the work but never names the skill — a CV
+            that describes running fortnightly retrospectives and grooming a backlog evidences
+            Scrum even with the word absent; one that describes building the deployment pipeline
+            that ships every merge evidences CI/CD. Rules:
+            - "evidence" must quote or closely paraphrase the CV's own line. No line, no entry.
+            - Never repeat a skill already in "skills" or "technologies" — those are extracted, and
+              a suggestion the candidate has already made is noise.
+            - Do not list a skill merely adjacent to one they have. "Uses Java" is not evidence of
+              Kotlin. Only what the described work itself demonstrates.
+            - Six entries at most. Omit the field entirely rather than padding it.
             """;
 
     private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
     private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
     private final ProfileSocialRepositoryPort socialRepo;
+    private final ImpliedSkillQueue impliedSkills;
 
     public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider, ObjectMapper objectMapper,
                           ProfilePrivateInfoRepositoryPort privateInfoRepo,
-                          ProfileSocialRepositoryPort socialRepo) {
+                          ProfileSocialRepositoryPort socialRepo,
+                          ImpliedSkillQueue impliedSkills) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
         this.privateInfoRepo = privateInfoRepo;
         this.socialRepo = socialRepo;
+        this.impliedSkills = impliedSkills;
     }
 
     @Override
@@ -106,6 +128,11 @@ public class ParseCvService implements ParseCvUseCase {
             saveSocialIfPresent(userId, node, "linkedinUrl", "LinkedIn", "linkedin", order);
             saveSocialIfPresent(userId, node, "githubUrl",   "GitHub",   "github",   order + 1);
             saveSocialIfPresent(userId, node, "websiteUrl",  "Website",  "globe",    order + 2);
+
+            // Inferences never join the extracted lists — they are queued as questions instead.
+            impliedSkills.queue(userId, node,
+                    arrayOrEmpty(node, "skills"), arrayOrEmpty(node, "technologies"),
+                    ParsedSkillSuggestion.Source.CV_PARSE);
 
             return new Profile(
                     null, userId,

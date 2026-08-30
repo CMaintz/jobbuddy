@@ -11,7 +11,12 @@ export interface SkillCandidate {
   marketFrequency: number;
   /** The user's own skills it sits next to in the taxonomy. */
   relatedSkills: string[];
-  source: 'TAXONOMY_ADJACENT' | 'MARKET_DEMAND' | 'BOTH';
+  source: 'TAXONOMY_ADJACENT' | 'MARKET_DEMAND' | 'BOTH' | 'DOCUMENT_INFERRED';
+  /**
+   * For a DOCUMENT_INFERRED candidate, the line of the user's own CV or LinkedIn export that
+   * implies the skill. It is what makes the suggestion answerable from memory.
+   */
+  evidence?: string | null;
 }
 
 export interface SkillConfirmation {

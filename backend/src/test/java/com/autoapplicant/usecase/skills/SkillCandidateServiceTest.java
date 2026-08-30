@@ -7,6 +7,8 @@ import com.autoapplicant.domain.skill.SkillConfirmation;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -44,8 +46,26 @@ class SkillCandidateServiceTest {
                 @Override public void dismiss(UUID userId, String normalizedName) { dismissed.add(normalizedName); }
             };
 
+    /** Real suggestion queue too: what a confirmed or declined suggestion does to it is behaviour. */
+    private final List<ParsedSkillSuggestion> parsedSuggestions = new ArrayList<>();
+    private final ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo =
+            new ParsedSkillSuggestionRepositoryPort() {
+                @Override public List<ParsedSkillSuggestion> findByUserId(UUID userId) {
+                    return List.copyOf(parsedSuggestions);
+                }
+                @Override public void record(ParsedSkillSuggestion s) {
+                    if (parsedSuggestions.stream().noneMatch(e -> e.normalizedName().equals(s.normalizedName()))) {
+                        parsedSuggestions.add(s);
+                    }
+                }
+                @Override public void remove(UUID userId, String normalizedName) {
+                    parsedSuggestions.removeIf(s -> s.normalizedName().equals(normalizedName));
+                }
+            };
+
     private final SkillCandidateService service = new SkillCandidateService(
-            profileSkillRepo, profileRepo, taxonomyRepo, dismissalRepo, marketCorpus);
+            profileSkillRepo, profileRepo, taxonomyRepo, dismissalRepo, marketCorpus,
+            parsedSuggestionRepo);
 
     @BeforeEach
     void setUp() {
@@ -199,5 +219,85 @@ class SkillCandidateServiceTest {
     @Test
     void anEmptyProfileAndAnEmptyMarketYieldNothingRatherThanEverything() {
         assertThat(service.suggest(USER, 10)).isEmpty();
+    }
+
+    // ── document-inferred candidates ──────────────────────────────────────────
+    //
+    // The parsers stay extractive — what they write to the profile is what the fact guard treats
+    // as the candidate's own account. A skill their CV evidences without naming arrives here
+    // instead, as a question, so a wrong reading costs a dismissal rather than a fabricated skill.
+
+    @Test
+    void aSkillTheUsersOwnCvEvidencesIsOfferedWithTheLineThatImpliedIt() {
+        queueInferred("Scrum", "Ran fortnightly retrospectives and groomed the backlog");
+
+        List<SkillCandidate> candidates = service.suggest(USER, 10);
+
+        assertThat(candidates).extracting(SkillCandidate::name).contains("Scrum");
+        SkillCandidate scrum = candidates.stream().filter(c -> c.name().equals("Scrum")).findFirst().orElseThrow();
+        assertThat(scrum.source()).isEqualTo(SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED);
+        assertThat(scrum.evidence()).isEqualTo("Ran fortnightly retrospectives and groomed the backlog");
+    }
+
+    @Test
+    void aDocumentInferenceOutranksSomethingMerelyInDemand() {
+        queueInferred("Scrum", "Ran fortnightly retrospectives");
+        market(posting(List.of("Kubernetes"), List.of()),
+               posting(List.of("Kubernetes"), List.of()),
+               posting(List.of("Kubernetes"), List.of()));
+
+        assertThat(service.suggest(USER, 10)).extracting(SkillCandidate::name).startsWith("Scrum");
+    }
+
+    @Test
+    void aDocumentInferenceSurvivesTheNoDemandCap() {
+        // Six market-less taxonomy candidates would push a seventh past MAX_UNDEMANDED_CANDIDATES;
+        // an inference is never part of that tail, because it carries its own explanation.
+        queueInferred("Scrum", "Ran fortnightly retrospectives");
+        profileWith("Java");
+        when(taxonomyRepo.findByNormalizedName("java")).thenReturn(Optional.of(
+                new SkillTaxonomy(UUID.randomUUID(), "Java", "java", null, "Programming Language", List.of())));
+
+        assertThat(service.suggest(USER, 10)).extracting(SkillCandidate::name).contains("Scrum");
+    }
+
+    @Test
+    void anInferenceForSomethingTheUserAlreadyClaimsIsNotOffered() {
+        profileWith("Scrum");
+        queueInferred("Scrum", "Ran fortnightly retrospectives");
+
+        assertThat(service.suggest(USER, 10)).extracting(SkillCandidate::name).doesNotContain("Scrum");
+    }
+
+    @Test
+    void answeringAnInferenceTakesItOutOfTheQueueWhicheverWayItIsAnswered() {
+        queueInferred("Scrum", "Ran fortnightly retrospectives");
+        when(profileSkillRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.confirm(USER, List.of(new SkillConfirmation("Scrum",
+                SkillConfirmation.Decision.YES, true, null)));
+        assertThat(parsedSuggestions).isEmpty();
+
+        queueInferred("Kanban", "Managed a WIP-limited board");
+        service.confirm(USER, List.of(new SkillConfirmation("Kanban",
+                SkillConfirmation.Decision.NO, false, null)));
+        assertThat(parsedSuggestions).isEmpty();
+        assertThat(service.suggest(USER, 10)).extracting(SkillCandidate::name).doesNotContain("Kanban");
+    }
+
+    @Test
+    void aSkippedInferenceStaysQueuedForNextTime() {
+        queueInferred("Scrum", "Ran fortnightly retrospectives");
+
+        service.confirm(USER, List.of(new SkillConfirmation("Scrum",
+                SkillConfirmation.Decision.SKIP, false, null)));
+
+        assertThat(service.suggest(USER, 10)).extracting(SkillCandidate::name).contains("Scrum");
+    }
+
+    private void queueInferred(String name, String evidence) {
+        parsedSuggestionRepo.record(new ParsedSkillSuggestion(UUID.randomUUID(), USER, name,
+                name.toLowerCase(java.util.Locale.ROOT), evidence,
+                ParsedSkillSuggestion.Source.CV_PARSE));
     }
 }
