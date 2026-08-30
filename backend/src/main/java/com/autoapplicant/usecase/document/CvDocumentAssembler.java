@@ -44,11 +44,14 @@ public class CvDocumentAssembler {
         }
         if (!selectedSkills.isEmpty()) {
             Map<String, String> skillCategory = categoryLookup(source.skillCategories());
+            // Taxonomy categories are a classification vocabulary; these become headings on the
+            // finished CV, so they are translated before they get there.
+            CvSkillGroupLabels groupLabels = CvSkillGroupLabels.forLanguage(documentLanguage);
             sections.add(new StructuredDocumentSection("skills", "skills", labels.skills(), null,
                     selectedSkills.stream()
                             .map(skill -> new StructuredDocumentItem(null, skill, null, null, null, null,
                                     List.of(), List.of(), List.of(), List.of(),
-                                    skillCategory.get(skill.toLowerCase(Locale.ROOT))))
+                                    groupLabels.labelFor(skillCategory.get(skill.toLowerCase(Locale.ROOT)))))
                             .toList()));
         }
         // Career-stage drives the default order of the three "story" sections. Early-stage
