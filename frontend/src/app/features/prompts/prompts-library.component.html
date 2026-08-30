@@ -49,8 +49,11 @@
                 </div>
                 <div class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ kindConfig(p.category).label | translate }}</div>
                 <div class="ml-auto flex items-center gap-1.5">
-                  @if (p.isSystem) {
-                    <jb-pill tone="neutral">{{ 'prompts.system' | translate }}</jb-pill>
+                  @if (p.isSelectedDefault) {
+                    <jb-pill tone="info">{{ 'prompts.inUse' | translate }}</jb-pill>
+                  }
+                  @if (p.isProtected) {
+                    <jb-pill tone="neutral">{{ 'prompts.protected' | translate }}</jb-pill>
                   }
                   <button class="icon-btn" [title]="(p.favourite ? 'prompts.unfavourite' : 'prompts.favourite') | translate"
                     (click)="toggleFavourite(p, $event)"
@@ -94,8 +97,11 @@
         <ng-container jb-modal-header>
           <jb-pill tone="neutral">{{ kindConfig(p.category).label | translate }}</jb-pill>
           <div class="text-xl font-medium flex-1">{{ editing() ? ('prompts.editPrompt' | translate) : p.name }}</div>
-          @if (p.isSystem) {
-            <jb-pill tone="info">{{ 'prompts.system' | translate }}</jb-pill>
+          @if (p.isSelectedDefault) {
+            <jb-pill tone="info">{{ 'prompts.inUse' | translate }}</jb-pill>
+          }
+          @if (p.isProtected) {
+            <jb-pill tone="neutral">{{ 'prompts.protected' | translate }}</jb-pill>
           }
         </ng-container>
             @if (editing()) {
@@ -156,6 +162,11 @@
             }
 
         <ng-container jb-modal-footer>
+          @if (mustDuplicateToCustomise(p) && !editing()) {
+            <span class="text-2xs text-jb-text-dim max-w-[280px] leading-snug">
+              {{ 'prompts.protectedHint' | translate }}
+            </span>
+          }
           @if (canModify(p) && !editing()) {
             <button class="text-xs text-jb-danger cursor-pointer bg-transparent border-none" (click)="deletePrompt(p)">{{ 'common.delete' | translate }}</button>
           }
@@ -166,6 +177,19 @@
                 {{ (savingEdit() ? 'common.saving' : 'prompts.saveChanges') | translate }}
               </jb-button>
             } @else {
+              @if (p.category) {
+                @if (p.isSelectedDefault) {
+                  @if (!p.isDefault) {
+                    <jb-button small icon="rotate-ccw" (clicked)="resetDefault(p, $event)">
+                      {{ 'prompts.restoreAppDefault' | translate }}
+                    </jb-button>
+                  }
+                } @else {
+                  <jb-button small icon="check" (clicked)="useAsDefault(p, $event)">
+                    {{ 'prompts.useAsDefault' | translate }}
+                  </jb-button>
+                }
+              }
               <jb-button small icon="copy" (clicked)="duplicate(p)">{{ 'prompts.duplicate' | translate }}</jb-button>
               @if (canModify(p)) {
                 <jb-button small [primary]="true" icon="edit" (clicked)="startEdit(p)">{{ 'common.edit' | translate }}</jb-button>

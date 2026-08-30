@@ -69,9 +69,43 @@ export class PromptsLibraryComponent implements OnInit {
     this.load();
   }
 
-  /** System templates are admin-only; user templates belong to their creator. Mirrors the backend rule. */
+  /**
+   * Protected templates ship with the app and are admin-only; everything else belongs to its
+   * creator. Mirrors the backend rule — the gate is protection, not "is a system template".
+   */
   canModify(p: PromptTemplate): boolean {
-    return p.isSystem ? this.isAdmin : p.userId === this.myUserId;
+    return p.isProtected ? this.isAdmin : p.userId === this.myUserId;
+  }
+
+  /** Protected prompts offer Duplicate where a user's own offer Edit and Delete. */
+  mustDuplicateToCustomise(p: PromptTemplate): boolean {
+    return p.isProtected && !this.isAdmin;
+  }
+
+  /** Points this prompt's category at this prompt. Never edits the app's seeded template. */
+  useAsDefault(p: PromptTemplate, event?: Event): void {
+    event?.stopPropagation();
+    if (p.isSelectedDefault) return;
+    this.promptApi.selectDefault(p.id).subscribe({
+      next: () => {
+        this.toast.set(this.translate.instant('prompts.toast.defaultSet', { name: p.name }));
+        this.load();
+      },
+      error: () => this.toast.set(this.translate.instant('prompts.toast.defaultFailed'))
+    });
+  }
+
+  /** Drops the user's choice for this category so the app's own prompt comes back. */
+  resetDefault(p: PromptTemplate, event?: Event): void {
+    event?.stopPropagation();
+    if (!p.category) return;
+    this.promptApi.resetDefault(p.category).subscribe({
+      next: () => {
+        this.toast.set(this.translate.instant('prompts.toast.defaultReset'));
+        this.load();
+      },
+      error: () => this.toast.set(this.translate.instant('prompts.toast.defaultFailed'))
+    });
   }
 
   startEdit(p: PromptTemplate): void {

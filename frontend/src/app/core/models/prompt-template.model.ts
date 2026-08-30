@@ -10,7 +10,17 @@ export interface PromptTemplate {
   userPrompt: string;
   outputConstraints?: string;
   isPublic: boolean;
+  /** The app shipped it. */
   isSystem: boolean;
+  /**
+   * App-origin: duplicable, never editable or deletable. Distinct from isSystem, which no longer
+   * decides what the user may do, and from isDefault, which is about selection rather than rights.
+   */
+  isProtected: boolean;
+  /** The app's seeded starting point for this category. */
+  isDefault: boolean;
+  /** The prompt this user actually gets for the category right now. */
+  isSelectedDefault: boolean;
   parentTemplateId?: string;
   versionNumber: number;
   createdAt: string;
