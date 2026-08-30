@@ -34,6 +34,9 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
     private static final Logger log = LoggerFactory.getLogger(InterviewPrepService.class);
 
+    /** How many questions a prep pack asks for when the caller does not say. */
+    private static final int DEFAULT_QUESTION_COUNT = 9;
+
     private static final String SYSTEM_PROMPT = """
             You are an expert interview coach. Generate interview questions based on the job description provided.
             Return ONLY a valid JSON array, no markdown, no explanation.
@@ -104,15 +107,34 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         repo.deleteByIdAndUserId(questionId, userId);
     }
 
+    /**
+     * Questions for a job, from the one place that generates them.
+     *
+     * <p>There is only ever one set of interview questions for a job — the prep pack builds it
+     * with the candidate's profile, their STAR+R story bank and the documents they actually
+     * submitted in hand, which is strictly more context than a job description alone. Two
+     * generators meant a candidate could see two different "your questions" lists for the same
+     * job depending on which screen they opened, so this endpoint asks the prep pack and returns
+     * its questions.
+     *
+     * <p>The standalone path below survives for the one case the prep pack cannot serve: a
+     * question set asked for without a job to hang it on (an unsolicited approach, a role pasted
+     * in by hand), where there is no posting to load and no submitted documents to stay
+     * consistent with.
+     */
     @Override
     public List<InterviewQuestion> generateQuestions(UUID jobId, UUID userId, String jobDescription, int count) {
+        Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+        if (job != null) {
+            return generatePrepPack(userId, jobId, count).questions();
+        }
+
         String userPrompt = String.format(
                 "Generate %d interview questions for the following job. Focus on the specific skills, technologies, and responsibilities mentioned.\n\nJob description:\n%s",
                 count, jobDescription);
 
-        Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
         PromptComposition composition = new PromptComposition(
-                questionSystemPrompt(job), userPrompt, "", "", "", "", userPrompt);
+                questionSystemPrompt(null), userPrompt, "", "", "", "", userPrompt);
 
         String json = aiProvider.generateJson(composition);
         List<InterviewQuestion> generated = parseQuestions(json, jobId, userId);
@@ -132,6 +154,11 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
     @Override
     public InterviewPrepPack generatePrepPack(UUID userId, UUID jobId) {
+        return generatePrepPack(userId, jobId, DEFAULT_QUESTION_COUNT);
+    }
+
+    private InterviewPrepPack generatePrepPack(UUID userId, UUID jobId, int questionCount) {
+        int wanted = questionCount > 0 ? questionCount : DEFAULT_QUESTION_COUNT;
         Job job = jobRepo.findById(jobId).orElseThrow(
                 () -> new IllegalArgumentException("Job not found"));
         String jobDescription = job.descriptionClean() != null ? job.descriptionClean() : "";
@@ -165,7 +192,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                   "consistencyBrief": ["<a claim made in the candidate's submitted documents they must be ready to defend — quote or paraphrase it>"],
                   "questionsToAsk": ["<a sharp question the candidate should ask the interviewer>"]
                 }
-                Give 8-10 questions targeting the posting's requirements and the candidate's weakest
+                Give %d questions targeting the posting's requirements and the candidate's weakest
                 coverage of them; 3-6 consistency-brief entries (omit the field's entries if no documents
                 are provided); and 4-6 questions to ask. When a story bank is provided, prefer behavioral
                 questions the candidate's existing STAR+R stories can answer, and never contradict them.
@@ -176,6 +203,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 ## Candidate profile (contact-free)
                 %s
                 %s%s""".formatted(
+                wanted,
                 job.title(), job.companyName() != null ? job.companyName() : "unknown company",
                 jobDescription,
                 profileJson,
@@ -263,12 +291,35 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
                 ## Interview so far
                 %s
-                %s""".formatted(job.title(), company, jobDescription, profileJson,
-                convo.isEmpty() ? "(not started)" : convo.toString().strip(), instruction);
+                %s%s""".formatted(job.title(), company, jobDescription, profileJson,
+                convo.isEmpty() ? "(not started)" : convo.toString().strip(),
+                buildQuestionPlan(jobId, userId), instruction);
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
         return aiProvider.generate(composition).strip();
+    }
+
+    /**
+     * The prepared question set, handed to the mock interviewer as its plan.
+     *
+     * <p>Without this the mock invented its own questions, so practising against it prepared the
+     * candidate for an interview other than the one their prep pack told them to expect. Same
+     * set, two uses: read them on the prep screen, get asked them in the mock.
+     *
+     * <p>It is a plan, not a script — the interviewer still follows up on what the candidate
+     * actually says, which is the whole point of practising out loud.
+     */
+    private String buildQuestionPlan(UUID jobId, UUID userId) {
+        List<InterviewQuestion> prepared = repo.findByJobIdAndUserId(jobId, userId);
+        if (prepared.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(
+                "\n## Your question plan (the set this candidate prepared against)\n"
+                + "Work through these, in your own words and in a natural order. Follow up on what "
+                + "the candidate actually says before moving to the next one; skip any their answers "
+                + "have already covered.\n");
+        prepared.stream().limit(12).forEach(q -> sb.append("- ").append(q.question()).append('\n'));
+        return sb.toString();
     }
 
     private static List<String> textList(JsonNode root, String field) {
