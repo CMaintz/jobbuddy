@@ -63,7 +63,13 @@ public class ProfileSkillPersistenceAdapter implements ProfileSkillRepositoryPor
         return toDomainWithCategory(e, null);
     }
 
-    private ProfileSkill toDomainWithCategory(ProfileSkillEntity e, String category) {
+    /**
+     * The row's own category wins; {@code taxonomyCategory} is the fallback for rows written
+     * before V070 gave profile_skills a category of its own. Passing null for it is therefore
+     * safe on the save path — a saved row already carries whatever category was resolved.
+     */
+    private ProfileSkill toDomainWithCategory(ProfileSkillEntity e, String taxonomyCategory) {
+        String category = e.getCategory() != null ? e.getCategory() : taxonomyCategory;
         return new ProfileSkill(e.getId(), e.getUserId(), e.getSkillName(), e.getTaxonomyId(),
                 e.getProficiencyLevel(), e.getYearsExperience(), e.isUsedInProduction(),
                 e.getDisplayOrder(), category);
@@ -79,6 +85,7 @@ public class ProfileSkillPersistenceAdapter implements ProfileSkillRepositoryPor
         e.setYearsExperience(s.yearsExperience());
         e.setUsedInProduction(s.usedInProduction());
         e.setDisplayOrder(s.displayOrder());
+        e.setCategory(s.category());
         return e;
     }
 }
