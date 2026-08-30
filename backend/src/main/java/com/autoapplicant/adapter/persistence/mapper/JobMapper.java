@@ -48,7 +48,9 @@ public final class JobMapper {
                 e.getLastSeenAt(),
                 e.getApplicationDeadline(),
                 JobContact.ofNullable(e.getContactName(), e.getContactTitle(),
-                        e.getContactEmail(), e.getContactPhone())
+                        e.getContactEmail(), e.getContactPhone()),
+                toList(e.getRequiredSkills()),
+                toList(e.getPreferredSkills())
         );
     }
 
@@ -75,6 +77,8 @@ public final class JobMapper {
         e.setCurrency(d.currency());
         e.setTechnologies(toArray(d.technologies()));
         e.setSkills(toArray(d.skills()));
+        e.setRequiredSkills(toArray(d.requiredSkills()));
+        e.setPreferredSkills(toArray(d.preferredSkills()));
         e.setLanguages(toArray(d.languages()));
         e.setPostedAt(d.postedAt());
         e.setScrapedAt(d.scrapedAt());

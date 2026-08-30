@@ -93,6 +93,8 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                   "aiSeniorityEstimate": "JUNIOR|MID|SENIOR|LEAD|PRINCIPAL|EXECUTIVE",
                   "technologies": ["Java", "React", "PostgreSQL"],
                   "skills": ["Agile", "Communication", "Problem Solving"],
+                  "requiredSkills": ["Java", "5 years backend experience"],
+                  "preferredSkills": ["Kubernetes", "Danish"],
                   "employmentType": "FULL_TIME|PART_TIME|CONTRACT|FREELANCE|INTERNSHIP or null",
                   "remoteType": "REMOTE|HYBRID|ON_SITE or null",
                   "salaryMin": null,
@@ -109,6 +111,14 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 - shortDescription: ignore any navigation text, cookie banners, or other page chrome
                 - technologies: specific tools, languages, frameworks, libraries, platforms, cloud services
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
+                - requiredSkills / preferredSkills: the SAME asks as technologies+skills, re-sorted by \
+                how the posting phrases them. Requirements read "du skal", "det er et krav", "du har \
+                X \u00e5rs erfaring med", or a bare "du har"; preferences read "det er en fordel", "gerne", \
+                "vi ser gerne at", "erfaring med X er et plus", "kendskab til". English postings use \
+                "must have"/"required" versus "nice to have"/"a plus"/"bonus". Put an ask in \
+                requiredSkills only when the posting's own wording demands it \u2014 when the phrasing is \
+                ambiguous, it is a preference. Use the same short label you used in technologies/skills \
+                so the two lists line up. Leave either list empty rather than guessing.
                 - Only include salary if numbers are explicitly stated in the posting
                 - municipality: match to a known Danish kommune name (e.g. "København", "Aarhus", "Odense")
                 - applicationDeadline: the stated application deadline (e.g. "Ansøgningsfrist"); null when not stated or "as soon as possible"
@@ -150,6 +160,21 @@ public class JobEnrichmentService implements EnrichJobUseCase {
 
             List<String> mergedTech = !technologies.isEmpty() ? technologies : job.technologies();
             List<String> mergedSkills = !skills.isEmpty() ? skills : job.skills();
+
+            // Requirement tier. Only ever narrowed to what the flat lists already hold, so a model
+            // that invents a requirement out of nowhere cannot make the matcher penalise for it.
+            List<String> vocabulary = new java.util.ArrayList<>(mergedTech);
+            vocabulary.addAll(mergedSkills);
+            List<String> required = confineToVocabulary(getList(parsed, "requiredSkills"), vocabulary);
+            // An ask cannot be both. The stricter tier wins, so "nice to have" never softens a demand.
+            List<String> preferred = confineToVocabulary(getList(parsed, "preferredSkills"), vocabulary)
+                    .stream()
+                    .filter(cand -> required.stream().noneMatch(r -> r.equalsIgnoreCase(cand)))
+                    .toList();
+            // Nothing usable came back — keep whatever a previous enrichment established.
+            boolean tiersUsable = !required.isEmpty() || !preferred.isEmpty();
+            List<String> requiredSkills  = tiersUsable ? required  : job.requiredSkills();
+            List<String> preferredSkills = tiersUsable ? preferred : job.preferredSkills();
 
             String municipality = job.municipality() != null ? job.municipality()
                     : (String) parsed.get("municipality");
@@ -208,6 +233,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                     .municipality(municipality)
                     .salaryMin(salaryMin).salaryMax(salaryMax).currency(currency)
                     .technologies(mergedTech).skills(mergedSkills)
+                    .requiredSkills(requiredSkills).preferredSkills(preferredSkills)
                     .aiSummary(summary).aiTags(tags).aiSeniorityEstimate(aiSeniority)
                     .jobCategory(jobCategory)
                     .shortDescription(shortDescription)
@@ -288,6 +314,26 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     /** A string field from a nested JSON object, or null when absent or not a string. */
     private static String str(Map<?, ?> map, String key) {
         return map.get(key) instanceof String s && !s.isBlank() ? s : null;
+    }
+
+    /**
+     * The tier list, keeping only entries the flat technology/skill lists already contain.
+     *
+     * <p>The tiers decide how hard a missing ask counts against a candidate, so an entry that
+     * exists only in the tier list is a claim nothing else corroborates. Matching on a
+     * case-insensitive exact label also keeps the tier vocabulary identical to what the profile
+     * is compared against — a tier entry the matcher could never match is worse than none.
+     */
+    private static List<String> confineToVocabulary(List<String> tier, List<String> vocabulary) {
+        if (tier.isEmpty() || vocabulary.isEmpty()) return List.of();
+        return tier.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(s -> vocabulary.stream().filter(v -> v.equalsIgnoreCase(s)).findFirst().orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
     }
 
     @SuppressWarnings("unchecked")

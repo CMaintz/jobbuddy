@@ -44,7 +44,18 @@ public record Job(
         /** Application deadline stated by the posting. Null when unknown or "ASAP". */
         java.time.LocalDate applicationDeadline,
         /** Contact person the posting names, or null when it names nobody. */
-        JobContact contact
+        JobContact contact,
+        /**
+         * Skills the posting states as a requirement ("du skal have", "krav", "must have").
+         * A subset of {@link #skills()} plus {@link #technologies()} — the split is about
+         * weight, not about holding different vocabulary.
+         */
+        List<String> requiredSkills,
+        /**
+         * Skills the posting states as an advantage rather than a requirement
+         * ("det er en fordel", "gerne", "nice to have").
+         */
+        List<String> preferredSkills
 ) {
 
     /** A fresh builder. Prefer {@link #toBuilder()} for copy-with-changes. */
@@ -70,7 +81,8 @@ public record Job(
                 .aiSummary(aiSummary).aiTags(aiTags).aiSeniorityEstimate(aiSeniorityEstimate)
                 .duplicateGroupId(duplicateGroupId).isActive(isActive).jobCategory(jobCategory)
                 .createdAt(createdAt).updatedAt(updatedAt).shortDescription(shortDescription)
-                .lastSeenAt(lastSeenAt).applicationDeadline(applicationDeadline).contact(contact);
+                .lastSeenAt(lastSeenAt).applicationDeadline(applicationDeadline).contact(contact)
+                .requiredSkills(requiredSkills).preferredSkills(preferredSkills);
     }
 
     public static final class Builder {
@@ -110,6 +122,8 @@ public record Job(
         private Instant lastSeenAt;
         private java.time.LocalDate applicationDeadline;
         private JobContact contact;
+        private List<String> requiredSkills = List.of();
+        private List<String> preferredSkills = List.of();
 
         public Builder id(UUID v) { this.id = v; return this; }
         public Builder source(JobSource v) { this.source = v; return this; }
@@ -147,6 +161,8 @@ public record Job(
         public Builder lastSeenAt(Instant v) { this.lastSeenAt = v; return this; }
         public Builder applicationDeadline(java.time.LocalDate v) { this.applicationDeadline = v; return this; }
         public Builder contact(JobContact v) { this.contact = v; return this; }
+        public Builder requiredSkills(List<String> v) { this.requiredSkills = v; return this; }
+        public Builder preferredSkills(List<String> v) { this.preferredSkills = v; return this; }
 
         public Job build() {
             return new Job(id, source, sourceJobId, url, title, companyId, companyName,
@@ -154,7 +170,8 @@ public record Job(
                     location, municipality, region, country, salaryMin, salaryMax, currency,
                     technologies, skills, languages, postedAt, scrapedAt, aiSummary, aiTags,
                     aiSeniorityEstimate, duplicateGroupId, isActive, jobCategory, createdAt,
-                    updatedAt, shortDescription, lastSeenAt, applicationDeadline, contact);
+                    updatedAt, shortDescription, lastSeenAt, applicationDeadline, contact,
+                    requiredSkills, preferredSkills);
         }
     }
 }

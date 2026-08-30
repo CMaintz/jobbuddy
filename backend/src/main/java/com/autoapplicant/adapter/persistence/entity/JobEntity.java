@@ -73,6 +73,15 @@ public class JobEntity {
     @Column(columnDefinition = "text[]")
     private String[] languages;
 
+    // Requirement tier of the posting's asks — see V069. jobs.skills stays the flat union.
+    @Type(StringArrayType.class)
+    @Column(name = "required_skills", columnDefinition = "text[]")
+    private String[] requiredSkills;
+
+    @Type(StringArrayType.class)
+    @Column(name = "preferred_skills", columnDefinition = "text[]")
+    private String[] preferredSkills;
+
     @Column(name = "posted_at")
     private Instant postedAt;
 
@@ -183,6 +192,10 @@ public class JobEntity {
     public void setTechnologies(String[] technologies) { this.technologies = technologies; }
     public String[] getSkills() { return skills; }
     public void setSkills(String[] skills) { this.skills = skills; }
+    public String[] getRequiredSkills() { return requiredSkills; }
+    public void setRequiredSkills(String[] v) { this.requiredSkills = v; }
+    public String[] getPreferredSkills() { return preferredSkills; }
+    public void setPreferredSkills(String[] v) { this.preferredSkills = v; }
     public String[] getLanguages() { return languages; }
     public void setLanguages(String[] languages) { this.languages = languages; }
     public Instant getPostedAt() { return postedAt; }

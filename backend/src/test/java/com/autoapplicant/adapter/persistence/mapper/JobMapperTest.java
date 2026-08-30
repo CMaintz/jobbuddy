@@ -123,7 +123,8 @@ class JobMapperTest {
                 Instant.now(), Instant.now(), "AI summary",
                 List.of("ml", "nlp"), "SENIOR",
                 null, true, null, Instant.now(), Instant.now(), null, null, null,
-                JobContact.ofNullable("Mette Hansen", "afdelingsleder", "mh@example.dk", "12345678"));
+                JobContact.ofNullable("Mette Hansen", "afdelingsleder", "mh@example.dk", "12345678"),
+                List.of("Python"), List.of("Django"));
 
         Job roundTripped = JobMapper.toDomain(JobMapper.toEntity(job));
 
@@ -137,6 +138,8 @@ class JobMapperTest {
         assertThat(roundTripped.skills()).containsExactly("Problem Solving");
         assertThat(roundTripped.languages()).containsExactly("Danish");
         assertThat(roundTripped.aiTags()).containsExactly("ml", "nlp");
+        assertThat(roundTripped.requiredSkills()).containsExactly("Python");
+        assertThat(roundTripped.preferredSkills()).containsExactly("Django");
         assertThat(roundTripped.isActive()).isTrue();
     }
 
@@ -147,13 +150,16 @@ class JobMapperTest {
                 null, null, null, null, null, null, null,
                 null, null, null,
                 null, null, null,
-                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null, null, null, null);
+                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null, null, null, null,
+                null, null);
 
         JobEntity entity = JobMapper.toEntity(job);
 
         assertThat(entity.getTechnologies()).isEmpty();
         assertThat(entity.getSkills()).isEmpty();
         assertThat(entity.getAiTags()).isEmpty();
+        assertThat(entity.getRequiredSkills()).isEmpty();
+        assertThat(entity.getPreferredSkills()).isEmpty();
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
