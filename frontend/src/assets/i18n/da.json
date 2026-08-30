@@ -1015,7 +1015,9 @@
       "recruiterEmail": "Rekrutteringsmail",
       "tailoredCv": "Tilpasset CV",
       "cvAnalysis": "CV-analyse",
-      "general": "Generel"
+      "general": "Generel",
+      "unsolicited": "Uopfordret",
+      "followUp": "Opfølgning"
     },
     "toast": {
       "updated": "Prompt opdateret",

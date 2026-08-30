@@ -432,6 +432,14 @@ public class PromptCompositionBuilder {
         return systemPrompt + "\nAlways write the output in " + targetLanguage + ".";
     }
 
+    /**
+     * The built-in application persona.
+     *
+     * <p>Kept even though V073 seeds this same voice as a template row: this is the fallback for a
+     * database with no seeds at all, so removing it would turn an empty prompt_templates table
+     * from a plain install into a broken one. The seeded row is what users read and fork; this is
+     * what runs when there is nothing to read.
+     */
     private static String defaultApplicationSystemPrompt() {
         return """
                 You are an expert career coach and professional writer specialising in job applications.
@@ -442,6 +450,7 @@ public class PromptCompositionBuilder {
                 """;
     }
 
+    /** The built-in CV-tailoring persona. Same role as above — the no-seeds fallback. */
     private static String defaultCvTailoringSystemPrompt() {
         return """
                 You are a careful CV tailoring specialist. Your task is to select and rewrite CV content

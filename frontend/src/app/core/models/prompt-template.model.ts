@@ -1,4 +1,14 @@
-export type PromptCategory = 'COVER_LETTER' | 'APPLICATION' | 'RECRUITER_MESSAGE' | 'CV_TAILORING' | 'CV_ANALYSIS' | 'GENERAL';
+export type PromptCategory =
+  | 'COVER_LETTER'
+  | 'APPLICATION'
+  /** Speculative application to a company with no posted vacancy ("uopfordret ansøgning"). */
+  | 'UNSOLICITED_APPLICATION'
+  | 'RECRUITER_MESSAGE'
+  /** The short nudge after an application or an unsolicited approach has gone quiet. */
+  | 'FOLLOW_UP_MESSAGE'
+  | 'CV_TAILORING'
+  | 'CV_ANALYSIS'
+  | 'GENERAL';
 
 export interface PromptTemplate {
   id: string;
