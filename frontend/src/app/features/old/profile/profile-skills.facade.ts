@@ -43,11 +43,12 @@ export class ProfileSkillsFacade {
         yearsExperience: vm.newSkill.yearsExperience ?? undefined,
         usedInProduction: vm.newSkill.usedInProduction ?? false,
         displayOrder: vm.profileSkills.length,
+        category: vm.newSkill.category || undefined,
       };
       this.skillsApi.addProfileSkill(payload).subscribe({
         next: () => {
           this.reloadProfileSkills(vm);
-          vm.newSkill = { skillName: '', proficiencyLevel: 'INTERMEDIATE', yearsExperience: undefined, usedInProduction: false };
+          vm.newSkill = { skillName: '', proficiencyLevel: 'INTERMEDIATE', yearsExperience: undefined, usedInProduction: false, category: '' };
           vm.taxonomySuggestions = [];
         },
         error: () => { vm.skillSaveError = 'Failed to save skill. Please try again.'; }
@@ -55,7 +56,11 @@ export class ProfileSkillsFacade {
     };
 
     if (!vm.newSkill.taxonomyId) {
-      this.skillsApi.createTaxonomySkill(vm.newSkill.skillName!.trim()).subscribe({
+      // A name that is not in the taxonomy gets a taxonomy row of its own — filed under the
+      // category the user picked, so the next person to type it inherits the classification
+      // instead of creating another uncategorised entry.
+      this.skillsApi.createTaxonomySkill(vm.newSkill.skillName!.trim(),
+                                         vm.newSkill.category || undefined).subscribe({
         next: taxonomy => save(taxonomy.id),
         error: () => save()
       });

@@ -146,9 +146,11 @@ public class SkillController {
     @PostMapping("/api/v1/profile/skills")
     public ResponseEntity<ProfileSkill> addProfileSkill(@RequestBody ProfileSkill skill) {
         UUID userId = secCtx.getCurrentUserId();
+        // The category the caller sent is carried through: for a skill outside the taxonomy it
+        // is the only category the row will ever have. The use case fills it in when it is null.
         ProfileSkill toSave = new ProfileSkill(null, userId, skill.skillName(), skill.taxonomyId(),
                 skill.proficiencyLevel(), skill.yearsExperience(), skill.usedInProduction(),
-                skill.displayOrder(), null);
+                skill.displayOrder(), skill.category());
         ProfileSkill saved = profileSkills.addSkill(toSave);
         return ResponseEntity.created(URI.create("/api/v1/profile/skills/" + saved.id())).body(saved);
     }
@@ -160,7 +162,7 @@ public class SkillController {
         UUID userId = secCtx.getCurrentUserId();
         ProfileSkill toSave = new ProfileSkill(id, userId, skill.skillName(), skill.taxonomyId(),
                 skill.proficiencyLevel(), skill.yearsExperience(), skill.usedInProduction(),
-                skill.displayOrder(), null);
+                skill.displayOrder(), skill.category());
         return ResponseEntity.ok(profileSkills.updateSkill(toSave));
     }
 

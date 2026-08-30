@@ -204,7 +204,10 @@ export class ProfileComponent implements OnInit {
 
   selectTaxonomySuggestion(suggestion: SkillTaxonomy): void {
     this.newSkill.skillName = suggestion.name;
-    this.newSkill = { ...this.newSkill, taxonomyId: suggestion.id };
+    // Take the suggestion's category too — it is what decides whether the skill lands in the
+    // Technologies group or the Skills group, and picking from the list is the clearest signal
+    // of which one the user means.
+    this.newSkill = { ...this.newSkill, taxonomyId: suggestion.id, category: suggestion.category };
     this.taxonomySuggestions = [];
     this.showDropdown = false;
   }
