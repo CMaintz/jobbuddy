@@ -12,8 +12,23 @@ public interface PromptTemplateRepositoryPort {
     Optional<PromptTemplate> findById(UUID id);
     List<PromptTemplate> findByUserId(UUID userId);
     List<PromptTemplate> findPublic();
-    /** Returns the first system-default template for a given category, e.g. CV_TAILORING. */
+    /** The app's seeded starting point for a category, e.g. CV_TAILORING. */
     Optional<PromptTemplate> findSystemDefault(String category);
+
+    /**
+     * The template this user should get for the category when they name none: their own chosen
+     * default if they have set one, otherwise the app's seeded default.
+     *
+     * <p>Kept separate from {@link #findSystemDefault(String)} because a user switching their
+     * default must not write to app-owned content.
+     */
+    Optional<PromptTemplate> findDefaultFor(UUID userId, String category);
+
+    /** Records this user's choice of default for a category. */
+    void setUserDefault(UUID userId, String category, UUID templateId);
+
+    /** Drops the user's override so the category falls back to the app's default. */
+    void clearUserDefault(UUID userId, String category);
 
     /** Bumps the template's usage counter (called whenever it drives a generation). */
     void incrementUsage(UUID templateId);

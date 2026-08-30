@@ -1,9 +1,39 @@
 {
   "careerProfile": {
     "title": "Karriereprofil",
-    "section": { "target": "Karrieremål", "stories": "Historiebank", "retracted": "Tilbagekaldte udsagn" , "skills": "Kompetencer"},
-    "skills": {"heading": "Kompetencer værd at tilføje", "intro": "Forslag fra de opslag, du reelt matcher, og fra det, der ligger tæt på dine nuværende kompetencer. Intet tilføjes, før du siger til.", "empty": "Ingen forslag lige nu. Gem eller søg et par stillinger, så der er et marked at sammenligne med.", "inPostings": "i {{count}} af dine matchede opslag", "fromYourCv": "Fra dit CV:", "relatedTo": "Ligger tæt på din {{skills}}", "usedInProduction": "Brugt i produktion", "usedIt": "Har brugt det", "notMine": "Ikke mig", "later": "Senere", "added": "{{name}} tilføjet til din profil", "failed": "Kunne ikke gemme — prøv igen"},
-    "evidence": {"heading": "Dokumentér det, du skriver", "intro": "Disse kompetencer står på din profil og i de opslag, du matcher, men intet i din historiebank underbygger dem — den hyppigste grund til at en dansk ansøgning bliver fravalgt.", "add": "Tilføj dokumentation", "situation": "Hvor? (fx platformsteamet hos Acme)", "action": "Hvad gjorde du?", "result": "Hvad var anderledes bagefter?", "saved": "Dokumentation gemt for {{name}}", "answerPlaceholder": "Bare beskriv det — fx \"flyttede 30 services til k8s hos Acme, deploys gik fra 40 min til 9\"", "draft": "Ryd op i det", "drafting": "Arbejder…", "addedFigures": "Udkastet tilføjede tal, du ikke skrev: {{figures}}. Fjern dem, før du gemmer."},
+    "section": {
+      "target": "Karrieremål",
+      "stories": "Historiebank",
+      "retracted": "Tilbagekaldte udsagn",
+      "skills": "Kompetencer"
+    },
+    "skills": {
+      "heading": "Kompetencer værd at tilføje",
+      "intro": "Forslag fra de opslag, du reelt matcher, og fra det, der ligger tæt på dine nuværende kompetencer. Intet tilføjes, før du siger til.",
+      "empty": "Ingen forslag lige nu. Gem eller søg et par stillinger, så der er et marked at sammenligne med.",
+      "inPostings": "i {{count}} af dine matchede opslag",
+      "fromYourCv": "Fra dit CV:",
+      "relatedTo": "Ligger tæt på din {{skills}}",
+      "usedInProduction": "Brugt i produktion",
+      "usedIt": "Har brugt det",
+      "notMine": "Ikke mig",
+      "later": "Senere",
+      "added": "{{name}} tilføjet til din profil",
+      "failed": "Kunne ikke gemme — prøv igen"
+    },
+    "evidence": {
+      "heading": "Dokumentér det, du skriver",
+      "intro": "Disse kompetencer står på din profil og i de opslag, du matcher, men intet i din historiebank underbygger dem — den hyppigste grund til at en dansk ansøgning bliver fravalgt.",
+      "add": "Tilføj dokumentation",
+      "situation": "Hvor? (fx platformsteamet hos Acme)",
+      "action": "Hvad gjorde du?",
+      "result": "Hvad var anderledes bagefter?",
+      "saved": "Dokumentation gemt for {{name}}",
+      "answerPlaceholder": "Bare beskriv det — fx \"flyttede 30 services til k8s hos Acme, deploys gik fra 40 min til 9\"",
+      "draft": "Ryd op i det",
+      "drafting": "Arbejder…",
+      "addedFigures": "Udkastet tilføjede tal, du ikke skrev: {{figures}}. Fjern dem, før du gemmer."
+    },
     "target": {
       "heading": "Karrieremål",
       "intro": "Fortæl AI'en, hvad du sigter efter. Det indgår i genereringen, så dokumenter fremhæver de roller, du faktisk vil have.",
@@ -57,7 +87,11 @@
       "lead": "Lead / leder",
       "careerChanger": "Karriereskifter"
     },
-    "toast": { "saved": "Karrieremål gemt", "saveFailed": "Gemning mislykkedes", "storySaved": "Historie gemt" }
+    "toast": {
+      "saved": "Karrieremål gemt",
+      "saveFailed": "Gemning mislykkedes",
+      "storySaved": "Historie gemt"
+    }
   },
   "pack": {
     "title": "Ansøgningspakke",
@@ -183,13 +217,15 @@
       "today": "i dag",
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
-      "noReply": "Intet svar endnu — send en opfølgning"
-    , "outreachFollowUp": "Følg op på din uopfordrede ansøgning"},
+      "noReply": "Intet svar endnu — send en opfølgning",
+      "outreachFollowUp": "Følg op på din uopfordrede ansøgning"
+    },
     "tag": {
       "followUp": "opfølgning",
       "deadline": "frist",
-      "noReply": "intet svar"
-    , "outreach": "Uopfordret"}
+      "noReply": "intet svar",
+      "outreach": "Uopfordret"
+    }
   },
   "shared": {
     "upload": "Upload",
@@ -222,9 +258,18 @@
     "applying": "Anvender…",
     "applyToCv": "Anvend på master-CV",
     "mergesInfo": "Flettes ind i din eksisterende profil — intet overskrives med tomme felter.",
-    "pdf": { "label": "Upload PDF", "desc": "Upload et eksisterende CV, så analyserer vi det ind i strukturerede sektioner." },
-    "paste": { "label": "Indsæt tekst", "desc": "Indsæt din CV-tekst, så udtrækker vi strukturen." },
-    "linkedin": { "label": "LinkedIn", "desc": "Upload din LinkedIn-profil-PDF-eksport for at auto-importere." },
+    "pdf": {
+      "label": "Upload PDF",
+      "desc": "Upload et eksisterende CV, så analyserer vi det ind i strukturerede sektioner."
+    },
+    "paste": {
+      "label": "Indsæt tekst",
+      "desc": "Indsæt din CV-tekst, så udtrækker vi strukturen."
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "desc": "Upload din LinkedIn-profil-PDF-eksport for at auto-importere."
+    },
     "error": {
       "pasteFirst": "Indsæt hele din CV-tekst først (mindst et par linjer)",
       "parseFailed": "Analyse mislykkedes — tjek filen/teksten og prøv igen",
@@ -339,7 +384,11 @@
       "sectionSpacing": "Sektionsafstand",
       "documentSize": "Dokumentstørrelse",
       "photoStyle": "Fotostil",
-      "shape": { "square": "Firkant", "rounded": "Afrundet", "circle": "Cirkel" },
+      "shape": {
+        "square": "Firkant",
+        "rounded": "Afrundet",
+        "circle": "Cirkel"
+      },
       "photoSize": "Fotostørrelse",
       "templateDefault": "skabelonstandard",
       "photoSizeTip": "Tip: du kan også trække i fotoet i forhåndsvisningen for at ændre størrelsen.",
@@ -356,12 +405,30 @@
     "layout": {
       "template": "Skabelon",
       "tpl": {
-        "classic": { "label": "Klassisk", "description": "To kolonner med mørk sidebjælke" },
-        "modern": { "label": "Moderne (1-kol.)", "description": "Rent enkeltkolonne-layout" },
-        "modern2col": { "label": "Moderne (2-kol.)", "description": "Mørk venstre kolonne" },
-        "minimal": { "label": "Minimal", "description": "Minimalistisk med tidslinje" },
-        "executive": { "label": "Executive", "description": "Executive med hovedbånd" },
-        "creative": { "label": "Kreativ", "description": "Farverig accent-stil" }
+        "classic": {
+          "label": "Klassisk",
+          "description": "To kolonner med mørk sidebjælke"
+        },
+        "modern": {
+          "label": "Moderne (1-kol.)",
+          "description": "Rent enkeltkolonne-layout"
+        },
+        "modern2col": {
+          "label": "Moderne (2-kol.)",
+          "description": "Mørk venstre kolonne"
+        },
+        "minimal": {
+          "label": "Minimal",
+          "description": "Minimalistisk med tidslinje"
+        },
+        "executive": {
+          "label": "Executive",
+          "description": "Executive med hovedbånd"
+        },
+        "creative": {
+          "label": "Kreativ",
+          "description": "Farverig accent-stil"
+        }
       },
       "mainSections": "Hovedsektioner — træk for at ændre rækkefølge",
       "sidebarSections": "Sidebjælkesektioner — træk for at ændre rækkefølge",
@@ -455,9 +522,18 @@
       "month": "Måned",
       "year": "År",
       "months": {
-        "jan": "Januar", "feb": "Februar", "mar": "Marts", "apr": "April",
-        "may": "Maj", "jun": "Juni", "jul": "Juli", "aug": "August",
-        "sep": "September", "oct": "Oktober", "nov": "November", "dec": "December"
+        "jan": "Januar",
+        "feb": "Februar",
+        "mar": "Marts",
+        "apr": "April",
+        "may": "Maj",
+        "jun": "Juni",
+        "jul": "Juli",
+        "aug": "August",
+        "sep": "September",
+        "oct": "Oktober",
+        "nov": "November",
+        "dec": "December"
       }
     }
   },
@@ -549,7 +625,11 @@
     "refinementDiff": "Finpudsningsdiff",
     "accept": "Accepter",
     "guardFindings": "Fund fra kontrol",
-    "evidence": {"heading": "Tynd på dokumentation", "body": "Dette brev fik {{score}}/100 på konkret dokumentation — det argumenterer uden at henvise til dit faktiske arbejde. To spørgsmål om et projekt ville give det næste noget at pege på.", "cta": "Tilføj dokumentation for dine kompetencer"},
+    "evidence": {
+      "heading": "Tynd på dokumentation",
+      "body": "Dette brev fik {{score}}/100 på konkret dokumentation — det argumenterer uden at henvise til dit faktiske arbejde. To spørgsmål om et projekt ville give det næste noget at pege på.",
+      "cta": "Tilføj dokumentation for dine kompetencer"
+    },
     "jdKeywords": "Opslagets nøgleord",
     "covered": "{{matched}}/{{total}} dækket",
     "notMentioned": "Ikke nævnt",
@@ -576,9 +656,18 @@
       "model": "Model"
     },
     "tpl": {
-      "editorial": { "label": "Editorial", "sub": "Rolige serif-overskrifter - cremefarvet papir" },
-      "classic": { "label": "Klassisk", "sub": "Serif-brødtekst - centreret hoved" },
-      "bold": { "label": "Fed", "sub": "Hvidt papir - ravgul kant-accent" }
+      "editorial": {
+        "label": "Editorial",
+        "sub": "Rolige serif-overskrifter - cremefarvet papir"
+      },
+      "classic": {
+        "label": "Klassisk",
+        "sub": "Serif-brødtekst - centreret hoved"
+      },
+      "bold": {
+        "label": "Fed",
+        "sub": "Hvidt papir - ravgul kant-accent"
+      }
     }
   },
   "masterCv": {
@@ -839,10 +928,22 @@
     "emptyTitle": "Få en ærlig score på dit master-CV",
     "emptyDesc": "Styrker, huller og konkrete rettelser — generelt eller mod en bestemt stilling.",
     "target": {
-      "general": { "label": "Generel styrke", "hint": "Klarhed, resultater, ATS-parathed" },
-      "job": { "label": "Mod en stilling", "hint": "Vælg blandt gemte stillinger & ansøgninger" },
-      "paste": { "label": "Mod et indsat opslag", "hint": "Indsæt en hvilken som helst jobbeskrivelse" },
-      "pipeline": { "label": "På tværs af min pipeline", "hint": "Kompetencehuller vs. gemte, ansøgte & matchede stillinger" }
+      "general": {
+        "label": "Generel styrke",
+        "hint": "Klarhed, resultater, ATS-parathed"
+      },
+      "job": {
+        "label": "Mod en stilling",
+        "hint": "Vælg blandt gemte stillinger & ansøgninger"
+      },
+      "paste": {
+        "label": "Mod et indsat opslag",
+        "hint": "Indsæt en hvilken som helst jobbeskrivelse"
+      },
+      "pipeline": {
+        "label": "På tværs af min pipeline",
+        "hint": "Kompetencehuller vs. gemte, ansøgte & matchede stillinger"
+      }
     },
     "dim": {
       "technical": "Tekniske færdigheder",
@@ -928,8 +1029,16 @@
       "duplicated": "Prompt duplikeret",
       "duplicateFailed": "Kunne ikke duplikere prompten",
       "created": "Prompt oprettet",
-      "createFailed": "Kunne ikke oprette prompten"
-    }
+      "createFailed": "Kunne ikke oprette prompten",
+      "defaultSet": "{{name}} er nu standard",
+      "defaultFailed": "Kunne ikke skifte standard — prøv igen",
+      "defaultReset": "Tilbage til appens prompt"
+    },
+    "protected": "Følger med appen",
+    "protectedHint": "Denne prompt følger med appen. Lav en kopi, hvis du vil rette i den.",
+    "inUse": "I brug",
+    "useAsDefault": "Brug som standard",
+    "restoreAppDefault": "Gendan appens prompt"
   },
   "interviews": {
     "inStages": "{{count}} i samtalefaser",
@@ -1085,9 +1194,43 @@
     }
   },
   "companies": {
-    "view": {"all": "Alle", "targets": "Uopfordret", "tracked": "Igangværende"},
-    "targets": {"intro": "Virksomheder der ansætter folk med dine kompetencer. Omkring halvdelen af danske stillinger bliver aldrig slået op — det er dem her, en uopfordret ansøgning er til.", "includeHiringNow": "Vis også virksomheder der søger lige nu", "empty": "Ingen emner endnu. Tilføj kompetencer og teknologier til din profil, og lad crawleren opbygge lidt ansættelseshistorik.", "write": "Skriv uopfordret", "reason": {"skillOverlap": "Ansætter inden for {{skills}}", "skillOverlapMore": "Ansætter inden for {{skills}} og {{count}} af dine øvrige kompetencer", "hiringRecent": "Har ansat inden for de seneste tre måneder", "hiringSemiRecent": "Har ansat inden for det seneste halve år", "repeatHirer": "Har slået {{count}} stillinger op det seneste år — ansætter jævnligt", "postedTwice": "Har slået to stillinger op det seneste år", "nothingOpen": "Intet slået op lige nu — præcis dét hul en uopfordret ansøgning er til", "hasOpenRoles": "Har {{count}} stilling(er) slået op nu: søg dem først", "consultancy": "Konsulenthus — udstationering frem for arbejde in-house"}, "callFirst": "Dansk praksis starter med et opkald: ring og spørg, om du må sende en ansøgning, hvem den skal sendes til, og hvordan de helst modtager den. Følg op inden for et par hverdage — det forventes, at du er den aktive part."},
-    "outreach": {"track": "Følg op", "untrack": "Stop opfølgning", "empty": "Ingen igangværende endnu. Gem et emne fra listen for at komme i gang.", "followUp": "opfølgning", "due": "Forfalden", "status": {"SAVED": "Gemt", "CONTACTED": "Kontaktet", "REPLIED": "Svar modtaget", "MEETING": "Møde", "CLOSED": "Afsluttet"}},
+    "view": {
+      "all": "Alle",
+      "targets": "Uopfordret",
+      "tracked": "Igangværende"
+    },
+    "targets": {
+      "intro": "Virksomheder der ansætter folk med dine kompetencer. Omkring halvdelen af danske stillinger bliver aldrig slået op — det er dem her, en uopfordret ansøgning er til.",
+      "includeHiringNow": "Vis også virksomheder der søger lige nu",
+      "empty": "Ingen emner endnu. Tilføj kompetencer og teknologier til din profil, og lad crawleren opbygge lidt ansættelseshistorik.",
+      "write": "Skriv uopfordret",
+      "reason": {
+        "skillOverlap": "Ansætter inden for {{skills}}",
+        "skillOverlapMore": "Ansætter inden for {{skills}} og {{count}} af dine øvrige kompetencer",
+        "hiringRecent": "Har ansat inden for de seneste tre måneder",
+        "hiringSemiRecent": "Har ansat inden for det seneste halve år",
+        "repeatHirer": "Har slået {{count}} stillinger op det seneste år — ansætter jævnligt",
+        "postedTwice": "Har slået to stillinger op det seneste år",
+        "nothingOpen": "Intet slået op lige nu — præcis dét hul en uopfordret ansøgning er til",
+        "hasOpenRoles": "Har {{count}} stilling(er) slået op nu: søg dem først",
+        "consultancy": "Konsulenthus — udstationering frem for arbejde in-house"
+      },
+      "callFirst": "Dansk praksis starter med et opkald: ring og spørg, om du må sende en ansøgning, hvem den skal sendes til, og hvordan de helst modtager den. Følg op inden for et par hverdage — det forventes, at du er den aktive part."
+    },
+    "outreach": {
+      "track": "Følg op",
+      "untrack": "Stop opfølgning",
+      "empty": "Ingen igangværende endnu. Gem et emne fra listen for at komme i gang.",
+      "followUp": "opfølgning",
+      "due": "Forfalden",
+      "status": {
+        "SAVED": "Gemt",
+        "CONTACTED": "Kontaktet",
+        "REPLIED": "Svar modtaget",
+        "MEETING": "Møde",
+        "CLOSED": "Afsluttet"
+      }
+    },
     "searchPlaceholder": "Søg virksomheder…",
     "count": "{{count}} virksomheder",
     "loading": "Indlæser virksomheder…",

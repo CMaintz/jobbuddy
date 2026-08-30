@@ -194,7 +194,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String jobDescription = job != null ? job.descriptionClean() : rawJobDescription;
         PostingContext posting = new PostingContext(jobDescription,
                 job != null ? job.country() : null, null);
-        PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
+        PromptTemplate promptTemplate = resolvePromptTemplate(userId, promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
                 source, posting, customInstructions, targetLanguage, promptTemplate,
@@ -233,11 +233,14 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         }
     }
 
-    /** Loads the prompt template by explicit ID, or falls back to the system default for the category. */
-    private PromptTemplate resolvePromptTemplate(UUID promptTemplateId, String fallbackCategory) {
+    /**
+     * Loads the prompt template by explicit ID, or falls back to the caller's default for the
+     * category — their own chosen one when they have set it, the app's seeded prompt otherwise.
+     */
+    private PromptTemplate resolvePromptTemplate(UUID userId, UUID promptTemplateId, String fallbackCategory) {
         PromptTemplate resolved = promptTemplateId != null
                 ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
-                : promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
+                : promptTemplateRepo.findDefaultFor(userId, fallbackCategory).orElse(null);
         if (resolved != null) promptTemplateRepo.incrementUsage(resolved.id());
         return resolved;
     }

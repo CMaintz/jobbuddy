@@ -317,7 +317,9 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
             PromptTemplate styleTemplate = promptTemplateId != null
                     ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
-                    : promptTemplateRepo.findSystemDefault(documentType).orElse(null);
+                    // The user's own chosen default when they have one, the app's seeded prompt
+                    // otherwise — switching a default is their row, never a write to app content.
+                    : promptTemplateRepo.findDefaultFor(userId, documentType).orElse(null);
             if (styleTemplate != null) promptTemplateRepo.incrementUsage(styleTemplate.id());
 
             PostingContext posting = new PostingContext(jobDescription,
