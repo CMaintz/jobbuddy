@@ -250,7 +250,7 @@ class MatchingServiceTest {
 
     @Test
     void a_beginner_level_skill_covers_a_requirement_only_partially() {
-        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of());
         UUID jobId = UUID.randomUUID();
         when(profileSkillRepo.findByUserId(userId)).thenReturn(List.of(
                 new ProfileSkill(UUID.randomUUID(), userId, "Java", null,
@@ -286,10 +286,22 @@ class MatchingServiceTest {
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * A profile plus the skills that go with it. Skills live in profile_skills, so giving a
+     * candidate a skill means stubbing that repository — the two arguments are kept apart only
+     * because the old signature distinguished them; both become plain skill rows.
+     */
     private Profile profile(UUID userId, String headline, String summary,
                             List<String> skills, List<String> technologies) {
+        List<String> all = new java.util.ArrayList<>(skills);
+        all.addAll(technologies);
+        if (!all.isEmpty()) {
+            lenient().when(profileSkillRepo.findByUserId(userId)).thenReturn(
+                    all.stream().map(name -> new ProfileSkill(UUID.randomUUID(), userId, name,
+                            null, null, null, false, 0, null)).toList());
+        }
         return new Profile(UUID.randomUUID(), userId, headline, summary,
-                null, skills, technologies, List.of(), List.of(),
+                null, List.of(), List.of(),
                 null, null, null, null, null,
                 null, null);
     }

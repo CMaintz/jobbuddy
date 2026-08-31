@@ -61,7 +61,7 @@ public class FirebaseUserProvisioningService implements ProvisionFirebaseUserUse
         User saved = userRepo.save(newUser);
 
         profileRepo.save(new Profile(null, saved.id(), null, null, null,
-                List.of(), List.of(), List.of(), List.of(),
+                List.of(), List.of(),
                 null, null, "DKK", null, null, null, null));
 
         if (name != null && !name.isBlank()) {

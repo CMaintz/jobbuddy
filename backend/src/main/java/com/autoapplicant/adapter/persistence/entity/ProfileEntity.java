@@ -27,14 +27,8 @@ public class ProfileEntity {
     // String[] + StringArrayType maps to PostgreSQL text[] natively.
     // @ElementCollection is avoided because it would generate a separate join table
     // and require an extra query; text[] is always loaded with the parent row.
-    @Type(StringArrayType.class)
-    @Column(columnDefinition = "text[]")
-    private String[] skills;
-
-    @Type(StringArrayType.class)
-    @Column(columnDefinition = "text[]")
-    private String[] technologies;
-
+    // Skills are NOT here — they live in profile_skills, one row each with taxonomy link,
+    // category, proficiency and years. See V074.
     @Type(StringArrayType.class)
     @Column(columnDefinition = "text[]")
     private String[] languages;
@@ -77,10 +71,6 @@ public class ProfileEntity {
     public void setSummary(String summary) { this.summary = summary; }
     public Integer getYearsExperience() { return yearsExperience; }
     public void setYearsExperience(Integer yearsExperience) { this.yearsExperience = yearsExperience; }
-    public String[] getSkills() { return skills; }
-    public void setSkills(String[] skills) { this.skills = skills; }
-    public String[] getTechnologies() { return technologies; }
-    public void setTechnologies(String[] technologies) { this.technologies = technologies; }
     public String[] getLanguages() { return languages; }
     public void setLanguages(String[] languages) { this.languages = languages; }
     public String[] getInterests() { return interests; }

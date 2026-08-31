@@ -5,13 +5,11 @@ import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillCandidate;
 import com.autoapplicant.domain.skill.SkillConfirmation;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
-import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +32,6 @@ class SkillCandidateServiceTest {
     private static final UUID USER = UUID.randomUUID();
 
     private final ProfileSkillRepositoryPort profileSkillRepo = Mockito.mock(ProfileSkillRepositoryPort.class);
-    private final ProfileRepositoryPort profileRepo = Mockito.mock(ProfileRepositoryPort.class);
     private final SkillTaxonomyRepositoryPort taxonomyRepo = Mockito.mock(SkillTaxonomyRepositoryPort.class);
     private final MarketCorpusService marketCorpus = Mockito.mock(MarketCorpusService.class);
 
@@ -64,22 +61,23 @@ class SkillCandidateServiceTest {
             };
 
     private final SkillCandidateService service = new SkillCandidateService(
-            profileSkillRepo, profileRepo, taxonomyRepo, dismissalRepo, marketCorpus,
-            parsedSuggestionRepo);
+            profileSkillRepo, taxonomyRepo, dismissalRepo, marketCorpus, parsedSuggestionRepo);
 
     @BeforeEach
     void setUp() {
         when(profileSkillRepo.findByUserId(USER)).thenReturn(List.of());
-        when(profileRepo.findByUserId(USER)).thenReturn(Optional.empty());
         when(taxonomyRepo.findByNormalizedName(any())).thenReturn(Optional.empty());
         when(taxonomyRepo.findByParentIds(any())).thenReturn(List.of());
         when(marketCorpus.collect(any(), anyBoolean())).thenReturn(List.of());
     }
 
+    /** Gives the user these skills — one profile_skills row each, the only place skills live. */
     private void profileWith(String... skills) {
-        when(profileRepo.findByUserId(USER)).thenReturn(Optional.of(new Profile(
-                UUID.randomUUID(), USER, null, null, null, List.of(skills), List.of(), List.of(),
-                List.of(), null, null, null, null, null, null, null)));
+        when(profileSkillRepo.findByUserId(USER)).thenReturn(
+                java.util.Arrays.stream(skills)
+                        .map(name -> new ProfileSkill(UUID.randomUUID(), USER, name, null,
+                                null, null, false, 0, null))
+                        .toList());
     }
 
     private static Job posting(List<String> technologies, List<String> skills) {

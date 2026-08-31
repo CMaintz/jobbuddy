@@ -11,7 +11,7 @@ import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.company.OutreachContactRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.user.CareerTargetRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -55,17 +55,17 @@ public class OutreachTargetService implements FindOutreachTargetsUseCase {
     private final JobRepositoryPort jobRepo;
     private final CompanyRepositoryPort companyRepo;
     private final OutreachContactRepositoryPort outreachRepo;
-    private final ProfileRepositoryPort profileRepo;
+    private final ProfileSkillRepositoryPort profileSkillRepo;
     private final CareerTargetRepositoryPort careerTargetRepo;
 
     public OutreachTargetService(JobRepositoryPort jobRepo, CompanyRepositoryPort companyRepo,
                                  OutreachContactRepositoryPort outreachRepo,
-                                 ProfileRepositoryPort profileRepo,
+                                 ProfileSkillRepositoryPort profileSkillRepo,
                                  CareerTargetRepositoryPort careerTargetRepo) {
         this.jobRepo = jobRepo;
         this.companyRepo = companyRepo;
         this.outreachRepo = outreachRepo;
-        this.profileRepo = profileRepo;
+        this.profileSkillRepo = profileSkillRepo;
         this.careerTargetRepo = careerTargetRepo;
     }
 
@@ -161,11 +161,10 @@ public class OutreachTargetService implements FindOutreachTargetsUseCase {
     /** The candidate's technologies and skills, lowercased — what "in my field" means for them. */
     private Set<String> candidateTerms(UUID userId) {
         Set<String> terms = new LinkedHashSet<>();
-        Profile profile = profileRepo.findByUserId(userId).orElse(null);
-        if (profile != null) {
-            addAll(terms, profile.technologies());
-            addAll(terms, profile.skills());
-        }
+        addAll(terms, profileSkillRepo.findByUserId(userId).stream()
+                .map(com.autoapplicant.domain.skill.ProfileSkill::skillName)
+                .filter(java.util.Objects::nonNull)
+                .toList());
         CareerTarget target = careerTargetRepo.findByUserId(userId).orElse(null);
         if (target != null) addAll(terms, target.targetArchetypes());
         return terms;

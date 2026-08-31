@@ -5,6 +5,7 @@ import com.autoapplicant.port.in.user.ParseLinkedInProfileUseCase;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
+import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -24,13 +25,16 @@ public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase 
     private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
     private final ImpliedSkillQueue impliedSkills;
+    private final ProfileSkillIngestion skillIngestion;
 
     public LinkedInProfileParseService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                        ObjectMapper objectMapper,
-                                       ImpliedSkillQueue impliedSkills) {
+                                       ImpliedSkillQueue impliedSkills,
+                                       ProfileSkillIngestion skillIngestion) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
         this.impliedSkills = impliedSkills;
+        this.skillIngestion = skillIngestion;
     }
 
     @Override
@@ -75,18 +79,19 @@ public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase 
         );
 
         String json = aiProvider.generate(composition);
-        queueImpliedSkills(userId, json);
+        applySkills(userId, json);
         return json;
     }
 
     /**
-     * Files the export's implied skills, then gets out of the way.
+     * Puts the export's skills on the profile and queues what it merely implies, then gets out of
+     * the way.
      *
      * <p>The raw JSON is what the caller consumes, so this reads it rather than rewriting it, and
      * swallows its own failures: an import that produced a usable profile must not be reported as
-     * failed because a suggestion could not be queued.
+     * failed because a skill could not be filed.
      */
-    private void queueImpliedSkills(UUID userId, String json) {
+    private void applySkills(UUID userId, String json) {
         try {
             String cleaned = json.trim();
             if (cleaned.startsWith("```")) {
@@ -97,8 +102,12 @@ public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase 
             JsonNode skills = node.get("skills");
             if (skills != null && skills.isArray()) skills.forEach(n -> stated.add(n.asText()));
             impliedSkills.queue(userId, node, stated, ParsedSkillSuggestion.Source.LINKEDIN_PARSE);
+            // Extracted skills go onto the profile as rows, taxonomy-resolved and categorised —
+            // the same shape a hand-typed skill gets. The raw JSON the caller consumes is
+            // unchanged; this is a side effect on the profile, not a rewrite of the response.
+            skillIngestion.ingest(userId, stated);
         } catch (Exception e) {
-            log.warn("Could not read implied skills from the LinkedIn export for user {}: {}",
+            log.warn("Could not read skills from the LinkedIn export for user {}: {}",
                     userId, e.getMessage());
         }
     }
