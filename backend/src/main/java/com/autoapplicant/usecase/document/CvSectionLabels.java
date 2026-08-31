@@ -8,6 +8,10 @@ package com.autoapplicant.usecase.document;
  * Danish CV reads "Erhvervserfaring" rather than "Experience" while every consumer keeps working.
  *
  * <p>A market's conventions live in {@link MarketConventions}; this is only the vocabulary.
+ *
+ * <p>The resume builder exports CVs too, from its own model, and takes its headings from the
+ * frontend's {@code resumeBuilder.section.*} translations. The two must agree, or the same CV
+ * reads differently depending on which path exported it — keep them in step.
  */
 final class CvSectionLabels {
 
