@@ -4,7 +4,7 @@ import { toHtml } from './rich-text-editor.component';
 
 /**
  * Renders resume rich-text content (TipTap HTML) in preview layouts.
- * Legacy plain-text content is wrapped in paragraphs. Trusting the HTML is
+ * Plain text, which is what generation returns, is wrapped in paragraphs. Trusting the HTML is
  * acceptable here: it is authored by the user in their own workspace and
  * Angular's sanitizer would otherwise strip the inline font/colour styles.
  */

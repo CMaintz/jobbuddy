@@ -27,19 +27,10 @@ public class ProfileSkillPersistenceAdapter implements ProfileSkillRepositoryPor
 
     @Override
     public List<ProfileSkill> findByUserId(UUID userId) {
-        List<ProfileSkillEntity> entities = repo.findByUserIdOrderByDisplayOrderAscSkillNameAsc(userId);
-
-        // Batch-load taxonomy categories for skills that have a taxonomyId
-        List<UUID> taxonomyIds = entities.stream()
-                .map(ProfileSkillEntity::getTaxonomyId)
-                .filter(id -> id != null)
-                .distinct().toList();
-        Map<UUID, String> categoryById = taxonomyIds.isEmpty() ? Map.of()
-                : taxonomyRepo.findByIdIn(taxonomyIds).stream()
-                    .collect(Collectors.toMap(t -> t.getId(), t -> t.getCategory() != null ? t.getCategory() : "Custom"));
-
-        return entities.stream()
-                .map(e -> toDomainWithCategory(e, categoryById.get(e.getTaxonomyId())))
+        // No taxonomy join: every write path resolves the category and stores it on the row, so
+        // reading it back is a column read rather than a second query.
+        return repo.findByUserIdOrderByDisplayOrderAscSkillNameAsc(userId).stream()
+                .map(this::toDomain)
                 .toList();
     }
 
@@ -60,19 +51,9 @@ public class ProfileSkillPersistenceAdapter implements ProfileSkillRepositoryPor
     }
 
     private ProfileSkill toDomain(ProfileSkillEntity e) {
-        return toDomainWithCategory(e, null);
-    }
-
-    /**
-     * The row's own category wins; {@code taxonomyCategory} is the fallback for rows written
-     * before V070 gave profile_skills a category of its own. Passing null for it is therefore
-     * safe on the save path — a saved row already carries whatever category was resolved.
-     */
-    private ProfileSkill toDomainWithCategory(ProfileSkillEntity e, String taxonomyCategory) {
-        String category = e.getCategory() != null ? e.getCategory() : taxonomyCategory;
         return new ProfileSkill(e.getId(), e.getUserId(), e.getSkillName(), e.getTaxonomyId(),
                 e.getProficiencyLevel(), e.getYearsExperience(), e.isUsedInProduction(),
-                e.getDisplayOrder(), category);
+                e.getDisplayOrder(), e.getCategory());
     }
 
     private ProfileSkillEntity toEntity(ProfileSkill s) {

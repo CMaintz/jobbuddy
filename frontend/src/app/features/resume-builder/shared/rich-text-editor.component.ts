@@ -226,7 +226,7 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
   }
 }
 
-/** Legacy resume content is plain text — wrap lines in paragraphs so TipTap accepts it. */
+/** Generated content arrives as plain text — wrap lines in paragraphs so TipTap accepts it. */
 export function toHtml(value: string): string {
   if (!value) return '';
   if (value.includes('<')) return value;

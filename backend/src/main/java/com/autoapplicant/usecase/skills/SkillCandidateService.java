@@ -179,7 +179,7 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         return added;
     }
 
-    /** Normalized name → display name, from both the structured skills and the legacy profile lists. */
+    /** Normalized name → display name for everything already on the profile. */
     private Map<String, String> claimedSkills(UUID userId) {
         Map<String, String> claimed = new HashMap<>();
         profileSkillRepo.findByUserId(userId).stream()
