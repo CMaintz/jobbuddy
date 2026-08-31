@@ -67,7 +67,9 @@ export class ResumePreviewComponent {
   /** Text-based single-column PDF — selectable text, safe for ATS parsers. */
   async downloadAtsPdf(): Promise<void> {
     const pi = this.state.displayPersonalInfo();
-    // Headings follow the interface language, matching what the backend puts on a generated CV.
+    // Headings follow the interface language. These keys are the frontend half of the CV heading
+    // vocabulary — the backend half is CvSectionLabels, and the two have to agree or the same CV
+    // reads differently depending on which path exported it.
     const model = resumeDataToAts(
       { ...this.state.resumeData(), socials: this.state.displaySocials() }, pi, this.state.settings(),
       {
