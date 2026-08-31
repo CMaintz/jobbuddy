@@ -6,6 +6,8 @@ import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
 import com.autoapplicant.port.out.user.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,6 +29,7 @@ public class CareerProfileContextService {
     private final EducationRepositoryPort educationRepo;
     private final CertificationRepositoryPort certRepo;
     private final ProfileSkillRepositoryPort skillRepo;
+    private final SkillTaxonomyRepositoryPort taxonomyRepo;
     private final SpokenLanguageRepositoryPort languageRepo;
     private final ProfileStrengthRepositoryPort strengthRepo;
     private final CareerTargetRepositoryPort careerTargetRepo;
@@ -39,6 +42,7 @@ public class CareerProfileContextService {
                                        EducationRepositoryPort educationRepo,
                                        CertificationRepositoryPort certRepo,
                                        ProfileSkillRepositoryPort skillRepo,
+                                       SkillTaxonomyRepositoryPort taxonomyRepo,
                                        SpokenLanguageRepositoryPort languageRepo,
                                        ProfileStrengthRepositoryPort strengthRepo,
                                        CareerTargetRepositoryPort careerTargetRepo,
@@ -50,6 +54,7 @@ public class CareerProfileContextService {
         this.educationRepo = educationRepo;
         this.certRepo = certRepo;
         this.skillRepo = skillRepo;
+        this.taxonomyRepo = taxonomyRepo;
         this.languageRepo = languageRepo;
         this.strengthRepo = strengthRepo;
         this.careerTargetRepo = careerTargetRepo;
@@ -70,12 +75,41 @@ public class CareerProfileContextService {
                 ? skillNames
                 : listOrEmpty(profile != null ? profile.skills() : null);
 
-        // Skill → category (e.g. "Java" → "Languages"), so the tailored CV can group skills.
-        // Sourced from the user's own categorised profile skills; last write wins on duplicates.
+        // Skill → category, so the tailored CV can group skills.
+        //
+        // Two sources, in this order. The user's own structured skills win: a category they filed
+        // deliberately is the best answer there is. The taxonomy then covers everything else.
+        //
+        // That second pass is what makes this work at all for most people. Only manual entry and
+        // confirmed suggestions create profile_skills rows — a CV upload or LinkedIn import writes
+        // the flat profile.skills/technologies arrays and no rows whatsoever. So for anyone who
+        // onboarded the normal way, categorising only the structured rows categorised nothing, and
+        // every CV came out as one flat wall of skills.
         Map<String, String> skillCategories = new LinkedHashMap<>();
         profileSkills.stream()
                 .filter(s -> s.skillName() != null && s.category() != null && !s.category().isBlank())
                 .forEach(s -> skillCategories.put(s.skillName(), s.category()));
+
+        List<String> uncategorised = java.util.stream.Stream
+                .concat(skills.stream(), listOrEmpty(profile != null ? profile.technologies() : null).stream())
+                .filter(Objects::nonNull)
+                .filter(name -> !skillCategories.containsKey(name))
+                .distinct()
+                .toList();
+        if (!uncategorised.isEmpty()) {
+            Map<String, String> byNormalizedName = taxonomyRepo
+                    .findByNormalizedNames(uncategorised.stream()
+                            .map(n -> n.strip().toLowerCase(java.util.Locale.ROOT))
+                            .collect(java.util.stream.Collectors.toSet()))
+                    .stream()
+                    .filter(t -> t.category() != null && !t.category().isBlank())
+                    .collect(java.util.stream.Collectors.toMap(
+                            SkillTaxonomy::normalizedName, SkillTaxonomy::category, (a, b) -> a));
+            uncategorised.forEach(name -> {
+                String category = byNormalizedName.get(name.strip().toLowerCase(java.util.Locale.ROOT));
+                if (category != null) skillCategories.put(name, category);
+            });
+        }
 
         List<String> spokenLanguages = languageRepo.findByUserId(userId).stream()
                 .map(lang -> lang.language() + " (" + formatProficiency(lang.proficiency()) + ")")

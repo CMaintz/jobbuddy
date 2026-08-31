@@ -235,6 +235,12 @@ public class PromptCompositionBuilder {
                 + "in the schema; do not attempt to reorder them." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + buildOutcomeLearnings(outcomeLessons)
+                + "\n\nThe profile's skillCategories map files each skill under a heading (Languages, "
+                + "Frameworks, Tools and so on), and the CV renders the skills section grouped by it. "
+                + "Select skills knowing they will be grouped: a heading that ends up with one entry "
+                + "reads as padding. Do not restate a skill's category in its name, and do not try to "
+                + "order or group the list yourself — return selectedSkills as a flat list, most "
+                + "relevant to this posting first, and the app groups it."
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."

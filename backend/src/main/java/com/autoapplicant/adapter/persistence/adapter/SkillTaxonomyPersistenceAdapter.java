@@ -58,6 +58,12 @@ public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryP
     }
 
     @Override
+    public List<SkillTaxonomy> findByNormalizedNames(java.util.Collection<String> normalizedNames) {
+        if (normalizedNames == null || normalizedNames.isEmpty()) return List.of();
+        return repo.findByNormalizedNameIn(normalizedNames).stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<SkillTaxonomy> findByIds(java.util.Collection<java.util.UUID> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
         return repo.findByIdIn(ids).stream().map(this::toDomain).toList();
