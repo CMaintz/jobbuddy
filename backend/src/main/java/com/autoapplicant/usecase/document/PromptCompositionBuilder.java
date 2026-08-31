@@ -15,41 +15,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class PromptCompositionBuilder {
 
-    // ── Template-based prose path (legacy / PromptController) ──────────────────────────────
-
-    public PromptComposition compose(PromptCompositionRequest req) {
-        String baseSystem = req.template().systemPrompt() != null
-                ? req.template().systemPrompt() : defaultApplicationSystemPrompt();
-        String systemPrompt = appendLanguage(baseSystem, req.targetLanguage());
-        String cvContext = req.contactFreeCareerProfileJson() != null && !req.contactFreeCareerProfileJson().isBlank()
-                ? "## Contact-Free Master Career Profile JSON\n" + req.contactFreeCareerProfileJson()
-                : "";
-        String jobDescText = req.job() != null ? req.job().descriptionClean()
-                : (req.rawJobDescription() != null && !req.rawJobDescription().isBlank()
-                    ? req.rawJobDescription() : null);
-        String jobDesc = jobDescText != null ? "## Job Description\n" + jobDescText : "";
-        String styleMemory = buildStyleMemory(req.writingProfile());
-        String outputConstraints = req.template().outputConstraints() != null
-                ? req.template().outputConstraints() : "";
-
-        String finalPrompt = String.join("\n\n",
-                req.template().userPrompt(), cvContext, jobDesc, styleMemory, outputConstraints
-        ).trim();
-
-        return new PromptComposition(systemPrompt, req.template().userPrompt(), cvContext,
-                jobDesc, styleMemory, outputConstraints, finalPrompt);
-    }
-
-    // ── Structured application document path (cover letter, recruiter msg, etc.) ───────────
-
-    /**
-     * Builds a prompt for generating a structured application document (cover letter,
-     * application text, recruiter message, follow-up message).
-     *
-     * <p>The {@code styleTemplate} — if provided — supplies the AI persona via its
-     * {@code systemPrompt} and style guidance via its {@code userPrompt}. The JSON output
-     * schema is always appended regardless of the template.
-     */
     public PromptComposition composeStructuredApplicationPrompt(
             String documentType,
             String careerProfileJson,

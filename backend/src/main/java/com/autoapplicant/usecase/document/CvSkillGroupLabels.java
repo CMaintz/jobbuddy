@@ -9,7 +9,7 @@ import java.util.Map;
  *
  * <p>Three vocabularies met here and none of them agreed. {@code skill_taxonomy.category} is a
  * classification vocabulary ("Programming Language", "Soft Skill", "Methodology"); the
- * resume-builder's own datalist offers CV headings ("Languages", "Frameworks", "Practices"); and
+ * resume-builder's own datalist offers CV headings ("Frameworks", "Tools", "Practices"); and
  * the grouping code renders whatever string it is given verbatim, as {@code "<category>:  Java"}.
  * So a skill categorised from the taxonomy printed "Programming Language:" on the finished CV,
  * while a skill the user typed in the builder printed "Languages:" — two headings, same meaning,
@@ -31,8 +31,10 @@ final class CvSkillGroupLabels {
     private static final String SOFT_SKILL = "soft skill";
 
     private static final Map<String, String> ENGLISH = Map.ofEntries(
-            Map.entry("programming language", "Languages"),
-            Map.entry("language", "Languages"),          // pre-V022 rows, if any survived
+            // Not "Languages": the CV already has a Languages section, for the ones the
+            // candidate speaks. Two headings reading "Languages" on one page, one listing Java
+            // and the other Danish, is worse than the extra word.
+            Map.entry("programming language", "Programming Languages"),
             Map.entry("framework", "Frameworks"),
             Map.entry("library", "Libraries"),
             Map.entry("database", "Databases"),

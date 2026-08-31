@@ -58,7 +58,7 @@ public class MatchingService implements GetRecommendationsUseCase {
     private static final int MAX_SKILL_SCORE     = 55;
     private static final int REQUIRED_BUDGET     = 34;  // coverage of what the posting demands
     private static final int PREFERRED_BUDGET    = 9;   // coverage of what it merely welcomes
-    private static final int TECH_OVERLAP_BUDGET = 12;  // untiered overlap, and the legacy path
+    private static final int TECH_OVERLAP_BUDGET = 12;  // overlap the posting did not tier
     private static final int MAX_MISSING_REQUIRED_PENALTY = -22;
     private static final int MISSING_REQUIRED_PENALTY_EACH = -6;
 
@@ -473,7 +473,7 @@ public class MatchingService implements GetRecommendationsUseCase {
         List<String> matched = held.stream().filter(asks::contains).sorted().toList();
         if (matched.isEmpty()) return 0;
 
-        if (budget == MAX_SKILL_SCORE) {   // legacy path — this overlap is all we know
+        if (budget == MAX_SKILL_SCORE) {   // untiered posting — this overlap is all we know
             reasons.add("Overlaps on: " + String.join(", ", matched.stream().limit(5).toList()));
         }
         double coverage = matched.size() / (double) asks.size();
