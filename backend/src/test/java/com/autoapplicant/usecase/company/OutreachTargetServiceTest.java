@@ -28,19 +28,21 @@ class OutreachTargetServiceTest {
             Mockito.mock(com.autoapplicant.port.out.company.CompanyRepositoryPort.class);
     private final com.autoapplicant.port.out.company.OutreachContactRepositoryPort outreachRepo =
             Mockito.mock(com.autoapplicant.port.out.company.OutreachContactRepositoryPort.class);
-    private final com.autoapplicant.port.out.user.ProfileRepositoryPort profileRepo =
-            Mockito.mock(com.autoapplicant.port.out.user.ProfileRepositoryPort.class);
+    private final com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort profileSkillRepo =
+            Mockito.mock(com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort.class);
     private final com.autoapplicant.port.out.user.CareerTargetRepositoryPort careerTargetRepo =
             Mockito.mock(com.autoapplicant.port.out.user.CareerTargetRepositoryPort.class);
 
     private final OutreachTargetService service =
-            new OutreachTargetService(jobRepo, companyRepo, outreachRepo, profileRepo, careerTargetRepo);
+            new OutreachTargetService(jobRepo, companyRepo, outreachRepo, profileSkillRepo, careerTargetRepo);
 
     private void profileWith(String... technologies) {
         when(outreachRepo.findByUserId(USER)).thenReturn(List.of());
-        when(profileRepo.findByUserId(USER)).thenReturn(Optional.of(new Profile(
-                UUID.randomUUID(), USER, null, null, null, List.of(), List.of(technologies),
-                List.of(), List.of(), null, null, null, null, null, null, null)));
+        when(profileSkillRepo.findByUserId(USER)).thenReturn(
+                java.util.Arrays.stream(technologies)
+                        .map(name -> new com.autoapplicant.domain.skill.ProfileSkill(
+                                UUID.randomUUID(), USER, name, null, null, null, false, 0, null))
+                        .toList());
         when(careerTargetRepo.findByUserId(USER)).thenReturn(Optional.empty());
     }
 
@@ -85,7 +87,7 @@ class OutreachTargetServiceTest {
     @Test
     void aProfileWithNoSkillsYieldsNothingRatherThanEverything() {
         when(outreachRepo.findByUserId(USER)).thenReturn(List.of());
-        when(profileRepo.findByUserId(USER)).thenReturn(Optional.empty());
+        when(profileSkillRepo.findByUserId(USER)).thenReturn(List.of());
         when(careerTargetRepo.findByUserId(USER)).thenReturn(Optional.empty());
         assertThat(service.findOutreachTargets(USER, 10, false)).isEmpty();
     }

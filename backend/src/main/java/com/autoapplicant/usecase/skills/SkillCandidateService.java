@@ -4,14 +4,12 @@ import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillCandidate;
 import com.autoapplicant.domain.skill.SkillConfirmation;
-import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import org.springframework.stereotype.Service;
 
@@ -56,20 +54,17 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
     private static final int MAX_UNDEMANDED_CANDIDATES = 5;
 
     private final ProfileSkillRepositoryPort profileSkillRepo;
-    private final ProfileRepositoryPort profileRepo;
     private final SkillTaxonomyRepositoryPort taxonomyRepo;
     private final SkillCandidateDismissalRepositoryPort dismissalRepo;
     private final MarketCorpusService marketCorpus;
     private final ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo;
 
     public SkillCandidateService(ProfileSkillRepositoryPort profileSkillRepo,
-                                 ProfileRepositoryPort profileRepo,
                                  SkillTaxonomyRepositoryPort taxonomyRepo,
                                  SkillCandidateDismissalRepositoryPort dismissalRepo,
                                  MarketCorpusService marketCorpus,
                                  ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo) {
         this.profileSkillRepo = profileSkillRepo;
-        this.profileRepo = profileRepo;
         this.taxonomyRepo = taxonomyRepo;
         this.dismissalRepo = dismissalRepo;
         this.marketCorpus = marketCorpus;
@@ -191,11 +186,6 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
                 .map(ProfileSkill::skillName)
                 .filter(Objects::nonNull)
                 .forEach(name -> claimed.put(normalize(name), name));
-        Profile profile = profileRepo.findByUserId(userId).orElse(null);
-        if (profile != null) {
-            addAll(claimed, profile.skills());
-            addAll(claimed, profile.technologies());
-        }
         return claimed;
     }
 

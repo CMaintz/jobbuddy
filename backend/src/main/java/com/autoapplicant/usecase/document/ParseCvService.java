@@ -11,6 +11,7 @@ import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
+import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -78,16 +79,19 @@ public class ParseCvService implements ParseCvUseCase {
     private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
     private final ProfileSocialRepositoryPort socialRepo;
     private final ImpliedSkillQueue impliedSkills;
+    private final ProfileSkillIngestion skillIngestion;
 
     public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider, ObjectMapper objectMapper,
                           ProfilePrivateInfoRepositoryPort privateInfoRepo,
                           ProfileSocialRepositoryPort socialRepo,
-                          ImpliedSkillQueue impliedSkills) {
+                          ImpliedSkillQueue impliedSkills,
+                          ProfileSkillIngestion skillIngestion) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
         this.privateInfoRepo = privateInfoRepo;
         this.socialRepo = socialRepo;
         this.impliedSkills = impliedSkills;
+        this.skillIngestion = skillIngestion;
     }
 
     @Override
@@ -129,25 +133,31 @@ public class ParseCvService implements ParseCvUseCase {
             saveSocialIfPresent(userId, node, "githubUrl",   "GitHub",   "github",   order + 1);
             saveSocialIfPresent(userId, node, "websiteUrl",  "Website",  "globe",    order + 2);
 
-            // Inferences never join the extracted lists — they are queued as questions instead.
-            impliedSkills.queue(userId, node,
-                    arrayOrEmpty(node, "skills"), arrayOrEmpty(node, "technologies"),
-                    ParsedSkillSuggestion.Source.CV_PARSE);
+            List<String> stated = new java.util.ArrayList<>(arrayOrEmpty(node, "skills"));
+            stated.addAll(arrayOrEmpty(node, "technologies"));
+
+            // Inferences never join the extracted list — they are queued as questions instead.
+            impliedSkills.queue(userId, node, stated, ParsedSkillSuggestion.Source.CV_PARSE);
+
+            // Skills are written straight to the profile's skill rows rather than handed back on
+            // the Profile for the client to save. They are the same skills whichever way they
+            // arrived, so they get the same taxonomy link and category, and everything built on
+            // that — grouped CV sections, proficiency-weighted matching, category-aware
+            // suggestions — works for an imported CV exactly as for a hand-typed skill.
+            skillIngestion.ingest(userId, stated);
 
             return new Profile(
                     null, userId,
                     textOrNull(node, "headline"),
                     textOrNull(node, "summary"),
                     null,
-                    arrayOrEmpty(node, "skills"),
-                    arrayOrEmpty(node, "technologies"),
                     arrayOrEmpty(node, "languages"),
                     arrayOrEmpty(node, "interests"),
                     null, null, "DKK", null, null, null, null
             );
         } catch (Exception e) {
             log.error("CV parsing failed for user {}: {}", userId, e.getMessage());
-            return new Profile(null, userId, null, null, null, List.of(), List.of(), List.of(),
+            return new Profile(null, userId, null, null, null, List.of(),
                     List.of(), null, null, "DKK", null, null, null, null);
         }
     }

@@ -7,6 +7,8 @@ import com.autoapplicant.port.in.linkedin.GenerateLinkedInQueryPlanUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.linkedin.LinkedInQueryPlanRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +42,7 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
 
     private final ChatProviderPort aiProvider;
     private final ProfileRepositoryPort profileRepo;
+    private final ProfileSkillRepositoryPort profileSkillRepo;
     private final LinkedInQueryPlanRepositoryPort planRepo;
     private final ObjectMapper objectMapper;
 
@@ -57,10 +60,12 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
 
     public LinkedInQueryPlanService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                     ProfileRepositoryPort profileRepo,
+                                    ProfileSkillRepositoryPort profileSkillRepo,
                                     LinkedInQueryPlanRepositoryPort planRepo,
                                     ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.profileRepo = profileRepo;
+        this.profileSkillRepo = profileSkillRepo;
         this.planRepo = planRepo;
         this.objectMapper = objectMapper;
     }
@@ -99,6 +104,10 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
     }
 
     private LinkedInQueryPlan generateFor(Profile profile) {
+        List<String> skillNames = profileSkillRepo.findByUserId(profile.userId()).stream()
+                .map(ProfileSkill::skillName)
+                .filter(java.util.Objects::nonNull)
+                .toList();
         String breadth = defaultBreadth;
         PromptComposition composition = new PromptComposition(
                 "You are a job-search strategist. Given a candidate profile, output a set of LinkedIn "
@@ -110,7 +119,8 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
                 + "(\"udvikler\" and \"developer\", \"projektleder\" and \"project manager\") — but do not "
                 + "invent a Danish title nobody advertises, which returns nothing and wastes a query.\n"
                 + "Respond with ONLY valid JSON.",
-                buildPrompt(profile, breadth), "", "", "", "", buildPrompt(profile, breadth));
+                buildPrompt(profile, skillNames, breadth), "", "", "", "",
+                buildPrompt(profile, skillNames, breadth));
 
         List<String> keywords;
         try {
@@ -147,7 +157,7 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
         return out;
     }
 
-    private String buildPrompt(Profile p, String breadth) {
+    private String buildPrompt(Profile p, List<String> skillNames, String breadth) {
         String breadthGuidance = switch (breadth == null ? "" : breadth.toLowerCase()) {
             case "narrow" -> "Keep it tight: only the candidate's core specialisation. Aim for 5-8 keywords.";
             case "normal" -> "Cover the core field plus clearly adjacent roles. Aim for 10-15 keywords.";
@@ -178,8 +188,7 @@ public class LinkedInQueryPlanService implements GenerateLinkedInQueryPlanUseCas
         if (notBlank(p.headline())) sb.append("Headline: ").append(p.headline()).append('\n');
         if (notBlank(p.summary())) sb.append("Summary: ").append(p.summary()).append('\n');
         if (p.yearsExperience() != null) sb.append("Years of experience: ").append(p.yearsExperience()).append('\n');
-        appendList(sb, "Skills", p.skills());
-        appendList(sb, "Technologies", p.technologies());
+        appendList(sb, "Skills", skillNames);
         appendList(sb, "Languages", p.languages());
         return sb.toString();
     }

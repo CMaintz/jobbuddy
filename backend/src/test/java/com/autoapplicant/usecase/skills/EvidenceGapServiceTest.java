@@ -4,10 +4,8 @@ import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.InterviewStory;
-import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,17 +26,15 @@ class EvidenceGapServiceTest {
     private static final UUID USER = UUID.randomUUID();
 
     private final ProfileSkillRepositoryPort profileSkillRepo = Mockito.mock(ProfileSkillRepositoryPort.class);
-    private final ProfileRepositoryPort profileRepo = Mockito.mock(ProfileRepositoryPort.class);
     private final InterviewStoryRepositoryPort storyRepo = Mockito.mock(InterviewStoryRepositoryPort.class);
     private final MarketCorpusService marketCorpus = Mockito.mock(MarketCorpusService.class);
 
     private final EvidenceGapService service =
-            new EvidenceGapService(profileSkillRepo, profileRepo, storyRepo, marketCorpus);
+            new EvidenceGapService(profileSkillRepo, storyRepo, marketCorpus);
 
     @BeforeEach
     void setUp() {
         when(profileSkillRepo.findByUserId(USER)).thenReturn(List.of());
-        when(profileRepo.findByUserId(USER)).thenReturn(Optional.empty());
         when(storyRepo.findByUserId(USER)).thenReturn(List.of());
         when(marketCorpus.collect(any(), anyBoolean())).thenReturn(List.of());
     }
@@ -119,16 +115,6 @@ class EvidenceGapServiceTest {
                 .containsExactly("Terraform", "Kubernetes");
     }
 
-    @Test
-    void legacyProfileListsCountAsClaims() {
-        when(profileRepo.findByUserId(USER)).thenReturn(Optional.of(new Profile(
-                UUID.randomUUID(), USER, null, null, null, List.of(), List.of("Kubernetes"),
-                List.of(), List.of(), null, null, null, null, null, null, null)));
-        marketAsksFor(List.of("Kubernetes"));
-
-        assertThat(service.evidenceGaps(USER, 5)).extracting(EvidenceGap::skillName)
-                .containsExactly("Kubernetes");
-    }
 
     @Test
     void recordedEvidenceIsTaggedWithItsSkillSoTheGapCloses() {

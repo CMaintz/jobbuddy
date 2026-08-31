@@ -106,7 +106,10 @@ public class MatchingService implements GetRecommendationsUseCase {
             Profile profile = profileRepo.findByUserId(userId).orElse(null);
             if (profile == null) return List.of();
 
-            String profileText = buildProfileText(profile);
+            // One load of the profile's skills, feeding the embedding text, the fit scoring and
+            // the proficiency weighting alike — they are the same skills.
+            List<ProfileSkill> profileSkillRows = profileSkillRepo.findByUserId(userId);
+            String profileText = buildProfileText(profile, profileSkillRows);
             if (profileText.isBlank()) return List.of();
 
             UserPreferences prefs = prefsRepo.findByUserId(userId).orElse(null);
@@ -139,17 +142,19 @@ public class MatchingService implements GetRecommendationsUseCase {
             Map<UUID, Job> jobMap = jobRepo.findByIds(candidateIds).stream()
                     .collect(Collectors.toMap(Job::id, j -> j));
 
-            Set<String> profileSkills = normalizedSet(profile.skills());
-            Set<String> profileTech   = normalizedSet(profile.technologies());
-            Map<String, Double> proficiencyCredit = buildProficiencyCredit(userId);
+            Set<String> held = profileSkillRows.stream()
+                    .map(ProfileSkill::skillName)
+                    .filter(Objects::nonNull)
+                    .map(name -> name.toLowerCase().trim())
+                    .collect(Collectors.toSet());
+            Map<String, Double> proficiencyCredit = buildProficiencyCredit(profileSkillRows);
 
             return candidateIds.stream()
                     .map(jobMap::get)
                     .filter(Objects::nonNull)
                     .filter(job -> passesHardConstraints(job, prefs))
                     .limit(limit * 2L)
-                    .map(job -> buildMatchResult(job, userId, profileSkills, profileTech,
-                            proficiencyCredit, feedbackMap, prefs))
+                    .map(job -> buildMatchResult(job, userId, held, proficiencyCredit, feedbackMap, prefs))
                     .sorted(Comparator.comparingInt(MatchResult::totalScore).reversed())
                     .limit(limit)
                     .collect(Collectors.toList());
@@ -247,15 +252,13 @@ public class MatchingService implements GetRecommendationsUseCase {
     // ── Score building ────────────────────────────────────────────────────────
 
     private MatchResult buildMatchResult(Job job, UUID userId,
-                                         Set<String> profileSkills, Set<String> profileTech,
+                                         Set<String> held,
                                          Map<String, Double> proficiencyCredit,
                                          Map<UUID, FeedbackType> feedbackMap,
                                          UserPreferences prefs) {
         List<String> reasons = new ArrayList<>();
 
         // ── Skill fit (0-55) ─────────────────────────────────────────────────
-        Set<String> held = new HashSet<>(profileSkills);
-        held.addAll(profileTech);
         int skillScore = scoreSkillFit(job, held, proficiencyCredit, reasons);
 
         // ── Preference bonuses ───────────────────────────────────────────────
@@ -497,10 +500,10 @@ public class MatchingService implements GetRecommendationsUseCase {
      * Skills with no recorded depth are absent and default to full credit — an unrecorded
      * proficiency is missing data, not evidence of weakness.
      */
-    private Map<String, Double> buildProficiencyCredit(UUID userId) {
+    private Map<String, Double> buildProficiencyCredit(List<ProfileSkill> profileSkills) {
         try {
             Map<String, Double> credit = new HashMap<>();
-            for (ProfileSkill s : profileSkillRepo.findByUserId(userId)) {
+            for (ProfileSkill s : profileSkills) {
                 if (s.skillName() == null) continue;
                 boolean weak = "BEGINNER".equalsIgnoreCase(s.proficiencyLevel())
                         && !s.usedInProduction();
@@ -509,7 +512,7 @@ public class MatchingService implements GetRecommendationsUseCase {
             }
             return credit;
         } catch (Exception e) {
-            log.debug("Proficiency lookup failed for user {}: {}", userId, e.getMessage());
+            log.debug("Could not read skill proficiency: {}", e.getMessage());
             return Map.of();
         }
     }
@@ -564,12 +567,12 @@ public class MatchingService implements GetRecommendationsUseCase {
                         (a, b) -> b));
     }
 
-    private static String buildProfileText(Profile p) {
+    private static String buildProfileText(Profile p, List<ProfileSkill> skills) {
         StringBuilder sb = new StringBuilder();
         if (p.headline() != null) sb.append(p.headline()).append(' ');
         if (p.summary() != null) sb.append(p.summary()).append(' ');
-        if (p.skills() != null) sb.append(String.join(" ", p.skills())).append(' ');
-        if (p.technologies() != null) sb.append(String.join(" ", p.technologies()));
+        skills.stream().map(ProfileSkill::skillName).filter(Objects::nonNull)
+                .forEach(name -> sb.append(name).append(' '));
         return sb.toString().trim();
     }
 

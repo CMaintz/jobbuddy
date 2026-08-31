@@ -90,7 +90,6 @@ export class OnboardingComponent {
     const bits: string[] = [];
     if (preview.headline) bits.push(this.translate.instant('onboarding.import.headline', { value: preview.headline }));
     if (preview.skills.length) bits.push(this.translate.instant('onboarding.import.skills', { n: preview.skills.length }));
-    if (preview.technologies.length) bits.push(this.translate.instant('onboarding.import.technologies', { n: preview.technologies.length }));
     this.importedSummary = bits.length
       ? this.translate.instant('onboarding.import.summary', { items: bits.join(', ') })
       : this.translate.instant('onboarding.import.applied');

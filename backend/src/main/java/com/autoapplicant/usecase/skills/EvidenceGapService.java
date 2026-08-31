@@ -4,11 +4,9 @@ import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.InterviewStory;
-import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.skills.GetEvidenceGapsUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import org.springframework.stereotype.Service;
 
@@ -38,16 +36,13 @@ import java.util.UUID;
 public class EvidenceGapService implements GetEvidenceGapsUseCase {
 
     private final ProfileSkillRepositoryPort profileSkillRepo;
-    private final ProfileRepositoryPort profileRepo;
     private final InterviewStoryRepositoryPort storyRepo;
     private final MarketCorpusService marketCorpus;
 
     public EvidenceGapService(ProfileSkillRepositoryPort profileSkillRepo,
-                              ProfileRepositoryPort profileRepo,
                               InterviewStoryRepositoryPort storyRepo,
                               MarketCorpusService marketCorpus) {
         this.profileSkillRepo = profileSkillRepo;
-        this.profileRepo = profileRepo;
         this.storyRepo = storyRepo;
         this.marketCorpus = marketCorpus;
     }
@@ -125,11 +120,6 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
                 .map(ProfileSkill::skillName)
                 .filter(name -> name != null && !name.isBlank())
                 .forEach(name -> claimed.put(normalize(name), name.strip()));
-        Profile profile = profileRepo.findByUserId(userId).orElse(null);
-        if (profile != null) {
-            addAll(claimed, profile.skills());
-            addAll(claimed, profile.technologies());
-        }
         return claimed;
     }
 

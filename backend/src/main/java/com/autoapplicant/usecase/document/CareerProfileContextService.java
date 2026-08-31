@@ -4,10 +4,12 @@ import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.domain.skill.SkillCategories;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.domain.skill.SkillCategories;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
 import com.autoapplicant.port.out.user.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -71,9 +73,7 @@ public class CareerProfileContextService {
                 .distinct()
                 .toList();
 
-        List<String> skills = !skillNames.isEmpty()
-                ? skillNames
-                : listOrEmpty(profile != null ? profile.skills() : null);
+        List<String> skills = skillNames;
 
         // Skill → category, so the tailored CV can group skills.
         //
@@ -90,8 +90,7 @@ public class CareerProfileContextService {
                 .filter(s -> s.skillName() != null && s.category() != null && !s.category().isBlank())
                 .forEach(s -> skillCategories.put(s.skillName(), s.category()));
 
-        List<String> uncategorised = java.util.stream.Stream
-                .concat(skills.stream(), listOrEmpty(profile != null ? profile.technologies() : null).stream())
+        List<String> uncategorised = skills.stream()
                 .filter(Objects::nonNull)
                 .filter(name -> !skillCategories.containsKey(name))
                 .distinct()
@@ -111,6 +110,12 @@ public class CareerProfileContextService {
             });
         }
 
+        // "Technologies" used to be its own column; it is now the technical slice of the one skill
+        // list, decided by category. Same information, one place to keep it correct.
+        List<String> technologies = skills.stream()
+                .filter(name -> SkillCategories.isTechnical(skillCategories.get(name)))
+                .toList();
+
         List<String> spokenLanguages = languageRepo.findByUserId(userId).stream()
                 .map(lang -> lang.language() + " (" + formatProficiency(lang.proficiency()) + ")")
                 .toList();
@@ -128,7 +133,7 @@ public class CareerProfileContextService {
                 profile != null ? profile.headline() : null,
                 profile != null ? profile.summary() : null,
                 skills,
-                listOrEmpty(profile != null ? profile.technologies() : null),
+                technologies,
                 listOrEmpty(profile != null ? profile.languages() : null),
                 spokenLanguages,
                 listOrEmpty(profile != null ? profile.interests() : null),

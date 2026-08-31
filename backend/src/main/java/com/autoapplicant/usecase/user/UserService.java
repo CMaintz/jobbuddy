@@ -4,6 +4,8 @@ import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.in.user.*;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.user.*;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.domain.skill.ProfileSkill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,6 +30,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
     private final ProjectRepositoryPort projectRepo;
     private final CertificationRepositoryPort certRepo;
     private final AiProviderPort aiProvider;
+    private final ProfileSkillRepositoryPort profileSkillRepo;
 
     public UserService(UserRepositoryPort userRepo,
                        ProfileRepositoryPort profileRepo,
@@ -36,7 +39,8 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                        WorkExperienceRepositoryPort workExpRepo,
                        ProjectRepositoryPort projectRepo,
                        CertificationRepositoryPort certRepo,
-                       @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider) {
+                       @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
+                       ProfileSkillRepositoryPort profileSkillRepo) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.prefsRepo = prefsRepo;
@@ -45,6 +49,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
         this.projectRepo = projectRepo;
         this.certRepo = certRepo;
         this.aiProvider = aiProvider;
+        this.profileSkillRepo = profileSkillRepo;
     }
 
     @Override
@@ -66,8 +71,6 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                 merged(profile.headline(), existing, Profile::headline),
                 merged(profile.summary(), existing, Profile::summary),
                 merged(profile.yearsExperience(), existing, Profile::yearsExperience),
-                merged(profile.skills(), existing, Profile::skills),
-                merged(profile.technologies(), existing, Profile::technologies),
                 merged(profile.languages(), existing, Profile::languages),
                 merged(profile.interests(), existing, Profile::interests),
                 merged(profile.desiredSalaryMin(), existing, Profile::desiredSalaryMin),
@@ -119,7 +122,13 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
             List<Project> projects = projectRepo.findByUserId(userId);
             List<Certification> certs = certRepo.findByUserId(userId);
 
-            String profileText = buildProfileText(profile, experience, projects, certs);
+            // Skill names come from the profile's skill rows now. The embedding is what makes a
+            // posting find this candidate at all, so dropping them would quietly cost recall.
+            List<String> skillNames = profileSkillRepo.findByUserId(userId).stream()
+                    .map(ProfileSkill::skillName)
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            String profileText = buildProfileText(profile, skillNames, experience, projects, certs);
             if (profileText.isBlank()) {
                 profileEmbeddingRepo.deleteByUserId(userId);
                 return;
@@ -135,16 +144,15 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
 
     /**
      * Builds a rich text representation of the user's full profile for embedding.
-     * Includes headline, summary, skills, technologies, work experience titles/descriptions,
+     * Includes headline, summary, skills, work experience titles/descriptions,
      * project names, and certifications for better semantic matching quality.
      */
-    static String buildProfileText(Profile p, List<WorkExperience> experience,
+    static String buildProfileText(Profile p, List<String> skillNames, List<WorkExperience> experience,
                                    List<Project> projects, List<Certification> certs) {
         StringBuilder sb = new StringBuilder();
         if (p.headline() != null) sb.append(p.headline()).append(' ');
         if (p.summary() != null) sb.append(p.summary()).append(' ');
-        if (p.skills() != null) sb.append(String.join(" ", p.skills())).append(' ');
-        if (p.technologies() != null) sb.append(String.join(" ", p.technologies())).append(' ');
+        if (skillNames != null && !skillNames.isEmpty()) sb.append(String.join(" ", skillNames)).append(' ');
 
         if (experience != null) {
             for (WorkExperience w : experience) {
@@ -175,9 +183,9 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
 
     /**
      * Simple profile text for MatchingService fallback (when no cached embedding exists).
-     * Uses only Profile record fields — no DB lookups needed.
+     * Skills come from the caller, which has already loaded them.
      */
-    static String buildProfileText(Profile p) {
-        return buildProfileText(p, List.of(), List.of(), List.of());
+    static String buildProfileText(Profile p, List<String> skillNames) {
+        return buildProfileText(p, skillNames, List.of(), List.of(), List.of());
     }
 }

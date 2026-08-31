@@ -28,6 +28,8 @@ import { ProfileSectionsApiService, FullProfileResponse } from '../../core/api/p
 import { ProfilePrivateApiService } from '../../core/api/profile-private.api';
 import { ProfileStrengthApiService } from '../../core/api/profile-strength.api';
 import { ProfileSocialApiService } from '../../core/api/profile-social.api';
+import { SkillsApiService } from '../../core/api/skills.api';
+import { ProfileSkill, TECH_CATEGORIES } from '../../core/models/skill-taxonomy.model';
 import { Profile, ProfilePrivateInfo } from '../../core/models/user.model';
 import {
   WorkExperience, Education, Project, Certification,
@@ -58,6 +60,7 @@ interface CvSection {
 })
 export class MasterCvBuilderComponent implements OnInit {
   private http = inject(HttpClient);
+  private skillsApi = inject(SkillsApiService);
   private translate = inject(TranslateService);
   private profileApi = inject(ProfileSectionsApiService);
   private privateApi = inject(ProfilePrivateApiService);
@@ -90,8 +93,24 @@ export class MasterCvBuilderComponent implements OnInit {
   // ATS-safe PDF export (full or anonymised)
   exportingPdf = signal(false);
 
-  get skillsList(): string[] { return this.profile.skills ?? []; }
-  get technologiesList(): string[] { return this.profile.technologies ?? []; }
+  /**
+   * The user's skills, one list.
+   *
+   * <p>There used to be two free-text editors here, "Skills" and "Technologies", backed by two
+   * columns on the profile. Skills are one thing now — a row each, carrying its taxonomy category
+   * — and whether one counts as a technology is read off that category. Two editors could no
+   * longer honestly control which bucket a typed skill landed in, so there is one.
+   */
+  profileSkills: ProfileSkill[] = [];
+
+  get skillsList(): string[] { return this.profileSkills.map(s => s.skillName); }
+
+  /** The technical slice, for the preview. Derived from category, exactly as the backend does it. */
+  get technologiesList(): string[] {
+    return this.profileSkills
+      .filter(s => s.category && TECH_CATEGORIES.has(s.category))
+      .map(s => s.skillName);
+  }
   get interestsList(): string[] { return this.profile.interests ?? []; }
 
   get coverage(): number {
@@ -144,10 +163,12 @@ export class MasterCvBuilderComponent implements OnInit {
     forkJoin({
       full: this.profileApi.getFullProfile(),
       priv: this.privateApi.getPrivateInfo(),
+      skills: this.skillsApi.getProfileSkills(),
     }).subscribe({
-      next: ({ full, priv }) => {
+      next: ({ full, priv, skills }) => {
         this.applyFullProfile(full);
         this.privateInfo = priv ?? {};
+        this.profileSkills = skills;
         this.loading = false;
       },
       error: () => {
@@ -259,14 +280,41 @@ export class MasterCvBuilderComponent implements OnInit {
     });
   }
 
+  /**
+   * Reconciles the edited list against the stored skills.
+   *
+   * <p>Saved immediately rather than on Save All: a skill is its own row, so adding one is a
+   * create and removing one is a delete — there is no profile field to fold them into. The
+   * backend resolves each new name against the taxonomy, so a skill typed here arrives with the
+   * same category and link as one picked from the career-profile autocomplete.
+   */
   onSkillsChange(value: string[]): void {
-    this.profile.skills = value;
-    this.markDirty();
+    const wanted = value.map(v => v.trim()).filter(v => v.length > 0);
+    const wantedKeys = new Set(wanted.map(v => v.toLowerCase()));
+    const heldKeys = new Set(this.profileSkills.map(s => s.skillName.toLowerCase()));
+
+    const added = wanted.filter(v => !heldKeys.has(v.toLowerCase()));
+    const removed = this.profileSkills.filter(s => !wantedKeys.has(s.skillName.toLowerCase()));
+
+    const ops: Observable<unknown>[] = [
+      ...added.map((name, i) => this.skillsApi.addProfileSkill({
+        skillName: name,
+        proficiencyLevel: 'INTERMEDIATE',
+        usedInProduction: false,
+        displayOrder: this.profileSkills.length + i,
+      })),
+      ...removed.filter(s => s.id).map(s => this.skillsApi.deleteProfileSkill(s.id!)),
+    ];
+    if (ops.length === 0) return;
+
+    forkJoin(ops).subscribe({
+      next: () => this.reloadSkills(),
+      error: () => this.toast.set(this.translate.instant('masterCv.toast.saveFailed'))
+    });
   }
 
-  onTechnologiesChange(value: string[]): void {
-    this.profile.technologies = value;
-    this.markDirty();
+  private reloadSkills(): void {
+    this.skillsApi.getProfileSkills().subscribe(skills => this.profileSkills = skills);
   }
 
   onInterestsChange(value: string[]): void {
@@ -349,8 +397,6 @@ export class MasterCvBuilderComponent implements OnInit {
         headline: this.profile.headline,
         summary: this.profile.summary,
         yearsExperience: this.profile.yearsExperience,
-        technologies: this.profile.technologies ?? [],
-        skills: this.profile.skills ?? [],
       }),
       this.privateApi.updatePrivateInfo({
         fullName: this.privateInfo.fullName,

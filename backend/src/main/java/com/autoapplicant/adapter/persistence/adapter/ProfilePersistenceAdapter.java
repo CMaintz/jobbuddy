@@ -29,8 +29,6 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
         e.setHeadline(profile.headline());
         e.setSummary(profile.summary());
         e.setYearsExperience(profile.yearsExperience());
-        e.setSkills(toArray(profile.skills()));
-        e.setTechnologies(toArray(profile.technologies()));
         e.setLanguages(toArray(profile.languages()));
         e.setInterests(toArray(profile.interests()));
         e.setDesiredSalaryMin(profile.desiredSalaryMin());
@@ -54,7 +52,7 @@ public class ProfilePersistenceAdapter implements ProfileRepositoryPort {
     private Profile toDomain(ProfileEntity e) {
         return new Profile(e.getId(), e.getUserId(), e.getHeadline(),
                 e.getSummary(), e.getYearsExperience(),
-                toList(e.getSkills()), toList(e.getTechnologies()), toList(e.getLanguages()),
+                toList(e.getLanguages()),
                 toList(e.getInterests()), e.getDesiredSalaryMin(), e.getDesiredSalaryMax(), e.getDesiredCurrency(),
                 parseEnum(e.getRemotePreference(), RemoteType.class),
                 parseEnum(e.getEmploymentTypePreference(), EmploymentType.class),
