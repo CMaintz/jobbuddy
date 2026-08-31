@@ -172,9 +172,33 @@ export class AtsPdfService {
 
 // ── Mappers ─────────────────────────────────────────────────────
 
+/**
+ * Section headings for the builder's ATS export.
+ *
+ * <p>The builder's own model has no headings — unlike a StructuredDocument, which carries the
+ * localised ones the backend chose. So they are passed in. They were hardcoded English, which
+ * meant a Danish CV exported from the builder came out headed "Skills" and "Education" while the
+ * same CV generated through the backend was headed "Kompetencer" and "Uddannelse".
+ */
+export interface AtsHeadings {
+  strengths: string;
+  experience: string;
+  skills: string;
+  projects: string;
+  education: string;
+  certifications: string;
+  languages: string;
+}
+
+const ENGLISH_HEADINGS: AtsHeadings = {
+  strengths: 'Strengths', experience: 'Experience', skills: 'Skills', projects: 'Projects',
+  education: 'Education', certifications: 'Certifications', languages: 'Languages',
+};
+
 /** CV Builder draft → ATS model. Pass the display (possibly anonymised) personal info. */
 export function resumeDataToAts(
   data: ResumeData, pi = data.personalInfo, settings?: ResumeSettings,
+  headings: AtsHeadings = ENGLISH_HEADINGS,
 ): AtsResumeModel {
   const contact = [pi.email, pi.phone, pi.location].filter(Boolean).join('  ·  ');
   const links = [pi.linkedin, pi.github, pi.website, ...data.socials.map(s => s.url)]
@@ -184,11 +208,11 @@ export function resumeDataToAts(
   const built: { id: string; section: AtsSection }[] = [];
 
   if (data.strengths.length) {
-    built.push({ id: 'strengths', section: { heading: 'Strengths', lines: [data.strengths.map(s => s.title).filter(Boolean).join('  ·  ')] } });
+    built.push({ id: 'strengths', section: { heading: headings.strengths, lines: [data.strengths.map(s => s.title).filter(Boolean).join('  ·  ')] } });
   }
   if (data.experience.length) {
     built.push({ id: 'experience', section: {
-      heading: 'Experience',
+      heading: headings.experience,
       items: data.experience.map(e => ({
         title: [e.title, e.company].filter(Boolean).join(' — '),
         meta: [`${e.startDate || ''} – ${e.current ? 'Present' : e.endDate || ''}`.trim(), e.location]
@@ -199,10 +223,10 @@ export function resumeDataToAts(
     } });
   }
   const skillLines = groupedSkillLines(data.skills);
-  if (skillLines.length) built.push({ id: 'skills', section: { heading: 'Skills', lines: skillLines } });
+  if (skillLines.length) built.push({ id: 'skills', section: { heading: headings.skills, lines: skillLines } });
   if (data.projects.length) {
     built.push({ id: 'projects', section: {
-      heading: 'Projects',
+      heading: headings.projects,
       items: data.projects.map(p => ({
         title: p.name,
         meta: [p.date, p.link].filter(Boolean).join('  ·  '),
@@ -212,7 +236,7 @@ export function resumeDataToAts(
   }
   if (data.education.length) {
     built.push({ id: 'education', section: {
-      heading: 'Education',
+      heading: headings.education,
       items: data.education.map(e => ({
         title: [e.degree, e.school].filter(Boolean).join(' — '),
         meta: `${e.startDate || ''} – ${e.current ? 'Present' : e.endDate || ''}`.trim(),
@@ -221,13 +245,13 @@ export function resumeDataToAts(
   }
   if (data.certifications.length) {
     built.push({ id: 'certifications', section: {
-      heading: 'Certifications',
+      heading: headings.certifications,
       lines: data.certifications.map(c => [c.name, c.issuer, c.date].filter(Boolean).join(' — ')),
     } });
   }
   if (data.languages.length) {
     built.push({ id: 'languages', section: {
-      heading: 'Languages',
+      heading: headings.languages,
       lines: [data.languages.map(l => `${l.name} (${l.proficiency})`).join('  ·  ')],
     } });
   }
