@@ -54,6 +54,11 @@ public class ApplicationPersistenceAdapter implements ApplicationRepositoryPort 
     }
 
     @Override
+    public java.util.Set<UUID> findAppliedJobIds(UUID userId) {
+        return new java.util.HashSet<>(repo.findAppliedJobIds(userId));
+    }
+
+    @Override
     public List<String> findRecentOutcomeLessons(UUID userId, int limit) {
         return repo.findRecentOutcomeLessons(userId, org.springframework.data.domain.PageRequest.of(0, limit));
     }

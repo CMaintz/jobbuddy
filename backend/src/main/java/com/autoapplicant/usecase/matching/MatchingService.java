@@ -16,6 +16,7 @@ import com.autoapplicant.port.out.ai.AiProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
@@ -79,6 +80,7 @@ public class MatchingService implements GetRecommendationsUseCase {
     private final RecommendationFeedbackRepositoryPort feedbackRepo;
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
     private final ProfileSkillRepositoryPort profileSkillRepo;
+    private final ApplicationRepositoryPort applicationRepo;
 
     public MatchingService(JobEmbeddingRepositoryPort embeddingRepo,
                            JobRepositoryPort jobRepo,
@@ -88,7 +90,8 @@ public class MatchingService implements GetRecommendationsUseCase {
                            IgnoredJobRepositoryPort ignoredJobRepo,
                            RecommendationFeedbackRepositoryPort feedbackRepo,
                            ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
-                           ProfileSkillRepositoryPort profileSkillRepo) {
+                           ProfileSkillRepositoryPort profileSkillRepo,
+                           ApplicationRepositoryPort applicationRepo) {
         this.embeddingRepo = embeddingRepo;
         this.jobRepo = jobRepo;
         this.profileRepo = profileRepo;
@@ -98,6 +101,7 @@ public class MatchingService implements GetRecommendationsUseCase {
         this.feedbackRepo = feedbackRepo;
         this.profileEmbeddingRepo = profileEmbeddingRepo;
         this.profileSkillRepo = profileSkillRepo;
+        this.applicationRepo = applicationRepo;
     }
 
     @Override
@@ -114,12 +118,16 @@ public class MatchingService implements GetRecommendationsUseCase {
 
             UserPreferences prefs = prefsRepo.findByUserId(userId).orElse(null);
 
-            Set<UUID> ignoredIds    = ignoredJobRepo.findJobIdsByUserId(userId);
+            Set<UUID> ignoredIds = ignoredJobRepo.findJobIdsByUserId(userId);
             Map<UUID, FeedbackType> feedbackMap = buildFeedbackMap(userId);
             Set<UUID> hiddenIds = feedbackMap.entrySet().stream()
                     .filter(e -> e.getValue() == FeedbackType.HIDE)
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toSet());
+            // A job you have already applied to is not a recommendation. Nothing excluded it
+            // before: ignoring is a separate deliberate act, and applying never touched the feed,
+            // so every posting you acted on kept coming back at the top of it.
+            Set<UUID> appliedIds = applicationRepo.findAppliedJobIds(userId);
 
             // Use cached profile embedding when available; fall back to on-the-fly computation
             float[] userEmbedding = profileEmbeddingRepo.findByUserId(userId)
@@ -135,7 +143,8 @@ public class MatchingService implements GetRecommendationsUseCase {
 
             // Filter out ignored/hidden IDs before hitting the DB
             List<UUID> candidateIds = nearestJobIds.stream()
-                    .filter(id -> !ignoredIds.contains(id) && !hiddenIds.contains(id))
+                    .filter(id -> !ignoredIds.contains(id) && !hiddenIds.contains(id)
+                            && !appliedIds.contains(id))
                     .toList();
 
             // Batch-fetch all candidate jobs in a single query instead of N+1
