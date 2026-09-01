@@ -39,11 +39,12 @@ public class ResponseMetricPersistenceAdapter implements ResponseMetricRepositor
         e.setApplicationId(metric.applicationId());
         e.setEventType(metric.eventType());
         e.setEventAt(metric.eventAt());
+        e.setNotes(metric.notes());
         return e;
     }
 
     private ResponseMetric toDomain(ResponseMetricEntity e) {
         return new ResponseMetric(e.getId(), e.getUserId(), e.getJobId(),
-                e.getApplicationId(), e.getEventType(), e.getEventAt(), null);
+                e.getApplicationId(), e.getEventType(), e.getEventAt(), e.getNotes());
     }
 }
