@@ -26,10 +26,36 @@
       }
     </div>
 
+    <!-- Which library: your own prompts, or the ones other people shared -->
+    <div class="flex items-center gap-2 px-[22px] pb-3">
+      <button type="button" (click)="showMine()"
+        class="py-[5px] px-3 rounded-full cursor-pointer text-sm font-medium"
+        [style.background]="view() === 'mine' ? 'var(--jb-surface-3)' : 'transparent'"
+        [style.border]="'1px solid ' + (view() === 'mine' ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+        [style.color]="view() === 'mine' ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+        {{ 'prompts.view.mine' | translate }}
+      </button>
+      <button type="button" (click)="showShared()"
+        class="py-[5px] px-3 rounded-full cursor-pointer text-sm font-medium"
+        [style.background]="view() === 'shared' ? 'var(--jb-surface-3)' : 'transparent'"
+        [style.border]="'1px solid ' + (view() === 'shared' ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+        [style.color]="view() === 'shared' ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+        {{ 'prompts.view.shared' | translate }}
+      </button>
+    </div>
+
     <!-- Card grid -->
     <div class="flex-1 overflow-auto p-[22px] jb-scroll">
       @if (loading()) {
         <div class="p-10 text-center text-jb-text-dim">{{ 'prompts.loading' | translate }}</div>
+      } @else if (loadingShared()) {
+        <div class="p-10 text-center text-jb-text-dim">{{ 'prompts.loading' | translate }}</div>
+      } @else if (filteredPrompts().length === 0 && view() === 'shared') {
+        <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md max-w-[560px] mx-auto">
+          <jb-icon name="globe" [size]="20" class="text-jb-accent" />
+          <div class="text-base text-jb-text-mid mt-2">{{ 'prompts.sharedEmptyTitle' | translate }}</div>
+          <div class="text-xs text-jb-text-dim mt-1">{{ 'prompts.sharedEmptyDesc' | translate }}</div>
+        </div>
       } @else if (filteredPrompts().length === 0) {
         <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md max-w-[560px] mx-auto">
           <jb-icon name="lightbulb" [size]="20" class="text-jb-accent" />
@@ -54,6 +80,9 @@
                   }
                   @if (p.isProtected) {
                     <jb-pill tone="neutral">{{ 'prompts.protected' | translate }}</jb-pill>
+                  }
+                  @if (p.isPublic && !p.isProtected) {
+                    <jb-pill tone="neutral">{{ 'prompts.shared' | translate }}</jb-pill>
                   }
                   <button class="icon-btn" [title]="(p.favourite ? 'prompts.unfavourite' : 'prompts.favourite') | translate"
                     (click)="toggleFavourite(p, $event)"
@@ -162,6 +191,11 @@
             }
 
         <ng-container jb-modal-footer>
+          @if (canShare(p) && !p.isPublic && !editing()) {
+            <span class="text-2xs text-jb-text-dim max-w-[300px] leading-snug">
+              {{ 'prompts.shareHint' | translate }}
+            </span>
+          }
           @if (mustDuplicateToCustomise(p) && !editing()) {
             <span class="text-2xs text-jb-text-dim max-w-[280px] leading-snug">
               {{ 'prompts.protectedHint' | translate }}
@@ -189,6 +223,11 @@
                     {{ 'prompts.useAsDefault' | translate }}
                   </jb-button>
                 }
+              }
+              @if (canShare(p)) {
+                <jb-button small icon="globe" (clicked)="toggleShared(p)">
+                  {{ (p.isPublic ? 'prompts.unshare' : 'prompts.share') | translate }}
+                </jb-button>
               }
               <jb-button small icon="copy" (clicked)="duplicate(p)">{{ 'prompts.duplicate' | translate }}</jb-button>
               @if (canModify(p)) {

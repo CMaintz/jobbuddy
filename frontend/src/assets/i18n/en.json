@@ -1034,13 +1034,27 @@
       "createFailed": "Could not create the prompt",
       "defaultSet": "{{name}} is now the default",
       "defaultFailed": "Could not change the default — try again",
-      "defaultReset": "Back to the app's prompt"
+      "defaultReset": "Back to the app's prompt",
+      "shared": "Prompt shared",
+      "unshared": "Prompt is private again",
+      "shareFailed": "Could not change sharing — try again",
+      "sharedLoadFailed": "Could not load shared prompts"
     },
     "protected": "Ships with the app",
     "protectedHint": "This prompt ships with the app. Duplicate it to make a version you can edit.",
     "inUse": "In use",
     "useAsDefault": "Use as default",
-    "restoreAppDefault": "Restore the app's prompt"
+    "restoreAppDefault": "Restore the app's prompt",
+    "view": {
+      "mine": "My prompts",
+      "shared": "Shared by others"
+    },
+    "shared": "Shared",
+    "share": "Share",
+    "unshare": "Stop sharing",
+    "shareHint": "Sharing makes this prompt's full text readable by other users. Only share prompts that contain nothing personal.",
+    "sharedEmptyTitle": "Nothing shared yet",
+    "sharedEmptyDesc": "Prompts other people choose to share will show up here. Duplicate one to get your own editable copy."
   },
   "interviews": {
     "inStages": "{{count}} in interview stages",

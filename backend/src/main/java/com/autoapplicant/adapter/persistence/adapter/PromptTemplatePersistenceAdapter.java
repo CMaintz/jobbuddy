@@ -56,7 +56,7 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
 
     @Override
     public List<PromptTemplate> findPublic() {
-        return repo.findByIsPublicTrueOrderByCreatedAtDesc().stream()
+        return repo.findByIsPublicTrueAndIsProtectedFalseOrderByCreatedAtDesc().stream()
                 .map(DocumentMapper::toDomain).collect(Collectors.toList());
     }
 

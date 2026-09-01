@@ -23,6 +23,14 @@ export class PromptApiService {
     return this.http.get<PromptTemplate[]>(this.base);
   }
 
+  /**
+   * Prompts other people chose to share. Excludes the app's own — everyone already has those —
+   * and your own, which are already in your library.
+   */
+  getPublic(): Observable<PromptTemplate[]> {
+    return this.http.get<PromptTemplate[]>(`${this.base}/public`);
+  }
+
   create(req: CreateTemplateRequest): Observable<PromptTemplate> {
     return this.http.post<PromptTemplate>(this.base, req);
   }

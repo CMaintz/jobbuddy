@@ -15,7 +15,7 @@ public interface PromptTemplateJpaRepository extends JpaRepository<PromptTemplat
     @Query("SELECT t FROM PromptTemplateEntity t WHERE t.userId = :userId OR t.isSystem = TRUE ORDER BY t.isSystem ASC, t.createdAt DESC")
     List<PromptTemplateEntity> findByUserIdOrSystem(@Param("userId") UUID userId);
 
-    List<PromptTemplateEntity> findByIsPublicTrueOrderByCreatedAtDesc();
+    List<PromptTemplateEntity> findByIsPublicTrueAndIsProtectedFalseOrderByCreatedAtDesc();
 
     /**
      * The default persona for a category. Ordered explicitly: without it the "default" was

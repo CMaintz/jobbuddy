@@ -13,7 +13,7 @@ import java.util.UUID;
 public class PromptTemplateService implements
         CreatePromptTemplateUseCase, GetPromptTemplatesUseCase, DuplicatePromptTemplateUseCase,
         UpdatePromptTemplateUseCase, DeletePromptTemplateUseCase, FavouritePromptTemplateUseCase,
-        SelectDefaultPromptUseCase {
+        SelectDefaultPromptUseCase, BrowsePublicPromptsUseCase {
 
     private final PromptTemplateRepositoryPort repo;
 
@@ -51,6 +51,15 @@ public class PromptTemplateService implements
     @Override
     public List<PromptTemplate> getTemplates(UUID userId) {
         return repo.findByUserId(userId);
+    }
+
+    @Override
+    public List<PromptTemplate> browsePublic(UUID callerId) {
+        // Your own shared prompts are already in your library; seeing them again in the browser
+        // would just be a second copy of a row you can already edit.
+        return repo.findPublic().stream()
+                .filter(t -> t.userId() != null && !t.userId().equals(callerId))
+                .toList();
     }
 
     @Override
