@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.skills;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.InterviewStory;
@@ -154,7 +155,7 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
     }
 
     private static String normalize(String value) {
-        return value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
+        return SkillNames.normalize(value);
     }
 
     private static String orEmpty(String value) {

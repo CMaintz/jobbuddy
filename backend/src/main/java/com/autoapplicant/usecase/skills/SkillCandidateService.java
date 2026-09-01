@@ -9,6 +9,7 @@ import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import org.springframework.stereotype.Service;
@@ -257,7 +258,7 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
     }
 
     static String normalize(String name) {
-        return name == null ? "" : name.strip().toLowerCase(Locale.ROOT);
+        return SkillNames.normalize(name);
     }
 
     /** A skill seen in the market, with the spelling the postings used. */
