@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.skills;
 
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.in.skills.ManageProfileSkillsUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
@@ -76,6 +77,6 @@ public class ProfileSkillService implements ManageProfileSkillsUseCase {
     }
 
     private static String normalize(String name) {
-        return name.strip().toLowerCase(Locale.ROOT);
+        return SkillNames.normalize(name);
     }
 }

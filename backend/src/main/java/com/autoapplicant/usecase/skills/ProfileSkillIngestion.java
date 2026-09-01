@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.skills;
 
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
@@ -105,7 +106,7 @@ public class ProfileSkillIngestion {
         return byName;
     }
 
-    private static String normalize(String name) {
-        return name == null ? "" : name.strip().toLowerCase(Locale.ROOT);
+    private static String normalize(String value) {
+        return SkillNames.normalize(value);
     }
 }

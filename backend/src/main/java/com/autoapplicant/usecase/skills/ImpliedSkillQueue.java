@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.skills;
 
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -98,6 +99,6 @@ public class ImpliedSkillQueue {
     }
 
     private static String normalize(String value) {
-        return value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
+        return SkillNames.normalize(value);
     }
 }
