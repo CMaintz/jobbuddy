@@ -30,6 +30,7 @@ public class PromptController {
     private final DeletePromptTemplateUseCase delete;
     private final FavouritePromptTemplateUseCase favourites;
     private final SelectDefaultPromptUseCase defaults;
+    private final BrowsePublicPromptsUseCase publicPrompts;
     private final SecurityContextHelper secCtx;
 
     public PromptController(CreatePromptTemplateUseCase create, GetPromptTemplatesUseCase getAll,
@@ -37,6 +38,7 @@ public class PromptController {
                              UpdatePromptTemplateUseCase update, DeletePromptTemplateUseCase delete,
                              FavouritePromptTemplateUseCase favourites,
                              SelectDefaultPromptUseCase defaults,
+                             BrowsePublicPromptsUseCase publicPrompts,
                              SecurityContextHelper secCtx) {
         this.create = create;
         this.getAll = getAll;
@@ -45,6 +47,7 @@ public class PromptController {
         this.delete = delete;
         this.favourites = favourites;
         this.defaults = defaults;
+        this.publicPrompts = publicPrompts;
         this.secCtx = secCtx;
     }
 
@@ -94,6 +97,19 @@ public class PromptController {
             @PathVariable com.autoapplicant.domain.document.PromptCategory category) {
         defaults.resetDefault(secCtx.getCurrentUserId(), category);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Browse prompts other people have shared",
+            description = "Prompts whose author made them public. Excludes the app's own prompts, "
+                    + "which everyone already has, and the caller's own, which are already in "
+                    + "their library. Duplicate one to get an editable copy.")
+    @GetMapping("/public")
+    public ResponseEntity<List<PromptTemplateResponse>> browsePublic() {
+        UUID userId = secCtx.getCurrentUserId();
+        var favIds = favourites.getFavouriteIds(userId);
+        return ResponseEntity.ok(publicPrompts.browsePublic(userId).stream()
+                .map(t -> PromptTemplateResponse.from(t, favIds.contains(t.id())))
+                .toList());
     }
 
     @Operation(summary = "Favourite a prompt template")

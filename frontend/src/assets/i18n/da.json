@@ -1034,13 +1034,27 @@
       "createFailed": "Kunne ikke oprette prompten",
       "defaultSet": "{{name}} er nu standard",
       "defaultFailed": "Kunne ikke skifte standard — prøv igen",
-      "defaultReset": "Tilbage til appens prompt"
+      "defaultReset": "Tilbage til appens prompt",
+      "shared": "Prompt delt",
+      "unshared": "Prompten er privat igen",
+      "shareFailed": "Kunne ikke ændre deling — prøv igen",
+      "sharedLoadFailed": "Kunne ikke hente delte prompts"
     },
     "protected": "Følger med appen",
     "protectedHint": "Denne prompt følger med appen. Lav en kopi, hvis du vil rette i den.",
     "inUse": "I brug",
     "useAsDefault": "Brug som standard",
-    "restoreAppDefault": "Gendan appens prompt"
+    "restoreAppDefault": "Gendan appens prompt",
+    "view": {
+      "mine": "Mine prompts",
+      "shared": "Delt af andre"
+    },
+    "shared": "Delt",
+    "share": "Del",
+    "unshare": "Stop deling",
+    "shareHint": "Deling gør hele promptens tekst synlig for andre brugere. Del kun prompts, der ikke indeholder noget personligt.",
+    "sharedEmptyTitle": "Intet delt endnu",
+    "sharedEmptyDesc": "Prompts, som andre vælger at dele, dukker op her. Lav en kopi, hvis du vil bruge og rette en."
   },
   "interviews": {
     "inStages": "{{count}} i samtalefaser",

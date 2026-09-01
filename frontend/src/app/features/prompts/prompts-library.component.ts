@@ -46,6 +46,11 @@ export class PromptsLibraryComponent implements OnInit {
   promptKinds = PROMPT_KINDS;
 
   prompts: PromptTemplate[] = [];
+
+  /** Which library is on screen: the caller's own prompts, or the ones other people shared. */
+  view = signal<'mine' | 'shared'>('mine');
+  sharedPrompts: PromptTemplate[] = [];
+  loadingShared = signal(false);
   private myUserId = '';
   private isAdmin = false;
 
@@ -178,10 +183,46 @@ export class PromptsLibraryComponent implements OnInit {
     });
   }
 
+  showShared(): void {
+    this.view.set('shared');
+    if (this.sharedPrompts.length || this.loadingShared()) return;
+    this.loadingShared.set(true);
+    this.promptApi.getPublic().subscribe({
+      next: shared => { this.sharedPrompts = shared; this.loadingShared.set(false); },
+      error: () => {
+        this.loadingShared.set(false);
+        this.toast.set(this.translate.instant('prompts.toast.sharedLoadFailed'));
+      }
+    });
+  }
+
+  showMine(): void { this.view.set('mine'); }
+
+  /** Sharing is per-prompt and reversible; only your own prompts can be shared. */
+  canShare(p: PromptTemplate): boolean {
+    return !p.isProtected && p.userId === this.myUserId;
+  }
+
+  toggleShared(p: PromptTemplate): void {
+    const next = !p.isPublic;
+    this.promptApi.update(p.id, {
+      name: p.name, category: p.category, description: p.description,
+      systemPrompt: p.systemPrompt, userPrompt: p.userPrompt,
+      outputConstraints: p.outputConstraints, isPublic: next, tags: p.tags,
+    }).subscribe({
+      next: () => {
+        p.isPublic = next;
+        this.toast.set(this.translate.instant(next ? 'prompts.toast.shared' : 'prompts.toast.unshared'));
+      },
+      error: () => this.toast.set(this.translate.instant('prompts.toast.shareFailed'))
+    });
+  }
+
   /** Favourites first, then most-used. */
   filteredPrompts(): PromptTemplate[] {
     const kind = this.activeKind();
-    const list = kind === 'all' ? this.prompts : this.prompts.filter(p => p.category === kind);
+    const source = this.view() === 'shared' ? this.sharedPrompts : this.prompts;
+    const list = kind === 'all' ? source : source.filter(p => p.category === kind);
     return [...list].sort((a, b) =>
       Number(b.favourite ?? false) - Number(a.favourite ?? false)
       || (b.usageCount ?? 0) - (a.usageCount ?? 0));

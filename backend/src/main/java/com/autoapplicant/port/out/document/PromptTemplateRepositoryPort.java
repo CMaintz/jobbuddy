@@ -11,6 +11,11 @@ public interface PromptTemplateRepositoryPort {
     void deleteById(UUID id);
     Optional<PromptTemplate> findById(UUID id);
     List<PromptTemplate> findByUserId(UUID userId);
+    /**
+     * Prompts other people have chosen to share: public, and not app-origin. The app's own
+     * prompts are public in the sense that everyone already has them, so listing them here
+     * would bury the handful a person actually wrote behind the two dozen that ship.
+     */
     List<PromptTemplate> findPublic();
     /** The app's seeded starting point for a category, e.g. CV_TAILORING. */
     Optional<PromptTemplate> findSystemDefault(String category);
