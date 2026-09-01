@@ -4,6 +4,7 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.in.user.ParseLinkedInProfileUseCase;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
 import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -93,10 +94,7 @@ public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase 
      */
     private void applySkills(UUID userId, String json) {
         try {
-            String cleaned = json.trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("```[a-z]*\n?", "").replace("```", "").trim();
-            }
+            String cleaned = AiResponseParser.stripCodeFence(json.trim());
             JsonNode node = objectMapper.readTree(cleaned);
             List<String> stated = new ArrayList<>();
             JsonNode skills = node.get("skills");

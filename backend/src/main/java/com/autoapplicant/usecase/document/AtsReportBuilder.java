@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.structured.AtsCheck;
 import com.autoapplicant.domain.document.structured.AtsReport;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+
 public class AtsReportBuilder {
 
     public AtsReport forTailored(TailoredCvContent tailored, String exportMode,
@@ -17,8 +19,8 @@ public class AtsReportBuilder {
         return new AtsReport(
                 scoreFromCoverage(tailored.keywordCoverage()),
                 clamp(tailored.keywordCoverage()),
-                listOrEmpty(tailored.matchedKeywords()),
-                listOrEmpty(tailored.missingKeywords()),
+                Values.listOrEmpty(tailored.matchedKeywords()),
+                Values.listOrEmpty(tailored.missingKeywords()),
                 checks(exportMode, tailored.notes(), findings, documentLanguage));
     }
 
@@ -28,8 +30,8 @@ public class AtsReportBuilder {
         return new AtsReport(
                 scoreFromCoverage(keywordCoverage),
                 clamp(keywordCoverage),
-                listOrEmpty(matchedKeywords),
-                listOrEmpty(missingKeywords),
+                Values.listOrEmpty(matchedKeywords),
+                Values.listOrEmpty(missingKeywords),
                 checks(exportMode, List.of(), findings, documentLanguage));
     }
 
@@ -54,7 +56,7 @@ public class AtsReportBuilder {
             result.add(new AtsCheck("layout_complexity", msg.designedLabel(), "WARN", msg.designedDetail()));
         }
         result.addAll(guardChecks(findings != null ? findings : ContentGuardFindings.NONE, msg));
-        for (String note : listOrEmpty(notes)) {
+        for (String note : Values.listOrEmpty(notes)) {
             // The note itself comes from the model, already in the document's language.
             result.add(new AtsCheck("ai_note", msg.noteLabel(), "INFO", note));
         }
@@ -104,7 +106,4 @@ public class AtsReportBuilder {
         return Math.max(0, Math.min(100, value));
     }
 
-    private static List<String> listOrEmpty(List<String> values) {
-        return values != null ? values : List.of();
-    }
 }

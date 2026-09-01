@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.skills;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.EvidenceGap;
@@ -82,8 +83,8 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
             throw new IllegalArgumentException("Evidence needs what you did or what came of it");
         }
         String skill = skillName.strip();
-        return storyRepo.save(new InterviewStory(null, userId, skill, blankToNull(situation), null,
-                blankToNull(action), blankToNull(result), null, List.of(skill), null, null));
+        return storyRepo.save(new InterviewStory(null, userId, skill, Values.blankToNull(situation), null,
+                Values.blankToNull(action), Values.blankToNull(result), null, List.of(skill), null, null));
     }
 
     /**
@@ -162,7 +163,4 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
         return value != null ? value : "";
     }
 
-    private static String blankToNull(String value) {
-        return value != null && !value.isBlank() ? value.strip() : null;
-    }
 }

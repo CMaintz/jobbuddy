@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.skill.ProfileSkill;
@@ -21,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+
 public class CareerProfileContextService {
 
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH);
@@ -134,16 +136,16 @@ public class CareerProfileContextService {
                 profile != null ? profile.summary() : null,
                 skills,
                 technologies,
-                listOrEmpty(profile != null ? profile.languages() : null),
+                Values.listOrEmpty(profile != null ? profile.languages() : null),
                 spokenLanguages,
-                listOrEmpty(profile != null ? profile.interests() : null),
+                Values.listOrEmpty(profile != null ? profile.interests() : null),
                 workExpRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 projectRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 certRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 strengths,
                 proofPoints(userId),
-                target != null ? listOrEmpty(target.targetArchetypes()) : List.of(),
+                target != null ? Values.listOrEmpty(target.targetArchetypes()) : List.of(),
                 target != null ? target.northStar() : null,
                 target != null ? target.narrative() : null,
                 target != null && target.careerStage() != null ? target.careerStage().name() : null,
@@ -223,8 +225,8 @@ public class CareerProfileContextService {
                 exp.location(),
                 dateRange(exp.startDate(), exp.endDate(), exp.isCurrent()),
                 exp.description(),
-                listOrEmpty(exp.achievements()),
-                listOrEmpty(exp.technologies()),
+                Values.listOrEmpty(exp.achievements()),
+                Values.listOrEmpty(exp.technologies()),
                 List.of(),
                 toSkillNames(exp.skills()),
                 null);
@@ -246,7 +248,7 @@ public class CareerProfileContextService {
                 dateRange(project.startDate(), project.endDate(), false),
                 project.description(),
                 bullets,
-                listOrEmpty(project.technologies()),
+                Values.listOrEmpty(project.technologies()),
                 links,
                 toSkillNames(project.skills()),
                 null);
@@ -301,9 +303,6 @@ public class CareerProfileContextService {
         if (value != null && !value.isBlank()) values.add(value);
     }
 
-    private static List<String> listOrEmpty(List<String> values) {
-        return values != null ? values : List.of();
-    }
 
     private static List<String> toSkillNames(List<SkillTaxonomy> skills) {
         if (skills == null || skills.isEmpty()) return List.of();

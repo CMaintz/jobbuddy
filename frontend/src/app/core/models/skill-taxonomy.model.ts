@@ -19,6 +19,13 @@ export interface ProfileSkill {
   category?: string;
 }
 
+/**
+ * Categories that count as a technology rather than a way of working.
+ *
+ * Mirrors SkillCategories.TECHNICAL on the backend, which derives the technologies list
+ * sent to the AI. Nothing enforces that the two agree, so changing one means changing the
+ * other.
+ */
 export const TECH_CATEGORIES = new Set([
   'Programming Language', 'Framework', 'Library', 'Database', 'Cloud',
   'DevOps', 'Tool', 'API', 'AI/ML', 'Architecture', 'Testing', 'Security'

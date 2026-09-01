@@ -252,14 +252,10 @@ public class JobEnrichmentService implements EnrichJobUseCase {
      */
     static String sanitizeJsonResponse(String raw) {
         if (raw == null) return "{}";
-        String cleaned = raw.trim();
-
-        // Strip markdown code fences
-        if (cleaned.startsWith("```")) {
-            int firstNewline = cleaned.indexOf('\n');
-            if (firstNewline > 0) cleaned = cleaned.substring(firstNewline + 1);
-            if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length() - 3).trim();
-        }
+        // Fences come off with the shared helper; what follows are repairs specific to the
+        // enrichment schema, which no other caller needs.
+        String cleaned = com.autoapplicant.usecase.document.AiResponseParser
+                .stripCodeFence(raw.trim());
 
         // Extract the JSON object if surrounded by extra text
         int firstBrace = cleaned.indexOf('{');
