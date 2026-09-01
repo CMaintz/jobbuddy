@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.company;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.company.OutreachContact;
 import com.autoapplicant.domain.company.OutreachStatus;
 import com.autoapplicant.port.in.company.ManageOutreachUseCase;
@@ -67,7 +68,7 @@ public class OutreachService implements ManageOutreachUseCase {
         }
         Instant now = clock.instant();
         return repo.save(new OutreachContact(null, userId, companyId, companyName.strip(),
-                OutreachStatus.SAVED, null, blankToNull(contactName), null, null, null, now, now));
+                OutreachStatus.SAVED, null, Values.blankToNull(contactName), null, null, null, now, now));
     }
 
     @Override
@@ -88,9 +89,9 @@ public class OutreachService implements ManageOutreachUseCase {
 
         return repo.save(new OutreachContact(existing.id(), userId, existing.companyId(),
                 existing.companyName(), newStatus,
-                channel != null ? blankToNull(channel) : existing.channel(),
+                channel != null ? Values.blankToNull(channel) : existing.channel(),
                 existing.contactName(), contactedAt, resolvedFollowUp,
-                notes != null ? blankToNull(notes) : existing.notes(),
+                notes != null ? Values.blankToNull(notes) : existing.notes(),
                 existing.createdAt(), clock.instant()));
     }
 
@@ -109,7 +110,4 @@ public class OutreachService implements ManageOutreachUseCase {
         return contact;
     }
 
-    private static String blankToNull(String value) {
-        return value != null && !value.isBlank() ? value.strip() : null;
-    }
 }

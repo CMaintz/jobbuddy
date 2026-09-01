@@ -101,11 +101,7 @@ public class ParseCvService implements ParseCvUseCase {
                     SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
             String json = aiProvider.generate(composition);
 
-            // Strip markdown code fences if present
-            String cleaned = json.trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("```[a-z]*\n?", "").replaceAll("```", "").trim();
-            }
+            String cleaned = AiResponseParser.stripCodeFence(json.trim());
 
             JsonNode node = objectMapper.readTree(cleaned);
 

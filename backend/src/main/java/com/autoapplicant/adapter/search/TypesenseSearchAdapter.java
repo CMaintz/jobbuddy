@@ -57,10 +57,6 @@ public class TypesenseSearchAdapter implements JobSearchPort {
         }
     }
 
-    @Override
-    public void bulkIndex(List<Job> jobs) {
-        jobs.forEach(this::index);
-    }
 
     @Override
     public void delete(UUID jobId) {

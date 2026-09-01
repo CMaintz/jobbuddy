@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.user.Profile;
@@ -12,6 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+
 public class CvDocumentAssembler {
 
     /** Upper bound on rendered skills — keeps the section scannable and ATS-parseable. */
@@ -179,10 +181,10 @@ public class CvDocumentAssembler {
                 firstPresent(item.location(), source.location()),
                 firstPresent(item.dateRange(), source.dateRange()),
                 firstPresent(item.description(), source.description()),
-                !listOrEmpty(item.bullets()).isEmpty() ? item.bullets() : source.bullets(),
+                !Values.listOrEmpty(item.bullets()).isEmpty() ? item.bullets() : source.bullets(),
                 validateSubset(item.technologies(), source.technologies()),
-                !listOrEmpty(item.links()).isEmpty() ? item.links() : source.links(),
-                listOrEmpty(source.skills()),
+                !Values.listOrEmpty(item.links()).isEmpty() ? item.links() : source.links(),
+                Values.listOrEmpty(source.skills()),
                 firstPresent(item.category(), source.category()));
     }
 
@@ -217,8 +219,8 @@ public class CvDocumentAssembler {
     }
 
     private List<String> validateSubset(List<String> candidate, List<String> source) {
-        if (candidate == null || candidate.isEmpty()) return listOrEmpty(source);
-        Set<String> allowed = listOrEmpty(source).stream()
+        if (candidate == null || candidate.isEmpty()) return Values.listOrEmpty(source);
+        Set<String> allowed = Values.listOrEmpty(source).stream()
                 .map(s -> s.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
         List<String> valid = candidate.stream()
@@ -226,16 +228,13 @@ public class CvDocumentAssembler {
                 .filter(value -> allowed.contains(value.toLowerCase(Locale.ROOT)))
                 .distinct()
                 .toList();
-        return valid.isEmpty() ? listOrEmpty(source) : valid;
+        return valid.isEmpty() ? Values.listOrEmpty(source) : valid;
     }
 
     static String firstPresent(String first, String fallback) {
         return first != null && !first.isBlank() ? first : fallback;
     }
 
-    static List<String> listOrEmpty(List<String> values) {
-        return values != null ? values : List.of();
-    }
 
     static List<String> merge(List<String> first, List<String> second) {
         List<String> merged = new ArrayList<>();

@@ -97,11 +97,6 @@ public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUse
     }
 
     @Override
-    public Set<UUID> getIgnoredJobIds(UUID userId) {
-        return ignoredJobRepo.findJobIdsByUserId(userId);
-    }
-
-    @Override
     public void unignoreJob(UUID userId, UUID jobId) {
         ignoredJobRepo.deleteByUserIdAndJobId(userId, jobId);
     }

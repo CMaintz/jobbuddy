@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.interview.InterviewQuestionRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.JobLanguageDetector;
 import com.autoapplicant.usecase.document.MarketConventions;
@@ -214,10 +215,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
         JsonNode root;
         try {
-            String cleaned = aiProvider.generateJson(composition).trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("```[a-z]*\\n?", "").replace("```", "").trim();
-            }
+            String cleaned = AiResponseParser.stripCodeFence(aiProvider.generateJson(composition).trim());
             root = objectMapper.readTree(cleaned);
         } catch (Exception e) {
             log.warn("Prep pack generation failed for job {}: {}", jobId, e.getMessage());
@@ -334,10 +332,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
     private List<InterviewQuestion> parseQuestions(String json, UUID jobId, UUID userId) {
         List<InterviewQuestion> result = new ArrayList<>();
         try {
-            String cleaned = json.trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("```[a-z]*\\n?", "").replace("```", "").trim();
-            }
+            String cleaned = AiResponseParser.stripCodeFence(json.trim());
             JsonNode arr = objectMapper.readTree(cleaned);
             if (arr.isArray()) {
                 for (JsonNode node : arr) {

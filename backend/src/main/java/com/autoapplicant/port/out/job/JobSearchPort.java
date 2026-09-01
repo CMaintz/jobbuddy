@@ -9,7 +9,6 @@ import java.util.UUID;
 
 public interface JobSearchPort {
     void index(Job job);
-    void bulkIndex(List<Job> jobs);
     void delete(UUID jobId);
     JobSearchResult search(JobSearchQuery query);
 }

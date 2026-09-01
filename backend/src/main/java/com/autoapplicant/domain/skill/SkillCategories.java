@@ -11,8 +11,9 @@ import java.util.Set;
  * is one row carrying its category, that distinction is derivable rather than stored, and the
  * split of one list into two happens here.
  *
- * <p>The vocabulary is the seeded taxonomy's own (V012/V017, renamed in V022). The frontend keeps
- * an identical set for its profile chip grouping; if one changes, the other has to.
+ * <p>The vocabulary is the seeded taxonomy's own. The frontend keeps an identical set,
+ * TECH_CATEGORIES in core/models/skill-taxonomy.model.ts, for its profile chip grouping.
+ * Nothing enforces that the two agree, so changing one means changing the other.
  */
 public final class SkillCategories {
 

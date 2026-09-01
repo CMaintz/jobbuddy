@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.user.CareerTarget;
 import com.autoapplicant.port.in.user.ManageCareerTargetUseCase;
 import com.autoapplicant.port.out.user.CareerTargetRepositoryPort;
@@ -32,12 +33,9 @@ public class CareerTargetService implements ManageCareerTargetUseCase {
                 draft.northStar(), draft.narrative(),
                 draft.cultureRequirements() != null ? draft.cultureRequirements() : List.of(),
                 draft.careerStage(),
-                blankToNull(draft.noticePeriod()),
+                Values.blankToNull(draft.noticePeriod()),
                 draft.earliestStartDate(),
                 Instant.now()));
     }
 
-    private static String blankToNull(String value) {
-        return value != null && !value.isBlank() ? value.strip() : null;
-    }
 }
