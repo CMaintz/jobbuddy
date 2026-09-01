@@ -16,6 +16,10 @@ public interface ApplicationJpaRepository extends JpaRepository<ApplicationEntit
     Optional<ApplicationEntity> findByIdAndUserId(UUID id, UUID userId);
     boolean existsByUserIdAndJobId(UUID userId, UUID jobId);
 
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT a.jobId FROM ApplicationEntity a WHERE a.userId = :userId AND a.jobId IS NOT NULL")
+    java.util.List<UUID> findAppliedJobIds(@org.springframework.data.repository.query.Param("userId") UUID userId);
+
     @Query("""
             select a.outcomeLessons from ApplicationEntity a
             where a.userId = :userId and a.outcomeLessons is not null and a.outcomeLessons <> ''

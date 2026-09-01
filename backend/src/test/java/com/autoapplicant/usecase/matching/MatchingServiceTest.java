@@ -15,6 +15,7 @@ import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +43,7 @@ class MatchingServiceTest {
     @Mock RecommendationFeedbackRepositoryPort feedbackRepo;
     @Mock ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
     @Mock ProfileSkillRepositoryPort profileSkillRepo;
+    @Mock ApplicationRepositoryPort applicationRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
@@ -48,7 +51,8 @@ class MatchingServiceTest {
     @BeforeEach
     void setUp() {
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
-                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo);
+                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo,
+                applicationRepo);
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────
@@ -282,6 +286,35 @@ class MatchingServiceTest {
 
         // 10 * FILTERED_CANDIDATE_MULTIPLIER rather than 10 * CANDIDATE_MULTIPLIER
         verify(embeddingRepo).findNearestNeighborJobIds(any(), eq(150));
+    }
+
+    // ── already-applied exclusion ─────────────────────────────────────────────
+
+    @Test
+    void a_job_you_have_already_applied_to_is_not_recommended_again() {
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID appliedId = UUID.randomUUID();
+        UUID freshId = UUID.randomUUID();
+        when(applicationRepo.findAppliedJobIds(userId)).thenReturn(Set.of(appliedId));
+        stubFeed(p, List.of(minimalJob(appliedId), minimalJob(freshId)));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(results).extracting(MatchResult::jobId).containsExactly(freshId);
+    }
+
+    @Test
+    void applying_is_a_separate_act_from_ignoring_and_neither_implies_the_other() {
+        // Ignoring is a deliberate "not interested"; applying is the opposite. Both remove the job
+        // from the feed, and one must not be inferred from the other.
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID appliedId = UUID.randomUUID();
+        when(applicationRepo.findAppliedJobIds(userId)).thenReturn(Set.of(appliedId));
+        when(ignoredJobRepo.findJobIdsByUserId(userId)).thenReturn(Set.of());
+        stubFeed(p, List.of(minimalJob(appliedId)));
+
+        assertThat(service.getRecommendations(userId, 10)).isEmpty();
+        verify(ignoredJobRepo, never()).save(any());
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
