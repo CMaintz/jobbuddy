@@ -27,6 +27,9 @@ public class ResponseMetricEntity {
     @Column(name = "event_at")
     private Instant eventAt;
 
+    @Column(name = "notes", columnDefinition = "text")
+    private String notes;
+
     @PrePersist
     void prePersist() {
         if (eventAt == null) eventAt = Instant.now();
@@ -44,4 +47,7 @@ public class ResponseMetricEntity {
     public void setEventType(String eventType) { this.eventType = eventType; }
     public Instant getEventAt() { return eventAt; }
     public void setEventAt(Instant eventAt) { this.eventAt = eventAt; }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }
