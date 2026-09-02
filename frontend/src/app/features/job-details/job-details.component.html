@@ -19,7 +19,7 @@
     @if (loading) {
       <div class="p-12 text-center text-jb-text-dim">{{ 'jobDetails.loading' | translate }}</div>
     } @else if (job) {
-      @if (job.active === false || reportedInactive()) {
+      @if (job.isActive === false || reportedInactive()) {
         <div class="flex items-center gap-2.5 px-6 py-2.5 border-b flex-shrink-0 bg-[rgba(248,113,113,0.08)] border-[rgba(248,113,113,0.35)]">
           <jb-icon name="x-circle" [size]="13" class="text-jb-danger" />
           <span class="text-sm text-jb-text">
@@ -239,7 +239,7 @@
                 <jb-icon name="external" [size]="10" class="text-jb-text-dim" />
               </a>
             </div>
-            @if (job.active !== false && !reportedInactive()) {
+            @if (job.isActive !== false && !reportedInactive()) {
               <button (click)="reportTakenDown()"
                 class="mt-2 w-full flex items-center gap-[7px] py-1.5 px-2.5 bg-transparent border border-jb-border rounded-md text-jb-text-dim text-[11.5px] cursor-pointer text-left hover:text-jb-text-mid">
                 <jb-icon name="x-circle" [size]="11" class="flex-shrink-0" />

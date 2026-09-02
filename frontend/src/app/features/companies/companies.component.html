@@ -125,7 +125,7 @@
           </div>
         } @else {
           @for (c of companies(); track c.id) {
-            <div (click)="selected.set(c)"
+            <div (click)="select(c)"
               class="jb-row flex items-center gap-3 p-[12px_16px] cursor-pointer border-b border-jb-border-faint"
               [style.background]="selected()?.id === c.id ? 'var(--jb-surface-2)' : 'transparent'">
               <jb-company-mark [name]="c.name" [size]="32" />
@@ -171,6 +171,36 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Everything we hold from this company -->
+          <div class="mt-3">
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">
+              {{ 'companies.jobs.heading' | translate }}
+              @if (companyJobs().length) { <span class="num">({{ companyJobs().length }})</span> }
+            </div>
+            @if (companyJobsLoading()) {
+              <div class="card p-3.5 text-sm text-jb-text-dim">{{ 'companies.jobs.loading' | translate }}</div>
+            } @else if (companyJobs().length === 0) {
+              <div class="card p-3.5 text-sm text-jb-text-dim">{{ 'companies.jobs.empty' | translate }}</div>
+            } @else {
+              <div class="flex flex-col gap-1.5">
+                @for (job of companyJobs(); track job.id) {
+                  <a [routerLink]="['/jobs', job.id]"
+                     class="card p-3 flex items-center gap-3 no-underline text-jb-text jb-row">
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium truncate">{{ job.title }}</div>
+                      <div class="text-xs text-jb-text-dim truncate mt-0.5">
+                        {{ job.location || '—' }}@if (job.remoteType) { · {{ job.remoteType | lowercase }} }
+                      </div>
+                    </div>
+                    @if (!job.isActive) {
+                      <jb-pill tone="neutral">{{ 'companies.jobs.closed' | translate }}</jb-pill>
+                    }
+                  </a>
+                }
+              </div>
+            }
           </div>
         } @else {
           <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">

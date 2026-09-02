@@ -1254,7 +1254,13 @@
     "country": "Country",
     "links": "Links",
     "website": "Website",
-    "selectCompany": "Select a company"
+    "selectCompany": "Select a company",
+    "jobs": {
+      "heading": "Roles we hold",
+      "loading": "Loading roles…",
+      "empty": "No postings from this company yet.",
+      "closed": "Closed"
+    }
   },
   "documents": {
     "generatedCount": "{{count}} generated",

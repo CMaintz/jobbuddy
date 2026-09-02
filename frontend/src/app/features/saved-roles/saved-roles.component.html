@@ -25,8 +25,8 @@
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis"
-                    [style.opacity]="job.active === false ? '0.55' : '1'">{{ job.title }}</div>
-                  @if (job.active === false) {
+                    [style.opacity]="job.isActive === false ? '0.55' : '1'">{{ job.title }}</div>
+                  @if (job.isActive === false) {
                     <jb-pill tone="danger">{{ 'savedRoles.noLongerActive' | translate }}</jb-pill>
                   }
                 </div>
@@ -36,7 +36,7 @@
             <div class="text-sm text-jb-text-mid">{{ job.location || ('savedRoles.remote' | translate) }}</div>
             <div class="text-sm text-jb-text-dim">{{ job.source || '—' }}</div>
             <div class="flex gap-1.5 justify-end items-center">
-              @if (job.active !== false) {
+              @if (job.isActive !== false) {
                 <jb-button small icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">{{ 'savedRoles.apply' | translate }}</jb-button>
               }
               <button class="icon-btn" [title]="'savedRoles.removeTooltip' | translate" (click)="remove(job, $event)">

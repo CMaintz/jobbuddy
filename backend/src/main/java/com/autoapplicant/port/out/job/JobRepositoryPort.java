@@ -20,6 +20,8 @@ public interface JobRepositoryPort {
     boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
     List<Job> findByIds(List<UUID> ids);
+    /** Every posting we hold from one company, live ones first. */
+    List<Job> findByCompanyId(UUID companyId, int limit);
     List<Job> findUnenriched(int limit);
     List<UUID> findStaleActiveJobIds(java.time.Instant cutoff);
     int deactivateStaleJobs(java.time.Instant cutoff);

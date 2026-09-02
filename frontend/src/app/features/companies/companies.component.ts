@@ -7,14 +7,15 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { Job } from '../../core/models/job.model';
 import { CompaniesApiService, Company, OutreachContact, OutreachStatus, OutreachTarget }
   from '../../core/api/companies.api';
 
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent, CompanyMarkComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent, CompanyMarkComponent, RouterLink],
   templateUrl: './companies.component.html'
 })
 export class CompaniesComponent implements OnInit, OnDestroy {
@@ -26,6 +27,10 @@ export class CompaniesComponent implements OnInit, OnDestroy {
   selected = signal<Company | null>(null);
   query = '';
 
+  /** Postings we hold from the selected company; reloaded whenever the selection changes. */
+  companyJobs = signal<Job[]>([]);
+  companyJobsLoading = signal(false);
+
   /**
    * 'all' browses every known company, 'targets' ranks them for unsolicited applications, and
    * 'tracked' is the outreach actually under way.
@@ -36,6 +41,25 @@ export class CompaniesComponent implements OnInit, OnDestroy {
   includeHiringNow = false;
   tracked = signal<OutreachContact[]>([]);
   trackedLoading = signal(false);
+
+  /** Selecting a company also pulls the postings we hold from them. */
+  select(company: Company): void {
+    this.selected.set(company);
+    this.companyJobs.set([]);
+    this.companyJobsLoading.set(true);
+    this.companiesApi.jobs(company.id).subscribe({
+      next: jobs => {
+        // A slower request for a company the user has since clicked away from must not
+        // overwrite the one they are looking at now.
+        if (this.selected()?.id !== company.id) return;
+        this.companyJobs.set(jobs);
+        this.companyJobsLoading.set(false);
+      },
+      error: () => {
+        if (this.selected()?.id === company.id) this.companyJobsLoading.set(false);
+      }
+    });
+  }
 
   readonly outreachStatuses: OutreachStatus[] = ['SAVED', 'CONTACTED', 'REPLIED', 'MEETING', 'CLOSED'];
 

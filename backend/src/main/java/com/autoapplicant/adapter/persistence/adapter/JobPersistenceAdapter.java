@@ -110,6 +110,12 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public List<Job> findByCompanyId(UUID companyId, int limit) {
+        return repo.findByCompanyId(companyId, PageRequest.of(0, limit)).stream()
+                .map(JobMapper::toDomain).toList();
+    }
+
+    @Override
     public List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size) {
         if (excludedIds == null || excludedIds.isEmpty()) {
             return findActive(page, size);
