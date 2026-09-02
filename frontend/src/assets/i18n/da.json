@@ -1254,7 +1254,13 @@
     "country": "Land",
     "links": "Links",
     "website": "Hjemmeside",
-    "selectCompany": "Vælg en virksomhed"
+    "selectCompany": "Vælg en virksomhed",
+    "jobs": {
+      "heading": "Stillinger vi har",
+      "loading": "Henter stillinger…",
+      "empty": "Ingen opslag fra denne virksomhed endnu.",
+      "closed": "Lukket"
+    }
   },
   "documents": {
     "generatedCount": "{{count}} genereret",

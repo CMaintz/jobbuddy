@@ -26,7 +26,7 @@ export interface Job {
   /** Person the posting names to answer questions about the role. Absent when it names nobody. */
   contact?: JobContact;
   /** false once the posting disappears from crawls or is expired. */
-  active?: boolean;
+  isActive?: boolean;
 }
 
 /** Extracted verbatim from the posting — never inferred, so any field may be missing. */

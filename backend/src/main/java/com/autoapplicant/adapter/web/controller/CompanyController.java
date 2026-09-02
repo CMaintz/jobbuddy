@@ -4,11 +4,13 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.company.TrackOutreachRequest;
 import com.autoapplicant.adapter.web.dto.company.UpdateOutreachRequest;
 import com.autoapplicant.domain.company.Company;
+import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.company.OutreachContact;
 import com.autoapplicant.domain.company.OutreachTarget;
 import com.autoapplicant.port.in.company.FindOutreachTargetsUseCase;
 import com.autoapplicant.port.in.company.GetCompaniesUseCase;
 import com.autoapplicant.port.in.company.ManageOutreachUseCase;
+import com.autoapplicant.port.in.job.GetJobsByCompanyUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,15 +28,18 @@ public class CompanyController {
     private final GetCompaniesUseCase companies;
     private final FindOutreachTargetsUseCase outreachTargets;
     private final ManageOutreachUseCase outreach;
+    private final GetJobsByCompanyUseCase companyJobs;
     private final SecurityContextHelper secCtx;
 
     public CompanyController(GetCompaniesUseCase companies,
                              FindOutreachTargetsUseCase outreachTargets,
                              ManageOutreachUseCase outreach,
+                             GetJobsByCompanyUseCase companyJobs,
                              SecurityContextHelper secCtx) {
         this.companies = companies;
         this.outreachTargets = outreachTargets;
         this.outreach = outreach;
+        this.companyJobs = companyJobs;
         this.secCtx = secCtx;
     }
 
@@ -100,6 +105,12 @@ public class CompanyController {
         return companies.getCompanyById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Every posting we hold from one company, live ones first")
+    @GetMapping("/api/v1/companies/{id}/jobs")
+    public ResponseEntity<List<Job>> jobsByCompany(@PathVariable UUID id) {
+        return ResponseEntity.ok(companyJobs.getJobsByCompany(id));
     }
 
     @Operation(summary = "Get company by slug")

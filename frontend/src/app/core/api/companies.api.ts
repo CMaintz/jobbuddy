@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Job } from '../models/job.model';
 
 export interface Company {
   id: string;
@@ -62,6 +63,11 @@ export class CompaniesApiService {
       .set('page', page)
       .set('size', size);
     return this.http.get<Company[]>('/api/v1/companies', { params });
+  }
+
+  /** Every posting we hold from one company, live ones first. */
+  jobs(companyId: string): Observable<Job[]> {
+    return this.http.get<Job[]>(`/api/v1/companies/${companyId}/jobs`);
   }
 
   /** Ranked unsolicited-application targets. Companies hiring right now are excluded by default. */

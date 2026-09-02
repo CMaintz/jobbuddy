@@ -25,6 +25,10 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.isActive = true ORDER BY j.postedAt DESC")
     List<JobEntity> findActiveJobs(Pageable pageable);
 
+    /** Live postings sort ahead of closed ones, newest first within each group. */
+    @Query("SELECT j FROM JobEntity j WHERE j.companyId = :companyId ORDER BY j.isActive DESC, j.postedAt DESC")
+    List<JobEntity> findByCompanyId(@Param("companyId") UUID companyId, Pageable pageable);
+
     @Query("SELECT j FROM JobEntity j WHERE j.aiSummary IS NULL ORDER BY j.createdAt ASC")
     List<JobEntity> findUnenriched(Pageable pageable);
 
