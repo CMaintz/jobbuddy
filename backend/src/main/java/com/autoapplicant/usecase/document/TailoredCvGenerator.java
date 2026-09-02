@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class TailoredCvGenerator {
@@ -46,7 +47,7 @@ public class TailoredCvGenerator {
                             promptBuilder.composeCvTailoringPrompt(
                                     sourceJson, posting, customInstructions,
                                     targetLanguage, styleTemplate, writingProfile, outcomeLessons,
-                                    lengthPreference))
+                                    lengthPreference), AiOperations.TAILORED_CV)
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {

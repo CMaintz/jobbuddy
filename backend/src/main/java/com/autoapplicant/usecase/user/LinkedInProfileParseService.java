@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase {
@@ -79,7 +80,7 @@ public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase 
                 userPrompt
         );
 
-        String json = aiProvider.generate(composition);
+        String json = aiProvider.generate(composition, AiOperations.LINKEDIN_PARSE);
         applySkills(userId, json);
         return json;
     }

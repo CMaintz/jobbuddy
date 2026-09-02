@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
+import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import org.slf4j.Logger;
@@ -35,14 +36,13 @@ public class CliAgentAdapter implements ChatProviderPort {
         this.props = props;
     }
 
+    /**
+     * A CLI agent bills a flat subscription and reports no token counts, so the
+     * completion carries zeros — the usage log records the request, not a cost.
+     */
     @Override
-    public String generate(PromptComposition composition) {
-        return run(composition, false);
-    }
-
-    @Override
-    public String generateJson(PromptComposition composition) {
-        return run(composition, true);
+    public AiCompletion complete(PromptComposition composition, boolean jsonObject, String operation) {
+        return AiCompletion.untracked(run(composition, jsonObject), chatModelName());
     }
 
     private String run(PromptComposition composition, boolean jsonObject) {

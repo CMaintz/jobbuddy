@@ -2,7 +2,9 @@ package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.AiUsageRepositoryPort;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.port.out.ai.CurrentUserPort;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,11 +48,24 @@ public class AiConfig {
                 : new OpenAiAdapter(openAi, props, tierModel("openai", tier, props));
     }
 
+    /**
+     * Generation runs on behalf of a signed-in user, so it is wrapped to log what each
+     * call cost them. Enrichment is background work with nobody to bill and stays bare.
+     */
     @Bean("generationAiProvider")
     public ChatProviderPort generationAiProvider(
             @Qualifier("openAiHttpClient") OpenAIClient openAi,
             @Qualifier("geminiHttpClient") OpenAIClient gemini,
-            AppProperties props) {
+            AppProperties props,
+            AiUsageRepositoryPort usageRepo,
+            CurrentUserPort currentUser) {
+        return new UsageRecordingChatProvider(
+                buildGenerationProvider(openAi, gemini, props), usageRepo, currentUser);
+    }
+
+    private static ChatProviderPort buildGenerationProvider(OpenAIClient openAi,
+                                                            OpenAIClient gemini,
+                                                            AppProperties props) {
         String provider = props.getAi().getGenerationProvider();
         if (isCliProvider(provider)) {
             return new CliAgentAdapter(props);

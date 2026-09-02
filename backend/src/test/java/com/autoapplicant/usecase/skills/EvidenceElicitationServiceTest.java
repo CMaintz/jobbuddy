@@ -40,11 +40,11 @@ class EvidenceElicitationServiceTest {
     }
 
     private void aiReturns(String json) {
-        when(ai.generateJson(any(PromptComposition.class))).thenReturn(json);
+        when(ai.generateJson(any(PromptComposition.class), any())).thenReturn(json);
     }
 
     private void aiFails() {
-        when(ai.generateJson(any(PromptComposition.class)))
+        when(ai.generateJson(any(PromptComposition.class), any()))
                 .thenThrow(new IllegalStateException("provider down"));
     }
 

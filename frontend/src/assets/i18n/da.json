@@ -1418,7 +1418,8 @@
       "gen": "Standardindstillinger for generering",
       "style": "Skrivestil",
       "account": "Konto",
-      "privacy": "Privatliv & data"
+      "privacy": "Privatliv & data",
+      "usage": "AI-forbrug"
     },
     "industry": {
       "softwareIt": "Software & IT",
@@ -1547,6 +1548,37 @@
       "resetFailed": "Kunne ikke sende nulstillingsmailen",
       "exportFailed": "Eksport mislykkedes",
       "deleteFailed": "Sletning af konto mislykkedes"
+    },
+    "usage": {
+      "intro": "Hvad dine genereringer har kostet indtil nu. Der er ingen kvote — det står her, så du kan se, hvor arbejdet går hen.",
+      "loading": "Henter forbrug…",
+      "loadError": "Kunne ikke hente forbrug.",
+      "empty": "Der er ikke genereret noget endnu.",
+      "today": "I dag",
+      "allTime": "I alt",
+      "requests": "genereringer",
+      "requestsShort": "gen.",
+      "tokens": "tokens",
+      "byOperation": "Hvor det gik hen",
+      "unmetered": "Din genereringsudbyder afregnes til fast pris og oplyser ingen tokental, så kun antallet af genereringer registreres.",
+      "op": {
+        "CV_ANALYSIS": "CV-analyse",
+        "CV_PARSE": "CV-import",
+        "LINKEDIN_PARSE": "LinkedIn-import",
+        "DOCUMENT_GENERATION": "Ansøgninger og breve",
+        "DOCUMENT_REFINE": "Forbedringer",
+        "DOCUMENT_REVIEW": "Gennemlæsning",
+        "TAILORED_CV": "Tilpassede CV’er",
+        "TAILORED_CV_REVIEW": "Gennemlæsning af tilpasset CV",
+        "INTERVIEW_QUESTIONS": "Samtalespørgsmål",
+        "INTERVIEW_PREP_PACK": "Forberedelsespakker",
+        "MOCK_INTERVIEW": "Øvesamtaler",
+        "COMPANY_GROUNDING": "Virksomhedsresearch",
+        "SKILL_GAP": "Kompetencegab",
+        "SKILL_EVIDENCE": "Kompetencebelæg",
+        "WRITING_PROFILE": "Analyse af skrivestil",
+        "GENERATION": "Andet"
+      }
     }
   },
   "apply": {

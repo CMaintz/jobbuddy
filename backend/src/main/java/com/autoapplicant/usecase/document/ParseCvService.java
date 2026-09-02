@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class ParseCvService implements ParseCvUseCase {
@@ -99,7 +100,7 @@ public class ParseCvService implements ParseCvUseCase {
         try {
             PromptComposition composition = new PromptComposition(
                     SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
-            String json = aiProvider.generate(composition);
+            String json = aiProvider.generate(composition, AiOperations.CV_PARSE);
 
             String cleaned = AiResponseParser.stripCodeFence(json.trim());
 

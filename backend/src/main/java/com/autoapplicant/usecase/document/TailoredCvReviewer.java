@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 /**
  * Drafter→reviewer pass for the structured CV — the CV-side counterpart to the cover-letter
@@ -81,7 +82,7 @@ public class TailoredCvReviewer {
 
             PromptComposition composition = new PromptComposition(system, user, "", "", "", "", user);
             String json = AiResponseParser.extractJsonObject(
-                    AiResponseParser.sanitize(aiProvider.generateJson(composition)).trim());
+                    AiResponseParser.sanitize(aiProvider.generateJson(composition, AiOperations.TAILORED_CV_REVIEW)).trim());
             TailoredCvContent revised = objectMapper.readValue(json, TailoredCvContent.class);
             return revised != null ? revised : draft;
         } catch (Exception e) {

@@ -2,11 +2,14 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.AiUsageLogEntity;
 import com.autoapplicant.adapter.persistence.repository.AiUsageLogJpaRepository;
+import com.autoapplicant.domain.ai.AiOperationUsage;
 import com.autoapplicant.domain.ai.AiUsageRecord;
+import com.autoapplicant.domain.ai.AiUsageTotals;
 import com.autoapplicant.port.out.ai.AiUsageRepositoryPort;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -32,22 +35,13 @@ public class AiUsagePersistenceAdapter implements AiUsageRepositoryPort {
     }
 
     @Override
-    public int countTokensSince(UUID userId, Instant since) {
-        return repo.countTokensSince(userId, since);
+    public AiUsageTotals totalsSince(UUID userId, Instant since) {
+        AiUsageTotals totals = repo.totalsSince(userId, since);
+        return totals == null ? AiUsageTotals.NONE : totals;
     }
 
     @Override
-    public int countRequestsSince(UUID userId, Instant since) {
-        return repo.countRequestsSince(userId, since);
-    }
-
-    @Override
-    public int totalTokens(UUID userId) {
-        return repo.totalTokens(userId);
-    }
-
-    @Override
-    public int totalRequests(UUID userId) {
-        return repo.totalRequests(userId);
+    public List<AiOperationUsage> byOperation(UUID userId) {
+        return repo.byOperation(userId);
     }
 }

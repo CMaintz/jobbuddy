@@ -1,0 +1,52 @@
+<h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.usage' | translate }}</h2>
+<p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">{{ 'settings.usage.intro' | translate }}</p>
+
+@if (loading()) {
+  <div class="p-10 text-center text-jb-text-dim">{{ 'settings.usage.loading' | translate }}</div>
+} @else if (loadError()) {
+  <div class="p-10 text-center text-jb-text-dim">{{ 'settings.usage.loadError' | translate }}</div>
+} @else if (!hasHistory()) {
+  <div class="p-10 text-center text-jb-text-dim">{{ 'settings.usage.empty' | translate }}</div>
+} @else {
+  @if (usage(); as u) {
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="card p-3.5">
+        <div class="text-xs text-jb-text-dim uppercase tracking-wider">{{ 'settings.usage.today' | translate }}</div>
+        <div class="text-[24px] font-semibold num mt-1">{{ u.today.requests }}</div>
+        <div class="text-xs text-jb-text-dim">{{ 'settings.usage.requests' | translate }}</div>
+        @if (isMetered()) {
+          <div class="text-xs text-jb-text-dim mt-1.5">{{ tokens(u.today) | number }} {{ 'settings.usage.tokens' | translate }}</div>
+        }
+      </div>
+      <div class="card p-3.5">
+        <div class="text-xs text-jb-text-dim uppercase tracking-wider">{{ 'settings.usage.allTime' | translate }}</div>
+        <div class="text-[24px] font-semibold num mt-1">{{ u.allTime.requests }}</div>
+        <div class="text-xs text-jb-text-dim">{{ 'settings.usage.requests' | translate }}</div>
+        @if (isMetered()) {
+          <div class="text-xs text-jb-text-dim mt-1.5">{{ tokens(u.allTime) | number }} {{ 'settings.usage.tokens' | translate }}</div>
+        }
+      </div>
+    </div>
+
+    @if (!isMetered()) {
+      <p class="text-xs text-jb-text-dim leading-[1.55] m-[0_0_14px]">{{ 'settings.usage.unmetered' | translate }}</p>
+    }
+
+    <div class="text-xs text-jb-text-dim uppercase tracking-wider mb-2">{{ 'settings.usage.byOperation' | translate }}</div>
+    <div class="flex flex-col gap-2">
+      @for (op of u.byOperation; track op.operation) {
+        <div>
+          <div class="flex items-baseline justify-between text-sm">
+            <span>{{ operationLabel(op.operation) | translate }}</span>
+            <span class="text-jb-text-dim num text-xs">
+              {{ op.requests }} {{ 'settings.usage.requestsShort' | translate }}@if (isMetered()) { · {{ tokens(op) | number }} {{ 'settings.usage.tokens' | translate }} }
+            </span>
+          </div>
+          <div class="h-[4px] rounded-full bg-jb-surface-3 mt-1 overflow-hidden">
+            <div class="h-full rounded-full bg-jb-accent" [style.width.%]="barWidth(op)"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}
