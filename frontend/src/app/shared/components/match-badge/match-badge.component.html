@@ -1,2 +1,7 @@
-
-    <span [class]="badgeClass" class="text-xs font-medium px-2 py-0.5 rounded-full">{{ label }}</span>
+<div class="rounded-full flex items-center justify-center flex-shrink-0 font-semibold"
+     [style.width.px]="size"
+     [style.height.px]="size"
+     [style.font-size.px]="size / 3"
+     [style.background]="color.bg"
+     [style.color]="color.fg"
+     [style.border]="'1px solid ' + color.border">{{ score }}</div>

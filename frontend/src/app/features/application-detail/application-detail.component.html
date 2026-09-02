@@ -23,7 +23,7 @@
               <div class="text-base text-jb-text-dim">{{ app.jobCompanyName || ('pipeline.unknown' | translate) }}</div>
             </div>
             <div class="ml-auto flex items-center gap-2.5">
-              <jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) | translate }}</jb-pill>
+              <app-status-chip [status]="app.status" />
               <jb-fit-bar [value]="app.matchScore ?? 0" />
             </div>
           </div>

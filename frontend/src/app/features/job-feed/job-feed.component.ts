@@ -12,6 +12,7 @@ import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.comp
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { Job, MatchResult } from '../../core/models/job.model';
+import { MatchBadgeComponent, MatchLabel, matchColor } from '../../shared/components/match-badge/match-badge.component';
 
 interface FeedRow {
   id: string;
@@ -20,6 +21,8 @@ interface FeedRow {
   location: string;
   salary?: string;
   matchScore?: number;
+  /** The backend's own verdict on the score — never re-derived here. */
+  matchLabel?: MatchLabel;
   matchReasons: string[];
   keywords: string[];
   source: string;
@@ -39,10 +42,13 @@ interface FeedRow {
 @Component({
   selector: 'app-job-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, MatchBadgeComponent],
   templateUrl: './job-feed.component.html'
 })
 export class JobFeedComponent implements OnInit, OnDestroy {
+  /** Exposed for the detail pane, which colours a bare number rather than a ring. */
+  matchColor = matchColor;
+
   private jobsApi = inject(JobsApiService);
   private translate = inject(TranslateService);
 
@@ -167,6 +173,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   private matchToRow(r: MatchResult): FeedRow {
     const row = this.jobToRow(r.job);
     row.matchScore = r.totalScore;
+    row.matchLabel = r.matchLabel;
     row.matchReasons = r.matchReasons ?? [];
     return row;
   }

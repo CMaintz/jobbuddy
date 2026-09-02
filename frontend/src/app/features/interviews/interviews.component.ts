@@ -7,6 +7,7 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
@@ -16,11 +17,6 @@ import { RemindersApiService } from '../../core/api/reminders.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
 const INTERVIEW_STAGES: ApplicationStatus[] = ['RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'];
-
-const STAGE_LABELS: Record<string, string> = {
-  RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview',
-  TECHNICAL_TEST: 'pipeline.stage.technical', FINAL_ROUND: 'interviews.stage.finalRound',
-};
 
 const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> = {
   BEHAVIORAL: 'info', TECHNICAL: 'accent', SITUATIONAL: 'violet', COMPANY: 'neutral',
@@ -76,7 +72,7 @@ export class InterviewsComponent implements OnInit {
   roleplayFeedback = signal('');
   roleplayInput = '';
 
-  stageLabel = (s: string) => STAGE_LABELS[s] ?? s;
+  stageLabel = (s: string) => stageLabelKey(s);
   categoryTone = (c: string) => CATEGORY_TONES[c] ?? 'neutral';
 
   ngOnInit(): void {

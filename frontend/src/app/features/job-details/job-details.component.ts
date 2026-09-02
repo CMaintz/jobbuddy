@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
+import { StatusChipComponent, stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -18,22 +18,11 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 
 const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'OFFER'];
 
-const STAGE_LABELS: Record<string, string> = {
-  SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.preparing', APPLIED: 'pipeline.stage.applied',
-  RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview', TECHNICAL_TEST: 'pipeline.stage.technical',
-  FINAL_ROUND: 'pipeline.stage.final', OFFER: 'pipeline.stage.offer', REJECTED: 'pipeline.stage.rejected', ARCHIVED: 'pipeline.stage.archived'
-};
-
-const STAGE_TONES: Record<string, string> = {
-  SAVED: 'neutral', PREPARING: 'neutral', APPLIED: 'info',
-  RECRUITER_CONTACT: 'violet', INTERVIEW: 'accent', TECHNICAL_TEST: 'accent',
-  FINAL_ROUND: 'accent', OFFER: 'success', REJECTED: 'danger', ARCHIVED: 'neutral'
-};
 
 @Component({
   selector: 'app-job-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
+  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent],
   templateUrl: './job-details.component.html'
 })
 export class JobDetailsComponent implements OnInit {
@@ -192,13 +181,7 @@ export class JobDetailsComponent implements OnInit {
     });
   }
 
-  stageLabel(status: ApplicationStatus | string): string {
-    return STAGE_LABELS[status] ?? status;
-  }
-
-  stageTone(status: ApplicationStatus | string): 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'violet' {
-    return (STAGE_TONES[status] as PillTone) ?? 'neutral';
-  }
+  stageLabel(status: ApplicationStatus | string): string { return stageLabelKey(status); }
 
   stageIdx(stage: ApplicationStatus | string): number {
     return STAGE_FLOW.indexOf(stage as ApplicationStatus);

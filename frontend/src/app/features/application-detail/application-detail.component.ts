@@ -5,27 +5,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
+import { StatusChipComponent, stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
-const STAGE_LABEL: Record<string, string> = {
-  SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.preparing', APPLIED: 'pipeline.stage.applied',
-  RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview', TECHNICAL_TEST: 'pipeline.stage.technical',
-  FINAL_ROUND: 'pipeline.stage.final', OFFER: 'pipeline.stage.offer', REJECTED: 'pipeline.stage.rejected', ARCHIVED: 'pipeline.stage.archived'
-};
-const STAGE_TONE: Record<string, PillTone> = {
-  SAVED: 'neutral', PREPARING: 'neutral', APPLIED: 'info',
-  RECRUITER_CONTACT: 'violet', INTERVIEW: 'accent', TECHNICAL_TEST: 'accent',
-  FINAL_ROUND: 'accent', OFFER: 'success', REJECTED: 'danger', ARCHIVED: 'neutral'
-};
 
 @Component({
   selector: 'app-application-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent],
   templateUrl: './application-detail.component.html'
 })
 export class ApplicationDetailComponent implements OnInit {
@@ -54,8 +44,7 @@ export class ApplicationDetailComponent implements OnInit {
     });
   }
 
-  stageLabel(status: ApplicationStatus): string { return STAGE_LABEL[status] ?? status; }
-  stageTone(status: ApplicationStatus): PillTone { return STAGE_TONE[status] ?? 'neutral'; }
+  stageLabel(status: ApplicationStatus): string { return stageLabelKey(status); }
 
   /** Outcome capture makes sense once the application has actually gone out. */
   showOutcome(): boolean {
