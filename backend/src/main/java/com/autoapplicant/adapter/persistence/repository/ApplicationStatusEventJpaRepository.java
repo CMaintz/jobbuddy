@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface ApplicationStatusEventJpaRepository extends JpaRepository<ApplicationStatusEventEntity, UUID> {
     List<ApplicationStatusEventEntity> findByUserIdOrderByOccurredAtAsc(UUID userId);
+
+    List<ApplicationStatusEventEntity> findByApplicationIdAndUserIdOrderByOccurredAtAsc(UUID applicationId, UUID userId);
 }
