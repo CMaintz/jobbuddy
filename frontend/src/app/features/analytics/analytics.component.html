@@ -46,6 +46,34 @@
             </div>
           </div>
 
+          <!-- How long each stage takes -->
+          @if (velocity().length > 0) {
+            <div class="card p-4">
+              <div class="text-base font-medium mb-1">{{ 'analytics.velocityTitle' | translate }}</div>
+              <div class="text-xs text-jb-text-dim mb-3">{{ 'analytics.velocitySubtitle' | translate }}</div>
+              <div class="flex flex-col gap-2.5">
+                @for (t of velocity(); track t.fromStatus + '->' + t.toStatus) {
+                  <div>
+                    <div class="flex items-baseline justify-between gap-2 text-sm">
+                      <span class="flex items-center gap-1.5 min-w-0">
+                        <span class="truncate">{{ stageLabel(t.fromStatus) | translate }}</span>
+                        <jb-icon name="arrow-right" [size]="10" class="text-jb-text-faint shrink-0" />
+                        <span class="truncate">{{ stageLabel(t.toStatus) | translate }}</span>
+                      </span>
+                      <span class="text-jb-text-dim text-xs whitespace-nowrap num">
+                        {{ 'analytics.velocityDays' | translate:{ days: days(t.avgDays) } }}
+                        · {{ 'analytics.velocityTimes' | translate:{ count: t.count } }}
+                      </span>
+                    </div>
+                    <div class="h-[4px] rounded-full bg-jb-surface-3 mt-1 overflow-hidden">
+                      <div class="h-full rounded-full bg-jb-accent" [style.width.%]="velocityBar(t)"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Heatmap -->
           <div class="card p-4">
             <div class="text-base font-medium mb-3">{{ 'analytics.heatmapTitle' | translate:{ count: heatmapWeeks } }}</div>

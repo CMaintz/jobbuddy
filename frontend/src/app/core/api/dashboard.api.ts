@@ -40,6 +40,18 @@ export interface DetailedMetrics {
   topCompanies: string[];
 }
 
+/** How long applications sit between two stages, averaged over every time it happened. */
+export interface FunnelTransition {
+  fromStatus: string;
+  toStatus: string;
+  count: number;
+  avgDays: number;
+}
+
+export interface FunnelVelocity {
+  transitions: FunnelTransition[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
   private http = inject(HttpClient);
@@ -58,5 +70,10 @@ export class DashboardApiService {
 
   getWeeklyTrend(): Observable<WeeklyTrend> {
     return this.http.get<WeeklyTrend>('/api/v1/analytics/trend');
+  }
+
+  /** Average time each stage transition takes, from the status-event ledger. */
+  getFunnelVelocity(): Observable<FunnelVelocity> {
+    return this.http.get<FunnelVelocity>('/api/v1/analytics/funnel-velocity');
   }
 }

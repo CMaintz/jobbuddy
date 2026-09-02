@@ -26,8 +26,8 @@ public class ResponseMetricPersistenceAdapter implements ResponseMetricRepositor
     }
 
     @Override
-    public List<ResponseMetric> findByApplicationId(UUID applicationId) {
-        return repo.findByApplicationIdOrderByEventAtAsc(applicationId).stream()
+    public List<ResponseMetric> findByApplicationIdAndUserId(UUID applicationId, UUID userId) {
+        return repo.findByApplicationIdAndUserIdOrderByEventAtAsc(applicationId, userId).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }

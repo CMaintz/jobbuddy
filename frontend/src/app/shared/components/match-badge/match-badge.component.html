@@ -1,7 +1,5 @@
-<div class="rounded-full flex items-center justify-center flex-shrink-0 font-semibold"
-     [style.width.px]="size"
-     [style.height.px]="size"
-     [style.font-size.px]="size / 3"
-     [style.background]="color.bg"
-     [style.color]="color.fg"
-     [style.border]="'1px solid ' + color.border">{{ score }}</div>
+<span class="text-2xs font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-default"
+      [style.background]="color.bg"
+      [style.color]="color.fg"
+      [style.border]="'1px solid ' + color.border"
+      [title]="'match.scoreTooltip' | translate:{ score: score }">{{ labelKey | translate }}</span>

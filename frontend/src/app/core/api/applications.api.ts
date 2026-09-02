@@ -16,10 +16,25 @@ export interface CreateApplicationPayload {
   notes?: string;
 }
 
+/** One thing the employer did — a screen, an interview, an offer, a rejection. */
+export interface ResponseMetric {
+  id: string;
+  jobId: string | null;
+  applicationId: string;
+  eventType: string;
+  eventAt: string;
+  notes: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApplicationsApiService {
   private http = inject(HttpClient);
   private base = '/api/v1/applications';
+
+  /** What the employer did and when, oldest first. Empty until they respond. */
+  timeline(applicationId: string): Observable<ResponseMetric[]> {
+    return this.http.get<ResponseMetric[]>(`${this.base}/${applicationId}/timeline`);
+  }
 
   getAll(): Observable<Application[]> {
     return this.http.get<Application[]>(this.base);

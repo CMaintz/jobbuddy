@@ -6,5 +6,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface GetApplicationTimelineUseCase {
-    List<ResponseMetric> getTimeline(UUID applicationId);
+    List<ResponseMetric> getTimeline(UUID applicationId, UUID userId);
 }

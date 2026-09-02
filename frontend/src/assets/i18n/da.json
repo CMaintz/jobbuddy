@@ -836,7 +836,18 @@
     "details": "Detaljer",
     "status": "Status",
     "created": "Oprettet",
-    "notFound": "Ansøgning ikke fundet."
+    "notFound": "Ansøgning ikke fundet.",
+    "timeline": {
+      "heading": "Svar fra arbejdsgiver",
+      "event": {
+        "RECRUITER_CONTACT": "Rekrutteringskonsulent tog kontakt",
+        "INTERVIEW_SCHEDULED": "Samtale aftalt",
+        "TECHNICAL_TEST": "Teknisk prøve",
+        "FINAL_ROUND": "Sidste runde",
+        "OFFER_RECEIVED": "Tilbud modtaget",
+        "REJECTED": "Afvist"
+      }
+    }
   },
   "jobDetails": {
     "loadingCrumb": "Indlæser",
@@ -976,7 +987,11 @@
     "vsLastWeek": "{{delta}} vs. sidste uge",
     "weekSummary": "{{thisWeek}} ansøgninger i denne uge · {{lastWeek}} sidste uge",
     "heatmapTitle": "Ansøgningsaktivitet — sidste {{count}} uger",
-    "topCompanies": "Mest ansøgte virksomheder"
+    "topCompanies": "Mest ansøgte virksomheder",
+    "velocityTitle": "Fremdrift pr. trin",
+    "velocitySubtitle": "Gennemsnitlig tid mellem to trin, på tværs af alle ansøgninger, der har taget skridtet.",
+    "velocityDays": "{{days}} dage",
+    "velocityTimes": "{{count}}×"
   },
   "prompts": {
     "newPrompt": "Ny prompt",
@@ -1753,5 +1768,14 @@
       "track": "Følg",
       "library": "Bibliotek"
     }
+  },
+  "match": {
+    "grade": {
+      "excellent": "Fremragende",
+      "strong": "Stærk",
+      "moderate": "Moderat",
+      "weak": "Svag"
+    },
+    "scoreTooltip": "{{score}} % match"
   }
 }

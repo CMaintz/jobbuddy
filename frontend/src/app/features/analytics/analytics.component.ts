@@ -9,9 +9,10 @@ import { FunnelComponent } from '../../shared/components/funnel/funnel.component
 import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
 import { SparklineComponent } from '../../shared/components/sparkline/sparkline.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
-import { DashboardApiService, DetailedMetrics, WeeklyTrend } from '../../core/api/dashboard.api';
+import { DashboardApiService, DetailedMetrics, WeeklyTrend , FunnelTransition } from '../../core/api/dashboard.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
+import { stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 
 const HEATMAP_WEEKS = 14;
 
@@ -31,6 +32,8 @@ export class AnalyticsComponent implements OnInit {
   trend = signal<WeeklyTrend | null>(null);
   funnelStages = signal<FunnelStage[]>([]);
   heatmapData = signal<number[]>([]);
+  /** How long each stage transition takes on average, busiest transition first. */
+  velocity = signal<FunnelTransition[]>([]);
   heatmapWeeks = HEATMAP_WEEKS;
 
   ngOnInit(): void {
@@ -38,12 +41,14 @@ export class AnalyticsComponent implements OnInit {
       metrics: this.dashboardApi.getDetailedAnalytics(),
       trend: this.dashboardApi.getWeeklyTrend(),
       apps: this.appsApi.getAll(),
+      velocity: this.dashboardApi.getFunnelVelocity(),
     }).subscribe({
-      next: ({ metrics, trend, apps }) => {
+      next: ({ metrics, trend, apps, velocity }) => {
         this.metrics.set(metrics);
         this.trend.set(trend);
         this.funnelStages.set(buildFunnelStages(apps));
         this.heatmapData.set(buildHeatmapData(apps, HEATMAP_WEEKS));
+        this.velocity.set([...velocity.transitions].sort((a, b) => b.count - a.count));
         this.loading.set(false);
       },
       error: () => {
@@ -55,6 +60,22 @@ export class AnalyticsComponent implements OnInit {
 
   trendData(): number[] {
     return (this.trend()?.daily ?? []).map(d => d.count);
+  }
+
+  /** Stage transitions reuse the pipeline's stage names. */
+  stageLabel(status: string): string {
+    return stageLabelKey(status);
+  }
+
+  /** Widest bar is the slowest transition; the rest are relative to it. */
+  velocityBar(t: FunnelTransition): number {
+    const slowest = Math.max(...this.velocity().map(v => v.avgDays), 0.1);
+    return Math.round((t.avgDays / slowest) * 100);
+  }
+
+  /** Sub-day gaps read as "same day" rather than "0.3 days". */
+  days(value: number): string {
+    return value < 1 ? '<1' : value.toFixed(value < 10 ? 1 : 0);
   }
 
   pct(value: number | undefined): string {

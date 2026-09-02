@@ -95,6 +95,35 @@
             </div>
           }
 
+          <!-- What the employer did, and when -->
+          @if (!timelineLoading() && timeline().length > 0) {
+            <div class="card p-[18px] mb-3">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-3">{{ 'applicationDetail.timeline.heading' | translate }}</div>
+              <ol class="list-none m-0 p-0 flex flex-col">
+                @for (event of timeline(); track event.id; let last = $last) {
+                  <li class="flex gap-3">
+                    <!-- Rail: dot, plus the line down to the next event -->
+                    <div class="flex flex-col items-center shrink-0 pt-[5px]">
+                      <span class="w-[7px] h-[7px] rounded-full shrink-0" [style.background]="eventTone(event.eventType)"></span>
+                      @if (!last) {
+                        <span class="w-px flex-1 bg-jb-border my-1"></span>
+                      }
+                    </div>
+                    <div [class.pb-3]="!last" class="min-w-0 flex-1">
+                      <div class="flex items-baseline justify-between gap-2">
+                        <span class="text-sm font-medium">{{ eventLabel(event.eventType) | translate }}</span>
+                        <span class="text-2xs text-jb-text-dim whitespace-nowrap">{{ event.eventAt | date:'mediumDate' }}</span>
+                      </div>
+                      @if (event.notes) {
+                        <div class="text-xs text-jb-text-mid leading-relaxed mt-0.5 whitespace-pre-line">{{ event.notes }}</div>
+                      }
+                    </div>
+                  </li>
+                }
+              </ol>
+            </div>
+          }
+
           <!-- Metadata -->
           <div class="card p-[18px]">
             <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'applicationDetail.details' | translate }}</div>

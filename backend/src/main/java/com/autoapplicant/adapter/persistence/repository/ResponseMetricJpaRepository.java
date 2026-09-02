@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ResponseMetricJpaRepository extends JpaRepository<ResponseMetricEntity, UUID> {
-    List<ResponseMetricEntity> findByApplicationIdOrderByEventAtAsc(UUID applicationId);
+    List<ResponseMetricEntity> findByApplicationIdAndUserIdOrderByEventAtAsc(UUID applicationId, UUID userId);
 }
