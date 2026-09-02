@@ -9,6 +9,7 @@ import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
@@ -36,9 +37,22 @@ public class MatchingService implements GetRecommendationsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(MatchingService.class);
 
-    // Behavioral adjustments
-    private static final int LIKE_BOOST     = 10;
+    // Behavioral adjustments. LIKE/DISLIKE speak about one posting; MORE/FEWER_LIKE_THIS speak
+    // about a kind of posting and are applied to its neighbours instead.
+    private static final int LIKE_BOOST      = 10;
     private static final int DISLIKE_PENALTY = -20;
+
+    /** Applied to a neighbour of a job the user steered toward or away from. */
+    private static final int STEER_BOOST   = 6;
+    private static final int STEER_PENALTY = -12;
+
+    /**
+     * How many steer signals per direction are honoured, most recent first, and how many
+     * neighbours each pulls. Both are capped because each signal costs one nearest-neighbour
+     * query per recommendation request — a user who steered fifty times should not pay for fifty.
+     */
+    private static final int STEER_SIGNALS_HONOURED = 5;
+    private static final int STEER_NEIGHBOURS       = 25;
 
     // Preference score bonuses (soft)
     private static final int REMOTE_MATCH_BONUS      = 8;
@@ -119,11 +133,8 @@ public class MatchingService implements GetRecommendationsUseCase {
             UserPreferences prefs = prefsRepo.findByUserId(userId).orElse(null);
 
             Set<UUID> ignoredIds = ignoredJobRepo.findJobIdsByUserId(userId);
-            Map<UUID, FeedbackType> feedbackMap = buildFeedbackMap(userId);
-            Set<UUID> hiddenIds = feedbackMap.entrySet().stream()
-                    .filter(e -> e.getValue() == FeedbackType.HIDE)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toSet());
+            List<RecommendationFeedback> feedback = feedbackRepo.findByUserId(userId);
+            Map<UUID, FeedbackType> feedbackMap = buildFeedbackMap(feedback);
             // A job you have already applied to is not a recommendation. Nothing excluded it
             // before: ignoring is a separate deliberate act, and applying never touched the feed,
             // so every posting you acted on kept coming back at the top of it.
@@ -143,8 +154,7 @@ public class MatchingService implements GetRecommendationsUseCase {
 
             // Filter out ignored/hidden IDs before hitting the DB
             List<UUID> candidateIds = nearestJobIds.stream()
-                    .filter(id -> !ignoredIds.contains(id) && !hiddenIds.contains(id)
-                            && !appliedIds.contains(id))
+                    .filter(id -> !ignoredIds.contains(id) && !appliedIds.contains(id))
                     .toList();
 
             // Batch-fetch all candidate jobs in a single query instead of N+1
@@ -157,13 +167,18 @@ public class MatchingService implements GetRecommendationsUseCase {
                     .map(name -> name.toLowerCase().trim())
                     .collect(Collectors.toSet());
             Map<String, Double> proficiencyCredit = buildProficiencyCredit(profileSkillRows);
+            // "More like this" is a statement about a kind of job, so it has to reach jobs the
+            // user has not seen. This resolves each steer signal to its neighbours once, rather
+            // than per candidate.
+            Map<UUID, Integer> steerAdjustments = buildSteerAdjustments(feedback);
 
             return candidateIds.stream()
                     .map(jobMap::get)
                     .filter(Objects::nonNull)
                     .filter(job -> passesHardConstraints(job, prefs))
                     .limit(limit * 2L)
-                    .map(job -> buildMatchResult(job, userId, held, proficiencyCredit, feedbackMap, prefs))
+                    .map(job -> buildMatchResult(job, userId, held, proficiencyCredit, feedbackMap,
+                            steerAdjustments, prefs))
                     .sorted(Comparator.comparingInt(MatchResult::totalScore).reversed())
                     .limit(limit)
                     .collect(Collectors.toList());
@@ -264,6 +279,7 @@ public class MatchingService implements GetRecommendationsUseCase {
                                          Set<String> held,
                                          Map<String, Double> proficiencyCredit,
                                          Map<UUID, FeedbackType> feedbackMap,
+                                         Map<UUID, Integer> steerAdjustments,
                                          UserPreferences prefs) {
         List<String> reasons = new ArrayList<>();
 
@@ -387,6 +403,15 @@ public class MatchingService implements GetRecommendationsUseCase {
             reasons.add("Previously liked");
         } else if (feedback == FeedbackType.DISLIKE || feedback == FeedbackType.FEWER_LIKE_THIS) {
             behavioralBoost = DISLIKE_PENALTY;
+        } else {
+            // Only a job the user has said nothing about is steered. A direct judgement about
+            // this posting always outranks an inference drawn from a neighbouring one.
+            Integer steer = steerAdjustments.get(job.id());
+            if (steer != null) {
+                behavioralBoost = steer;
+                reasons.add(steer > 0 ? "Similar to jobs you asked for more of"
+                                      : "Similar to jobs you asked for fewer of");
+            }
         }
 
         // ── Final score ──────────────────────────────────────────────────────
@@ -569,11 +594,55 @@ public class MatchingService implements GetRecommendationsUseCase {
         return true;
     }
 
-    private Map<UUID, FeedbackType> buildFeedbackMap(UUID userId) {
-        return feedbackRepo.findByUserId(userId).stream()
+    private Map<UUID, FeedbackType> buildFeedbackMap(List<RecommendationFeedback> feedback) {
+        return feedback.stream()
                 .collect(Collectors.toMap(RecommendationFeedback::jobId,
                         RecommendationFeedback::feedbackType,
                         (a, b) -> b));
+    }
+
+    /**
+     * Job id → score adjustment, for jobs sitting near something the user steered toward or away
+     * from.
+     *
+     * <p>This is what makes "more like this" different from "like". A like is a verdict on one
+     * posting; a steer is a request about a kind of posting, and is worth nothing unless it
+     * reaches postings the user has not seen yet. Until this existed the two were scored
+     * identically, so steering only ever raised the job the user had already judged.
+     *
+     * <p>The adjustment is smaller than a direct like or dislike on purpose: it is inferred from
+     * proximity to something the user judged, not from anything they said about this job.
+     */
+    private Map<UUID, Integer> buildSteerAdjustments(List<RecommendationFeedback> feedback) {
+        Map<UUID, Integer> adjustments = new HashMap<>();
+        applySteer(feedback, FeedbackType.MORE_LIKE_THIS, STEER_BOOST, adjustments);
+        applySteer(feedback, FeedbackType.FEWER_LIKE_THIS, STEER_PENALTY, adjustments);
+        return adjustments;
+    }
+
+    private void applySteer(List<RecommendationFeedback> feedback, FeedbackType type,
+                            int adjustment, Map<UUID, Integer> into) {
+        List<RecommendationFeedback> signals = feedback.stream()
+                .filter(f -> f.feedbackType() == type)
+                .sorted(Comparator.comparing(RecommendationFeedback::createdAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(STEER_SIGNALS_HONOURED)
+                .toList();
+
+        for (RecommendationFeedback signal : signals) {
+            try {
+                embeddingRepo.findByJobId(signal.jobId())
+                        .map(JobEmbedding::embedding)
+                        .map(vector -> embeddingRepo.findNearestNeighborJobIds(vector, STEER_NEIGHBOURS))
+                        .ifPresent(neighbours -> neighbours.forEach(id -> {
+                            // Steering the same way twice does not double the effect; steering both
+                            // ways cancels, which is the honest reading of contradictory signals.
+                            if (!id.equals(signal.jobId())) into.merge(id, adjustment, Integer::sum);
+                        }));
+            } catch (Exception e) {
+                log.debug("Could not expand steer signal for job {}: {}", signal.jobId(), e.getMessage());
+            }
+        }
     }
 
     private static String buildProfileText(Profile p, List<ProfileSkill> skills) {
