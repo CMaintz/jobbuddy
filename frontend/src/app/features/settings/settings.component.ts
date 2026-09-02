@@ -13,6 +13,7 @@ import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.comp
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
+import { AiUsagePanelComponent } from './ai-usage-panel.component';
 import { ThemeService } from '../../core/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserPreferences } from '../../core/models/user.model';
@@ -22,7 +23,7 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
 
-type Section = 'match' | 'gen' | 'style' | 'account' | 'privacy';
+type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy';
 
 /** Generation defaults have no backend home yet — kept client-side so the apply screen can read them. */
 export interface GenDefaults {
@@ -86,7 +87,7 @@ interface StyleSnapshot {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent, AiUsagePanelComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
@@ -118,6 +119,7 @@ export class SettingsComponent implements OnInit {
     { key: 'match', label: 'settings.section.match', icon: 'target' },
     { key: 'gen', label: 'settings.section.gen', icon: 'wand' },
     { key: 'style', label: 'settings.section.style', icon: 'edit' },
+    { key: 'usage', label: 'settings.section.usage', icon: 'chart-up' },
     { key: 'account', label: 'settings.section.account', icon: 'user' },
     { key: 'privacy', label: 'settings.section.privacy', icon: 'key' },
   ];

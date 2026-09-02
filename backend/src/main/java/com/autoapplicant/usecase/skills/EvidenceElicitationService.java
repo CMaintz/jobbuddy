@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 /**
  * The one place a model is involved in evidence elicitation, and it is deliberately small: it
@@ -82,7 +83,8 @@ public class EvidenceElicitationService implements ElicitEvidenceUseCase {
 
             JsonNode root = objectMapper.readTree(AiResponseParser.extractJsonObject(
                     AiResponseParser.sanitize(aiProvider.generateJson(
-                            new PromptComposition(system, user.toString(), "", "", "", "", user.toString())))));
+                            new PromptComposition(system, user.toString(), "", "", "", "", user.toString()),
+                            AiOperations.SKILL_EVIDENCE))));
 
             List<EvidenceGap> tailored = new ArrayList<>();
             for (EvidenceGap gap : batch) {
@@ -140,7 +142,8 @@ public class EvidenceElicitationService implements ElicitEvidenceUseCase {
 
             JsonNode root = objectMapper.readTree(AiResponseParser.extractJsonObject(
                     AiResponseParser.sanitize(aiProvider.generateJson(
-                            new PromptComposition(system, user, "", "", "", "", user)))));
+                            new PromptComposition(system, user, "", "", "", "", user),
+                            AiOperations.SKILL_EVIDENCE))));
 
             String situation = text(root, "situation");
             String action = text(root, "action");

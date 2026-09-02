@@ -125,7 +125,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     + "Never assume skills or experience the CV does not state.\n\n"
                     + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT,
                     prompt, "", "", "", "", prompt);
-            String response = sanitizeAiText(aiProvider.generateJson(composition));
+            String response = sanitizeAiText(aiProvider.generateJson(composition, AiOperations.CV_ANALYSIS));
             return CompletableFuture.completedFuture(analysisParser.parse(response));
         } catch (Exception e) {
             log.error("CV analysis failed: {}", e.getMessage(), e);
@@ -169,7 +169,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
             PromptComposition composition = new PromptComposition(
                     systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
-            String refined = sanitizeAiText(aiProvider.generate(composition));
+            String refined = sanitizeAiText(aiProvider.generate(composition, AiOperations.DOCUMENT_REFINE));
 
             // Same backstops as generation: an edit can introduce a fabrication just as easily.
             contentGuards.verify(request.userId(), refined, contactFreeJson, "REFINEMENT");
@@ -283,7 +283,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
         try {
             var node = objectMapper.readTree(AiResponseParser.extractJsonObject(
-                    sanitizeAiText(aiProvider.generateJson(composition))));
+                    sanitizeAiText(aiProvider.generateJson(composition, AiOperations.DOCUMENT_REVIEW))));
             String revised = node.path("revisedContent").asText(null);
             if (revised == null || revised.isBlank()) {
                 throw new IllegalStateException("Reviewer returned no revised content");
@@ -335,7 +335,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     companyFacts, lengthPreference);
 
             String json = AiResponseParser.extractJsonObject(
-                    sanitizeAiText(aiProvider.generateJson(composition)).trim());
+                    sanitizeAiText(aiProvider.generateJson(composition, AiOperations.DOCUMENT_GENERATION)).trim());
 
             ApplicationDocumentAiResponse aiResponse =
                     objectMapper.readValue(json, ApplicationDocumentAiResponse.class);

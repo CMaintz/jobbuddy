@@ -55,7 +55,7 @@ class InterviewPrepServiceTest {
     @Test
     void generating_questions_for_a_known_job_goes_through_the_prep_pack() {
         stubPrepPackJob();
-        when(aiProvider.generateJson(any())).thenReturn("""
+        when(aiProvider.generateJson(any(), any())).thenReturn("""
                 {"questions":[{"question":"Walk me through the Kafka migration.","category":"TECHNICAL"}],
                  "consistencyBrief":["You claimed a 40% latency drop."],
                  "questionsToAsk":["How is the team structured?"]}""");
@@ -75,7 +75,7 @@ class InterviewPrepServiceTest {
     @Test
     void the_requested_question_count_reaches_the_prep_pack_prompt() {
         stubPrepPackJob();
-        when(aiProvider.generateJson(any())).thenReturn("{\"questions\":[]}");
+        when(aiProvider.generateJson(any(), any())).thenReturn("{\"questions\":[]}");
 
         service.generateQuestions(jobId, userId, "ignored", 4);
 
@@ -87,7 +87,7 @@ class InterviewPrepServiceTest {
         // An unsolicited approach or a hand-pasted role: there is no posting to load and no
         // submitted documents to stay consistent with, so the prep pack has nothing to work from.
         when(jobRepo.findById(jobId)).thenReturn(Optional.empty());
-        when(aiProvider.generateJson(any())).thenReturn(
+        when(aiProvider.generateJson(any(), any())).thenReturn(
                 "[{\"question\":\"Why this field?\",\"category\":\"BEHAVIORAL\"}]");
         when(repo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -104,12 +104,12 @@ class InterviewPrepServiceTest {
         when(careerProfileContext.buildJson(userId)).thenReturn("{}");
         when(repo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of(
                 question("Walk me through the Kafka migration.")));
-        when(aiProvider.generate(any())).thenReturn("So, tell me about yourself.");
+        when(aiProvider.generate(any(), any())).thenReturn("So, tell me about yourself.");
 
         service.respond(userId, jobId, List.of(), false);
 
         ArgumentCaptor<PromptComposition> captor = ArgumentCaptor.forClass(PromptComposition.class);
-        verify(aiProvider).generate(captor.capture());
+        verify(aiProvider).generate(captor.capture(), any());
         assertThat(captor.getValue().resolvedFinalPrompt())
                 .contains("Walk me through the Kafka migration.")
                 .contains("question plan");
@@ -120,7 +120,7 @@ class InterviewPrepServiceTest {
         when(jobRepo.findById(jobId)).thenReturn(Optional.of(job()));
         when(careerProfileContext.buildJson(userId)).thenReturn("{}");
         when(repo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());
-        when(aiProvider.generate(any())).thenReturn("Tell me about yourself.");
+        when(aiProvider.generate(any(), any())).thenReturn("Tell me about yourself.");
 
         String reply = service.respond(userId, jobId,
                 List.of(new MockInterviewTurn("candidate", "Hi")), false);
@@ -142,7 +142,7 @@ class InterviewPrepServiceTest {
 
     private PromptComposition captureComposition() {
         ArgumentCaptor<PromptComposition> captor = ArgumentCaptor.forClass(PromptComposition.class);
-        verify(aiProvider).generateJson(captor.capture());
+        verify(aiProvider).generateJson(captor.capture(), any());
         return captor.getValue();
     }
 

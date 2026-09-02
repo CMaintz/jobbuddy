@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
@@ -137,7 +138,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         PromptComposition composition = new PromptComposition(
                 questionSystemPrompt(null), userPrompt, "", "", "", "", userPrompt);
 
-        String json = aiProvider.generateJson(composition);
+        String json = aiProvider.generateJson(composition, AiOperations.INTERVIEW_QUESTIONS);
         List<InterviewQuestion> generated = parseQuestions(json, jobId, userId);
         List<InterviewQuestion> saved = new ArrayList<>();
         int existingCount = repo.findByJobIdAndUserId(jobId, userId).size();
@@ -215,7 +216,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
         JsonNode root;
         try {
-            String cleaned = AiResponseParser.stripCodeFence(aiProvider.generateJson(composition).trim());
+            String cleaned = AiResponseParser.stripCodeFence(aiProvider.generateJson(composition, AiOperations.INTERVIEW_PREP_PACK).trim());
             root = objectMapper.readTree(cleaned);
         } catch (Exception e) {
             log.warn("Prep pack generation failed for job {}: {}", jobId, e.getMessage());
@@ -295,7 +296,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
-        return aiProvider.generate(composition).strip();
+        return aiProvider.generate(composition, AiOperations.MOCK_INTERVIEW).strip();
     }
 
     /**

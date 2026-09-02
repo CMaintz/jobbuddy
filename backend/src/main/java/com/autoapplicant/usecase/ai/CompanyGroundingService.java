@@ -87,7 +87,7 @@ public class CompanyGroundingService {
                 + "No preamble, no headings, just the bullets.";
         String user = "Company: " + companyName + "\n\nWebsite text:\n" + pageText;
         PromptComposition composition = new PromptComposition(system, user, "", "", "", "", user);
-        String out = ai.generate(composition);
+        String out = ai.generate(composition, AiOperations.COMPANY_GROUNDING);
         return out != null ? out.trim() : null;
     }
 }

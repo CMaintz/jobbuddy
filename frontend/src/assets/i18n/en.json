@@ -1418,7 +1418,8 @@
       "gen": "Generation defaults",
       "style": "Writing style",
       "account": "Account",
-      "privacy": "Privacy & data"
+      "privacy": "Privacy & data",
+      "usage": "AI usage"
     },
     "industry": {
       "softwareIt": "Software & IT",
@@ -1547,6 +1548,37 @@
       "resetFailed": "Could not send the reset email",
       "exportFailed": "Export failed",
       "deleteFailed": "Account deletion failed"
+    },
+    "usage": {
+      "intro": "What your generations have cost so far. There's no quota — this is here so you can see where the work goes.",
+      "loading": "Loading usage…",
+      "loadError": "Couldn't load usage.",
+      "empty": "Nothing generated yet.",
+      "today": "Today",
+      "allTime": "All time",
+      "requests": "generations",
+      "requestsShort": "gen.",
+      "tokens": "tokens",
+      "byOperation": "Where it went",
+      "unmetered": "Your generation provider bills a flat fee and reports no token counts, so only the number of generations is tracked.",
+      "op": {
+        "CV_ANALYSIS": "CV analysis",
+        "CV_PARSE": "CV import",
+        "LINKEDIN_PARSE": "LinkedIn import",
+        "DOCUMENT_GENERATION": "Applications & letters",
+        "DOCUMENT_REFINE": "Refinements",
+        "DOCUMENT_REVIEW": "Reviewer pass",
+        "TAILORED_CV": "Tailored CVs",
+        "TAILORED_CV_REVIEW": "Tailored CV review",
+        "INTERVIEW_QUESTIONS": "Interview questions",
+        "INTERVIEW_PREP_PACK": "Interview prep packs",
+        "MOCK_INTERVIEW": "Mock interviews",
+        "COMPANY_GROUNDING": "Company research",
+        "SKILL_GAP": "Skill gap reports",
+        "SKILL_EVIDENCE": "Skill evidence",
+        "WRITING_PROFILE": "Writing style analysis",
+        "GENERATION": "Other"
+      }
     }
   },
   "apply": {

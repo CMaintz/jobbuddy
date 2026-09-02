@@ -81,7 +81,7 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
                     prompt, "", "", "", "", prompt);
 
             JsonNode root = objectMapper.readTree(
-                    AiResponseParser.extractJsonObject(aiProvider.generateJson(composition)));
+                    AiResponseParser.extractJsonObject(aiProvider.generateJson(composition, AiOperations.SKILL_GAP)));
 
             List<SkillGapReport.SkillGap> gaps = new ArrayList<>();
             for (JsonNode g : root.path("gaps")) {

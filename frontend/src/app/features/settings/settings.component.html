@@ -316,6 +316,10 @@
             </div>
           }
 
+          @if (activeSection() === 'usage') {
+            <app-ai-usage-panel />
+          }
+
           @if (activeSection() === 'privacy') {
             <h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.privacy' | translate }}</h2>
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">

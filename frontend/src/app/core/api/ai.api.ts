@@ -114,6 +114,29 @@ export interface SkillGap {
   resources?: string[];
 }
 
+export interface AiUsageTotals {
+  tokensIn: number;
+  tokensOut: number;
+  requests: number;
+}
+
+export interface AiOperationUsage {
+  operation: string;
+  tokensIn: number;
+  tokensOut: number;
+  requests: number;
+}
+
+/**
+ * What generation has cost. A provider on a flat fee reports no tokens, so zero
+ * tokens against a non-zero request count means "not metered", not "nothing ran".
+ */
+export interface AiUsageSummary {
+  allTime: AiUsageTotals;
+  today: AiUsageTotals;
+  byOperation: AiOperationUsage[];
+}
+
 export interface SkillGapReport {
   gaps: SkillGap[];
   summary?: string;
@@ -123,6 +146,10 @@ export interface SkillGapReport {
 @Injectable({ providedIn: 'root' })
 export class AiApiService {
   private http = inject(HttpClient);
+
+  getUsage(): Observable<AiUsageSummary> {
+    return this.http.get<AiUsageSummary>('/api/v1/ai/usage');
+  }
 
   getCvRenderModel(templateId?: string): Observable<StructuredDocument> {
     const params: Record<string, string> = {};
