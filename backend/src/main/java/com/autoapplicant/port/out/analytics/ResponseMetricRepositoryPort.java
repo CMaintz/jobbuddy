@@ -9,5 +9,6 @@ public interface ResponseMetricRepositoryPort {
 
     ResponseMetric save(ResponseMetric metric);
 
-    List<ResponseMetric> findByApplicationId(UUID applicationId);
+    /** Scoped by user: an application id alone must not open another user's timeline. */
+    List<ResponseMetric> findByApplicationIdAndUserId(UUID applicationId, UUID userId);
 }

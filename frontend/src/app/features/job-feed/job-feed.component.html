@@ -145,6 +145,38 @@
                       </span>
                     }
                   </div>
+
+                  <!-- The same four controls as the detail pane, so a decision never
+                       costs a click into the role first. -->
+                  <div class="flex items-center gap-0.5 mt-2 -ml-1">
+                    <button type="button" class="jb-card-action"
+                            [class.on]="savedIds().has(job.id)"
+                            [title]="(savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate"
+                            [attr.aria-label]="(savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate"
+                            (click)="$event.stopPropagation(); saveJob(job)">
+                      <jb-icon name="bookmark" [size]="12" />
+                    </button>
+                    <button type="button" class="jb-card-action"
+                            [class.on]="steered().get(job.id) === 'MORE_LIKE_THIS'"
+                            [title]="'jobFeed.moreLikeThis' | translate"
+                            [attr.aria-label]="'jobFeed.moreLikeThis' | translate"
+                            (click)="$event.stopPropagation(); steerFeed(job, 'MORE_LIKE_THIS')">
+                      <jb-icon name="chart-up" [size]="12" />
+                    </button>
+                    <button type="button" class="jb-card-action"
+                            [class.on]="steered().get(job.id) === 'FEWER_LIKE_THIS'"
+                            [title]="'jobFeed.fewerLikeThis' | translate"
+                            [attr.aria-label]="'jobFeed.fewerLikeThis' | translate"
+                            (click)="$event.stopPropagation(); steerFeed(job, 'FEWER_LIKE_THIS')">
+                      <jb-icon name="arrow-down" [size]="12" />
+                    </button>
+                    <button type="button" class="jb-card-action"
+                            [title]="'jobFeed.notInterested' | translate"
+                            [attr.aria-label]="'jobFeed.notInterested' | translate"
+                            (click)="$event.stopPropagation(); hideJob(job)">
+                      <jb-icon name="x" [size]="12" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

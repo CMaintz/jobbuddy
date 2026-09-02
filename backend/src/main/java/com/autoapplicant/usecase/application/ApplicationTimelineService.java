@@ -18,7 +18,7 @@ public class ApplicationTimelineService implements GetApplicationTimelineUseCase
     }
 
     @Override
-    public List<ResponseMetric> getTimeline(UUID applicationId) {
-        return responseMetricRepo.findByApplicationId(applicationId);
+    public List<ResponseMetric> getTimeline(UUID applicationId, UUID userId) {
+        return responseMetricRepo.findByApplicationIdAndUserId(applicationId, userId);
     }
 }

@@ -157,7 +157,7 @@ public class ApplicationController {
     @Operation(summary = "Get application response timeline")
     @GetMapping("/{id}/timeline")
     public ResponseEntity<List<ResponseMetric>> getTimeline(@PathVariable UUID id) {
-        return ResponseEntity.ok(timeline.getTimeline(id));
+        return ResponseEntity.ok(timeline.getTimeline(id, secCtx.getCurrentUserId()));
     }
 
     private static ApplicationStatus parseStatus(String value, ApplicationStatus fallback) {

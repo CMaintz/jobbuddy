@@ -8,7 +8,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { StatusChipComponent, stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
-import { ApplicationsApiService } from '../../core/api/applications.api';
+import { ApplicationsApiService, ResponseMetric } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
 
@@ -24,6 +24,10 @@ export class ApplicationDetailComponent implements OnInit {
 
   app: Application | null = null;
   loading = true;
+
+  /** What the employer actually did, oldest first. Empty until they respond. */
+  timeline = signal<ResponseMetric[]>([]);
+  timelineLoading = signal(true);
 
   outcomeFeedback = '';
   outcomeLessons = '';
@@ -42,9 +46,25 @@ export class ApplicationDetailComponent implements OnInit {
       },
       error: () => this.loading = false
     });
+    this.api.timeline(id).subscribe({
+      next: (events) => { this.timeline.set(events); this.timelineLoading.set(false); },
+      error: () => this.timelineLoading.set(false)
+    });
   }
 
   stageLabel(status: ApplicationStatus): string { return stageLabelKey(status); }
+
+  /** Translation key for a response event; unknown types fall back to their raw name. */
+  eventLabel(eventType: string): string {
+    return 'applicationDetail.timeline.event.' + eventType;
+  }
+
+  /** A rejection reads red; everything else is the employer moving forward. */
+  eventTone(eventType: string): string {
+    if (eventType === 'REJECTED') return 'var(--jb-danger)';
+    if (eventType === 'OFFER_RECEIVED') return 'var(--jb-success)';
+    return 'var(--jb-accent-2)';
+  }
 
   /** Outcome capture makes sense once the application has actually gone out. */
   showOutcome(): boolean {

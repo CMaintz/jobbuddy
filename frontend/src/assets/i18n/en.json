@@ -836,7 +836,18 @@
     "details": "Details",
     "status": "Status",
     "created": "Created",
-    "notFound": "Application not found."
+    "notFound": "Application not found.",
+    "timeline": {
+      "heading": "Employer response",
+      "event": {
+        "RECRUITER_CONTACT": "Recruiter got in touch",
+        "INTERVIEW_SCHEDULED": "Interview scheduled",
+        "TECHNICAL_TEST": "Technical test",
+        "FINAL_ROUND": "Final round",
+        "OFFER_RECEIVED": "Offer received",
+        "REJECTED": "Rejected"
+      }
+    }
   },
   "jobDetails": {
     "loadingCrumb": "Loading",
@@ -976,7 +987,11 @@
     "vsLastWeek": "{{delta}} vs last week",
     "weekSummary": "{{thisWeek}} applications this week · {{lastWeek}} last week",
     "heatmapTitle": "Application activity — last {{count}} weeks",
-    "topCompanies": "Most applied-to companies"
+    "topCompanies": "Most applied-to companies",
+    "velocityTitle": "Stage velocity",
+    "velocitySubtitle": "Average time between two stages, across every application that made the move.",
+    "velocityDays": "{{days}} days",
+    "velocityTimes": "{{count}}×"
   },
   "prompts": {
     "newPrompt": "New prompt",
@@ -1753,5 +1768,14 @@
       "track": "Track",
       "library": "Library"
     }
+  },
+  "match": {
+    "grade": {
+      "excellent": "Excellent",
+      "strong": "Strong",
+      "moderate": "Moderate",
+      "weak": "Weak"
+    },
+    "scoreTooltip": "{{score}}% match"
   }
 }

@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 export type MatchLabel = 'EXCELLENT' | 'STRONG' | 'MODERATE' | 'WEAK';
 
@@ -20,19 +21,30 @@ export function matchColor(label: MatchLabel | undefined): { fg: string; bg: str
   }
 }
 
-/** The score ring shown next to a role in any list of matched jobs. */
+export function matchLabelKey(label: MatchLabel | undefined): string {
+  return 'match.grade.' + (label ?? 'WEAK').toLowerCase();
+}
+
+/**
+ * How well a role fits, shown as the grade rather than a bare number — a grade is
+ * what a glance down a list can actually use. The score itself is a hover away for
+ * when the ranking is what you're questioning.
+ */
 @Component({
   selector: 'app-match-badge',
   standalone: true,
+  imports: [TranslateModule],
   templateUrl: './match-badge.component.html'
 })
 export class MatchBadgeComponent {
   @Input() score = 0;
   @Input() label: MatchLabel | undefined;
-  /** Ring diameter in px. */
-  @Input() size = 28;
 
   get color() {
     return matchColor(this.label);
+  }
+
+  get labelKey(): string {
+    return matchLabelKey(this.label);
   }
 }
