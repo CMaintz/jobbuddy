@@ -1378,7 +1378,6 @@
     "savedBtn": "Saved",
     "details": "Details",
     "generateApplication": "Generate application",
-    "hide": "Hide",
     "selectRole": "Select a role from the feed",
     "location": {
       "all": "All",
@@ -1397,8 +1396,15 @@
       "saved": "Saved to your roles",
       "saveFailed": "Could not save the role",
       "hidden": "Hidden from your feed",
-      "hideFailed": "Could not hide the role"
-    }
+      "hideFailed": "Could not hide the role",
+      "moreLikeThis": "Noted — more roles like this one",
+      "fewerLikeThis": "Noted — fewer roles like this one",
+      "steerFailed": "Could not record that — try again"
+    },
+    "notInterested": "Not interested",
+    "moreOfThis": "Tune my feed",
+    "moreLikeThis": "More like this",
+    "fewerLikeThis": "Fewer like this"
   },
   "settings": {
     "loading": "Loading settings…",

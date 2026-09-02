@@ -52,6 +52,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   searchMode = signal(false);
   feedRows = signal<FeedRow[]>([]);
   selectedJob = signal<FeedRow | null>(null);
+  /** Which way each job has been steered, so the control can show the current state. */
+  steered = signal<Map<string, 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS'>>(new Map());
   mobilePanel = signal<'list' | 'detail'>('list');
   savedIds = signal<Set<string>>(new Set());
 
@@ -270,6 +272,24 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         this.toast.set(this.translate.instant('jobFeed.toast.saved'));
       },
       error: () => this.toast.set(this.translate.instant('jobFeed.toast.saveFailed'))
+    });
+  }
+
+  /**
+   * Steering: a statement about the kind of role, not this one.
+   *
+   * The job stays in the feed — you are shaping what comes next, not dismissing what is in front
+   * of you. Dismissing is what "Not interested" is for.
+   */
+  steerFeed(row: FeedRow, type: 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS'): void {
+    this.steered.update(m => new Map(m).set(row.id, type));
+    this.jobsApi.submitFeedback(row.id, type).subscribe({
+      next: () => this.toast.set(this.translate.instant(
+        type === 'MORE_LIKE_THIS' ? 'jobFeed.toast.moreLikeThis' : 'jobFeed.toast.fewerLikeThis')),
+      error: () => {
+        this.steered.update(m => { const next = new Map(m); next.delete(row.id); return next; });
+        this.toast.set(this.translate.instant('jobFeed.toast.steerFailed'));
+      }
     });
   }
 

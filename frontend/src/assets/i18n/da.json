@@ -1378,7 +1378,6 @@
     "savedBtn": "Gemt",
     "details": "Detaljer",
     "generateApplication": "Generér ansøgning",
-    "hide": "Skjul",
     "selectRole": "Vælg en stilling fra feedet",
     "location": {
       "all": "Alle",
@@ -1397,8 +1396,15 @@
       "saved": "Gemt til dine stillinger",
       "saveFailed": "Kunne ikke gemme stillingen",
       "hidden": "Skjult fra dit feed",
-      "hideFailed": "Kunne ikke skjule stillingen"
-    }
+      "hideFailed": "Kunne ikke skjule stillingen",
+      "moreLikeThis": "Noteret — flere roller som denne",
+      "fewerLikeThis": "Noteret — færre roller som denne",
+      "steerFailed": "Kunne ikke gemme — prøv igen"
+    },
+    "notInterested": "Ikke relevant",
+    "moreOfThis": "Justér mit feed",
+    "moreLikeThis": "Flere som denne",
+    "fewerLikeThis": "Færre som denne"
   },
   "settings": {
     "loading": "Indlæser indstillinger…",
