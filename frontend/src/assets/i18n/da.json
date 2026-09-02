@@ -1097,9 +1097,6 @@
     "reminderPrefix": "Samtale —",
     "theRole": "stillingen",
     "followUpFallback": "Følg op",
-    "stage": {
-      "finalRound": "Sidste runde"
-    },
     "logStage": {
       "screen": "Screening / rekrutteringsopkald",
       "interview": "Samtale",

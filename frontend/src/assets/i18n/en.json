@@ -1097,9 +1097,6 @@
     "reminderPrefix": "Interview —",
     "theRole": "the role",
     "followUpFallback": "Follow up",
-    "stage": {
-      "finalRound": "Final round"
-    },
     "logStage": {
       "screen": "Screen / recruiter call",
       "interview": "Interview",
