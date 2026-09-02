@@ -16,13 +16,16 @@ export interface CreateApplicationPayload {
   notes?: string;
 }
 
-/** One thing the employer did — a screen, an interview, an offer, a rejection. */
-export interface ResponseMetric {
-  id: string;
-  jobId: string | null;
-  applicationId: string;
-  eventType: string;
-  eventAt: string;
+/**
+ * One step in an application's progress — the user's own moves as well as the
+ * employer's replies. `fromStatus` is null for the first step, the application
+ * being created.
+ */
+export interface ApplicationTimelineEntry {
+  at: string;
+  fromStatus: ApplicationStatus | null;
+  toStatus: ApplicationStatus;
+  employerResponse: boolean;
   notes: string | null;
 }
 
@@ -31,9 +34,9 @@ export class ApplicationsApiService {
   private http = inject(HttpClient);
   private base = '/api/v1/applications';
 
-  /** What the employer did and when, oldest first. Empty until they respond. */
-  timeline(applicationId: string): Observable<ResponseMetric[]> {
-    return this.http.get<ResponseMetric[]>(`${this.base}/${applicationId}/timeline`);
+  /** Every step this application has taken, oldest first. */
+  timeline(applicationId: string): Observable<ApplicationTimelineEntry[]> {
+    return this.http.get<ApplicationTimelineEntry[]>(`${this.base}/${applicationId}/timeline`);
   }
 
   getAll(): Observable<Application[]> {

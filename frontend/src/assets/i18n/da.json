@@ -838,15 +838,7 @@
     "created": "Oprettet",
     "notFound": "Ansøgning ikke fundet.",
     "timeline": {
-      "heading": "Svar fra arbejdsgiver",
-      "event": {
-        "RECRUITER_CONTACT": "Rekrutteringskonsulent tog kontakt",
-        "INTERVIEW_SCHEDULED": "Samtale aftalt",
-        "TECHNICAL_TEST": "Teknisk prøve",
-        "FINAL_ROUND": "Sidste runde",
-        "OFFER_RECEIVED": "Tilbud modtaget",
-        "REJECTED": "Afvist"
-      }
+      "heading": "Forløb"
     }
   },
   "jobDetails": {

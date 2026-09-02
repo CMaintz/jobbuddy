@@ -838,15 +838,7 @@
     "created": "Created",
     "notFound": "Application not found.",
     "timeline": {
-      "heading": "Employer response",
-      "event": {
-        "RECRUITER_CONTACT": "Recruiter got in touch",
-        "INTERVIEW_SCHEDULED": "Interview scheduled",
-        "TECHNICAL_TEST": "Technical test",
-        "FINAL_ROUND": "Final round",
-        "OFFER_RECEIVED": "Offer received",
-        "REJECTED": "Rejected"
-      }
+      "heading": "Progress"
     }
   },
   "jobDetails": {

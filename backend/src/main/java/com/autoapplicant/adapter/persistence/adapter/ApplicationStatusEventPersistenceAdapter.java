@@ -35,6 +35,12 @@ public class ApplicationStatusEventPersistenceAdapter implements ApplicationStat
         return repo.findByUserIdOrderByOccurredAtAsc(userId).stream().map(this::toDomain).toList();
     }
 
+    @Override
+    public List<ApplicationStatusEvent> findByApplicationIdAndUserId(UUID applicationId, UUID userId) {
+        return repo.findByApplicationIdAndUserIdOrderByOccurredAtAsc(applicationId, userId)
+                .stream().map(this::toDomain).toList();
+    }
+
     private ApplicationStatusEvent toDomain(ApplicationStatusEventEntity e) {
         return new ApplicationStatusEvent(e.getId(), e.getApplicationId(), e.getUserId(),
                 parse(e.getFromStatus()), parse(e.getToStatus()), e.getOccurredAt());
