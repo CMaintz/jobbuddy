@@ -51,9 +51,14 @@
               <button (click)="feedback.emit({ jobId: job.id, type: 'DISLIKE' })"
                       title="Not relevant"
                       class="text-xs text-gray-400 hover:text-red-500">👎</button>
-              <button (click)="feedback.emit({ jobId: job.id, type: 'HIDE' })"
-                      title="Hide this job"
-                      class="text-xs text-gray-400 hover:text-gray-600">✕</button>
+              <!-- Steering: about the kind of job, not this one. Sent as separate signals so the
+                   matcher can raise or lower the postings near it. -->
+              <button (click)="feedback.emit({ jobId: job.id, type: 'MORE_LIKE_THIS' })"
+                      title="Show me more jobs like this one"
+                      class="text-xs text-gray-400 hover:text-green-600">More like this</button>
+              <button (click)="feedback.emit({ jobId: job.id, type: 'FEWER_LIKE_THIS' })"
+                      title="Show me fewer jobs like this one"
+                      class="text-xs text-gray-400 hover:text-red-500">Fewer</button>
             </div>
           }
         </div>

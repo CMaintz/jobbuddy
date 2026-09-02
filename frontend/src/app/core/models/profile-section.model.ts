@@ -68,7 +68,14 @@ export interface SpokenLanguage {
   displayOrder: number;
 }
 
-export type FeedbackType = 'LIKE' | 'DISLIKE' | 'HIDE' | 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS';
+/**
+ * Two axes. LIKE and DISLIKE judge this posting and move only its own score; MORE_LIKE_THIS and
+ * FEWER_LIKE_THIS ask about the kind of posting and steer the ones near it.
+ *
+ * There is no HIDE — ignoring a job already removes it from the feed, records a reason, and can be
+ * undone from a list you can see.
+ */
+export type FeedbackType = 'LIKE' | 'DISLIKE' | 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS';
 
 export interface RecommendationFeedback {
   id?: string;

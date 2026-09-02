@@ -1,6 +1,9 @@
 package com.autoapplicant.usecase.matching;
 
+import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.matching.FeedbackType;
+import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.user.Profile;
@@ -317,6 +320,124 @@ class MatchingServiceTest {
         verify(ignoredJobRepo, never()).save(any());
     }
 
+    // ── item feedback vs steering ─────────────────────────────────────────────
+    //
+    // These are two different statements. A like is a verdict on one posting. "More like this" is
+    // a request about a kind of posting, and is worth nothing unless it reaches postings the user
+    // has not seen — which is exactly what was missing when all four values scored identically.
+
+    @Test
+    void more_like_this_raises_jobs_near_the_one_you_pointed_at() {
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID steered = UUID.randomUUID();
+        UUID neighbour = UUID.randomUUID();
+        UUID unrelated = UUID.randomUUID();
+
+        when(feedbackRepo.findByUserId(userId)).thenReturn(List.of(
+                feedback(steered, FeedbackType.MORE_LIKE_THIS)));
+        when(embeddingRepo.findByJobId(steered)).thenReturn(Optional.of(
+                new JobEmbedding(UUID.randomUUID(), steered, new float[]{0.9f}, null, null)));
+        stubFeed(p, List.of(minimalJob(neighbour), minimalJob(unrelated)));
+        // Narrower than stubFeed's matcher and declared after it, so it serves the steer lookup
+        // while the main retrieval (limit * 5) still gets the feed.
+        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(25)))
+                .thenReturn(List.of(steered, neighbour));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(scoreOf(results, neighbour)).isGreaterThan(scoreOf(results, unrelated));
+        assertThat(reasonsFor(results, neighbour))
+                .anyMatch(r -> r.contains("asked for more of"));
+    }
+
+    @Test
+    void fewer_like_this_lowers_jobs_near_the_one_you_pointed_at() {
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID steered = UUID.randomUUID();
+        UUID neighbour = UUID.randomUUID();
+        UUID unrelated = UUID.randomUUID();
+
+        when(feedbackRepo.findByUserId(userId)).thenReturn(List.of(
+                feedback(steered, FeedbackType.FEWER_LIKE_THIS)));
+        when(embeddingRepo.findByJobId(steered)).thenReturn(Optional.of(
+                new JobEmbedding(UUID.randomUUID(), steered, new float[]{0.9f}, null, null)));
+        stubFeed(p, List.of(minimalJob(neighbour), minimalJob(unrelated)));
+        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(25)))
+                .thenReturn(List.of(steered, neighbour));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(scoreOf(results, neighbour)).isLessThan(scoreOf(results, unrelated));
+    }
+
+    @Test
+    void a_plain_like_stays_a_verdict_on_that_one_posting() {
+        // The distinction the enum has always claimed and never had: LIKE must not steer.
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID liked = UUID.randomUUID();
+        UUID other = UUID.randomUUID();
+
+        when(feedbackRepo.findByUserId(userId)).thenReturn(List.of(feedback(liked, FeedbackType.LIKE)));
+        stubFeed(p, List.of(minimalJob(liked), minimalJob(other)));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(scoreOf(results, liked)).isGreaterThan(scoreOf(results, other));
+        verify(embeddingRepo, never()).findByJobId(any());
+    }
+
+    @Test
+    void what_you_said_about_a_job_outranks_what_was_inferred_from_its_neighbour() {
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID steered = UUID.randomUUID();
+        UUID judged = UUID.randomUUID();
+
+        // "More of these" pulls in `judged` as a neighbour, but the user disliked `judged` outright.
+        when(feedbackRepo.findByUserId(userId)).thenReturn(List.of(
+                feedback(steered, FeedbackType.MORE_LIKE_THIS),
+                feedback(judged, FeedbackType.DISLIKE)));
+        when(embeddingRepo.findByJobId(steered)).thenReturn(Optional.of(
+                new JobEmbedding(UUID.randomUUID(), steered, new float[]{0.9f}, null, null)));
+
+        UUID plain = UUID.randomUUID();
+        stubFeed(p, List.of(minimalJob(judged), minimalJob(plain)));
+        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(25))).thenReturn(List.of(judged));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(scoreOf(results, judged)).isLessThan(scoreOf(results, plain));
+    }
+
+    @Test
+    void steering_costs_nothing_when_the_user_has_never_steered() {
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        when(feedbackRepo.findByUserId(userId)).thenReturn(List.of());
+        stubFeed(p, List.of(minimalJob(UUID.randomUUID())));
+
+        service.getRecommendations(userId, 10);
+
+        verify(embeddingRepo, never()).findByJobId(any());
+    }
+
+    @Test
+    void only_the_most_recent_steer_signals_are_honoured() {
+        // Each signal costs a nearest-neighbour query per request; fifty steers must not mean
+        // fifty queries.
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        List<RecommendationFeedback> many = new java.util.ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            many.add(new RecommendationFeedback(UUID.randomUUID(), userId, UUID.randomUUID(),
+                    FeedbackType.MORE_LIKE_THIS, java.time.Instant.now().minusSeconds(i)));
+        }
+        when(feedbackRepo.findByUserId(userId)).thenReturn(many);
+        when(embeddingRepo.findByJobId(any())).thenReturn(Optional.empty());
+        stubFeed(p, List.of(minimalJob(UUID.randomUUID())));
+
+        service.getRecommendations(userId, 10);
+
+        verify(embeddingRepo, times(5)).findByJobId(any());
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     /**
@@ -377,5 +498,14 @@ class MatchingServiceTest {
         return new UserPreferences(UUID.randomUUID(), userId, List.of(), List.of("K\u00f8benhavn"),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
                 null, null, km, false, null, null, null, null);
+    }
+
+    private RecommendationFeedback feedback(UUID jobId, FeedbackType type) {
+        return new RecommendationFeedback(UUID.randomUUID(), userId, jobId, type,
+                java.time.Instant.now());
+    }
+
+    private static List<String> reasonsFor(List<MatchResult> results, UUID jobId) {
+        return results.stream().filter(r -> r.jobId().equals(jobId)).findFirst().orElseThrow().matchReasons();
     }
 }
