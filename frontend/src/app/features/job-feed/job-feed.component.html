@@ -21,9 +21,38 @@
     <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     <!-- 3-column layout -->
-    <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[200px_1fr_380px]">
-      <!-- Left: Filters -->
-      <aside class="hidden lg:flex border-r border-jb-border p-[14px_12px] overflow-y-auto flex-col gap-4 jb-scroll">
+    <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[360px_1fr]">
+      <!-- Left: filters over the list -->
+      <div class="flex flex-col min-h-0 border-r border-jb-border md:!flex"
+           [class.hidden]="mobilePanel() === 'detail'">
+
+      <!-- Filter bar: collapsed to a toggle so the list and the posting get the width -->
+      <div class="shrink-0 border-b border-jb-border">
+        <div class="flex items-center gap-2 p-[10px_12px]">
+          <button type="button" (click)="filtersOpen.set(!filtersOpen())"
+            class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs cursor-pointer"
+            [attr.aria-expanded]="filtersOpen()"
+            [style.background]="activeFilterCount() ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+            [style.border-color]="activeFilterCount() ? 'var(--jb-accent-border)' : 'var(--jb-border)'"
+            [style.color]="activeFilterCount() ? 'var(--jb-accent-2)' : 'var(--jb-text-mid)'">
+            <jb-icon name="filter" [size]="11" />
+            {{ 'jobFeed.filters' | translate }}
+            @if (activeFilterCount()) { <span class="num">({{ activeFilterCount() }})</span> }
+            <jb-icon [name]="filtersOpen() ? 'chev-down' : 'chev-right'" [size]="10" />
+          </button>
+          @if (activeFilterCount()) {
+            <button type="button" (click)="resetFilters()"
+              class="text-xs text-jb-text-dim hover:text-jb-text bg-transparent border-none cursor-pointer">
+              {{ 'jobFeed.clearFilters' | translate }}
+            </button>
+          }
+          <span class="ml-auto text-2xs text-jb-text-dim whitespace-nowrap">
+            {{ sortLabel() | translate }}
+          </span>
+        </div>
+
+        @if (filtersOpen()) {
+      <aside class="flex p-[4px_12px_14px] max-h-[46vh] overflow-y-auto flex-col gap-4 jb-scroll">
         <!-- Sort -->
         <div>
           <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.sortBy' | translate }}</div>
@@ -111,15 +140,16 @@
           </div>
         }
       </aside>
+        }
+      </div>
 
-      <!-- Middle: Feed list -->
-      <div class="overflow-y-auto border-r border-jb-border jb-scroll md:!block"
-           [class.hidden]="mobilePanel() === 'detail'">
+      <!-- Feed list -->
+      <div class="overflow-y-auto jb-scroll flex-1 min-h-0">
         @if (loading()) {
           <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'jobFeed.loadingRoles' | translate }}</div>
         } @else {
           @for (job of filteredJobs(); track job.id) {
-            <div (click)="selectedJob.set(job); mobilePanel.set('detail')"
+            <div (click)="selectJob(job)"
               class="jb-row p-[14px_16px] cursor-pointer border-b border-jb-border-faint"
               [style.background]="selectedJob()?.id === job.id ? 'var(--jb-surface-2)' : 'transparent'">
               <div class="flex items-start gap-2.5">
@@ -192,8 +222,9 @@
           }
         }
       </div>
+      </div>
 
-      <!-- Right: Detail panel -->
+      <!-- Right: the posting, and the case for it -->
       <div class="overflow-y-auto p-5 jb-scroll md:!block"
            [class.hidden]="mobilePanel() !== 'detail'">
         <!-- Mobile back button -->
@@ -252,6 +283,21 @@
                   <span class="pill pill-neutral">{{ kw }}</span>
                 }
               </div>
+            </div>
+          }
+
+          <!-- The posting itself. Already in the feed payload, so "view more" costs no request. -->
+          @if (job.description) {
+            <div class="card p-3.5 mb-3">
+              <div class="text-xs font-medium mb-2">{{ 'jobFeed.description' | translate }}</div>
+              <div class="text-base leading-[1.7] text-jb-text-mid whitespace-pre-line max-w-[68ch]">{{ descriptionText(job) }}</div>
+              @if (descriptionIsTruncated(job)) {
+                <button type="button" (click)="descriptionExpanded.set(!descriptionExpanded())"
+                  class="mt-2 inline-flex items-center gap-1 text-sm text-jb-accent-2 bg-transparent border-none p-0 cursor-pointer">
+                  {{ (descriptionExpanded() ? 'jobFeed.viewLess' : 'jobFeed.viewMore') | translate }}
+                  <jb-icon [name]="descriptionExpanded() ? 'arrow-up' : 'arrow-down'" [size]="10" />
+                </button>
+              }
             </div>
           }
 

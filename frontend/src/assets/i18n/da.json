@@ -1414,7 +1414,12 @@
     "notInterested": "Ikke relevant",
     "moreOfThis": "Justér mit feed",
     "moreLikeThis": "Flere som denne",
-    "fewerLikeThis": "Færre som denne"
+    "fewerLikeThis": "Færre som denne",
+    "filters": "Filtre",
+    "clearFilters": "Ryd",
+    "description": "Opslaget",
+    "viewMore": "Vis mere",
+    "viewLess": "Vis mindre"
   },
   "settings": {
     "loading": "Indlæser indstillinger…",

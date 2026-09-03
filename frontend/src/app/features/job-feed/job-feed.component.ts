@@ -37,7 +37,12 @@ interface FeedRow {
   remote: boolean;
   seniority?: string;
   category?: string;
+  /** The posting itself. Already in the payload, so reading it costs no extra request. */
+  description?: string;
 }
+
+/** How much of a posting the detail pane shows before "view more". */
+const DESCRIPTION_PREVIEW_CHARS = 900;
 
 @Component({
   selector: 'app-job-feed',
@@ -56,6 +61,10 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   toast = signal('');
   /** true while showing Typesense search results instead of recommendations */
   searchMode = signal(false);
+  /** The filter set is collapsed by default so the list gets the width. */
+  filtersOpen = signal(false);
+  /** "View more" is per-selection: picking another role starts collapsed again. */
+  descriptionExpanded = signal(false);
   feedRows = signal<FeedRow[]>([]);
   selectedJob = signal<FeedRow | null>(null);
   /** Which way each job has been steered, so the control can show the current state. */
@@ -200,6 +209,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       remote: job.remoteType === 'REMOTE',
       seniority: job.seniority ?? undefined,
       category: job.jobCategory ?? undefined,
+      description: job.descriptionClean ?? undefined,
     };
   }
 
@@ -269,6 +279,53 @@ export class JobFeedComponent implements OnInit, OnDestroy {
 
   categoryLabel(cat: string): string {
     return cat.replace(/_/g, ' ').toLowerCase();
+  }
+
+  /** Selecting a role collapses any expanded description from the previous one. */
+  selectJob(row: FeedRow): void {
+    this.selectedJob.set(row);
+    this.descriptionExpanded.set(false);
+    this.mobilePanel.set('detail');
+  }
+
+  /** The visible slice of the posting, honouring "view more". */
+  descriptionText(row: FeedRow): string {
+    const full = row.description ?? '';
+    if (this.descriptionExpanded() || full.length <= DESCRIPTION_PREVIEW_CHARS) return full;
+    // Cut at the last line break inside the budget so a paragraph is not sliced mid-word.
+    const slice = full.slice(0, DESCRIPTION_PREVIEW_CHARS);
+    const lastBreak = slice.lastIndexOf('\n');
+    return (lastBreak > DESCRIPTION_PREVIEW_CHARS / 2 ? slice.slice(0, lastBreak) : slice).trimEnd() + '…';
+  }
+
+  descriptionIsTruncated(row: FeedRow): boolean {
+    return (row.description?.length ?? 0) > DESCRIPTION_PREVIEW_CHARS;
+  }
+
+  /** How many filters are narrowing the list right now — shown on the collapsed toggle. */
+  activeFilterCount(): number {
+    let n = 0;
+    if (!this.searchMode() && this.minMatch > 50) n++;
+    if (this.locationFilter !== 'all') n++;
+    if (this.hideExpired) n++;
+    if (this.seniorityFilters.length > 1 && this.activeSeniorities.size < this.seniorityFilters.length) n++;
+    if (this.categoryFilters.length > 1 && this.activeCategories.size < this.categoryFilters.length) n++;
+    if (this.sourceFilters.length > 1 && this.activeSources.size < this.sourceFilters.length) n++;
+    return n;
+  }
+
+  /** The current sort, shown on the filter bar so it stays visible while collapsed. */
+  sortLabel(): string {
+    return this.sortOptions.find(o => o.value === this.sortBy)?.label ?? 'jobFeed.sort.match';
+  }
+
+  resetFilters(): void {
+    this.minMatch = 50;
+    this.locationFilter = 'all';
+    this.hideExpired = false;
+    this.activeSeniorities = new Set(this.seniorityFilters);
+    this.activeCategories = new Set(this.categoryFilters);
+    this.activeSources = new Set(this.sourceFilters);
   }
 
   saveJob(row: FeedRow): void {
