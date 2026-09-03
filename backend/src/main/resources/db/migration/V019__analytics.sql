@@ -18,22 +18,6 @@ CREATE TABLE application_metrics (
     CONSTRAINT application_metrics_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE response_metrics (
-    id uuid DEFAULT uuid_generate_v4() NOT NULL,
-    user_id uuid NOT NULL,
-    job_id uuid,
-    application_id uuid,
-    event_type character varying(100) NOT NULL,
-    event_at timestamp with time zone DEFAULT now() NOT NULL,
-    -- What the candidate wrote about this transition: the rejection reason, what the recruiter
-    -- said. On a rejection timeline it is the only part worth reading twice.
-    notes text,
-    CONSTRAINT response_metrics_pkey PRIMARY KEY (id),
-    CONSTRAINT response_metrics_application_id_fkey FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE SET NULL,
-    CONSTRAINT response_metrics_job_id_fkey FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE SET NULL,
-    CONSTRAINT response_metrics_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 CREATE TABLE ai_usage_log (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,

@@ -28,6 +28,9 @@ public class ApplicationStatusEventEntity {
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
 
+    @Column(name = "notes", columnDefinition = "text")
+    private String notes;
+
     @PrePersist void prePersist() {
         if (occurredAt == null) occurredAt = Instant.now();
     }
@@ -44,4 +47,6 @@ public class ApplicationStatusEventEntity {
     public void setToStatus(String toStatus) { this.toStatus = toStatus; }
     public Instant getOccurredAt() { return occurredAt; }
     public void setOccurredAt(Instant occurredAt) { this.occurredAt = occurredAt; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }
