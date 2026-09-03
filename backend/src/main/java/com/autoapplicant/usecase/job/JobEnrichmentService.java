@@ -3,6 +3,7 @@ package com.autoapplicant.usecase.job;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobContact;
+import com.autoapplicant.domain.job.JobText;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -81,12 +82,13 @@ public class JobEnrichmentService implements EnrichJobUseCase {
 
     private String buildEnrichmentPrompt(Job job) {
         return """
-                You are given the text content of a job posting page. The content may include page chrome \
-                (company boilerplate, cookie notices, navigation links) mixed in with the actual job description.
+                You are given the text of a job posting page, one numbered line per line. The content \
+                may include page chrome (company boilerplate, cookie notices, navigation links) mixed in \
+                with the actual job description.
 
                 Return JSON with exactly these fields:
                 {
-                  "descriptionClean": "full job description extracted from the content — keep all requirements, responsibilities, qualifications, and contact details; remove navigation, cookie banners, company branding boilerplate, and legal footer text",
+                  "boilerplateLines": [[12, 18], [40, 40]],
                   "shortDescription": "1-2 sentence teaser capturing the role and its key appeal, for use in job card previews",
                   "aiSummary": "2-3 sentence human-friendly summary",
                   "aiTags": ["tag1", "tag2", "tag3"],
@@ -107,7 +109,13 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 }
 
                 Rules:
-                - descriptionClean: extract the actual job posting content; preserve contact names, email addresses, phone numbers, and application instructions
+                - boilerplateLines: line ranges [start, end] (1-based, inclusive, as numbered in the \
+                content below) holding text that is NOT part of this job posting — cookie notices, \
+                navigation, legal footers, generic company branding blurb, and other vacancies listed \
+                on the same page. Do NOT rewrite or return the posting text; only point at what to cut. \
+                Never mark requirements, responsibilities, qualifications, contact names, email \
+                addresses, phone numbers, or application instructions. Return [] when nothing is \
+                boilerplate — an empty list is a better answer than a guess.
                 - shortDescription: ignore any navigation text, cookie banners, or other page chrome
                 - technologies: specific tools, languages, frameworks, libraries, platforms, cloud services
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
@@ -131,7 +139,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 """.formatted(
                 job.title(),
                 job.companyName() != null ? job.companyName() : "Unknown",
-                job.descriptionClean() != null ? job.descriptionClean().substring(0, Math.min(5000, job.descriptionClean().length())) : ""
+                JobText.numbered(JobText.truncate(job.descriptionClean()))
         );
     }
 
@@ -143,10 +151,9 @@ public class JobEnrichmentService implements EnrichJobUseCase {
             String cleaned = sanitizeJsonResponse(jsonResponse);
             Map<String, Object> parsed = objectMapper.readValue(cleaned, new TypeReference<>() {});
 
-            // AI-extracted clean description (replaces the raw page-text version from TextCleaningService)
-            String aiDescClean = (String) parsed.get("descriptionClean");
-            String descriptionClean = (aiDescClean != null && !aiDescClean.isBlank())
-                    ? aiDescClean : job.descriptionClean();
+            // The model points at boilerplate; the cut happens here, so the stored description
+            // stays the posting's own words rather than the model's rendering of them.
+            String descriptionClean = JobText.stripLines(job.descriptionClean(), lineRanges(parsed));
 
             String shortDescription = job.shortDescription() != null ? job.shortDescription()
                     : (String) parsed.get("shortDescription");
@@ -336,5 +343,22 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     private List<String> getList(Map<String, Object> parsed, String key) {
         Object val = parsed.get(key);
         return val instanceof List<?> list ? (List<String>) list : List.of();
+    }
+
+    /**
+     * Reads the {@code boilerplateLines} ranges. Anything malformed is skipped rather
+     * than failing the enrichment: a bad range should cost us a surviving cookie
+     * banner, not every field the model got right.
+     */
+    private List<int[]> lineRanges(Map<String, Object> parsed) {
+        if (!(parsed.get("boilerplateLines") instanceof List<?> raw)) return List.of();
+        List<int[]> ranges = new java.util.ArrayList<>();
+        for (Object entry : raw) {
+            if (!(entry instanceof List<?> pair) || pair.size() < 2) continue;
+            if (pair.get(0) instanceof Number from && pair.get(1) instanceof Number to) {
+                ranges.add(new int[]{from.intValue(), to.intValue()});
+            }
+        }
+        return ranges;
     }
 }
