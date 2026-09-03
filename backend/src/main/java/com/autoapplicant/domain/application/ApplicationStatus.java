@@ -15,6 +15,18 @@ public enum ApplicationStatus {
     REJECTED,
     ARCHIVED;
 
+    /**
+     * True when reaching this status means the employer did something, rather than the
+     * candidate. Drives how a step reads on the progress timeline: their replies are the
+     * news, the candidate's own moves are context.
+     */
+    public boolean isEmployerDriven() {
+        return switch (this) {
+            case RECRUITER_CONTACT, INTERVIEW, TECHNICAL_TEST, FINAL_ROUND, OFFER, REJECTED -> true;
+            case SAVED, PREPARING, APPLIED, ARCHIVED -> false;
+        };
+    }
+
     public boolean canTransitionTo(ApplicationStatus next) {
         return switch (this) {
             case SAVED -> Set.of(PREPARING, ARCHIVED).contains(next);

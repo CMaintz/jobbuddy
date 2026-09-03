@@ -40,6 +40,10 @@ CREATE TABLE application_status_event (
     from_status character varying(40),
     to_status character varying(40) NOT NULL,
     occurred_at timestamp with time zone DEFAULT now() NOT NULL,
+    -- What the candidate wrote about this move: the rejection reason, what the recruiter
+    -- said, why they sat on it for a week. On a rejection it is the only part worth
+    -- reading twice.
+    notes text,
     CONSTRAINT application_status_event_pkey PRIMARY KEY (id),
     CONSTRAINT application_status_event_application_id_fkey FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
     CONSTRAINT application_status_event_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

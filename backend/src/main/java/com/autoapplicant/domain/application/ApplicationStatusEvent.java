@@ -5,8 +5,10 @@ import java.util.UUID;
 
 /**
  * One immutable status-transition event. The append-only ledger of these events is the
- * source for funnel-velocity and time-in-stage analytics. {@code fromStatus} is null for
- * the very first event of an application.
+ * source for the progress timeline and for funnel-velocity analytics. {@code fromStatus}
+ * is null for the very first event of an application — its creation.
+ *
+ * <p>{@code notes} is whatever the candidate wrote about this particular move.
  */
 public record ApplicationStatusEvent(
         UUID id,
@@ -14,5 +16,6 @@ public record ApplicationStatusEvent(
         UUID userId,
         ApplicationStatus fromStatus,
         ApplicationStatus toStatus,
-        Instant occurredAt
+        Instant occurredAt,
+        String notes
 ) {}

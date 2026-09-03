@@ -27,6 +27,7 @@ public class ApplicationStatusEventPersistenceAdapter implements ApplicationStat
         e.setFromStatus(event.fromStatus() != null ? event.fromStatus().name() : null);
         e.setToStatus(event.toStatus().name());
         e.setOccurredAt(event.occurredAt());
+        e.setNotes(event.notes());
         return toDomain(repo.save(e));
     }
 
@@ -43,7 +44,7 @@ public class ApplicationStatusEventPersistenceAdapter implements ApplicationStat
 
     private ApplicationStatusEvent toDomain(ApplicationStatusEventEntity e) {
         return new ApplicationStatusEvent(e.getId(), e.getApplicationId(), e.getUserId(),
-                parse(e.getFromStatus()), parse(e.getToStatus()), e.getOccurredAt());
+                parse(e.getFromStatus()), parse(e.getToStatus()), e.getOccurredAt(), e.getNotes());
     }
 
     private static ApplicationStatus parse(String v) {

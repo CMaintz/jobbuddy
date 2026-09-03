@@ -1,6 +1,5 @@
 package com.autoapplicant.usecase.application;
 
-import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.ApplicationStatusEvent;
@@ -8,7 +7,6 @@ import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
-import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import org.springframework.data.domain.Page;
@@ -27,16 +25,13 @@ public class ApplicationService implements
         GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
-    private final ResponseMetricRepositoryPort responseMetricRepo;
     private final ApplicationStatusEventRepositoryPort statusEventRepo;
     private final PersistGeneratedDocumentUseCase structuredGeneratedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
-                              ResponseMetricRepositoryPort responseMetricRepo,
                               ApplicationStatusEventRepositoryPort statusEventRepo,
                               PersistGeneratedDocumentUseCase structuredGeneratedDocuments) {
         this.repo = repo;
-        this.responseMetricRepo = responseMetricRepo;
         this.statusEventRepo = statusEventRepo;
         this.structuredGeneratedDocuments = structuredGeneratedDocuments;
     }
@@ -64,7 +59,7 @@ public class ApplicationService implements
         // The opening move belongs in the ledger too, or the timeline starts mid-story and
         // funnel velocity never sees how long the first stage took.
         statusEventRepo.save(new ApplicationStatusEvent(
-                null, saved.id(), saved.userId(), null, status, now));
+                null, saved.id(), saved.userId(), null, status, now, command.notes()));
         if (command.generatedDocumentId() != null) {
             structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
         }
@@ -92,7 +87,7 @@ public class ApplicationService implements
         // any other and has to reach the ledger, or the timeline skips it.
         if (targetStatus != existing.status()) {
             statusEventRepo.save(new ApplicationStatusEvent(
-                    null, saved.id(), saved.userId(), existing.status(), targetStatus, now));
+                    null, saved.id(), saved.userId(), existing.status(), targetStatus, now, notes));
         }
         return saved;
     }
@@ -144,21 +139,7 @@ public class ApplicationService implements
 
         // Append-only transition ledger — every change, for the timeline and funnel velocity.
         statusEventRepo.save(new ApplicationStatusEvent(
-                null, applicationId, existing.userId(), existing.status(), newStatus, now));
-
-        String eventType = switch (newStatus) {
-            case RECRUITER_CONTACT -> "RECRUITER_CONTACT";
-            case INTERVIEW -> "INTERVIEW_SCHEDULED";
-            case TECHNICAL_TEST -> "TECHNICAL_TEST";
-            case FINAL_ROUND -> "FINAL_ROUND";
-            case OFFER -> "OFFER_RECEIVED";
-            case REJECTED -> "REJECTED";
-            default -> null;
-        };
-        if (eventType != null) {
-            responseMetricRepo.save(new ResponseMetric(null, existing.userId(), existing.jobId(),
-                    applicationId, eventType, now, notes));
-        }
+                null, applicationId, existing.userId(), existing.status(), newStatus, now, notes));
 
         return saved;
     }

@@ -1,10 +1,8 @@
 package com.autoapplicant.usecase.application;
 
-import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.ApplicationTimelineEntry;
-import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import org.junit.jupiter.api.Test;
 
@@ -23,26 +21,26 @@ class ApplicationTimelineServiceTest {
     private static final Instant SAVED_AT = Instant.parse("2026-02-01T10:00:00Z");
     private static final Instant APPLIED_AT = Instant.parse("2026-02-04T08:30:00Z");
     private static final Instant SCREEN_AT = Instant.parse("2026-02-11T14:00:00Z");
+    private static final Instant REJECTED_AT = Instant.parse("2026-03-01T09:00:00Z");
 
     private final ApplicationStatusEventRepositoryPort statusEvents =
             mock(ApplicationStatusEventRepositoryPort.class);
-    private final ResponseMetricRepositoryPort replies = mock(ResponseMetricRepositoryPort.class);
-    private final ApplicationTimelineService service = new ApplicationTimelineService(statusEvents, replies);
+    private final ApplicationTimelineService service = new ApplicationTimelineService(statusEvents);
 
     private void givenLedger(ApplicationStatusEvent... events) {
         when(statusEvents.findByApplicationIdAndUserId(APPLICATION, USER)).thenReturn(List.of(events));
     }
 
-    private static ApplicationStatusEvent event(ApplicationStatus from, ApplicationStatus to, Instant at) {
-        return new ApplicationStatusEvent(UUID.randomUUID(), APPLICATION, USER, from, to, at);
+    private static ApplicationStatusEvent event(ApplicationStatus from, ApplicationStatus to,
+                                                Instant at, String notes) {
+        return new ApplicationStatusEvent(UUID.randomUUID(), APPLICATION, USER, from, to, at, notes);
     }
 
     @Test
     void the_users_own_moves_are_on_the_timeline_not_just_the_employers_replies() {
         givenLedger(
-                event(null, ApplicationStatus.SAVED, SAVED_AT),
-                event(ApplicationStatus.SAVED, ApplicationStatus.APPLIED, APPLIED_AT));
-        when(replies.findByApplicationIdAndUserId(APPLICATION, USER)).thenReturn(List.of());
+                event(null, ApplicationStatus.SAVED, SAVED_AT, null),
+                event(ApplicationStatus.PREPARING, ApplicationStatus.APPLIED, APPLIED_AT, null));
 
         List<ApplicationTimelineEntry> timeline = service.getTimeline(APPLICATION, USER);
 
@@ -55,11 +53,9 @@ class ApplicationTimelineServiceTest {
     @Test
     void an_employers_reply_carries_its_note_and_is_marked_as_theirs() {
         givenLedger(
-                event(null, ApplicationStatus.SAVED, SAVED_AT),
-                event(ApplicationStatus.APPLIED, ApplicationStatus.RECRUITER_CONTACT, SCREEN_AT));
-        when(replies.findByApplicationIdAndUserId(APPLICATION, USER)).thenReturn(List.of(
-                new ResponseMetric(UUID.randomUUID(), USER, UUID.randomUUID(), APPLICATION,
-                        "RECRUITER_CONTACT", SCREEN_AT, "Called about the platform role")));
+                event(null, ApplicationStatus.SAVED, SAVED_AT, null),
+                event(ApplicationStatus.APPLIED, ApplicationStatus.RECRUITER_CONTACT, SCREEN_AT,
+                        "Called about the platform role"));
 
         List<ApplicationTimelineEntry> timeline = service.getTimeline(APPLICATION, USER);
 
@@ -70,29 +66,33 @@ class ApplicationTimelineServiceTest {
     }
 
     @Test
-    void a_note_finds_its_own_step_when_two_steps_share_a_status_history() {
-        Instant rejectedAt = Instant.parse("2026-03-01T09:00:00Z");
-        givenLedger(
-                event(ApplicationStatus.APPLIED, ApplicationStatus.RECRUITER_CONTACT, SCREEN_AT),
-                event(ApplicationStatus.RECRUITER_CONTACT, ApplicationStatus.REJECTED, rejectedAt));
-        when(replies.findByApplicationIdAndUserId(APPLICATION, USER)).thenReturn(List.of(
-                new ResponseMetric(UUID.randomUUID(), USER, null, APPLICATION,
-                        "REJECTED", rejectedAt, "Went with an internal candidate")));
+    void a_note_on_the_users_own_move_is_kept_even_though_it_is_not_a_reply() {
+        givenLedger(event(ApplicationStatus.PREPARING, ApplicationStatus.APPLIED, APPLIED_AT,
+                "Sent through their portal, referenced Marie"));
 
-        List<ApplicationTimelineEntry> timeline = service.getTimeline(APPLICATION, USER);
+        ApplicationTimelineEntry entry = service.getTimeline(APPLICATION, USER).getFirst();
 
-        assertThat(timeline.getFirst().notes()).isNull();
-        assertThat(timeline.getLast().notes()).isEqualTo("Went with an internal candidate");
+        assertThat(entry.employerResponse()).isFalse();
+        assertThat(entry.notes()).isEqualTo("Sent through their portal, referenced Marie");
+    }
+
+    @Test
+    void a_rejection_is_the_employers_and_keeps_the_reason() {
+        givenLedger(event(ApplicationStatus.RECRUITER_CONTACT, ApplicationStatus.REJECTED, REJECTED_AT,
+                "Went with an internal candidate"));
+
+        ApplicationTimelineEntry entry = service.getTimeline(APPLICATION, USER).getFirst();
+
+        assertThat(entry.employerResponse()).isTrue();
+        assertThat(entry.notes()).isEqualTo("Went with an internal candidate");
     }
 
     @Test
     void another_users_application_id_yields_nothing_rather_than_their_history() {
         UUID theirs = UUID.randomUUID();
         when(statusEvents.findByApplicationIdAndUserId(theirs, USER)).thenReturn(List.of());
-        when(replies.findByApplicationIdAndUserId(theirs, USER)).thenReturn(List.of());
 
         assertThat(service.getTimeline(theirs, USER)).isEmpty();
-
         verify(statusEvents).findByApplicationIdAndUserId(theirs, USER);
     }
 }

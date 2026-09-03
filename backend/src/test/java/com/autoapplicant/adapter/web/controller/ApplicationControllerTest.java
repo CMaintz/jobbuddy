@@ -8,7 +8,6 @@ import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.job.GetJobByIdUseCase;
-import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,7 +51,6 @@ class ApplicationControllerTest {
     @MockBean GetApplicationTimelineUseCase   timelineUseCase;
     @MockBean GetJobByIdUseCase               getJobByIdUseCase;
     @MockBean JobRepositoryPort               jobRepo;
-    @MockBean ResponseMetricRepositoryPort    responseMetricRepo;
     @MockBean SecurityContextHelper           secCtx;
     @MockBean ProvisionFirebaseUserUseCase    provisionUser;
     @MockBean ResolveLinkedInUserUseCase      resolveLinkedInUser;
