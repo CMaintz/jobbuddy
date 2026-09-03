@@ -1414,7 +1414,12 @@
     "notInterested": "Not interested",
     "moreOfThis": "Tune my feed",
     "moreLikeThis": "More like this",
-    "fewerLikeThis": "Fewer like this"
+    "fewerLikeThis": "Fewer like this",
+    "filters": "Filters",
+    "clearFilters": "Clear",
+    "description": "The posting",
+    "viewMore": "View more",
+    "viewLess": "View less"
   },
   "settings": {
     "loading": "Loading settings…",
