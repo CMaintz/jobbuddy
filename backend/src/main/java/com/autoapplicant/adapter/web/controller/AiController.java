@@ -64,7 +64,7 @@ public class AiController {
     private final GetAiUsageUseCase aiUsage;
     private final ManageAiCredentialUseCase aiCredentials;
     private final SecretCipherPort secretCipher;
-    private final java.util.concurrent.Executor requestBoundExecutor;
+    private final java.util.concurrent.Executor userAiExecutor;
     private final SecurityContextHelper secCtx;
 
     public AiController(AnalyzeCvUseCase analyze,
@@ -79,8 +79,8 @@ public class AiController {
                         GetAiUsageUseCase aiUsage,
                         ManageAiCredentialUseCase aiCredentials,
                         SecretCipherPort secretCipher,
-                        @Qualifier("requestBoundExecutor")
-                        java.util.concurrent.Executor requestBoundExecutor,
+                        @Qualifier("userAiTaskExecutor")
+                        java.util.concurrent.Executor userAiExecutor,
                         SecurityContextHelper secCtx) {
         this.analyze = analyze;
         this.parseCv = parseCv;
@@ -94,7 +94,7 @@ public class AiController {
         this.aiUsage = aiUsage;
         this.aiCredentials = aiCredentials;
         this.secretCipher = secretCipher;
-        this.requestBoundExecutor = requestBoundExecutor;
+        this.userAiExecutor = userAiExecutor;
         this.secCtx = secCtx;
     }
 
@@ -155,7 +155,7 @@ public class AiController {
                         req.promptTemplateId(),
                         Boolean.TRUE.equals(req.showProfileImage()),
                         req.theme() != null ? req.theme().toTheme() : null,
-                        req.lengthPreference()), requestBoundExecutor)
+                        req.lengthPreference()), userAiExecutor)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(
                         persistedDocuments.save(userId, req.jobId(), r, null))))
                 .exceptionally(e -> {

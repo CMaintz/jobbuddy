@@ -108,7 +108,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     }
 
     @Override
-    @Async("aiTaskExecutor")
+    @Async("userAiTaskExecutor")
     public CompletableFuture<AiAnalysisResult> analyze(UUID userId, UUID cvVersionId,
                                                        UUID jobId, String rawJobDescription) {
         try {
@@ -134,7 +134,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     }
 
     @Override
-    @Async("aiTaskExecutor")
+    @Async("userAiTaskExecutor")
     public CompletableFuture<RefineDocumentResult> refine(RefineDocumentRequest request) {
         try {
             // Refinement produces text the user sends. It was the one generation path with no
@@ -183,7 +183,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     }
 
     @Override
-    @Async("aiTaskExecutor")
+    @Async("userAiTaskExecutor")
     public CompletableFuture<ReviewDocumentResult> review(ReviewDocumentRequest request) {
         try {
             ReviewOutcome outcome = reviewContent(request.userId(), request.documentType(),
@@ -300,7 +300,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     }
 
     @Override
-    @Async("aiTaskExecutor")
+    @Async("userAiTaskExecutor")
     public CompletableFuture<StructuredDocument> generateDocument(
             UUID userId, String documentType, UUID jobId, String rawJobDescription,
             String templateId, UUID promptTemplateId, String customInstructions,
