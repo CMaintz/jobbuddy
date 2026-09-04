@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.job.JobResponse;
+import com.autoapplicant.adapter.web.dto.job.MatchResultResponse;
 import com.autoapplicant.adapter.web.dto.job.ManualJobRequest;
 import com.autoapplicant.domain.job.EmploymentType;
 import com.autoapplicant.domain.job.Job;
@@ -90,7 +91,7 @@ public class JobController {
             @RequestParam(defaultValue = "20") int size) {
         UUID userId = secCtx.getCurrentUserId();
         JobSearchQuery query = new JobSearchQuery(null, null, page, size, "postedAt", userId);
-        return ResponseEntity.ok(getJobs.getJobs(query).map(JobResponse::from));
+        return ResponseEntity.ok(getJobs.getJobs(query).map(JobResponse::preview));
     }
 
     @Operation(summary = "Search jobs by query")
@@ -107,10 +108,11 @@ public class JobController {
 
     @Operation(summary = "Get personalized job recommendations")
     @GetMapping("/recommendations")
-    public ResponseEntity<List<MatchResult>> recommendations(
+    public ResponseEntity<List<MatchResultResponse>> recommendations(
             @RequestParam(defaultValue = "10") int limit) {
         UUID userId = secCtx.getCurrentUserId();
-        return ResponseEntity.ok(getRecommendations.getRecommendations(userId, limit));
+        return ResponseEntity.ok(getRecommendations.getRecommendations(userId, limit).stream()
+                .map(MatchResultResponse::from).toList());
     }
 
     @Operation(summary = "Get job by id")
@@ -127,7 +129,7 @@ public class JobController {
     public ResponseEntity<List<JobResponse>> saved() {
         UUID userId = secCtx.getCurrentUserId();
         return ResponseEntity.ok(getSavedJobs.getSavedJobs(userId).stream()
-                .map(JobResponse::from).toList());
+                .map(JobResponse::preview).toList());
     }
 
     @Operation(summary = "Save a job")
@@ -207,7 +209,7 @@ public class JobController {
     public ResponseEntity<List<JobResponse>> searchSemantic(@RequestParam String q,
                                                             @RequestParam(defaultValue = "30") int limit) {
         List<JobResponse> result = semanticSearch.semanticSearch(q, Math.min(Math.max(limit, 1), 100))
-                .stream().map(JobResponse::from).toList();
+                .stream().map(JobResponse::preview).toList();
         return ResponseEntity.ok(result);
     }
 
@@ -216,7 +218,7 @@ public class JobController {
     public ResponseEntity<List<JobResponse>> similar(@PathVariable UUID id,
                                                      @RequestParam(defaultValue = "5") int limit) {
         List<JobResponse> result = getSimilarJobs.getSimilarJobs(id, Math.min(Math.max(limit, 1), 20))
-                .stream().map(JobResponse::from).toList();
+                .stream().map(JobResponse::preview).toList();
         return ResponseEntity.ok(result);
     }
 

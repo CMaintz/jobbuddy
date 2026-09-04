@@ -4,7 +4,10 @@ export interface Job {
   url: string;
   title: string;
   companyName?: string;
+  /** In a list response this is only the opening — see descriptionTruncated. */
   descriptionClean?: string;
+  /** True when descriptionClean holds only the opening and the rest is a fetch away. */
+  descriptionTruncated?: boolean;
   employmentType?: string;
   seniority?: string;
   remoteType?: string;
@@ -47,10 +50,8 @@ export interface JobSearchResult {
 
 export interface MatchResult {
   jobId: string;
-  userId: string;
   job: Job;
   hardConstraintPassed: boolean;
-  semanticScore: number;
   totalScore: number;
   matchLabel: 'EXCELLENT' | 'STRONG' | 'MODERATE' | 'WEAK';
   matchReasons: string[];

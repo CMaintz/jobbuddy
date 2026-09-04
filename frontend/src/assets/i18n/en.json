@@ -1419,7 +1419,9 @@
     "clearFilters": "Clear",
     "description": "The posting",
     "viewMore": "View more",
-    "viewLess": "View less"
+    "viewLess": "View less",
+    "viewMoreLoading": "Loading…",
+    "descriptionLoadFailed": "Couldn't load the rest of the posting."
   },
   "settings": {
     "loading": "Loading settings…",

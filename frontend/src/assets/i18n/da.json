@@ -1419,7 +1419,9 @@
     "clearFilters": "Ryd",
     "description": "Opslaget",
     "viewMore": "Vis mere",
-    "viewLess": "Vis mindre"
+    "viewLess": "Vis mindre",
+    "viewMoreLoading": "Henter…",
+    "descriptionLoadFailed": "Kunne ikke hente resten af opslaget."
   },
   "settings": {
     "loading": "Indlæser indstillinger…",
