@@ -15,6 +15,7 @@ import com.autoapplicant.domain.ai.AiCredentialProvider;
 import com.autoapplicant.domain.ai.AiUsageSummary;
 import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
 import com.autoapplicant.port.out.security.SecretCipherPort;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
 import com.autoapplicant.domain.ai.ReviewDocumentRequest;
@@ -63,6 +64,7 @@ public class AiController {
     private final GetAiUsageUseCase aiUsage;
     private final ManageAiCredentialUseCase aiCredentials;
     private final SecretCipherPort secretCipher;
+    private final java.util.concurrent.Executor requestBoundExecutor;
     private final SecurityContextHelper secCtx;
 
     public AiController(AnalyzeCvUseCase analyze,
@@ -77,6 +79,8 @@ public class AiController {
                         GetAiUsageUseCase aiUsage,
                         ManageAiCredentialUseCase aiCredentials,
                         SecretCipherPort secretCipher,
+                        @Qualifier("requestBoundExecutor")
+                        java.util.concurrent.Executor requestBoundExecutor,
                         SecurityContextHelper secCtx) {
         this.analyze = analyze;
         this.parseCv = parseCv;
@@ -90,6 +94,7 @@ public class AiController {
         this.aiUsage = aiUsage;
         this.aiCredentials = aiCredentials;
         this.secretCipher = secretCipher;
+        this.requestBoundExecutor = requestBoundExecutor;
         this.secCtx = secCtx;
     }
 
@@ -150,7 +155,7 @@ public class AiController {
                         req.promptTemplateId(),
                         Boolean.TRUE.equals(req.showProfileImage()),
                         req.theme() != null ? req.theme().toTheme() : null,
-                        req.lengthPreference()))
+                        req.lengthPreference()), requestBoundExecutor)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(
                         persistedDocuments.save(userId, req.jobId(), r, null))))
                 .exceptionally(e -> {
