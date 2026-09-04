@@ -19,7 +19,29 @@ public final class JobText {
      */
     public static final int MAX_DESCRIPTION_CHARS = 8000;
 
+    /**
+     * How much of a posting a list response carries. Enough to judge a role from the
+     * feed; the rest is one request away, so a page of twenty roles does not ship
+     * twenty full postings.
+     */
+    public static final int PREVIEW_CHARS = 900;
+
     private JobText() {}
+
+    /**
+     * The opening of a posting, cut at a line break rather than mid-sentence when
+     * there is one late enough to be worth using.
+     */
+    public static String preview(String text) {
+        if (text == null || text.length() <= PREVIEW_CHARS) return text;
+        String slice = text.substring(0, PREVIEW_CHARS);
+        int lastBreak = slice.lastIndexOf('\n');
+        return (lastBreak > PREVIEW_CHARS / 2 ? slice.substring(0, lastBreak) : slice).stripTrailing();
+    }
+
+    public static boolean exceedsPreview(String text) {
+        return text != null && text.length() > PREVIEW_CHARS;
+    }
 
     public static String truncate(String text) {
         if (text == null) return null;

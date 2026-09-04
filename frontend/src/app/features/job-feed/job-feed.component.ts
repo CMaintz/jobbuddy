@@ -37,12 +37,14 @@ interface FeedRow {
   remote: boolean;
   seniority?: string;
   category?: string;
-  /** The posting itself. Already in the payload, so reading it costs no extra request. */
+  /** The posting's opening, as the list response carries it. Never overwritten. */
   description?: string;
+  /** True when the list response carried only the opening. */
+  descriptionTruncated?: boolean;
+  /** The whole posting, once fetched. Kept beside the preview so collapsing works. */
+  fullDescription?: string;
 }
 
-/** How much of a posting the detail pane shows before "view more". */
-const DESCRIPTION_PREVIEW_CHARS = 900;
 
 @Component({
   selector: 'app-job-feed',
@@ -65,6 +67,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   filtersOpen = signal(false);
   /** "View more" is per-selection: picking another role starts collapsed again. */
   descriptionExpanded = signal(false);
+  /** The rest of the posting is being fetched. */
+  descriptionLoading = signal(false);
   feedRows = signal<FeedRow[]>([]);
   selectedJob = signal<FeedRow | null>(null);
   /** Which way each job has been steered, so the control can show the current state. */
@@ -210,6 +214,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       seniority: job.seniority ?? undefined,
       category: job.jobCategory ?? undefined,
       description: job.descriptionClean ?? undefined,
+      descriptionTruncated: job.descriptionTruncated ?? false,
     };
   }
 
@@ -288,18 +293,49 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     this.mobilePanel.set('detail');
   }
 
-  /** The visible slice of the posting, honouring "view more". */
+  /**
+   * Collapsed shows the opening the list response carried; expanded shows the whole
+   * posting once fetched. The two are kept apart so collapsing has something to go
+   * back to.
+   */
   descriptionText(row: FeedRow): string {
-    const full = row.description ?? '';
-    if (this.descriptionExpanded() || full.length <= DESCRIPTION_PREVIEW_CHARS) return full;
-    // Cut at the last line break inside the budget so a paragraph is not sliced mid-word.
-    const slice = full.slice(0, DESCRIPTION_PREVIEW_CHARS);
-    const lastBreak = slice.lastIndexOf('\n');
-    return (lastBreak > DESCRIPTION_PREVIEW_CHARS / 2 ? slice.slice(0, lastBreak) : slice).trimEnd() + '…';
+    if (this.descriptionExpanded() && row.fullDescription) return row.fullDescription;
+    const opening = row.description ?? '';
+    return this.hasMoreDescription(row) ? opening.trimEnd() + '…' : opening;
   }
 
-  descriptionIsTruncated(row: FeedRow): boolean {
-    return (row.description?.length ?? 0) > DESCRIPTION_PREVIEW_CHARS;
+  /** There is more posting than is on screen — either unfetched, or fetched and collapsed. */
+  hasMoreDescription(row: FeedRow): boolean {
+    return !!row.descriptionTruncated || !!row.fullDescription;
+  }
+
+  /**
+   * Fetches the rest of the posting the first time it is asked for, then keeps it on
+   * the row so collapsing and re-expanding costs nothing.
+   */
+  toggleDescription(row: FeedRow): void {
+    if (this.descriptionExpanded()) {
+      this.descriptionExpanded.set(false);
+      return;
+    }
+    if (row.fullDescription || !row.descriptionTruncated) {
+      this.descriptionExpanded.set(true);
+      return;
+    }
+    this.descriptionLoading.set(true);
+    this.jobsApi.getById(row.id).subscribe({
+      next: job => {
+        // The reader may have moved on while this was in flight.
+        if (this.selectedJob()?.id !== row.id) { this.descriptionLoading.set(false); return; }
+        row.fullDescription = job.descriptionClean ?? row.description;
+        this.descriptionLoading.set(false);
+        this.descriptionExpanded.set(true);
+      },
+      error: () => {
+        this.descriptionLoading.set(false);
+        this.toast.set(this.translate.instant('jobFeed.descriptionLoadFailed'));
+      }
+    });
   }
 
   /** How many filters are narrowing the list right now — shown on the collapsed toggle. */

@@ -30,13 +30,29 @@ public record JobResponse(
         String jobCategory,
         String shortDescription,
         java.time.LocalDate applicationDeadline,
-        boolean active
+        boolean active,
+        /** True when descriptionClean holds only the opening of the posting. */
+        boolean descriptionTruncated
 ) {
+    /** The whole posting — for a single job the caller asked for by id. */
     public static JobResponse from(Job job) {
+        return build(job, job.descriptionClean(), false);
+    }
+
+    /**
+     * The posting's opening only. Lists use this so a feed of twenty roles does not
+     * carry twenty full descriptions; the reader fetches the rest for the one they open.
+     */
+    public static JobResponse preview(Job job) {
+        return build(job, JobText.preview(job.descriptionClean()),
+                JobText.exceedsPreview(job.descriptionClean()));
+    }
+
+    private static JobResponse build(Job job, String description, boolean truncated) {
         return new JobResponse(
                 job.id(),
                 job.source() != null ? job.source().name() : null,
-                job.url(), job.title(), job.companyName(), job.descriptionClean(),
+                job.url(), job.title(), job.companyName(), description,
                 job.employmentType() != null ? job.employmentType().name() : null,
                 job.seniority() != null ? job.seniority().name() : null,
                 job.remoteType() != null ? job.remoteType().name() : null,
@@ -47,7 +63,8 @@ public record JobResponse(
                 job.jobCategory() != null ? job.jobCategory().name() : null,
                 job.shortDescription(),
                 job.applicationDeadline(),
-                job.isActive()
+                job.isActive(),
+                truncated
         );
     }
 }

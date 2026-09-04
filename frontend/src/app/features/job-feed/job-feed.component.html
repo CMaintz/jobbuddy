@@ -286,21 +286,6 @@
             </div>
           }
 
-          <!-- The posting itself. Already in the feed payload, so "view more" costs no request. -->
-          @if (job.description) {
-            <div class="card p-3.5 mb-3">
-              <div class="text-xs font-medium mb-2">{{ 'jobFeed.description' | translate }}</div>
-              <div class="text-base leading-[1.7] text-jb-text-mid whitespace-pre-line max-w-[68ch]">{{ descriptionText(job) }}</div>
-              @if (descriptionIsTruncated(job)) {
-                <button type="button" (click)="descriptionExpanded.set(!descriptionExpanded())"
-                  class="mt-2 inline-flex items-center gap-1 text-sm text-jb-accent-2 bg-transparent border-none p-0 cursor-pointer">
-                  {{ (descriptionExpanded() ? 'jobFeed.viewLess' : 'jobFeed.viewMore') | translate }}
-                  <jb-icon [name]="descriptionExpanded() ? 'arrow-up' : 'arrow-down'" [size]="10" />
-                </button>
-              }
-            </div>
-          }
-
           <!-- Actions -->
           <div class="flex gap-2 flex-wrap">
             <jb-button icon="bookmark" (clicked)="saveJob(job)">{{ (savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate }}</jb-button>
@@ -319,6 +304,21 @@
               [primary]="steered().get(job.id) === 'FEWER_LIKE_THIS'"
               (clicked)="steerFeed(job, 'FEWER_LIKE_THIS')">{{ 'jobFeed.fewerLikeThis' | translate }}</jb-button>
           </div>
+
+          <!-- The posting. The list carries its opening; "view more" fetches the rest. -->
+          @if (job.description) {
+            <div class="card p-3.5 mb-3">
+              <div class="text-xs font-medium mb-2">{{ 'jobFeed.description' | translate }}</div>
+              <div class="text-base leading-[1.7] text-jb-text-mid whitespace-pre-line">{{ descriptionText(job)
+                }}@if (hasMoreDescription(job)) {<button type="button"
+                  (click)="toggleDescription(job)" [disabled]="descriptionLoading()"
+                  class="ml-1 align-baseline text-sm font-medium text-jb-accent-2 bg-transparent border-none p-0 cursor-pointer disabled:opacity-60">{{
+                    (descriptionLoading() ? 'jobFeed.viewMoreLoading'
+                      : descriptionExpanded() ? 'jobFeed.viewLess' : 'jobFeed.viewMore') | translate
+                  }}</button>}</div>
+            </div>
+          }
+
         } @else {
           <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">
             <jb-icon name="compass" [size]="24" class="mb-2" />
