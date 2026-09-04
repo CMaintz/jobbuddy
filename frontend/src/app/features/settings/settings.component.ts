@@ -14,6 +14,7 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { AiUsagePanelComponent } from './ai-usage-panel.component';
+import { AiKeyPanelComponent } from './ai-key-panel.component';
 import { ThemeService } from '../../core/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserPreferences } from '../../core/models/user.model';
@@ -87,7 +88,7 @@ interface StyleSnapshot {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent, AiUsagePanelComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {

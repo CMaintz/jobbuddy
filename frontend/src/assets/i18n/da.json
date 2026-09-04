@@ -1599,6 +1599,28 @@
         "WRITING_PROFILE": "Analyse af skrivestil",
         "GENERATION": "Andet"
       }
+    },
+    "aiKey": {
+      "title": "Din egen API-nøgle",
+      "desc": "Generering kører på din nøgle i stedet for serverens. Lad feltet stå tomt for at bruge serverens opsætning — på en personlig installation er det din lokale CLI-agent. Nøglen krypteres og vises aldrig igen.",
+      "loading": "Tjekker…",
+      "unavailable": "Denne installation kan ikke gemme API-nøgler — der er ikke opsat en krypteringsnøgle.",
+      "usingServer": "Ingen nøgle gemt. Generering bruger serverens udbyder.",
+      "inUse": "I brug",
+      "providerLabel": "Udbyder",
+      "keyLabel": "API-nøgle",
+      "keyPlaceholder": "sk-…",
+      "modelLabel": "Model (valgfri)",
+      "modelPlaceholder": "udbyderens standard",
+      "save": "Gem nøgle",
+      "replace": "Erstat nøgle",
+      "remove": "Fjern",
+      "saveFailed": "Kunne ikke gemme nøglen.",
+      "clearFailed": "Kunne ikke fjerne nøglen.",
+      "provider": {
+        "openai": "OpenAI",
+        "gemini": "Google Gemini"
+      }
     }
   },
   "apply": {
