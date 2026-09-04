@@ -194,6 +194,10 @@ Required:
 - Firebase service account JSON at `.secrets/firebase-service-account.json`
 
 Optional (all have local defaults):
+- `SECRET_ENCRYPTION_KEY` — base64 AES key (16/24/32 bytes) encrypting users' own API keys at
+  rest. Unset means the app refuses to store them rather than keeping them in the clear, so
+  bring-your-own-key is simply unavailable. Only needed for a hosted deployment.
+  Generate one with: `[Convert]::ToBase64String((1..32 | % { Get-Random -Max 256 }))`
 - `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD`
 - `TYPESENSE_API_KEY`, `TYPESENSE_HOST`, `TYPESENSE_PORT`
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)

@@ -1599,6 +1599,28 @@
         "WRITING_PROFILE": "Writing style analysis",
         "GENERATION": "Other"
       }
+    },
+    "aiKey": {
+      "title": "Your own API key",
+      "desc": "Generation runs on your key instead of this server's. Leave it empty to use whatever the server is configured with — on a personal install that's your local CLI agent. The key is encrypted and never shown again.",
+      "loading": "Checking…",
+      "unavailable": "This deployment cannot store API keys — no encryption secret is configured.",
+      "usingServer": "No key stored. Generation uses the server's provider.",
+      "inUse": "In use",
+      "providerLabel": "Provider",
+      "keyLabel": "API key",
+      "keyPlaceholder": "sk-…",
+      "modelLabel": "Model (optional)",
+      "modelPlaceholder": "provider default",
+      "save": "Save key",
+      "replace": "Replace key",
+      "remove": "Remove",
+      "saveFailed": "Couldn't save the key.",
+      "clearFailed": "Couldn't remove the key.",
+      "provider": {
+        "openai": "OpenAI",
+        "gemini": "Google Gemini"
+      }
     }
   },
   "apply": {

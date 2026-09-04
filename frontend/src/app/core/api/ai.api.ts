@@ -137,6 +137,17 @@ export interface AiUsageSummary {
   byOperation: AiOperationUsage[];
 }
 
+/** What the settings screen may know about a stored key — never the key itself. */
+export interface AiCredentialStatus {
+  configured: boolean;
+  provider: 'OPENAI' | 'GEMINI' | null;
+  hint: string | null;
+  model: string | null;
+  updatedAt: string | null;
+  /** False when the deployment has no encryption secret and so cannot store keys. */
+  storageAvailable: boolean;
+}
+
 export interface SkillGapReport {
   gaps: SkillGap[];
   summary?: string;
@@ -146,6 +157,18 @@ export interface SkillGapReport {
 @Injectable({ providedIn: 'root' })
 export class AiApiService {
   private http = inject(HttpClient);
+
+  getCredentialStatus(): Observable<AiCredentialStatus> {
+    return this.http.get<AiCredentialStatus>('/api/v1/ai/credentials');
+  }
+
+  setCredential(provider: string, apiKey: string, model?: string): Observable<AiCredentialStatus> {
+    return this.http.put<AiCredentialStatus>('/api/v1/ai/credentials', { provider, apiKey, model });
+  }
+
+  clearCredential(): Observable<void> {
+    return this.http.delete<void>('/api/v1/ai/credentials');
+  }
 
   getUsage(): Observable<AiUsageSummary> {
     return this.http.get<AiUsageSummary>('/api/v1/ai/usage');

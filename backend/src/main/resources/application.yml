@@ -23,6 +23,10 @@ server:
   port: 8080
 
 app:
+  security:
+    # Base64 AES key (16/24/32 bytes) used to encrypt users' own API keys at rest.
+    # Unset means the app refuses to store them rather than keeping them in the clear.
+    secret-encryption-key: ${SECRET_ENCRYPTION_KEY:}
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,http://localhost:80}
   ai:
