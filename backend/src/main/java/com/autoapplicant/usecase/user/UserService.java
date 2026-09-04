@@ -115,7 +115,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                 true, user.createdAt(), user.updatedAt()));
     }
 
-    @Async("aiTaskExecutor")
+    @Async("userAiTaskExecutor")
     protected void recomputeProfileEmbeddingAsync(UUID userId, Profile profile) {
         try {
             List<WorkExperience> experience = workExpRepo.findByUserId(userId);

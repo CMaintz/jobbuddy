@@ -23,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AsyncSecurityPropagationTest {
 
     private final AsyncConfig config = new AsyncConfig();
-    private final Executor executor = config.aiTaskExecutor(config.aiTaskPool());
+    private final Executor enrichmentExecutor = config.aiTaskExecutor(config.aiTaskPool());
+    private final Executor userExecutor = config.userAiTaskExecutor(config.userAiTaskPool());
     private final SecurityContextCurrentUser currentUser = new SecurityContextCurrentUser();
 
     @AfterEach
@@ -31,7 +32,7 @@ class AsyncSecurityPropagationTest {
         SecurityContextHolder.clearContext();
     }
 
-    private Optional<UUID> userSeenOnExecutor() throws Exception {
+    private Optional<UUID> userSeenOn(Executor executor) throws Exception {
         AtomicReference<Optional<UUID>> seen = new AtomicReference<>();
         Thread waiter = new Thread(() -> { });
         executor.execute(() -> seen.set(currentUser.currentUserId()));
@@ -47,7 +48,7 @@ class AsyncSecurityPropagationTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(userId, null, List.of()));
 
-        assertThat(userSeenOnExecutor())
+        assertThat(userSeenOn(userExecutor))
                 .as("the user's own API key and their usage log both depend on this")
                 .contains(userId);
     }
@@ -60,16 +61,26 @@ class AsyncSecurityPropagationTest {
         AtomicReference<Optional<UUID>> seen = new AtomicReference<>();
 
         java.util.concurrent.CompletableFuture
-                .runAsync(() -> seen.set(currentUser.currentUserId()), config.requestBoundExecutor())
+                .runAsync(() -> seen.set(currentUser.currentUserId()), userExecutor)
                 .join();
 
         assertThat(seen.get()).contains(userId);
     }
 
     @Test
+    void a_users_generation_never_queues_behind_the_crawl_backlog() {
+        // The enrichment pool drops work when its queue fills, which is right for
+        // enrichment and would silently lose someone's cover letter. The two must
+        // therefore not be the same pool.
+        assertThat(config.userAiTaskPool()).isNotSameAs(config.aiTaskPool());
+        assertThat(config.userAiTaskPool().getThreadNamePrefix()).isEqualTo("ai-user-");
+    }
+
+    @Test
     void background_work_with_no_signed_in_user_still_sees_nobody() throws Exception {
         SecurityContextHolder.clearContext();
 
-        assertThat(userSeenOnExecutor()).isEmpty();
+        assertThat(userSeenOn(userExecutor)).isEmpty();
+        assertThat(userSeenOn(enrichmentExecutor)).isEmpty();
     }
 }

@@ -56,7 +56,7 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
     }
 
     @Override
-    @Async("aiTaskExecutor")
+    @Async("userAiTaskExecutor")
     public CompletableFuture<SkillGapReport> analyzeSkillGaps(UUID userId) {
         try {
             List<Job> jobs = marketCorpus.collect(userId, true);
