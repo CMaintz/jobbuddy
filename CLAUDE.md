@@ -40,7 +40,7 @@ docker compose --env-file .env -f infra/docker-compose.yml up --build
 ### Local development (backend)
 ```powershell
 # Start dependencies only
-docker compose --env-file .env -f infra/docker-compose.yml up postgres typesense -d
+docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 
 # Run backend (from repo root)
 ./gradlew :backend:bootRun
@@ -92,7 +92,6 @@ cd frontend; npm run lint
 | Backend API | http://localhost:8080/api/v1 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI spec | http://localhost:8080/v3/api-docs |
-| Typesense | http://localhost:8108 |
 
 ---
 
@@ -199,7 +198,6 @@ Optional (all have local defaults):
   bring-your-own-key is simply unavailable. Only needed for a hosted deployment.
   Generate one with: `[Convert]::ToBase64String((1..32 | % { Get-Random -Max 256 }))`
 - `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD`
-- `TYPESENSE_API_KEY`, `TYPESENSE_HOST`, `TYPESENSE_PORT`
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)
 - `ALLOWED_ORIGINS` (CORS)
 

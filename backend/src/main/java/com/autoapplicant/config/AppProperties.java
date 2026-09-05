@@ -10,7 +10,6 @@ public class AppProperties {
     private Ai ai = new Ai();
     private Openai openai = new Openai();
     private Gemini gemini = new Gemini();
-    private Typesense typesense = new Typesense();
     private LinkedIn linkedin = new LinkedIn();
     private Careerjet careerjet = new Careerjet();
     private Greenhouse greenhouse = new Greenhouse();
@@ -21,7 +20,6 @@ public class AppProperties {
     public Ai getAi() { return ai; }
     public Openai getOpenai() { return openai; }
     public Gemini getGemini() { return gemini; }
-    public Typesense getTypesense() { return typesense; }
     public LinkedIn getLinkedin() { return linkedin; }
     public Careerjet getCareerjet() { return careerjet; }
     public Greenhouse getGreenhouse() { return greenhouse; }
@@ -109,21 +107,6 @@ public class AppProperties {
         public void setStandardModel(String standardModel) { this.standardModel = standardModel; }
         public String getPremiumModel() { return premiumModel; }
         public void setPremiumModel(String premiumModel) { this.premiumModel = premiumModel; }
-    }
-
-    public static class Typesense {
-        private String apiKey;
-        private String host;
-        private int port;
-        private String protocol;
-        public String getApiKey() { return apiKey; }
-        public void setApiKey(String apiKey) { this.apiKey = apiKey; }
-        public String getHost() { return host; }
-        public void setHost(String host) { this.host = host; }
-        public int getPort() { return port; }
-        public void setPort(int port) { this.port = port; }
-        public String getProtocol() { return protocol; }
-        public void setProtocol(String protocol) { this.protocol = protocol; }
     }
 
     public static class LinkedIn {

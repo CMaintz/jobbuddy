@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Runs the job crawler as a one-shot CLI command and exits.
- * Order(2) ensures TypesenseSchemaInitializer (Order 1) runs first.
  *
  * Usage (from repo root):
  *   ./gradlew :backend:bootRun --args="--spring.profiles.active=crawler"

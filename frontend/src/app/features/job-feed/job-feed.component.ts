@@ -61,7 +61,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
 
   loading = signal(true);
   toast = signal('');
-  /** true while showing Typesense search results instead of recommendations */
+  /** true while showing search results instead of recommendations */
   searchMode = signal(false);
   /** The filter set is collapsed by default so the list gets the width. */
   filtersOpen = signal(false);
@@ -81,7 +81,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   locationFilter = 'all';
   hideExpired = false;
   sortBy: 'match' | 'newest' | 'deadline' = 'match';
-  /** true = embed the query and rank by meaning; false = Typesense keyword search. */
+  /** true = embed the query and rank by meaning; false = Postgres keyword search. */
   semanticMode = false;
   activeSources = new Set<string>();
   sourceFilters: string[] = [];

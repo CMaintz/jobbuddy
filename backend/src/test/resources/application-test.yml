@@ -6,11 +6,6 @@ app:
     api-key: test-key
     model: gpt-4o
     embedding-model: text-embedding-3-small
-  typesense:
-    api-key: test-key
-    host: localhost
-    port: 8108
-    protocol: http
 
 spring:
   datasource:
