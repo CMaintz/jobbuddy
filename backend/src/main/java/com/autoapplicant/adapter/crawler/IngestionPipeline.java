@@ -15,6 +15,7 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -30,6 +31,7 @@ public class IngestionPipeline {
     private final AtomicInteger enrichedCount = new AtomicInteger(0);
 
     private final JobRepositoryPort jobRepo;
+    private final int maxEnrichmentAttempts;
     private final JobEmbeddingRepositoryPort embeddingRepo;
     private final AiProviderPort aiProvider;
     private final EnrichJobUseCase enrichJob;
@@ -42,12 +44,14 @@ public class IngestionPipeline {
                               JobEmbeddingRepositoryPort embeddingRepo,
                               @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                               EnrichJobUseCase enrichJob, TextCleaningService textCleaner,
-                              CompanyRepositoryPort companyRepo) {
+                              CompanyRepositoryPort companyRepo,
+                              @Value("${app.enrichment.max-attempts:4}") int maxEnrichmentAttempts) {
         this.jobRepo = jobRepo;
         this.embeddingRepo = embeddingRepo;
         this.aiProvider = aiProvider;
         this.enrichJob = enrichJob;
         this.textCleaner = textCleaner;
+        this.maxEnrichmentAttempts = maxEnrichmentAttempts;
         this.companyRepo = companyRepo;
     }
 
@@ -93,6 +97,13 @@ public class IngestionPipeline {
             // Async: AI enrichment
             enrichJob.enrich(saved).thenAccept(enriched -> {
                 jobRepo.save(enriched);
+                // Recording the outcome is what lets the sweep tell "never got to it"
+                // from "tried and failed" — and stop retrying the hopeless ones.
+                if (enriched.aiSummary() != null) {
+                    jobRepo.markEnriched(saved.id());
+                } else {
+                    jobRepo.markEnrichmentFailed(saved.id(), "no summary returned", maxEnrichmentAttempts);
+                }
                 embed(enriched);
                 int n = enrichedCount.incrementAndGet();
                 if (n % 50 == 0) {
@@ -100,6 +111,7 @@ public class IngestionPipeline {
                 }
             }).exceptionally(ex -> {
                 log.error("Enrichment failed for job {} ({}): {}", saved.id(), saved.sourceJobId(), ex.getMessage());
+                jobRepo.markEnrichmentFailed(saved.id(), ex.getMessage(), maxEnrichmentAttempts);
                 return null;
             });
 

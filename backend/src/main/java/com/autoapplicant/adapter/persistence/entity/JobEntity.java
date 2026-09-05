@@ -39,6 +39,19 @@ public class JobEntity {
     @Column(name = "description_clean", columnDefinition = "text")
     private String descriptionClean;
 
+    // ── Enrichment state (entity-only: processing metadata, not part of the posting) ──
+    @Column(name = "enrichment_status", nullable = false, length = 20)
+    private String enrichmentStatus = "PENDING";
+
+    @Column(name = "enrichment_attempts", nullable = false)
+    private int enrichmentAttempts;
+
+    @Column(name = "enrichment_last_attempt_at")
+    private Instant enrichmentLastAttemptAt;
+
+    @Column(name = "enrichment_last_error", columnDefinition = "text")
+    private String enrichmentLastError;
+
     @Column(name = "employment_type")
     private String employmentType;
 
@@ -166,6 +179,15 @@ public class JobEntity {
     public void setCompanyName(String companyName) { this.companyName = companyName; }
     public String getDescriptionRaw() { return descriptionRaw; }
     public void setDescriptionRaw(String descriptionRaw) { this.descriptionRaw = descriptionRaw; }
+    public String getEnrichmentStatus() { return enrichmentStatus; }
+    public void setEnrichmentStatus(String enrichmentStatus) { this.enrichmentStatus = enrichmentStatus; }
+    public int getEnrichmentAttempts() { return enrichmentAttempts; }
+    public void setEnrichmentAttempts(int enrichmentAttempts) { this.enrichmentAttempts = enrichmentAttempts; }
+    public Instant getEnrichmentLastAttemptAt() { return enrichmentLastAttemptAt; }
+    public void setEnrichmentLastAttemptAt(Instant at) { this.enrichmentLastAttemptAt = at; }
+    public String getEnrichmentLastError() { return enrichmentLastError; }
+    public void setEnrichmentLastError(String enrichmentLastError) { this.enrichmentLastError = enrichmentLastError; }
+
     public String getDescriptionClean() { return descriptionClean; }
     public void setDescriptionClean(String descriptionClean) { this.descriptionClean = descriptionClean; }
     public String getEmploymentType() { return employmentType; }

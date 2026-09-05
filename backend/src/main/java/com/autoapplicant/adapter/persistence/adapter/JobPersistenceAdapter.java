@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.mapper.JobMapper;
 import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
+import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.EnumMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -227,9 +230,49 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findUnenriched(int limit) {
-        return repo.findUnenriched(org.springframework.data.domain.PageRequest.of(0, limit))
-                .stream().map(JobMapper::toDomain).collect(java.util.stream.Collectors.toList());
+    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore) {
+        return repo.findForEnrichment(maxAttempts, retryBefore, PageRequest.of(0, limit))
+                .stream().map(JobMapper::toDomain).toList();
+    }
+
+    @Override
+    public void markEnriched(UUID jobId) {
+        repo.findById(jobId).ifPresent(e -> {
+            e.setEnrichmentStatus(EnrichmentStatus.ENRICHED.name());
+            e.setEnrichmentAttempts(e.getEnrichmentAttempts() + 1);
+            e.setEnrichmentLastAttemptAt(Instant.now());
+            e.setEnrichmentLastError(null);
+            repo.save(e);
+        });
+    }
+
+    @Override
+    public boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts) {
+        return repo.findById(jobId).map(e -> {
+            int attempts = e.getEnrichmentAttempts() + 1;
+            boolean givingUp = attempts >= maxAttempts;
+            e.setEnrichmentAttempts(attempts);
+            e.setEnrichmentLastAttemptAt(Instant.now());
+            e.setEnrichmentLastError(truncate(reason));
+            e.setEnrichmentStatus((givingUp ? EnrichmentStatus.FAILED : EnrichmentStatus.PENDING).name());
+            repo.save(e);
+            return givingUp;
+        }).orElse(false);
+    }
+
+    @Override
+    public Map<EnrichmentStatus, Long> countByEnrichmentStatus() {
+        Map<EnrichmentStatus, Long> counts = new EnumMap<>(EnrichmentStatus.class);
+        for (Object[] row : repo.countByEnrichmentStatus()) {
+            counts.merge(EnrichmentStatus.parse((String) row[0]), ((Number) row[1]).longValue(), Long::sum);
+        }
+        return counts;
+    }
+
+    /** The column is text, but an unbounded provider error has no business filling it. */
+    private static String truncate(String reason) {
+        if (reason == null) return null;
+        return reason.length() <= 500 ? reason : reason.substring(0, 500);
     }
 
     @Override

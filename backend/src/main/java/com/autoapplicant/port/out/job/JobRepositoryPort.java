@@ -22,7 +22,25 @@ public interface JobRepositoryPort {
     List<Job> findByIds(List<UUID> ids);
     /** Every posting we hold from one company, live ones first. */
     List<Job> findByCompanyId(UUID companyId, int limit);
-    List<Job> findUnenriched(int limit);
+    /**
+     * The enrichment queue: jobs still worth trying, never-attempted first. Jobs given
+     * up on after {@code maxAttempts}, and ones tried since {@code retryBefore}, are
+     * left out.
+     */
+    List<Job> findForEnrichment(int limit, int maxAttempts, java.time.Instant retryBefore);
+
+    /** Enrichment produced a usable result; stop asking about this one. */
+    void markEnriched(UUID jobId);
+
+    /**
+     * An attempt failed. Increments the attempt count and gives up on the job once it
+     * reaches {@code maxAttempts}, so a posting that can never be enriched stops
+     * consuming quota. Returns true when this was the attempt that gave up.
+     */
+    boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts);
+
+    /** How many jobs sit in each enrichment state — for the sweep's own reporting. */
+    java.util.Map<com.autoapplicant.domain.job.EnrichmentStatus, Long> countByEnrichmentStatus();
     List<UUID> findStaleActiveJobIds(java.time.Instant cutoff);
     int deactivateStaleJobs(java.time.Instant cutoff);
     long count();

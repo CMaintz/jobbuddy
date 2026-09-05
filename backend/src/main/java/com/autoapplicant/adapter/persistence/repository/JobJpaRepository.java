@@ -29,8 +29,23 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.companyId = :companyId ORDER BY j.isActive DESC, j.postedAt DESC")
     List<JobEntity> findByCompanyId(@Param("companyId") UUID companyId, Pageable pageable);
 
-    @Query("SELECT j FROM JobEntity j WHERE j.aiSummary IS NULL ORDER BY j.createdAt ASC")
-    List<JobEntity> findUnenriched(Pageable pageable);
+    /**
+     * The enrichment queue: never-attempted jobs first, then the ones tried longest ago,
+     * skipping any that have been given up on or retried too recently.
+     */
+    @Query("""
+            SELECT j FROM JobEntity j
+            WHERE j.enrichmentStatus = 'PENDING'
+              AND j.enrichmentAttempts < :maxAttempts
+              AND (j.enrichmentLastAttemptAt IS NULL OR j.enrichmentLastAttemptAt < :retryBefore)
+            ORDER BY j.enrichmentLastAttemptAt ASC NULLS FIRST, j.createdAt ASC
+            """)
+    List<JobEntity> findForEnrichment(@Param("maxAttempts") int maxAttempts,
+                                      @Param("retryBefore") Instant retryBefore,
+                                      Pageable pageable);
+
+    @Query("SELECT j.enrichmentStatus, count(j) FROM JobEntity j GROUP BY j.enrichmentStatus")
+    List<Object[]> countByEnrichmentStatus();
 
     @Query("SELECT j FROM JobEntity j WHERE j.isActive = true AND j.id NOT IN :excludedIds ORDER BY j.postedAt DESC")
     List<JobEntity> findAllExcluding(@Param("excludedIds") Set<UUID> excludedIds, Pageable pageable);
