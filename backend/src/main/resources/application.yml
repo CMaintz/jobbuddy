@@ -94,6 +94,18 @@ app:
     cron: "${DUE_REMINDER_CRON:0 0 7 * * *}"
   crawler:
     cron: "0 0 */4 * * *"
+  enrichment:
+    # A posting is given up on after this many failed attempts, so one the model can
+    # never summarise stops consuming quota on every sweep.
+    max-attempts: ${ENRICHMENT_MAX_ATTEMPTS:4}
+    # How long to leave a failed posting alone before trying it again.
+    retry-delay: ${ENRICHMENT_RETRY_DELAY:PT6H}
+    sweep:
+      # Recovers postings the enrichment pool dropped and ones that failed. Offset from
+      # the crawler so the sweep is not competing with the ingest it cleans up after.
+      enabled: ${ENRICHMENT_SWEEP_ENABLED:true}
+      cron: ${ENRICHMENT_SWEEP_CRON:0 30 * * * *}
+      batch-size: ${ENRICHMENT_SWEEP_BATCH:40}
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}
