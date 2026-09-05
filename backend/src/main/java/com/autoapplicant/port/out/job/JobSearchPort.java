@@ -1,14 +1,12 @@
 package com.autoapplicant.port.out.job;
 
-import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
 
-import java.util.List;
-import java.util.UUID;
-
+/**
+ * Keyword search over postings. There is no index to maintain: the search vector is a
+ * generated column on the row itself, so writing a job is what makes it findable.
+ */
 public interface JobSearchPort {
-    void index(Job job);
-    void delete(UUID jobId);
     JobSearchResult search(JobSearchQuery query);
 }

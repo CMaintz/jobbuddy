@@ -5,7 +5,7 @@ An AI-powered job application platform that helps candidates go from job posting
 ## Features
 
 - **Career profile management** — structured profile with experience, education, skills, and projects; can be bootstrapped by parsing an existing CV
-- **Job discovery** — multi-source job crawler (Jobindex, Jobnet, IT-Jobbank, Jobdanmark, + ATS boards) and full-text/semantic search powered by Typesense
+- **Job discovery** — multi-source job crawler (Jobindex, Jobnet, IT-Jobbank, Jobdanmark, + ATS boards) and Postgres full-text and pgvector semantic search
 - **LinkedIn job connector** — personal-use, low-volume connector over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated per-user keyword plans; runs on its own jittered schedule off the shared crawl (see `db.md` / `application.yml` `app.linkedin.*`)
 - **AI document generation** — tailored CVs and cover letters generated against a specific posting, with a configurable **automatic drafter→reviewer loop** that critiques and revises each draft before assembly
 - **ATS reports** — automated analysis of how well a generated document matches the target posting
@@ -25,11 +25,11 @@ An AI-powered job application platform that helps candidates go from job posting
 | Architecture | Hexagonal (Ports & Adapters) — `domain` / `port` / `usecase` / `adapter` |
 | Frontend | Angular (standalone components, lazy-loaded routes) |
 | Database | PostgreSQL with Flyway migrations |
-| Search | Typesense (keyword + vector search, `text-embedding-3-small`) |
+| Search | Postgres full-text (`danish` config) + pgvector semantic search (`text-embedding-3-small`) |
 | AI | OpenAI / Gemini API, or a local CLI agent (Claude Code / Codex) for generation |
 | Auth | Firebase Authentication (JWT), optional LinkedIn OAuth |
 | Docs | Springdoc OpenAPI / Swagger UI |
-| Infra | Docker Compose (Postgres, Typesense, backend, frontend) |
+| Infra | Docker Compose (Postgres, backend, frontend) |
 
 ## Architecture
 
@@ -42,7 +42,6 @@ adapter/            Spring controllers, JPA adapters, AI client, crawler, PDF re
   ai/               OpenAI client implementing AiProviderPort
   crawler/          Job posting crawler
   pdf/              PDF rendering
-  search/           Typesense adapter
 port/
   in/               Use case interfaces (what the application can do)
   out/              Repository/external service interfaces (what the app needs)
@@ -65,7 +64,7 @@ docker compose --env-file .env -f infra/docker-compose.yml up --build
 
 ```powershell
 # Dependencies only
-docker compose --env-file .env -f infra/docker-compose.yml up postgres typesense -d
+docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 
 # Backend
 ./gradlew :backend:bootRun
@@ -79,7 +78,6 @@ cd frontend; npm install; npm run start:local
 | Frontend | http://localhost:4200 |
 | Backend API | http://localhost:8080/api/v1 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
-| Typesense | http://localhost:8108 |
 
 ### Required configuration
 

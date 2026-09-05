@@ -87,11 +87,6 @@ app:
     economy-model: gemini-2.5-flash
     standard-model: gemini-2.5-flash
     premium-model: gemini-2.5-pro
-  typesense:
-    api-key: ${TYPESENSE_API_KEY:local-dev-key}
-    host: ${TYPESENSE_HOST:localhost}
-    port: ${TYPESENSE_PORT:8108}
-    protocol: http
   reminders:
     # Daily "due today" email: reminders the user set and outreach follow-ups that have arrived.
     # Users with nothing due are not mailed — a usually-empty daily email gets filtered, and then

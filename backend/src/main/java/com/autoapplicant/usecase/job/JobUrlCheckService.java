@@ -6,7 +6,6 @@ import com.autoapplicant.domain.job.UrlProbeOutcome;
 import com.autoapplicant.port.in.job.ReportJobInactiveUseCase;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import com.autoapplicant.port.out.job.JobSearchPort;
 import com.autoapplicant.port.out.job.JobUrlProbePort;
 import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
 import org.slf4j.Logger;
@@ -43,7 +42,6 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
 
     private final JobRepositoryPort jobRepo;
     private final JobUrlProbePort urlProbe;
-    private final JobSearchPort jobSearch;
     private final IgnoredJobRepositoryPort ignoredJobRepo;
     private final SavedJobRepositoryPort savedJobRepo;
     private final boolean enabled;
@@ -52,7 +50,6 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
     private final long politenessDelayMs;
 
     public JobUrlCheckService(JobRepositoryPort jobRepo, JobUrlProbePort urlProbe,
-                              JobSearchPort jobSearch,
                               IgnoredJobRepositoryPort ignoredJobRepo,
                               SavedJobRepositoryPort savedJobRepo,
                               @Value("${app.job.url-check.enabled:true}") boolean enabled,
@@ -61,7 +58,6 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
                               @Value("${app.job.url-check.politeness-delay-ms:300}") long politenessDelayMs) {
         this.jobRepo = jobRepo;
         this.urlProbe = urlProbe;
-        this.jobSearch = jobSearch;
         this.ignoredJobRepo = ignoredJobRepo;
         this.savedJobRepo = savedJobRepo;
         this.enabled = enabled;
@@ -118,7 +114,6 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
             case GONE, GONE_SOFT -> {
                 int threshold = outcome == UrlProbeOutcome.GONE ? HARD_GONE_THRESHOLD : SOFT_GONE_THRESHOLD;
                 if (jobRepo.markUrlTakenDown(job.id(), threshold)) {
-                    jobSearch.delete(job.id());
                     return true;
                 }
             }
