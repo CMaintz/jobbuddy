@@ -82,6 +82,29 @@ final class AtsCheckMessages {
     }
 
     String fillerLabel()     { return danish ? "Floskler" : "Filler phrases"; }
+
+    // ── Keyword coverage (measured here, not reported by the model) ───────────────────────
+
+    String keywordLabel()    { return danish ? "Nøgleord fra opslaget" : "Posting keywords"; }
+
+    String keywordPass(int percent, int matched, int total) {
+        return danish
+                ? "Dokumentet nævner " + matched + " af " + total + " nøgleord fra opslaget (" + percent + " %)."
+                : "The document mentions " + matched + " of " + total + " posting keywords (" + percent + "%).";
+    }
+
+    String keywordWarn(int percent, List<String> missingRequired) {
+        String named = join(missingRequired);
+        return danish
+                ? "Kun " + percent + " % dækning. Krav der ikke nævnes: " + named + "."
+                : "Only " + percent + "% coverage. Requirements not mentioned: " + named + ".";
+    }
+
+    String keywordThin(int percent) {
+        return danish
+                ? "Kun " + percent + " % af opslagets nøgleord nævnes i dokumentet."
+                : "Only " + percent + "% of the posting's keywords appear in the document.";
+    }
     String fillerPass()      {
         return danish ? "Ingen kendte floskler eller AI-typiske vendinger."
                       : "No known application clichés or AI-tell phrasing.";

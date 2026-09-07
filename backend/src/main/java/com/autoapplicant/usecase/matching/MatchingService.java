@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.autoapplicant.usecase.common.KeywordMatcher;
 
 @Service
 public class MatchingService implements GetRecommendationsUseCase {
@@ -365,8 +366,10 @@ public class MatchingService implements GetRecommendationsUseCase {
             if (!descLower.isBlank()) {
                 int signalBonus = 0;
                 if (notEmpty(prefs.positiveSignals())) {
+                    // Whole-token, not substring: a signal of "Java" must not be satisfied
+                    // by a posting that only mentions JavaScript.
                     long posHits = prefs.positiveSignals().stream()
-                            .filter(s -> descLower.contains(s.toLowerCase().trim()))
+                            .filter(s -> KeywordMatcher.contains(descLower, s))
                             .count();
                     if (posHits > 0) {
                         signalBonus += Math.min((int) posHits * POSITIVE_SIGNAL_BONUS, MAX_SIGNAL_BONUS);
@@ -375,7 +378,7 @@ public class MatchingService implements GetRecommendationsUseCase {
                 }
                 if (notEmpty(prefs.negativeSignals())) {
                     long negHits = prefs.negativeSignals().stream()
-                            .filter(s -> descLower.contains(s.toLowerCase().trim()))
+                            .filter(s -> KeywordMatcher.contains(descLower, s))
                             .count();
                     if (negHits > 0) {
                         signalBonus += Math.max((int) negHits * NEGATIVE_SIGNAL_PENALTY, MAX_SIGNAL_PENALTY);

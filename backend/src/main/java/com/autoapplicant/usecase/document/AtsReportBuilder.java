@@ -4,6 +4,7 @@ import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.structured.AtsCheck;
 import com.autoapplicant.domain.document.structured.AtsReport;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
+import com.autoapplicant.domain.document.structured.KeywordCoverage;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import org.springframework.stereotype.Component;
 
@@ -14,26 +15,55 @@ import java.util.List;
 
 public class AtsReportBuilder {
 
-    public AtsReport forTailored(TailoredCvContent tailored, String exportMode,
+    public AtsReport forTailored(KeywordCoverage coverage, TailoredCvContent tailored, String exportMode,
                                  ContentGuardFindings findings, String documentLanguage) {
-        return new AtsReport(
-                scoreFromCoverage(tailored.keywordCoverage()),
-                clamp(tailored.keywordCoverage()),
-                Values.listOrEmpty(tailored.matchedKeywords()),
-                Values.listOrEmpty(tailored.missingKeywords()),
-                checks(exportMode, tailored.notes(), findings, documentLanguage));
+        return forCoverage(coverage, tailored.notes(), exportMode, findings, documentLanguage);
     }
 
-    public AtsReport forCoverage(Integer keywordCoverage, List<String> matchedKeywords,
-                                  List<String> missingKeywords, String exportMode,
-                                  ContentGuardFindings findings, String documentLanguage) {
-        return new AtsReport(
-                scoreFromCoverage(keywordCoverage),
-                clamp(keywordCoverage),
-                Values.listOrEmpty(matchedKeywords),
-                Values.listOrEmpty(missingKeywords),
-                checks(exportMode, List.of(), findings, documentLanguage));
+    public AtsReport forCoverage(KeywordCoverage coverage, String exportMode,
+                                 ContentGuardFindings findings, String documentLanguage) {
+        return forCoverage(coverage, List.of(), exportMode, findings, documentLanguage);
     }
+
+    private AtsReport forCoverage(KeywordCoverage coverage, List<String> notes, String exportMode,
+                                  ContentGuardFindings findings, String documentLanguage) {
+        KeywordCoverage measured = coverage != null ? coverage : KeywordCoverage.NOT_MEASURED;
+        List<AtsCheck> checks = checks(exportMode, notes, findings, documentLanguage);
+        keywordCheck(measured, documentLanguage).ifPresent(checks::add);
+        return new AtsReport(
+                measured.measured() ? scoreFromCoverage(measured.percent()) : NOT_MEASURED_SCORE,
+                measured.percent(),
+                measured.matched(),
+                measured.missing(),
+                checks);
+    }
+
+    /**
+     * The keyword line. Absent when there was nothing to measure against — an unenriched
+     * posting is not the same as a document that covers nothing.
+     */
+    private static java.util.Optional<AtsCheck> keywordCheck(KeywordCoverage coverage, String documentLanguage) {
+        if (!coverage.measured()) return java.util.Optional.empty();
+        AtsCheckMessages msg = AtsCheckMessages.forLanguage(documentLanguage);
+        int total = coverage.matched().size() + coverage.missing().size();
+
+        if (!coverage.missingRequired().isEmpty()) {
+            return java.util.Optional.of(new AtsCheck("keyword_coverage", msg.keywordLabel(), "WARN",
+                    msg.keywordWarn(coverage.percent(), coverage.missingRequired())));
+        }
+        if (coverage.percent() < LOW_COVERAGE) {
+            return java.util.Optional.of(new AtsCheck("keyword_coverage", msg.keywordLabel(), "WARN",
+                    msg.keywordThin(coverage.percent())));
+        }
+        return java.util.Optional.of(new AtsCheck("keyword_coverage", msg.keywordLabel(), "PASS",
+                msg.keywordPass(coverage.percent(), coverage.matched().size(), total)));
+    }
+
+    /** Coverage below this reads as thin rather than adequate. Warn-only; nothing blocks on it. */
+    private static final int LOW_COVERAGE = 50;
+
+    /** Score used when there was no keyword list to measure against. */
+    private static final int NOT_MEASURED_SCORE = 50;
 
     public AtsReport basic(String content, String exportMode, ContentGuardFindings findings,
                            String documentLanguage) {

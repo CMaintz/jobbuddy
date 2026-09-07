@@ -3,6 +3,7 @@ package com.autoapplicant.usecase.document;
 import com.autoapplicant.domain.document.structured.AtsCheck;
 import com.autoapplicant.domain.document.structured.AtsReport;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
+import com.autoapplicant.domain.document.structured.KeywordCoverage;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -29,7 +30,8 @@ class AtsReportBuilderTest {
 
     @Test
     void unsupportedMetricsFailWithTheOffendingClaims() {
-        AtsReport report = builder.forCoverage(50, List.of(), List.of(), "ATS",
+        AtsReport report = builder.forCoverage(
+                new KeywordCoverage(true, 50, List.of("Java"), List.of("Go"), List.of()), "ATS",
                 new ContentGuardFindings(List.of("94772 users"), List.of(), List.of(), List.of()), null);
         assertThat(check(report, "fact_guard")).get().satisfies(c -> {
             assertThat(c.status()).isEqualTo("FAIL");
@@ -85,6 +87,64 @@ class AtsReportBuilderTest {
         });
         // …and the hard check stays green, because nothing was fabricated.
         assertThat(check(report, "fact_guard")).get().extracting(AtsCheck::status).isEqualTo("PASS");
+    }
+
+    @Test
+    void a_measured_document_gets_a_keyword_line_reporting_what_it_covered() {
+        AtsReport report = builder.forCoverage(
+                new KeywordCoverage(true, 80, List.of("Java", "Kubernetes", "Go", "Terraform"),
+                        List.of("Rust"), List.of()),
+                "ATS", ContentGuardFindings.NONE, null);
+
+        assertThat(check(report, "keyword_coverage")).get().satisfies(c -> {
+            assertThat(c.status()).isEqualTo("PASS");
+            assertThat(c.detail()).contains("4 of 5").contains("80%");
+        });
+        assertThat(report.keywordCoverage()).isEqualTo(80);
+        assertThat(report.missingKeywords()).containsExactly("Rust");
+    }
+
+    @Test
+    void a_missing_requirement_warns_and_names_it_even_when_coverage_is_otherwise_high() {
+        AtsReport report = builder.forCoverage(
+                new KeywordCoverage(true, 75, List.of("Kubernetes"), List.of("Java"), List.of("Java")),
+                "ATS", ContentGuardFindings.NONE, null);
+
+        assertThat(check(report, "keyword_coverage")).get().satisfies(c -> {
+            assertThat(c.status()).isEqualTo("WARN");
+            assertThat(c.detail()).contains("Java");
+        });
+    }
+
+    @Test
+    void thin_coverage_warns_even_with_no_requirement_missed() {
+        AtsReport report = builder.forCoverage(
+                new KeywordCoverage(true, 20, List.of("Go"), List.of("Java", "Rust", "C#"), List.of()),
+                "ATS", ContentGuardFindings.NONE, null);
+
+        assertThat(check(report, "keyword_coverage")).get().extracting(AtsCheck::status).isEqualTo("WARN");
+    }
+
+    @Test
+    void an_unmeasured_document_gets_no_keyword_line_at_all() {
+        // Nothing to measure against is not the same as covering nothing, so the report
+        // stays quiet rather than showing a damning zero.
+        AtsReport report = builder.basic("body", "ATS", ContentGuardFindings.NONE, null);
+
+        assertThat(check(report, "keyword_coverage")).isEmpty();
+        assertThat(report.keywordCoverage()).isZero();
+    }
+
+    @Test
+    void the_keyword_line_speaks_danish_for_a_danish_document() {
+        AtsReport report = builder.forCoverage(
+                new KeywordCoverage(true, 90, List.of("Kubernetes"), List.of(), List.of()),
+                "ATS", ContentGuardFindings.NONE, "Danish");
+
+        assertThat(check(report, "keyword_coverage")).get().satisfies(c -> {
+            assertThat(c.label()).isEqualTo("Nøgleord fra opslaget");
+            assertThat(c.detail()).contains("nøgleord");
+        });
     }
 
     @Test

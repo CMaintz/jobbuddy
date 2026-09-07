@@ -9,8 +9,5 @@ public record TailoredCvContent(
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,
         List<StructuredDocumentItem> certifications,
-        Integer keywordCoverage,
-        List<String> matchedKeywords,
-        List<String> missingKeywords,
         List<String> notes
 ) {}

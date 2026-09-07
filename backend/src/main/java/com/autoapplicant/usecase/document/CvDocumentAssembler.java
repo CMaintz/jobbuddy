@@ -20,8 +20,11 @@ public class CvDocumentAssembler {
     private static final int MAX_SKILLS = 24;
 
     private final AtsReportBuilder atsReportBuilder;
+    private final KeywordCoverageCalculator coverageCalculator;
 
-    public CvDocumentAssembler(AtsReportBuilder atsReportBuilder) {
+    public CvDocumentAssembler(AtsReportBuilder atsReportBuilder,
+                               KeywordCoverageCalculator coverageCalculator) {
+        this.coverageCalculator = coverageCalculator;
         this.atsReportBuilder = atsReportBuilder;
     }
 
@@ -30,7 +33,9 @@ public class CvDocumentAssembler {
                                         TailoredCvContent tailored, String exportMode, String templateId,
                                         boolean showProfileImage, DocumentTheme theme,
                                         ContentGuardFindings guardFindings,
-                                        String documentLanguage) {
+                                        String documentLanguage,
+                                        JobKeywords jobKeywords,
+                                        String documentText) {
         CvSectionLabels labels = CvSectionLabels.forLanguage(documentLanguage);
         List<String> selectedSkills = tailored != null && tailored.selectedSkills() != null && !tailored.selectedSkills().isEmpty()
                 ? validateSkills(tailored.selectedSkills(), source)
@@ -100,9 +105,14 @@ public class CvDocumentAssembler {
         }
 
         ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
+        // Measured against the CV's own text and the posting's own keywords — neither
+        // side of the comparison comes from the model that wrote the document.
+        KeywordCoverage coverage = coverageCalculator.measure(documentText, jobKeywords);
         AtsReport report = tailored != null
-                ? atsReportBuilder.forTailored(tailored, exportMode, findings, documentLanguage)
-                : atsReportBuilder.basic(null, exportMode, findings, documentLanguage);
+                ? atsReportBuilder.forTailored(coverage, tailored, exportMode, findings, documentLanguage)
+                : coverage.measured()
+                        ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage)
+                        : atsReportBuilder.basic(null, exportMode, findings, documentLanguage);
 
         return new StructuredDocument(
                 null,
