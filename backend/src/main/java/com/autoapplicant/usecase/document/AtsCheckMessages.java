@@ -100,6 +100,22 @@ final class AtsCheckMessages {
                 : "Only " + percent + "% coverage. Requirements not mentioned: " + named + ".";
     }
 
+    String requirementsLabel() {
+        return danish ? "Krav ud over nøgleord" : "Requirements beyond keywords";
+    }
+
+    /**
+     * Listed, not scored. The wording says so plainly: these are the asks the reader has to
+     * settle, because no count of words in the document can.
+     */
+    String requirementsInfo(List<String> requirements) {
+        return danish
+                ? "Opslaget beder også om: " + join(requirements)
+                  + ". Tjek selv, at ansøgningen svarer på dem — det kan en nøgleordstælling ikke afgøre."
+                : "The posting also asks for: " + join(requirements)
+                  + ". Check the document answers these — a keyword count cannot settle them.";
+    }
+
     String keywordThin(int percent) {
         return danish
                 ? "Kun " + percent + " % af opslagets nøgleord nævnes i dokumentet."

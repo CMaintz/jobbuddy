@@ -3,9 +3,13 @@ package com.autoapplicant.adapter.persistence.entity;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Type;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "jobs")
@@ -94,6 +98,11 @@ public class JobEntity {
     @Type(StringArrayType.class)
     @Column(name = "preferred_skills", columnDefinition = "text[]")
     private String[] preferredSkills;
+
+    /** The posting's asks in its own words — see V027. Untrimmed by the skills vocabulary. */
+    @Type(JsonType.class)
+    @Column(name = "requirements", columnDefinition = "jsonb", nullable = false)
+    private List<Map<String, Object>> requirements = new ArrayList<>();
 
     @Column(name = "posted_at")
     private Instant postedAt;
@@ -216,6 +225,9 @@ public class JobEntity {
     public void setSkills(String[] skills) { this.skills = skills; }
     public String[] getRequiredSkills() { return requiredSkills; }
     public void setRequiredSkills(String[] v) { this.requiredSkills = v; }
+    public List<Map<String, Object>> getRequirements() { return requirements; }
+    public void setRequirements(List<Map<String, Object>> v) { this.requirements = v == null ? new ArrayList<>() : v; }
+
     public String[] getPreferredSkills() { return preferredSkills; }
     public void setPreferredSkills(String[] v) { this.preferredSkills = v; }
     public String[] getLanguages() { return languages; }

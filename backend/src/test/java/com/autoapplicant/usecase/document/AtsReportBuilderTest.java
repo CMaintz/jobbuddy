@@ -4,6 +4,9 @@ import com.autoapplicant.domain.document.structured.AtsCheck;
 import com.autoapplicant.domain.document.structured.AtsReport;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.KeywordCoverage;
+import com.autoapplicant.domain.job.JobRequirement;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.RequirementTier;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -151,5 +154,41 @@ class AtsReportBuilderTest {
     void nullFindingsAreTreatedAsClean() {
         assertThat(check(builder.basic("body", "ATS", null, null), "fact_guard"))
                 .get().extracting(AtsCheck::status).isEqualTo("PASS");
+    }
+
+    // ── Asks a keyword count cannot settle ────────────────────────────────────────────────
+
+    private static final List<JobRequirement> UNMEASURABLE = List.of(
+            new JobRequirement("Kandidatgrad i datalogi", RequirementTier.PREFERRED,
+                    RequirementKind.EDUCATION, null),
+            new JobRequirement("Mindst 5 års erfaring med backend", RequirementTier.REQUIRED,
+                    RequirementKind.EXPERIENCE, null));
+
+    @Test
+    void unmeasurableRequirementsAreListedAsInfoNotScored() {
+        AtsReport report = builder.forCoverage(
+                new KeywordCoverage(true, 80, List.of("Java"), List.of(), List.of()), "ATS",
+                ContentGuardFindings.NONE, null, UNMEASURABLE);
+
+        assertThat(check(report, "posting_requirements")).get().satisfies(c -> {
+            assertThat(c.status()).isEqualTo("INFO");
+            assertThat(c.detail()).contains("Mindst 5 års erfaring med backend", "Kandidatgrad i datalogi");
+        });
+        // The score is the keyword figure, untouched by the listed asks.
+        assertThat(report.score()).isEqualTo(AtsReportBuilder.scoreFromCoverage(80));
+        assertThat(report.keywordCoverage()).isEqualTo(80);
+    }
+
+    @Test
+    void demandsAreNamedBeforePreferences() {
+        AtsReport report = builder.basic("body", "ATS", ContentGuardFindings.NONE, null, UNMEASURABLE);
+        String detail = check(report, "posting_requirements").orElseThrow().detail();
+        assertThat(detail.indexOf("5 års")).isLessThan(detail.indexOf("Kandidatgrad"));
+    }
+
+    @Test
+    void noRequirementLineWhenThePostingHasNoUnmeasurableAsks() {
+        assertThat(check(builder.basic("body", "ATS", ContentGuardFindings.NONE, null), "posting_requirements"))
+                .isEmpty();
     }
 }

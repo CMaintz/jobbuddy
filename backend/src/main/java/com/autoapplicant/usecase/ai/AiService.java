@@ -310,7 +310,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             PostingContext posting = new PostingContext(jobDescription,
                     job != null ? job.country() : null,
                     job != null && job.contact() != null && job.contact().hasName()
-                            ? job.contact().display() : null);
+                            ? job.contact().display() : null,
+                    job != null ? job.requirements() : java.util.List.of());
 
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                     documentType, contactFreeJson, posting,

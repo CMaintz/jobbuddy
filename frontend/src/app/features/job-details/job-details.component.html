@@ -134,6 +134,22 @@
                   </div>
                 </div>
                 <pre class="m-0 p-[18px] bg-jb-surface border border-jb-border rounded-lg text-base leading-[1.7] text-jb-text whitespace-pre-wrap font-sans">{{ job.descriptionClean || job.aiSummary || ('jobDetails.noDescription' | translate) }}</pre>
+                @if (requirements.length) {
+                  <div class="mt-[18px] pt-3.5 border-t border-jb-border">
+                    <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'jobFeed.requirements' | translate }}</div>
+                    <ul class="list-none p-0 m-0 flex flex-col gap-1.5">
+                      @for (req of requirements; track req.text) {
+                        <li class="flex gap-2 items-start text-base text-jb-text-mid">
+                          <span class="pill shrink-0"
+                            [class.pill-accent]="req.tier === 'REQUIRED'"
+                            [class.pill-neutral]="req.tier !== 'REQUIRED'">{{
+                              ('jobFeed.tier.' + req.tier) | translate }}</span>
+                          <span>{{ req.text }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
                 @if (keywords.length) {
                   <div class="mt-[18px] pt-3.5 border-t border-jb-border">
                     <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'jobDetails.keywordsFound' | translate }}</div>

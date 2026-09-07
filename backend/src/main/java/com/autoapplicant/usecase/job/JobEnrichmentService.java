@@ -4,6 +4,9 @@ import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobContact;
 import com.autoapplicant.domain.job.JobText;
+import com.autoapplicant.domain.job.RequirementTier;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -95,8 +98,10 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                   "aiSeniorityEstimate": "JUNIOR|MID|SENIOR|LEAD|PRINCIPAL|EXECUTIVE",
                   "technologies": ["Java", "React", "PostgreSQL"],
                   "skills": ["Agile", "Communication", "Problem Solving"],
-                  "requiredSkills": ["Java", "5 years backend experience"],
-                  "preferredSkills": ["Kubernetes", "Danish"],
+                  "requiredSkills": ["Java"],
+                  "preferredSkills": ["Kubernetes"],
+                  "requirements": [{"text": "5 års erfaring med backend-udvikling", "tier": "REQUIRED", "kind": "EXPERIENCE", "skill": null},
+                                   {"text": "Java", "tier": "REQUIRED", "kind": "SKILL", "skill": "Java"}],
                   "employmentType": "FULL_TIME|PART_TIME|CONTRACT|FREELANCE|INTERNSHIP or null",
                   "remoteType": "REMOTE|HYBRID|ON_SITE or null",
                   "salaryMin": null,
@@ -131,6 +136,14 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 - municipality: match to a known Danish kommune name (e.g. "København", "Aarhus", "Odense")
                 - applicationDeadline: the stated application deadline (e.g. "Ansøgningsfrist"); null when not stated or "as soon as possible"
                 - contact: the person the posting names to answer questions about the role (Danish                 postings usually do: "Har du spørgsmål, så kontakt …"). Copy the name, their stated job                 title, and any email or phone given FOR THAT PERSON. Use null for the whole "contact"                 object when the posting names no individual — a generic jobs@ address or "HR" is NOT a                 contact person. Never guess a name, never carry one over from page chrome or another                 vacancy on the page.
+                - requirements: EVERY ask the posting makes, in the posting's own words — do not \
+                shorten to a label and do not skip one because it is not a technology. Include \
+                years of experience, education, languages, certifications, driving licences, \
+                willingness to travel. tier is REQUIRED when the posting demands it and PREFERRED \
+                otherwise (the same wording rules as requiredSkills/preferredSkills). kind is one \
+                of SKILL, EXPERIENCE, EDUCATION, LANGUAGE, CERTIFICATION, OTHER. Set "skill" only \
+                for kind SKILL, to the same short label you used in technologies/skills; null \
+                otherwise. This list is NOT filtered against those lists — it is the full picture.
                 - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits.
 
                 Job title: %s
@@ -182,6 +195,12 @@ public class JobEnrichmentService implements EnrichJobUseCase {
             boolean tiersUsable = !required.isEmpty() || !preferred.isEmpty();
             List<String> requiredSkills  = tiersUsable ? required  : job.requiredSkills();
             List<String> preferredSkills = tiersUsable ? preferred : job.preferredSkills();
+
+            // Deliberately not confined to the technologies/skills vocabulary: that narrowing
+            // protects the matcher from an invented requirement, and would here throw away every
+            // ask that is not a short label — which is most of what a posting demands.
+            List<JobRequirement> requirements = parseRequirements(parsed);
+            if (requirements.isEmpty()) requirements = job.requirements();
 
             String municipality = job.municipality() != null ? job.municipality()
                     : (String) parsed.get("municipality");
@@ -241,6 +260,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                     .salaryMin(salaryMin).salaryMax(salaryMax).currency(currency)
                     .technologies(mergedTech).skills(mergedSkills)
                     .requiredSkills(requiredSkills).preferredSkills(preferredSkills)
+                    .requirements(requirements)
                     .aiSummary(summary).aiTags(tags).aiSeniorityEstimate(aiSeniority)
                     .jobCategory(jobCategory)
                     .shortDescription(shortDescription)
@@ -350,6 +370,44 @@ public class JobEnrichmentService implements EnrichJobUseCase {
      * than failing the enrichment: a bad range should cost us a surviving cookie
      * banner, not every field the model got right.
      */
+    /**
+     * Reads the posting's asks. A malformed entry is skipped rather than failing the
+     * enrichment — losing one requirement beats losing every other field the model got right.
+     */
+    @SuppressWarnings("unchecked")
+    /**
+     * A posting asking for more than this is listing wishes; the cap keeps one verbose ad from
+     * dominating every prompt it is pasted into.
+     */
+    private static final int MAX_REQUIREMENTS = 30;
+
+    /** Longer than this is a paragraph the model failed to split, not a single ask. */
+    private static final int MAX_REQUIREMENT_CHARS = 300;
+
+    private List<JobRequirement> parseRequirements(Map<String, Object> parsed) {
+        if (!(parsed.get("requirements") instanceof List<?> raw)) return List.of();
+        List<JobRequirement> result = new java.util.ArrayList<>();
+        for (Object entry : raw) {
+            if (result.size() >= MAX_REQUIREMENTS) break;
+            if (!(entry instanceof Map<?, ?> row)) continue;
+            Object text = row.get("text");
+            if (!(text instanceof String t) || t.isBlank()) continue;
+            String cleaned = t.strip();
+            if (cleaned.length() > MAX_REQUIREMENT_CHARS) {
+                cleaned = cleaned.substring(0, MAX_REQUIREMENT_CHARS).strip();
+            }
+            result.add(new JobRequirement(cleaned,
+                    RequirementTier.parse(asString(row.get("tier"))),
+                    RequirementKind.parse(asString(row.get("kind"))),
+                    asString(row.get("skill"))));
+        }
+        return List.copyOf(result);
+    }
+
+    private static String asString(Object value) {
+        return value instanceof String s && !s.isBlank() ? s.trim() : null;
+    }
+
     private List<int[]> lineRanges(Map<String, Object> parsed) {
         if (!(parsed.get("boilerplateLines") instanceof List<?> raw)) return List.of();
         List<int[]> ranges = new java.util.ArrayList<>();

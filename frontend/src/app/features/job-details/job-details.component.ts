@@ -12,7 +12,7 @@ import { JobsApiService } from '../../core/api/jobs.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { NotesApiService } from '../../core/api/notes.api';
 import { Note } from '../../core/models/note.model';
-import { Job } from '../../core/models/job.model';
+import { Job, JobRequirement } from '../../core/models/job.model';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 
@@ -71,6 +71,15 @@ export class JobDetailsComponent implements OnInit {
     if (this.job.salaryMin && this.job.salaryMax) return `${cur}${this.job.salaryMin}–${this.job.salaryMax}`;
     if (this.job.salaryMin) return `${cur}${this.job.salaryMin}+`;
     return this.translate.instant('jobDetails.upTo', { amount: `${cur}${this.job!.salaryMax}` });
+  }
+
+  /**
+   * The posting's asks, demands first. Listed rather than scored: only the skill asks are
+   * something a keyword check can settle, and the rest are for the reader to judge.
+   */
+  get requirements(): JobRequirement[] {
+    const all = this.job?.requirements ?? [];
+    return [...all.filter(r => r.tier === 'REQUIRED'), ...all.filter(r => r.tier !== 'REQUIRED')];
   }
 
   get keywords(): string[] {

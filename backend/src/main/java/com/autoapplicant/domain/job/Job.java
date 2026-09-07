@@ -55,7 +55,13 @@ public record Job(
          * Skills the posting states as an advantage rather than a requirement
          * ("det er en fordel", "gerne", "nice to have").
          */
-        List<String> preferredSkills
+        List<String> preferredSkills,
+        /**
+         * Everything the posting asks for, in its own words and untrimmed by the
+         * technologies/skills vocabulary. Feeds tailoring and the requirements panel;
+         * the two tiered lists above still feed the matcher.
+         */
+        List<JobRequirement> requirements
 ) {
 
     /** A fresh builder. Prefer {@link #toBuilder()} for copy-with-changes. */
@@ -82,7 +88,8 @@ public record Job(
                 .duplicateGroupId(duplicateGroupId).isActive(isActive).jobCategory(jobCategory)
                 .createdAt(createdAt).updatedAt(updatedAt).shortDescription(shortDescription)
                 .lastSeenAt(lastSeenAt).applicationDeadline(applicationDeadline).contact(contact)
-                .requiredSkills(requiredSkills).preferredSkills(preferredSkills);
+                .requiredSkills(requiredSkills).preferredSkills(preferredSkills)
+                .requirements(requirements);
     }
 
     public static final class Builder {
@@ -124,6 +131,7 @@ public record Job(
         private JobContact contact;
         private List<String> requiredSkills = List.of();
         private List<String> preferredSkills = List.of();
+        private List<JobRequirement> requirements = List.of();
 
         public Builder id(UUID v) { this.id = v; return this; }
         public Builder source(JobSource v) { this.source = v; return this; }
@@ -163,6 +171,7 @@ public record Job(
         public Builder contact(JobContact v) { this.contact = v; return this; }
         public Builder requiredSkills(List<String> v) { this.requiredSkills = v; return this; }
         public Builder preferredSkills(List<String> v) { this.preferredSkills = v; return this; }
+        public Builder requirements(List<JobRequirement> v) { this.requirements = v == null ? List.of() : v; return this; }
 
         public Job build() {
             return new Job(id, source, sourceJobId, url, title, companyId, companyName,
@@ -171,7 +180,7 @@ public record Job(
                     technologies, skills, languages, postedAt, scrapedAt, aiSummary, aiTags,
                     aiSeniorityEstimate, duplicateGroupId, isActive, jobCategory, createdAt,
                     updatedAt, shortDescription, lastSeenAt, applicationDeadline, contact,
-                    requiredSkills, preferredSkills);
+                    requiredSkills, preferredSkills, requirements);
         }
     }
 }

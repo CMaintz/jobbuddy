@@ -468,7 +468,7 @@ class MatchingServiceTest {
                 List.of(), List.of(), List.of(),
                 null, null, null, null, null, null, true,
                 null, null, null, null, null, null, null,
-                List.of(), List.of());
+                List.of(), List.of(), List.of());
     }
 
     private void stubFeed(Profile p, List<Job> jobs) {

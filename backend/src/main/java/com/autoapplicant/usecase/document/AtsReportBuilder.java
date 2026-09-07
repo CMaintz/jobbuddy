@@ -6,6 +6,7 @@ import com.autoapplicant.domain.document.structured.AtsReport;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.KeywordCoverage;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
+import com.autoapplicant.domain.job.JobRequirement;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,25 +18,60 @@ public class AtsReportBuilder {
 
     public AtsReport forTailored(KeywordCoverage coverage, TailoredCvContent tailored, String exportMode,
                                  ContentGuardFindings findings, String documentLanguage) {
-        return forCoverage(coverage, tailored.notes(), exportMode, findings, documentLanguage);
+        return forTailored(coverage, tailored, exportMode, findings, documentLanguage, List.of());
+    }
+
+    public AtsReport forTailored(KeywordCoverage coverage, TailoredCvContent tailored, String exportMode,
+                                 ContentGuardFindings findings, String documentLanguage,
+                                 List<JobRequirement> requirements) {
+        return forCoverage(coverage, tailored.notes(), exportMode, findings, documentLanguage, requirements);
     }
 
     public AtsReport forCoverage(KeywordCoverage coverage, String exportMode,
                                  ContentGuardFindings findings, String documentLanguage) {
-        return forCoverage(coverage, List.of(), exportMode, findings, documentLanguage);
+        return forCoverage(coverage, List.of(), exportMode, findings, documentLanguage, List.of());
+    }
+
+    public AtsReport forCoverage(KeywordCoverage coverage, String exportMode,
+                                 ContentGuardFindings findings, String documentLanguage,
+                                 List<JobRequirement> requirements) {
+        return forCoverage(coverage, List.of(), exportMode, findings, documentLanguage, requirements);
     }
 
     private AtsReport forCoverage(KeywordCoverage coverage, List<String> notes, String exportMode,
-                                  ContentGuardFindings findings, String documentLanguage) {
+                                  ContentGuardFindings findings, String documentLanguage,
+                                  List<JobRequirement> requirements) {
         KeywordCoverage measured = coverage != null ? coverage : KeywordCoverage.NOT_MEASURED;
         List<AtsCheck> checks = checks(exportMode, notes, findings, documentLanguage);
         keywordCheck(measured, documentLanguage).ifPresent(checks::add);
+        requirementCheck(requirements, documentLanguage).ifPresent(checks::add);
         return new AtsReport(
                 measured.measured() ? scoreFromCoverage(measured.percent()) : NOT_MEASURED_SCORE,
                 measured.percent(),
                 measured.matched(),
                 measured.missing(),
                 checks);
+    }
+
+    /**
+     * The asks a keyword check cannot settle — years of experience, a degree, a driving licence.
+     * Listed, never scored: whether the candidate has five years of backend experience is not
+     * something the presence of a word in their CV can establish, and folding it into a
+     * percentage would make the percentage a guess. INFO, so it reads as "check these yourself"
+     * rather than as a finding against the document.
+     */
+    private static java.util.Optional<AtsCheck> requirementCheck(List<JobRequirement> requirements,
+                                                                 String documentLanguage) {
+        if (requirements == null || requirements.isEmpty()) return java.util.Optional.empty();
+        List<String> texts = requirements.stream()
+                .filter(r -> r.text() != null && !r.text().isBlank())
+                .sorted(java.util.Comparator.comparing(r -> r.isRequired() ? 0 : 1))
+                .map(r -> r.text().strip())
+                .toList();
+        if (texts.isEmpty()) return java.util.Optional.empty();
+        AtsCheckMessages msg = AtsCheckMessages.forLanguage(documentLanguage);
+        return java.util.Optional.of(new AtsCheck("posting_requirements", msg.requirementsLabel(),
+                "INFO", msg.requirementsInfo(texts)));
     }
 
     /**
@@ -67,12 +103,18 @@ public class AtsReportBuilder {
 
     public AtsReport basic(String content, String exportMode, ContentGuardFindings findings,
                            String documentLanguage) {
+        return basic(content, exportMode, findings, documentLanguage, List.of());
+    }
+
+    public AtsReport basic(String content, String exportMode, ContentGuardFindings findings,
+                           String documentLanguage, List<JobRequirement> requirements) {
         // No keyword coverage to score against (e.g. a plain document): report a neutral
         // "not measured" score rather than a reassuringly high one.
         int wordCount = content != null && !content.isBlank() ? content.trim().split("\\s+").length : 0;
         int score = wordCount > 0 ? 60 : 50;
-        return new AtsReport(score, 0, List.of(), List.of(),
-                checks(exportMode, List.of(), findings, documentLanguage));
+        List<AtsCheck> checks = checks(exportMode, List.of(), findings, documentLanguage);
+        requirementCheck(requirements, documentLanguage).ifPresent(checks::add);
+        return new AtsReport(score, 0, List.of(), List.of(), checks);
     }
 
     public List<AtsCheck> checks(String exportMode, List<String> notes, ContentGuardFindings findings,

@@ -5,6 +5,10 @@ import com.autoapplicant.domain.job.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import com.autoapplicant.domain.job.RequirementTier;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.JobRequirement;
 
 public final class JobMapper {
 
@@ -50,7 +54,8 @@ public final class JobMapper {
                 JobContact.ofNullable(e.getContactName(), e.getContactTitle(),
                         e.getContactEmail(), e.getContactPhone()),
                 toList(e.getRequiredSkills()),
-                toList(e.getPreferredSkills())
+                toList(e.getPreferredSkills()),
+                toRequirements(e.getRequirements())
         );
     }
 
@@ -78,6 +83,7 @@ public final class JobMapper {
         e.setTechnologies(toArray(d.technologies()));
         e.setSkills(toArray(d.skills()));
         e.setRequiredSkills(toArray(d.requiredSkills()));
+        e.setRequirements(fromRequirements(d.requirements()));
         e.setPreferredSkills(toArray(d.preferredSkills()));
         e.setLanguages(toArray(d.languages()));
         e.setPostedAt(d.postedAt());
@@ -110,5 +116,34 @@ public final class JobMapper {
 
     private static String[] toArray(List<String> list) {
         return list != null ? list.toArray(String[]::new) : new String[0];
+    }
+    /** jsonb rows in, domain requirements out. A malformed entry is skipped, never fatal. */
+    private static List<JobRequirement> toRequirements(List<Map<String, Object>> raw) {
+        if (raw == null || raw.isEmpty()) return List.of();
+        List<JobRequirement> result = new java.util.ArrayList<>();
+        for (Map<String, Object> row : raw) {
+            if (row == null) continue;
+            Object text = row.get("text");
+            if (!(text instanceof String s) || s.isBlank()) continue;
+            result.add(new JobRequirement(s,
+                    RequirementTier.parse((String) row.get("tier")),
+                    RequirementKind.parse((String) row.get("kind")),
+                    (String) row.get("skill")));
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<Map<String, Object>> fromRequirements(List<JobRequirement> requirements) {
+        if (requirements == null || requirements.isEmpty()) return new java.util.ArrayList<>();
+        List<Map<String, Object>> rows = new java.util.ArrayList<>();
+        for (JobRequirement r : requirements) {
+            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("text", r.text());
+            row.put("tier", r.tier().name());
+            row.put("kind", r.kind().name());
+            if (r.skill() != null) row.put("skill", r.skill());
+            rows.add(row);
+        }
+        return rows;
     }
 }
