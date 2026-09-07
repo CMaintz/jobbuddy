@@ -47,6 +47,17 @@ public interface JobRepositoryPort {
     long countActive();
 
     /**
+     * How often each skill label appears across every posting we hold, most-named first.
+     *
+     * <p>Counted in the database rather than by loading postings: this reads the whole table, and
+     * the answer is one row per distinct label. Case and surrounding space are folded here; the
+     * remaining normalisation is the caller's, so there is still exactly one normalizer.
+     *
+     * @param maxLabels ceiling on distinct labels returned, since the tail is single mentions
+     */
+    List<com.autoapplicant.domain.skill.SkillMention> findSkillMentions(int maxLabels);
+
+    /**
      * Per-company hiring aggregates over postings seen since the cutoff — the raw material for
      * ranking unsolicited-application targets. Bounded internally; companies with no postings in
      * the window are absent rather than zero-valued.

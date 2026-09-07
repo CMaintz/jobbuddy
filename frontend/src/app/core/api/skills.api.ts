@@ -19,6 +19,19 @@ export interface SkillCandidate {
   evidence?: string | null;
 }
 
+/**
+ * A label the job market keeps naming that the taxonomy does not know — the admin review
+ * queue for growing the vocabulary everyone picks from.
+ */
+export interface TaxonomyCandidate {
+  name: string;
+  normalizedName: string;
+  /** How many distinct postings name it. The whole ranking. */
+  postings: number;
+  /** Enrichment usually filed it under technologies rather than soft skills. */
+  readAsTechnology: boolean;
+}
+
 export interface SkillConfirmation {
   name: string;
   decision: 'YES' | 'NO' | 'SKIP';
@@ -61,6 +74,22 @@ export class SkillsApiService {
 
   getCategories(): Observable<string[]> {
     return this.http.get<string[]>('/api/v1/skills/categories');
+  }
+
+  // ── Admin: curating the shared taxonomy ────────────────────────────────────────────
+
+  getTaxonomyCandidates(limit = 50): Observable<TaxonomyCandidate[]> {
+    return this.http.get<TaxonomyCandidate[]>('/api/v1/admin/skill-taxonomy/candidates',
+      { params: { limit } });
+  }
+
+  /** The category is required — the backend never guesses one. */
+  approveTaxonomyCandidate(name: string, category: string): Observable<SkillTaxonomy> {
+    return this.http.post<SkillTaxonomy>('/api/v1/admin/skill-taxonomy/approve', { name, category });
+  }
+
+  rejectTaxonomyCandidate(name: string, reason?: string): Observable<void> {
+    return this.http.post<void>('/api/v1/admin/skill-taxonomy/reject', { name, reason });
   }
 
   /** Deterministic suggestions — safe to call on every page load, no AI cost. */

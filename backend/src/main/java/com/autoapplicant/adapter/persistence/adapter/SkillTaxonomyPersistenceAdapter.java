@@ -26,6 +26,27 @@ public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryP
     }
 
     @Override
+    public java.util.Set<String> findAllKnownNormalizedNames() {
+        // The taxonomy is reference data in the hundreds of rows, and every one of them plus its
+        // aliases is needed to answer "is this label already known" — one read beats a query per
+        // candidate label.
+        java.util.Set<String> known = new java.util.LinkedHashSet<>();
+        for (SkillTaxonomyEntity entity : repo.findAll()) {
+            known.add(com.autoapplicant.domain.skill.SkillNames.normalize(entity.getNormalizedName()));
+            known.add(com.autoapplicant.domain.skill.SkillNames.normalize(entity.getName()));
+            if (entity.getAliases() != null) {
+                for (String alias : entity.getAliases()) {
+                    if (alias != null && !alias.isBlank()) {
+                        known.add(com.autoapplicant.domain.skill.SkillNames.normalize(alias));
+                    }
+                }
+            }
+        }
+        known.remove("");
+        return known;
+    }
+
+    @Override
     public List<SkillTaxonomy> findByParentIds(java.util.Collection<java.util.UUID> parentIds) {
         if (parentIds == null || parentIds.isEmpty()) return List.of();
         return repo.findByParentIdIn(parentIds).stream().map(this::toDomain).toList();

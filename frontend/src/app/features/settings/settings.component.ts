@@ -14,6 +14,7 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { AiUsagePanelComponent } from './ai-usage-panel.component';
+import { SkillTaxonomyPanelComponent } from './skill-taxonomy-panel.component';
 import { AiKeyPanelComponent } from './ai-key-panel.component';
 import { ThemeService } from '../../core/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -24,7 +25,7 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
 
-type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy';
+type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy' | 'taxonomy';
 
 /** Generation defaults have no backend home yet — kept client-side so the apply screen can read them. */
 export interface GenDefaults {
@@ -88,7 +89,7 @@ interface StyleSnapshot {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
@@ -165,7 +166,16 @@ export class SettingsComponent implements OnInit {
     const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
     if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
 
-    this.auth.currentUser$.subscribe(u => this.userEmail = u?.email ?? '');
+    this.auth.currentUser$.subscribe(u => {
+      this.userEmail = u?.email ?? '';
+      // The taxonomy is shared reference data, so its review queue is an admin section —
+      // added to the nav rather than rendered and refused, which would just be a dead tab.
+      const isAdmin = u?.role === 'ADMIN';
+      const listed = this.sections.some(s => s.key === 'taxonomy');
+      if (isAdmin && !listed) {
+        this.sections = [...this.sections, { key: 'taxonomy', label: 'settings.section.taxonomy', icon: 'sparkle' }];
+      }
+    });
     this.emailVerified = this.auth.isEmailVerified();
     this.provider = this.auth.signInProvider();
 

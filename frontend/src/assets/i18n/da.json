@@ -1445,7 +1445,23 @@
       "style": "Skrivestil",
       "account": "Konto",
       "privacy": "Privatliv & data",
-      "usage": "AI-forbrug"
+      "usage": "AI-forbrug",
+      "taxonomy": "Kompetenceordbog"
+    },
+    "taxonomy": {
+      "intro": "Kompetencer, som opslagene bliver ved med at nævne, men som appen ikke kender. Godkender du en, ryger den i den ordbog, alle brugere vælger fra, så den skal have en kategori; afviser du en, kommer den ikke igen. Intet her rører nogens profil.",
+      "loading": "Læser hvad markedet nævner…",
+      "loadError": "Køen kunne ikke hentes.",
+      "empty": "Intet mangler. Alle kompetencer i opslagene findes allerede i ordbogen.",
+      "postings": "nævnt i {{n}} opslag",
+      "asTechnology": "læst som en teknologi",
+      "asSkill": "læst som en kompetence",
+      "category": "Kategori",
+      "approve": "Tilføj",
+      "reject": "Ikke en kompetence",
+      "approved": "{{name}} er tilføjet ordbogen.",
+      "rejected": "{{name}} bliver ikke foreslået igen.",
+      "failed": "Det gik ikke igennem. Prøv igen."
     },
     "industry": {
       "softwareIt": "Software & IT",

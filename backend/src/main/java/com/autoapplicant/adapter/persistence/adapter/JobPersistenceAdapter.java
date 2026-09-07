@@ -70,6 +70,20 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    public List<com.autoapplicant.domain.skill.SkillMention> findSkillMentions(int maxLabels) {
+        if (maxLabels <= 0) return List.of();
+        // [label, postings, technologyPostings] — the counts arrive as some Number subtype
+        // depending on the driver, so read them as Number rather than casting to a concrete one.
+        return repo.findSkillMentions(maxLabels).stream()
+                .filter(row -> row.length >= 3 && row[0] instanceof String)
+                .map(row -> new com.autoapplicant.domain.skill.SkillMention(
+                        (String) row[0],
+                        row[1] instanceof Number n ? n.intValue() : 0,
+                        row[2] instanceof Number n ? n.intValue() : 0))
+                .toList();
+    }
+
+    @Override
     public Job save(Job job) {
         var entity = JobMapper.toEntity(job);
         // URL-check state and the content fingerprint live only on the entity; carry them
