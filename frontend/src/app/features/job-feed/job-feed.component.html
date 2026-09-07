@@ -168,6 +168,19 @@
                       <span class="mono" [class.text-jb-danger]="job.deadlinePassed"> · {{ 'jobFeed.deadline' | translate }} {{ job.deadline }}</span>
                     }
                   </div>
+                  <!-- What the role costs to qualify for, on the card: the seniority the
+                       posting states, and the years it demands when it names a number. -->
+                  @if (job.seniority || job.experienceYears) {
+                    <div class="flex flex-wrap items-center gap-1 mt-1">
+                      @if (job.seniority) {
+                        <span class="pill pill-neutral">{{ job.seniority | titlecase }}</span>
+                      }
+                      @if (job.experienceYears) {
+                        <span class="pill pill-neutral" [title]="job.experienceAsk">{{
+                          'jobFeed.yearsDemanded' | translate:{ n: job.experienceYears } }}</span>
+                      }
+                    </div>
+                  }
                   <div class="flex flex-wrap gap-1 mt-1.5">
                     @for (reason of job.matchReasons.slice(0, 2); track reason) {
                       <span class="text-2xs text-jb-success flex items-center gap-[3px]">

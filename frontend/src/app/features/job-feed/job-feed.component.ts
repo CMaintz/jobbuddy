@@ -48,6 +48,26 @@ interface FeedRow {
    * posting fills in the preferences too.
    */
   requirements: JobRequirement[];
+  /** Years of experience the posting demands, when it states a number. */
+  experienceYears?: number;
+  /** The demand in the posting's own words, for the chip's tooltip. */
+  experienceAsk?: string;
+}
+
+/**
+ * A stated quantity of years: "mindst 5 års erfaring", "5-7 års", "3+ years". Danish "års"
+ * is matched by "år"; the range form takes the lower bound, which is the threshold.
+ */
+const YEARS_STATED = /(\d+)\s*(?:\+|[–-]\s*\d+)?\s*(?:år|years?)/i;
+
+/**
+ * The number of years an ask states, or null when it states none. Exported so the parsing
+ * can be tested on its own — a posting phrased without a figure must get no chip rather
+ * than a guessed one.
+ */
+export function yearsDemanded(text: string | undefined): number | null {
+  const match = YEARS_STATED.exec(text ?? '');
+  return match ? +match[1] : null;
 }
 
 
@@ -221,7 +241,23 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       description: job.descriptionClean ?? undefined,
       descriptionTruncated: job.descriptionTruncated ?? false,
       requirements: job.requirements ?? [],
+      ...this.experienceDemand(job.requirements ?? []),
     };
+  }
+
+  /**
+   * The experience threshold the card shows. The list response carries only the posting's
+   * demands, which is exactly the half that decides whether a role is worth opening; the
+   * first one stating a number wins, and a demand phrased without one gets no chip rather
+   * than a guessed figure.
+   */
+  private experienceDemand(requirements: JobRequirement[]): Partial<FeedRow> {
+    for (const req of requirements) {
+      if (req.tier !== 'REQUIRED' || req.kind !== 'EXPERIENCE') continue;
+      const years = yearsDemanded(req.text);
+      if (years !== null) return { experienceYears: years, experienceAsk: req.text };
+    }
+    return {};
   }
 
   private refreshSourceFilters(): void {
