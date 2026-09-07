@@ -6,9 +6,10 @@ Initial sources:
 
 - LinkedIn Jobs
 - Jobindex
-- IT Jobbank
+- Computerworld / IT Jobbank
 - The Hub
 - Ofir
+- Jobnet
 - WorkinDenmark
 - company career pages
 
