@@ -65,8 +65,7 @@ public class TailoredCvReviewer {
                     a REVISED version in the identical JSON schema. Rules: keep every sourceId unchanged; \
                     never invent employers, titles, dates, schools, credentials, technologies, outcomes, \
                     or metrics not already present; you may only reselect, reorder within a section, and \
-                    rewrite phrasing. Recompute keywordCoverage/matchedKeywords/missingKeywords for your \
-                    revised content. Respond with ONLY valid JSON."""
+                    rewrite phrasing. revised content. Respond with ONLY valid JSON."""
                     + "\n\n" + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT;
             if (resolvedLanguage != null) {
                 system += "\nWrite all rewritten text in " + resolvedLanguage + ".";

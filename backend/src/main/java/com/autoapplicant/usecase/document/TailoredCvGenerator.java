@@ -58,7 +58,6 @@ public class TailoredCvGenerator {
                     source.projects(),
                     source.education(),
                     source.certifications(),
-                    0, List.of(), List.of(),
                     List.of("AI tailoring failed — master profile used without rewriting."));
         }
     }

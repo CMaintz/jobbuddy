@@ -83,9 +83,6 @@ public class PromptCompositionBuilder {
         String schema = """
                 {
                   "body": "<full document text>",
-                  "keywordCoverage": <0-100 integer>,
-                  "matchedKeywords": ["keyword"],
-                  "missingKeywords": ["keyword"],
                   "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job — omit if none"]
                 }""";
 
@@ -184,9 +181,6 @@ public class PromptCompositionBuilder {
                   "projects": [],
                   "education": [],
                   "certifications": [],
-                  "keywordCoverage": 0,
-                  "matchedKeywords": [],
-                  "missingKeywords": [],
                   "notes": ["1-3 specific observations about gaps or opportunities — omit if none"]
                 }""";
 

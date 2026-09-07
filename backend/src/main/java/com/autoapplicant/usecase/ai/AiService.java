@@ -6,6 +6,7 @@ import com.autoapplicant.domain.document.QualityScore;
 import com.autoapplicant.domain.document.RecordedQualityScore;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
+import com.autoapplicant.domain.document.structured.JobKeywords;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
@@ -201,18 +202,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     }
 
     /**
-     * Carrier for one reviewer pass: the revised draft, what the reviewer changed/flagged, and
-     * the keyword coverage recomputed against the REVISED text (so the ATS report the user sees
-     * describes what was actually delivered, not the pre-review draft). Coverage fields are null
-     * when the reviewer did not supply them.
-     */
-    private record ReviewOutcome(String revised, List<String> critique,
-                                 Integer keywordCoverage, List<String> matchedKeywords,
-                                 List<String> missingKeywords) {}
-
-    /** The reviewed body plus the coverage metadata that describes it (null coverage = unchanged). */
-    private record ReviewedBody(String body, Integer keywordCoverage,
-                                List<String> matchedKeywords, List<String> missingKeywords) {}
+    /** Carrier for one reviewer pass: the revised draft and what the reviewer changed or flagged. */
+    private record ReviewOutcome(String revised, List<String> critique) {}
 
     /**
      * Drafter→reviewer pass: a fresh context critiques the draft against the posting and
@@ -271,13 +262,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 Return only valid JSON in exactly this shape:
                 {
                   "revisedContent": "<the full revised document text>",
-                  "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"],
-                  "keywordCoverage": <0-100 integer — recompute for the REVISED text against the posting>,
-                  "matchedKeywords": ["<posting keyword the revised text genuinely supports>"],
-                  "missingKeywords": ["<posting keyword still not covered>"]
+                  "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"]
                 }
-                Recompute the keyword fields for your revised text; never drop a keyword the draft
-                genuinely supports just to shorten it.""");
+                Never drop a keyword the draft genuinely supports just to shorten it — coverage is
+                measured against the delivered text after you are done.""");
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
@@ -290,10 +278,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             }
             List<String> critique = new java.util.ArrayList<>();
             node.path("critique").forEach(c -> critique.add(c.asText()));
-            Integer coverage = node.has("keywordCoverage") && node.path("keywordCoverage").isNumber()
-                    ? node.path("keywordCoverage").asInt() : null;
-            return new ReviewOutcome(revised, critique, coverage,
-                    textList(node, "matchedKeywords"), textList(node, "missingKeywords"));
+            return new ReviewOutcome(revised, critique);
         } catch (Exception e) {
             throw new IllegalStateException("Document review failed: " + e.getMessage(), e);
         }
@@ -343,30 +328,21 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
             // Automatic drafter→reviewer loop: a fresh reviewer critiques and revises the
             // body before assembly. Config-gated (each pass is one extra LLM call); stops
-            // early once a pass reports no further critique. Keyword metadata from the
-            // original pass is retained — the reviewer is instructed never to drop keywords.
-            ReviewedBody reviewed = maybeReview(userId, documentType, aiResponse.body(), jobDescription,
+            // early once a pass reports no further critique.
+            String body = maybeReview(userId, documentType, aiResponse.body(), jobDescription,
                     targetLanguage, job != null ? job.country() : null);
-            String body = reviewed.body();
 
             // Deterministic backstops (fact gate + retracted claims + filler), shared with the CV
             // path. The findings ride along into the ATS report so the user sees them.
             ContentGuardFindings guardFindings =
                     contentGuards.verify(userId, body, contactFreeJson, documentType);
 
-            // Prefer the reviewer's recomputed coverage (it describes the delivered text); fall
-            // back to the drafter's metadata when the reviewer didn't revise or supply it.
-            Integer coverage = reviewed.keywordCoverage() != null
-                    ? reviewed.keywordCoverage() : aiResponse.keywordCoverage();
-            List<String> matched = reviewed.matchedKeywords() != null
-                    ? reviewed.matchedKeywords() : aiResponse.matchedKeywords();
-            List<String> missing = reviewed.missingKeywords() != null
-                    ? reviewed.missingKeywords() : aiResponse.missingKeywords();
-
             DocumentType type = parseDocumentType(documentType);
+            // Keyword coverage is measured downstream against the delivered text and the
+            // posting's own tiered asks — the model is no longer asked to grade itself.
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                     userId, type, body, templateId,
-                    coverage, matched, missing, showProfileImage, theme, guardFindings);
+                    JobKeywords.of(job), showProfileImage, theme, guardFindings);
 
             StructuredDocument saved = persistGeneratedDocument.save(
                     userId, jobId, doc, aiProvider.chatModelName());
@@ -414,17 +390,14 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     /**
      * Runs up to {@code autoReviewMaxIterations} reviewer passes on the draft body when
      * auto-review is enabled, returning the improved text together with the keyword coverage the
-     * last successful pass recomputed for it (so the ATS report matches the delivered text). A
+     * A
      * failed pass is non-fatal — it logs and returns the best draft so far, so generation never
      * breaks on the reviewer.
      */
-    private ReviewedBody maybeReview(UUID userId, String documentType, String body,
-                                     String jobDescription, String targetLanguage, String jobCountry) {
-        if (!autoReviewEnabled) return new ReviewedBody(body, null, null, null);
+    private String maybeReview(UUID userId, String documentType, String body,
+                               String jobDescription, String targetLanguage, String jobCountry) {
+        if (!autoReviewEnabled) return body;
         String current = body;
-        Integer coverage = null;
-        List<String> matched = null;
-        List<String> missing = null;
         int passes = Math.max(1, autoReviewMaxIterations);
         for (int i = 1; i <= passes; i++) {
             try {
@@ -432,10 +405,6 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                         targetLanguage, jobCountry);
                 if (outcome.revised() != null && !outcome.revised().isBlank()) {
                     current = outcome.revised();
-                    // Adopt the reviewer's recomputed coverage only when it also revised the body.
-                    if (outcome.keywordCoverage() != null) coverage = outcome.keywordCoverage();
-                    if (outcome.matchedKeywords() != null) matched = outcome.matchedKeywords();
-                    if (outcome.missingKeywords() != null) missing = outcome.missingKeywords();
                 }
                 log.info("Auto-review pass {}/{}: {} change(s) flagged", i, passes, outcome.critique().size());
                 if (outcome.critique().isEmpty()) break; // reviewer found nothing more to fix
@@ -444,7 +413,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 break;
             }
         }
-        return new ReviewedBody(current, coverage, matched, missing);
+        return current;
     }
 
     private static void validateApplicationResponse(ApplicationDocumentAiResponse response) {
