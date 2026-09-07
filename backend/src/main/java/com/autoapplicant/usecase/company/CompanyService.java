@@ -27,9 +27,4 @@ public class CompanyService implements GetCompaniesUseCase {
     public Optional<Company> getCompanyById(UUID id) {
         return repo.findById(id);
     }
-
-    @Override
-    public Optional<Company> getCompanyBySlug(String slug) {
-        return repo.findBySlug(slug);
-    }
 }

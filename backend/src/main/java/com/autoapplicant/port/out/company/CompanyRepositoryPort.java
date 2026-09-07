@@ -14,7 +14,6 @@ public interface CompanyRepositoryPort {
     /** Set the company homepage only when it is currently empty (crawl-provided backfill). */
     void backfillWebsite(UUID companyId, String website);
     List<Company> search(String query, int page, int size);
-    Optional<Company> findBySlug(String slug);
 
     // ── Cached company grounding facts ──────────────────────
     Optional<CompanyFacts> findFacts(UUID companyId);
