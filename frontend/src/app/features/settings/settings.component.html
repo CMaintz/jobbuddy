@@ -318,6 +318,10 @@
             </div>
           }
 
+          @if (activeSection() === 'taxonomy') {
+            <app-skill-taxonomy-panel />
+          }
+
           @if (activeSection() === 'usage') {
             <app-ai-usage-panel />
           }

@@ -1445,7 +1445,23 @@
       "style": "Writing style",
       "account": "Account",
       "privacy": "Privacy & data",
-      "usage": "AI usage"
+      "usage": "AI usage",
+      "taxonomy": "Skill vocabulary"
+    },
+    "taxonomy": {
+      "intro": "Skills the postings keep naming that the app does not know yet. Approving one adds it to the vocabulary every user picks from, so it needs a category; rejecting one keeps it out for good. Nothing here touches anyone's profile.",
+      "loading": "Reading what the market names…",
+      "loadError": "Could not load the queue.",
+      "empty": "Nothing missing. Every skill the postings name is already in the vocabulary.",
+      "postings": "named by {{n}} postings",
+      "asTechnology": "read as a technology",
+      "asSkill": "read as a competency",
+      "category": "Category",
+      "approve": "Add",
+      "reject": "Not a skill",
+      "approved": "Added {{name}} to the vocabulary.",
+      "rejected": "{{name}} will not be offered again.",
+      "failed": "That did not go through. Try again."
     },
     "industry": {
       "softwareIt": "Software & IT",

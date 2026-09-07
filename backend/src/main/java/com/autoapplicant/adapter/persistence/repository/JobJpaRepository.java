@@ -103,4 +103,33 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Modifying
     @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.applicationDeadline < :before")
     int deactivateDeadlineExpired(@Param("before") java.time.LocalDate before);
+
+    /**
+     * Every distinct skill label across all postings with the number of postings naming it.
+     *
+     * <p>Both arrays are unnested and counted together: {@code technologies} and {@code skills}
+     * are the same vocabulary filed into two drawers by enrichment, and which drawer a label
+     * landed in is reported separately rather than splitting the count. Labels are folded on
+     * lower-cased, trimmed text and the most common spelling is returned as the display name —
+     * a posting writing "REACT" should not create a second candidate.
+     *
+     * <p>Rows come back positionally as {@code [label, postings, technologyPostings]}. Nothing
+     * in this project boots a Spring context in a test, so a projection interface bound by
+     * column name would be verified only in production; positions cannot be misbound.
+     */
+    @Query(value = """
+            SELECT mode() WITHIN GROUP (ORDER BY s.label),
+                   COUNT(DISTINCT s.job_id),
+                   COUNT(DISTINCT s.job_id) FILTER (WHERE s.from_tech)
+            FROM (
+                SELECT j.id AS job_id, unnest(j.technologies) AS label, true AS from_tech FROM jobs j
+                UNION ALL
+                SELECT j.id AS job_id, unnest(j.skills) AS label, false AS from_tech FROM jobs j
+            ) s
+            WHERE s.label IS NOT NULL AND btrim(s.label) <> ''
+            GROUP BY lower(btrim(s.label))
+            ORDER BY 2 DESC, 1 ASC
+            LIMIT :maxLabels
+            """, nativeQuery = true)
+    List<Object[]> findSkillMentions(@Param("maxLabels") int maxLabels);
 }
