@@ -104,9 +104,10 @@ Adapters
 
 - LinkedIn Jobs
 - Jobindex
-- IT Jobbank
+- Computerworld / IT Jobbank
 - The Hub
 - Ofir
+- Jobnet
 - WorkinDenmark
 - Company career pages
 
@@ -118,6 +119,7 @@ Each source must be isolated.
 JobSourceConnector
  ├── LinkedInConnector
  ├── JobindexConnector
+ ├── ComputerworldConnector
  ├── TheHubConnector
  └── CompanyCareerConnector
 ```

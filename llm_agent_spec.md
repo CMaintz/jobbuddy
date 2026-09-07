@@ -115,9 +115,10 @@ Initial required sources:
 
 - LinkedIn Jobs
 - Jobindex
-- IT Jobbank
+- Computerworld / IT Jobbank
 - The Hub
 - Ofir
+- Jobnet
 - WorkinDenmark
 - Company career pages
 
@@ -133,6 +134,7 @@ Example:
 JobSourceConnector
  ├── LinkedInConnector
  ├── JobindexConnector
+ ├── ComputerworldConnector
  ├── TheHubConnector
  └── CompanyCareerConnector
 ```
