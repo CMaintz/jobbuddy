@@ -1386,6 +1386,7 @@
     "passed": "(udløbet)",
     "keywords": "Nøgleord",
     "requirements": "Det de beder om",
+    "yearsDemanded": "{{n}}+ års erfaring",
     "tier": {
       "REQUIRED": "Krav",
       "PREFERRED": "Ønske"
