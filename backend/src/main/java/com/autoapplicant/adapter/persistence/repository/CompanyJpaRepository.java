@@ -11,5 +11,4 @@ import java.util.UUID;
 public interface CompanyJpaRepository extends JpaRepository<CompanyEntity, UUID> {
     Optional<CompanyEntity> findByNameIgnoreCase(String name);
     Page<CompanyEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
-    Optional<CompanyEntity> findBySlug(String slug);
 }

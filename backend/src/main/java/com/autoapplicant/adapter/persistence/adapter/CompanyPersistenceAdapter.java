@@ -64,11 +64,6 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
     }
 
     @Override
-    public Optional<Company> findBySlug(String slug) {
-        return repo.findBySlug(slug).map(this::toDomain);
-    }
-
-    @Override
     public Optional<com.autoapplicant.domain.company.CompanyFacts> findFacts(UUID companyId) {
         return repo.findById(companyId)
                 .filter(e -> e.getResearchedFacts() != null && !e.getResearchedFacts().isBlank())

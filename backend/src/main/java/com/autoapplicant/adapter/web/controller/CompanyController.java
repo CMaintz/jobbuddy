@@ -112,12 +112,4 @@ public class CompanyController {
     public ResponseEntity<List<Job>> jobsByCompany(@PathVariable UUID id) {
         return ResponseEntity.ok(companyJobs.getJobsByCompany(id));
     }
-
-    @Operation(summary = "Get company by slug")
-    @GetMapping("/api/v1/companies/by-slug/{slug}")
-    public ResponseEntity<Company> getBySlug(@PathVariable String slug) {
-        return companies.getCompanyBySlug(slug)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
 }
