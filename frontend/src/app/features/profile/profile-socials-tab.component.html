@@ -1,0 +1,53 @@
+<!-- Socials Tab -->
+<div *ngIf="vm.activeTab === 'socials'">
+  <app-section-header
+    title="Social Links"
+    actionLabel="+ Add Link"
+    (action)="vm.showSocialForm = !vm.showSocialForm">
+  </app-section-header>
+
+  <app-inline-form-panel *ngIf="vm.showSocialForm">
+    <form (ngSubmit)="vm.saveSocial()" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Platform</label>
+          <select [(ngModel)]="vm.newSocial.platform" name="platform" (change)="vm.onSocialPlatformChange()"
+                  class="mt-1 w-full border rounded px-2 py-1.5 text-sm">
+            @for (p of vm.socialPlatforms; track p.iconKey) {
+              <option [value]="p.platform">{{ p.platform }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Username <span class="text-gray-400">(optional)</span></label>
+          <input [(ngModel)]="vm.newSocial.username" name="username"
+                 placeholder="e.g. johndoe"
+                 class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-medium text-gray-700">URL</label>
+          <input [(ngModel)]="vm.newSocial.url" name="url" required
+                 placeholder="https://..."
+                 class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+        </div>
+      </div>
+      <app-form-actions [disabled]="!vm.newSocial.url?.trim()" (cancel)="vm.showSocialForm = false"></app-form-actions>
+    </form>
+  </app-inline-form-panel>
+
+  @for (social of vm.socials; track social.id) {
+    <div class="list-item flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <svg class="w-4 h-4 flex-shrink-0 text-gray-500 fill-current" viewBox="0 0 24 24">
+          <path [attr.d]="vm.getSocialIcon(social.iconKey)" />
+        </svg>
+        <div>
+          <p class="font-semibold text-sm">{{ social.platform }}</p>
+          <span class="text-xs text-gray-500 truncate max-w-xs block">{{ social.username || social.url }}</span>
+        </div>
+      </div>
+      <app-confirm-delete-button (confirmed)="vm.deleteSocial(social.id!)"></app-confirm-delete-button>
+    </div>
+  }
+  <app-empty-state *ngIf="!vm.socials.length" message="No social links added yet. Add your LinkedIn, GitHub or other profiles."></app-empty-state>
+</div>

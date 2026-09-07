@@ -1,0 +1,38 @@
+<!-- Certifications Tab -->
+      <div *ngIf="vm.activeTab === 'certifications'">
+        <app-section-header title="Certifications" actionLabel="+ Add Certification" (action)="vm.showCertForm = !vm.showCertForm"></app-section-header>
+
+        <app-inline-form-panel *ngIf="vm.showCertForm">
+        <form [formGroup]="vm.certForm" (ngSubmit)="vm.saveCertification()" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Certification Name</label>
+              <input formControlName="name" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Issuer</label>
+              <input formControlName="issuer" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Issued Date</label>
+              <input formControlName="issuedAt" type="date" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Credential URL</label>
+              <input formControlName="credentialUrl" class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+          </div>
+          <app-form-actions (cancel)="vm.showCertForm = false"></app-form-actions>
+        </form>
+        </app-inline-form-panel>
+
+        <div *ngFor="let c of vm.certifications" class="list-item flex justify-between">
+          <div>
+            <p class="font-semibold">{{ c.name }}</p>
+            <p class="text-sm text-gray-600">{{ c.issuer }} · {{ c.issuedAt | slice:0:7 }}</p>
+            <a *ngIf="c.credentialUrl" [href]="c.credentialUrl" target="_blank" class="text-xs text-blue-600 hover:underline">View Credential</a>
+          </div>
+          <app-confirm-delete-button (confirmed)="vm.deleteCertification(c.id!)"></app-confirm-delete-button>
+        </div>
+        <app-empty-state *ngIf="!vm.certifications.length" message="No certifications added yet."></app-empty-state>
+      </div>

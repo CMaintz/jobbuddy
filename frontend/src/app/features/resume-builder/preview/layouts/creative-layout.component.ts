@@ -1,0 +1,159 @@
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
+import { ResumeStateService } from '../../services/resume-state.service';
+import { SkillChipListComponent } from '../../shared/skill-chip-list.component';
+import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
+import { getStrengthIcon } from '../../data/strength-icons';
+
+@Component({
+  selector: 'app-creative-layout',
+  standalone: true,
+  imports: [CommonModule, LucideAngularModule, SkillChipListComponent],
+  template: `
+    <div class="flex h-full">
+      <!-- Top accent bar -->
+      <div class="absolute top-0 left-0 right-0 h-2" [style.background-color]="themeColor" style="position:absolute"></div>
+      <!-- Left column (40%) -->
+      <div class="flex-[40] p-8 flex flex-col gap-5 border-r border-gray-100 mt-2">
+        <div class="flex flex-col items-center text-center mt-4">
+          @if (pi.photoUrl) {
+            <img [src]="pi.photoUrl" alt="Photo" class="w-28 h-28 object-cover mb-3 shadow-lg"
+              [class.rounded-full]="photoStyle === 'circle'" [class.rounded-2xl]="photoStyle === 'rounded'" />
+          }
+          <h1 class="text-2xl font-bold" [style.color]="themeColor">{{ pi.fullName }}</h1>
+          <p class="text-sm text-gray-400 mt-1">{{ pi.title }}</p>
+        </div>
+        <div class="border-t border-gray-100 pt-4 flex flex-col gap-1.5 text-xs text-gray-500">
+          @if (pi.email) { <p class="flex items-center gap-1.5"><svg class="w-3 h-3 flex-shrink-0" [style.fill]="themeColor" viewBox="0 0 24 24"><path [attr.d]="contactIcons.email"/></svg>{{ pi.email }}</p> }
+          @if (pi.phone) { <p class="flex items-center gap-1.5"><svg class="w-3 h-3 flex-shrink-0" [style.fill]="themeColor" viewBox="0 0 24 24"><path [attr.d]="contactIcons.phone"/></svg>{{ pi.phone }}</p> }
+          @if (pi.location) { <p class="flex items-center gap-1.5"><svg class="w-3 h-3 flex-shrink-0" [style.fill]="themeColor" viewBox="0 0 24 24"><path [attr.d]="contactIcons.location"/></svg>{{ pi.location }}</p> }
+        </div>
+        @if (skills.length > 0) {
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-2" [style.color]="themeColor">Skills</h2>
+            <div class="flex flex-col gap-1.5">
+              @for (s of skills; track s.id) {
+                <div>
+                  <span class="text-xs text-gray-700">{{ s.name }}</span>
+                  @if (showSkillLevel && s.level) {
+                    <div class="flex gap-0.5 mt-0.5">
+                      @for (d of [1,2,3,4,5]; track d) {
+                        <div class="h-1 flex-1 rounded-full" [style.background-color]="d <= (s.level ?? 0) ? themeColor : '#e5e7eb'"></div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+        @if (languages.length > 0) {
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-2" [style.color]="themeColor">Languages</h2>
+            @for (lang of languages; track lang.id) {
+              <div class="flex justify-between text-xs"><span>{{ lang.name }}</span><span class="text-gray-400">{{ lang.proficiency }}</span></div>
+            }
+          </div>
+        }
+        @if (socials.length > 0) {
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-2" [style.color]="themeColor">Links</h2>
+            @for (s of socials; track s.id) {
+              <div class="flex items-center gap-1.5 mb-1">
+                <lucide-icon [img]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor" class="flex-shrink-0"></lucide-icon>
+                <span class="text-xs text-gray-600 truncate">{{ s.username || s.url }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <!-- Right column (60%) -->
+      <div class="flex-[60] p-8 flex flex-col gap-5 mt-2">
+        @if (pi.summary) {
+          <p class="text-sm text-gray-600 leading-relaxed">{{ pi.summary }}</p>
+        }
+        @if (experience.length > 0) {
+          <section>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Experience</h2>
+            @for (exp of experience; track exp.id) {
+              <div class="mb-4 pl-3 border-l-2" [style.border-color]="themeColor + '60'">
+                <div class="flex justify-between"><h3 class="font-semibold text-sm">{{ exp.title }}</h3><span class="text-xs text-gray-400">{{ exp.startDate }} – {{ exp.current ? 'Present' : exp.endDate }}</span></div>
+                <p class="text-xs text-gray-400">{{ exp.company }}</p>
+                @if (exp.description) { <p class="text-xs text-gray-500 mt-1">{{ exp.description }}</p> }
+                <app-skill-chip-list [skills]="exp.skills ?? []" />
+              </div>
+            }
+          </section>
+        }
+        @if (education.length > 0) {
+          <section>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Education</h2>
+            @for (edu of education; track edu.id) {
+              <div class="mb-2"><p class="font-medium text-sm">{{ edu.degree }}</p><p class="text-xs text-gray-400">{{ edu.school }}</p></div>
+            }
+          </section>
+        }
+        @if (projects.length > 0) {
+          <section>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Projects</h2>
+            @for (proj of projects; track proj.id) {
+              <div class="mb-3"><p class="font-semibold text-sm">{{ proj.name }}</p>@if (proj.description) { <p class="text-xs text-gray-500">{{ proj.description }}</p> }<app-skill-chip-list [skills]="proj.skills ?? []" /></div>
+            }
+          </section>
+        }
+        @if (strengths.length > 0) {
+          <section>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">Strengths</h2>
+            <div class="grid grid-cols-2 gap-2">
+              @for (s of strengths; track s.id) {
+                <div class="p-2 rounded-lg border border-gray-100 bg-gray-50">
+                  <p class="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                    <lucide-icon [img]="getStrengthIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor" class="flex-shrink-0"></lucide-icon>
+                    {{ s.title }}
+                  </p>
+                  @if (s.description) { <p class="text-xs text-gray-400">{{ s.description }}</p> }
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Custom Sections -->
+        @for (cs of customSections; track cs.id) {
+          <section>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-3" [style.color]="themeColor">{{ cs.heading }}</h2>
+            @if (cs.body) { <p class="text-sm text-gray-600 leading-relaxed">{{ cs.body }}</p> }
+            @if (cs.items && cs.items.length > 0) {
+              <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
+                @for (item of cs.items; track item.id) {
+                  <li class="text-xs text-gray-500">{{ item.text }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      </div>
+    </div>
+  `,
+})
+export class CreativeLayoutComponent {
+  private svc = inject(ResumeStateService);
+  get pi() { return this.svc.personalInfo(); }
+  get experience() { return this.svc.experience(); }
+  get education() { return this.svc.education(); }
+  get projects() { return this.svc.projects(); }
+  get skills() { return this.svc.skills(); }
+  get languages() { return this.svc.languages(); }
+  get strengths() { return this.svc.strengths(); }
+  get socials() { return this.svc.socials(); }
+  get customSections() { return this.svc.customSections(); }
+  get themeColor() { return this.svc.settings().themeColor; }
+  get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }
+  get showSkillLevel() { return this.svc.settings().showSkillLevel; }
+  readonly contactIcons = CONTACT_ICONS;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSocialIcon(key: string): any { return getSocialIcon(key); }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getStrengthIcon(key: string): any { return getStrengthIcon(key); }
+}

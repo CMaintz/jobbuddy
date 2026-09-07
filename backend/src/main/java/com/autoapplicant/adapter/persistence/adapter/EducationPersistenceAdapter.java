@@ -1,0 +1,78 @@
+package com.autoapplicant.adapter.persistence.adapter;
+
+import com.autoapplicant.adapter.persistence.entity.EducationEntity;
+import com.autoapplicant.adapter.persistence.entity.EducationSkillEntity;
+import com.autoapplicant.adapter.persistence.mapper.ProfileSectionMapper;
+import com.autoapplicant.adapter.persistence.repository.EducationJpaRepository;
+import com.autoapplicant.adapter.persistence.repository.EducationSkillJpaRepository;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.domain.user.Education;
+import com.autoapplicant.port.out.user.EducationRepositoryPort;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+@Component
+public class EducationPersistenceAdapter implements EducationRepositoryPort {
+
+    private final EducationJpaRepository repo;
+    private final EducationSkillJpaRepository skillRepo;
+    private final SectionSkillLoader skillLoader;
+
+    public EducationPersistenceAdapter(EducationJpaRepository repo,
+                                        EducationSkillJpaRepository skillRepo,
+                                        SectionSkillLoader skillLoader) {
+        this.repo = repo;
+        this.skillRepo = skillRepo;
+        this.skillLoader = skillLoader;
+    }
+
+    @Override
+    @Transactional
+    public Education save(Education education) {
+        var saved = repo.save(ProfileSectionMapper.toEntity(education));
+        skillRepo.deleteByEducationId(saved.getId());
+        List<SkillTaxonomy> skills = education.skills() != null ? education.skills() : List.of();
+        for (SkillTaxonomy skill : skills) {
+            if (skill.id() != null) {
+                var link = new EducationSkillEntity();
+                link.setEducationId(saved.getId());
+                link.setTaxonomyId(skill.id());
+                skillRepo.save(link);
+            }
+        }
+        return ProfileSectionMapper.toDomain(saved, skills);
+    }
+
+    @Override
+    public List<Education> findByUserId(UUID userId) {
+        return loadWithSkills(repo.findByUserIdOrderByDisplayOrderAsc(userId));
+    }
+
+    @Override
+    public Optional<Education> findById(UUID id) {
+        return repo.findById(id).map(e -> loadWithSkills(List.of(e)).get(0));
+    }
+
+    @Override
+    @Transactional
+    public void deleteByIdAndUserId(UUID id, UUID userId) {
+        repo.deleteByIdAndUserId(id, userId);
+    }
+
+    private List<Education> loadWithSkills(List<EducationEntity> entities) {
+        if (entities.isEmpty()) return List.of();
+        Set<UUID> ids = new HashSet<>();
+        for (var e : entities) ids.add(e.getId());
+        List<EducationSkillEntity> links = skillRepo.findByEducationIdIn(ids);
+        Map<UUID, List<SkillTaxonomy>> skillsByEduId = skillLoader.resolve(
+                links,
+                EducationSkillEntity::getEducationId,
+                EducationSkillEntity::getTaxonomyId);
+        return entities.stream()
+                .map(e -> ProfileSectionMapper.toDomain(e,
+                        skillsByEduId.getOrDefault(e.getId(), List.of())))
+                .toList();
+    }
+}

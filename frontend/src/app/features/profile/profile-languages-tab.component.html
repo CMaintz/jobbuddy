@@ -1,0 +1,38 @@
+<!-- Languages Tab -->
+      <div *ngIf="vm.activeTab === 'languages'">
+        <app-section-header title="Spoken Languages" actionLabel="+ Add Language" (action)="vm.showLangForm = !vm.showLangForm"></app-section-header>
+
+        <app-inline-form-panel *ngIf="vm.showLangForm">
+        <form (ngSubmit)="vm.saveLanguage()" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Language</label>
+              <input [(ngModel)]="vm.newLang.language" name="language" required
+                     placeholder="e.g. Danish, English, German"
+                     class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Proficiency</label>
+              <select [(ngModel)]="vm.newLang.proficiency" name="proficiency"
+                      class="mt-1 w-full border rounded px-2 py-1.5 text-sm">
+                <option value="NATIVE">Native</option>
+                <option value="FLUENT">Fluent</option>
+                <option value="PROFESSIONAL">Professional working proficiency</option>
+                <option value="CONVERSATIONAL">Conversational</option>
+                <option value="ELEMENTARY">Elementary</option>
+              </select>
+            </div>
+          </div>
+          <app-form-actions [disabled]="!vm.newLang.language?.trim()" (cancel)="vm.showLangForm = false"></app-form-actions>
+        </form>
+        </app-inline-form-panel>
+
+        <div *ngFor="let lang of vm.spokenLanguages" class="list-item flex justify-between items-center">
+          <div>
+            <p class="font-semibold text-sm">{{ lang.language }}</p>
+            <span class="text-xs text-gray-500">{{ vm.proficiencyLabel(lang.proficiency) }}</span>
+          </div>
+          <app-confirm-delete-button (confirmed)="vm.deleteLanguage(lang.id!)"></app-confirm-delete-button>
+        </div>
+        <app-empty-state *ngIf="!vm.spokenLanguages.length" message="No languages added yet."></app-empty-state>
+      </div>

@@ -1,0 +1,118 @@
+package com.autoapplicant.adapter.web.controller;
+
+import com.autoapplicant.adapter.pdf.PdfRenderingService;
+import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.adapter.web.dto.pdf.PdfExportRequest;
+import com.autoapplicant.adapter.web.dto.pdf.StructuredApplicationRequest;
+import com.autoapplicant.adapter.web.dto.pdf.StructuredDocumentExportRequest;
+import com.autoapplicant.domain.document.PdfTemplate;
+import com.autoapplicant.domain.document.structured.StructuredDocument;
+import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfilePrivateInfo;
+import com.autoapplicant.domain.user.User;
+import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
+import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
+import com.autoapplicant.port.in.user.GetUserProfileUseCase;
+import com.autoapplicant.port.in.user.ManageProfilePrivateInfoUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/documents")
+@Tag(name = "PDF Export")
+public class PdfExportController {
+
+    private final ManagePdfTemplatesUseCase pdfTemplates;
+    private final GetUserProfileUseCase getUserProfile;
+    private final ManageProfilePrivateInfoUseCase privateInfoUseCase;
+    private final PdfRenderingService pdfRenderer;
+    private final BuildApplicationDocumentUseCase buildAppDocument;
+    private final SecurityContextHelper secCtx;
+
+    public PdfExportController(ManagePdfTemplatesUseCase pdfTemplates,
+                               GetUserProfileUseCase getUserProfile,
+                               ManageProfilePrivateInfoUseCase privateInfoUseCase,
+                               PdfRenderingService pdfRenderer,
+                               BuildApplicationDocumentUseCase buildAppDocument,
+                               SecurityContextHelper secCtx) {
+        this.pdfTemplates = pdfTemplates;
+        this.getUserProfile = getUserProfile;
+        this.privateInfoUseCase = privateInfoUseCase;
+        this.pdfRenderer = pdfRenderer;
+        this.buildAppDocument = buildAppDocument;
+        this.secCtx = secCtx;
+    }
+
+    @Operation(summary = "Export document as PDF")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "PDF template not found"))
+    @PostMapping("/export-pdf")
+    public ResponseEntity<byte[]> exportPdf(@RequestBody PdfExportRequest req) {
+        UUID userId = secCtx.getCurrentUserId();
+
+        PdfTemplate template = pdfTemplates.getById(req.pdfTemplateId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PDF template not found"));
+
+        Profile profile = getUserProfile.getProfile(userId).orElse(null);
+        ProfilePrivateInfo privateInfo = privateInfoUseCase.getPrivateInfo(userId);
+        User user = getUserProfile.getUser(userId).orElse(null);
+
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("NAME",     privateInfo.fullName()    != null ? privateInfo.fullName()    : "");
+        placeholders.put("EMAIL",    user    != null && user.email()  != null ? user.email()        : "");
+        placeholders.put("PHONE",    privateInfo.phone()       != null ? privateInfo.phone()        : "");
+        placeholders.put("LOCATION", privateInfo.location()    != null ? privateInfo.location()     : "");
+        placeholders.put("LINKEDIN", "");
+        placeholders.put("GITHUB",   "");
+        placeholders.put("HEADLINE", profile != null && profile.headline() != null ? profile.headline() : "");
+        placeholders.put("DATE",     LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+
+        String rawContent = req.content() != null ? req.content() : "";
+        String escapedContent = rawContent
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br>");
+        placeholders.put("CONTENT", escapedContent);
+
+        byte[] pdf = pdfRenderer.render(template.htmlTemplate(), template.cssStyles(), placeholders);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document.pdf\"")
+                .body(pdf);
+    }
+
+    @Operation(summary = "Export structured document as PDF")
+    @PostMapping("/export-structured-pdf")
+    public ResponseEntity<byte[]> exportStructuredPdf(@RequestBody StructuredDocumentExportRequest req) {
+        byte[] pdf = pdfRenderer.renderStructured(req.document());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document.pdf\"")
+                .body(pdf);
+    }
+
+    @Operation(summary = "Build structured application document model")
+    @PostMapping("/structured-application")
+    public ResponseEntity<StructuredDocument> structuredApplication(@RequestBody StructuredApplicationRequest req) {
+        return ResponseEntity.ok(buildAppDocument.buildApplicationDocument(
+                secCtx.getCurrentUserId(), req.documentType(), req.content(), req.templateId(),
+                Boolean.TRUE.equals(req.showProfileImage()),
+                req.theme() != null ? req.theme().toTheme() : null));
+    }
+}

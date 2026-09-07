@@ -1,0 +1,111 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/autoapplicant}
+    username: ${DB_USER:autoapplicant}
+    password: ${DB_PASS:${POSTGRES_PASSWORD:localdevpassword}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+server:
+  port: 8080
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,http://localhost:80}
+  ai:
+    enrichment-provider: ${ENRICHMENT_AI_PROVIDER:openai}
+    generation-provider: ${GENERATION_AI_PROVIDER:openai}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: gpt-4o-mini
+    embedding-model: text-embedding-3-small
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    embedding-model: gemini-embedding-001
+  typesense:
+    api-key: ${TYPESENSE_API_KEY:local-dev-key}
+    host: ${TYPESENSE_HOST:localhost}
+    port: ${TYPESENSE_PORT:8108}
+    protocol: http
+  crawler:
+    cron: "0 0 */4 * * *"
+  linkedin:
+    client-id: ${LINKEDIN_CLIENT_ID:}
+    client-secret: ${LINKEDIN_CLIENT_SECRET:}
+  careerjet:
+    affiliate-id: ${CAREERJET_AFFILIATE_ID:}
+  greenhouse:
+    # To add more: check https://boards.greenhouse.io/{token} — if it loads, add it here.
+    companies:
+      # Copenhagen
+      - trustpilot        # Trustpilot, Copenhagen — review platform
+      - toogoodtogo       # Too Good To Go, Copenhagen — food waste app
+      - wolt              # Wolt, Copenhagen — food delivery unicorn
+      - hellomonday       # HELLOMONDAY/DEPT®, Copenhagen+Aarhus — digital agency
+  lever:
+    # To add more: curl https://api.lever.co/v0/postings/{slug} — non-empty array = valid
+    companies:
+      # Copenhagen
+      - veo               # Veo Technologies, Copenhagen — sports cameras
+      - dixa              # Dixa, Copenhagen — customer service platform
+      - vivino            # Vivino, Copenhagen — wine marketplace
+      - contractbook      # Contractbook, Copenhagen — contract management
+  teamtailor:
+    # Format: {company}.teamtailor.com — verify at https://{slug}.teamtailor.com/jobs before adding.
+    career-page-urls:
+      - https://netnordicdenmark.teamtailor.com  # Net Nordic Denmark
+      - https://bankdata.teamtailor.com          # Bankdata (financial IT)
+      - https://relesys.teamtailor.com           # Relesys (retail HR software)
+      - https://goodiebox.teamtailor.com         # Goodiebox
+      - https://onomondo.teamtailor.com          # Onomondo (IoT connectivity)
+      - https://normative.teamtailor.com         # Normative (carbon accounting)
+      - https://trifork.teamtailor.com           # Trifork (software consultancy)
+      - https://templafy.teamtailor.com          # Templafy (document automation)
+      - https://veo.teamtailor.com               # Veo Technologies (sports cameras)
+      - https://dfdsdenmark.teamtailor.com       # DFDS Denmark — shipping & logistics
+      - https://ecoonline.teamtailor.com         # EcoOnline — HSE SaaS (CPH + Aarhus)
+      - https://cepheo.teamtailor.com            # Cepheo — MS Dynamics consulting (CPH + Aarhus + Aalborg)
+      - https://danskindustri.teamtailor.com     # Dansk Industri — business confederation (CPH + Aarhus)
+      - https://power.teamtailor.com             # Power Danmark — consumer electronics retail
+      - https://wspdenmark.teamtailor.com        # WSP Denmark — engineering consultancy
+      # Aarhus & Jutland
+      - https://eg.teamtailor.com                # EG A/S, Skanderborg — business software
+      - https://prevas.teamtailor.com            # Prevas — embedded systems & IoT (Aarhus + Aalborg)
+      - https://twodaydenmark.teamtailor.com     # TwoDay - Software consultancy
+      - https://careers-dk.columbusglobal.com    # Columbus Denmark — ERP/data consultancy (Aarhus + CPH)
+  cornerstone-on-demand:
+    # To add more: find URL pattern https://{tenant}.csod.com/ux/ats/careersite/{siteId}/home
+    tenants:
+      - name: tdc
+        site-id: 17        # TDC / Nuuday / TDC Erhverv, Copenhagen
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED:true}

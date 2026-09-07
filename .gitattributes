@@ -1,0 +1,22 @@
+# Default: normalize line endings to LF in the repository
+* text=auto eol=lf
+
+# Force LF for shell scripts and Docker files (must be LF on Linux)
+*.sh text eol=lf
+gradlew text eol=lf
+Dockerfile text eol=lf
+
+# Windows-only scripts can stay CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+gradlew.bat text eol=crlf
+
+# Binary files — no line ending conversion
+*.jar binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
