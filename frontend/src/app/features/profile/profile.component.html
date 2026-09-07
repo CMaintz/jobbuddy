@@ -1,0 +1,36 @@
+<div class="max-w-4xl mx-auto p-6">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">Master Career Profile</h1>
+
+  <app-tab-nav [tabs]="tabs" [activeKey]="activeTab" (activeKeyChange)="activeTab = $event"></app-tab-nav>
+
+  @if (activeTab === 'overview') {
+    <app-profile-overview-tab [vm]="vm"></app-profile-overview-tab>
+  }
+  @if (activeTab === 'experience') {
+    <app-profile-experience-tab [vm]="vm"></app-profile-experience-tab>
+  }
+  @if (activeTab === 'projects') {
+    <app-profile-projects-tab [vm]="vm"></app-profile-projects-tab>
+  }
+  @if (activeTab === 'education') {
+    <app-profile-education-tab [vm]="vm"></app-profile-education-tab>
+  }
+  @if (activeTab === 'certifications') {
+    <app-profile-certifications-tab [vm]="vm"></app-profile-certifications-tab>
+  }
+  @if (activeTab === 'languages') {
+    <app-profile-languages-tab [vm]="vm"></app-profile-languages-tab>
+  }
+  @if (activeTab === 'socials') {
+    <app-profile-socials-tab [vm]="vm"></app-profile-socials-tab>
+  }
+  @if (activeTab === 'strengths') {
+    <app-profile-strengths-tab [vm]="vm"></app-profile-strengths-tab>
+  }
+  @if (pendingNewSkill) {
+    <app-profile-new-skill-modal [vm]="vm"></app-profile-new-skill-modal>
+  }
+  @if (activeTab === 'skills') {
+    <app-profile-skills-tab [vm]="vm"></app-profile-skills-tab>
+  }
+</div>

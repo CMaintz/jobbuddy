@@ -1,0 +1,39 @@
+<!-- Strengths Tab -->
+<div *ngIf="vm.activeTab === 'strengths'">
+  <app-section-header
+    title="Strengths"
+    actionLabel="+ Add Strength"
+    (action)="vm.showStrengthForm = !vm.showStrengthForm">
+  </app-section-header>
+
+  <app-inline-form-panel *ngIf="vm.showStrengthForm">
+    <form (ngSubmit)="vm.saveStrength()" class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-700">Title</label>
+        <input [(ngModel)]="vm.newStrength.title" name="title" required
+               placeholder="e.g. Problem Solving, Leadership"
+               class="mt-1 w-full border rounded px-2 py-1.5 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700">Description <span class="text-gray-400">(optional)</span></label>
+        <textarea [(ngModel)]="vm.newStrength.description" name="description" rows="2"
+                  placeholder="Brief description of this strength..."
+                  class="mt-1 w-full border rounded px-2 py-1.5 text-sm"></textarea>
+      </div>
+      <app-form-actions [disabled]="!vm.newStrength.title?.trim()" (cancel)="vm.showStrengthForm = false"></app-form-actions>
+    </form>
+  </app-inline-form-panel>
+
+  @for (strength of vm.strengths; track strength.id) {
+    <div class="list-item flex justify-between items-start">
+      <div>
+        <p class="font-semibold text-sm">{{ strength.title }}</p>
+        @if (strength.description) {
+          <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ strength.description }}</p>
+        }
+      </div>
+      <app-confirm-delete-button (confirmed)="vm.deleteStrength(strength.id!)"></app-confirm-delete-button>
+    </div>
+  }
+  <app-empty-state *ngIf="!vm.strengths.length" message="No strengths added yet. These appear in your resume's strengths section."></app-empty-state>
+</div>

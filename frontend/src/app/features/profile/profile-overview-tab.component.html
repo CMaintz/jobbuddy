@@ -1,0 +1,222 @@
+<!-- Overview Tab -->
+      <div *ngIf="vm.activeTab === 'overview'">
+        <form [formGroup]="vm.profileForm" (ngSubmit)="vm.saveProfile()" class="space-y-4">
+
+          <!-- Photo upload -->
+          <div class="flex items-center gap-4 pb-2 border-b border-gray-100">
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+              @if (vm.photoUrl) {
+                <img [src]="vm.photoUrl" alt="Profile photo" class="w-full h-full object-cover" />
+              } @else {
+                <span class="text-gray-400 text-2xl leading-none">&#128100;</span>
+              }
+            </div>
+            <div>
+              <app-file-upload-button
+                accept="image/*"
+                [label]="vm.photoUrl ? 'Change Photo' : 'Upload Photo'"
+                loadingLabel="Uploading..."
+                [loading]="vm.uploadingPhoto"
+                (fileSelected)="vm.onPhotoSelected($event)">
+              </app-file-upload-button>
+              @if (vm.photoError) {
+                <span class="block text-red-600 text-xs mt-1">{{ vm.photoError }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Full Name</label>
+              <input formControlName="fullName" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Headline</label>
+              <input formControlName="headline" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Location</label>
+              <input formControlName="location" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Years of Experience</label>
+              <input formControlName="yearsExperience" type="number" class="mt-1 w-full border rounded px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Phone</label>
+              <input formControlName="phone" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="+45 12 34 56 78"/>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Professional Summary</label>
+            <textarea formControlName="summary" rows="4" class="mt-1 w-full border rounded px-3 py-2 text-sm"></textarea>
+          </div>
+          <!-- CV Import Section -->
+          <div class="border-t border-gray-100 pt-4 mt-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Import CV</h3>
+            <div class="flex flex-wrap gap-3">
+              <!-- Generic CV PDF -->
+              <div>
+                <app-file-upload-button
+                  accept=".pdf"
+                  label="Upload CV (PDF)"
+                  loadingLabel="Parsing..."
+                  [loading]="vm.importingCvPdf"
+                  buttonClass="border border-green-300 text-green-700 hover:bg-green-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                  (fileSelected)="vm.onCvPdfSelected($event)">
+                </app-file-upload-button>
+              </div>
+              <!-- LinkedIn PDF -->
+              <div>
+                <app-file-upload-button
+                  accept=".pdf"
+                  label="Upload LinkedIn PDF"
+                  loadingLabel="Parsing..."
+                  [loading]="vm.importingLinkedIn"
+                  buttonClass="border border-blue-300 text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                  (fileSelected)="vm.onLinkedInPdfSelected($event)">
+                </app-file-upload-button>
+              </div>
+              <!-- Manual hint -->
+              <span class="self-center text-xs text-gray-400">or fill the form manually below</span>
+            </div>
+            @if (vm.cvPdfImportError) {
+              <span class="block text-red-600 text-xs mt-1">{{ vm.cvPdfImportError }}</span>
+            }
+            @if (vm.linkedInImportError) {
+              <span class="block text-red-600 text-xs mt-1">{{ vm.linkedInImportError }}</span>
+            }
+          </div>
+
+          <app-form-actions saveLabel="Save Profile" [showCancel]="false"></app-form-actions>
+          <span *ngIf="vm.saveSuccess" class="ml-3 text-green-600 text-sm">Saved!</span>
+        </form>
+
+        <!-- CV PDF Import Preview Modal -->
+        @if (vm.cvPdfPreview) {
+          <app-modal-shell title="CV Preview" (closed)="vm.cvPdfPreview = null">
+              <p class="text-sm text-gray-500 mb-4">
+                Review the extracted data. Click "Apply to Profile" to fill your profile fields.
+              </p>
+              <div class="space-y-3 text-sm">
+                @if (vm.cvPdfPreview.fullName) {
+                  <div><span class="font-medium text-gray-700">Name:</span> {{ vm.cvPdfPreview.fullName }}</div>
+                }
+                @if (vm.cvPdfPreview.headline) {
+                  <div><span class="font-medium text-gray-700">Headline:</span> {{ vm.cvPdfPreview.headline }}</div>
+                }
+                @if (vm.cvPdfPreview.location) {
+                  <div><span class="font-medium text-gray-700">Location:</span> {{ vm.cvPdfPreview.location }}</div>
+                }
+                @if (vm.cvPdfPreview.summary) {
+                  <div>
+                    <span class="font-medium text-gray-700">Summary:</span>
+                    <p class="text-gray-600 mt-1 text-xs leading-relaxed line-clamp-4">{{ vm.cvPdfPreview.summary }}</p>
+                  </div>
+                }
+                @if (vm.cvPdfPreview.skills?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Skills ({{ vm.cvPdfPreview.skills.length }}):</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (s of vm.cvPdfPreview.skills.slice(0, 20); track s) {
+                        <span class="bg-green-50 text-green-700 text-xs px-2 py-0.5 rounded-full">{{ s }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (vm.cvPdfPreview.technologies?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Technologies:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (t of vm.cvPdfPreview.technologies.slice(0, 20); track t) {
+                        <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ t }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button (click)="vm.applyCvPdfPreview()"
+                        class="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700">
+                  Apply to Profile
+                </button>
+                <button (click)="vm.cvPdfPreview = null"
+                        class="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+          </app-modal-shell>
+        }
+
+        <!-- LinkedIn Import Preview Modal -->
+        @if (vm.linkedInPreview) {
+          <app-modal-shell title="LinkedIn Profile Preview" (closed)="vm.linkedInPreview = null">
+              <p class="text-sm text-gray-500 mb-4">
+                Review the extracted data below. Click "Apply to Profile" to fill your profile fields.
+                You can edit anything after applying.
+              </p>
+
+              <div class="space-y-3 text-sm">
+                @if (vm.linkedInPreview.fullName) {
+                  <div><span class="font-medium text-gray-700">Name:</span> {{ vm.linkedInPreview.fullName }}</div>
+                }
+                @if (vm.linkedInPreview.headline) {
+                  <div><span class="font-medium text-gray-700">Headline:</span> {{ vm.linkedInPreview.headline }}</div>
+                }
+                @if (vm.linkedInPreview.location) {
+                  <div><span class="font-medium text-gray-700">Location:</span> {{ vm.linkedInPreview.location }}</div>
+                }
+                @if (vm.linkedInPreview.summary) {
+                  <div>
+                    <span class="font-medium text-gray-700">Summary:</span>
+                    <p class="text-gray-600 mt-1 text-xs leading-relaxed line-clamp-4">{{ vm.linkedInPreview.summary }}</p>
+                  </div>
+                }
+                @if (vm.linkedInPreview.skills?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Skills ({{ vm.linkedInPreview.skills.length }}):</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (s of vm.linkedInPreview.skills.slice(0, 15); track s) {
+                        <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ s }}</span>
+                      }
+                      @if (vm.linkedInPreview.skills.length > 15) {
+                        <span class="text-xs text-gray-400">+{{ vm.linkedInPreview.skills.length - 15 }} more</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (vm.linkedInPreview.experience?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Experience ({{ vm.linkedInPreview.experience.length }} roles):</span>
+                    <ul class="mt-1 space-y-1 text-xs text-gray-600">
+                      @for (e of vm.linkedInPreview.experience.slice(0, 5); track e.company) {
+                        <li>{{ e.title }} {{ '@' }} {{ e.company }} ({{ e.startDate }} – {{ e.endDate || 'Present' }})</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (vm.linkedInPreview.education?.length) {
+                  <div>
+                    <span class="font-medium text-gray-700">Education:</span>
+                    <ul class="mt-1 space-y-1 text-xs text-gray-600">
+                      @for (e of vm.linkedInPreview.education; track e.institution) {
+                        <li>{{ e.degree }} in {{ e.fieldOfStudy }} — {{ e.institution }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+
+              <div class="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button (click)="vm.applyLinkedInPreview()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
+                  Apply to Profile
+                </button>
+                <button (click)="vm.linkedInPreview = null"
+                        class="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+          </app-modal-shell>
+        }
+      </div>

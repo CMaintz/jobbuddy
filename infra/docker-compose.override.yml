@@ -1,0 +1,6 @@
+# Local development overrides — mounts source for faster iteration
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      LOGGING_LEVEL_COM_AUTOAPPLICANT: DEBUG

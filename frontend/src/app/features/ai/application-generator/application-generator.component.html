@@ -1,0 +1,59 @@
+<div class="space-y-6 max-w-5xl mx-auto">
+      <h1 class="text-3xl font-bold text-gray-900">Generate Application</h1>
+
+      <app-generation-config-form
+        [form]="form"
+        [availableStructuredTemplates]="availableStructuredTemplates"
+        [languages]="languages"
+        [loading]="loading"
+        [jobTitle]="jobTitle"
+        (generate)="generate()"
+        (generateApplicationSet)="generateApplicationSet()">
+      </app-generation-config-form>
+
+      @if (error) {
+        <div class="bg-red-50 text-red-700 rounded-md p-3 text-sm">{{ error }}</div>
+      }
+
+      <!-- Editor + Chat panel (shown after generation) -->
+      @if (showEditor) {
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+          <app-generated-document-editor
+            class="lg:col-span-3"
+            [structuredDocument]="structuredDocument"
+            [applicationDocument]="applicationDocument"
+            [pairedCvDocument]="pairedCvDocument"
+            [activeDocument]="activeDocument"
+            [currentContent]="currentContent"
+            [editorHtml]="editorHtml"
+            [modelLabel]="modelLabel"
+            [copied]="copied"
+            [downloadingPdf]="downloadingPdf"
+            [savingApplication]="savingApplication"
+            [applicationSaveMessage]="applicationSaveMessage"
+            (currentContentChange)="currentContent = $event"
+            (bodyTextChange)="refreshStructuredApplication()"
+            (switchDocument)="switchActiveDocument($event)"
+            (copy)="copyContent()"
+            (download)="downloadPdf()"
+            (downloadCv)="downloadCvPdf()"
+            (save)="saveToApplication($event)">
+          </app-generated-document-editor>
+
+          <app-document-refine-panel
+            class="lg:col-span-2"
+            [structuredDocument]="structuredDocument"
+            [chatHistory]="chatHistory"
+            [refining]="refining"
+            [chatMessage]="chatMessage"
+            (chatMessageChange)="chatMessage = $event"
+            (send)="sendChat()"
+            (moveSection)="moveSection($event.index, $event.direction)"
+            (removeSection)="removeSection($event)"
+            (addCustomSection)="addCustomSection($event.heading, $event.body)">
+          </app-document-refine-panel>
+        </div>
+      }
+    </div>
+  `
