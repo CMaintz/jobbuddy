@@ -108,11 +108,15 @@ public class CvDocumentAssembler {
         // Measured against the CV's own text and the posting's own keywords — neither
         // side of the comparison comes from the model that wrote the document.
         KeywordCoverage coverage = coverageCalculator.measure(documentText, jobKeywords);
+        // The asks a word count cannot settle travel alongside the coverage figure, listed
+        // rather than folded into it.
+        java.util.List<com.autoapplicant.domain.job.JobRequirement> unmeasurable =
+                jobKeywords != null ? jobKeywords.unmeasurableRequirements() : java.util.List.of();
         AtsReport report = tailored != null
-                ? atsReportBuilder.forTailored(coverage, tailored, exportMode, findings, documentLanguage)
+                ? atsReportBuilder.forTailored(coverage, tailored, exportMode, findings, documentLanguage, unmeasurable)
                 : coverage.measured()
-                        ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage)
-                        : atsReportBuilder.basic(null, exportMode, findings, documentLanguage);
+                        ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage, unmeasurable)
+                        : atsReportBuilder.basic(null, exportMode, findings, documentLanguage, unmeasurable);
 
         return new StructuredDocument(
                 null,

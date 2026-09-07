@@ -11,7 +11,7 @@ import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.compone
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JobsApiService } from '../../core/api/jobs.api';
-import { Job, MatchResult } from '../../core/models/job.model';
+import { Job, JobRequirement, MatchResult } from '../../core/models/job.model';
 import { MatchBadgeComponent, MatchLabel, matchColor } from '../../shared/components/match-badge/match-badge.component';
 
 interface FeedRow {
@@ -43,6 +43,11 @@ interface FeedRow {
   descriptionTruncated?: boolean;
   /** The whole posting, once fetched. Kept beside the preview so collapsing works. */
   fullDescription?: string;
+  /**
+   * What the posting asks for. The list response carries its demands; fetching the full
+   * posting fills in the preferences too.
+   */
+  requirements: JobRequirement[];
 }
 
 
@@ -215,6 +220,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       category: job.jobCategory ?? undefined,
       description: job.descriptionClean ?? undefined,
       descriptionTruncated: job.descriptionTruncated ?? false,
+      requirements: job.requirements ?? [],
     };
   }
 
@@ -328,6 +334,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         // The reader may have moved on while this was in flight.
         if (this.selectedJob()?.id !== row.id) { this.descriptionLoading.set(false); return; }
         row.fullDescription = job.descriptionClean ?? row.description;
+        // The full posting also carries the preferences the list response left out.
+        if (job.requirements?.length) row.requirements = job.requirements;
         this.descriptionLoading.set(false);
         this.descriptionExpanded.set(true);
       },

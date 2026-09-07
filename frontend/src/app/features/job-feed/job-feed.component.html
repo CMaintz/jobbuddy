@@ -286,6 +286,25 @@
             </div>
           }
 
+          <!-- What the posting asks for. Listed, not scored: whether five years of experience
+               is met is not something a word count settles. -->
+          @if (job.requirements.length > 0) {
+            <div class="card p-3.5 mb-3">
+              <div class="text-xs font-medium mb-2">{{ 'jobFeed.requirements' | translate }}</div>
+              <ul class="list-none p-0 m-0 flex flex-col gap-1.5">
+                @for (req of job.requirements; track req.text) {
+                  <li class="flex gap-2 items-start text-sm text-jb-text-mid">
+                    <span class="pill shrink-0"
+                      [class.pill-accent]="req.tier === 'REQUIRED'"
+                      [class.pill-neutral]="req.tier !== 'REQUIRED'">{{
+                        ('jobFeed.tier.' + req.tier) | translate }}</span>
+                    <span>{{ req.text }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
           <!-- Actions -->
           <div class="flex gap-2 flex-wrap">
             <jb-button icon="bookmark" (clicked)="saveJob(job)">{{ (savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate }}</jb-button>

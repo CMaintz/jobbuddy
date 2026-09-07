@@ -144,9 +144,11 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String documentLanguage = JobLanguageDetector.detect(content);
         // Measured here against the letter's own text; the model is not asked how well it did.
         KeywordCoverage coverage = coverageCalculator.measure(content, jobKeywords);
+        java.util.List<com.autoapplicant.domain.job.JobRequirement> unmeasurable =
+                jobKeywords != null ? jobKeywords.unmeasurableRequirements() : java.util.List.of();
         AtsReport atsReport = coverage.measured()
-                ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage)
-                : atsReportBuilder.basic(content, exportMode, findings, documentLanguage);
+                ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage, unmeasurable)
+                : atsReportBuilder.basic(content, exportMode, findings, documentLanguage, unmeasurable);
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
         ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
         List<ProfileSocial> socials = socialRepo.findByUserId(userId);
@@ -194,7 +196,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
         String jobDescription = job != null ? job.descriptionClean() : rawJobDescription;
         PostingContext posting = new PostingContext(jobDescription,
-                job != null ? job.country() : null, null);
+                job != null ? job.country() : null, null,
+                job != null ? job.requirements() : java.util.List.of());
         PromptTemplate promptTemplate = resolvePromptTemplate(userId, promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(

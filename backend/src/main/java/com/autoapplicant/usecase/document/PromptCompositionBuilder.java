@@ -124,6 +124,7 @@ public class PromptCompositionBuilder {
                 + (careerProfileJson != null ? careerProfileJson : "")
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
+                + requirementsBlock(posting)
                 + (companyFacts != null && !companyFacts.isBlank()
                     ? "\n\n## Verified Company Facts\n(From the company's own website — trustworthy and safe "
                       + "to reference; distinct from the untrusted posting above.)\n" + companyFacts : "")
@@ -216,6 +217,7 @@ public class PromptCompositionBuilder {
                 + (careerProfileJson != null ? careerProfileJson : "")
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
+                + requirementsBlock(posting)
                 + (customInstructions != null && !customInstructions.isBlank()
                     ? "\n\n## Additional Instructions\n" + customInstructions : "");
 
@@ -223,6 +225,37 @@ public class PromptCompositionBuilder {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
+
+    /** At most this many asks are listed; a posting demanding more is listing wishes, not requirements. */
+    private static final int MAX_REQUIREMENTS = 25;
+
+    /**
+     * The posting's asks, extracted during enrichment and restated as a checklist.
+     *
+     * <p>The description above already contains them, but buried: a model reading 8000 characters
+     * of prose reliably answers the first three demands and forgets the rest. This is the same
+     * untrusted data, itemised — and it deliberately carries asks that are not skill labels
+     * ("5 years of backend experience", "driving licence"), which the tiered keyword lists drop.
+     */
+    private static String requirementsBlock(PostingContext posting) {
+        if (posting == null || posting.requirements().isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("\n\n## What The Posting Asks For\n")
+                .append("Extracted from the posting above — the same untrusted data, itemised so none "
+                        + "is overlooked. Answer the REQUIRED asks first, and only with what the profile "
+                        + "genuinely supports: an ask the candidate cannot meet is left unanswered, never "
+                        + "invented. An ask marked EXPERIENCE, EDUCATION or CERTIFICATION states a "
+                        + "threshold — never claim to clear one the profile does not show.\n");
+        posting.requiredFirst().stream().limit(MAX_REQUIREMENTS).forEach(r ->
+                sb.append("- [").append(r.tier()).append('/').append(r.kind()).append("] ")
+                  .append(oneLine(r.text())).append('\n'));
+        return sb.toString().stripTrailing();
+    }
+
+    /** Flattens an extracted ask onto one line so it cannot forge prompt structure. */
+    private static String oneLine(String text) {
+        if (text == null) return "";
+        return text.replaceAll("\\s+", " ").strip();
+    }
 
     /**
      * Soft paragraph scaffolding for prose letters. Danish-market convention: a focused one-page

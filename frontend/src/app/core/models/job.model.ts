@@ -30,6 +30,24 @@ export interface Job {
   contact?: JobContact;
   /** false once the posting disappears from crawls or is expired. */
   isActive?: boolean;
+  /**
+   * What the posting asks for, in its own words. A list response carries the demands only;
+   * the preferences arrive with the full posting.
+   */
+  requirements?: JobRequirement[];
+}
+
+/**
+ * One ask from the posting, as enrichment extracted it. `kind` says how it could be
+ * verified at all — only SKILL is something a keyword check can settle, which is why the
+ * rest are listed rather than scored.
+ */
+export interface JobRequirement {
+  text: string;
+  tier: 'REQUIRED' | 'PREFERRED';
+  kind: 'SKILL' | 'EXPERIENCE' | 'EDUCATION' | 'LANGUAGE' | 'CERTIFICATION' | 'OTHER';
+  /** The short label, when the ask is a nameable skill. */
+  skill?: string;
 }
 
 /** Extracted verbatim from the posting — never inferred, so any field may be missing. */
