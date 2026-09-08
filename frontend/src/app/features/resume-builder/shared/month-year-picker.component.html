@@ -1,0 +1,23 @@
+
+    <div class="flex gap-2">
+      <select
+        class="input w-auto flex-1"
+        [(ngModel)]="selectedMonth"
+        (ngModelChange)="emitChange()"
+      >
+        <option value="">{{ 'resumeBuilder.monthPicker.month' | translate }}</option>
+        @for (m of months; track m.value) {
+          <option [value]="m.value">{{ m.label | translate }}</option>
+        }
+      </select>
+      <select
+        class="input w-auto flex-1"
+        [(ngModel)]="selectedYear"
+        (ngModelChange)="emitChange()"
+      >
+        <option value="">{{ 'resumeBuilder.monthPicker.year' | translate }}</option>
+        @for (y of years; track y) {
+          <option [value]="y">{{ y }}</option>
+        }
+      </select>
+    </div>

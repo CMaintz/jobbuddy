@@ -1,7 +1,9 @@
 package com.autoapplicant.adapter.web.controller;
 
+import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
+import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,15 +11,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/admin/crawler")
 @Tag(name = "Admin - Crawler")
 public class CrawlerAdminController {
 
     private final TriggerCrawlUseCase triggerCrawl;
+    private final CrawlerStateRepositoryPort crawlerStateRepo;
 
-    public CrawlerAdminController(TriggerCrawlUseCase triggerCrawl) {
+    public CrawlerAdminController(TriggerCrawlUseCase triggerCrawl,
+                                   CrawlerStateRepositoryPort crawlerStateRepo) {
         this.triggerCrawl = triggerCrawl;
+        this.crawlerStateRepo = crawlerStateRepo;
+    }
+
+    @Operation(summary = "Get crawl status for all sources")
+    @GetMapping("/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CrawlerState>> getStatus() {
+        return ResponseEntity.ok(crawlerStateRepo.findAll());
+    }
+
+    @Operation(summary = "Get crawl status for a specific source")
+    @GetMapping("/status/{source}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CrawlerState> getSourceStatus(@PathVariable String source) {
+        return crawlerStateRepo.findBySource(source.toUpperCase())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Trigger crawl for all sources")

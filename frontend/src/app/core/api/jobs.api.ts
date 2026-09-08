@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Job, JobSearchResult, MatchResult } from '../models/job.model';
 import { FeedbackType, RecommendationFeedback } from '../models/profile-section.model';
@@ -19,17 +19,27 @@ export class JobsApiService {
   private base = '/api/v1/jobs';
 
   getJobs(page = 0, size = 20): Observable<{ content: Job[]; totalElements: number }> {
-    return this.http.get<any>(this.base, { params: { page, size } });
+    return this.http.get<{ content: Job[]; totalElements: number }>(this.base, { params: { page, size } });
   }
 
   search(q: string, page = 0, size = 20, categories: string[] = []): Observable<JobSearchResult> {
-    let params: Record<string, any> = { q, page, size };
+    const params: Record<string, string | number | string[]> = { q, page, size };
     if (categories.length) params['categories'] = categories;
     return this.http.get<JobSearchResult>(`${this.base}/search`, { params });
   }
 
   getById(id: string): Observable<Job> {
     return this.http.get<Job>(`${this.base}/${id}`);
+  }
+
+  /** Semantically similar active jobs (embedding nearest-neighbors). */
+  getSimilar(id: string, limit = 5): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.base}/${id}/similar`, { params: { limit } });
+  }
+
+  /** Semantic search: query is embedded and ranked by vector distance. */
+  searchSemantic(q: string, limit = 30): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.base}/search/semantic`, { params: { q, limit } });
   }
 
   getRecommendations(limit = 10): Observable<MatchResult[]> {
@@ -60,6 +70,11 @@ export class JobsApiService {
     return this.http.delete<void>(`${this.base}/${id}/feedback`);
   }
 
+  /** Hides the job for this user and asks the server to verify the posting URL. */
+  reportInactive(id: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${id}/report-inactive`, {});
+  }
+
   getIgnored(): Observable<IgnoredJob[]> {
     return this.http.get<IgnoredJob[]>(`${this.base}/ignored`);
   }
@@ -70,5 +85,17 @@ export class JobsApiService {
 
   getDocumentsForJob(id: string): Observable<GeneratedDocument[]> {
     return this.http.get<GeneratedDocument[]>(`${this.base}/${id}/documents`);
+  }
+
+  lookupByUrl(url: string): Observable<Job> {
+    return this.http.get<Job>(`${this.base}/lookup`, { params: { url } });
+  }
+
+  addManual(payload: {
+    title: string; companyName: string; description: string;
+    url?: string; location?: string; employmentType?: string; remoteType?: string;
+    salaryMin?: number; salaryMax?: number; currency?: string;
+  }): Observable<Job> {
+    return this.http.post<Job>(`${this.base}/manual`, payload);
   }
 }

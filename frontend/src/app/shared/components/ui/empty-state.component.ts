@@ -1,9 +1,11 @@
 import { Component, Input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-empty-state',
   standalone: true,
-  template: `<p class="text-gray-500 text-sm">{{ message }}</p>`
+  imports: [TranslateModule],
+  templateUrl: './empty-state.component.html'
 })
 export class EmptyStateComponent {
   @Input({ required: true }) message = '';

@@ -18,4 +18,10 @@ public class SecurityContextHelper {
         if (principal instanceof String str) return UUID.fromString(str);
         throw new IllegalStateException("Unexpected principal type: " + principal.getClass().getName());
     }
+
+    public boolean isAdmin() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
 }

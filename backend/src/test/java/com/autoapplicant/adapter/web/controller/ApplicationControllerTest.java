@@ -46,6 +46,7 @@ class ApplicationControllerTest {
     @MockBean CreateApplicationUseCase        createUseCase;
     @MockBean UpdateApplicationStatusUseCase  updateStatusUseCase;
     @MockBean UpdateRecruiterInfoUseCase      updateRecruiterUseCase;
+    @MockBean UpdateOutcomeUseCase            updateOutcomeUseCase;
     @MockBean GetApplicationsUseCase          getAllUseCase;
     @MockBean GetApplicationByIdUseCase       getByIdUseCase;
     @MockBean GetApplicationTimelineUseCase   timelineUseCase;
@@ -223,6 +224,6 @@ class ApplicationControllerTest {
         return new Application(id, userId, jobId, status, null,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now());
+                Instant.now(), Instant.now(), null, null);
     }
 }

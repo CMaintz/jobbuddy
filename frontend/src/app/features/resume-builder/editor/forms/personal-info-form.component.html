@@ -1,0 +1,74 @@
+
+    <div class="flex flex-col gap-3">
+      <!-- Photo -->
+      <div class="flex items-center gap-3">
+        @if (pi.photoUrl) {
+          <img [src]="pi.photoUrl" [alt]="'resumeBuilder.form.photo' | translate"
+            class="w-14 h-14 object-cover border border-jb-border"
+            [style.border-radius]="photoShape === 'circle' ? '50%' : photoShape === 'rounded' ? '12px' : '4px'" />
+        } @else {
+          <div class="w-14 h-14 flex items-center justify-center bg-jb-surface-2 border border-dashed border-jb-border-strong text-jb-text-dim text-xs"
+            [style.border-radius]="photoShape === 'circle' ? '50%' : '8px'">{{ 'resumeBuilder.form.photo' | translate }}</div>
+        }
+        <div class="flex gap-1.5">
+          <input type="file" accept="image/*" class="hidden" #photoInput (change)="onPhotoSelected($event)" style="display:none;" />
+          <button class="btn btn-sm" (click)="photoInput.click()">{{ (pi.photoUrl ? 'resumeBuilder.form.replace' : 'resumeBuilder.form.upload') | translate }}</button>
+          @if (pi.photoUrl) {
+            <button class="btn btn-sm" (click)="recrop()">{{ 'resumeBuilder.form.recrop' | translate }}</button>
+            <button class="btn btn-sm btn-danger" (click)="removePhoto()">{{ 'resumeBuilder.form.remove' | translate }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div style="grid-column:span 2;">
+          <label class="label">{{ 'resumeBuilder.form.fullName' | translate }}</label>
+          <input class="input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" placeholder="Jane Doe" />
+        </div>
+        <div style="grid-column:span 2;">
+          <label class="label">{{ 'resumeBuilder.form.jobTitle' | translate }}</label>
+          <input class="input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" placeholder="Senior Software Engineer" />
+        </div>
+        <div>
+          <label class="label">{{ 'resumeBuilder.form.email' | translate }}</label>
+          <input class="input" type="email" [value]="pi.email" (input)="update('email', $any($event.target).value)" placeholder="jane@example.com" />
+        </div>
+        <div>
+          <label class="label">{{ 'resumeBuilder.form.phone' | translate }}</label>
+          <input class="input" type="tel" [value]="pi.phone" (input)="update('phone', $any($event.target).value)" placeholder="+1 234 567 8900" />
+        </div>
+        <div style="grid-column:span 2;">
+          <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>
+          <input class="input" type="text" [value]="pi.location" (input)="update('location', $any($event.target).value)" placeholder="New York, NY" />
+        </div>
+        <div style="grid-column:span 2;">
+          <label class="label">{{ 'resumeBuilder.form.website' | translate }}</label>
+          <input class="input" type="url" [value]="pi.website" (input)="update('website', $any($event.target).value)" placeholder="https://yoursite.com" />
+        </div>
+        <div>
+          <label class="label">{{ 'resumeBuilder.form.linkedin' | translate }}</label>
+          <input class="input" type="text" [value]="pi.linkedin" (input)="update('linkedin', $any($event.target).value)" placeholder="linkedin.com/in/jane" />
+        </div>
+        <div>
+          <label class="label">{{ 'resumeBuilder.form.github' | translate }}</label>
+          <input class="input" type="text" [value]="pi.github" (input)="update('github', $any($event.target).value)" placeholder="github.com/jane" />
+        </div>
+        <div style="grid-column:span 2;">
+          <div class="flex justify-between items-center mb-1">
+            <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.form.summary' | translate }}</label>
+            <app-ai-refine-menu [content]="pi.summary" [jobDescription]="jobDescription"
+              (refined)="update('summary', $event)" />
+          </div>
+          <app-rich-text-editor
+            [value]="pi.summary"
+            [placeholder]="'resumeBuilder.form.summaryPlaceholder' | translate"
+            (debouncedChange)="update('summary', $event)"
+          />
+        </div>
+      </div>
+    </div>
+
+    @if (cropSrc(); as src) {
+      <app-photo-crop-dialog [src]="src" [shape]="photoShape"
+        (cropped)="onCropped($event)" (cancelled)="cropSrc.set(null)" />
+    }

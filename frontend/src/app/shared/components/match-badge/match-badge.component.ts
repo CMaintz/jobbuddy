@@ -5,9 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-match-badge',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <span [class]="badgeClass" class="text-xs font-medium px-2 py-0.5 rounded-full">{{ label }}</span>
-  `
+  templateUrl: './match-badge.component.html'
 })
 export class MatchBadgeComponent {
   @Input() label: 'EXCELLENT' | 'STRONG' | 'MODERATE' | 'WEAK' = 'WEAK';

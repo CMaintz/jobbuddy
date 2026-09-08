@@ -1,0 +1,155 @@
+<div class="h-screen flex flex-col items-center justify-center p-10">
+  <!-- Progress dots -->
+  <div class="flex gap-1.5 mb-8">
+    @for (s of steps; track s.key; let i = $index) {
+      <div class="w-[8px] h-[8px] rounded-full"
+        [style.background]="i <= currentStep() ? 'var(--jb-accent)' : 'var(--jb-surface-3)'"
+        [style.border]="'1px solid ' + (i <= currentStep() ? 'var(--jb-accent)' : 'var(--jb-border)')"></div>
+    }
+  </div>
+
+  <div class="max-w-[520px] w-full">
+    <!-- Step 0: Welcome -->
+    @if (currentStep() === 0) {
+      <div class="text-center">
+        <div class="text-[32px] font-medium tracking-tighter mb-2">{{ 'onboarding.welcome.title' | translate }}</div>
+        <div class="text-xl text-jb-text-mid mb-8 leading-relaxed">
+          {{ 'onboarding.welcome.subtitle' | translate }}
+        </div>
+        <jb-button [primary]="true" icon="arrow-right" (clicked)="next()">{{ 'onboarding.welcome.getStarted' | translate }}</jb-button>
+      </div>
+    }
+
+    <!-- Step 1: Profile basics -->
+    @if (currentStep() === 1) {
+      <div>
+        <div class="text-[20px] font-medium tracking-tight mb-[4px]">{{ 'onboarding.profile.title' | translate }}</div>
+        <div class="text-base text-jb-text-dim mb-5">{{ 'onboarding.profile.subtitle' | translate }}</div>
+        <div class="card p-[18px] flex flex-col gap-3.5">
+          <div class="grid gap-3 grid-cols-1 sm:grid-cols-2">
+            <label class="flex flex-col gap-[5px]">
+              <span class="label">{{ 'onboarding.profile.fullName' | translate }}</span>
+              <input [(ngModel)]="name" class="input" [placeholder]="'onboarding.profile.fullNamePlaceholder' | translate" />
+            </label>
+            <label class="flex flex-col gap-[5px]">
+              <span class="label">{{ 'onboarding.profile.currentTitle' | translate }}</span>
+              <input [(ngModel)]="title" class="input" [placeholder]="'onboarding.profile.currentTitlePlaceholder' | translate" />
+            </label>
+          </div>
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">{{ 'onboarding.profile.location' | translate }}</span>
+            <input [(ngModel)]="location" class="input" [placeholder]="'onboarding.profile.locationPlaceholder' | translate" />
+          </label>
+        </div>
+        @if (error()) {
+          <div class="mt-3 text-sm text-jb-error">{{ error() | translate }}</div>
+        }
+        <div class="flex justify-between mt-5">
+          <jb-button ghost (clicked)="prev()">{{ 'common.back' | translate }}</jb-button>
+          <jb-button [primary]="true" icon="arrow-right" [disabled]="saving()" (clicked)="next()">{{ (saving() ? 'onboarding.saving' : 'common.continue') | translate }}</jb-button>
+        </div>
+      </div>
+    }
+
+    <!-- Step 2: CV import -->
+    @if (currentStep() === 2) {
+      <div>
+        <div class="text-[20px] font-medium tracking-tight mb-[4px]">{{ 'onboarding.cv.title' | translate }}</div>
+        <div class="text-base text-jb-text-dim mb-5">{{ 'onboarding.cv.subtitle' | translate }}</div>
+
+        <jb-cv-import-panel [compact]="true" (applied)="onImportApplied($event)" (failed)="error.set($event)" />
+
+        @if (importedSummary) {
+          <div class="mt-3 p-3 rounded-md flex items-center gap-2 bg-jb-success-soft border border-[rgba(74,222,128,0.3)]">
+            <jb-icon name="check-circle" [size]="13" class="text-jb-success" />
+            <span class="text-sm text-jb-text">{{ importedSummary }}</span>
+          </div>
+        }
+
+        @if (error()) {
+          <div class="mt-3 text-sm text-jb-error">{{ error() | translate }}</div>
+        }
+
+        <div class="flex justify-between mt-5">
+          <jb-button ghost (clicked)="prev()">{{ 'common.back' | translate }}</jb-button>
+          <div class="flex gap-2">
+            <jb-button ghost (clicked)="skipCvImport()">{{ 'onboarding.cv.skip' | translate }}</jb-button>
+            <jb-button [primary]="true" icon="arrow-right" (clicked)="next()">{{ 'common.continue' | translate }}</jb-button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Step 3: Preferences -->
+    @if (currentStep() === 3) {
+      <div>
+        <div class="text-[20px] font-medium tracking-tight mb-[4px]">{{ 'onboarding.prefs.title' | translate }}</div>
+        <div class="text-base text-jb-text-dim mb-5">{{ 'onboarding.prefs.subtitle' | translate }}</div>
+        <div class="card p-[18px] flex flex-col gap-3.5">
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">{{ 'onboarding.prefs.targetRoles' | translate }}</span>
+            <input [(ngModel)]="targetRoles" class="input" [placeholder]="'onboarding.prefs.targetRolesPlaceholder' | translate" />
+          </label>
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">{{ 'onboarding.prefs.locations' | translate }}</span>
+            <input [(ngModel)]="locations" class="input" [placeholder]="'onboarding.prefs.locationsPlaceholder' | translate" />
+          </label>
+          <div>
+            <span class="label mb-2 block">{{ 'onboarding.prefs.workType' | translate }}</span>
+            <div class="flex gap-1.5">
+              @for (w of workTypes; track w) {
+                <button (click)="workType.set(w)"
+                  class="p-[6px_12px] rounded-md cursor-pointer text-sm font-medium"
+                  [style.background]="workType() === w ? 'var(--jb-surface-3)' : 'transparent'"
+                  [style.border]="'1px solid ' + (workType() === w ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+                  [style.color]="workType() === w ? 'var(--jb-text)' : 'var(--jb-text-mid)'">{{ ('onboarding.workType.' + w.toLowerCase().replace('-', '')) | translate }}</button>
+              }
+            </div>
+          </div>
+        </div>
+        @if (error()) {
+          <div class="mt-3 text-sm text-jb-error">{{ error() | translate }}</div>
+        }
+        <div class="flex justify-between mt-5">
+          <jb-button ghost (clicked)="prev()">{{ 'common.back' | translate }}</jb-button>
+          <jb-button [primary]="true" icon="arrow-right" [disabled]="saving()" (clicked)="next()">{{ (saving() ? 'onboarding.saving' : 'common.continue') | translate }}</jb-button>
+        </div>
+      </div>
+    }
+
+    <!-- Step 4: Goal -->
+    @if (currentStep() === 4) {
+      <div>
+        <div class="text-[20px] font-medium tracking-tight mb-[4px]">{{ 'onboarding.goal.title' | translate }}</div>
+        <div class="text-base text-jb-text-dim mb-5">{{ 'onboarding.goal.subtitle' | translate }}</div>
+        <div class="card p-6 text-center">
+          <div class="text-[48px] font-medium tracking-tighter text-jb-accent">{{ weeklyGoal }}</div>
+          <div class="text-sm text-jb-text-dim mb-4">{{ 'onboarding.goal.perWeek' | translate }}</div>
+          <input type="range" [min]="1" [max]="20" [(ngModel)]="weeklyGoal"
+            class="w-full" style="accent-color:var(--jb-accent);" />
+        </div>
+        <div class="flex justify-between mt-5">
+          <jb-button ghost (clicked)="prev()">{{ 'common.back' | translate }}</jb-button>
+          <jb-button [primary]="true" icon="arrow-right" [disabled]="saving()" (clicked)="next()">{{ (saving() ? 'onboarding.finishing' : 'common.continue') | translate }}</jb-button>
+        </div>
+      </div>
+    }
+
+    <!-- Step 5: Done -->
+    @if (currentStep() === 5) {
+      <div class="text-center">
+        <div class="w-[64px] h-[64px] rounded-full bg-jb-success-soft flex items-center justify-center m-[0_auto_16px]" style="border:1px solid rgba(74,222,128,0.4);">
+          <jb-icon name="check" [size]="24" class="text-jb-success" />
+        </div>
+        <div class="text-[24px] font-medium tracking-tight mb-2">{{ 'onboarding.done.title' | translate }}</div>
+        <div class="text-md text-jb-text-mid mb-8 leading-relaxed">
+          {{ 'onboarding.done.subtitle' | translate }}
+        </div>
+        <div class="flex gap-2 justify-center">
+          <jb-button icon="compass" (clicked)="goTo('/jobs/feed')">{{ 'onboarding.done.browseJobs' | translate }}</jb-button>
+          <jb-button [primary]="true" icon="sparkle" (clicked)="goTo('/apply')">{{ 'nav.newApplication' | translate }}</jb-button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -27,8 +27,8 @@ public class ProfilePrivateInfoController {
         return useCase.getPrivateInfo(secCtx.getCurrentUserId());
     }
 
-    @Operation(summary = "Update private profile info (PII)")
-    @PutMapping
+    @Operation(summary = "Update private profile info (PII). Merge semantics: omitted/null fields keep their current value; send an empty string to clear a field.")
+    @RequestMapping(method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ProfilePrivateInfo updatePrivateInfo(@RequestBody ProfilePrivateInfo info) {
         return useCase.updatePrivateInfo(secCtx.getCurrentUserId(), info);
     }

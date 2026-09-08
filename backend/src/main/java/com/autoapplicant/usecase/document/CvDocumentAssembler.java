@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 @Component
 public class CvDocumentAssembler {
 
+    /** Upper bound on rendered skills — keeps the section scannable and ATS-parseable. */
+    private static final int MAX_SKILLS = 24;
+
     private final AtsReportBuilder atsReportBuilder;
 
     public CvDocumentAssembler(AtsReportBuilder atsReportBuilder) {
@@ -37,23 +40,39 @@ public class CvDocumentAssembler {
             sections.add(new StructuredDocumentSection("profile", "profile", "Profile", selectedProfile, List.of()));
         }
         if (!selectedSkills.isEmpty()) {
+            Map<String, String> skillCategory = categoryLookup(source.skillCategories());
             sections.add(new StructuredDocumentSection("skills", "skills", "Skills", null,
                     selectedSkills.stream()
-                            .map(skill -> new StructuredDocumentItem(null, skill, null, null, null, null, List.of(), List.of(), List.of(), List.of()))
+                            .map(skill -> new StructuredDocumentItem(null, skill, null, null, null, null,
+                                    List.of(), List.of(), List.of(), List.of(),
+                                    skillCategory.get(skill.toLowerCase(Locale.ROOT))))
                             .toList()));
         }
-        addSection(sections, "experience", "experience", "Experience",
-                validateItems(tailored != null ? tailored.experience() : null, source.experience()));
-        addSection(sections, "projects", "projects", "Projects",
-                validateItems(tailored != null ? tailored.projects() : null, source.projects()));
-        addSection(sections, "education", "education", "Education",
-                validateItems(tailored != null ? tailored.education() : null, source.education()));
+        // Career-stage drives the default order of the three "story" sections. Early-stage
+        // candidates (student/new grad) lead with education + projects; everyone else leads with
+        // experience. This order is authoritative: the frontend derives the resume-builder's
+        // default column layout from it (the user can still reorder in the builder).
+        List<StructuredDocumentItem> experienceItems =
+                validateItems(tailored != null ? tailored.experience() : null, source.experience());
+        List<StructuredDocumentItem> projectItems =
+                validateItems(tailored != null ? tailored.projects() : null, source.projects());
+        List<StructuredDocumentItem> educationItems =
+                validateItems(tailored != null ? tailored.education() : null, source.education());
+        if (isEarlyStage(source.careerStage())) {
+            addSection(sections, "education", "education", "Education", educationItems);
+            addSection(sections, "projects", "projects", "Projects", projectItems);
+            addSection(sections, "experience", "experience", "Experience", experienceItems);
+        } else {
+            addSection(sections, "experience", "experience", "Experience", experienceItems);
+            addSection(sections, "projects", "projects", "Projects", projectItems);
+            addSection(sections, "education", "education", "Education", educationItems);
+        }
         addSection(sections, "certifications", "certifications", "Certifications",
                 validateItems(tailored != null ? tailored.certifications() : null, source.certifications()));
         if (source.spokenLanguages() != null && !source.spokenLanguages().isEmpty()) {
             sections.add(new StructuredDocumentSection("languages", "languages", "Languages", null,
                     source.spokenLanguages().stream()
-                            .map(lang -> new StructuredDocumentItem(null, lang, null, null, null, null, List.of(), List.of(), List.of(), List.of()))
+                            .map(lang -> new StructuredDocumentItem(null, lang, null, null, null, null, List.of(), List.of(), List.of(), List.of(), null))
                             .toList()));
         }
 
@@ -103,6 +122,11 @@ public class CvDocumentAssembler {
         return buildIdentity(user, profile, null, List.of());
     }
 
+    /** Student / new-grad → education + projects should precede experience by default. */
+    private static boolean isEarlyStage(String careerStage) {
+        return "STUDENT".equals(careerStage) || "NEW_GRAD".equals(careerStage);
+    }
+
     private void addSection(List<StructuredDocumentSection> sections, String id, String type, String heading,
                              List<StructuredDocumentItem> items) {
         if (!items.isEmpty()) {
@@ -136,9 +160,27 @@ public class CvDocumentAssembler {
                 !listOrEmpty(item.bullets()).isEmpty() ? item.bullets() : source.bullets(),
                 validateSubset(item.technologies(), source.technologies()),
                 !listOrEmpty(item.links()).isEmpty() ? item.links() : source.links(),
-                listOrEmpty(source.skills()));
+                listOrEmpty(source.skills()),
+                firstPresent(item.category(), source.category()));
     }
 
+    /** Lowercased skill-name → category map for case-insensitive lookup; empty when none declared. */
+    private static Map<String, String> categoryLookup(Map<String, String> skillCategories) {
+        if (skillCategories == null || skillCategories.isEmpty()) return Map.of();
+        Map<String, String> lookup = new HashMap<>();
+        skillCategories.forEach((name, category) -> {
+            if (name != null && category != null && !category.isBlank()) {
+                lookup.put(name.toLowerCase(Locale.ROOT), category);
+            }
+        });
+        return lookup;
+    }
+
+    /**
+     * Skills the AI selected (keyword-first, most relevant to the posting leading), validated
+     * against the master profile and capped so the section scans rather than becoming a wall.
+     * The AI's ordering is preserved; the cap simply drops the long tail of least-relevant skills.
+     */
     private List<String> validateSkills(List<String> selected, CareerProfileForAi source) {
         Set<String> allowed = merge(source.skills(), source.technologies()).stream()
                 .map(s -> s.toLowerCase(Locale.ROOT))
@@ -148,7 +190,8 @@ public class CvDocumentAssembler {
                 .filter(skill -> allowed.contains(skill.toLowerCase(Locale.ROOT)))
                 .distinct()
                 .toList();
-        return valid.isEmpty() ? merge(source.skills(), source.technologies()) : valid;
+        List<String> resolved = valid.isEmpty() ? merge(source.skills(), source.technologies()) : valid;
+        return resolved.size() > MAX_SKILLS ? resolved.subList(0, MAX_SKILLS) : resolved;
     }
 
     private List<String> validateSubset(List<String> candidate, List<String> source) {

@@ -21,6 +21,7 @@ public record UserPreferences(
         Integer maxCommuteKm,
         boolean notificationEnabled,
         String notificationFrequency,
+        Integer weeklyApplicationGoal,
         Instant createdAt,
         Instant updatedAt
 ) {}

@@ -1,264 +1,64 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { DailyCount, WeeklyTrend } from '../../core/api/dashboard.api';
+import { TranslateModule } from '@ngx-translate/core';
+import { forkJoin } from 'rxjs';
+import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+import { FunnelComponent } from '../../shared/components/funnel/funnel.component';
+import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
+import { SparklineComponent } from '../../shared/components/sparkline/sparkline.component';
+import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
+import { DashboardApiService, DetailedMetrics, WeeklyTrend } from '../../core/api/dashboard.api';
+import { ApplicationsApiService } from '../../core/api/applications.api';
+import { buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
 
-interface DetailedMetrics {
-  total: number;
-  saved: number;
-  applied: number;
-  pendingResponse: number;
-  activeInterviews: number;
-  offers: number;
-  appliedThisWeek: number;
-  appliedThisMonth: number;
-  responseRate: number;
-  interviewRate: number;
-  offerRate: number;
-  topCompanies: string[];
-}
-
-interface SparklineBar {
-  x: number;
-  y: number;
-  height: number;
-  isThisWeek: boolean;
-}
+const HEATMAP_WEEKS = 14;
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="space-y-6">
-      <h1 class="text-2xl font-bold text-gray-900">Analytics</h1>
-
-      <div *ngIf="loading" class="text-center py-12 text-gray-500">Loading analytics...</div>
-
-      <div *ngIf="!loading && metrics">
-        <!-- 4 Metric Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-blue-600">{{ metrics.applied }}</div>
-            <div class="text-sm text-gray-500 mt-1">Total Applied</div>
-          </div>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-green-600">{{ metrics.responseRate | number:'1.0-1' }}%</div>
-            <div class="text-sm text-gray-500 mt-1">Response Rate</div>
-          </div>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-yellow-600">{{ metrics.interviewRate | number:'1.0-1' }}%</div>
-            <div class="text-sm text-gray-500 mt-1">Interview Rate</div>
-          </div>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-purple-600">{{ metrics.offerRate | number:'1.0-1' }}%</div>
-            <div class="text-sm text-gray-500 mt-1">Offer Rate</div>
-          </div>
-        </div>
-
-        <!-- 3 Stat Boxes -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div class="card flex items-center gap-4">
-            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-              <span class="text-blue-600 font-bold text-sm">7d</span>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900">{{ metrics.appliedThisWeek }}</div>
-              <div class="text-sm text-gray-500">Applied This Week</div>
-            </div>
-          </div>
-          <div class="card flex items-center gap-4">
-            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-              <span class="text-green-600 font-bold text-sm">30d</span>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900">{{ metrics.appliedThisMonth }}</div>
-              <div class="text-sm text-gray-500">Applied This Month</div>
-            </div>
-          </div>
-          <div class="card flex items-center gap-4">
-            <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
-              <span class="text-yellow-600 font-bold text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </span>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900">{{ metrics.activeInterviews }}</div>
-              <div class="text-sm text-gray-500">Active Interviews</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Weekly Trend Card -->
-        <div *ngIf="trend" class="card mb-6">
-          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-semibold text-gray-900">Week-over-Week Activity</h2>
-              <p class="text-sm mt-1"
-                 [ngClass]="{
-                   'text-green-600 font-medium': trend.delta > 0,
-                   'text-orange-500': trend.delta < 0,
-                   'text-gray-500': trend.delta === 0
-                 }">{{ trend.message }}</p>
-              <div class="flex items-baseline gap-4 mt-3">
-                <div>
-                  <span class="text-2xl font-bold text-gray-900">{{ trend.thisWeek }}</span>
-                  <span class="text-sm text-gray-500 ml-1">this week</span>
-                </div>
-                <span class="text-gray-300 font-medium">vs</span>
-                <div>
-                  <span class="text-2xl font-bold text-gray-400">{{ trend.lastWeek }}</span>
-                  <span class="text-sm text-gray-500 ml-1">last week</span>
-                </div>
-              </div>
-            </div>
-            <div class="shrink-0">
-              <p class="text-xs text-gray-400 mb-2 sm:text-right">Last 14 days
-                <span class="inline-flex items-center gap-2 ml-3">
-                  <span class="inline-block w-3 h-3 rounded-sm bg-gray-300"></span><span>prev week</span>
-                  <span class="inline-block w-3 h-3 rounded-sm bg-blue-500 ml-1"></span><span>this week</span>
-                </span>
-              </p>
-              <svg viewBox="0 0 280 44" width="280" height="44" xmlns="http://www.w3.org/2000/svg">
-                <rect *ngFor="let bar of trendBars"
-                      [attr.x]="bar.x"
-                      [attr.y]="bar.y"
-                      [attr.width]="16"
-                      [attr.height]="bar.height"
-                      rx="2"
-                      [attr.fill]="bar.isThisWeek ? '#3b82f6' : '#d1d5db'"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Application Funnel -->
-          <div class="card">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Application Funnel</h2>
-            <div class="space-y-3">
-              <!-- Applied -->
-              <div>
-                <div class="flex justify-between text-sm mb-1">
-                  <span class="text-gray-700 font-medium">Applied</span>
-                  <span class="text-gray-500">{{ metrics.applied }}</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-3">
-                  <div class="bg-blue-500 h-3 rounded-full" [style.width]="'100%'"></div>
-                </div>
-              </div>
-              <!-- Responded -->
-              <div>
-                <div class="flex justify-between text-sm mb-1">
-                  <span class="text-gray-700 font-medium">Responded</span>
-                  <span class="text-gray-500">{{ metrics.applied - metrics.pendingResponse }}
-                    <span class="text-gray-400 ml-1">({{ metrics.responseRate | number:'1.0-1' }}%)</span>
-                  </span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-3">
-                  <div class="bg-green-500 h-3 rounded-full"
-                       [style.width]="funnelWidth(metrics.applied - metrics.pendingResponse, metrics.applied)"></div>
-                </div>
-              </div>
-              <!-- Interview -->
-              <div>
-                <div class="flex justify-between text-sm mb-1">
-                  <span class="text-gray-700 font-medium">Interview</span>
-                  <span class="text-gray-500">{{ metrics.activeInterviews }}
-                    <span class="text-gray-400 ml-1">({{ metrics.interviewRate | number:'1.0-1' }}%)</span>
-                  </span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-3">
-                  <div class="bg-yellow-500 h-3 rounded-full"
-                       [style.width]="funnelWidth(metrics.activeInterviews, metrics.applied)"></div>
-                </div>
-              </div>
-              <!-- Offer -->
-              <div>
-                <div class="flex justify-between text-sm mb-1">
-                  <span class="text-gray-700 font-medium">Offer</span>
-                  <span class="text-gray-500">{{ metrics.offers }}
-                    <span class="text-gray-400 ml-1">({{ metrics.offerRate | number:'1.0-1' }}%)</span>
-                  </span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-3">
-                  <div class="bg-purple-500 h-3 rounded-full"
-                       [style.width]="funnelWidth(metrics.offers, metrics.applied)"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Top Companies -->
-          <div class="card">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Top Companies Applied To</h2>
-            <div *ngIf="metrics.topCompanies && metrics.topCompanies.length > 0" class="space-y-2">
-              <div *ngFor="let company of metrics.topCompanies; let i = index"
-                   class="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-                <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0">
-                  {{ i + 1 }}
-                </span>
-                <span class="text-sm font-medium text-gray-900">{{ company }}</span>
-              </div>
-            </div>
-            <p *ngIf="!metrics.topCompanies || !metrics.topCompanies.length" class="text-gray-500 text-sm">
-              No company data available yet.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="!loading && !metrics" class="text-center py-12 text-gray-500">
-        Failed to load analytics. Please try again later.
-      </div>
-    </div>
-  `
+  imports: [CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent, FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent],
+  templateUrl: './analytics.component.html'
 })
 export class AnalyticsComponent implements OnInit {
-  private http = inject(HttpClient);
+  private dashboardApi = inject(DashboardApiService);
+  private appsApi = inject(ApplicationsApiService);
 
-  metrics: DetailedMetrics | null = null;
-  loading = true;
-
-  trend: WeeklyTrend | null = null;
-  trendBars: SparklineBar[] = [];
+  loading = signal(true);
+  loadError = signal(false);
+  metrics = signal<DetailedMetrics | null>(null);
+  trend = signal<WeeklyTrend | null>(null);
+  funnelStages = signal<FunnelStage[]>([]);
+  heatmapData = signal<number[]>([]);
+  heatmapWeeks = HEATMAP_WEEKS;
 
   ngOnInit(): void {
-    this.http.get<DetailedMetrics>('/api/v1/analytics/detailed').subscribe({
-      next: (data) => {
-        this.metrics = data;
-        this.loading = false;
+    forkJoin({
+      metrics: this.dashboardApi.getDetailedAnalytics(),
+      trend: this.dashboardApi.getWeeklyTrend(),
+      apps: this.appsApi.getAll(),
+    }).subscribe({
+      next: ({ metrics, trend, apps }) => {
+        this.metrics.set(metrics);
+        this.trend.set(trend);
+        this.funnelStages.set(buildFunnelStages(apps));
+        this.heatmapData.set(buildHeatmapData(apps, HEATMAP_WEEKS));
+        this.loading.set(false);
       },
       error: () => {
-        this.loading = false;
+        this.loading.set(false);
+        this.loadError.set(true);
       }
     });
-
-    this.http.get<WeeklyTrend>('/api/v1/analytics/trend').subscribe({
-      next: (data) => {
-        this.trend = data;
-        this.trendBars = this.computeBars(data.daily);
-      },
-      error: () => {}
-    });
   }
 
-  private computeBars(daily: DailyCount[]): SparklineBar[] {
-    if (!daily?.length) return [];
-    const maxCount = Math.max(...daily.map(d => d.count), 1);
-    const CHART_H = 40;
-    return daily.map((d, i) => {
-      const h = Math.max(2, Math.round((d.count / maxCount) * CHART_H));
-      return { x: i * 20, y: 44 - h, height: h, isThisWeek: i >= 7 };
-    });
+  trendData(): number[] {
+    return (this.trend()?.daily ?? []).map(d => d.count);
   }
 
-  funnelWidth(value: number, total: number): string {
-    if (!total || total === 0) return '0%';
-    const pct = Math.min(100, Math.round((value / total) * 100));
-    return `${pct}%`;
+  pct(value: number | undefined): string {
+    return value !== undefined ? `${Math.round(value * 100)}%` : '—';
   }
+
 }

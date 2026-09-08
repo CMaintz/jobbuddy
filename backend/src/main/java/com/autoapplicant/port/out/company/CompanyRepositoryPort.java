@@ -1,6 +1,7 @@
 package com.autoapplicant.port.out.company;
 
 import com.autoapplicant.domain.company.Company;
+import com.autoapplicant.domain.company.CompanyFacts;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,12 @@ public interface CompanyRepositoryPort {
     Optional<Company> findById(UUID id);
     Optional<Company> findByName(String name);
     Company findOrCreate(String name);
+    /** Set the company homepage only when it is currently empty (crawl-provided backfill). */
+    void backfillWebsite(UUID companyId, String website);
     List<Company> search(String query, int page, int size);
     Optional<Company> findBySlug(String slug);
+
+    // ── Cached company grounding facts ──────────────────────
+    Optional<CompanyFacts> findFacts(UUID companyId);
+    void saveFacts(UUID companyId, String facts);
 }

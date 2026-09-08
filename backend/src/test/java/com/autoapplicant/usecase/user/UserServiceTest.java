@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.user;
 
 import com.autoapplicant.domain.job.RemoteType;
 import com.autoapplicant.domain.user.*;
+import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.user.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,16 +23,22 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-    @Mock UserRepositoryPort        userRepo;
-    @Mock ProfileRepositoryPort     profileRepo;
-    @Mock PreferencesRepositoryPort prefsRepo;
+    @Mock UserRepositoryPort              userRepo;
+    @Mock ProfileRepositoryPort           profileRepo;
+    @Mock PreferencesRepositoryPort       prefsRepo;
+    @Mock ProfileEmbeddingRepositoryPort  profileEmbeddingRepo;
+    @Mock WorkExperienceRepositoryPort    workExpRepo;
+    @Mock ProjectRepositoryPort           projectRepo;
+    @Mock CertificationRepositoryPort     certRepo;
+    @Mock AiProviderPort                  aiProvider;
 
     UserService service;
     UUID        userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepo, profileRepo, prefsRepo);
+        service = new UserService(userRepo, profileRepo, prefsRepo, profileEmbeddingRepo,
+                workExpRepo, projectRepo, certRepo, aiProvider);
     }
 
     // ── getUser ───────────────────────────────────────────────────────────────
@@ -90,6 +97,6 @@ class UserServiceTest {
 
     private User user(UUID id, String email, String firebaseUid) {
         return new User(id, email, null, null, firebaseUid,
-                UserRole.USER, true, Instant.now(), Instant.now());
+                UserRole.USER, true, false, Instant.now(), Instant.now());
     }
 }

@@ -6,6 +6,10 @@ import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -17,6 +21,12 @@ import java.util.Map;
 
 @Service
 public class PdfRenderingService {
+
+    private static final Logger log = LoggerFactory.getLogger(PdfRenderingService.class);
+
+    /** When true, a CV over 2 pages (or a letter over 1) fails rendering instead of just warning. */
+    @Value("${app.pdf.page-budget.strict:false}")
+    private boolean pageBudgetStrict;
 
     public byte[] render(String htmlTemplate, String cssStyles, Map<String, String> placeholders) {
         String html = htmlTemplate.replace("{{CSS}}", cssStyles != null ? cssStyles : "");
@@ -47,9 +57,32 @@ public class PdfRenderingService {
             builder.withHtmlContent(html, null);
             builder.toStream(baos);
             builder.run();
-            return baos.toByteArray();
+            byte[] pdf = baos.toByteArray();
+            enforcePageBudget(pdf, document);
+            return pdf;
         } catch (Exception ex) {
             throw new RuntimeException("Structured PDF rendering failed", ex);
+        }
+    }
+
+    /**
+     * Post-render page-budget check: a CV should be 2 pages or fewer, other documents 1.
+     * Measures the true page count of the rendered PDF (layout is never mutated to fit).
+     * Warns by default; fails when {@code app.pdf.page-budget.strict=true}.
+     */
+    private void enforcePageBudget(byte[] pdf, StructuredDocument document) {
+        boolean cv = document.documentType() != null && "CV".equals(document.documentType().name());
+        int max = cv ? 2 : 1;
+        try (PDDocument doc = PDDocument.load(pdf)) {
+            int pages = doc.getNumberOfPages();
+            if (pages > max) {
+                String msg = "PDF page budget exceeded: " + (cv ? "CV" : "document")
+                        + " rendered " + pages + " pages (max " + max + ")";
+                if (pageBudgetStrict) throw new IllegalStateException(msg);
+                log.warn(msg);
+            }
+        } catch (IOException e) {
+            log.warn("Could not verify PDF page count: {}", e.getMessage());
         }
     }
 
@@ -75,7 +108,7 @@ public class PdfRenderingService {
         return html.toString();
     }
 
-    // ── Contact icons (inline SVG, 12 px, compatible with openhtmltopdf) ──────
+    // Contact icons (inline SVG, 12 px, compatible with openhtmltopdf)
     private static final String ICON_EMAIL =
         "<svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"#7a8a99\" style=\"display:inline-block;vertical-align:middle;margin-right:4px\">" +
         "<path d=\"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z\"/></svg>";
@@ -200,7 +233,29 @@ public class PdfRenderingService {
 
     private String escape(String value) {
         if (value == null) return "";
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        return normalizeAtsText(value)
+                .replaceAll("[\\u00A0\\u2009\\u202F]", " ")        // nbsp / thin / narrow -> space
+                .replaceAll("[\\u200B\\u200C\\u200D\\uFEFF]", "")  // zero-width chars -> removed
+                .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /**
+     * Normalizes ATS-hostile Unicode in the PDF text layer to plain ASCII equivalents.
+     * Parsers read the embedded text, not the rendered glyphs; smart quotes, en/em dashes,
+     * ellipses, non-breaking/thin spaces, and zero-width characters all degrade keyword
+     * extraction, and models routinely emit them. The decorative middot separator (U+00B7)
+     * inserted by this renderer is intentionally left alone.
+     */
+    private static String normalizeAtsText(String value) {
+        return value
+                .replace('‘', '\'').replace('’', '\'')  // smart single quotes
+                .replace('“', '"').replace('”', '"')    // smart double quotes
+                .replace('–', '-').replace('—', '-')    // en / em dash
+                .replace('−', '-')                           // minus sign
+                .replace("…", "...")                         // ellipsis
+                .replace(' ', ' ').replace(' ', ' ').replace(' ', ' ') // nbsp / narrow / thin
+                .replace("​", "").replace("‌", "")      // zero-width space / non-joiner
+                .replace("‍", "").replace("﻿", "");     // zero-width joiner / BOM
     }
 
     private String atsCss(DocumentTheme theme) {

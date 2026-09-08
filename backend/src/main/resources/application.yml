@@ -26,16 +26,52 @@ app:
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,http://localhost:80}
   ai:
+    # enrichment-provider must be a real API (openai/gemini) — it produces embeddings for search.
     enrichment-provider: ${ENRICHMENT_AI_PROVIDER:openai}
+    # generation-provider: openai | gemini | claude-cli | codex | cli
+    # claude-cli/codex/cli pipe prompts to a local agent CLI (flat-fee subscription) instead of an API.
     generation-provider: ${GENERATION_AI_PROVIDER:openai}
+    # Spend tier per operation class (economy | standard | premium) -> resolves to the provider's tier model.
+    # Bulk enrichment runs cheap; generation can be dialled up to premium. Defaults keep current models.
+    enrichment-tier: ${ENRICHMENT_AI_TIER:economy}
+    generation-tier: ${GENERATION_AI_TIER:standard}
+    cli:
+      command: ${AI_CLI_COMMAND:claude -p}   # e.g. "claude -p" or "codex exec"; prompt piped to stdin
+      timeout-seconds: 120
+      model-label: ${AI_CLI_MODEL_LABEL:cli-agent}
+    auto-review:
+      # Automatic reviewer critique/revise pass after document generation.
+      # Each pass is one extra LLM call — disable to halve generation cost.
+      enabled: ${AUTO_REVIEW_ENABLED:true}
+      max-iterations: 1
+    fact-guard:
+      # Deterministic (model-free) check that generated metrics trace to the profile.
+      # warn = log unsupported numbers; block = fail generation when any are found.
+      enabled: ${FACT_GUARD_ENABLED:true}
+      mode: ${FACT_GUARD_MODE:warn}
+    retracted-claims:
+      # Ensures a claim the user has disowned never resurfaces in generated content.
+      # warn = log; block = fail generation when a retracted claim appears.
+      mode: ${RETRACTED_CLAIMS_MODE:warn}
+    company-grounding:
+      # Fetch the company's own website (cached in DB) and extract verified facts to ground
+      # cover-letter references, instead of parroting the untrusted posting.
+      enabled: ${COMPANY_GROUNDING_ENABLED:true}
+      staleness-days: 60
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o-mini
     embedding-model: text-embedding-3-small
+    economy-model: gpt-4o-mini
+    standard-model: gpt-4o-mini
+    premium-model: gpt-4o
   gemini:
     api-key: ${GEMINI_API_KEY:}
     model: gemini-2.5-flash
     embedding-model: gemini-embedding-001
+    economy-model: gemini-2.5-flash
+    standard-model: gemini-2.5-flash
+    premium-model: gemini-2.5-pro
   typesense:
     api-key: ${TYPESENSE_API_KEY:local-dev-key}
     host: ${TYPESENSE_HOST:localhost}
@@ -46,6 +82,23 @@ app:
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}
+    # ── Job connector (public jobs-guest endpoints). Personal, low-volume use only. ──
+    enabled: ${LINKEDIN_SCRAPER_ENABLED:true}
+    # Pipe-separated LinkedIn place strings (comma is part of a place name, so it can't be the separator).
+    locations: ${LINKEDIN_LOCATIONS:Denmark}
+    job-age-days: 14          # only pull postings from the last N days (recency filter)
+    max-pages-per-query: 2    # 10 results per page
+    queries-per-run: 10       # rotate a subset of (keyword × location) searches each run
+    max-jobs-per-run: 40      # hard ceiling on new detail fetches per run — the main volume guard
+    min-delay-ms: 4000        # randomised pause between requests, lower bound
+    max-delay-ms: 9000        # …upper bound
+    schedule:
+      cron: "0 0 9,13,18 * * *"   # a few times a day; the connector, not the cron, bounds volume
+      jitter-max-minutes: 50      # random pre-run delay so runs don't land on a fixed tick
+    plan:
+      staleness-days: 14       # regenerate a user's keyword plan once it's older than this
+      max-keywords: 30         # hard ceiling on keywords per profile (the "wide" budget)
+      default-breadth: wide    # narrow | normal | wide
   careerjet:
     affiliate-id: ${CAREERJET_AFFILIATE_ID:}
   greenhouse:

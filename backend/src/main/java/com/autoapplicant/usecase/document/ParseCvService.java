@@ -5,7 +5,7 @@ import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
@@ -41,12 +41,12 @@ public class ParseCvService implements ParseCvUseCase {
             }
             """;
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
     private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
     private final ProfileSocialRepositoryPort socialRepo;
 
-    public ParseCvService(@Qualifier("generationAiProvider") AiProviderPort aiProvider, ObjectMapper objectMapper,
+    public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider, ObjectMapper objectMapper,
                           ProfilePrivateInfoRepositoryPort privateInfoRepo,
                           ProfileSocialRepositoryPort socialRepo) {
         this.aiProvider = aiProvider;

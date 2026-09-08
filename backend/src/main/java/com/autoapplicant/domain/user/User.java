@@ -11,6 +11,7 @@ public record User(
         String firebaseUid,
         UserRole role,
         boolean emailVerified,
+        boolean onboardingComplete,
         Instant createdAt,
         Instant updatedAt
 ) {}

@@ -44,7 +44,9 @@ public final class JobMapper {
                 e.getJobCategory() != null ? parseEnum(e.getJobCategory(), JobCategory.class) : null,
                 e.getCreatedAt(),
                 e.getUpdatedAt(),
-                e.getShortDescription()
+                e.getShortDescription(),
+                e.getLastSeenAt(),
+                e.getApplicationDeadline()
         );
     }
 
@@ -81,6 +83,8 @@ public final class JobMapper {
         e.setActive(d.isActive());
         e.setJobCategory(d.jobCategory() != null ? d.jobCategory().name() : null);
         e.setShortDescription(d.shortDescription());
+        e.setLastSeenAt(d.lastSeenAt());
+        e.setApplicationDeadline(d.applicationDeadline());
         return e;
     }
 

@@ -40,11 +40,11 @@ public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUse
         if (query.userId() != null) {
             Set<UUID> ignored = ignoredJobRepo.findJobIdsByUserId(query.userId());
             List<Job> jobs = jobRepo.findAllExcluding(ignored, query.page(), query.size());
-            long total = Math.max(jobRepo.count() - ignored.size(), 0);
+            long total = Math.max(jobRepo.countActive() - ignored.size(), 0);
             return new PageImpl<>(jobs, PageRequest.of(query.page(), query.size()), total);
         }
-        List<Job> jobs = jobRepo.findAll(query.page(), query.size());
-        long total = jobRepo.count();
+        List<Job> jobs = jobRepo.findActive(query.page(), query.size());
+        long total = jobRepo.countActive();
         return new PageImpl<>(jobs, PageRequest.of(query.page(), query.size()), total);
     }
 
