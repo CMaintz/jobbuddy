@@ -15,7 +15,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.interview.InterviewQuestionRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.JobLanguageDetector;
+import com.autoapplicant.usecase.document.MarketConventions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
@@ -32,12 +36,23 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
     private static final Logger log = LoggerFactory.getLogger(InterviewPrepService.class);
 
+    /** How many questions a prep pack asks for when the caller does not say. */
+    private static final int DEFAULT_QUESTION_COUNT = 9;
+
     private static final String SYSTEM_PROMPT = """
             You are an expert interview coach. Generate interview questions based on the job description provided.
             Return ONLY a valid JSON array, no markdown, no explanation.
             Each element must have exactly two fields: "question" (string) and "category" (one of: BEHAVIORAL, TECHNICAL, SITUATIONAL, COMPANY).
             Example: [{"question":"Tell me about a time you led a team.","category":"BEHAVIORAL"}]
             """;
+
+    /** Questions are only useful if they are the ones this market actually asks. */
+    private String questionSystemPrompt(Job job) {
+        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
+                JobLanguageDetector.detect(job != null ? job.descriptionClean() : null),
+                job != null ? job.country() : null));
+        return marketRules.isBlank() ? SYSTEM_PROMPT : SYSTEM_PROMPT + "\n" + marketRules;
+    }
 
     private final InterviewQuestionRepositoryPort repo;
     private final ChatProviderPort aiProvider;
@@ -94,16 +109,36 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         repo.deleteByIdAndUserId(questionId, userId);
     }
 
+    /**
+     * Questions for a job, from the one place that generates them.
+     *
+     * <p>There is only ever one set of interview questions for a job — the prep pack builds it
+     * with the candidate's profile, their STAR+R story bank and the documents they actually
+     * submitted in hand, which is strictly more context than a job description alone. Two
+     * generators meant a candidate could see two different "your questions" lists for the same
+     * job depending on which screen they opened, so this endpoint asks the prep pack and returns
+     * its questions.
+     *
+     * <p>The standalone path below survives for the one case the prep pack cannot serve: a
+     * question set asked for without a job to hang it on (an unsolicited approach, a role pasted
+     * in by hand), where there is no posting to load and no submitted documents to stay
+     * consistent with.
+     */
     @Override
     public List<InterviewQuestion> generateQuestions(UUID jobId, UUID userId, String jobDescription, int count) {
+        Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+        if (job != null) {
+            return generatePrepPack(userId, jobId, count).questions();
+        }
+
         String userPrompt = String.format(
                 "Generate %d interview questions for the following job. Focus on the specific skills, technologies, and responsibilities mentioned.\n\nJob description:\n%s",
                 count, jobDescription);
 
         PromptComposition composition = new PromptComposition(
-                SYSTEM_PROMPT, userPrompt, "", "", "", "", userPrompt);
+                questionSystemPrompt(null), userPrompt, "", "", "", "", userPrompt);
 
-        String json = aiProvider.generateJson(composition);
+        String json = aiProvider.generateJson(composition, AiOperations.INTERVIEW_QUESTIONS);
         List<InterviewQuestion> generated = parseQuestions(json, jobId, userId);
         List<InterviewQuestion> saved = new ArrayList<>();
         int existingCount = repo.findByJobIdAndUserId(jobId, userId).size();
@@ -121,6 +156,11 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
     @Override
     public InterviewPrepPack generatePrepPack(UUID userId, UUID jobId) {
+        return generatePrepPack(userId, jobId, DEFAULT_QUESTION_COUNT);
+    }
+
+    private InterviewPrepPack generatePrepPack(UUID userId, UUID jobId, int questionCount) {
+        int wanted = questionCount > 0 ? questionCount : DEFAULT_QUESTION_COUNT;
         Job job = jobRepo.findById(jobId).orElseThrow(
                 () -> new IllegalArgumentException("Job not found"));
         String jobDescription = job.descriptionClean() != null ? job.descriptionClean() : "";
@@ -135,11 +175,15 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
         String profileJson = careerProfileContext.buildJson(userId);
 
+        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
+                JobLanguageDetector.detect(job.descriptionClean()), job.country()));
+
         String systemPrompt = """
                 You are an expert interview coach preparing a candidate for an interview.
                 Never invent experience the candidate does not have; where the profile shows a gap
                 against the posting, prepare the candidate to address it honestly.
-                Return ONLY valid JSON — no markdown, no commentary.""";
+                Return ONLY valid JSON — no markdown, no commentary."""
+                + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
 
         String userPrompt = """
                 Build an interview prep pack.
@@ -150,7 +194,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                   "consistencyBrief": ["<a claim made in the candidate's submitted documents they must be ready to defend — quote or paraphrase it>"],
                   "questionsToAsk": ["<a sharp question the candidate should ask the interviewer>"]
                 }
-                Give 8-10 questions targeting the posting's requirements and the candidate's weakest
+                Give %d questions targeting the posting's requirements and the candidate's weakest
                 coverage of them; 3-6 consistency-brief entries (omit the field's entries if no documents
                 are provided); and 4-6 questions to ask. When a story bank is provided, prefer behavioral
                 questions the candidate's existing STAR+R stories can answer, and never contradict them.
@@ -161,6 +205,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 ## Candidate profile (contact-free)
                 %s
                 %s%s""".formatted(
+                wanted,
                 job.title(), job.companyName() != null ? job.companyName() : "unknown company",
                 jobDescription,
                 profileJson,
@@ -171,10 +216,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
         JsonNode root;
         try {
-            String cleaned = aiProvider.generateJson(composition).trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("```[a-z]*\\n?", "").replace("```", "").trim();
-            }
+            String cleaned = AiResponseParser.stripCodeFence(aiProvider.generateJson(composition, AiOperations.INTERVIEW_PREP_PACK).trim());
             root = objectMapper.readTree(cleaned);
         } catch (Exception e) {
             log.warn("Prep pack generation failed for job {}: {}", jobId, e.getMessage());
@@ -202,6 +244,11 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         String profileJson = careerProfileContext.buildJson(userId);
         String company = job.companyName() != null ? job.companyName() : "the company";
 
+        // The mock interviewer has to behave like a local one, or practising against it teaches
+        // the wrong register: a Danish hiring manager probes differently from an American one.
+        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
+                JobLanguageDetector.detect(job.descriptionClean()), job.country()));
+
         String systemPrompt = """
                 You are roleplaying as an experienced hiring manager at %s interviewing a candidate \
                 for the role of %s. Stay fully in character: professional, friendly but probing. \
@@ -209,7 +256,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 answer before moving on. Draw questions from the job description and dig into areas \
                 where the candidate's profile looks weakest against it. Keep each message under \
                 120 words. Never break character, never mention being an AI, and output plain \
-                conversational text only — no JSON, no markdown headers.""".formatted(company, job.title());
+                conversational text only — no JSON, no markdown headers.""".formatted(company, job.title())
+                + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
 
         StringBuilder convo = new StringBuilder();
         for (MockInterviewTurn turn : transcript) {
@@ -242,12 +290,35 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
                 ## Interview so far
                 %s
-                %s""".formatted(job.title(), company, jobDescription, profileJson,
-                convo.isEmpty() ? "(not started)" : convo.toString().strip(), instruction);
+                %s%s""".formatted(job.title(), company, jobDescription, profileJson,
+                convo.isEmpty() ? "(not started)" : convo.toString().strip(),
+                buildQuestionPlan(jobId, userId), instruction);
 
         PromptComposition composition = new PromptComposition(
                 systemPrompt, userPrompt, "", "", "", "", userPrompt);
-        return aiProvider.generate(composition).strip();
+        return aiProvider.generate(composition, AiOperations.MOCK_INTERVIEW).strip();
+    }
+
+    /**
+     * The prepared question set, handed to the mock interviewer as its plan.
+     *
+     * <p>Without this the mock invented its own questions, so practising against it prepared the
+     * candidate for an interview other than the one their prep pack told them to expect. Same
+     * set, two uses: read them on the prep screen, get asked them in the mock.
+     *
+     * <p>It is a plan, not a script — the interviewer still follows up on what the candidate
+     * actually says, which is the whole point of practising out loud.
+     */
+    private String buildQuestionPlan(UUID jobId, UUID userId) {
+        List<InterviewQuestion> prepared = repo.findByJobIdAndUserId(jobId, userId);
+        if (prepared.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(
+                "\n## Your question plan (the set this candidate prepared against)\n"
+                + "Work through these, in your own words and in a natural order. Follow up on what "
+                + "the candidate actually says before moving to the next one; skip any their answers "
+                + "have already covered.\n");
+        prepared.stream().limit(12).forEach(q -> sb.append("- ").append(q.question()).append('\n'));
+        return sb.toString();
     }
 
     private static List<String> textList(JsonNode root, String field) {
@@ -262,10 +333,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
     private List<InterviewQuestion> parseQuestions(String json, UUID jobId, UUID userId) {
         List<InterviewQuestion> result = new ArrayList<>();
         try {
-            String cleaned = json.trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("```[a-z]*\\n?", "").replace("```", "").trim();
-            }
+            String cleaned = AiResponseParser.stripCodeFence(json.trim());
             JsonNode arr = objectMapper.readTree(cleaned);
             if (arr.isArray()) {
                 for (JsonNode node : arr) {

@@ -16,7 +16,9 @@ import { PromptTemplate, PromptCategory } from '../../core/models/prompt-templat
 const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: string }[] = [
   { key: 'APPLICATION', label: 'prompts.kind.application', icon: 'layers', color: 'var(--jb-accent)' },
   { key: 'COVER_LETTER', label: 'prompts.kind.coverLetter', icon: 'doc', color: 'var(--jb-info)' },
+  { key: 'UNSOLICITED_APPLICATION', label: 'prompts.kind.unsolicited', icon: 'compass', color: '#f2c97d' },
   { key: 'RECRUITER_MESSAGE', label: 'prompts.kind.recruiterEmail', icon: 'mail', color: '#7df2a8' },
+  { key: 'FOLLOW_UP_MESSAGE', label: 'prompts.kind.followUp', icon: 'clock', color: '#7dd3f2' },
   { key: 'CV_TAILORING', label: 'prompts.kind.tailoredCv', icon: 'doc', color: 'var(--jb-violet)' },
   { key: 'CV_ANALYSIS', label: 'prompts.kind.cvAnalysis', icon: 'doc', color: 'var(--jb-text-dim)' },
   { key: 'GENERAL', label: 'prompts.kind.general', icon: 'lightbulb', color: 'var(--jb-text-dim)' },
@@ -44,6 +46,11 @@ export class PromptsLibraryComponent implements OnInit {
   promptKinds = PROMPT_KINDS;
 
   prompts: PromptTemplate[] = [];
+
+  /** Which library is on screen: the caller's own prompts, or the ones other people shared. */
+  view = signal<'mine' | 'shared'>('mine');
+  sharedPrompts: PromptTemplate[] = [];
+  loadingShared = signal(false);
   private myUserId = '';
   private isAdmin = false;
 
@@ -69,9 +76,43 @@ export class PromptsLibraryComponent implements OnInit {
     this.load();
   }
 
-  /** System templates are admin-only; user templates belong to their creator. Mirrors the backend rule. */
+  /**
+   * Protected templates ship with the app and are admin-only; everything else belongs to its
+   * creator. Mirrors the backend rule — the gate is protection, not "is a system template".
+   */
   canModify(p: PromptTemplate): boolean {
-    return p.isSystem ? this.isAdmin : p.userId === this.myUserId;
+    return p.isProtected ? this.isAdmin : p.userId === this.myUserId;
+  }
+
+  /** Protected prompts offer Duplicate where a user's own offer Edit and Delete. */
+  mustDuplicateToCustomise(p: PromptTemplate): boolean {
+    return p.isProtected && !this.isAdmin;
+  }
+
+  /** Points this prompt's category at this prompt. Never edits the app's seeded template. */
+  useAsDefault(p: PromptTemplate, event?: Event): void {
+    event?.stopPropagation();
+    if (p.isSelectedDefault) return;
+    this.promptApi.selectDefault(p.id).subscribe({
+      next: () => {
+        this.toast.set(this.translate.instant('prompts.toast.defaultSet', { name: p.name }));
+        this.load();
+      },
+      error: () => this.toast.set(this.translate.instant('prompts.toast.defaultFailed'))
+    });
+  }
+
+  /** Drops the user's choice for this category so the app's own prompt comes back. */
+  resetDefault(p: PromptTemplate, event?: Event): void {
+    event?.stopPropagation();
+    if (!p.category) return;
+    this.promptApi.resetDefault(p.category).subscribe({
+      next: () => {
+        this.toast.set(this.translate.instant('prompts.toast.defaultReset'));
+        this.load();
+      },
+      error: () => this.toast.set(this.translate.instant('prompts.toast.defaultFailed'))
+    });
   }
 
   startEdit(p: PromptTemplate): void {
@@ -142,10 +183,46 @@ export class PromptsLibraryComponent implements OnInit {
     });
   }
 
+  showShared(): void {
+    this.view.set('shared');
+    if (this.sharedPrompts.length || this.loadingShared()) return;
+    this.loadingShared.set(true);
+    this.promptApi.getPublic().subscribe({
+      next: shared => { this.sharedPrompts = shared; this.loadingShared.set(false); },
+      error: () => {
+        this.loadingShared.set(false);
+        this.toast.set(this.translate.instant('prompts.toast.sharedLoadFailed'));
+      }
+    });
+  }
+
+  showMine(): void { this.view.set('mine'); }
+
+  /** Sharing is per-prompt and reversible; only your own prompts can be shared. */
+  canShare(p: PromptTemplate): boolean {
+    return !p.isProtected && p.userId === this.myUserId;
+  }
+
+  toggleShared(p: PromptTemplate): void {
+    const next = !p.isPublic;
+    this.promptApi.update(p.id, {
+      name: p.name, category: p.category, description: p.description,
+      systemPrompt: p.systemPrompt, userPrompt: p.userPrompt,
+      outputConstraints: p.outputConstraints, isPublic: next, tags: p.tags,
+    }).subscribe({
+      next: () => {
+        p.isPublic = next;
+        this.toast.set(this.translate.instant(next ? 'prompts.toast.shared' : 'prompts.toast.unshared'));
+      },
+      error: () => this.toast.set(this.translate.instant('prompts.toast.shareFailed'))
+    });
+  }
+
   /** Favourites first, then most-used. */
   filteredPrompts(): PromptTemplate[] {
     const kind = this.activeKind();
-    const list = kind === 'all' ? this.prompts : this.prompts.filter(p => p.category === kind);
+    const source = this.view() === 'shared' ? this.sharedPrompts : this.prompts;
+    const list = kind === 'all' ? source : source.filter(p => p.category === kind);
     return [...list].sort((a, b) =>
       Number(b.favourite ?? false) - Number(a.favourite ?? false)
       || (b.usageCount ?? 0) - (a.usageCount ?? 0));

@@ -3,9 +3,13 @@ package com.autoapplicant.adapter.persistence.entity;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Type;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "jobs")
@@ -38,6 +42,19 @@ public class JobEntity {
 
     @Column(name = "description_clean", columnDefinition = "text")
     private String descriptionClean;
+
+    // ── Enrichment state (entity-only: processing metadata, not part of the posting) ──
+    @Column(name = "enrichment_status", nullable = false, length = 20)
+    private String enrichmentStatus = "PENDING";
+
+    @Column(name = "enrichment_attempts", nullable = false)
+    private int enrichmentAttempts;
+
+    @Column(name = "enrichment_last_attempt_at")
+    private Instant enrichmentLastAttemptAt;
+
+    @Column(name = "enrichment_last_error", columnDefinition = "text")
+    private String enrichmentLastError;
 
     @Column(name = "employment_type")
     private String employmentType;
@@ -72,6 +89,20 @@ public class JobEntity {
     @Type(StringArrayType.class)
     @Column(columnDefinition = "text[]")
     private String[] languages;
+
+    // Requirement tier of the posting's asks — see V069. jobs.skills stays the flat union.
+    @Type(StringArrayType.class)
+    @Column(name = "required_skills", columnDefinition = "text[]")
+    private String[] requiredSkills;
+
+    @Type(StringArrayType.class)
+    @Column(name = "preferred_skills", columnDefinition = "text[]")
+    private String[] preferredSkills;
+
+    /** The posting's asks in its own words — see V027. Untrimmed by the skills vocabulary. */
+    @Type(JsonType.class)
+    @Column(name = "requirements", columnDefinition = "jsonb", nullable = false)
+    private List<Map<String, Object>> requirements = new ArrayList<>();
 
     @Column(name = "posted_at")
     private Instant postedAt;
@@ -113,6 +144,18 @@ public class JobEntity {
     @Column(name = "application_deadline")
     private java.time.LocalDate applicationDeadline;
 
+    @Column(name = "contact_name", columnDefinition = "text")
+    private String contactName;
+
+    @Column(name = "contact_title", columnDefinition = "text")
+    private String contactTitle;
+
+    @Column(name = "contact_email", columnDefinition = "text")
+    private String contactEmail;
+
+    @Column(name = "contact_phone", columnDefinition = "text")
+    private String contactPhone;
+
     @Column(name = "last_url_check_at")
     private Instant lastUrlCheckAt;
 
@@ -145,6 +188,15 @@ public class JobEntity {
     public void setCompanyName(String companyName) { this.companyName = companyName; }
     public String getDescriptionRaw() { return descriptionRaw; }
     public void setDescriptionRaw(String descriptionRaw) { this.descriptionRaw = descriptionRaw; }
+    public String getEnrichmentStatus() { return enrichmentStatus; }
+    public void setEnrichmentStatus(String enrichmentStatus) { this.enrichmentStatus = enrichmentStatus; }
+    public int getEnrichmentAttempts() { return enrichmentAttempts; }
+    public void setEnrichmentAttempts(int enrichmentAttempts) { this.enrichmentAttempts = enrichmentAttempts; }
+    public Instant getEnrichmentLastAttemptAt() { return enrichmentLastAttemptAt; }
+    public void setEnrichmentLastAttemptAt(Instant at) { this.enrichmentLastAttemptAt = at; }
+    public String getEnrichmentLastError() { return enrichmentLastError; }
+    public void setEnrichmentLastError(String enrichmentLastError) { this.enrichmentLastError = enrichmentLastError; }
+
     public String getDescriptionClean() { return descriptionClean; }
     public void setDescriptionClean(String descriptionClean) { this.descriptionClean = descriptionClean; }
     public String getEmploymentType() { return employmentType; }
@@ -171,6 +223,13 @@ public class JobEntity {
     public void setTechnologies(String[] technologies) { this.technologies = technologies; }
     public String[] getSkills() { return skills; }
     public void setSkills(String[] skills) { this.skills = skills; }
+    public String[] getRequiredSkills() { return requiredSkills; }
+    public void setRequiredSkills(String[] v) { this.requiredSkills = v; }
+    public List<Map<String, Object>> getRequirements() { return requirements; }
+    public void setRequirements(List<Map<String, Object>> v) { this.requirements = v == null ? new ArrayList<>() : v; }
+
+    public String[] getPreferredSkills() { return preferredSkills; }
+    public void setPreferredSkills(String[] v) { this.preferredSkills = v; }
     public String[] getLanguages() { return languages; }
     public void setLanguages(String[] languages) { this.languages = languages; }
     public Instant getPostedAt() { return postedAt; }
@@ -197,6 +256,14 @@ public class JobEntity {
     public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
     public java.time.LocalDate getApplicationDeadline() { return applicationDeadline; }
     public void setApplicationDeadline(java.time.LocalDate applicationDeadline) { this.applicationDeadline = applicationDeadline; }
+    public String getContactName() { return contactName; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
+    public String getContactTitle() { return contactTitle; }
+    public void setContactTitle(String contactTitle) { this.contactTitle = contactTitle; }
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
     public Instant getLastUrlCheckAt() { return lastUrlCheckAt; }
     public void setLastUrlCheckAt(Instant lastUrlCheckAt) { this.lastUrlCheckAt = lastUrlCheckAt; }
     public int getUrlCheckFailures() { return urlCheckFailures; }

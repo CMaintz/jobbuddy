@@ -72,7 +72,7 @@
                   <div class="text-[11.5px] text-jb-text-dim">{{ app.jobCompanyName || ('pipeline.unknown' | translate) }}</div>
                 </div>
               </div>
-              <div><jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) | translate }}</jb-pill></div>
+              <div><app-status-chip [status]="app.status" /></div>
               <div><jb-fit-bar [value]="app.matchScore ?? 0" /></div>
               <div class="mono text-sm text-jb-text-mid">—</div>
               <div class="mono text-xs text-jb-text-dim">{{ ageLabel(app.createdAt) }}</div>

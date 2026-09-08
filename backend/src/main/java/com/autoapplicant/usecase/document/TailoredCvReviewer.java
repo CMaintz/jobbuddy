@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 /**
  * Drafter→reviewer pass for the structured CV — the CV-side counterpart to the cover-letter
@@ -43,11 +45,17 @@ public class TailoredCvReviewer {
     }
 
     /** Critiques and revises the tailored CV; returns the draft unchanged when disabled or on error. */
-    public TailoredCvContent review(TailoredCvContent draft, String jobDescription,
+    public TailoredCvContent review(TailoredCvContent draft, PostingContext posting,
                                     WritingProfile writingProfile, String targetLanguage) {
         if (!autoReviewEnabled || draft == null) return draft;
         try {
             String draftJson = objectMapper.writeValueAsString(draft);
+            String jobDescription = posting != null ? posting.description() : null;
+            // Same language/market resolution as the drafting prompt, so the reviewer cannot
+            // quietly switch language or drop the market conventions the draft was written to.
+            String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
+            String marketRules = MarketConventions.cvRules(MarketConventions.resolve(
+                    resolvedLanguage, posting != null ? posting.country() : null));
 
             String system = """
                     You are a demanding hiring manager reviewing a candidate's tailored CV with fresh \
@@ -57,22 +65,23 @@ public class TailoredCvReviewer {
                     a REVISED version in the identical JSON schema. Rules: keep every sourceId unchanged; \
                     never invent employers, titles, dates, schools, credentials, technologies, outcomes, \
                     or metrics not already present; you may only reselect, reorder within a section, and \
-                    rewrite phrasing. Recompute keywordCoverage/matchedKeywords/missingKeywords for your \
-                    revised content. Respond with ONLY valid JSON."""
+                    rewrite phrasing. revised content. Respond with ONLY valid JSON."""
                     + "\n\n" + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT;
-            if (targetLanguage != null && !targetLanguage.isBlank()) {
-                system += "\nWrite all rewritten text in " + targetLanguage + ".";
+            if (resolvedLanguage != null) {
+                system += "\nWrite all rewritten text in " + resolvedLanguage + ".";
             }
 
             String styleMemory = promptBuilder.buildStyleMemory(writingProfile);
             String user = "## Draft CV (JSON)\n" + draftJson
                     + "\n\n## Job Description\n" + (jobDescription != null ? jobDescription : "(none provided)")
                     + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
+                    + (marketRules.isBlank() ? "" : "\n\n" + marketRules)
+                    + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
                     + "\n\nReturn the revised CV in exactly the same JSON shape as the draft above.";
 
             PromptComposition composition = new PromptComposition(system, user, "", "", "", "", user);
             String json = AiResponseParser.extractJsonObject(
-                    AiResponseParser.sanitize(aiProvider.generateJson(composition)).trim());
+                    AiResponseParser.sanitize(aiProvider.generateJson(composition, AiOperations.TAILORED_CV_REVIEW)).trim());
             TailoredCvContent revised = objectMapper.readValue(json, TailoredCvContent.class);
             return revised != null ? revised : draft;
         } catch (Exception e) {

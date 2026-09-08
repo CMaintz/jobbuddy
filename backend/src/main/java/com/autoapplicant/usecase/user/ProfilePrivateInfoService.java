@@ -46,8 +46,9 @@ public class ProfilePrivateInfoService implements ManageProfilePrivateInfoUseCas
         return value != null ? value : fallback;
     }
 
-    @Override
-    public ProfilePrivateInfo updatePhotoUrl(UUID userId, String photoUrl) {
+    /** Stores the stored-photo URL. Only {@link #uploadPhoto} needs this; callers clear a
+     *  photo through the ordinary private-info update instead. */
+    private ProfilePrivateInfo updatePhotoUrl(UUID userId, String photoUrl) {
         ProfilePrivateInfo existing = getPrivateInfo(userId);
         ProfilePrivateInfo updated = new ProfilePrivateInfo(
                 existing.id(), userId, existing.fullName(), existing.phone(),

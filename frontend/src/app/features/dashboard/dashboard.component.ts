@@ -233,27 +233,40 @@ export class DashboardComponent implements OnInit {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const dueSoon = reminders.filter(r => new Date(r.dueAt).getTime() <= endOfDay.getTime());
     this.overdueCount = reminders.filter(r => new Date(r.dueAt).getTime() < now).length;
-    const reminderItems: QueueItem[] = dueSoon.map(r => {
-      const app = appMap.get(r.applicationId);
-      const overdue = new Date(r.dueAt).getTime() < now;
+
+    // The backend feed is the single source for the queue: it already carries due reminders and
+    // outreach follow-ups, and it is the same list the daily email sends. Building them here too
+    // would give the screen and the email different answers.
+    this.todayQueue = nudges.map(n => this.nudgeItem(n, appMap)).slice(0, 5);
+  }
+
+  private nudgeItem(n: Nudge, appMap?: Map<string, Application>): QueueItem {
+    const app = n.applicationId ? appMap?.get(n.applicationId) : undefined;
+    const detail = `${n.companyName ?? app?.jobCompanyName ?? ''}`
+      + `${n.jobTitle || app?.jobTitle ? ' · ' + (n.jobTitle ?? app?.jobTitle) : ''}` || '—';
+    const overdue = !!n.deadline && new Date(n.deadline).getTime() < Date.now();
+
+    if (n.type === 'REMINDER_DUE') {
       return {
-        time: overdue ? 'dashboard.queue.now' : new Date(r.dueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        what: r.note || 'dashboard.queue.followUp',
-        detail: app ? `${app.jobCompanyName ?? ''} · ${app.jobTitle ?? ''}` : '',
+        time: overdue ? 'dashboard.queue.now' : 'dashboard.queue.today',
+        what: n.note || 'dashboard.queue.followUp',
+        detail,
         tag: 'dashboard.tag.followUp',
         tone: overdue ? 'danger' : 'info',
         hot: overdue,
       };
-    });
-
-    // Manual reminders lead; computed nudges fill the remaining slots
-    this.todayQueue = [...reminderItems, ...nudges.map(n => this.nudgeItem(n))].slice(0, 5);
-  }
-
-  private nudgeItem(n: Nudge): QueueItem {
-    const detail = `${n.companyName ?? ''}${n.jobTitle ? ' · ' + n.jobTitle : ''}` || '—';
+    }
+    if (n.type === 'OUTREACH_FOLLOW_UP') {
+      return {
+        time: overdue ? 'dashboard.queue.now' : 'dashboard.queue.today',
+        what: 'dashboard.queue.outreachFollowUp',
+        detail: n.note ? `${n.companyName ?? ''} · ${n.note}` : (n.companyName ?? '—'),
+        tag: 'dashboard.tag.outreach',
+        tone: overdue ? 'danger' : 'info',
+        hot: overdue,
+      };
+    }
     if (n.type === 'DEADLINE_SOON') {
       const daysLeft = Math.max(0, Math.ceil((new Date(n.deadline ?? '').getTime() - Date.now()) / 86400000));
       return {

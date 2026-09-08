@@ -11,9 +11,9 @@
                  (input)="update(s.id, 'title', $any($event.target).value)"
                  [placeholder]="'resumeBuilder.form.strengthTitlePlaceholder' | translate" />
           <label class="label">{{ 'resumeBuilder.form.description' | translate }}</label>
-          <textarea class="input" style="resize:none;" rows="2" [value]="s.description"
-                    (input)="update(s.id, 'description', $any($event.target).value)"
-                    [placeholder]="'resumeBuilder.form.strengthDescPlaceholder' | translate"></textarea>
+          <app-debounced-textarea [value]="s.description" [rows]="2"
+                    (debouncedChange)="update(s.id, 'description', $event)"
+                    [placeholder]="'resumeBuilder.form.strengthDescPlaceholder' | translate" />
           <app-icon-picker
             [label]="'resumeBuilder.form.icon' | translate"
             [selected]="s.iconKey"

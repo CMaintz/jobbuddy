@@ -122,18 +122,32 @@ class JobMapperTest {
                 List.of("Python", "Django"), List.of("Problem Solving"), List.of("Danish"),
                 Instant.now(), Instant.now(), "AI summary",
                 List.of("ml", "nlp"), "SENIOR",
-                null, true, null, Instant.now(), Instant.now(), null, null, null);
+                null, true, null, Instant.now(), Instant.now(), null, null, null,
+                JobContact.ofNullable("Mette Hansen", "afdelingsleder", "mh@example.dk", "12345678"),
+                List.of("Python"), List.of("Django"),
+                List.of(new JobRequirement("Mindst 5 års erfaring med Python", RequirementTier.REQUIRED,
+                        RequirementKind.EXPERIENCE, null)));
 
         Job roundTripped = JobMapper.toDomain(JobMapper.toEntity(job));
 
         assertThat(roundTripped.source()).isEqualTo(JobSource.MANUAL);
         assertThat(roundTripped.employmentType()).isEqualTo(EmploymentType.PART_TIME);
+        assertThat(roundTripped.contact()).isEqualTo(
+                new JobContact("Mette Hansen", "afdelingsleder", "mh@example.dk", "12345678"));
         assertThat(roundTripped.seniority()).isEqualTo(Seniority.SENIOR);
         assertThat(roundTripped.remoteType()).isEqualTo(RemoteType.REMOTE);
         assertThat(roundTripped.technologies()).containsExactly("Python", "Django");
         assertThat(roundTripped.skills()).containsExactly("Problem Solving");
         assertThat(roundTripped.languages()).containsExactly("Danish");
         assertThat(roundTripped.aiTags()).containsExactly("ml", "nlp");
+        assertThat(roundTripped.requiredSkills()).containsExactly("Python");
+        assertThat(roundTripped.preferredSkills()).containsExactly("Django");
+        // The requirements list is jsonb, not a text array — it has its own way to get lost.
+        assertThat(roundTripped.requirements()).singleElement().satisfies(r -> {
+            assertThat(r.text()).isEqualTo("Mindst 5 års erfaring med Python");
+            assertThat(r.tier()).isEqualTo(RequirementTier.REQUIRED);
+            assertThat(r.kind()).isEqualTo(RequirementKind.EXPERIENCE);
+        });
         assertThat(roundTripped.isActive()).isTrue();
     }
 
@@ -144,13 +158,17 @@ class JobMapperTest {
                 null, null, null, null, null, null, null,
                 null, null, null,
                 null, null, null,
-                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null, null, null);
+                null, Instant.now(), null, null, null, null, false, null, Instant.now(), Instant.now(), null, null, null, null,
+                null, null, null);
 
         JobEntity entity = JobMapper.toEntity(job);
 
         assertThat(entity.getTechnologies()).isEmpty();
         assertThat(entity.getSkills()).isEmpty();
         assertThat(entity.getAiTags()).isEmpty();
+        assertThat(entity.getRequiredSkills()).isEmpty();
+        assertThat(entity.getPreferredSkills()).isEmpty();
+        assertThat(entity.getRequirements()).isEmpty();
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

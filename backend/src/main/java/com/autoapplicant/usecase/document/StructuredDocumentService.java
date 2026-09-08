@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.*;
@@ -24,7 +25,6 @@ import com.autoapplicant.port.out.user.UserRepositoryPort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -45,6 +45,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final TailoredCvGenerator tailoredCvGenerator;
     private final TailoredCvReviewer tailoredCvReviewer;
     private final AtsReportBuilder atsReportBuilder;
+    private final KeywordCoverageCalculator coverageCalculator;
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
 
@@ -60,6 +61,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      TailoredCvGenerator tailoredCvGenerator,
                                      TailoredCvReviewer tailoredCvReviewer,
                                      AtsReportBuilder atsReportBuilder,
+                                     KeywordCoverageCalculator coverageCalculator,
                                      ApplicationRepositoryPort applicationRepo,
                                      GeneratedContentGuards contentGuards) {
         this.userRepo = userRepo;
@@ -74,6 +76,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.tailoredCvGenerator = tailoredCvGenerator;
         this.tailoredCvReviewer = tailoredCvReviewer;
         this.atsReportBuilder = atsReportBuilder;
+        this.coverageCalculator = coverageCalculator;
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
     }
@@ -96,49 +99,56 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, null,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme));
+                showProfileImage, resolveTheme(theme), ContentGuardFindings.NONE, null,
+                JobKeywords.NONE, null);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId) {
-        return buildApplicationDocument(userId, type, content, templateId, null, null, null, false);
+        return buildApplicationDocument(userId, type, content, templateId, JobKeywords.NONE, false);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId, boolean showProfileImage) {
-        return buildApplicationDocument(userId, type, content, templateId, null, null, null, showProfileImage);
+        return buildApplicationDocument(userId, type, content, templateId, JobKeywords.NONE, showProfileImage);
     }
 
     @Override
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId, boolean showProfileImage,
                                                        DocumentTheme theme) {
-        return buildApplicationDocument(userId, type, content, templateId, null, null, null, showProfileImage, theme);
+        return buildApplicationDocument(userId, type, content, templateId, JobKeywords.NONE,
+                showProfileImage, theme, ContentGuardFindings.NONE);
     }
 
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId,
-                                                       Integer keywordCoverage,
-                                                       List<String> matchedKeywords,
-                                                       List<String> missingKeywords,
+                                                       JobKeywords jobKeywords,
                                                        boolean showProfileImage) {
-        return buildApplicationDocument(userId, type, content, templateId, keywordCoverage, matchedKeywords,
-                missingKeywords, showProfileImage, DocumentTheme.defaults());
+        return buildApplicationDocument(userId, type, content, templateId, jobKeywords,
+                showProfileImage, DocumentTheme.defaults(), ContentGuardFindings.NONE);
     }
 
     @Override
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId,
-                                                       Integer keywordCoverage,
-                                                       List<String> matchedKeywords,
-                                                       List<String> missingKeywords,
+                                                       JobKeywords jobKeywords,
                                                        boolean showProfileImage,
-                                                       DocumentTheme theme) {
+                                                       DocumentTheme theme,
+                                                       ContentGuardFindings guardFindings) {
         String resolvedTemplate = resolveTemplate(templateId, "application-modern");
         String exportMode = exportModeFromTemplate(resolvedTemplate);
-        AtsReport atsReport = keywordCoverage != null && keywordCoverage > 0
-                ? atsReportBuilder.forCoverage(keywordCoverage, matchedKeywords, missingKeywords, exportMode)
-                : atsReportBuilder.basic(content, exportMode);
+        ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
+        // The letter knows its own language: detect it from the delivered body rather than
+        // threading yet another parameter through four overloads and the port.
+        String documentLanguage = JobLanguageDetector.detect(content);
+        // Measured here against the letter's own text; the model is not asked how well it did.
+        KeywordCoverage coverage = coverageCalculator.measure(content, jobKeywords);
+        java.util.List<com.autoapplicant.domain.job.JobRequirement> unmeasurable =
+                jobKeywords != null ? jobKeywords.unmeasurableRequirements() : java.util.List.of();
+        AtsReport atsReport = coverage.measured()
+                ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage, unmeasurable)
+                : atsReportBuilder.basic(content, exportMode, findings, documentLanguage, unmeasurable);
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
         ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
         List<ProfileSocial> socials = socialRepo.findByUserId(userId);
@@ -181,20 +191,31 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         User user = userRepo.findById(userId).orElse(null);
         CareerProfileForAi source = careerProfileContext.build(userId);
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
-        String jobDescription = resolveJobDescription(jobId, rawJobDescription);
-        PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
+        // One lookup: the posting supplies both the description and the country whose hiring
+        // conventions the prompts should follow.
+        Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+        String jobDescription = job != null ? job.descriptionClean() : rawJobDescription;
+        PostingContext posting = new PostingContext(jobDescription,
+                job != null ? job.country() : null, null,
+                job != null ? job.requirements() : java.util.List.of());
+        PromptTemplate promptTemplate = resolvePromptTemplate(userId, promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
-                source, jobDescription, customInstructions, targetLanguage, promptTemplate,
+                source, posting, customInstructions, targetLanguage, promptTemplate,
                 writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
         // Drafter→reviewer pass on the structured CV (config-gated); non-fatal on failure.
-        tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage);
+        tailored = tailoredCvReviewer.review(tailored, posting, writingProfile, targetLanguage);
         // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
-        contentGuards.verify(userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
+        ContentGuardFindings findings = contentGuards.verify(
+                userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
+        String cvText = cvText(tailored);
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme));
+                showProfileImage, resolveTheme(theme), findings,
+                JobLanguageDetector.resolve(targetLanguage, jobDescription),
+                JobKeywords.of(job), cvText);
     }
+
 
     /** Flattens the tailored CV's rewritten text so the guards can check it like a letter body. */
     private static String cvText(TailoredCvContent t) {
@@ -219,23 +240,16 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         }
     }
 
-    /** Loads the prompt template by explicit ID, or falls back to the system default for the category. */
-    private PromptTemplate resolvePromptTemplate(UUID promptTemplateId, String fallbackCategory) {
+    /**
+     * Loads the prompt template by explicit ID, or falls back to the caller's default for the
+     * category — their own chosen one when they have set it, the app's seeded prompt otherwise.
+     */
+    private PromptTemplate resolvePromptTemplate(UUID userId, UUID promptTemplateId, String fallbackCategory) {
         PromptTemplate resolved = promptTemplateId != null
                 ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
-                : promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
+                : promptTemplateRepo.findDefaultFor(userId, fallbackCategory).orElse(null);
         if (resolved != null) promptTemplateRepo.incrementUsage(resolved.id());
         return resolved;
-    }
-
-    private String resolveJobDescription(UUID jobId, String rawJobDescription) {
-        if (jobId != null) {
-            Optional<Job> job = jobRepo.findById(jobId);
-            if (job.isPresent()) {
-                return job.get().descriptionClean();
-            }
-        }
-        return rawJobDescription;
     }
 
     private static String resolveTemplate(String templateId, String defaultTemplate) {

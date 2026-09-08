@@ -1,0 +1,46 @@
+<h2 class="text-[16px] font-medium tracking-tight m-[0_0_4px]">{{ 'settings.section.taxonomy' | translate }}</h2>
+<p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">{{ 'settings.taxonomy.intro' | translate }}</p>
+
+@if (toast()) {
+  <div class="card p-2.5 mb-3 text-sm text-jb-text-mid">{{ toast() }}</div>
+}
+
+@if (loading()) {
+  <div class="p-10 text-center text-jb-text-dim">{{ 'settings.taxonomy.loading' | translate }}</div>
+} @else if (loadError()) {
+  <div class="p-10 text-center text-jb-text-dim">{{ 'settings.taxonomy.loadError' | translate }}</div>
+} @else if (candidates().length === 0) {
+  <div class="p-10 text-center text-jb-text-dim">{{ 'settings.taxonomy.empty' | translate }}</div>
+} @else {
+  <div class="flex flex-col gap-2">
+    @for (candidate of candidates(); track candidate.normalizedName) {
+      <div class="card p-3 flex flex-wrap items-center gap-2.5">
+        <div class="flex-1 min-w-[160px]">
+          <div class="text-base font-medium">{{ candidate.name }}</div>
+          <div class="text-xs text-jb-text-dim mt-0.5">
+            {{ 'settings.taxonomy.postings' | translate:{ n: candidate.postings } }}
+            ·
+            {{ (candidate.readAsTechnology ? 'settings.taxonomy.asTechnology' : 'settings.taxonomy.asSkill') | translate }}
+          </div>
+        </div>
+
+        <label class="sr-only" [attr.for]="'cat-' + candidate.normalizedName">{{ 'settings.taxonomy.category' | translate }}</label>
+        <select [id]="'cat-' + candidate.normalizedName"
+          class="input text-sm py-1"
+          [value]="categoryFor(candidate)"
+          (change)="choose(candidate, $any($event.target).value)">
+          @for (category of categories(); track category) {
+            <option [value]="category" [selected]="category === categoryFor(candidate)">{{ category }}</option>
+          }
+        </select>
+
+        <jb-button small [primary]="true" icon="check"
+          [disabled]="busy() === candidate.normalizedName"
+          (clicked)="approve(candidate)">{{ 'settings.taxonomy.approve' | translate }}</jb-button>
+        <jb-button small ghost icon="x"
+          [disabled]="busy() === candidate.normalizedName"
+          (clicked)="reject(candidate)">{{ 'settings.taxonomy.reject' | translate }}</jb-button>
+      </div>
+    }
+  </div>
+}

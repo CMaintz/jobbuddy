@@ -11,9 +11,13 @@ export interface Profile {
   headline?: string;
   summary?: string;
   yearsExperience?: number;
-  skills?: string[];
-  technologies?: string[];
+  // Skills are not here — they are their own resource (see SkillsApiService.getProfileSkills),
+  // one row each with taxonomy category, proficiency and years. They used to also live on the
+  // profile as two bare string arrays, which meant a skill's attributes depended on which of the
+  // two write paths had created it.
   languages?: string[];
+  /** Leisure interests — the closing section of a Danish CV ("fritidsinteresser"). */
+  interests?: string[];
   desiredSalaryMin?: number;
   desiredSalaryMax?: number;
   desiredCurrency?: string;

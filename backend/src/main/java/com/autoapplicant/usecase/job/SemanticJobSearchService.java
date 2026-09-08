@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 /**
  * "Search by meaning": embeds the query and ranks jobs by vector distance,
- * complementing the keyword search (Typesense) which misses paraphrases.
+ * complementing the Postgres keyword search, which misses paraphrases.
  */
 @Service
 public class SemanticJobSearchService implements SemanticSearchJobsUseCase {

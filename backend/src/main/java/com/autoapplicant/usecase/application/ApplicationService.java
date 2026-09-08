@@ -1,6 +1,5 @@
 package com.autoapplicant.usecase.application;
 
-import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.ApplicationStatusEvent;
@@ -8,7 +7,6 @@ import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
-import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import org.springframework.data.domain.Page;
@@ -27,16 +25,13 @@ public class ApplicationService implements
         GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
-    private final ResponseMetricRepositoryPort responseMetricRepo;
     private final ApplicationStatusEventRepositoryPort statusEventRepo;
     private final PersistGeneratedDocumentUseCase structuredGeneratedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
-                              ResponseMetricRepositoryPort responseMetricRepo,
                               ApplicationStatusEventRepositoryPort statusEventRepo,
                               PersistGeneratedDocumentUseCase structuredGeneratedDocuments) {
         this.repo = repo;
-        this.responseMetricRepo = responseMetricRepo;
         this.statusEventRepo = statusEventRepo;
         this.structuredGeneratedDocuments = structuredGeneratedDocuments;
     }
@@ -54,12 +49,17 @@ public class ApplicationService implements
             throw new IllegalStateException("An application for this job already exists");
         }
         ApplicationStatus status = command.status() != null ? command.status() : ApplicationStatus.SAVED;
+        Instant now = Instant.now();
         Application app = new Application(null, command.userId(), command.jobId(), status,
-                status == ApplicationStatus.APPLIED ? Instant.now() : null,
+                status == ApplicationStatus.APPLIED ? now : null,
                 null, null, command.coverLetterText(), command.applicationText(), command.recruiterMessage(),
                 null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null,
                 null, null);
         Application saved = repo.save(app);
+        // The opening move belongs in the ledger too, or the timeline starts mid-story and
+        // funnel velocity never sees how long the first stage took.
+        statusEventRepo.save(new ApplicationStatusEvent(
+                null, saved.id(), saved.userId(), null, status, now, command.notes()));
         if (command.generatedDocumentId() != null) {
             structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
         }
@@ -74,14 +74,22 @@ public class ApplicationService implements
         GeneratedDocument document = structuredGeneratedDocuments.attachToApplication(userId, generatedDocumentId, applicationId);
         Application withContent = applyGeneratedContent(existing, document, generatedContent);
         ApplicationStatus targetStatus = status != null ? status : withContent.status();
+        Instant now = Instant.now();
         Application updated = withContent.toBuilder()
                 .status(targetStatus)
                 .appliedAt(targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null
-                        ? Instant.now() : withContent.appliedAt())
+                        ? now : withContent.appliedAt())
                 .notes(notes != null ? notes : withContent.notes())
-                .updatedAt(Instant.now())
+                .updatedAt(now)
                 .build();
-        return repo.save(updated);
+        Application saved = repo.save(updated);
+        // Attaching a generated document can move the application on; that is a move like
+        // any other and has to reach the ledger, or the timeline skips it.
+        if (targetStatus != existing.status()) {
+            statusEventRepo.save(new ApplicationStatusEvent(
+                    null, saved.id(), saved.userId(), existing.status(), targetStatus, now, notes));
+        }
+        return saved;
     }
 
     private Application applyGeneratedContent(Application application, GeneratedDocument document, String generatedContent) {
@@ -118,31 +126,20 @@ public class ApplicationService implements
                     + existing.status() + " -> " + newStatus);
         }
 
+        // One instant for the whole transition: the response metric's note finds its way
+        // back to the ledger entry by matching on it.
+        Instant now = Instant.now();
         Application updated = existing.toBuilder()
                 .status(newStatus)
-                .appliedAt(newStatus == ApplicationStatus.APPLIED ? Instant.now() : existing.appliedAt())
+                .appliedAt(newStatus == ApplicationStatus.APPLIED ? now : existing.appliedAt())
                 .notes(notes != null ? notes : existing.notes())
-                .updatedAt(Instant.now())
+                .updatedAt(now)
                 .build();
         Application saved = repo.save(updated);
 
-        // Append-only transition ledger — every change, for funnel-velocity analytics.
+        // Append-only transition ledger — every change, for the timeline and funnel velocity.
         statusEventRepo.save(new ApplicationStatusEvent(
-                null, applicationId, existing.userId(), existing.status(), newStatus, Instant.now()));
-
-        String eventType = switch (newStatus) {
-            case RECRUITER_CONTACT -> "RECRUITER_CONTACT";
-            case INTERVIEW -> "INTERVIEW_SCHEDULED";
-            case TECHNICAL_TEST -> "TECHNICAL_TEST";
-            case FINAL_ROUND -> "FINAL_ROUND";
-            case OFFER -> "OFFER_RECEIVED";
-            case REJECTED -> "REJECTED";
-            default -> null;
-        };
-        if (eventType != null) {
-            responseMetricRepo.save(new ResponseMetric(null, existing.userId(), existing.jobId(),
-                    applicationId, eventType, Instant.now(), notes));
-        }
+                null, applicationId, existing.userId(), existing.status(), newStatus, now, notes));
 
         return saved;
     }

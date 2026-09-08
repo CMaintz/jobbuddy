@@ -32,10 +32,6 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
         return repo.findById(id).map(this::toDomain);
     }
 
-    @Override
-    public Optional<Company> findByName(String name) {
-        return repo.findByNameIgnoreCase(name).map(this::toDomain);
-    }
 
     @Override
     public Company findOrCreate(String name) {
@@ -65,11 +61,6 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
                 .stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public Optional<Company> findBySlug(String slug) {
-        return repo.findBySlug(slug).map(this::toDomain);
     }
 
     @Override

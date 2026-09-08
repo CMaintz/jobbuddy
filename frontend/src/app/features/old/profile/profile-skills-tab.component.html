@@ -28,6 +28,16 @@
               </div>
             </div>
 
+            <!-- Category — decides which group the skill is filed under, and is the only
+                 classification a skill outside the taxonomy will ever get. -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Category</label>
+              <select [(ngModel)]="vm.newSkill.category" name="skillCategory" class="input text-sm">
+                <option value="">Uncategorised</option>
+                <option *ngFor="let c of vm.availableCategories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
             <!-- Proficiency -->
             <div>
               <label class="block text-xs font-medium text-gray-700 mb-1">Proficiency</label>

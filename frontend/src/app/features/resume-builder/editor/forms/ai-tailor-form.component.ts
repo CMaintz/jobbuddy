@@ -10,6 +10,7 @@ import { PromptApiService } from '../../../../core/api/prompt.api';
 import { AtsReport, StructuredDocument } from '../../../../core/models/structured-document.model';
 import { PromptTemplate } from '../../../../core/models/prompt-template.model';
 import { ResumeData } from '../../models/resume-builder.models';
+import { JbIconComponent } from '../../../../shared/components/jb-icon/jb-icon.component';
 import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/diff-viewer.component';
 import { JbButtonComponent } from '../../../../shared/components/jb-button/jb-button.component';
 
@@ -28,7 +29,7 @@ const TAILOR_PROMPTS = [
 @Component({
   selector: 'app-ai-tailor-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent],
   templateUrl: './ai-tailor-form.component.html',
 })
 export class AiTailorFormComponent implements OnInit {

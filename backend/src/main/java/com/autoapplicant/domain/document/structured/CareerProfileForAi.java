@@ -9,11 +9,19 @@ public record CareerProfileForAi(
         List<String> technologies,
         List<String> languages,
         List<String> spokenLanguages,
+        /** Leisure interests, rendered verbatim on the CV rather than tailored. */
+        List<String> interests,
         List<StructuredDocumentItem> experience,
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,
         List<StructuredDocumentItem> certifications,
         List<String> strengths,
+        /**
+         * Concrete proof points from the story bank — what the candidate did and what changed —
+         * each prefixed with the skill it evidences. These are what the letter's proof rules cite;
+         * without them the model can only assert. Identity-free: work, never who.
+         */
+        List<String> proofPoints,
         /** Declared target role-archetypes to frame generation toward. Identity-free. */
         List<String> targetArchetypes,
         /** One-line statement of the ideal next role / direction. */
@@ -23,5 +31,11 @@ public record CareerProfileForAi(
         /** Self-declared career stage (e.g. NEW_GRAD, SENIOR) driving stage-appropriate framing. */
         String careerStage,
         /** Skill name → category (e.g. "Java" → "Languages"), so the CV can group skills. */
-        java.util.Map<String, String> skillCategories
+        java.util.Map<String, String> skillCategories,
+        /**
+         * Notice period and/or earliest start date, pre-rendered as one line
+         * ("Notice period: 3 måneder; available from 1 Sep 2026"). Null when the user stated
+         * neither. Identity-free — it says when, never who.
+         */
+        String availability
 ) {}

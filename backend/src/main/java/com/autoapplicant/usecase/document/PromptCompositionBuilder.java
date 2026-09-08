@@ -15,45 +15,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class PromptCompositionBuilder {
 
-    // ── Template-based prose path (legacy / PromptController) ──────────────────────────────
-
-    public PromptComposition compose(PromptCompositionRequest req) {
-        String baseSystem = req.template().systemPrompt() != null
-                ? req.template().systemPrompt() : defaultApplicationSystemPrompt();
-        String systemPrompt = appendLanguage(baseSystem, req.targetLanguage());
-        String cvContext = req.contactFreeCareerProfileJson() != null && !req.contactFreeCareerProfileJson().isBlank()
-                ? "## Contact-Free Master Career Profile JSON\n" + req.contactFreeCareerProfileJson()
-                : "";
-        String jobDescText = req.job() != null ? req.job().descriptionClean()
-                : (req.rawJobDescription() != null && !req.rawJobDescription().isBlank()
-                    ? req.rawJobDescription() : null);
-        String jobDesc = jobDescText != null ? "## Job Description\n" + jobDescText : "";
-        String styleMemory = buildStyleMemory(req.writingProfile());
-        String outputConstraints = req.template().outputConstraints() != null
-                ? req.template().outputConstraints() : "";
-
-        String finalPrompt = String.join("\n\n",
-                req.template().userPrompt(), cvContext, jobDesc, styleMemory, outputConstraints
-        ).trim();
-
-        return new PromptComposition(systemPrompt, req.template().userPrompt(), cvContext,
-                jobDesc, styleMemory, outputConstraints, finalPrompt);
-    }
-
-    // ── Structured application document path (cover letter, recruiter msg, etc.) ───────────
-
-    /**
-     * Builds a prompt for generating a structured application document (cover letter,
-     * application text, recruiter message, follow-up message).
-     *
-     * <p>The {@code styleTemplate} — if provided — supplies the AI persona via its
-     * {@code systemPrompt} and style guidance via its {@code userPrompt}. The JSON output
-     * schema is always appended regardless of the template.
-     */
     public PromptComposition composeStructuredApplicationPrompt(
             String documentType,
             String careerProfileJson,
-            String jobDescription,
+            PostingContext posting,
             String customInstructions,
             String motivationText,
             String targetLanguage,
@@ -63,9 +28,17 @@ public class PromptCompositionBuilder {
             String companyFacts,
             String lengthPreference) {
 
-        String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
-                ? "Write the document body in " + targetLanguage + "."
+        String jobDescription = posting != null ? posting.description() : null;
+        String jobCountry = posting != null ? posting.country() : null;
+
+        // Resolve the output language deterministically instead of asking the model to guess:
+        // the user's explicit choice wins, otherwise the posting's detected language. The result
+        // also selects the market conventions and the banned-phrase list below.
+        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
+        String languageInstruction = resolvedLanguage != null
+                ? "Write the document body in " + resolvedLanguage + "."
                 : "Write in the same language as the job description when clear, otherwise Danish.";
+        MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, jobCountry);
 
         String docLabel = switch (documentType != null ? documentType.toUpperCase() : "") {
             case "COVER_LETTER" -> "a compelling cover letter";
@@ -74,7 +47,15 @@ public class PromptCompositionBuilder {
                     + "applying speculatively, there is NO posted vacancy. State early and clearly what "
                     + "kind of role the candidate is looking for, show genuine knowledge of or interest "
                     + "in the company, and make a concrete case for the value they would add. Do not "
-                    + "reference 'the position' or 'the posting'";
+                    + "reference 'the position' or 'the posting'. Around half of Danish vacancies are "
+                    + "never advertised, so this letter is read as a proposal, not an application: lead "
+                    + "with a specific problem or opportunity the candidate could take off the reader's "
+                    + "hands, name the concrete evidence they have done it before, and keep it shorter "
+                    + "than a posted-vacancy letter. Close by proposing a short conversation, and state "
+                    + "that the candidate will follow up — never ask to be kept 'on file'. If (and only "
+                    + "if) the instructions say the candidate has already phoned the company, open by "
+                    + "referring to that call, which is the normal Danish sequence; otherwise write as "
+                    + "a first approach and never imply a conversation that did not happen";
             case "RECRUITER_MESSAGE" -> "a brief, personalized recruiter message (under 150 words)";
             case "FOLLOW_UP_MESSAGE" -> "a polite follow-up message (under 100 words)";
             default -> "a professional document";
@@ -102,9 +83,6 @@ public class PromptCompositionBuilder {
         String schema = """
                 {
                   "body": "<full document text>",
-                  "keywordCoverage": <0-100 integer>,
-                  "matchedKeywords": ["keyword"],
-                  "missingKeywords": ["keyword"],
                   "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job — omit if none"]
                 }""";
 
@@ -112,11 +90,23 @@ public class PromptCompositionBuilder {
 
         // Structural scaffolding for prose letters (not the short recruiter/follow-up messages,
         // which carry their own word caps in docLabel).
-        String type = documentType != null ? documentType.toUpperCase() : "";
-        boolean isLetter = type.equals("COVER_LETTER") || type.equals("APPLICATION_TEXT")
-                || type.equals("UNSOLICITED_APPLICATION");
+        boolean isLetter = isProseLetter(documentType);
         String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
+        // Short outreach gets its own conventions: same market, different medium, and the way it
+        // fails is sounding like sales rather than sounding generic.
+        String marketRules = isLetter
+                ? MarketConventions.letterRules(market)
+                : MarketConventions.outreachRules(market);
+        String marketBlock = marketRules.isBlank() ? "" : "\n\n" + marketRules;
+        // A posting-supplied contact is the one named recipient the letter may address. Everything
+        // else about the recipient stays unnamed, per the structure block.
+        String contactBlock = posting != null && posting.hasContactPerson()
+                ? "\n\n## Named Contact\nThe posting names " + posting.contactPerson()
+                  + " as the person to contact about this role. Address the letter to them by name, "
+                  + "spelled exactly as given. Do not invent any other recipient, title, or detail "
+                  + "about them."
+                : "";
 
         String userPrompt = "Write " + docLabel + " based on the contact-free master career profile "
                 + "and job description provided." + styleGuidance
@@ -124,13 +114,17 @@ public class PromptCompositionBuilder {
                 + buildOutcomeLearnings(outcomeLessons)
                 + "\n\n" + HONESTY_RULES
                 + "\n\n" + TARGETING_RULES
+                + marketBlock
+                + contactBlock
                 + structure
                 + lengthGuidance
+                + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
+                + requirementsBlock(posting)
                 + (companyFacts != null && !companyFacts.isBlank()
                     ? "\n\n## Verified Company Facts\n(From the company's own website — trustworthy and safe "
                       + "to reference; distinct from the untrusted posting above.)\n" + companyFacts : "")
@@ -153,7 +147,7 @@ public class PromptCompositionBuilder {
      */
     public PromptComposition composeCvTailoringPrompt(
             String careerProfileJson,
-            String jobDescription,
+            PostingContext posting,
             String customInstructions,
             String targetLanguage,
             PromptTemplate styleTemplate,
@@ -161,9 +155,14 @@ public class PromptCompositionBuilder {
             java.util.List<String> outcomeLessons,
             String lengthPreference) {
 
-        String languageInstruction = targetLanguage != null && !targetLanguage.isBlank()
-                ? "Write all rewritten text in " + targetLanguage + "."
+        String jobDescription = posting != null ? posting.description() : null;
+        String jobCountry = posting != null ? posting.country() : null;
+        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
+        String languageInstruction = resolvedLanguage != null
+                ? "Write all rewritten text in " + resolvedLanguage + "."
                 : "Write rewritten text in the same language as the job description when clear.";
+        MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, jobCountry);
+        String marketRules = MarketConventions.cvRules(market);
 
         String baseSystem = styleTemplate != null && styleTemplate.systemPrompt() != null
                 ? styleTemplate.systemPrompt()
@@ -183,9 +182,6 @@ public class PromptCompositionBuilder {
                   "projects": [],
                   "education": [],
                   "certifications": [],
-                  "keywordCoverage": 0,
-                  "matchedKeywords": [],
-                  "missingKeywords": [],
                   "notes": ["1-3 specific observations about gaps or opportunities — omit if none"]
                 }""";
 
@@ -199,6 +195,12 @@ public class PromptCompositionBuilder {
                 + "in the schema; do not attempt to reorder them." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + buildOutcomeLearnings(outcomeLessons)
+                + "\n\nThe profile's skillCategories map files each skill under a heading (Languages, "
+                + "Frameworks, Tools and so on), and the CV renders the skills section grouped by it. "
+                + "Select skills knowing they will be grouped: a heading that ends up with one entry "
+                + "reads as padding. Do not restate a skill's category in its name, and do not try to "
+                + "order or group the list yourself — return selectedSkills as a flat list, most "
+                + "relevant to this posting first, and the app groups it."
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
@@ -207,12 +209,15 @@ public class PromptCompositionBuilder {
                 + "\n- When content must be condensed, drop the bullets with the lowest combination of "
                 + "relevance to this posting's keywords and uniqueness within the document — not simply "
                 + "the oldest ones. A dated bullet that hits posting keywords outranks a recent one that does not."
+                + (marketRules.isBlank() ? "" : "\n\n" + marketRules)
                 + "\n\n## Length\n" + cvLengthGuidance(lengthPreference)
+                + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
+                + requirementsBlock(posting)
                 + (customInstructions != null && !customInstructions.isBlank()
                     ? "\n\n## Additional Instructions\n" + customInstructions : "");
 
@@ -220,6 +225,37 @@ public class PromptCompositionBuilder {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
+
+    /** At most this many asks are listed; a posting demanding more is listing wishes, not requirements. */
+    private static final int MAX_REQUIREMENTS = 25;
+
+    /**
+     * The posting's asks, extracted during enrichment and restated as a checklist.
+     *
+     * <p>The description above already contains them, but buried: a model reading 8000 characters
+     * of prose reliably answers the first three demands and forgets the rest. This is the same
+     * untrusted data, itemised — and it deliberately carries asks that are not skill labels
+     * ("5 years of backend experience", "driving licence"), which the tiered keyword lists drop.
+     */
+    private static String requirementsBlock(PostingContext posting) {
+        if (posting == null || posting.requirements().isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("\n\n## What The Posting Asks For\n")
+                .append("Extracted from the posting above — the same untrusted data, itemised so none "
+                        + "is overlooked. Answer the REQUIRED asks first, and only with what the profile "
+                        + "genuinely supports: an ask the candidate cannot meet is left unanswered, never "
+                        + "invented. An ask marked EXPERIENCE, EDUCATION or CERTIFICATION states a "
+                        + "threshold — never claim to clear one the profile does not show.\n");
+        posting.requiredFirst().stream().limit(MAX_REQUIREMENTS).forEach(r ->
+                sb.append("- [").append(r.tier()).append('/').append(r.kind()).append("] ")
+                  .append(oneLine(r.text())).append('\n'));
+        return sb.toString().stripTrailing();
+    }
+
+    /** Flattens an extracted ask onto one line so it cannot forge prompt structure. */
+    private static String oneLine(String text) {
+        if (text == null) return "";
+        return text.replaceAll("\\s+", " ").strip();
+    }
 
     /**
      * Soft paragraph scaffolding for prose letters. Danish-market convention: a focused one-page
@@ -235,14 +271,42 @@ public class PromptCompositionBuilder {
             - A short company-fit paragraph connecting the candidate's direction to the employer; \
             ground any company reference in the Verified Company Facts when provided.
             - Close with a brief, confident call to action.
-            Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.""";
+            Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.
+            If — and only if — the profile carries an "availability" value, state it as one short             factual clause near the close (employers routinely ask, and a candidate who volunteers             it reads as someone who has thought the move through). Never invent a notice period or             start date the profile does not state.""";
+
+    /**
+     * The document types that get prose-letter treatment (structure, length target, market
+     * conventions) — as opposed to the short recruiter and follow-up messages, which carry their
+     * own word caps. Public so the quality evaluator scores exactly the documents this shapes.
+     */
+    public static boolean isProseLetter(String documentType) {
+        String type = documentType != null ? documentType.toUpperCase() : "";
+        return type.equals("COVER_LETTER") || type.equals("APPLICATION_TEXT")
+                || type.equals("UNSOLICITED_APPLICATION");
+    }
+
+    /**
+     * The word target for a prose letter. Single source of truth: the prompt asks for this number
+     * and the evaluator scores against it, so instruction and measurement cannot drift apart.
+     */
+    public static int letterWordTarget(String lengthPreference) {
+        return switch (normalizeLength(lengthPreference)) {
+            case "SHORT" -> 200;
+            case "DETAILED" -> 380;
+            default -> 300;
+        };
+    }
 
     /** Word/paragraph target for prose letters, by the user's length preference. */
     private static String letterLengthGuidance(String pref) {
+        int target = letterWordTarget(pref);
         return switch (normalizeLength(pref)) {
-            case "SHORT" -> "Keep it tight — about 200 words across 3 short paragraphs. One page maximum.";
-            case "DETAILED" -> "You may go fuller — about 380 words across 4 paragraphs — but never exceed one page.";
-            default -> "Aim for about 300 words across 3–4 short paragraphs. One page maximum.";
+            case "SHORT" -> "Keep it tight — about " + target
+                    + " words across 3 short paragraphs. One page maximum.";
+            case "DETAILED" -> "You may go fuller — about " + target
+                    + " words across 4 paragraphs — but never exceed one page.";
+            default -> "Aim for about " + target
+                    + " words across 3–4 short paragraphs. One page maximum.";
         };
     }
 
@@ -300,6 +364,9 @@ public class PromptCompositionBuilder {
             - Quantified achievements and measurable outcomes ALREADY IN the profile are the \
             authoritative proof points — surface the ones most relevant to this posting first. Never \
             invent, round up, or embellish a metric that is not in the profile.
+            - The profile's "proofPoints" are the candidate's own account of what they did and what \
+            changed. Prefer them over a rephrased bullet when one fits the posting: they are the \
+            most defensible material available, because the candidate wrote them to be asked about.
             - Ground every specific match claim in a concrete profile item (a named role, project, or \
             skill), never a vague assertion.
             - If the profile declares a careerStage, frame for it. For STUDENT / NEW_GRAD / \
@@ -363,6 +430,14 @@ public class PromptCompositionBuilder {
         return systemPrompt + "\nAlways write the output in " + targetLanguage + ".";
     }
 
+    /**
+     * The built-in application persona.
+     *
+     * <p>Kept even though V073 seeds this same voice as a template row: this is the fallback for a
+     * database with no seeds at all, so removing it would turn an empty prompt_templates table
+     * from a plain install into a broken one. The seeded row is what users read and fork; this is
+     * what runs when there is nothing to read.
+     */
     private static String defaultApplicationSystemPrompt() {
         return """
                 You are an expert career coach and professional writer specialising in job applications.
@@ -373,6 +448,7 @@ public class PromptCompositionBuilder {
                 """;
     }
 
+    /** The built-in CV-tailoring persona. Same role as above — the no-seeds fallback. */
     private static String defaultCvTailoringSystemPrompt() {
         return """
                 You are a careful CV tailoring specialist. Your task is to select and rewrite CV content

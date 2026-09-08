@@ -6,6 +6,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../jb-button/jb-button.component';
+import { SkillsApiService } from '../../../core/api/skills.api';
 import { AiApiService } from '../../../core/api/ai.api';
 
 /** Normalized preview of whatever the parser extracted, regardless of source. */
@@ -13,8 +14,12 @@ export interface ImportPreview {
   fullName?: string;
   headline?: string;
   summary?: string;
+  /**
+   * The skills now on the profile. Shown for reassurance rather than approval: the parser writes
+   * skills straight to the profile's skill rows so they can be taxonomy-resolved and categorised,
+   * which happens when the CV is parsed, not when this preview is applied.
+   */
   skills: string[];
-  technologies: string[];
   yearsExperience?: number;
 }
 
@@ -23,8 +28,6 @@ interface ParsedCvResponse {
   fullName?: string | null;
   headline?: string | null;
   summary?: string | null;
-  skills?: string[] | null;
-  technologies?: string[] | null;
   yearsExperience?: number | null;
 }
 
@@ -42,6 +45,7 @@ interface ParsedCvResponse {
 export class CvImportPanelComponent {
   private http = inject(HttpClient);
   private aiApi = inject(AiApiService);
+  private skillsApi = inject(SkillsApiService);
   private translate = inject(TranslateService);
 
   /** Tighter spacing for embedded contexts like onboarding. */
@@ -106,9 +110,13 @@ export class CvImportPanelComponent {
           fullName: parsed?.fullName || undefined,
           headline: parsed?.headline || undefined,
           summary: parsed?.summary || undefined,
-          skills: parsed?.skills || [],
-          technologies: parsed?.technologies || [],
+          skills: [],
           yearsExperience: parsed?.yearsExperience ?? undefined,
+        });
+        // Read back what the parse actually filed, so the count shown is the real one.
+        this.skillsApi.getProfileSkills().subscribe(skills => {
+          const current = this.preview();
+          if (current) this.preview.set({ ...current, skills: skills.map(s => s.skillName) });
         });
       },
       error: () => {
@@ -128,8 +136,9 @@ export class CvImportPanelComponent {
       headline: p.headline ?? null,
       summary: p.summary ?? null,
       yearsExperience: p.yearsExperience ?? null,
-      skills: p.skills.length ? p.skills : null,
-      technologies: p.technologies.length ? p.technologies : null,
+      // Skills are not in this payload: the parser already wrote them to the profile's skill
+      // rows, taxonomy-resolved and categorised. Sending them here would be a second, weaker copy
+      // of something already saved.
     }).pipe(
       switchMap(() => p.fullName
         ? this.http.patch('/api/v1/profile/private', { fullName: p.fullName })

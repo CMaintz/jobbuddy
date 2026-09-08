@@ -1,7 +1,39 @@
 {
   "careerProfile": {
     "title": "Karriereprofil",
-    "section": { "target": "Karrieremål", "stories": "Historiebank", "retracted": "Tilbagekaldte udsagn" },
+    "section": {
+      "target": "Karrieremål",
+      "stories": "Historiebank",
+      "retracted": "Tilbagekaldte udsagn",
+      "skills": "Kompetencer"
+    },
+    "skills": {
+      "heading": "Kompetencer værd at tilføje",
+      "intro": "Forslag fra de opslag, du reelt matcher, og fra det, der ligger tæt på dine nuværende kompetencer. Intet tilføjes, før du siger til.",
+      "empty": "Ingen forslag lige nu. Gem eller søg et par stillinger, så der er et marked at sammenligne med.",
+      "inPostings": "i {{count}} af dine matchede opslag",
+      "fromYourCv": "Fra dit CV:",
+      "relatedTo": "Ligger tæt på din {{skills}}",
+      "usedInProduction": "Brugt i produktion",
+      "usedIt": "Har brugt det",
+      "notMine": "Ikke mig",
+      "later": "Senere",
+      "added": "{{name}} tilføjet til din profil",
+      "failed": "Kunne ikke gemme — prøv igen"
+    },
+    "evidence": {
+      "heading": "Dokumentér det, du skriver",
+      "intro": "Disse kompetencer står på din profil og i de opslag, du matcher, men intet i din historiebank underbygger dem — den hyppigste grund til at en dansk ansøgning bliver fravalgt.",
+      "add": "Tilføj dokumentation",
+      "situation": "Hvor? (fx platformsteamet hos Acme)",
+      "action": "Hvad gjorde du?",
+      "result": "Hvad var anderledes bagefter?",
+      "saved": "Dokumentation gemt for {{name}}",
+      "answerPlaceholder": "Bare beskriv det — fx \"flyttede 30 services til k8s hos Acme, deploys gik fra 40 min til 9\"",
+      "draft": "Ryd op i det",
+      "drafting": "Arbejder…",
+      "addedFigures": "Udkastet tilføjede tal, du ikke skrev: {{figures}}. Fjern dem, før du gemmer."
+    },
     "target": {
       "heading": "Karrieremål",
       "intro": "Fortæl AI'en, hvad du sigter efter. Det indgår i genereringen, så dokumenter fremhæver de roller, du faktisk vil have.",
@@ -10,6 +42,9 @@
       "archetypes": "Målarketyper",
       "archetypesDesc": "Rolletyper, du sigter efter — f.eks. Platform Engineer, AI-implementering, Marketing og kommunikation.",
       "archetypesPlaceholder": "Tilføj en arketype, og tryk Enter",
+      "availability": "Tilgængelighed",
+      "availabilityDesc": "Opsigelsesvarsel og tidligste startdato. Nævnes i ansøgninger når du har udfyldt det — opfindes aldrig når du ikke har.",
+      "noticePeriodPlaceholder": "fx 3 måneder, efter aftale",
       "northStar": "Nordstjerne",
       "northStarPlaceholder": "Én linje: din ideelle næste rolle eller retning",
       "narrative": "Positioneringsfortælling",
@@ -52,7 +87,11 @@
       "lead": "Lead / leder",
       "careerChanger": "Karriereskifter"
     },
-    "toast": { "saved": "Karrieremål gemt", "saveFailed": "Gemning mislykkedes", "storySaved": "Historie gemt" }
+    "toast": {
+      "saved": "Karrieremål gemt",
+      "saveFailed": "Gemning mislykkedes",
+      "storySaved": "Historie gemt"
+    }
   },
   "pack": {
     "title": "Ansøgningspakke",
@@ -178,12 +217,14 @@
       "today": "i dag",
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
-      "noReply": "Intet svar endnu — send en opfølgning"
+      "noReply": "Intet svar endnu — send en opfølgning",
+      "outreachFollowUp": "Følg op på din uopfordrede ansøgning"
     },
     "tag": {
       "followUp": "opfølgning",
       "deadline": "frist",
-      "noReply": "intet svar"
+      "noReply": "intet svar",
+      "outreach": "Uopfordret"
     }
   },
   "shared": {
@@ -217,9 +258,18 @@
     "applying": "Anvender…",
     "applyToCv": "Anvend på master-CV",
     "mergesInfo": "Flettes ind i din eksisterende profil — intet overskrives med tomme felter.",
-    "pdf": { "label": "Upload PDF", "desc": "Upload et eksisterende CV, så analyserer vi det ind i strukturerede sektioner." },
-    "paste": { "label": "Indsæt tekst", "desc": "Indsæt din CV-tekst, så udtrækker vi strukturen." },
-    "linkedin": { "label": "LinkedIn", "desc": "Upload din LinkedIn-profil-PDF-eksport for at auto-importere." },
+    "pdf": {
+      "label": "Upload PDF",
+      "desc": "Upload et eksisterende CV, så analyserer vi det ind i strukturerede sektioner."
+    },
+    "paste": {
+      "label": "Indsæt tekst",
+      "desc": "Indsæt din CV-tekst, så udtrækker vi strukturen."
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "desc": "Upload din LinkedIn-profil-PDF-eksport for at auto-importere."
+    },
     "error": {
       "pasteFirst": "Indsæt hele din CV-tekst først (mindst et par linjer)",
       "parseFailed": "Analyse mislykkedes — tjek filen/teksten og prøv igen",
@@ -237,7 +287,7 @@
       "personal": "Personlige oplysninger",
       "experience": "Erhvervserfaring",
       "education": "Uddannelse",
-      "skills": "Færdigheder",
+      "skills": "Kompetencer",
       "projects": "Projekter",
       "languages": "Sprog",
       "certifications": "Certificeringer",
@@ -334,7 +384,11 @@
       "sectionSpacing": "Sektionsafstand",
       "documentSize": "Dokumentstørrelse",
       "photoStyle": "Fotostil",
-      "shape": { "square": "Firkant", "rounded": "Afrundet", "circle": "Cirkel" },
+      "shape": {
+        "square": "Firkant",
+        "rounded": "Afrundet",
+        "circle": "Cirkel"
+      },
       "photoSize": "Fotostørrelse",
       "templateDefault": "skabelonstandard",
       "photoSizeTip": "Tip: du kan også trække i fotoet i forhåndsvisningen for at ændre størrelsen.",
@@ -351,12 +405,30 @@
     "layout": {
       "template": "Skabelon",
       "tpl": {
-        "classic": { "label": "Klassisk", "description": "To kolonner med mørk sidebjælke" },
-        "modern": { "label": "Moderne (1-kol.)", "description": "Rent enkeltkolonne-layout" },
-        "modern2col": { "label": "Moderne (2-kol.)", "description": "Mørk venstre kolonne" },
-        "minimal": { "label": "Minimal", "description": "Minimalistisk med tidslinje" },
-        "executive": { "label": "Executive", "description": "Executive med hovedbånd" },
-        "creative": { "label": "Kreativ", "description": "Farverig accent-stil" }
+        "classic": {
+          "label": "Klassisk",
+          "description": "To kolonner med mørk sidebjælke"
+        },
+        "modern": {
+          "label": "Moderne (1-kol.)",
+          "description": "Rent enkeltkolonne-layout"
+        },
+        "modern2col": {
+          "label": "Moderne (2-kol.)",
+          "description": "Mørk venstre kolonne"
+        },
+        "minimal": {
+          "label": "Minimal",
+          "description": "Minimalistisk med tidslinje"
+        },
+        "executive": {
+          "label": "Executive",
+          "description": "Executive med hovedbånd"
+        },
+        "creative": {
+          "label": "Kreativ",
+          "description": "Farverig accent-stil"
+        }
       },
       "mainSections": "Hovedsektioner — træk for at ændre rækkefølge",
       "sidebarSections": "Sidebjælkesektioner — træk for at ændre rækkefølge",
@@ -450,9 +522,18 @@
       "month": "Måned",
       "year": "År",
       "months": {
-        "jan": "Januar", "feb": "Februar", "mar": "Marts", "apr": "April",
-        "may": "Maj", "jun": "Juni", "jul": "Juli", "aug": "August",
-        "sep": "September", "oct": "Oktober", "nov": "November", "dec": "December"
+        "jan": "Januar",
+        "feb": "Februar",
+        "mar": "Marts",
+        "apr": "April",
+        "may": "Maj",
+        "jun": "Juni",
+        "jul": "Juli",
+        "aug": "August",
+        "sep": "September",
+        "oct": "Oktober",
+        "nov": "November",
+        "dec": "December"
       }
     }
   },
@@ -543,6 +624,12 @@
     "refining": "Finpudser...",
     "refinementDiff": "Finpudsningsdiff",
     "accept": "Accepter",
+    "guardFindings": "Fund fra kontrol",
+    "evidence": {
+      "heading": "Tynd på dokumentation",
+      "body": "Dette brev fik {{score}}/100 på konkret dokumentation — det argumenterer uden at henvise til dit faktiske arbejde. To spørgsmål om et projekt ville give det næste noget at pege på.",
+      "cta": "Tilføj dokumentation for dine kompetencer"
+    },
     "jdKeywords": "Opslagets nøgleord",
     "covered": "{{matched}}/{{total}} dækket",
     "notMentioned": "Ikke nævnt",
@@ -569,9 +656,18 @@
       "model": "Model"
     },
     "tpl": {
-      "editorial": { "label": "Editorial", "sub": "Rolige serif-overskrifter - cremefarvet papir" },
-      "classic": { "label": "Klassisk", "sub": "Serif-brødtekst - centreret hoved" },
-      "bold": { "label": "Fed", "sub": "Hvidt papir - ravgul kant-accent" }
+      "editorial": {
+        "label": "Editorial",
+        "sub": "Rolige serif-overskrifter - cremefarvet papir"
+      },
+      "classic": {
+        "label": "Klassisk",
+        "sub": "Serif-brødtekst - centreret hoved"
+      },
+      "bold": {
+        "label": "Fed",
+        "sub": "Hvidt papir - ravgul kant-accent"
+      }
     }
   },
   "masterCv": {
@@ -616,6 +712,9 @@
     "yearsExp": "Års erfaring",
     "addSkill": "Tilføj en færdighed…",
     "skillsHint": "Bredere kompetencer: arkitektur, tilgængelighed, mentoring…",
+    "interests": "Fritidsinteresser",
+    "addInterest": "Tilføj en interesse",
+    "interestsHint": "Valgfrit. Et fast afsnit sidst i et dansk CV — hold det kort og ægte; det er ofte dét, samtalen starter med.",
     "technologies": "Teknologier",
     "addTech": "Tilføj en teknologi…",
     "techHint": "Konkrete værktøjer & stakke: Angular, Spring Boot, PostgreSQL… Bruges direkte til jobmatchning.",
@@ -737,7 +836,10 @@
     "details": "Detaljer",
     "status": "Status",
     "created": "Oprettet",
-    "notFound": "Ansøgning ikke fundet."
+    "notFound": "Ansøgning ikke fundet.",
+    "timeline": {
+      "heading": "Forløb"
+    }
   },
   "jobDetails": {
     "loadingCrumb": "Indlæser",
@@ -750,6 +852,8 @@
     "via": "via {{source}}",
     "fit": "Match",
     "postedAge": "Slået op {{age}}",
+    "contact": "Kontaktperson",
+    "contactNudge": "Danske opslag angiver en kontaktperson af en grund — et kort opkald inden du søger er forventet, ikke anmassende, og giver dig noget konkret at skrive om.",
     "passed": "udløbet",
     "hideDetails": "Skjul detaljer",
     "docsActions": "Dokumenter & handlinger",
@@ -827,10 +931,22 @@
     "emptyTitle": "Få en ærlig score på dit master-CV",
     "emptyDesc": "Styrker, huller og konkrete rettelser — generelt eller mod en bestemt stilling.",
     "target": {
-      "general": { "label": "Generel styrke", "hint": "Klarhed, resultater, ATS-parathed" },
-      "job": { "label": "Mod en stilling", "hint": "Vælg blandt gemte stillinger & ansøgninger" },
-      "paste": { "label": "Mod et indsat opslag", "hint": "Indsæt en hvilken som helst jobbeskrivelse" },
-      "pipeline": { "label": "På tværs af min pipeline", "hint": "Kompetencehuller vs. gemte, ansøgte & matchede stillinger" }
+      "general": {
+        "label": "Generel styrke",
+        "hint": "Klarhed, resultater, ATS-parathed"
+      },
+      "job": {
+        "label": "Mod en stilling",
+        "hint": "Vælg blandt gemte stillinger & ansøgninger"
+      },
+      "paste": {
+        "label": "Mod et indsat opslag",
+        "hint": "Indsæt en hvilken som helst jobbeskrivelse"
+      },
+      "pipeline": {
+        "label": "På tværs af min pipeline",
+        "hint": "Kompetencehuller vs. gemte, ansøgte & matchede stillinger"
+      }
     },
     "dim": {
       "technical": "Tekniske færdigheder",
@@ -863,7 +979,11 @@
     "vsLastWeek": "{{delta}} vs. sidste uge",
     "weekSummary": "{{thisWeek}} ansøgninger i denne uge · {{lastWeek}} sidste uge",
     "heatmapTitle": "Ansøgningsaktivitet — sidste {{count}} uger",
-    "topCompanies": "Mest ansøgte virksomheder"
+    "topCompanies": "Mest ansøgte virksomheder",
+    "velocityTitle": "Fremdrift pr. trin",
+    "velocitySubtitle": "Gennemsnitlig tid mellem to trin, på tværs af alle ansøgninger, der har taget skridtet.",
+    "velocityDays": "{{days}} dage",
+    "velocityTimes": "{{count}}×"
   },
   "prompts": {
     "newPrompt": "Ny prompt",
@@ -902,7 +1022,9 @@
       "recruiterEmail": "Rekrutteringsmail",
       "tailoredCv": "Tilpasset CV",
       "cvAnalysis": "CV-analyse",
-      "general": "Generel"
+      "general": "Generel",
+      "unsolicited": "Uopfordret",
+      "followUp": "Opfølgning"
     },
     "toast": {
       "updated": "Prompt opdateret",
@@ -916,8 +1038,30 @@
       "duplicated": "Prompt duplikeret",
       "duplicateFailed": "Kunne ikke duplikere prompten",
       "created": "Prompt oprettet",
-      "createFailed": "Kunne ikke oprette prompten"
-    }
+      "createFailed": "Kunne ikke oprette prompten",
+      "defaultSet": "{{name}} er nu standard",
+      "defaultFailed": "Kunne ikke skifte standard — prøv igen",
+      "defaultReset": "Tilbage til appens prompt",
+      "shared": "Prompt delt",
+      "unshared": "Prompten er privat igen",
+      "shareFailed": "Kunne ikke ændre deling — prøv igen",
+      "sharedLoadFailed": "Kunne ikke hente delte prompts"
+    },
+    "protected": "Følger med appen",
+    "protectedHint": "Denne prompt følger med appen. Lav en kopi, hvis du vil rette i den.",
+    "inUse": "I brug",
+    "useAsDefault": "Brug som standard",
+    "restoreAppDefault": "Gendan appens prompt",
+    "view": {
+      "mine": "Mine prompts",
+      "shared": "Delt af andre"
+    },
+    "shared": "Delt",
+    "share": "Del",
+    "unshare": "Stop deling",
+    "shareHint": "Deling gør hele promptens tekst synlig for andre brugere. Del kun prompts, der ikke indeholder noget personligt.",
+    "sharedEmptyTitle": "Intet delt endnu",
+    "sharedEmptyDesc": "Prompts, som andre vælger at dele, dukker op her. Lav en kopi, hvis du vil bruge og rette en."
   },
   "interviews": {
     "inStages": "{{count}} i samtalefaser",
@@ -960,9 +1104,6 @@
     "reminderPrefix": "Samtale —",
     "theRole": "stillingen",
     "followUpFallback": "Følg op",
-    "stage": {
-      "finalRound": "Sidste runde"
-    },
     "logStage": {
       "screen": "Screening / rekrutteringsopkald",
       "interview": "Samtale",
@@ -1073,6 +1214,43 @@
     }
   },
   "companies": {
+    "view": {
+      "all": "Alle",
+      "targets": "Uopfordret",
+      "tracked": "Igangværende"
+    },
+    "targets": {
+      "intro": "Virksomheder der ansætter folk med dine kompetencer. Omkring halvdelen af danske stillinger bliver aldrig slået op — det er dem her, en uopfordret ansøgning er til.",
+      "includeHiringNow": "Vis også virksomheder der søger lige nu",
+      "empty": "Ingen emner endnu. Tilføj kompetencer og teknologier til din profil, og lad crawleren opbygge lidt ansættelseshistorik.",
+      "write": "Skriv uopfordret",
+      "reason": {
+        "skillOverlap": "Ansætter inden for {{skills}}",
+        "skillOverlapMore": "Ansætter inden for {{skills}} og {{count}} af dine øvrige kompetencer",
+        "hiringRecent": "Har ansat inden for de seneste tre måneder",
+        "hiringSemiRecent": "Har ansat inden for det seneste halve år",
+        "repeatHirer": "Har slået {{count}} stillinger op det seneste år — ansætter jævnligt",
+        "postedTwice": "Har slået to stillinger op det seneste år",
+        "nothingOpen": "Intet slået op lige nu — præcis dét hul en uopfordret ansøgning er til",
+        "hasOpenRoles": "Har {{count}} stilling(er) slået op nu: søg dem først",
+        "consultancy": "Konsulenthus — udstationering frem for arbejde in-house"
+      },
+      "callFirst": "Dansk praksis starter med et opkald: ring og spørg, om du må sende en ansøgning, hvem den skal sendes til, og hvordan de helst modtager den. Følg op inden for et par hverdage — det forventes, at du er den aktive part."
+    },
+    "outreach": {
+      "track": "Følg op",
+      "untrack": "Stop opfølgning",
+      "empty": "Ingen igangværende endnu. Gem et emne fra listen for at komme i gang.",
+      "followUp": "opfølgning",
+      "due": "Forfalden",
+      "status": {
+        "SAVED": "Gemt",
+        "CONTACTED": "Kontaktet",
+        "REPLIED": "Svar modtaget",
+        "MEETING": "Møde",
+        "CLOSED": "Afsluttet"
+      }
+    },
     "searchPlaceholder": "Søg virksomheder…",
     "count": "{{count}} virksomheder",
     "loading": "Indlæser virksomheder…",
@@ -1083,7 +1261,13 @@
     "country": "Land",
     "links": "Links",
     "website": "Hjemmeside",
-    "selectCompany": "Vælg en virksomhed"
+    "selectCompany": "Vælg en virksomhed",
+    "jobs": {
+      "heading": "Stillinger vi har",
+      "loading": "Henter stillinger…",
+      "empty": "Ingen opslag fra denne virksomhed endnu.",
+      "closed": "Lukket"
+    }
   },
   "documents": {
     "generatedCount": "{{count}} genereret",
@@ -1201,10 +1385,15 @@
     "posted": "Slået op",
     "passed": "(udløbet)",
     "keywords": "Nøgleord",
+    "requirements": "Det de beder om",
+    "yearsDemanded": "{{n}}+ års erfaring",
+    "tier": {
+      "REQUIRED": "Krav",
+      "PREFERRED": "Ønske"
+    },
     "savedBtn": "Gemt",
     "details": "Detaljer",
     "generateApplication": "Generér ansøgning",
-    "hide": "Skjul",
     "selectRole": "Vælg en stilling fra feedet",
     "location": {
       "all": "Alle",
@@ -1223,8 +1412,22 @@
       "saved": "Gemt til dine stillinger",
       "saveFailed": "Kunne ikke gemme stillingen",
       "hidden": "Skjult fra dit feed",
-      "hideFailed": "Kunne ikke skjule stillingen"
-    }
+      "hideFailed": "Kunne ikke skjule stillingen",
+      "moreLikeThis": "Noteret — flere roller som denne",
+      "fewerLikeThis": "Noteret — færre roller som denne",
+      "steerFailed": "Kunne ikke gemme — prøv igen"
+    },
+    "notInterested": "Ikke relevant",
+    "moreOfThis": "Justér mit feed",
+    "moreLikeThis": "Flere som denne",
+    "fewerLikeThis": "Færre som denne",
+    "filters": "Filtre",
+    "clearFilters": "Ryd",
+    "description": "Opslaget",
+    "viewMore": "Vis mere",
+    "viewLess": "Vis mindre",
+    "viewMoreLoading": "Henter…",
+    "descriptionLoadFailed": "Kunne ikke hente resten af opslaget."
   },
   "settings": {
     "loading": "Indlæser indstillinger…",
@@ -1241,7 +1444,24 @@
       "gen": "Standardindstillinger for generering",
       "style": "Skrivestil",
       "account": "Konto",
-      "privacy": "Privatliv & data"
+      "privacy": "Privatliv & data",
+      "usage": "AI-forbrug",
+      "taxonomy": "Kompetenceordbog"
+    },
+    "taxonomy": {
+      "intro": "Kompetencer, som opslagene bliver ved med at nævne, men som appen ikke kender. Godkender du en, ryger den i den ordbog, alle brugere vælger fra, så den skal have en kategori; afviser du en, kommer den ikke igen. Intet her rører nogens profil.",
+      "loading": "Læser hvad markedet nævner…",
+      "loadError": "Køen kunne ikke hentes.",
+      "empty": "Intet mangler. Alle kompetencer i opslagene findes allerede i ordbogen.",
+      "postings": "nævnt i {{n}} opslag",
+      "asTechnology": "læst som en teknologi",
+      "asSkill": "læst som en kompetence",
+      "category": "Kategori",
+      "approve": "Tilføj",
+      "reject": "Ikke en kompetence",
+      "approved": "{{name}} er tilføjet ordbogen.",
+      "rejected": "{{name}} bliver ikke foreslået igen.",
+      "failed": "Det gik ikke igennem. Prøv igen."
     },
     "industry": {
       "softwareIt": "Software & IT",
@@ -1370,6 +1590,59 @@
       "resetFailed": "Kunne ikke sende nulstillingsmailen",
       "exportFailed": "Eksport mislykkedes",
       "deleteFailed": "Sletning af konto mislykkedes"
+    },
+    "usage": {
+      "intro": "Hvad dine genereringer har kostet indtil nu. Der er ingen kvote — det står her, så du kan se, hvor arbejdet går hen.",
+      "loading": "Henter forbrug…",
+      "loadError": "Kunne ikke hente forbrug.",
+      "empty": "Der er ikke genereret noget endnu.",
+      "today": "I dag",
+      "allTime": "I alt",
+      "requests": "genereringer",
+      "requestsShort": "gen.",
+      "tokens": "tokens",
+      "byOperation": "Hvor det gik hen",
+      "unmetered": "Din genereringsudbyder afregnes til fast pris og oplyser ingen tokental, så kun antallet af genereringer registreres.",
+      "op": {
+        "CV_ANALYSIS": "CV-analyse",
+        "CV_PARSE": "CV-import",
+        "LINKEDIN_PARSE": "LinkedIn-import",
+        "DOCUMENT_GENERATION": "Ansøgninger og breve",
+        "DOCUMENT_REFINE": "Forbedringer",
+        "DOCUMENT_REVIEW": "Gennemlæsning",
+        "TAILORED_CV": "Tilpassede CV’er",
+        "TAILORED_CV_REVIEW": "Gennemlæsning af tilpasset CV",
+        "INTERVIEW_QUESTIONS": "Samtalespørgsmål",
+        "INTERVIEW_PREP_PACK": "Forberedelsespakker",
+        "MOCK_INTERVIEW": "Øvesamtaler",
+        "COMPANY_GROUNDING": "Virksomhedsresearch",
+        "SKILL_GAP": "Kompetencegab",
+        "SKILL_EVIDENCE": "Kompetencebelæg",
+        "WRITING_PROFILE": "Analyse af skrivestil",
+        "GENERATION": "Andet"
+      }
+    },
+    "aiKey": {
+      "title": "Din egen API-nøgle",
+      "desc": "Generering kører på din nøgle i stedet for serverens. Lad feltet stå tomt for at bruge serverens opsætning — på en personlig installation er det din lokale CLI-agent. Nøglen krypteres og vises aldrig igen.",
+      "loading": "Tjekker…",
+      "unavailable": "Denne installation kan ikke gemme API-nøgler — der er ikke opsat en krypteringsnøgle.",
+      "usingServer": "Ingen nøgle gemt. Generering bruger serverens udbyder.",
+      "inUse": "I brug",
+      "providerLabel": "Udbyder",
+      "keyLabel": "API-nøgle",
+      "keyPlaceholder": "sk-…",
+      "modelLabel": "Model (valgfri)",
+      "modelPlaceholder": "udbyderens standard",
+      "save": "Gem nøgle",
+      "replace": "Erstat nøgle",
+      "remove": "Fjern",
+      "saveFailed": "Kunne ikke gemme nøglen.",
+      "clearFailed": "Kunne ikke fjerne nøglen.",
+      "provider": {
+        "openai": "OpenAI",
+        "gemini": "Google Gemini"
+      }
     }
   },
   "apply": {
@@ -1538,5 +1811,14 @@
       "track": "Følg",
       "library": "Bibliotek"
     }
+  },
+  "match": {
+    "grade": {
+      "excellent": "Fremragende",
+      "strong": "Stærk",
+      "moderate": "Moderat",
+      "weak": "Svag"
+    },
+    "scoreTooltip": "{{score}} % match"
   }
 }

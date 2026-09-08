@@ -40,7 +40,7 @@ docker compose --env-file .env -f infra/docker-compose.yml up --build
 ### Local development (backend)
 ```powershell
 # Start dependencies only
-docker compose --env-file .env -f infra/docker-compose.yml up postgres typesense -d
+docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 
 # Run backend (from repo root)
 ./gradlew :backend:bootRun
@@ -67,8 +67,14 @@ cd frontend; npm run build        # production Angular build
 # Single test class
 ./gradlew :backend:test --tests "com.autoapplicant.usecase.user.UserServiceTest"
 
-# Frontend tests
+# Prompt evaluation harness (offline; scores fixture letters, prints the per-dimension table)
+./gradlew :backend:test --tests "*PromptEvalHarnessTest*" --info
+
+# Frontend tests (watch mode, opens a browser)
 cd frontend; npm test
+
+# Frontend tests, headless — what CI runs
+cd frontend; npm run test:ci
 ```
 
 ### Lint
@@ -86,7 +92,6 @@ cd frontend; npm run lint
 | Backend API | http://localhost:8080/api/v1 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI spec | http://localhost:8080/v3/api-docs |
-| Typesense | http://localhost:8108 |
 
 ---
 
@@ -158,6 +163,15 @@ All document generation goes through `StructuredDocument` — a record containin
 - **Cover letters / application text:** `AiService.generateDocument()` → AI returns `ApplicationDocumentAiResponse` (structured JSON) → assembled by `StructuredDocumentService.buildApplicationDocument()`
 - **Template = format:** `exportMode` (`ATS` / `DESIGNED`) is derived from `templateId` via `exportModeFromTemplate()`. It is never a separate user input.
 
+### Market Conventions
+
+Generation prompts carry a market-conventions block chosen by `MarketConventions.resolve(language,
+jobCountry)` — the posting's country wins over its language, so a Copenhagen employer posting in
+English still gets Danish conventions. The output language itself is resolved deterministically by
+`JobLanguageDetector` (user's explicit choice → detected posting language → model's own judgement),
+not left to the model. Adding a market means adding a constant plus a branch in `resolve` — never
+editing the prompt builder. The research behind the Danish rules lives in `danish_market_playbook.md`.
+
 ### Privacy Invariant
 
 `CareerProfileForAi` intentionally excludes `name`, `email`, `phone`, `photoUrl`, `linkedinUrl`, `githubUrl`, `websiteUrl`. These fields must never be sent to the AI provider. Identity is assembled server-side after the AI call in `CvDocumentAssembler.buildIdentity()`.
@@ -179,8 +193,11 @@ Required:
 - Firebase service account JSON at `.secrets/firebase-service-account.json`
 
 Optional (all have local defaults):
+- `SECRET_ENCRYPTION_KEY` — base64 AES key (16/24/32 bytes) encrypting users' own API keys at
+  rest. Unset means the app refuses to store them rather than keeping them in the clear, so
+  bring-your-own-key is simply unavailable. Only needed for a hosted deployment.
+  Generate one with: `[Convert]::ToBase64String((1..32 | % { Get-Random -Max 256 }))`
 - `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD`
-- `TYPESENSE_API_KEY`, `TYPESENSE_HOST`, `TYPESENSE_PORT`
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)
 - `ALLOWED_ORIGINS` (CORS)
 
@@ -190,4 +207,20 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
 - `AI_CLI_COMMAND` — CLI invoked for local-agent generation (default `claude -p`; prompt on stdin).
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
+- `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
+  restructuring a free-text answer). Off = template questions and the user's raw text; the feature
+  still works. See `skill_elicitation_design.md`.
+- `CLICHE_GUARD_ENABLED` / `CLICHE_GUARD_MODE` — deterministic Danish-floskel / AI-tell phrase check
+  on generated documents (`warn` logs, `block` fails generation). Findings are also fed back into
+  the reviewer pass to be rewritten. See `danish_market_playbook.md`.
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (personal-use, low-volume).
+- `DUE_REMINDER_CRON` — daily "due today" email (default `0 0 7 * * *`). Sends only to users with
+  notifications enabled who actually have something due; nothing due means no mail.
+- `ENRICHMENT_SWEEP_ENABLED` / `ENRICHMENT_SWEEP_CRON` / `ENRICHMENT_SWEEP_BATCH` — hourly sweep
+  (default `0 30 * * * *`, 40 jobs) that enriches postings the crawler's async enrichment never
+  reached or failed on. The enrichment pool discards work when its queue fills, so without this
+  those jobs stay unenriched forever.
+- `ENRICHMENT_MAX_ATTEMPTS` (default 4) / `ENRICHMENT_RETRY_DELAY` (default `PT6H`) — a posting is
+  given up on after this many failures, and left alone this long between tries. Enrichment state
+  lives on `jobs.enrichment_status/_attempts/_last_attempt_at/_last_error`; it is never inferred
+  from whether `ai_summary` happens to be set.

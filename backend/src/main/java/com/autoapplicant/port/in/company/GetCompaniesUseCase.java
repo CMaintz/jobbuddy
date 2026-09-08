@@ -8,5 +8,4 @@ import java.util.UUID;
 public interface GetCompaniesUseCase {
     List<Company> searchCompanies(String query, int page, int size);
     Optional<Company> getCompanyById(UUID id);
-    Optional<Company> getCompanyBySlug(String slug);
 }

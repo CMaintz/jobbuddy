@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.user.Profile;
@@ -12,21 +13,30 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+
 public class CvDocumentAssembler {
 
     /** Upper bound on rendered skills — keeps the section scannable and ATS-parseable. */
     private static final int MAX_SKILLS = 24;
 
     private final AtsReportBuilder atsReportBuilder;
+    private final KeywordCoverageCalculator coverageCalculator;
 
-    public CvDocumentAssembler(AtsReportBuilder atsReportBuilder) {
+    public CvDocumentAssembler(AtsReportBuilder atsReportBuilder,
+                               KeywordCoverageCalculator coverageCalculator) {
+        this.coverageCalculator = coverageCalculator;
         this.atsReportBuilder = atsReportBuilder;
     }
 
     public StructuredDocument assemble(User user, Profile profile, ProfilePrivateInfo privateInfo,
                                         List<ProfileSocial> socials, CareerProfileForAi source,
                                         TailoredCvContent tailored, String exportMode, String templateId,
-                                        boolean showProfileImage, DocumentTheme theme) {
+                                        boolean showProfileImage, DocumentTheme theme,
+                                        ContentGuardFindings guardFindings,
+                                        String documentLanguage,
+                                        JobKeywords jobKeywords,
+                                        String documentText) {
+        CvSectionLabels labels = CvSectionLabels.forLanguage(documentLanguage);
         List<String> selectedSkills = tailored != null && tailored.selectedSkills() != null && !tailored.selectedSkills().isEmpty()
                 ? validateSkills(tailored.selectedSkills(), source)
                 : merge(source.skills(), source.technologies());
@@ -37,15 +47,18 @@ public class CvDocumentAssembler {
 
         List<StructuredDocumentSection> sections = new ArrayList<>();
         if (selectedProfile != null && !selectedProfile.isBlank()) {
-            sections.add(new StructuredDocumentSection("profile", "profile", "Profile", selectedProfile, List.of()));
+            sections.add(new StructuredDocumentSection("profile", "profile", labels.profile(), selectedProfile, List.of()));
         }
         if (!selectedSkills.isEmpty()) {
             Map<String, String> skillCategory = categoryLookup(source.skillCategories());
-            sections.add(new StructuredDocumentSection("skills", "skills", "Skills", null,
+            // Taxonomy categories are a classification vocabulary; these become headings on the
+            // finished CV, so they are translated before they get there.
+            CvSkillGroupLabels groupLabels = CvSkillGroupLabels.forLanguage(documentLanguage);
+            sections.add(new StructuredDocumentSection("skills", "skills", labels.skills(), null,
                     selectedSkills.stream()
                             .map(skill -> new StructuredDocumentItem(null, skill, null, null, null, null,
                                     List.of(), List.of(), List.of(), List.of(),
-                                    skillCategory.get(skill.toLowerCase(Locale.ROOT))))
+                                    groupLabels.labelFor(skillCategory.get(skill.toLowerCase(Locale.ROOT)))))
                             .toList()));
         }
         // Career-stage drives the default order of the three "story" sections. Early-stage
@@ -59,26 +72,51 @@ public class CvDocumentAssembler {
         List<StructuredDocumentItem> educationItems =
                 validateItems(tailored != null ? tailored.education() : null, source.education());
         if (isEarlyStage(source.careerStage())) {
-            addSection(sections, "education", "education", "Education", educationItems);
-            addSection(sections, "projects", "projects", "Projects", projectItems);
-            addSection(sections, "experience", "experience", "Experience", experienceItems);
+            addSection(sections, "education", "education", labels.education(), educationItems);
+            addSection(sections, "projects", "projects", labels.projects(), projectItems);
+            addSection(sections, "experience", "experience", labels.experience(), experienceItems);
         } else {
-            addSection(sections, "experience", "experience", "Experience", experienceItems);
-            addSection(sections, "projects", "projects", "Projects", projectItems);
-            addSection(sections, "education", "education", "Education", educationItems);
+            addSection(sections, "experience", "experience", labels.experience(), experienceItems);
+            addSection(sections, "projects", "projects", labels.projects(), projectItems);
+            addSection(sections, "education", "education", labels.education(), educationItems);
         }
-        addSection(sections, "certifications", "certifications", "Certifications",
+        addSection(sections, "certifications", "certifications", labels.certifications(),
                 validateItems(tailored != null ? tailored.certifications() : null, source.certifications()));
         if (source.spokenLanguages() != null && !source.spokenLanguages().isEmpty()) {
-            sections.add(new StructuredDocumentSection("languages", "languages", "Languages", null,
+            sections.add(new StructuredDocumentSection("languages", "languages", labels.languages(), null,
                     source.spokenLanguages().stream()
                             .map(lang -> new StructuredDocumentItem(null, lang, null, null, null, null, List.of(), List.of(), List.of(), List.of(), null))
                             .toList()));
         }
 
+        // Fritidsinteresser: a standard closing section on a Danish CV, rendered verbatim from the
+        // user's own data — never AI-selected, since there is nothing to tailor about a hobby.
+        if (source.interests() != null && !source.interests().isEmpty()) {
+            sections.add(new StructuredDocumentSection("interests", "interests", labels.interests(), null,
+                    source.interests().stream()
+                            .map(interest -> new StructuredDocumentItem(null, interest, null, null, null,
+                                    null, List.of(), List.of(), List.of(), List.of(), null))
+                            .toList()));
+        }
+        String referencesNote = labels.referencesNote();
+        if (referencesNote != null) {
+            sections.add(new StructuredDocumentSection("references", "references", labels.references(),
+                    referencesNote, List.of()));
+        }
+
+        ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
+        // Measured against the CV's own text and the posting's own keywords — neither
+        // side of the comparison comes from the model that wrote the document.
+        KeywordCoverage coverage = coverageCalculator.measure(documentText, jobKeywords);
+        // The asks a word count cannot settle travel alongside the coverage figure, listed
+        // rather than folded into it.
+        java.util.List<com.autoapplicant.domain.job.JobRequirement> unmeasurable =
+                jobKeywords != null ? jobKeywords.unmeasurableRequirements() : java.util.List.of();
         AtsReport report = tailored != null
-                ? atsReportBuilder.forTailored(tailored, exportMode)
-                : atsReportBuilder.basic(null, exportMode);
+                ? atsReportBuilder.forTailored(coverage, tailored, exportMode, findings, documentLanguage, unmeasurable)
+                : coverage.measured()
+                        ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage, unmeasurable)
+                        : atsReportBuilder.basic(null, exportMode, findings, documentLanguage, unmeasurable);
 
         return new StructuredDocument(
                 null,
@@ -157,10 +195,10 @@ public class CvDocumentAssembler {
                 firstPresent(item.location(), source.location()),
                 firstPresent(item.dateRange(), source.dateRange()),
                 firstPresent(item.description(), source.description()),
-                !listOrEmpty(item.bullets()).isEmpty() ? item.bullets() : source.bullets(),
+                !Values.listOrEmpty(item.bullets()).isEmpty() ? item.bullets() : source.bullets(),
                 validateSubset(item.technologies(), source.technologies()),
-                !listOrEmpty(item.links()).isEmpty() ? item.links() : source.links(),
-                listOrEmpty(source.skills()),
+                !Values.listOrEmpty(item.links()).isEmpty() ? item.links() : source.links(),
+                Values.listOrEmpty(source.skills()),
                 firstPresent(item.category(), source.category()));
     }
 
@@ -195,8 +233,8 @@ public class CvDocumentAssembler {
     }
 
     private List<String> validateSubset(List<String> candidate, List<String> source) {
-        if (candidate == null || candidate.isEmpty()) return listOrEmpty(source);
-        Set<String> allowed = listOrEmpty(source).stream()
+        if (candidate == null || candidate.isEmpty()) return Values.listOrEmpty(source);
+        Set<String> allowed = Values.listOrEmpty(source).stream()
                 .map(s -> s.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
         List<String> valid = candidate.stream()
@@ -204,16 +242,13 @@ public class CvDocumentAssembler {
                 .filter(value -> allowed.contains(value.toLowerCase(Locale.ROOT)))
                 .distinct()
                 .toList();
-        return valid.isEmpty() ? listOrEmpty(source) : valid;
+        return valid.isEmpty() ? Values.listOrEmpty(source) : valid;
     }
 
     static String firstPresent(String first, String fallback) {
         return first != null && !first.isBlank() ? first : fallback;
     }
 
-    static List<String> listOrEmpty(List<String> values) {
-        return values != null ? values : List.of();
-    }
 
     static List<String> merge(List<String> first, List<String> second) {
         List<String> merged = new ArrayList<>();

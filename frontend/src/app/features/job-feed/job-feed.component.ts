@@ -11,7 +11,8 @@ import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.compone
 import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JobsApiService } from '../../core/api/jobs.api';
-import { Job, MatchResult } from '../../core/models/job.model';
+import { Job, JobRequirement, MatchResult } from '../../core/models/job.model';
+import { MatchBadgeComponent, MatchLabel, matchColor } from '../../shared/components/match-badge/match-badge.component';
 
 interface FeedRow {
   id: string;
@@ -20,6 +21,8 @@ interface FeedRow {
   location: string;
   salary?: string;
   matchScore?: number;
+  /** The backend's own verdict on the score — never re-derived here. */
+  matchLabel?: MatchLabel;
   matchReasons: string[];
   keywords: string[];
   source: string;
@@ -34,24 +37,67 @@ interface FeedRow {
   remote: boolean;
   seniority?: string;
   category?: string;
+  /** The posting's opening, as the list response carries it. Never overwritten. */
+  description?: string;
+  /** True when the list response carried only the opening. */
+  descriptionTruncated?: boolean;
+  /** The whole posting, once fetched. Kept beside the preview so collapsing works. */
+  fullDescription?: string;
+  /**
+   * What the posting asks for. The list response carries its demands; fetching the full
+   * posting fills in the preferences too.
+   */
+  requirements: JobRequirement[];
+  /** Years of experience the posting demands, when it states a number. */
+  experienceYears?: number;
+  /** The demand in the posting's own words, for the chip's tooltip. */
+  experienceAsk?: string;
 }
+
+/**
+ * A stated quantity of years: "mindst 5 års erfaring", "5-7 års", "3+ years". Danish "års"
+ * is matched by "år"; the range form takes the lower bound, which is the threshold.
+ */
+const YEARS_STATED = /(\d+)\s*(?:\+|[–-]\s*\d+)?\s*(?:år|years?)/i;
+
+/**
+ * The number of years an ask states, or null when it states none. Exported so the parsing
+ * can be tested on its own — a posting phrased without a figure must get no chip rather
+ * than a guessed one.
+ */
+export function yearsDemanded(text: string | undefined): number | null {
+  const match = YEARS_STATED.exec(text ?? '');
+  return match ? +match[1] : null;
+}
+
 
 @Component({
   selector: 'app-job-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, MatchBadgeComponent],
   templateUrl: './job-feed.component.html'
 })
 export class JobFeedComponent implements OnInit, OnDestroy {
+  /** Exposed for the detail pane, which colours a bare number rather than a ring. */
+  matchColor = matchColor;
+
   private jobsApi = inject(JobsApiService);
   private translate = inject(TranslateService);
 
   loading = signal(true);
   toast = signal('');
-  /** true while showing Typesense search results instead of recommendations */
+  /** true while showing search results instead of recommendations */
   searchMode = signal(false);
+  /** The filter set is collapsed by default so the list gets the width. */
+  filtersOpen = signal(false);
+  /** "View more" is per-selection: picking another role starts collapsed again. */
+  descriptionExpanded = signal(false);
+  /** The rest of the posting is being fetched. */
+  descriptionLoading = signal(false);
   feedRows = signal<FeedRow[]>([]);
   selectedJob = signal<FeedRow | null>(null);
+  /** Which way each job has been steered, so the control can show the current state. */
+  steered = signal<Map<string, 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS'>>(new Map());
   mobilePanel = signal<'list' | 'detail'>('list');
   savedIds = signal<Set<string>>(new Set());
 
@@ -60,7 +106,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   locationFilter = 'all';
   hideExpired = false;
   sortBy: 'match' | 'newest' | 'deadline' = 'match';
-  /** true = embed the query and rank by meaning; false = Typesense keyword search. */
+  /** true = embed the query and rank by meaning; false = Postgres keyword search. */
   semanticMode = false;
   activeSources = new Set<string>();
   sourceFilters: string[] = [];
@@ -165,6 +211,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   private matchToRow(r: MatchResult): FeedRow {
     const row = this.jobToRow(r.job);
     row.matchScore = r.totalScore;
+    row.matchLabel = r.matchLabel;
     row.matchReasons = r.matchReasons ?? [];
     return row;
   }
@@ -191,7 +238,26 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       remote: job.remoteType === 'REMOTE',
       seniority: job.seniority ?? undefined,
       category: job.jobCategory ?? undefined,
+      description: job.descriptionClean ?? undefined,
+      descriptionTruncated: job.descriptionTruncated ?? false,
+      requirements: job.requirements ?? [],
+      ...this.experienceDemand(job.requirements ?? []),
     };
+  }
+
+  /**
+   * The experience threshold the card shows. The list response carries only the posting's
+   * demands, which is exactly the half that decides whether a role is worth opening; the
+   * first one stating a number wins, and a demand phrased without one gets no chip rather
+   * than a guessed figure.
+   */
+  private experienceDemand(requirements: JobRequirement[]): Partial<FeedRow> {
+    for (const req of requirements) {
+      if (req.tier !== 'REQUIRED' || req.kind !== 'EXPERIENCE') continue;
+      const years = yearsDemanded(req.text);
+      if (years !== null) return { experienceYears: years, experienceAsk: req.text };
+    }
+    return {};
   }
 
   private refreshSourceFilters(): void {
@@ -262,6 +328,86 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     return cat.replace(/_/g, ' ').toLowerCase();
   }
 
+  /** Selecting a role collapses any expanded description from the previous one. */
+  selectJob(row: FeedRow): void {
+    this.selectedJob.set(row);
+    this.descriptionExpanded.set(false);
+    this.mobilePanel.set('detail');
+  }
+
+  /**
+   * Collapsed shows the opening the list response carried; expanded shows the whole
+   * posting once fetched. The two are kept apart so collapsing has something to go
+   * back to.
+   */
+  descriptionText(row: FeedRow): string {
+    if (this.descriptionExpanded() && row.fullDescription) return row.fullDescription;
+    const opening = row.description ?? '';
+    return this.hasMoreDescription(row) ? opening.trimEnd() + '…' : opening;
+  }
+
+  /** There is more posting than is on screen — either unfetched, or fetched and collapsed. */
+  hasMoreDescription(row: FeedRow): boolean {
+    return !!row.descriptionTruncated || !!row.fullDescription;
+  }
+
+  /**
+   * Fetches the rest of the posting the first time it is asked for, then keeps it on
+   * the row so collapsing and re-expanding costs nothing.
+   */
+  toggleDescription(row: FeedRow): void {
+    if (this.descriptionExpanded()) {
+      this.descriptionExpanded.set(false);
+      return;
+    }
+    if (row.fullDescription || !row.descriptionTruncated) {
+      this.descriptionExpanded.set(true);
+      return;
+    }
+    this.descriptionLoading.set(true);
+    this.jobsApi.getById(row.id).subscribe({
+      next: job => {
+        // The reader may have moved on while this was in flight.
+        if (this.selectedJob()?.id !== row.id) { this.descriptionLoading.set(false); return; }
+        row.fullDescription = job.descriptionClean ?? row.description;
+        // The full posting also carries the preferences the list response left out.
+        if (job.requirements?.length) row.requirements = job.requirements;
+        this.descriptionLoading.set(false);
+        this.descriptionExpanded.set(true);
+      },
+      error: () => {
+        this.descriptionLoading.set(false);
+        this.toast.set(this.translate.instant('jobFeed.descriptionLoadFailed'));
+      }
+    });
+  }
+
+  /** How many filters are narrowing the list right now — shown on the collapsed toggle. */
+  activeFilterCount(): number {
+    let n = 0;
+    if (!this.searchMode() && this.minMatch > 50) n++;
+    if (this.locationFilter !== 'all') n++;
+    if (this.hideExpired) n++;
+    if (this.seniorityFilters.length > 1 && this.activeSeniorities.size < this.seniorityFilters.length) n++;
+    if (this.categoryFilters.length > 1 && this.activeCategories.size < this.categoryFilters.length) n++;
+    if (this.sourceFilters.length > 1 && this.activeSources.size < this.sourceFilters.length) n++;
+    return n;
+  }
+
+  /** The current sort, shown on the filter bar so it stays visible while collapsed. */
+  sortLabel(): string {
+    return this.sortOptions.find(o => o.value === this.sortBy)?.label ?? 'jobFeed.sort.match';
+  }
+
+  resetFilters(): void {
+    this.minMatch = 50;
+    this.locationFilter = 'all';
+    this.hideExpired = false;
+    this.activeSeniorities = new Set(this.seniorityFilters);
+    this.activeCategories = new Set(this.categoryFilters);
+    this.activeSources = new Set(this.sourceFilters);
+  }
+
   saveJob(row: FeedRow): void {
     if (this.savedIds().has(row.id)) return;
     this.jobsApi.save(row.id).subscribe({
@@ -270,6 +416,24 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         this.toast.set(this.translate.instant('jobFeed.toast.saved'));
       },
       error: () => this.toast.set(this.translate.instant('jobFeed.toast.saveFailed'))
+    });
+  }
+
+  /**
+   * Steering: a statement about the kind of role, not this one.
+   *
+   * The job stays in the feed — you are shaping what comes next, not dismissing what is in front
+   * of you. Dismissing is what "Not interested" is for.
+   */
+  steerFeed(row: FeedRow, type: 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS'): void {
+    this.steered.update(m => new Map(m).set(row.id, type));
+    this.jobsApi.submitFeedback(row.id, type).subscribe({
+      next: () => this.toast.set(this.translate.instant(
+        type === 'MORE_LIKE_THIS' ? 'jobFeed.toast.moreLikeThis' : 'jobFeed.toast.fewerLikeThis')),
+      error: () => {
+        this.steered.update(m => { const next = new Map(m); next.delete(row.id); return next; });
+        this.toast.set(this.translate.instant('jobFeed.toast.steerFailed'));
+      }
     });
   }
 

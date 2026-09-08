@@ -225,6 +225,13 @@ export class ApplyComponent implements OnInit {
     const format = this.route.snapshot.queryParamMap.get('format');
     if (format && this.formats.some(f => f.key === format)) this.selectedFormat.set(format);
 
+    // Handed over from an outreach target: no posting exists, so start in unsolicited mode.
+    const unsolicitedCompany = this.route.snapshot.queryParamMap.get('unsolicitedCompany');
+    if (unsolicitedCompany) {
+      this.mode.set('unsolicited');
+      this.company = unsolicitedCompany;
+    }
+
     if (jobId) this.loadPresetJob(jobId);
     this.restored = true;
   }

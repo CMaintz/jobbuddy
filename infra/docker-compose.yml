@@ -20,24 +20,6 @@ services:
           cpus: "1.0"
           memory: 512M
 
-  typesense:
-    image: typesense/typesense:0.25.2
-    command: --data-dir /data --api-key=${TYPESENSE_API_KEY:-local-dev-key} --enable-cors
-    ports:
-      - "8108:8108"
-    volumes:
-      - typesense_data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8108'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
 
   backend:
     build:
@@ -53,13 +35,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-localdevpassword}
       GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      APP_TYPESENSE_HOST: typesense
-      APP_TYPESENSE_PORT: 8108
-      APP_TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-local-dev-key}
     depends_on:
       postgres:
-        condition: service_healthy
-      typesense:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
@@ -96,4 +73,3 @@ services:
 
 volumes:
   postgres_data:
-  typesense_data:

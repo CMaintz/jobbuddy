@@ -114,6 +114,40 @@ export interface SkillGap {
   resources?: string[];
 }
 
+export interface AiUsageTotals {
+  tokensIn: number;
+  tokensOut: number;
+  requests: number;
+}
+
+export interface AiOperationUsage {
+  operation: string;
+  tokensIn: number;
+  tokensOut: number;
+  requests: number;
+}
+
+/**
+ * What generation has cost. A provider on a flat fee reports no tokens, so zero
+ * tokens against a non-zero request count means "not metered", not "nothing ran".
+ */
+export interface AiUsageSummary {
+  allTime: AiUsageTotals;
+  today: AiUsageTotals;
+  byOperation: AiOperationUsage[];
+}
+
+/** What the settings screen may know about a stored key — never the key itself. */
+export interface AiCredentialStatus {
+  configured: boolean;
+  provider: 'OPENAI' | 'GEMINI' | null;
+  hint: string | null;
+  model: string | null;
+  updatedAt: string | null;
+  /** False when the deployment has no encryption secret and so cannot store keys. */
+  storageAvailable: boolean;
+}
+
 export interface SkillGapReport {
   gaps: SkillGap[];
   summary?: string;
@@ -123,6 +157,22 @@ export interface SkillGapReport {
 @Injectable({ providedIn: 'root' })
 export class AiApiService {
   private http = inject(HttpClient);
+
+  getCredentialStatus(): Observable<AiCredentialStatus> {
+    return this.http.get<AiCredentialStatus>('/api/v1/ai/credentials');
+  }
+
+  setCredential(provider: string, apiKey: string, model?: string): Observable<AiCredentialStatus> {
+    return this.http.put<AiCredentialStatus>('/api/v1/ai/credentials', { provider, apiKey, model });
+  }
+
+  clearCredential(): Observable<void> {
+    return this.http.delete<void>('/api/v1/ai/credentials');
+  }
+
+  getUsage(): Observable<AiUsageSummary> {
+    return this.http.get<AiUsageSummary>('/api/v1/ai/usage');
+  }
 
   getCvRenderModel(templateId?: string): Observable<StructuredDocument> {
     const params: Record<string, string> = {};

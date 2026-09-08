@@ -2,7 +2,10 @@ package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
+import com.autoapplicant.port.out.ai.AiUsageRepositoryPort;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.port.out.ai.CurrentUserPort;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +17,7 @@ import java.time.Duration;
 @Configuration
 public class AiConfig {
 
-    private static final String GEMINI_BASE_URL =
+    static final String GEMINI_BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/openai/";
 
     @Bean("openAiHttpClient")
@@ -46,11 +49,29 @@ public class AiConfig {
                 : new OpenAiAdapter(openAi, props, tierModel("openai", tier, props));
     }
 
+    /**
+     * Generation runs on behalf of a signed-in user, so it is wrapped to log what each
+     * call cost them. Enrichment is background work with nobody to bill and stays bare.
+     */
     @Bean("generationAiProvider")
     public ChatProviderPort generationAiProvider(
             @Qualifier("openAiHttpClient") OpenAIClient openAi,
             @Qualifier("geminiHttpClient") OpenAIClient gemini,
-            AppProperties props) {
+            AppProperties props,
+            AiUsageRepositoryPort usageRepo,
+            CurrentUserPort currentUser,
+            ManageAiCredentialUseCase credentials) {
+        // Layers, outermost first: usage is logged for whatever ran, and what runs is
+        // the user's own key when they have set one, else the server's provider — which
+        // on a personal install is the local CLI agent.
+        ChatProviderPort perUser = new PerUserChatProvider(
+                buildGenerationProvider(openAi, gemini, props), credentials, currentUser, props);
+        return new UsageRecordingChatProvider(perUser, usageRepo, currentUser);
+    }
+
+    private static ChatProviderPort buildGenerationProvider(OpenAIClient openAi,
+                                                            OpenAIClient gemini,
+                                                            AppProperties props) {
         String provider = props.getAi().getGenerationProvider();
         if (isCliProvider(provider)) {
             return new CliAgentAdapter(props);

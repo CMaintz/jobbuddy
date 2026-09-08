@@ -21,9 +21,38 @@
     <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     <!-- 3-column layout -->
-    <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[200px_1fr_380px]">
-      <!-- Left: Filters -->
-      <aside class="hidden lg:flex border-r border-jb-border p-[14px_12px] overflow-y-auto flex-col gap-4 jb-scroll">
+    <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[360px_1fr]">
+      <!-- Left: filters over the list -->
+      <div class="flex flex-col min-h-0 border-r border-jb-border md:!flex"
+           [class.hidden]="mobilePanel() === 'detail'">
+
+      <!-- Filter bar: collapsed to a toggle so the list and the posting get the width -->
+      <div class="shrink-0 border-b border-jb-border">
+        <div class="flex items-center gap-2 p-[10px_12px]">
+          <button type="button" (click)="filtersOpen.set(!filtersOpen())"
+            class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs cursor-pointer"
+            [attr.aria-expanded]="filtersOpen()"
+            [style.background]="activeFilterCount() ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+            [style.border-color]="activeFilterCount() ? 'var(--jb-accent-border)' : 'var(--jb-border)'"
+            [style.color]="activeFilterCount() ? 'var(--jb-accent-2)' : 'var(--jb-text-mid)'">
+            <jb-icon name="filter" [size]="11" />
+            {{ 'jobFeed.filters' | translate }}
+            @if (activeFilterCount()) { <span class="num">({{ activeFilterCount() }})</span> }
+            <jb-icon [name]="filtersOpen() ? 'chev-down' : 'chev-right'" [size]="10" />
+          </button>
+          @if (activeFilterCount()) {
+            <button type="button" (click)="resetFilters()"
+              class="text-xs text-jb-text-dim hover:text-jb-text bg-transparent border-none cursor-pointer">
+              {{ 'jobFeed.clearFilters' | translate }}
+            </button>
+          }
+          <span class="ml-auto text-2xs text-jb-text-dim whitespace-nowrap">
+            {{ sortLabel() | translate }}
+          </span>
+        </div>
+
+        @if (filtersOpen()) {
+      <aside class="flex p-[4px_12px_14px] max-h-[46vh] overflow-y-auto flex-col gap-4 jb-scroll">
         <!-- Sort -->
         <div>
           <div class="text-2xs font-medium uppercase tracking-widest text-jb-text-dim mb-1.5">{{ 'jobFeed.sortBy' | translate }}</div>
@@ -111,15 +140,16 @@
           </div>
         }
       </aside>
+        }
+      </div>
 
-      <!-- Middle: Feed list -->
-      <div class="overflow-y-auto border-r border-jb-border jb-scroll md:!block"
-           [class.hidden]="mobilePanel() === 'detail'">
+      <!-- Feed list -->
+      <div class="overflow-y-auto jb-scroll flex-1 min-h-0">
         @if (loading()) {
           <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'jobFeed.loadingRoles' | translate }}</div>
         } @else {
           @for (job of filteredJobs(); track job.id) {
-            <div (click)="selectedJob.set(job); mobilePanel.set('detail')"
+            <div (click)="selectJob(job)"
               class="jb-row p-[14px_16px] cursor-pointer border-b border-jb-border-faint"
               [style.background]="selectedJob()?.id === job.id ? 'var(--jb-surface-2)' : 'transparent'">
               <div class="flex items-start gap-2.5">
@@ -129,12 +159,7 @@
                     <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ job.title }}</div>
                     <!-- Score ring -->
                     @if (job.matchScore !== undefined) {
-                      <div class="w-[28px] h-[28px] rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-semibold"
-                        [style.background]="job.matchScore >= 80 ? 'var(--jb-success-soft)' : job.matchScore >= 60 ? 'var(--jb-accent-soft)' : 'var(--jb-surface-3)'"
-                        [style.color]="job.matchScore >= 80 ? 'var(--jb-success)' : job.matchScore >= 60 ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'"
-                        [style.border]="'1px solid ' + (job.matchScore >= 80 ? 'rgba(74,222,128,0.3)' : job.matchScore >= 60 ? 'var(--jb-accent-border)' : 'var(--jb-border)')">
-                        {{ job.matchScore }}
-                      </div>
+                      <app-match-badge [score]="job.matchScore" [label]="job.matchLabel" />
                     }
                   </div>
                   <div class="text-xs text-jb-text-dim mt-0.5">
@@ -143,12 +168,57 @@
                       <span class="mono" [class.text-jb-danger]="job.deadlinePassed"> · {{ 'jobFeed.deadline' | translate }} {{ job.deadline }}</span>
                     }
                   </div>
+                  <!-- What the role costs to qualify for, on the card: the seniority the
+                       posting states, and the years it demands when it names a number. -->
+                  @if (job.seniority || job.experienceYears) {
+                    <div class="flex flex-wrap items-center gap-1 mt-1">
+                      @if (job.seniority) {
+                        <span class="pill pill-neutral">{{ job.seniority | titlecase }}</span>
+                      }
+                      @if (job.experienceYears) {
+                        <span class="pill pill-neutral" [title]="job.experienceAsk">{{
+                          'jobFeed.yearsDemanded' | translate:{ n: job.experienceYears } }}</span>
+                      }
+                    </div>
+                  }
                   <div class="flex flex-wrap gap-1 mt-1.5">
                     @for (reason of job.matchReasons.slice(0, 2); track reason) {
                       <span class="text-2xs text-jb-success flex items-center gap-[3px]">
                         <jb-icon name="check" [size]="9" [strokeWidth]="2.5" /> {{ reason }}
                       </span>
                     }
+                  </div>
+
+                  <!-- The same four controls as the detail pane, so a decision never
+                       costs a click into the role first. -->
+                  <div class="flex items-center gap-0.5 mt-2 -ml-1">
+                    <button type="button" class="jb-card-action"
+                            [class.on]="savedIds().has(job.id)"
+                            [title]="(savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate"
+                            [attr.aria-label]="(savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate"
+                            (click)="$event.stopPropagation(); saveJob(job)">
+                      <jb-icon name="bookmark" [size]="12" />
+                    </button>
+                    <button type="button" class="jb-card-action"
+                            [class.on]="steered().get(job.id) === 'MORE_LIKE_THIS'"
+                            [title]="'jobFeed.moreLikeThis' | translate"
+                            [attr.aria-label]="'jobFeed.moreLikeThis' | translate"
+                            (click)="$event.stopPropagation(); steerFeed(job, 'MORE_LIKE_THIS')">
+                      <jb-icon name="chart-up" [size]="12" />
+                    </button>
+                    <button type="button" class="jb-card-action"
+                            [class.on]="steered().get(job.id) === 'FEWER_LIKE_THIS'"
+                            [title]="'jobFeed.fewerLikeThis' | translate"
+                            [attr.aria-label]="'jobFeed.fewerLikeThis' | translate"
+                            (click)="$event.stopPropagation(); steerFeed(job, 'FEWER_LIKE_THIS')">
+                      <jb-icon name="arrow-down" [size]="12" />
+                    </button>
+                    <button type="button" class="jb-card-action"
+                            [title]="'jobFeed.notInterested' | translate"
+                            [attr.aria-label]="'jobFeed.notInterested' | translate"
+                            (click)="$event.stopPropagation(); hideJob(job)">
+                      <jb-icon name="x" [size]="12" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -165,8 +235,9 @@
           }
         }
       </div>
+      </div>
 
-      <!-- Right: Detail panel -->
+      <!-- Right: the posting, and the case for it -->
       <div class="overflow-y-auto p-5 jb-scroll md:!block"
            [class.hidden]="mobilePanel() !== 'detail'">
         <!-- Mobile back button -->
@@ -188,7 +259,7 @@
             <div class="card p-3.5 mb-3">
               <div class="flex items-center gap-2 mb-2.5">
                 <span class="text-[24px] font-semibold num"
-                  [style.color]="job.matchScore >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ job.matchScore }}</span>
+                  [style.color]="matchColor(job.matchLabel).fg">{{ job.matchScore }}</span>
                 <span class="text-sm text-jb-text-dim">{{ 'jobFeed.matchScore' | translate }}</span>
               </div>
               <div class="flex flex-col gap-1">
@@ -228,13 +299,58 @@
             </div>
           }
 
+          <!-- What the posting asks for. Listed, not scored: whether five years of experience
+               is met is not something a word count settles. -->
+          @if (job.requirements.length > 0) {
+            <div class="card p-3.5 mb-3">
+              <div class="text-xs font-medium mb-2">{{ 'jobFeed.requirements' | translate }}</div>
+              <ul class="list-none p-0 m-0 flex flex-col gap-1.5">
+                @for (req of job.requirements; track req.text) {
+                  <li class="flex gap-2 items-start text-sm text-jb-text-mid">
+                    <span class="pill shrink-0"
+                      [class.pill-accent]="req.tier === 'REQUIRED'"
+                      [class.pill-neutral]="req.tier !== 'REQUIRED'">{{
+                        ('jobFeed.tier.' + req.tier) | translate }}</span>
+                    <span>{{ req.text }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
           <!-- Actions -->
           <div class="flex gap-2 flex-wrap">
             <jb-button icon="bookmark" (clicked)="saveJob(job)">{{ (savedIds().has(job.id) ? 'jobFeed.savedBtn' : 'common.save') | translate }}</jb-button>
             <jb-button icon="external" [routerLink]="['/jobs', job.id]">{{ 'jobFeed.details' | translate }}</jb-button>
             <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">{{ 'jobFeed.generateApplication' | translate }}</jb-button>
-            <jb-button ghost icon="x" (clicked)="hideJob(job)">{{ 'jobFeed.hide' | translate }}</jb-button>
+            <jb-button ghost icon="x" (clicked)="hideJob(job)">{{ 'jobFeed.notInterested' | translate }}</jb-button>
           </div>
+
+          <!-- Steering: about the kind of role, not this one, so the job stays put -->
+          <div class="flex gap-2 flex-wrap items-center mt-2.5 pt-2.5 border-t border-jb-border">
+            <span class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'jobFeed.moreOfThis' | translate }}</span>
+            <jb-button small icon="chart-up"
+              [primary]="steered().get(job.id) === 'MORE_LIKE_THIS'"
+              (clicked)="steerFeed(job, 'MORE_LIKE_THIS')">{{ 'jobFeed.moreLikeThis' | translate }}</jb-button>
+            <jb-button small icon="arrow-down"
+              [primary]="steered().get(job.id) === 'FEWER_LIKE_THIS'"
+              (clicked)="steerFeed(job, 'FEWER_LIKE_THIS')">{{ 'jobFeed.fewerLikeThis' | translate }}</jb-button>
+          </div>
+
+          <!-- The posting. The list carries its opening; "view more" fetches the rest. -->
+          @if (job.description) {
+            <div class="card p-3.5 mb-3">
+              <div class="text-xs font-medium mb-2">{{ 'jobFeed.description' | translate }}</div>
+              <div class="text-base leading-[1.7] text-jb-text-mid whitespace-pre-line">{{ descriptionText(job)
+                }}@if (hasMoreDescription(job)) {<button type="button"
+                  (click)="toggleDescription(job)" [disabled]="descriptionLoading()"
+                  class="ml-1 align-baseline text-sm font-medium text-jb-accent-2 bg-transparent border-none p-0 cursor-pointer disabled:opacity-60">{{
+                    (descriptionLoading() ? 'jobFeed.viewMoreLoading'
+                      : descriptionExpanded() ? 'jobFeed.viewLess' : 'jobFeed.viewMore') | translate
+                  }}</button>}</div>
+            </div>
+          }
+
         } @else {
           <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">
             <jb-icon name="compass" [size]="24" class="mb-2" />

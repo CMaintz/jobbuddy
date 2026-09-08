@@ -103,16 +103,6 @@
               </div>
             </div>
           }
-          @if (preview()!.technologies.length > 0) {
-            <div>
-              <div class="label">{{ 'cvImport.techCount' | translate:{ n: preview()!.technologies.length } }}</div>
-              <div class="flex flex-wrap gap-1.5 mt-1">
-                @for (tech of preview()!.technologies; track tech) {
-                  <span class="pill pill-accent">{{ tech }}</span>
-                }
-              </div>
-            </div>
-          }
         </div>
         <div class="flex gap-2 mt-5 justify-end">
           <jb-button (clicked)="discardPreview()">{{ 'cvImport.discard' | translate }}</jb-button>

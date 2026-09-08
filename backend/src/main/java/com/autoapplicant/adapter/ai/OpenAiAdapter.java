@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
+import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.openai.client.OpenAIClient;
@@ -31,16 +32,7 @@ public class OpenAiAdapter implements AiProviderPort {
     }
 
     @Override
-    public String generate(PromptComposition composition) {
-        return complete(composition, false);
-    }
-
-    @Override
-    public String generateJson(PromptComposition composition) {
-        return complete(composition, true);
-    }
-
-    private String complete(PromptComposition composition, boolean jsonObject) {
+    public AiCompletion complete(PromptComposition composition, boolean jsonObject, String operation) {
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
                 .model(resolveChatModel());
 
@@ -54,7 +46,10 @@ public class OpenAiAdapter implements AiProviderPort {
         }
 
         ChatCompletion completion = client.chat().completions().create(builder.build());
-        return completion.choices().getFirst().message().content().orElse("");
+        String text = completion.choices().getFirst().message().content().orElse("");
+        return completion.usage()
+                .map(u -> new AiCompletion(text, (int) u.promptTokens(), (int) u.completionTokens(), resolveChatModel()))
+                .orElseGet(() -> AiCompletion.untracked(text, resolveChatModel()));
     }
 
     @Override

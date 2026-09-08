@@ -7,7 +7,8 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -21,7 +22,7 @@ interface StageConfig {
 @Component({
   selector: 'app-pipeline',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent],
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {
@@ -88,23 +89,6 @@ export class PipelineComponent implements OnInit {
       (a.notes ?? '').toLowerCase().includes(q));
   }
 
-  stageTone(status: ApplicationStatus): 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'violet' {
-    const map: Record<string, PillTone> = {
-      SAVED: 'neutral', PREPARING: 'neutral', APPLIED: 'info',
-      RECRUITER_CONTACT: 'violet', INTERVIEW: 'accent', TECHNICAL_TEST: 'accent',
-      FINAL_ROUND: 'accent', OFFER: 'success', REJECTED: 'danger', ARCHIVED: 'neutral'
-    };
-    return map[status] ?? 'neutral';
-  }
-
-  stageLabel(status: ApplicationStatus): string {
-    const map: Record<string, string> = {
-      SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.preparing', APPLIED: 'pipeline.stage.applied',
-      RECRUITER_CONTACT: 'pipeline.stage.screen', INTERVIEW: 'pipeline.stage.interview', TECHNICAL_TEST: 'pipeline.stage.technical',
-      FINAL_ROUND: 'pipeline.stage.final', OFFER: 'pipeline.stage.offer', REJECTED: 'pipeline.stage.rejected', ARCHIVED: 'pipeline.stage.archived'
-    };
-    return map[status] ?? status;
-  }
 
   ageLabel(dateStr: string): string {
     if (!dateStr) return '—';

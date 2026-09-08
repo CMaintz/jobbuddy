@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class TailoredCvGenerator {
@@ -32,8 +34,9 @@ public class TailoredCvGenerator {
      *
      * @param styleTemplate optional {@link PromptTemplate} to customise AI persona and approach;
      *                      pass {@code null} to use the built-in default
+     * @param posting       the posting's text, country, and named contact; may be {@link PostingContext#EMPTY}
      */
-    public TailoredCvContent generate(CareerProfileForAi source, String jobDescription,
+    public TailoredCvContent generate(CareerProfileForAi source, PostingContext posting,
                                       String customInstructions, String targetLanguage,
                                       PromptTemplate styleTemplate, WritingProfile writingProfile,
                                       List<String> outcomeLessons, String lengthPreference) {
@@ -42,9 +45,9 @@ public class TailoredCvGenerator {
             String json = AiResponseParser.extractJsonObject(
                     AiResponseParser.sanitize(aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
-                                    sourceJson, jobDescription, customInstructions,
+                                    sourceJson, posting, customInstructions,
                                     targetLanguage, styleTemplate, writingProfile, outcomeLessons,
-                                    lengthPreference))
+                                    lengthPreference), AiOperations.TAILORED_CV)
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {
@@ -55,7 +58,6 @@ public class TailoredCvGenerator {
                     source.projects(),
                     source.education(),
                     source.certifications(),
-                    0, List.of(), List.of(),
                     List.of("AI tailoring failed — master profile used without rewriting."));
         }
     }

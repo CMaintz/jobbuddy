@@ -1,0 +1,53 @@
+<div class="py-3.5 border-b border-jb-border-faint">
+  <div class="text-base font-medium">{{ 'settings.aiKey.title' | translate }}</div>
+  <div class="text-xs text-jb-text-dim mt-[1px] leading-[1.55]">{{ 'settings.aiKey.desc' | translate }}</div>
+
+  @if (loading()) {
+    <div class="text-sm text-jb-text-dim mt-3">{{ 'settings.aiKey.loading' | translate }}</div>
+  } @else {
+    @if (status(); as s) {
+    @if (!s.storageAvailable && !s.configured) {
+      <div class="text-sm text-jb-text-dim mt-3">{{ 'settings.aiKey.unavailable' | translate }}</div>
+    } @else {
+      @if (s.configured) {
+        <div class="flex items-center gap-2 mt-3">
+          <span class="pill pill-success">{{ 'settings.aiKey.inUse' | translate }}</span>
+          <span class="text-sm">{{ ('settings.aiKey.provider.' + (s.provider === 'GEMINI' ? 'gemini' : 'openai')) | translate }}</span>
+          <span class="mono text-xs text-jb-text-dim">{{ s.hint }}</span>
+          <jb-button small ghost (clicked)="clear()" [disabled]="saving()">{{ 'settings.aiKey.remove' | translate }}</jb-button>
+        </div>
+      } @else {
+        <div class="text-sm text-jb-text-dim mt-3">{{ 'settings.aiKey.usingServer' | translate }}</div>
+      }
+
+      <div class="flex flex-wrap items-end gap-2 mt-3">
+        <div>
+          <label class="label" for="ai-key-provider">{{ 'settings.aiKey.providerLabel' | translate }}</label>
+          <select id="ai-key-provider" class="input" [(ngModel)]="provider" style="width:auto;">
+            @for (p of providers; track p.value) {
+              <option [value]="p.value">{{ p.label | translate }}</option>
+            }
+          </select>
+        </div>
+        <div class="flex-1 min-w-[220px]">
+          <label class="label" for="ai-key-value">{{ 'settings.aiKey.keyLabel' | translate }}</label>
+          <input id="ai-key-value" class="input" type="password" autocomplete="off"
+                 [(ngModel)]="apiKey" [placeholder]="'settings.aiKey.keyPlaceholder' | translate" />
+        </div>
+        <div>
+          <label class="label" for="ai-key-model">{{ 'settings.aiKey.modelLabel' | translate }}</label>
+          <input id="ai-key-model" class="input" [(ngModel)]="model"
+                 [placeholder]="'settings.aiKey.modelPlaceholder' | translate" style="width:180px;" />
+        </div>
+        <jb-button [primary]="true" (clicked)="save()" [disabled]="saving() || !apiKey.trim()">
+          {{ (s.configured ? 'settings.aiKey.replace' : 'settings.aiKey.save') | translate }}
+        </jb-button>
+      </div>
+
+      @if (error()) {
+        <div class="text-sm text-jb-danger mt-2">{{ error() | translate }}</div>
+      }
+      }
+    }
+  }
+</div>

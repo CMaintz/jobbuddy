@@ -14,7 +14,7 @@ public record AiAnalysisResult(
         /** Posting/employer risk — separate from the score; only for job-targeted analyses. */
         RiskAssessment risk
 ) {
-    /** Fallback shape for legacy/unparseable responses. */
+    /** Fallback shape for a response that would not parse into the structured form. */
     public static AiAnalysisResult unstructured(String text) {
         return new AiAnalysisResult(List.of(text), 0, text, null, List.of(), List.of(), null, null);
     }

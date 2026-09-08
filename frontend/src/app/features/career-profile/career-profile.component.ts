@@ -10,8 +10,10 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { CareerTargetApiService, CareerTarget, CareerStage } from '../../core/api/career-target.api';
 import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retracted-claims.api';
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
+import { SkillsApiService, EvidenceDraft, EvidenceGap, SkillCandidate, SkillConfirmation }
+  from '../../core/api/skills.api';
 
-type Section = 'target' | 'stories' | 'retracted';
+type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
 @Component({
   selector: 'app-career-profile',
@@ -25,6 +27,7 @@ export class CareerProfileComponent implements OnInit {
   private targetApi = inject(CareerTargetApiService);
   private claimsApi = inject(RetractedClaimsApiService);
   private storyApi = inject(StoryBankApiService);
+  private skillsApi = inject(SkillsApiService);
   private translate = inject(TranslateService);
 
   activeSection = signal<Section>('target');
@@ -32,6 +35,7 @@ export class CareerProfileComponent implements OnInit {
 
   sections: { key: Section; label: string; icon: string }[] = [
     { key: 'target', label: 'careerProfile.section.target', icon: 'target' },
+    { key: 'skills', label: 'careerProfile.section.skills', icon: 'bolt' },
     { key: 'stories', label: 'careerProfile.section.stories', icon: 'edit' },
     { key: 'retracted', label: 'careerProfile.section.retracted', icon: 'key' },
   ];
@@ -42,6 +46,8 @@ export class CareerProfileComponent implements OnInit {
   narrative = '';
   culture: string[] = [];
   careerStage: CareerStage | '' = '';
+  noticePeriod = '';
+  earliestStartDate = '';
   savingTarget = signal(false);
   targetDirty = signal(false);
 
@@ -71,6 +77,8 @@ export class CareerProfileComponent implements OnInit {
     this.targetApi.get().subscribe({ next: t => this.applyTarget(t), error: () => {} });
     this.reloadStories();
     this.reloadClaims();
+    this.loadCandidates();
+    this.loadGaps();
   }
 
   // ── Career target ──
@@ -80,6 +88,131 @@ export class CareerProfileComponent implements OnInit {
     this.narrative = t.narrative ?? '';
     this.culture = t.cultureRequirements ?? [];
     this.careerStage = t.careerStage ?? '';
+    this.noticePeriod = t.noticePeriod ?? '';
+    this.earliestStartDate = t.earliestStartDate ?? '';
+  }
+
+  // ── Skill candidates ───────────────────────────────────────
+  candidates = signal<SkillCandidate[]>([]);
+  candidatesLoading = signal(false);
+  /** Names answered in this round, so a row can disappear the moment it is answered. */
+  private answered = new Set<string>();
+
+  loadCandidates(): void {
+    this.candidatesLoading.set(true);
+    this.answered.clear();
+    this.skillsApi.getSkillCandidates(12).subscribe({
+      next: rows => { this.candidates.set(rows); this.candidatesLoading.set(false); },
+      error: () => this.candidatesLoading.set(false),
+    });
+  }
+
+  /**
+   * Answers one suggestion. Sent immediately rather than batched behind a save button: each row is
+   * an independent decision, and a half-finished round should still keep what was decided.
+   */
+  answer(candidate: SkillCandidate, decision: SkillConfirmation['decision'],
+         usedInProduction = false): void {
+    if (this.answered.has(candidate.name)) return;
+    this.answered.add(candidate.name);
+    this.candidates.set(this.candidates().filter(c => c.name !== candidate.name));
+
+    const confirmation: SkillConfirmation = { name: candidate.name, decision, usedInProduction };
+    this.skillsApi.confirmSkillCandidates([confirmation]).subscribe({
+      next: added => {
+        if (added.length) {
+          this.toast.set(this.translate.instant('careerProfile.skills.added', { name: candidate.name }));
+        }
+      },
+      // Put the row back rather than silently losing the answer.
+      error: () => {
+        this.answered.delete(candidate.name);
+        this.candidates.set([candidate, ...this.candidates()]);
+        this.toast.set(this.translate.instant('careerProfile.skills.failed'));
+      },
+    });
+  }
+
+  // ── Evidence gaps ──────────────────────────────────────────
+  gaps = signal<EvidenceGap[]>([]);
+  /** The gap currently being answered; only one form is open at a time. */
+  openGap = signal<string | null>(null);
+  evidenceSituation = '';
+  evidenceAction = '';
+  evidenceResult = '';
+  savingEvidence = signal(false);
+
+  loadGaps(): void {
+    // Tailored questions when the AI is available; the endpoint falls back to templates itself.
+    this.skillsApi.getTailoredEvidenceGaps(5).subscribe({
+      next: rows => this.gaps.set(rows),
+      error: () => this.skillsApi.getEvidenceGaps(5).subscribe({
+        next: rows => this.gaps.set(rows),
+        error: () => this.gaps.set([]),
+      }),
+    });
+  }
+
+  /** What the user typed before it was restructured — one box beats three. */
+  evidenceAnswer = '';
+  drafting = signal(false);
+  draftWarnings = signal<string[]>([]);
+
+  /**
+   * Turns the free-text answer into the three fields, which the user then edits and saves. The
+   * draft is never saved directly: the model reorganises their words, they decide it is right.
+   */
+  draftEvidence(gap: EvidenceGap): void {
+    const answer = this.evidenceAnswer.trim();
+    if (!answer || this.drafting()) return;
+    this.drafting.set(true);
+    this.skillsApi.draftEvidence(gap.skillName, answer).subscribe({
+      next: (draft: EvidenceDraft) => {
+        this.evidenceSituation = draft.situation ?? '';
+        this.evidenceAction = draft.action ?? '';
+        this.evidenceResult = draft.result ?? '';
+        this.draftWarnings.set(draft.unsupportedFigures ?? []);
+        this.drafting.set(false);
+      },
+      // Losing what they typed would be the worst outcome; keep it in the action field.
+      error: () => {
+        this.evidenceAction = answer;
+        this.drafting.set(false);
+      },
+    });
+  }
+
+  openEvidenceForm(gap: EvidenceGap): void {
+    this.openGap.set(gap.skillName);
+    this.evidenceSituation = '';
+    this.evidenceAction = '';
+    this.evidenceResult = '';
+    this.evidenceAnswer = '';
+    this.draftWarnings.set([]);
+  }
+
+  /** Evidence needs substance: context alone proves nothing a letter could cite. */
+  get canSaveEvidence(): boolean {
+    return this.evidenceAction.trim().length > 0 || this.evidenceResult.trim().length > 0;
+  }
+
+  saveEvidence(gap: EvidenceGap): void {
+    if (!this.canSaveEvidence || this.savingEvidence()) return;
+    this.savingEvidence.set(true);
+    this.skillsApi.recordEvidence(gap.skillName, this.evidenceSituation,
+      this.evidenceAction, this.evidenceResult).subscribe({
+      next: () => {
+        this.savingEvidence.set(false);
+        this.openGap.set(null);
+        this.gaps.set(this.gaps().filter(g => g.skillName !== gap.skillName));
+        this.reloadStories();   // it lands in the story bank too
+        this.toast.set(this.translate.instant('careerProfile.evidence.saved', { name: gap.skillName }));
+      },
+      error: () => {
+        this.savingEvidence.set(false);
+        this.toast.set(this.translate.instant('careerProfile.skills.failed'));
+      },
+    });
   }
 
   markTargetDirty(): void { this.targetDirty.set(true); }
@@ -93,6 +226,8 @@ export class CareerProfileComponent implements OnInit {
       narrative: this.narrative.trim() || undefined,
       cultureRequirements: this.culture,
       careerStage: this.careerStage || undefined,
+      noticePeriod: this.noticePeriod.trim() || undefined,
+      earliestStartDate: this.earliestStartDate || undefined,
     }).subscribe({
       next: t => {
         this.applyTarget(t);

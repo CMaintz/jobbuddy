@@ -7,6 +7,15 @@ import {
 const MAIN_SECTION_IDS = DEFAULT_LEFT_COLUMN.map(c => c.id);
 
 /**
+ * Backend section types the builder has a typed home for. Anything else — interests, the Danish
+ * references line, whatever a future market needs — is carried into `customSections` rather than
+ * dropped, so opening a tailored CV as an editable draft never silently loses part of it.
+ */
+const TYPED_SECTION_TYPES = new Set([
+  'profile', 'skills', 'experience', 'education', 'projects', 'certifications', 'languages',
+]);
+
+/**
  * Derives the builder's default main-column order from the backend document's section order.
  * The backend orders sections by the candidate's career stage (new grads lead with education +
  * projects), so that stage-aware ordering becomes the initial layout — the user can still drag
@@ -98,5 +107,17 @@ export function structuredDocToResumeData(doc: StructuredDocument): ResumeData {
     })),
     strengths: [],
     socials:   [],
+    customSections: sections
+      .filter(s => !TYPED_SECTION_TYPES.has(s.type))
+      .map(s => ({
+        id:      s.id || crypto.randomUUID(),
+        heading: s.heading,
+        body:    s.body || undefined,
+        items:   (s.items ?? [])
+          .map(item => ({ id: crypto.randomUUID(), text: item.title ?? '' }))
+          .filter(item => !!item.text),
+      }))
+      // A section with neither prose nor entries would render as a bare heading.
+      .filter(s => !!s.body || (s.items?.length ?? 0) > 0),
   };
 }

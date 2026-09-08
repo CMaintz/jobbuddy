@@ -1,0 +1,13 @@
+{
+  "name": "English platform engineer, mid-career",
+  "language": "English",
+  "country": "Denmark",
+  "targetWords": 160,
+  "postingKeywords": ["Terraform", "AWS", "observability", "Go"],
+  "posting": "We are looking for a platform engineer to join our team in Copenhagen. You will own our Terraform estate on AWS, improve observability across services, and help teams ship safely. You will work in Go and Python. We offer an informal workplace with skilled colleagues.",
+  "profileJson": "{\"headline\":\"Platform engineer\",\"careerStage\":\"MID_CAREER\",\"skills\":[\"Terraform\",\"AWS\",\"Go\",\"Prometheus\"],\"experience\":[{\"title\":\"Platform engineer\",\"subtitle\":\"Netcompany\",\"description\":\"Owned the Terraform estate for 30 AWS accounts and cut median deploy time from 40 minutes to 9.\"}]}",
+  "outputs": {
+    "good": "At Netcompany I owned the Terraform estate across 30 AWS accounts, and the change I am proudest of is unglamorous: median deploy time went from 40 minutes to 9, because we stopped treating every environment as a special case.\n\nThat work was mostly observability. You cannot shorten a deploy you cannot see, so the Prometheus metrics came before the refactor. The same order applies to what your posting describes — helping teams ship safely is a measurement problem before it is a tooling one, and Go is the language I reach for when a tool has to run everywhere.\n\nWhat draws me to this role is the ownership of the estate rather than a queue of tickets against it. I have done the version where platform is a service desk, and the version where it sets defaults other teams adopt because they are better. The second one is worth doing.\n\nI would be glad to talk about where your Terraform estate is today.",
+    "weak": "I am writing to apply for the platform engineer position at your company. I have a proven track record as a results-driven team player who is passionate about cloud infrastructure. I am confident that I would be a great fit for this role. In today's fast-paced environment, I am able to hit the ground running and wear many hats. I owned the Terraform estate for 30 AWS accounts and cut median deploy time from 40 minutes to 9. I have grown platforms serving 500000 users. I look forward to hearing from you."
+  }
+}

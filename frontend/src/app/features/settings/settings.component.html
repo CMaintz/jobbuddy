@@ -142,6 +142,8 @@
             <p class="text-base text-jb-text-dim leading-[1.55] m-[0_0_14px]">
               {{ 'settings.gen.intro' | translate }}
             </p>
+
+            <app-ai-key-panel />
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
               <div class="flex-1"><div class="text-base font-medium">{{ 'settings.gen.voice' | translate }}</div></div>
               <jb-segmented [options]="['Direct', 'Warm', 'Formal']" [value]="gen.voice" (changed)="gen.voice = $event; markDirty()" />
@@ -314,6 +316,14 @@
               </div>
               <jb-button small icon="arrow-right" (clicked)="signOut()">{{ 'settings.account.signOut' | translate }}</jb-button>
             </div>
+          }
+
+          @if (activeSection() === 'taxonomy') {
+            <app-skill-taxonomy-panel />
+          }
+
+          @if (activeSection() === 'usage') {
+            <app-ai-usage-panel />
           }
 
           @if (activeSection() === 'privacy') {

@@ -16,10 +16,28 @@ export interface CreateApplicationPayload {
   notes?: string;
 }
 
+/**
+ * One step in an application's progress — the user's own moves as well as the
+ * employer's replies. `fromStatus` is null for the first step, the application
+ * being created.
+ */
+export interface ApplicationTimelineEntry {
+  at: string;
+  fromStatus: ApplicationStatus | null;
+  toStatus: ApplicationStatus;
+  employerResponse: boolean;
+  notes: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApplicationsApiService {
   private http = inject(HttpClient);
   private base = '/api/v1/applications';
+
+  /** Every step this application has taken, oldest first. */
+  timeline(applicationId: string): Observable<ApplicationTimelineEntry[]> {
+    return this.http.get<ApplicationTimelineEntry[]>(`${this.base}/${applicationId}/timeline`);
+  }
 
   getAll(): Observable<Application[]> {
     return this.http.get<Application[]>(this.base);

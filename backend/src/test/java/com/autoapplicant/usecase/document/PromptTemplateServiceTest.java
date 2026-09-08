@@ -65,7 +65,7 @@ class PromptTemplateServiceTest {
     void create_preserves_name_and_user_prompt() {
         PromptTemplate incoming = new PromptTemplate(null, userId, "Cover Letter",
                 PromptCategory.COVER_LETTER, "desc", "system", "Write a cover letter for {job}",
-                "max 300 words", true, null, 1, null, null, false, List.of(), 0);
+                "max 300 words", true, null, 1, null, null, false, List.of(), 0, false, false);
         when(repo.save(any())).thenReturn(incoming);
 
         service.createTemplate(userId, incoming);
@@ -138,7 +138,8 @@ class PromptTemplateServiceTest {
     @Test
     void duplicate_sets_is_public_to_false() {
         PromptTemplate original = new PromptTemplate(templateId, userId, "Public T",
-                null, null, null, "prompt", null, true, null, 1, null, null, false, List.of(), 0);
+                null, null, null, "prompt", null, true, null, 1, null, null, false, List.of(), 0,
+                false, false);
         when(repo.findById(templateId)).thenReturn(Optional.of(original));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -166,10 +167,107 @@ class PromptTemplateServiceTest {
         assertThat(copy.userId()).isEqualTo(anotherUser);
     }
 
+
+    // ── protection vs default ─────────────────────────────────────────────────
+    //
+    // Two properties that used to be one flag. A protected prompt ships with the app: it is
+    // duplicable but never editable or deletable, so customising it means editing your own copy.
+    // Which prompt a category actually uses is a separate, per-user choice that never writes to
+    // the app's content — so resetting always has something to fall back to.
+
+    @Test
+    void a_protected_template_cannot_be_edited_and_the_error_says_what_to_do_instead() {
+        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
+
+        assertThatThrownBy(() -> service.updateTemplate(templateId, userId, false, protectedTemplate()))
+                .isInstanceOf(SecurityException.class)
+                .hasMessageContaining("Duplicate it");
+    }
+
+    @Test
+    void a_protected_template_cannot_be_deleted() {
+        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
+
+        assertThatThrownBy(() -> service.deleteTemplate(templateId, userId, false))
+                .isInstanceOf(SecurityException.class);
+        verify(repo, never()).deleteById(any());
+    }
+
+    @Test
+    void duplicating_a_protected_template_produces_an_unprotected_copy_the_user_owns() {
+        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PromptTemplate copy = service.duplicate(templateId, userId, "Mine");
+
+        assertThat(copy.isProtected()).isFalse();
+        assertThat(copy.isDefault()).isFalse();
+        assertThat(copy.userId()).isEqualTo(userId);
+    }
+
+    @Test
+    void a_users_own_template_is_never_protected_or_the_app_default() {
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PromptTemplate created = service.createTemplate(userId,
+                template(null, userId, "Mine", 1));
+
+        assertThat(created.isProtected()).isFalse();
+        assertThat(created.isDefault()).isFalse();
+    }
+
+    @Test
+    void selecting_a_default_records_the_users_choice_rather_than_editing_the_template() {
+        PromptTemplate mine = categorised(userId, PromptCategory.COVER_LETTER, false);
+        when(repo.findById(templateId)).thenReturn(Optional.of(mine));
+
+        service.selectDefault(userId, PromptCategory.COVER_LETTER, templateId);
+
+        verify(repo).setUserDefault(userId, "COVER_LETTER", templateId);
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void a_template_cannot_be_made_the_default_for_a_category_it_is_not_in() {
+        when(repo.findById(templateId)).thenReturn(Optional.of(
+                categorised(userId, PromptCategory.COVER_LETTER, false)));
+
+        assertThatThrownBy(() -> service.selectDefault(userId, PromptCategory.CV_TAILORING, templateId))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void someone_elses_private_template_cannot_be_made_your_default() {
+        PromptTemplate theirs = categorised(UUID.randomUUID(), PromptCategory.COVER_LETTER, false);
+        when(repo.findById(templateId)).thenReturn(Optional.of(theirs));
+
+        assertThatThrownBy(() -> service.selectDefault(userId, PromptCategory.COVER_LETTER, templateId))
+                .isInstanceOf(SecurityException.class);
+    }
+
+    @Test
+    void resetting_a_default_drops_the_users_choice_so_the_apps_prompt_comes_back() {
+        service.resetDefault(userId, PromptCategory.COVER_LETTER);
+
+        verify(repo).clearUserDefault(userId, "COVER_LETTER");
+    }
+
+    private PromptTemplate protectedTemplate() {
+        return new PromptTemplate(templateId, null, "House prompt", PromptCategory.COVER_LETTER,
+                null, "sys", "usr", null, true, null, 1, null, null, true, List.of(), 0,
+                true, true);
+    }
+
+    private PromptTemplate categorised(UUID owner, PromptCategory category, boolean isSystem) {
+        return new PromptTemplate(templateId, owner, "T", category, null, "sys", "usr", null,
+                false, null, 1, null, null, isSystem, List.of(), 0, isSystem, false);
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private PromptTemplate template(UUID id, UUID userId, String name, int version) {
         return new PromptTemplate(id, userId, name, null, null, null,
-                "user prompt text", null, false, null, version, null, null, false, List.of(), 0);
+                "user prompt text", null, false, null, version, null, null, false, List.of(), 0,
+                false, false);
     }
 }

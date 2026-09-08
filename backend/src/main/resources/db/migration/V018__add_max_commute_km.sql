@@ -1,1 +1,0 @@
-ALTER TABLE preferences ADD COLUMN IF NOT EXISTS max_commute_km INTEGER;

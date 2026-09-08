@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class WritingProfileService implements ManageWritingProfileUseCase, AnalyzeWritingStyleUseCase {
@@ -95,7 +96,7 @@ public class WritingProfileService implements ManageWritingProfileUseCase, Analy
 
         JsonNode root;
         try {
-            root = objectMapper.readTree(AiResponseParser.extractJsonObject(aiProvider.generateJson(composition)));
+            root = objectMapper.readTree(AiResponseParser.extractJsonObject(aiProvider.generateJson(composition, AiOperations.WRITING_PROFILE)));
         } catch (Exception e) {
             log.warn("Writing-style analysis failed for user {}: {}", userId, e.getMessage());
             throw new IllegalStateException("Writing-style analysis failed", e);

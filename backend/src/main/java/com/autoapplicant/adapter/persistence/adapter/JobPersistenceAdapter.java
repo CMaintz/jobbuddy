@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.mapper.JobMapper;
 import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
+import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.EnumMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -18,10 +21,66 @@ import java.util.stream.Collectors;
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
 
+    /**
+     * Ceiling on postings pulled for the company-hiring aggregate. Generous for a personal-scale
+     * jobs table, and bounded so the query can never turn into a full-table load.
+     */
+    private static final int AGGREGATION_LIMIT = 5000;
+
     private final JobJpaRepository repo;
 
     public JobPersistenceAdapter(JobJpaRepository repo) {
         this.repo = repo;
+    }
+
+    @Override
+    public List<com.autoapplicant.domain.company.CompanyHiringSignal> findCompanyHiringSignals(
+            java.time.Instant since) {
+        var postings = repo.findForCompanyAggregation(since,
+                org.springframework.data.domain.PageRequest.of(0, AGGREGATION_LIMIT));
+
+        java.util.Map<java.util.UUID, java.util.List<com.autoapplicant.adapter.persistence.entity.JobEntity>> byCompany =
+                new java.util.LinkedHashMap<>();
+        for (var job : postings) {
+            byCompany.computeIfAbsent(job.getCompanyId(), k -> new java.util.ArrayList<>()).add(job);
+        }
+
+        java.util.List<com.autoapplicant.domain.company.CompanyHiringSignal> signals = new java.util.ArrayList<>();
+        byCompany.forEach((companyId, jobs) -> {
+            java.util.Set<String> technologies = new java.util.LinkedHashSet<>();
+            int active = 0;
+            java.time.Instant lastPosted = null;
+            String companyName = null;
+            for (var job : jobs) {
+                if (job.getTechnologies() != null) {
+                    for (String tech : job.getTechnologies()) {
+                        if (tech != null && !tech.isBlank()) technologies.add(tech.strip());
+                    }
+                }
+                if (job.isActive()) active++;
+                java.time.Instant posted = job.getPostedAt() != null ? job.getPostedAt() : job.getCreatedAt();
+                if (posted != null && (lastPosted == null || posted.isAfter(lastPosted))) lastPosted = posted;
+                if (companyName == null && job.getCompanyName() != null) companyName = job.getCompanyName();
+            }
+            signals.add(new com.autoapplicant.domain.company.CompanyHiringSignal(
+                    companyId, companyName, jobs.size(), active, lastPosted,
+                    java.util.List.copyOf(technologies)));
+        });
+        return signals;
+    }
+
+    @Override
+    public List<com.autoapplicant.domain.skill.SkillMention> findSkillMentions(int maxLabels) {
+        if (maxLabels <= 0) return List.of();
+        // [label, postings, technologyPostings] — the counts arrive as some Number subtype
+        // depending on the driver, so read them as Number rather than casting to a concrete one.
+        return repo.findSkillMentions(maxLabels).stream()
+                .filter(row -> row.length >= 3 && row[0] instanceof String)
+                .map(row -> new com.autoapplicant.domain.skill.SkillMention(
+                        (String) row[0],
+                        row[1] instanceof Number n ? n.intValue() : 0,
+                        row[2] instanceof Number n ? n.intValue() : 0))
+                .toList();
     }
 
     @Override
@@ -64,6 +123,12 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public List<Job> findActive(int page, int size) {
         return repo.findActiveJobs(PageRequest.of(page, size)).stream()
+                .map(JobMapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Job> findByCompanyId(UUID companyId, int limit) {
+        return repo.findByCompanyId(companyId, PageRequest.of(0, limit)).stream()
                 .map(JobMapper::toDomain).toList();
     }
 
@@ -179,9 +244,49 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findUnenriched(int limit) {
-        return repo.findUnenriched(org.springframework.data.domain.PageRequest.of(0, limit))
-                .stream().map(JobMapper::toDomain).collect(java.util.stream.Collectors.toList());
+    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore) {
+        return repo.findForEnrichment(maxAttempts, retryBefore, PageRequest.of(0, limit))
+                .stream().map(JobMapper::toDomain).toList();
+    }
+
+    @Override
+    public void markEnriched(UUID jobId) {
+        repo.findById(jobId).ifPresent(e -> {
+            e.setEnrichmentStatus(EnrichmentStatus.ENRICHED.name());
+            e.setEnrichmentAttempts(e.getEnrichmentAttempts() + 1);
+            e.setEnrichmentLastAttemptAt(Instant.now());
+            e.setEnrichmentLastError(null);
+            repo.save(e);
+        });
+    }
+
+    @Override
+    public boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts) {
+        return repo.findById(jobId).map(e -> {
+            int attempts = e.getEnrichmentAttempts() + 1;
+            boolean givingUp = attempts >= maxAttempts;
+            e.setEnrichmentAttempts(attempts);
+            e.setEnrichmentLastAttemptAt(Instant.now());
+            e.setEnrichmentLastError(truncate(reason));
+            e.setEnrichmentStatus((givingUp ? EnrichmentStatus.FAILED : EnrichmentStatus.PENDING).name());
+            repo.save(e);
+            return givingUp;
+        }).orElse(false);
+    }
+
+    @Override
+    public Map<EnrichmentStatus, Long> countByEnrichmentStatus() {
+        Map<EnrichmentStatus, Long> counts = new EnumMap<>(EnrichmentStatus.class);
+        for (Object[] row : repo.countByEnrichmentStatus()) {
+            counts.merge(EnrichmentStatus.parse((String) row[0]), ((Number) row[1]).longValue(), Long::sum);
+        }
+        return counts;
+    }
+
+    /** The column is text, but an unbounded provider error has no business filling it. */
+    private static String truncate(String reason) {
+        if (reason == null) return null;
+        return reason.length() <= 500 ? reason : reason.substring(0, 500);
     }
 
     @Override

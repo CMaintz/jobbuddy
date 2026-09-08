@@ -3,7 +3,9 @@ package com.autoapplicant.adapter.persistence.adapter;
 import com.autoapplicant.adapter.persistence.entity.PromptTemplateFavoriteEntity;
 import com.autoapplicant.adapter.persistence.mapper.DocumentMapper;
 import com.autoapplicant.adapter.persistence.repository.PromptTemplateFavoriteJpaRepository;
+import com.autoapplicant.adapter.persistence.entity.UserDefaultPromptEntity;
 import com.autoapplicant.adapter.persistence.repository.PromptTemplateJpaRepository;
+import com.autoapplicant.adapter.persistence.repository.UserDefaultPromptJpaRepository;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import org.springframework.stereotype.Component;
@@ -21,11 +23,14 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
 
     private final PromptTemplateJpaRepository repo;
     private final PromptTemplateFavoriteJpaRepository favoriteRepo;
+    private final UserDefaultPromptJpaRepository userDefaultRepo;
 
     public PromptTemplatePersistenceAdapter(PromptTemplateJpaRepository repo,
-                                            PromptTemplateFavoriteJpaRepository favoriteRepo) {
+                                            PromptTemplateFavoriteJpaRepository favoriteRepo,
+                                            UserDefaultPromptJpaRepository userDefaultRepo) {
         this.repo = repo;
         this.favoriteRepo = favoriteRepo;
+        this.userDefaultRepo = userDefaultRepo;
     }
 
     @Override
@@ -51,13 +56,47 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
 
     @Override
     public List<PromptTemplate> findPublic() {
-        return repo.findByIsPublicTrueOrderByCreatedAtDesc().stream()
+        return repo.findByIsPublicTrueAndIsProtectedFalseOrderByCreatedAtDesc().stream()
                 .map(DocumentMapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
     public Optional<PromptTemplate> findSystemDefault(String category) {
-        return repo.findFirstByCategoryAndIsSystemTrue(category).map(DocumentMapper::toDomain);
+        return repo.findFirstByCategoryAndIsSystemTrueOrderByIsDefaultDescCreatedAtAsc(category)
+                .map(DocumentMapper::toDomain);
+    }
+
+    @Override
+    public Optional<PromptTemplate> findDefaultFor(UUID userId, String category) {
+        if (userId != null) {
+            Optional<PromptTemplate> chosen = userDefaultRepo
+                    .findByUserIdAndCategory(userId, category)
+                    .map(UserDefaultPromptEntity::getTemplateId)
+                    .flatMap(repo::findById)
+                    .map(DocumentMapper::toDomain)
+                    // A template the user no longer owns (deleted, or never theirs) must not
+                    // silently become nobody's prompt — fall through to the app's default.
+                    .filter(t -> t.isSystem() || userId.equals(t.userId()));
+            if (chosen.isPresent()) return chosen;
+        }
+        return findSystemDefault(category);
+    }
+
+    @Override
+    @Transactional
+    public void setUserDefault(UUID userId, String category, UUID templateId) {
+        UserDefaultPromptEntity e = userDefaultRepo.findByUserIdAndCategory(userId, category)
+                .orElseGet(UserDefaultPromptEntity::new);
+        e.setUserId(userId);
+        e.setCategory(category);
+        e.setTemplateId(templateId);
+        userDefaultRepo.save(e);
+    }
+
+    @Override
+    @Transactional
+    public void clearUserDefault(UUID userId, String category) {
+        userDefaultRepo.deleteByUserIdAndCategory(userId, category);
     }
 
     @Override

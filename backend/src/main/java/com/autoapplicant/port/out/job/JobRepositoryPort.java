@@ -20,11 +20,50 @@ public interface JobRepositoryPort {
     boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
     List<Job> findByIds(List<UUID> ids);
-    List<Job> findUnenriched(int limit);
+    /** Every posting we hold from one company, live ones first. */
+    List<Job> findByCompanyId(UUID companyId, int limit);
+    /**
+     * The enrichment queue: jobs still worth trying, never-attempted first. Jobs given
+     * up on after {@code maxAttempts}, and ones tried since {@code retryBefore}, are
+     * left out.
+     */
+    List<Job> findForEnrichment(int limit, int maxAttempts, java.time.Instant retryBefore);
+
+    /** Enrichment produced a usable result; stop asking about this one. */
+    void markEnriched(UUID jobId);
+
+    /**
+     * An attempt failed. Increments the attempt count and gives up on the job once it
+     * reaches {@code maxAttempts}, so a posting that can never be enriched stops
+     * consuming quota. Returns true when this was the attempt that gave up.
+     */
+    boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts);
+
+    /** How many jobs sit in each enrichment state — for the sweep's own reporting. */
+    java.util.Map<com.autoapplicant.domain.job.EnrichmentStatus, Long> countByEnrichmentStatus();
     List<UUID> findStaleActiveJobIds(java.time.Instant cutoff);
     int deactivateStaleJobs(java.time.Instant cutoff);
     long count();
     long countActive();
+
+    /**
+     * How often each skill label appears across every posting we hold, most-named first.
+     *
+     * <p>Counted in the database rather than by loading postings: this reads the whole table, and
+     * the answer is one row per distinct label. Case and surrounding space are folded here; the
+     * remaining normalisation is the caller's, so there is still exactly one normalizer.
+     *
+     * @param maxLabels ceiling on distinct labels returned, since the tail is single mentions
+     */
+    List<com.autoapplicant.domain.skill.SkillMention> findSkillMentions(int maxLabels);
+
+    /**
+     * Per-company hiring aggregates over postings seen since the cutoff — the raw material for
+     * ranking unsolicited-application targets. Bounded internally; companies with no postings in
+     * the window are absent rather than zero-valued.
+     */
+    List<com.autoapplicant.domain.company.CompanyHiringSignal> findCompanyHiringSignals(
+            java.time.Instant since);
 
     // ── URL health checks (takedown detection) ──────────────────
     /** Active non-manual jobs whose URL hasn't been probed since the cutoff, oldest check first. */

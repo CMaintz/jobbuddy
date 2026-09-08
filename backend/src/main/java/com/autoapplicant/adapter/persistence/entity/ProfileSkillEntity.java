@@ -33,6 +33,11 @@ public class ProfileSkillEntity {
     @Column(name = "display_order")
     private int displayOrder;
 
+    // Stored rather than always derived: a skill outside the taxonomy has no row to derive
+    // from, and until V070 those stayed uncategorised permanently.
+    @Column(name = "category")
+    private String category;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -54,5 +59,7 @@ public class ProfileSkillEntity {
     public void setUsedInProduction(boolean usedInProduction) { this.usedInProduction = usedInProduction; }
     public int getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public Instant getCreatedAt() { return createdAt; }
 }

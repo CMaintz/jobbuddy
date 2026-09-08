@@ -50,7 +50,7 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
         User savedUser = userRepo.save(newUser);
 
         Profile profile = new Profile(null, savedUser.id(), null, null, null,
-                List.of(), List.of(), List.of(),
+                List.of(), List.of(),
                 null, null, "DKK", null, null, null, null);
         profileRepo.save(profile);
 

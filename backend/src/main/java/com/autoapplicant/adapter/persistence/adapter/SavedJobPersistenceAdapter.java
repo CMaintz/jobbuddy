@@ -39,8 +39,4 @@ public class SavedJobPersistenceAdapter implements SavedJobRepositoryPort {
         return repo.findJobIdsByUserId(userId);
     }
 
-    @Override
-    public boolean isSaved(UUID userId, UUID jobId) {
-        return repo.existsByUserIdAndJobId(userId, jobId);
-    }
 }

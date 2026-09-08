@@ -1,7 +1,39 @@
 {
   "careerProfile": {
     "title": "Career Profile",
-    "section": { "target": "Career target", "stories": "Story bank", "retracted": "Retracted claims" },
+    "section": {
+      "target": "Career target",
+      "stories": "Story bank",
+      "retracted": "Retracted claims",
+      "skills": "Skills"
+    },
+    "skills": {
+      "heading": "Skills worth adding",
+      "intro": "Suggestions from the postings you actually match and from what sits next to your existing skills. Nothing is added until you say so.",
+      "empty": "Nothing to suggest right now. Save or apply to a few roles so there is a market to compare against.",
+      "inPostings": "in {{count}} of your matched postings",
+      "fromYourCv": "From your CV:",
+      "relatedTo": "Next to your {{skills}}",
+      "usedInProduction": "Used in production",
+      "usedIt": "Used it",
+      "notMine": "Not mine",
+      "later": "Later",
+      "added": "{{name}} added to your profile",
+      "failed": "Could not save that — try again"
+    },
+    "evidence": {
+      "heading": "Prove what you claim",
+      "intro": "These skills are on your profile and in the postings you match, but nothing in your story bank backs them up — the most common reason a Danish application is rejected.",
+      "add": "Add evidence",
+      "situation": "Where? (e.g. platform team at Acme)",
+      "action": "What did you do?",
+      "result": "What was different afterwards?",
+      "saved": "Evidence saved for {{name}}",
+      "answerPlaceholder": "Just describe it — e.g. \"moved 30 services to k8s at Acme, deploys went from 40 min to 9\"",
+      "draft": "Sort it out",
+      "drafting": "Working…",
+      "addedFigures": "The draft added figures you did not write: {{figures}}. Remove them before saving."
+    },
     "target": {
       "heading": "Career target",
       "intro": "Tell the AI what you're aiming for. This is folded into generation so documents lead with the roles you actually want.",
@@ -10,6 +42,9 @@
       "archetypes": "Target archetypes",
       "archetypesDesc": "Role types you're aiming for — e.g. Platform Engineer, AI Implementation, Marketing Communications.",
       "archetypesPlaceholder": "Add an archetype and press Enter",
+      "availability": "Availability",
+      "availabilityDesc": "Notice period and the earliest date you could start. Stated in applications when you have it; never invented when you do not.",
+      "noticePeriodPlaceholder": "e.g. 3 months, negotiable",
       "northStar": "North-Star",
       "northStarPlaceholder": "One line: your ideal next role or direction",
       "narrative": "Positioning narrative",
@@ -52,7 +87,11 @@
       "lead": "Lead / manager",
       "careerChanger": "Career changer"
     },
-    "toast": { "saved": "Career target saved", "saveFailed": "Save failed", "storySaved": "Story saved" }
+    "toast": {
+      "saved": "Career target saved",
+      "saveFailed": "Save failed",
+      "storySaved": "Story saved"
+    }
   },
   "pack": {
     "title": "Application pack",
@@ -178,12 +217,14 @@
       "today": "today",
       "followUp": "Follow up",
       "applyDeadline": "Apply before the deadline",
-      "noReply": "No reply yet — send a follow-up"
+      "noReply": "No reply yet — send a follow-up",
+      "outreachFollowUp": "Follow up on your unsolicited application"
     },
     "tag": {
       "followUp": "follow-up",
       "deadline": "deadline",
-      "noReply": "no reply"
+      "noReply": "no reply",
+      "outreach": "Outreach"
     }
   },
   "shared": {
@@ -217,9 +258,18 @@
     "applying": "Applying…",
     "applyToCv": "Apply to Master CV",
     "mergesInfo": "Merges into your existing profile — nothing is overwritten with blanks.",
-    "pdf": { "label": "Upload PDF", "desc": "Upload an existing CV and we'll parse it into structured sections." },
-    "paste": { "label": "Paste text", "desc": "Paste your CV text and we'll extract the structure." },
-    "linkedin": { "label": "LinkedIn", "desc": "Upload your LinkedIn profile PDF export to auto-import." },
+    "pdf": {
+      "label": "Upload PDF",
+      "desc": "Upload an existing CV and we'll parse it into structured sections."
+    },
+    "paste": {
+      "label": "Paste text",
+      "desc": "Paste your CV text and we'll extract the structure."
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "desc": "Upload your LinkedIn profile PDF export to auto-import."
+    },
     "error": {
       "pasteFirst": "Paste your full CV text first (at least a few lines)",
       "parseFailed": "Parsing failed — check the file/text and try again",
@@ -334,7 +384,11 @@
       "sectionSpacing": "Section Spacing",
       "documentSize": "Document Size",
       "photoStyle": "Photo Style",
-      "shape": { "square": "Square", "rounded": "Rounded", "circle": "Circle" },
+      "shape": {
+        "square": "Square",
+        "rounded": "Rounded",
+        "circle": "Circle"
+      },
       "photoSize": "Photo Size",
       "templateDefault": "template default",
       "photoSizeTip": "Tip: you can also drag the photo in the preview to resize it.",
@@ -351,12 +405,30 @@
     "layout": {
       "template": "Template",
       "tpl": {
-        "classic": { "label": "Classic", "description": "Two-column with dark sidebar" },
-        "modern": { "label": "Modern (1-col)", "description": "Clean single-column layout" },
-        "modern2col": { "label": "Modern (2-col)", "description": "Dark left column" },
-        "minimal": { "label": "Minimal", "description": "Minimalist with timeline" },
-        "executive": { "label": "Executive", "description": "Executive with header band" },
-        "creative": { "label": "Creative", "description": "Colorful accent style" }
+        "classic": {
+          "label": "Classic",
+          "description": "Two-column with dark sidebar"
+        },
+        "modern": {
+          "label": "Modern (1-col)",
+          "description": "Clean single-column layout"
+        },
+        "modern2col": {
+          "label": "Modern (2-col)",
+          "description": "Dark left column"
+        },
+        "minimal": {
+          "label": "Minimal",
+          "description": "Minimalist with timeline"
+        },
+        "executive": {
+          "label": "Executive",
+          "description": "Executive with header band"
+        },
+        "creative": {
+          "label": "Creative",
+          "description": "Colorful accent style"
+        }
       },
       "mainSections": "Main Sections — drag to reorder",
       "sidebarSections": "Sidebar Sections — drag to reorder",
@@ -450,9 +522,18 @@
       "month": "Month",
       "year": "Year",
       "months": {
-        "jan": "January", "feb": "February", "mar": "March", "apr": "April",
-        "may": "May", "jun": "June", "jul": "July", "aug": "August",
-        "sep": "September", "oct": "October", "nov": "November", "dec": "December"
+        "jan": "January",
+        "feb": "February",
+        "mar": "March",
+        "apr": "April",
+        "may": "May",
+        "jun": "June",
+        "jul": "July",
+        "aug": "August",
+        "sep": "September",
+        "oct": "October",
+        "nov": "November",
+        "dec": "December"
       }
     }
   },
@@ -543,6 +624,12 @@
     "refining": "Refining...",
     "refinementDiff": "Refinement diff",
     "accept": "Accept",
+    "guardFindings": "Guard findings",
+    "evidence": {
+      "heading": "Thin on evidence",
+      "body": "This letter scored {{score}}/100 on concrete proof — it argues without citing much of your actual work. Two questions about a project would give the next one something to point at.",
+      "cta": "Add evidence for your skills"
+    },
     "jdKeywords": "JD keywords",
     "covered": "{{matched}}/{{total}} covered",
     "notMentioned": "Not mentioned",
@@ -569,9 +656,18 @@
       "model": "Model"
     },
     "tpl": {
-      "editorial": { "label": "Editorial", "sub": "Calm serif headers - cream paper" },
-      "classic": { "label": "Classic", "sub": "Serif body - centered header" },
-      "bold": { "label": "Bold", "sub": "White paper - amber rail accent" }
+      "editorial": {
+        "label": "Editorial",
+        "sub": "Calm serif headers - cream paper"
+      },
+      "classic": {
+        "label": "Classic",
+        "sub": "Serif body - centered header"
+      },
+      "bold": {
+        "label": "Bold",
+        "sub": "White paper - amber rail accent"
+      }
     }
   },
   "masterCv": {
@@ -616,6 +712,9 @@
     "yearsExp": "Years of experience",
     "addSkill": "Add a skill…",
     "skillsHint": "Broader competencies: architecture, accessibility, mentoring…",
+    "interests": "Leisure interests",
+    "addInterest": "Add an interest",
+    "interestsHint": "Optional. A standard closing section on a Danish CV — keep it short and real; it is often what an interviewer opens with.",
     "technologies": "Technologies",
     "addTech": "Add a technology…",
     "techHint": "Concrete tools & stacks: Angular, Spring Boot, PostgreSQL… Used directly for job matching.",
@@ -737,7 +836,10 @@
     "details": "Details",
     "status": "Status",
     "created": "Created",
-    "notFound": "Application not found."
+    "notFound": "Application not found.",
+    "timeline": {
+      "heading": "Progress"
+    }
   },
   "jobDetails": {
     "loadingCrumb": "Loading",
@@ -750,6 +852,8 @@
     "via": "via {{source}}",
     "fit": "Fit",
     "postedAge": "Posted {{age}}",
+    "contact": "Contact person",
+    "contactNudge": "Danish postings name a contact for a reason — a short call before you apply is expected here, not pushy, and gives you something specific to write about.",
     "passed": "passed",
     "hideDetails": "Hide details",
     "docsActions": "Documents & actions",
@@ -827,10 +931,22 @@
     "emptyTitle": "Get an honest score on your master CV",
     "emptyDesc": "Strengths, gaps, and concrete fixes — generally or against a specific role.",
     "target": {
-      "general": { "label": "General strength", "hint": "Clarity, achievements, ATS readiness" },
-      "job": { "label": "Against a job", "hint": "Pick from saved roles & applications" },
-      "paste": { "label": "Against a pasted JD", "hint": "Paste any job description" },
-      "pipeline": { "label": "Across my pipeline", "hint": "Skill gaps vs saved, applied & matched roles" }
+      "general": {
+        "label": "General strength",
+        "hint": "Clarity, achievements, ATS readiness"
+      },
+      "job": {
+        "label": "Against a job",
+        "hint": "Pick from saved roles & applications"
+      },
+      "paste": {
+        "label": "Against a pasted JD",
+        "hint": "Paste any job description"
+      },
+      "pipeline": {
+        "label": "Across my pipeline",
+        "hint": "Skill gaps vs saved, applied & matched roles"
+      }
     },
     "dim": {
       "technical": "Technical skills",
@@ -863,7 +979,11 @@
     "vsLastWeek": "{{delta}} vs last week",
     "weekSummary": "{{thisWeek}} applications this week · {{lastWeek}} last week",
     "heatmapTitle": "Application activity — last {{count}} weeks",
-    "topCompanies": "Most applied-to companies"
+    "topCompanies": "Most applied-to companies",
+    "velocityTitle": "Stage velocity",
+    "velocitySubtitle": "Average time between two stages, across every application that made the move.",
+    "velocityDays": "{{days}} days",
+    "velocityTimes": "{{count}}×"
   },
   "prompts": {
     "newPrompt": "New prompt",
@@ -902,7 +1022,9 @@
       "recruiterEmail": "Recruiter email",
       "tailoredCv": "Tailored CV",
       "cvAnalysis": "CV analysis",
-      "general": "General"
+      "general": "General",
+      "unsolicited": "Unsolicited",
+      "followUp": "Follow-up"
     },
     "toast": {
       "updated": "Prompt updated",
@@ -916,8 +1038,30 @@
       "duplicated": "Prompt duplicated",
       "duplicateFailed": "Could not duplicate the prompt",
       "created": "Prompt created",
-      "createFailed": "Could not create the prompt"
-    }
+      "createFailed": "Could not create the prompt",
+      "defaultSet": "{{name}} is now the default",
+      "defaultFailed": "Could not change the default — try again",
+      "defaultReset": "Back to the app's prompt",
+      "shared": "Prompt shared",
+      "unshared": "Prompt is private again",
+      "shareFailed": "Could not change sharing — try again",
+      "sharedLoadFailed": "Could not load shared prompts"
+    },
+    "protected": "Ships with the app",
+    "protectedHint": "This prompt ships with the app. Duplicate it to make a version you can edit.",
+    "inUse": "In use",
+    "useAsDefault": "Use as default",
+    "restoreAppDefault": "Restore the app's prompt",
+    "view": {
+      "mine": "My prompts",
+      "shared": "Shared by others"
+    },
+    "shared": "Shared",
+    "share": "Share",
+    "unshare": "Stop sharing",
+    "shareHint": "Sharing makes this prompt's full text readable by other users. Only share prompts that contain nothing personal.",
+    "sharedEmptyTitle": "Nothing shared yet",
+    "sharedEmptyDesc": "Prompts other people choose to share will show up here. Duplicate one to get your own editable copy."
   },
   "interviews": {
     "inStages": "{{count}} in interview stages",
@@ -960,9 +1104,6 @@
     "reminderPrefix": "Interview —",
     "theRole": "the role",
     "followUpFallback": "Follow up",
-    "stage": {
-      "finalRound": "Final round"
-    },
     "logStage": {
       "screen": "Screen / recruiter call",
       "interview": "Interview",
@@ -1073,6 +1214,43 @@
     }
   },
   "companies": {
+    "view": {
+      "all": "All",
+      "targets": "Outreach targets",
+      "tracked": "Tracked"
+    },
+    "targets": {
+      "intro": "Companies that hire people with your skills. Around half of Danish vacancies are never advertised — these are the ones worth an unsolicited application.",
+      "includeHiringNow": "Include companies hiring right now",
+      "empty": "No targets yet. Add skills and technologies to your profile, and let the crawler build up some hiring history.",
+      "write": "Write unsolicited",
+      "reason": {
+        "skillOverlap": "Hires for {{skills}}",
+        "skillOverlapMore": "Hires for {{skills}} and {{count}} more of your skills",
+        "hiringRecent": "Hiring activity in the last three months",
+        "hiringSemiRecent": "Hiring activity in the last six months",
+        "repeatHirer": "Posted {{count}} roles in the past year — a repeat hirer",
+        "postedTwice": "Posted twice in the past year",
+        "nothingOpen": "Nothing open right now — the window an unsolicited application is for",
+        "hasOpenRoles": "Has {{count}} role(s) open now: apply to those first",
+        "consultancy": "Consultancy — placement rather than in-house work"
+      },
+      "callFirst": "Danish practice starts with a phone call: ring and ask whether you may send an application, who to send it to, and how they prefer to receive it. Then follow up within a few working days — being the active party is expected here, not pushy."
+    },
+    "outreach": {
+      "track": "Track",
+      "untrack": "Stop tracking",
+      "empty": "Nothing tracked yet. Save a target from the outreach list to start.",
+      "followUp": "follow up",
+      "due": "Due",
+      "status": {
+        "SAVED": "Saved",
+        "CONTACTED": "Contacted",
+        "REPLIED": "Replied",
+        "MEETING": "Meeting",
+        "CLOSED": "Closed"
+      }
+    },
     "searchPlaceholder": "Search companies…",
     "count": "{{count}} companies",
     "loading": "Loading companies…",
@@ -1083,7 +1261,13 @@
     "country": "Country",
     "links": "Links",
     "website": "Website",
-    "selectCompany": "Select a company"
+    "selectCompany": "Select a company",
+    "jobs": {
+      "heading": "Roles we hold",
+      "loading": "Loading roles…",
+      "empty": "No postings from this company yet.",
+      "closed": "Closed"
+    }
   },
   "documents": {
     "generatedCount": "{{count}} generated",
@@ -1201,10 +1385,15 @@
     "posted": "Posted",
     "passed": "(passed)",
     "keywords": "Keywords",
+    "requirements": "What they ask for",
+    "yearsDemanded": "{{n}}+ yrs",
+    "tier": {
+      "REQUIRED": "Required",
+      "PREFERRED": "Preferred"
+    },
     "savedBtn": "Saved",
     "details": "Details",
     "generateApplication": "Generate application",
-    "hide": "Hide",
     "selectRole": "Select a role from the feed",
     "location": {
       "all": "All",
@@ -1223,8 +1412,22 @@
       "saved": "Saved to your roles",
       "saveFailed": "Could not save the role",
       "hidden": "Hidden from your feed",
-      "hideFailed": "Could not hide the role"
-    }
+      "hideFailed": "Could not hide the role",
+      "moreLikeThis": "Noted — more roles like this one",
+      "fewerLikeThis": "Noted — fewer roles like this one",
+      "steerFailed": "Could not record that — try again"
+    },
+    "notInterested": "Not interested",
+    "moreOfThis": "Tune my feed",
+    "moreLikeThis": "More like this",
+    "fewerLikeThis": "Fewer like this",
+    "filters": "Filters",
+    "clearFilters": "Clear",
+    "description": "The posting",
+    "viewMore": "View more",
+    "viewLess": "View less",
+    "viewMoreLoading": "Loading…",
+    "descriptionLoadFailed": "Couldn't load the rest of the posting."
   },
   "settings": {
     "loading": "Loading settings…",
@@ -1241,7 +1444,24 @@
       "gen": "Generation defaults",
       "style": "Writing style",
       "account": "Account",
-      "privacy": "Privacy & data"
+      "privacy": "Privacy & data",
+      "usage": "AI usage",
+      "taxonomy": "Skill vocabulary"
+    },
+    "taxonomy": {
+      "intro": "Skills the postings keep naming that the app does not know yet. Approving one adds it to the vocabulary every user picks from, so it needs a category; rejecting one keeps it out for good. Nothing here touches anyone's profile.",
+      "loading": "Reading what the market names…",
+      "loadError": "Could not load the queue.",
+      "empty": "Nothing missing. Every skill the postings name is already in the vocabulary.",
+      "postings": "named by {{n}} postings",
+      "asTechnology": "read as a technology",
+      "asSkill": "read as a competency",
+      "category": "Category",
+      "approve": "Add",
+      "reject": "Not a skill",
+      "approved": "Added {{name}} to the vocabulary.",
+      "rejected": "{{name}} will not be offered again.",
+      "failed": "That did not go through. Try again."
     },
     "industry": {
       "softwareIt": "Software & IT",
@@ -1370,6 +1590,59 @@
       "resetFailed": "Could not send the reset email",
       "exportFailed": "Export failed",
       "deleteFailed": "Account deletion failed"
+    },
+    "usage": {
+      "intro": "What your generations have cost so far. There's no quota — this is here so you can see where the work goes.",
+      "loading": "Loading usage…",
+      "loadError": "Couldn't load usage.",
+      "empty": "Nothing generated yet.",
+      "today": "Today",
+      "allTime": "All time",
+      "requests": "generations",
+      "requestsShort": "gen.",
+      "tokens": "tokens",
+      "byOperation": "Where it went",
+      "unmetered": "Your generation provider bills a flat fee and reports no token counts, so only the number of generations is tracked.",
+      "op": {
+        "CV_ANALYSIS": "CV analysis",
+        "CV_PARSE": "CV import",
+        "LINKEDIN_PARSE": "LinkedIn import",
+        "DOCUMENT_GENERATION": "Applications & letters",
+        "DOCUMENT_REFINE": "Refinements",
+        "DOCUMENT_REVIEW": "Reviewer pass",
+        "TAILORED_CV": "Tailored CVs",
+        "TAILORED_CV_REVIEW": "Tailored CV review",
+        "INTERVIEW_QUESTIONS": "Interview questions",
+        "INTERVIEW_PREP_PACK": "Interview prep packs",
+        "MOCK_INTERVIEW": "Mock interviews",
+        "COMPANY_GROUNDING": "Company research",
+        "SKILL_GAP": "Skill gap reports",
+        "SKILL_EVIDENCE": "Skill evidence",
+        "WRITING_PROFILE": "Writing style analysis",
+        "GENERATION": "Other"
+      }
+    },
+    "aiKey": {
+      "title": "Your own API key",
+      "desc": "Generation runs on your key instead of this server's. Leave it empty to use whatever the server is configured with — on a personal install that's your local CLI agent. The key is encrypted and never shown again.",
+      "loading": "Checking…",
+      "unavailable": "This deployment cannot store API keys — no encryption secret is configured.",
+      "usingServer": "No key stored. Generation uses the server's provider.",
+      "inUse": "In use",
+      "providerLabel": "Provider",
+      "keyLabel": "API key",
+      "keyPlaceholder": "sk-…",
+      "modelLabel": "Model (optional)",
+      "modelPlaceholder": "provider default",
+      "save": "Save key",
+      "replace": "Replace key",
+      "remove": "Remove",
+      "saveFailed": "Couldn't save the key.",
+      "clearFailed": "Couldn't remove the key.",
+      "provider": {
+        "openai": "OpenAI",
+        "gemini": "Google Gemini"
+      }
     }
   },
   "apply": {
@@ -1538,5 +1811,14 @@
       "track": "Track",
       "library": "Library"
     }
+  },
+  "match": {
+    "grade": {
+      "excellent": "Excellent",
+      "strong": "Strong",
+      "moderate": "Moderate",
+      "weak": "Weak"
+    },
+    "scoreTooltip": "{{score}}% match"
   }
 }

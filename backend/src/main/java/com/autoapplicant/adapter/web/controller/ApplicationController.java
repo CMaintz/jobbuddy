@@ -4,7 +4,7 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.application.*;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
-import com.autoapplicant.domain.analytics.ResponseMetric;
+import com.autoapplicant.domain.application.ApplicationTimelineEntry;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.job.GetJobByIdUseCase;
@@ -154,10 +154,10 @@ public class ApplicationController {
         return ResponseEntity.ok(ApplicationResponse.from(updated));
     }
 
-    @Operation(summary = "Get application response timeline")
+    @Operation(summary = "Get the application's progress timeline")
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<List<ResponseMetric>> getTimeline(@PathVariable UUID id) {
-        return ResponseEntity.ok(timeline.getTimeline(id));
+    public ResponseEntity<List<ApplicationTimelineEntry>> getTimeline(@PathVariable UUID id) {
+        return ResponseEntity.ok(timeline.getTimeline(id, secCtx.getCurrentUserId()));
     }
 
     private static ApplicationStatus parseStatus(String value, ApplicationStatus fallback) {

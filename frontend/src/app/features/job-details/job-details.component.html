@@ -19,7 +19,7 @@
     @if (loading) {
       <div class="p-12 text-center text-jb-text-dim">{{ 'jobDetails.loading' | translate }}</div>
     } @else if (job) {
-      @if (job.active === false || reportedInactive()) {
+      @if (job.isActive === false || reportedInactive()) {
         <div class="flex items-center gap-2.5 px-6 py-2.5 border-b flex-shrink-0 bg-[rgba(248,113,113,0.08)] border-[rgba(248,113,113,0.35)]">
           <jb-icon name="x-circle" [size]="13" class="text-jb-danger" />
           <span class="text-sm text-jb-text">
@@ -53,7 +53,7 @@
                 <div class="text-[20px] font-medium tracking-[-0.015em] mt-1">{{ job.title }}</div>
                 <div class="flex items-center gap-2.5 mt-3">
                   @if (application) {
-                    <jb-pill [tone]="stageTone(application.status)">{{ stageLabel(application.status) | translate }}</jb-pill>
+                    <app-status-chip [status]="application.status" />
                   }
                   <div class="flex items-center gap-1.5 text-[11.5px] text-jb-text-dim">
                     <jb-icon name="target" [size]="11" class="text-jb-accent" />
@@ -134,6 +134,22 @@
                   </div>
                 </div>
                 <pre class="m-0 p-[18px] bg-jb-surface border border-jb-border rounded-lg text-base leading-[1.7] text-jb-text whitespace-pre-wrap font-sans">{{ job.descriptionClean || job.aiSummary || ('jobDetails.noDescription' | translate) }}</pre>
+                @if (requirements.length) {
+                  <div class="mt-[18px] pt-3.5 border-t border-jb-border">
+                    <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'jobFeed.requirements' | translate }}</div>
+                    <ul class="list-none p-0 m-0 flex flex-col gap-1.5">
+                      @for (req of requirements; track req.text) {
+                        <li class="flex gap-2 items-start text-base text-jb-text-mid">
+                          <span class="pill shrink-0"
+                            [class.pill-accent]="req.tier === 'REQUIRED'"
+                            [class.pill-neutral]="req.tier !== 'REQUIRED'">{{
+                              ('jobFeed.tier.' + req.tier) | translate }}</span>
+                          <span>{{ req.text }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
                 @if (keywords.length) {
                   <div class="mt-[18px] pt-3.5 border-t border-jb-border">
                     <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'jobDetails.keywordsFound' | translate }}</div>
@@ -239,7 +255,7 @@
                 <jb-icon name="external" [size]="10" class="text-jb-text-dim" />
               </a>
             </div>
-            @if (job.active !== false && !reportedInactive()) {
+            @if (job.isActive !== false && !reportedInactive()) {
               <button (click)="reportTakenDown()"
                 class="mt-2 w-full flex items-center gap-[7px] py-1.5 px-2.5 bg-transparent border border-jb-border rounded-md text-jb-text-dim text-[11.5px] cursor-pointer text-left hover:text-jb-text-mid">
                 <jb-icon name="x-circle" [size]="11" class="flex-shrink-0" />
@@ -304,6 +320,34 @@
               }
             </div>
           </div>
+
+          <!-- Contact person named by the posting: in Denmark, calling before applying is expected -->
+          @if (job.contact?.name || job.contact?.phone || job.contact?.email) {
+            <div class="p-4 border-t border-jb-border">
+              <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">{{ 'jobDetails.contact' | translate }}</div>
+              @if (job.contact?.name) {
+                <div class="text-sm font-medium">{{ job.contact?.name }}</div>
+              }
+              @if (job.contact?.title) {
+                <div class="text-xs text-jb-text-dim mb-1.5">{{ job.contact?.title }}</div>
+              }
+              <div class="flex flex-col gap-1 mt-1.5">
+                @if (job.contact?.phone) {
+                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'tel:' + job.contact?.phone">
+                    <jb-icon name="phone" [size]="11" />{{ job.contact?.phone }}
+                  </a>
+                }
+                @if (job.contact?.email) {
+                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'mailto:' + job.contact?.email">
+                    <jb-icon name="mail" [size]="11" />{{ job.contact?.email }}
+                  </a>
+                }
+              </div>
+              @if (job.contact?.phone) {
+                <div class="text-xs text-jb-text-dim leading-relaxed mt-2">{{ 'jobDetails.contactNudge' | translate }}</div>
+              }
+            </div>
+          }
 
           <!-- Similar roles (embedding nearest-neighbors) -->
           @if (similarJobs().length) {

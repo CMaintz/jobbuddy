@@ -9,7 +9,13 @@ import com.autoapplicant.adapter.web.dto.ai.ReviewRequest;
 import com.autoapplicant.adapter.web.dto.ai.SaveStructuredDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.StructuredGenerateRequest;
 import com.autoapplicant.domain.ai.AiAnalysisResult;
+import com.autoapplicant.adapter.web.dto.ai.AiCredentialRequest;
+import com.autoapplicant.adapter.web.dto.ai.AiCredentialStatusResponse;
+import com.autoapplicant.domain.ai.AiCredentialProvider;
 import com.autoapplicant.domain.ai.AiUsageSummary;
+import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
+import com.autoapplicant.port.out.security.SecretCipherPort;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
 import com.autoapplicant.domain.ai.ReviewDocumentRequest;
@@ -56,6 +62,9 @@ public class AiController {
     private final GenerateTailoredCvUseCase generateTailoredCv;
     private final PersistGeneratedDocumentUseCase persistedDocuments;
     private final GetAiUsageUseCase aiUsage;
+    private final ManageAiCredentialUseCase aiCredentials;
+    private final SecretCipherPort secretCipher;
+    private final java.util.concurrent.Executor userAiExecutor;
     private final SecurityContextHelper secCtx;
 
     public AiController(AnalyzeCvUseCase analyze,
@@ -68,6 +77,10 @@ public class AiController {
                         GenerateTailoredCvUseCase generateTailoredCv,
                         PersistGeneratedDocumentUseCase persistedDocuments,
                         GetAiUsageUseCase aiUsage,
+                        ManageAiCredentialUseCase aiCredentials,
+                        SecretCipherPort secretCipher,
+                        @Qualifier("userAiTaskExecutor")
+                        java.util.concurrent.Executor userAiExecutor,
                         SecurityContextHelper secCtx) {
         this.analyze = analyze;
         this.parseCv = parseCv;
@@ -79,7 +92,34 @@ public class AiController {
         this.generateTailoredCv = generateTailoredCv;
         this.persistedDocuments = persistedDocuments;
         this.aiUsage = aiUsage;
+        this.aiCredentials = aiCredentials;
+        this.secretCipher = secretCipher;
+        this.userAiExecutor = userAiExecutor;
         this.secCtx = secCtx;
+    }
+
+    @Operation(summary = "Whether the user has their own generation key stored, and for which provider")
+    @GetMapping("/credentials")
+    public ResponseEntity<AiCredentialStatusResponse> getCredentialStatus() {
+        return ResponseEntity.ok(aiCredentials.findCredential(secCtx.getCurrentUserId())
+                .map(AiCredentialStatusResponse::of)
+                .orElseGet(() -> AiCredentialStatusResponse.none(secretCipher.isConfigured())));
+    }
+
+    @Operation(summary = "Store the user's own generation API key")
+    @ApiResponses(@ApiResponse(responseCode = "400", description = "Unknown provider or missing key"))
+    @PutMapping("/credentials")
+    public ResponseEntity<AiCredentialStatusResponse> setCredential(@RequestBody AiCredentialRequest req) {
+        AiCredentialProvider provider = AiCredentialProvider.parse(req.provider());
+        return ResponseEntity.ok(AiCredentialStatusResponse.of(aiCredentials.setCredential(
+                secCtx.getCurrentUserId(), provider, req.apiKey(), req.model())));
+    }
+
+    @Operation(summary = "Forget the user's own generation API key")
+    @DeleteMapping("/credentials")
+    public ResponseEntity<Void> clearCredential() {
+        aiCredentials.clearCredential(secCtx.getCurrentUserId());
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Get AI usage summary for current user")
@@ -115,7 +155,7 @@ public class AiController {
                         req.promptTemplateId(),
                         Boolean.TRUE.equals(req.showProfileImage()),
                         req.theme() != null ? req.theme().toTheme() : null,
-                        req.lengthPreference()))
+                        req.lengthPreference()), userAiExecutor)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(
                         persistedDocuments.save(userId, req.jobId(), r, null))))
                 .exceptionally(e -> {

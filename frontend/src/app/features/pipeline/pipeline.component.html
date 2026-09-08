@@ -75,7 +75,7 @@
               </div>
 
               <!-- Stage -->
-              <jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) | translate }}</jb-pill>
+              <app-status-chip [status]="app.status" />
 
               <!-- Fit -->
               <jb-fit-bar [value]="app.matchScore ?? 0" />

@@ -12,7 +12,9 @@ public interface SkillTaxonomyJpaRepository extends JpaRepository<SkillTaxonomyE
             String name, String normalizedName);
     List<SkillTaxonomyEntity> findByCategoryOrderByName(String category);
     java.util.Optional<SkillTaxonomyEntity> findByNormalizedName(String normalizedName);
+    java.util.List<SkillTaxonomyEntity> findByNormalizedNameIn(java.util.Collection<String> normalizedNames);
     java.util.List<SkillTaxonomyEntity> findByIdIn(java.util.Collection<UUID> ids);
+    java.util.List<SkillTaxonomyEntity> findByParentIdIn(java.util.Collection<UUID> parentIds);
 
     @Query("SELECT DISTINCT e.category FROM SkillTaxonomyEntity e WHERE e.category IS NOT NULL ORDER BY e.category")
     List<String> findAllCategories();
