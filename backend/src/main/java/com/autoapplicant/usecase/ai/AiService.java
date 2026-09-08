@@ -8,14 +8,18 @@ import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
+import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -29,54 +33,83 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, GenerateDocumentUseCase {
+public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, ReviewDocumentUseCase, GenerateDocumentUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final JobRepositoryPort jobRepo;
     private final CvVersionRepositoryPort cvRepo;
     private final PromptTemplateRepositoryPort promptTemplateRepo;
+    private final WritingProfileRepositoryPort writingProfileRepo;
     private final PromptCompositionBuilder compositionBuilder;
     private final CareerProfileContextService careerProfileContext;
     private final BuildApplicationDocumentPort buildApplicationDocument;
     private final PersistGeneratedDocumentPort persistGeneratedDocument;
+    private final ApplicationRepositoryPort applicationRepo;
+    private final GeneratedContentGuards contentGuards;
+    private final CompanyGroundingService companyGrounding;
+    private final AnalysisResponseParser analysisParser;
     private final ObjectMapper objectMapper;
 
-    public AiService(@Qualifier("generationAiProvider") AiProviderPort aiProvider,
+    /** When true, generateDocument runs a reviewer critique/revise pass on the draft before assembling. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.auto-review.enabled:true}")
+    private boolean autoReviewEnabled;
+
+    /** Max reviewer passes; the loop also stops early once a pass reports no further critique. */
+    @org.springframework.beans.factory.annotation.Value("${app.ai.auto-review.max-iterations:1}")
+    private int autoReviewMaxIterations;
+
+    public AiService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
                      CvVersionRepositoryPort cvRepo,
                      PromptTemplateRepositoryPort promptTemplateRepo,
+                     WritingProfileRepositoryPort writingProfileRepo,
                      PromptCompositionBuilder compositionBuilder,
                      CareerProfileContextService careerProfileContext,
                      BuildApplicationDocumentPort buildApplicationDocument,
                      PersistGeneratedDocumentPort persistGeneratedDocument,
+                     ApplicationRepositoryPort applicationRepo,
+                     GeneratedContentGuards contentGuards,
+                     CompanyGroundingService companyGrounding,
+                     AnalysisResponseParser analysisParser,
                      ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.jobRepo = jobRepo;
         this.cvRepo = cvRepo;
         this.promptTemplateRepo = promptTemplateRepo;
+        this.writingProfileRepo = writingProfileRepo;
         this.compositionBuilder = compositionBuilder;
         this.careerProfileContext = careerProfileContext;
         this.buildApplicationDocument = buildApplicationDocument;
         this.persistGeneratedDocument = persistGeneratedDocument;
+        this.applicationRepo = applicationRepo;
+        this.contentGuards = contentGuards;
+        this.companyGrounding = companyGrounding;
+        this.analysisParser = analysisParser;
         this.objectMapper = objectMapper;
     }
 
     @Override
     @Async("aiTaskExecutor")
-    public CompletableFuture<AiAnalysisResult> analyze(UUID cvVersionId, UUID jobId) {
+    public CompletableFuture<AiAnalysisResult> analyze(UUID userId, UUID cvVersionId,
+                                                       UUID jobId, String rawJobDescription) {
         try {
+            // Explicit CV version wins; otherwise the PII-free master profile JSON.
             String cvContent = cvVersionId != null
-                    ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("") : "";
+                    ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("")
+                    : careerProfileContext.buildJson(userId);
             String jobDesc = jobId != null
-                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse("") : "";
+                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse(rawJobDescription)
+                    : rawJobDescription;
             String prompt = buildAnalysisPrompt(cvContent, jobDesc);
             PromptComposition composition = new PromptComposition(
-                    "You are an expert ATS and career coach. Analyze CVs and provide actionable feedback.",
+                    "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
+                    + "Never assume skills or experience the CV does not state.\n\n"
+                    + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT,
                     prompt, "", "", "", "", prompt);
-            String response = aiProvider.generate(composition);
-            return CompletableFuture.completedFuture(new AiAnalysisResult(List.of(response), 0, response));
+            String response = sanitizeAiText(aiProvider.generateJson(composition));
+            return CompletableFuture.completedFuture(analysisParser.parse(response));
         } catch (Exception e) {
             log.error("CV analysis failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
@@ -102,7 +135,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
             userPrompt.append("## Refinement Request\n").append(request.userMessage());
             PromptComposition composition = new PromptComposition(
                     systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
-            String refined = aiProvider.generate(composition);
+            String refined = sanitizeAiText(aiProvider.generate(composition));
             return CompletableFuture.completedFuture(
                     new RefineDocumentResult(refined, aiProvider.chatModelName()));
         } catch (Exception e) {
@@ -113,36 +146,155 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
 
     @Override
     @Async("aiTaskExecutor")
+    public CompletableFuture<ReviewDocumentResult> review(ReviewDocumentRequest request) {
+        try {
+            ReviewOutcome outcome = reviewContent(request.userId(), request.documentType(),
+                    request.currentContent(), request.jobDescription(), request.targetLanguage());
+            return CompletableFuture.completedFuture(
+                    new ReviewDocumentResult(outcome.revised(), outcome.critique(), aiProvider.chatModelName()));
+        } catch (Exception e) {
+            log.error("Document review failed: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /**
+     * Carrier for one reviewer pass: the revised draft, what the reviewer changed/flagged, and
+     * the keyword coverage recomputed against the REVISED text (so the ATS report the user sees
+     * describes what was actually delivered, not the pre-review draft). Coverage fields are null
+     * when the reviewer did not supply them.
+     */
+    private record ReviewOutcome(String revised, List<String> critique,
+                                 Integer keywordCoverage, List<String> matchedKeywords,
+                                 List<String> missingKeywords) {}
+
+    /** The reviewed body plus the coverage metadata that describes it (null coverage = unchanged). */
+    private record ReviewedBody(String body, Integer keywordCoverage,
+                                List<String> matchedKeywords, List<String> missingKeywords) {}
+
+    /**
+     * Drafter→reviewer pass: a fresh context critiques the draft against the posting and
+     * the user's writing profile, then returns a revised version. Shared by the public
+     * review endpoint and the automatic post-generation loop in {@link #generateDocument}.
+     * The reviewer prompt lives server-side on purpose — it is not user-editable.
+     */
+    private ReviewOutcome reviewContent(UUID userId, String documentType, String currentContent,
+                                        String jobDescription, String targetLanguage) {
+        WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
+
+        StringBuilder systemPrompt = new StringBuilder("""
+                You are a demanding hiring manager reviewing a candidate's application document \
+                with fresh eyes. Critique it against the job posting: missed keywords, weak or \
+                generic framing, claims that overreach what a candidate could defend in an \
+                interview, and mismatches with the requested writing style. Then produce a \
+                revised version that fixes what you flagged. Never invent skills or experience \
+                the draft does not already claim, and never claim the candidate built a tool they \
+                merely used. Respond with ONLY valid JSON.""");
+        systemPrompt.append("\n\n").append(PromptCompositionBuilder.UNTRUSTED_JOB_INPUT);
+        if (targetLanguage != null && !targetLanguage.isBlank()) {
+            systemPrompt.append(" Write the revised document in ").append(targetLanguage).append(".");
+        }
+
+        StringBuilder userPrompt = new StringBuilder();
+        userPrompt.append("## Draft (").append(documentType != null ? documentType : "document")
+                .append(")\n").append(currentContent).append("\n\n");
+        if (jobDescription != null && !jobDescription.isBlank()) {
+            userPrompt.append("## Job Description\n").append(jobDescription).append("\n\n");
+        }
+        String styleMemory = compositionBuilder.buildStyleMemory(writingProfile);
+        if (!styleMemory.isBlank()) {
+            userPrompt.append(styleMemory).append("\n\n");
+        }
+        userPrompt.append("""
+                Return only valid JSON in exactly this shape:
+                {
+                  "revisedContent": "<the full revised document text>",
+                  "critique": ["<what you changed or flagged — one point per entry, 2-6 entries>"],
+                  "keywordCoverage": <0-100 integer — recompute for the REVISED text against the posting>,
+                  "matchedKeywords": ["<posting keyword the revised text genuinely supports>"],
+                  "missingKeywords": ["<posting keyword still not covered>"]
+                }
+                Recompute the keyword fields for your revised text; never drop a keyword the draft
+                genuinely supports just to shorten it.""");
+
+        PromptComposition composition = new PromptComposition(
+                systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
+        try {
+            var node = objectMapper.readTree(AiResponseParser.extractJsonObject(
+                    sanitizeAiText(aiProvider.generateJson(composition))));
+            String revised = node.path("revisedContent").asText(null);
+            if (revised == null || revised.isBlank()) {
+                throw new IllegalStateException("Reviewer returned no revised content");
+            }
+            List<String> critique = new java.util.ArrayList<>();
+            node.path("critique").forEach(c -> critique.add(c.asText()));
+            Integer coverage = node.has("keywordCoverage") && node.path("keywordCoverage").isNumber()
+                    ? node.path("keywordCoverage").asInt() : null;
+            return new ReviewOutcome(revised, critique, coverage,
+                    textList(node, "matchedKeywords"), textList(node, "missingKeywords"));
+        } catch (Exception e) {
+            throw new IllegalStateException("Document review failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Async("aiTaskExecutor")
     public CompletableFuture<StructuredDocument> generateDocument(
             UUID userId, String documentType, UUID jobId, String rawJobDescription,
             String templateId, UUID promptTemplateId, String customInstructions,
-            String motivationText, String targetLanguage, boolean showProfileImage, DocumentTheme theme) {
+            String motivationText, String targetLanguage, boolean showProfileImage, DocumentTheme theme,
+            String lengthPreference) {
         try {
-            String jobDescription = jobId != null
-                    ? jobRepo.findById(jobId).map(Job::descriptionClean).orElse(rawJobDescription)
-                    : rawJobDescription;
+            Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+            String jobDescription = job != null && job.descriptionClean() != null
+                    ? job.descriptionClean() : rawJobDescription;
             String contactFreeJson = careerProfileContext.buildJson(userId);
+            // Grounded company facts (cached; from the company's own site) so company references
+            // in cover letters are accurate rather than parroted from the untrusted posting.
+            String companyFacts = job != null ? companyGrounding.factsFor(job.companyId()) : null;
 
             PromptTemplate styleTemplate = promptTemplateId != null
                     ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
                     : promptTemplateRepo.findSystemDefault(documentType).orElse(null);
+            if (styleTemplate != null) promptTemplateRepo.incrementUsage(styleTemplate.id());
 
             PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                     documentType, contactFreeJson, jobDescription,
-                    customInstructions, motivationText, targetLanguage, styleTemplate);
+                    customInstructions, motivationText, targetLanguage, styleTemplate,
+                    writingProfileRepo.findByUserId(userId).orElse(null),
+                    applicationRepo.findRecentOutcomeLessons(userId, 5),
+                    companyFacts, lengthPreference);
 
             String json = AiResponseParser.extractJsonObject(
-                    aiProvider.generateJson(composition).trim());
+                    sanitizeAiText(aiProvider.generateJson(composition)).trim());
 
             ApplicationDocumentAiResponse aiResponse =
                     objectMapper.readValue(json, ApplicationDocumentAiResponse.class);
             validateApplicationResponse(aiResponse);
 
+            // Automatic drafter→reviewer loop: a fresh reviewer critiques and revises the
+            // body before assembly. Config-gated (each pass is one extra LLM call); stops
+            // early once a pass reports no further critique. Keyword metadata from the
+            // original pass is retained — the reviewer is instructed never to drop keywords.
+            ReviewedBody reviewed = maybeReview(userId, documentType, aiResponse.body(), jobDescription, targetLanguage);
+            String body = reviewed.body();
+
+            // Deterministic backstops (fact gate + retracted claims), shared with the CV path.
+            contentGuards.verify(userId, body, contactFreeJson, documentType);
+
+            // Prefer the reviewer's recomputed coverage (it describes the delivered text); fall
+            // back to the drafter's metadata when the reviewer didn't revise or supply it.
+            Integer coverage = reviewed.keywordCoverage() != null
+                    ? reviewed.keywordCoverage() : aiResponse.keywordCoverage();
+            List<String> matched = reviewed.matchedKeywords() != null
+                    ? reviewed.matchedKeywords() : aiResponse.matchedKeywords();
+            List<String> missing = reviewed.missingKeywords() != null
+                    ? reviewed.missingKeywords() : aiResponse.missingKeywords();
+
             DocumentType type = parseDocumentType(documentType);
             StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
-                    userId, type, aiResponse.body(), templateId,
-                    aiResponse.keywordCoverage(), aiResponse.matchedKeywords(),
-                    aiResponse.missingKeywords(), showProfileImage, theme);
+                    userId, type, body, templateId,
+                    coverage, matched, missing, showProfileImage, theme);
 
             return CompletableFuture.completedFuture(
                     persistGeneratedDocument.save(userId, jobId, doc, aiProvider.chatModelName()));
@@ -150,6 +302,41 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
             log.error("Structured document generation failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    /**
+     * Runs up to {@code autoReviewMaxIterations} reviewer passes on the draft body when
+     * auto-review is enabled, returning the improved text together with the keyword coverage the
+     * last successful pass recomputed for it (so the ATS report matches the delivered text). A
+     * failed pass is non-fatal — it logs and returns the best draft so far, so generation never
+     * breaks on the reviewer.
+     */
+    private ReviewedBody maybeReview(UUID userId, String documentType, String body,
+                                     String jobDescription, String targetLanguage) {
+        if (!autoReviewEnabled) return new ReviewedBody(body, null, null, null);
+        String current = body;
+        Integer coverage = null;
+        List<String> matched = null;
+        List<String> missing = null;
+        int passes = Math.max(1, autoReviewMaxIterations);
+        for (int i = 1; i <= passes; i++) {
+            try {
+                ReviewOutcome outcome = reviewContent(userId, documentType, current, jobDescription, targetLanguage);
+                if (outcome.revised() != null && !outcome.revised().isBlank()) {
+                    current = outcome.revised();
+                    // Adopt the reviewer's recomputed coverage only when it also revised the body.
+                    if (outcome.keywordCoverage() != null) coverage = outcome.keywordCoverage();
+                    if (outcome.matchedKeywords() != null) matched = outcome.matchedKeywords();
+                    if (outcome.missingKeywords() != null) missing = outcome.missingKeywords();
+                }
+                log.info("Auto-review pass {}/{}: {} change(s) flagged", i, passes, outcome.critique().size());
+                if (outcome.critique().isEmpty()) break; // reviewer found nothing more to fix
+            } catch (Exception e) {
+                log.warn("Auto-review pass {} failed, keeping current draft: {}", i, e.getMessage());
+                break;
+            }
+        }
+        return new ReviewedBody(current, coverage, matched, missing);
     }
 
     private static void validateApplicationResponse(ApplicationDocumentAiResponse response) {
@@ -161,18 +348,83 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Gener
     private static DocumentType parseDocumentType(String type) {
         if (type == null) return DocumentType.COVER_LETTER;
         try { return DocumentType.valueOf(type.toUpperCase()); }
-        catch (IllegalArgumentException ex) { return DocumentType.COVER_LETTER; }
+        catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid document type: " + type
+                    + ". Valid types: " + java.util.Arrays.toString(DocumentType.values()));
+        }
+    }
+
+    private static String sanitizeAiText(String text) {
+        return AiResponseParser.sanitize(text);
+    }
+
+    /** Reads a JSON string array into a list, or {@code null} when the field is absent/not an array. */
+    private static List<String> textList(com.fasterxml.jackson.databind.JsonNode node, String field) {
+        com.fasterxml.jackson.databind.JsonNode arr = node.get(field);
+        if (arr == null || !arr.isArray()) return null;
+        List<String> out = new java.util.ArrayList<>();
+        arr.forEach(n -> {
+            String v = n.asText(null);
+            if (v != null && !v.isBlank()) out.add(v.strip());
+        });
+        return out;
     }
 
     private static String buildAnalysisPrompt(String cvContent, String jobDescription) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Analyze this CV and provide specific, actionable feedback:\n\n");
+        sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
         sb.append("## CV Content\n").append(cvContent).append("\n\n");
         if (jobDescription != null && !jobDescription.isBlank()) {
             sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
-            sb.append("Focus on: ATS keyword matching, relevant experience alignment, gaps.\n");
+            sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
+            sb.append("""
+
+                    Respond with ONLY a JSON object in exactly this shape:
+                    {
+                      "score": <0-100 overall score>,
+                      "summary": "<2-3 sentence overall verdict>",
+                      "strengths": ["<what already works well>", ...],
+                      "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                      "suggestions": ["<concrete, actionable improvement — one per entry>", ...],
+                      "dimensions": {
+                        "technicalSkills": <0-100 — required/preferred skills coverage>,
+                        "experience": <0-100 — work-history domain and role-type alignment>,
+                        "cultureFit": <0-100 — company culture signals vs the candidate's profile>,
+                        "careerAlignment": <0-100 — growth path and motivation fit for this role>,
+                        "location": "PASS|FLAG|FAIL — commute/remote/relocation feasibility",
+                        "locationNote": "<one sentence explaining the location verdict, or null>"
+                      },
+                      "risk": {
+                        "legitimacy": "HIGH_CONFIDENCE|CAUTION|SUSPICIOUS - is this a real, active opening?",
+                        "legitimacyNote": "<one sentence on the legitimacy verdict>",
+                        "signals": [{"label":"<short risk label>","severity":"LOW|MEDIUM|HIGH","note":"<one sentence>"}],
+                        "compensationReliability": "HIGH|MEDIUM|LOW|UNKNOWN - trust in advertised pay as real base",
+                        "compensationNote": "<one sentence, or null>"
+                      }
+                    }
+                    Assess "risk" (posting legitimacy, risk signals, compensation reliability) SEPARATELY
+                    from the score - it must NEVER change the score or any dimension. Surface signals,
+                    never accuse; note legitimate explanations. Use ghost-posting cues (stale or vague
+                    posting, contradictory or unrealistic requirements, no concrete team or role detail),
+                    and classify how far the advertised comp is trustworthy base pay vs variable / "up to" /
+                    commission. Give 0-4 risk signals; omit the array if none.
+                    Score each dimension independently; do not average them yourself.
+                    Be honest about gaps — never assume skills the CV does not state.
+                    Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
+        } else {
+            sb.append("No target job given — judge the CV on general strength: clarity, quantified achievements, ATS readiness.\n");
+            sb.append("""
+
+                    Respond with ONLY a JSON object in exactly this shape:
+                    {
+                      "score": <0-100 overall score>,
+                      "summary": "<2-3 sentence overall verdict>",
+                      "strengths": ["<what already works well>", ...],
+                      "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                      "suggestions": ["<concrete, actionable improvement — one per entry>", ...]
+                    }
+                    Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
         }
-        sb.append("Provide: 1) ATS optimization tips, 2) Key missing keywords, 3) Achievement improvements, 4) Readability score (1-10)");
         return sb.toString();
     }
 }

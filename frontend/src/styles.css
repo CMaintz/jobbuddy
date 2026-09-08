@@ -2,35 +2,384 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════
+   Jobbuddy — CSS custom properties (theme tokens)
+   Light is default; .dark overrides for dark mode.
+   ═══════════════════════════════════════════════════════════════ */
+
 @layer base {
-  body {
-    @apply bg-gray-50 text-gray-900;
+  :root {
+    --jb-bg: #f8f9fa;
+    --jb-surface: #ffffff;
+    --jb-surface-2: #f1f3f5;
+    --jb-surface-3: #e9ecef;
+    --jb-hover: #f1f3f5;
+
+    --jb-border: #dee2e6;
+    --jb-border-strong: #ced4da;
+    --jb-border-faint: #e9ecef;
+
+    --jb-text: #1a1d21;
+    --jb-text-mid: #495057;
+    --jb-text-dim: #868e96;
+    --jb-text-faint: #adb5bd;
+
+    --jb-accent: #e09000;
+    --jb-accent-2: #d4850a;
+    --jb-accent-soft: rgba(224, 144, 0, 0.10);
+    --jb-accent-border: rgba(224, 144, 0, 0.28);
+    --jb-accent-gradient: linear-gradient(135deg, #e09000 0%, #b87200 100%);
+
+    --jb-success: #37b24d;
+    --jb-success-soft: rgba(55, 178, 77, 0.10);
+    --jb-info: #4c6ef5;
+    --jb-info-soft: rgba(76, 110, 245, 0.10);
+    --jb-danger: #e03131;
+    --jb-danger-soft: rgba(224, 49, 49, 0.10);
+    --jb-violet: #7950f2;
+    --jb-violet-soft: rgba(121, 80, 242, 0.10);
+
+    --jb-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --jb-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  .dark {
+    --jb-bg: #0a0c0f;
+    --jb-surface: #14171c;
+    --jb-surface-2: #1a1e24;
+    --jb-surface-3: #21262d;
+    --jb-hover: #1f242b;
+
+    --jb-border: #262b32;
+    --jb-border-strong: #353b44;
+    --jb-border-faint: #1e2228;
+
+    --jb-text: #e6e8ec;
+    --jb-text-mid: #a8acb3;
+    --jb-text-dim: #6b7079;
+    --jb-text-faint: #464a52;
+
+    --jb-accent: #f5a623;
+    --jb-accent-2: #ffc15c;
+    --jb-accent-soft: rgba(245, 166, 35, 0.14);
+    --jb-accent-border: rgba(245, 166, 35, 0.32);
+    --jb-accent-gradient: linear-gradient(135deg, #f5a623 0%, #c97a14 100%);
+
+    --jb-success: #4ade80;
+    --jb-success-soft: rgba(74, 222, 128, 0.12);
+    --jb-info: #7aa2f7;
+    --jb-info-soft: rgba(122, 162, 247, 0.13);
+    --jb-danger: #f87171;
+    --jb-danger-soft: rgba(248, 113, 113, 0.12);
+    --jb-violet: #b48ce8;
+    --jb-violet-soft: rgba(180, 140, 232, 0.13);
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: var(--jb-sans);
+    font-feature-settings: 'ss01', 'cv11';
+    color: var(--jb-text);
+    background: var(--jb-bg);
+    font-size: 13px;
+    line-height: 1.45;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  input, textarea, select {
+    font-family: inherit;
+    color: inherit;
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Component classes
+   ═══════════════════════════════════════════════════════════════ */
+
 @layer components {
+  /* ── Buttons ──────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md text-sm font-medium transition-all;
+    padding: 6px 10px;
+    background: var(--jb-surface-2);
+    border: 1px solid var(--jb-border);
+    color: var(--jb-text);
+    cursor: pointer;
+  }
+  .btn:hover {
+    background: var(--jb-hover);
+    border-color: var(--jb-border-strong);
+  }
+
   .btn-primary {
-    @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors;
+    background: var(--jb-accent);
+    color: #1c1004;
+    border: 1px solid;
+    border-color: #c8881c;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset;
   }
-  .btn-secondary {
-    @apply bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors;
+  .dark .btn-primary { border-color: #c8881c; }
+  .btn-primary:hover {
+    filter: brightness(1.08);
   }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--jb-text-mid);
+  }
+  .btn-ghost:hover {
+    background: var(--jb-hover);
+    color: var(--jb-text);
+  }
+
   .btn-danger {
-    @apply text-red-600 hover:text-red-700 transition-colors;
+    color: var(--jb-danger);
+    border-color: rgba(248, 113, 113, 0.3);
   }
+
+  .btn-sm {
+    padding: 4px 8px;
+    font-size: 11.5px;
+  }
+
+  /* ── Cards ────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+    background: var(--jb-surface);
+    border: 1px solid var(--jb-border);
+    border-radius: 8px;
   }
-  .form-panel {
-    @apply bg-gray-50 rounded p-4 mb-4 space-y-3;
-  }
-  .list-item {
-    @apply border rounded p-4 mb-3;
-  }
+
+  /* ── Form elements ───────────────────────────── */
   .input {
-    @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--jb-surface-2);
+    border: 1px solid var(--jb-border);
+    border-radius: 6px;
+    color: var(--jb-text);
+    font-size: 12.5px;
   }
+  .input:focus {
+    outline: none;
+    border-color: var(--jb-accent);
+    box-shadow: 0 0 0 2px var(--jb-accent-soft);
+  }
+
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    display: block;
+    font-size: 10.5px;
+    color: var(--jb-text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    width: 26px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--jb-text-dim);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover {
+    background: var(--jb-surface-2);
+    border-color: var(--jb-border);
+    color: var(--jb-text);
+  }
+
+  .form-panel {
+    background: var(--jb-surface);
+    border: 1px solid var(--jb-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Pills / badges ──────────────────────────── */
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full text-xs font-medium;
+    padding: 2px 8px;
+    font-size: 11px;
+    letter-spacing: 0.01em;
+    border: 1px solid transparent;
+  }
+  .pill-neutral {
+    color: var(--jb-text-mid);
+    background: var(--jb-surface-2);
+    border-color: var(--jb-border);
+  }
+  .pill-accent {
+    color: var(--jb-accent-2);
+    background: var(--jb-accent-soft);
+    border-color: var(--jb-accent-border);
+  }
+  .pill-success {
+    color: var(--jb-success);
+    background: var(--jb-success-soft);
+    border-color: rgba(74, 222, 128, 0.3);
+  }
+  .pill-info {
+    color: var(--jb-info);
+    background: var(--jb-info-soft);
+    border-color: rgba(122, 162, 247, 0.3);
+  }
+  .pill-danger {
+    color: var(--jb-danger);
+    background: var(--jb-danger-soft);
+    border-color: rgba(248, 113, 113, 0.3);
+  }
+  .pill-violet {
+    color: var(--jb-violet);
+    background: var(--jb-violet-soft);
+    border-color: rgba(180, 140, 232, 0.3);
+  }
+
+  /* ── Dropdown menu items (used inside jb-dropdown) ── */
+  .jb-menu-item {
+    @apply w-full p-2 flex items-start gap-2.5 rounded-md text-left cursor-pointer;
+    background: transparent;
+    border: none;
+    color: var(--jb-text);
+  }
+  .jb-menu-item:hover {
+    background: var(--jb-surface-2);
+  }
+
+  /* ── Keyboard hint chips ─────────────────────── */
+  .kbd {
+    @apply inline-flex items-center justify-center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: var(--jb-surface-2);
+    border: 1px solid var(--jb-border);
+    border-bottom-width: 2px;
+    color: var(--jb-text-mid);
+    font-family: var(--jb-mono);
+    font-size: 10.5px;
+    line-height: 1;
+  }
+
+  /* ── Links ───────────────────────────────────── */
+  .jb-link {
+    color: var(--jb-text);
+    border-bottom: 1px solid var(--jb-border-strong);
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .jb-link:hover {
+    color: var(--jb-accent-2);
+    border-color: var(--jb-accent);
+  }
+
+  /* ── Progress bar ────────────────────────────── */
+  .bar {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--jb-surface-3);
+    overflow: hidden;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    background: var(--jb-accent);
+    border-radius: 999px;
+  }
+
+  /* ── Dot indicator ───────────────────────────── */
+  .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  /* ── Hairlines ───────────────────────────────── */
+  .hairline {
+    border-top: 1px solid var(--jb-border);
+  }
+  .vhair {
+    border-left: 1px solid var(--jb-border);
+  }
+
+  /* ── Monospace / numeric ─────────────────────── */
+  .mono {
+    font-family: var(--jb-mono);
+    font-feature-settings: 'zero', 'ss02';
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  /* ── List item (old frontend compat) ─────────── */
+  .list-item {
+    border: 1px solid var(--jb-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Placeholder image block ─────────────────── */
+  .ph {
+    background:
+      repeating-linear-gradient(135deg,
+        rgba(255,255,255,0.025) 0 8px,
+        rgba(255,255,255,0.0) 8px 16px),
+      var(--jb-surface-2);
+    border: 1px dashed var(--jb-border-strong);
+    color: var(--jb-text-dim);
+    font-family: var(--jb-mono);
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Diff styles (angled CV) ─────────────────── */
+  .diff-add {
+    background: rgba(74, 222, 128, 0.13);
+    color: #b9f1cf;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .diff-del {
+    background: rgba(248, 113, 113, 0.10);
+    color: #f1a8a8;
+    padding: 0 2px;
+    border-radius: 2px;
+    text-decoration: line-through;
+    text-decoration-color: rgba(248, 113, 113, 0.6);
+  }
+  .diff-keep {
+    color: var(--jb-text);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Unlayered styles live in separate sheets (see angular.json order):
+   - src/styles/effects.css          hover/motion/scrollbar/responsive
+   - src/styles/document-render.css  resume preview engine + letter extras
+   Only Tailwind-layered rules (@layer needs the @tailwind directives
+   in the same file) belong in this file.
+   ═══════════════════════════════════════════════════════════════ */

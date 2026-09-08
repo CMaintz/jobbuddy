@@ -1,0 +1,175 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { forkJoin } from 'rxjs';
+import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
+import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
+import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
+import { RemindersApiService, FollowUpReminder } from '../../core/api/reminders.api';
+import { ApplicationsApiService } from '../../core/api/applications.api';
+import { Application } from '../../core/models/application.model';
+
+type Group = 'overdue' | 'today' | 'tomorrow' | 'week' | 'later';
+type Kind = 'followup' | 'interview';
+
+interface TaskRow {
+  reminder: FollowUpReminder;
+  company: string;
+  role: string;
+  group: Group;
+  kind: Kind;
+  dueLabel: string;
+}
+
+@Component({
+  selector: 'app-tasks',
+  standalone: true,
+  imports: [CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  templateUrl: './tasks.component.html'
+})
+export class TasksComponent implements OnInit {
+  private remindersApi = inject(RemindersApiService);
+  private appsApi = inject(ApplicationsApiService);
+  private router = inject(Router);
+  private translate = inject(TranslateService);
+
+  loading = signal(true);
+  toast = signal('');
+  rows = signal<TaskRow[]>([]);
+  doneToday = signal(0);
+  applications: Application[] = [];
+
+  // Add-reminder form
+  showForm = signal(false);
+  newAppId = '';
+  newNote = '';
+  newDue = '';
+
+  groups: { key: Group; label: string }[] = [
+    { key: 'overdue', label: 'tasks.group.overdue' },
+    { key: 'today', label: 'tasks.group.today' },
+    { key: 'tomorrow', label: 'tasks.group.tomorrow' },
+    { key: 'week', label: 'tasks.group.week' },
+    { key: 'later', label: 'tasks.group.later' },
+  ];
+
+  kindFilter = signal<'all' | Kind>('all');
+  kindChips: { key: 'all' | Kind; label: string }[] = [
+    { key: 'all', label: 'tasks.kind.all' },
+    { key: 'followup', label: 'tasks.kind.followups' },
+    { key: 'interview', label: 'tasks.kind.interviews' },
+  ];
+
+  kindCount(kind: 'all' | Kind): number {
+    return kind === 'all' ? this.rows().length : this.rows().filter(r => r.kind === kind).length;
+  }
+
+  get overdueCount(): number { return this.rows().filter(r => r.group === 'overdue').length; }
+  get todayCount(): number { return this.rows().filter(r => r.group === 'today').length; }
+  get weekCount(): number { return this.rows().filter(r => r.group === 'week' || r.group === 'tomorrow').length; }
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  private load(): void {
+    forkJoin({
+      reminders: this.remindersApi.getOpenReminders(),
+      apps: this.appsApi.getAll(),
+    }).subscribe({
+      next: ({ reminders, apps }) => {
+        this.applications = apps;
+        const appMap = new Map(apps.map(a => [a.id, a]));
+        this.rows.set(reminders.map(r => this.toRow(r, appMap.get(r.applicationId))));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.set(this.translate.instant('tasks.toast.loadFailed'));
+      }
+    });
+  }
+
+  private toRow(reminder: FollowUpReminder, app?: Application): TaskRow {
+    const due = new Date(reminder.dueAt);
+    const now = new Date();
+    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const dayDiff = Math.floor((startOfDay(due).getTime() - startOfDay(now).getTime()) / 86400000);
+
+    let group: Group;
+    if (due.getTime() < now.getTime() && dayDiff < 0) group = 'overdue';
+    else if (dayDiff <= 0) group = 'today';
+    else if (dayDiff === 1) group = 'tomorrow';
+    else if (dayDiff <= 7) group = 'week';
+    else group = 'later';
+
+    const dueLabel = dayDiff < 0 ? this.translate.instant('tasks.due.overdue', { n: -dayDiff })
+      : dayDiff === 0 ? this.translate.instant('tasks.due.today')
+      : dayDiff === 1 ? this.translate.instant('tasks.due.tomorrow')
+      : due.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+
+    return {
+      reminder,
+      company: app?.jobCompanyName ?? this.translate.instant('tasks.unknown'),
+      role: app?.jobTitle ?? '',
+      group,
+      kind: (reminder.note ?? '').toLowerCase().startsWith('interview') ? 'interview' : 'followup',
+      dueLabel,
+    };
+  }
+
+  tasksForGroup(group: Group): TaskRow[] {
+    const kind = this.kindFilter();
+    return this.rows().filter(r => r.group === group && (kind === 'all' || r.kind === kind));
+  }
+
+  /** Contextual action: prep for interviews, draft the follow-up message otherwise. */
+  contextAction(row: TaskRow): void {
+    if (row.kind === 'interview') {
+      this.router.navigate(['/interviews']);
+    } else {
+      this.router.navigate(['/applications', row.reminder.applicationId, 'output'],
+        { queryParams: { format: 'fu' } });
+    }
+  }
+
+  complete(row: TaskRow): void {
+    this.remindersApi.complete(row.reminder.id).subscribe({
+      next: () => {
+        this.rows.update(rows => rows.filter(r => r.reminder.id !== row.reminder.id));
+        this.doneToday.update(n => n + 1);
+      },
+      error: () => this.toast.set(this.translate.instant('tasks.toast.completeFailed'))
+    });
+  }
+
+  remove(row: TaskRow): void {
+    this.remindersApi.delete(row.reminder.id).subscribe({
+      next: () => this.rows.update(rows => rows.filter(r => r.reminder.id !== row.reminder.id)),
+      error: () => this.toast.set(this.translate.instant('tasks.toast.deleteFailed'))
+    });
+  }
+
+  openApplication(row: TaskRow): void {
+    this.router.navigate(['/applications', row.reminder.applicationId]);
+  }
+
+  createReminder(): void {
+    if (!this.newAppId || !this.newNote.trim() || !this.newDue) return;
+    this.remindersApi.create(this.newAppId, this.newNote.trim(), new Date(this.newDue).toISOString()).subscribe({
+      next: () => {
+        this.showForm.set(false);
+        this.newAppId = '';
+        this.newNote = '';
+        this.newDue = '';
+        this.load();
+      },
+      error: () => this.toast.set(this.translate.instant('tasks.toast.createFailed'))
+    });
+  }
+}

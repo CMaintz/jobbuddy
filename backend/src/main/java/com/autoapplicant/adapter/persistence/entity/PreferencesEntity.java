@@ -69,6 +69,9 @@ public class PreferencesEntity {
     @Column(name = "notification_frequency")
     private String notificationFrequency;
 
+    @Column(name = "weekly_application_goal")
+    private Integer weeklyApplicationGoal;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -110,6 +113,8 @@ public class PreferencesEntity {
     public void setNotificationEnabled(boolean v) { this.notificationEnabled = v; }
     public String getNotificationFrequency() { return notificationFrequency; }
     public void setNotificationFrequency(String v) { this.notificationFrequency = v; }
+    public Integer getWeeklyApplicationGoal() { return weeklyApplicationGoal; }
+    public void setWeeklyApplicationGoal(Integer v) { this.weeklyApplicationGoal = v; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

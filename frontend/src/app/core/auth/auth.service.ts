@@ -9,6 +9,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithPopup,
   signInWithCustomToken,
   signOut,
@@ -19,6 +20,7 @@ export interface MeResponse {
   userId: string;
   email: string;
   role: 'USER' | 'ADMIN';
+  onboardingComplete: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,19 +89,69 @@ export class AuthService {
     return signOut(auth);
   }
 
+  /** True when the signed-in Firebase user has verified their email. */
+  isEmailVerified(): boolean {
+    return auth.currentUser?.emailVerified ?? false;
+  }
+
+  /** Sign-in provider id of the current session: 'password', 'google.com', or custom (LinkedIn). */
+  signInProvider(): string {
+    return auth.currentUser?.providerData[0]?.providerId ?? 'password';
+  }
+
+  resendVerification(): Promise<void> {
+    if (!auth.currentUser) return Promise.reject(new Error('Not signed in'));
+    return sendEmailVerification(auth.currentUser);
+  }
+
+  /** Sends the Firebase password-reset email to the signed-in user's address. */
+  sendPasswordReset(): Promise<void> {
+    const email = auth.currentUser?.email;
+    if (!email) return Promise.reject(new Error('No email on the account'));
+    return sendPasswordResetEmail(auth, email);
+  }
+
+  /**
+   * Resolves once Firebase has restored (or ruled out) a persisted session.
+   * On a fresh page load auth.currentUser is null until the SDK finishes reading
+   * IndexedDB — checking it before this resolves misreads a logged-in user as
+   * logged out.
+   */
+  whenAuthReady(): Promise<void> {
+    return auth.authStateReady();
+  }
+
   /** Returns the current Firebase ID token (auto-refreshed by the Firebase SDK). */
   getIdToken(): Promise<string | null> {
-    return auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
+    return auth.authStateReady()
+      .then(() => auth.currentUser ? auth.currentUser.getIdToken() : null);
   }
 
   isAuthenticated(): boolean {
     return !!auth.currentUser;
   }
 
+  isOnboardingComplete(): boolean {
+    return this.currentUserSubject.value?.onboardingComplete ?? true;
+  }
+
+  completeOnboarding(): Observable<void> {
+    return this.http.post<void>('/api/v1/auth/complete-onboarding', {}).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          const updated: User = { ...user, onboardingComplete: true };
+          localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+          this.currentUserSubject.next(updated);
+        }
+      })
+    );
+  }
+
   private fetchMe(): Observable<MeResponse> {
     return this.http.get<MeResponse>('/api/v1/auth/me').pipe(
       tap(res => {
-        const user: User = { id: res.userId, email: res.email, role: res.role };
+        const user: User = { id: res.userId, email: res.email, role: res.role, onboardingComplete: res.onboardingComplete };
         localStorage.setItem(this.USER_KEY, JSON.stringify(user));
         this.currentUserSubject.next(user);
       })

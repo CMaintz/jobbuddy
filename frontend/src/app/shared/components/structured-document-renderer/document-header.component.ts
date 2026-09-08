@@ -6,32 +6,7 @@ import { DocumentIdentity } from '../../../core/models/structured-document.model
   selector: 'app-document-header',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <header class="topbar">
-      @if (showProfileImage) {
-        <div class="avatar">
-          @if (identity.profileImageUrl) {
-            <img [src]="identity.profileImageUrl" alt="" />
-          } @else {
-            {{ initials(identity.name) }}
-          }
-        </div>
-      }
-
-      <div class="person">
-        <h1>{{ identity.name }}</h1>
-        @if (identity.headline) {
-          <p>{{ identity.headline }}</p>
-        }
-      </div>
-
-      <div class="contact">
-        @for (contact of contactLines; track contact) {
-          <span>{{ contact }}</span>
-        }
-      </div>
-    </header>
-  `
+  templateUrl: './document-header.component.html'
 })
 export class DocumentHeaderComponent {
   @Input({ required: true }) identity!: DocumentIdentity;

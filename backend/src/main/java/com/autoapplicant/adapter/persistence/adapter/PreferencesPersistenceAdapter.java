@@ -38,12 +38,18 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         e.setMaxCommuteKm(prefs.maxCommuteKm());
         e.setNotificationEnabled(prefs.notificationEnabled());
         e.setNotificationFrequency(prefs.notificationFrequency());
+        e.setWeeklyApplicationGoal(prefs.weeklyApplicationGoal());
         return toDomain(repo.save(e));
     }
 
     @Override
     public Optional<UserPreferences> findByUserId(UUID userId) {
         return repo.findByUserId(userId).map(this::toDomain);
+    }
+
+    @Override
+    public List<UserPreferences> findAllWithNotificationsEnabled() {
+        return repo.findByNotificationEnabledTrue().stream().map(this::toDomain).toList();
     }
 
     private UserPreferences toDomain(PreferencesEntity e) {
@@ -55,7 +61,7 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
                 toList(e.getPreferredSeniority()), toList(e.getPreferredIndustries()),
                 e.getSalaryMin(), e.getSalaryMax(), e.getMaxCommuteKm(),
                 e.isNotificationEnabled(), e.getNotificationFrequency(),
-                e.getCreatedAt(), e.getUpdatedAt());
+                e.getWeeklyApplicationGoal(), e.getCreatedAt(), e.getUpdatedAt());
     }
 
     private static String[] toArray(List<String> l) { return l != null ? l.toArray(String[]::new) : new String[0]; }

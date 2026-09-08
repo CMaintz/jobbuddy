@@ -1,0 +1,41 @@
+    <div>
+      @if (label) {
+        <label class="block text-xs font-medium text-gray-700">{{ label | translate }}</label>
+      }
+      <div class="relative mt-1">
+        <input [(ngModel)]="query"
+               [ngModelOptions]="{standalone: true}"
+               (ngModelChange)="onQueryChange($event)"
+               (blur)="hideDropdownDelayed()"
+               [placeholder]="placeholder | translate"
+               class="w-full border rounded px-2 py-1.5 text-sm" />
+        @if (showDropdown) {
+          <div class="absolute z-10 top-full left-0 right-0 bg-white border rounded shadow-lg mt-0.5 max-h-48 overflow-y-auto">
+            @for (skill of suggestions; track skill.id) {
+              <button type="button"
+                      (mousedown)="selectSkill(skill)"
+                      class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0">
+                <span class="font-medium">{{ skill.name }}</span>
+                <span class="text-xs text-gray-400 ml-2">{{ skill.category }}</span>
+              </button>
+            }
+            @if (query.trim()) {
+              <button type="button"
+                      (mousedown)="createRequested.emit(query.trim()); clearSearch()"
+                      class="w-full text-left px-3 py-2 text-sm hover:bg-green-50 text-green-700">
+                {{ 'skillPicker.create' | translate:{ query: query } }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-1 mt-2">
+        @for (skill of selected; track skill.id) {
+          <span class="flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full">
+            {{ skill.name }}
+            <button type="button" (click)="removeSkill(skill.id)" class="hover:text-indigo-900 ml-0.5">x</button>
+          </span>
+        }
+      </div>
+    </div>

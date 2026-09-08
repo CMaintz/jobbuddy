@@ -1,5 +1,6 @@
 package com.autoapplicant.config;
 
+import com.autoapplicant.adapter.security.AiRateLimitFilter;
 import com.autoapplicant.adapter.security.FirebaseTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,11 +24,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final FirebaseTokenFilter firebaseTokenFilter;
+    private final AiRateLimitFilter aiRateLimitFilter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(FirebaseTokenFilter firebaseTokenFilter,
+                          AiRateLimitFilter aiRateLimitFilter,
                           @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins}") String allowedOriginsRaw) {
         this.firebaseTokenFilter = firebaseTokenFilter;
+        this.aiRateLimitFilter = aiRateLimitFilter;
         this.allowedOrigins = Arrays.asList(allowedOriginsRaw.split(","));
     }
 
@@ -50,6 +54,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(aiRateLimitFilter, FirebaseTokenFilter.class)
                 .build();
     }
 

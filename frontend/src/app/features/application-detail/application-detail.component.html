@@ -1,0 +1,116 @@
+    <!-- Topbar -->
+    <div class="flex items-center gap-2.5 px-[18px] h-11 border-b border-jb-border flex-[0_0_auto]">
+      <a routerLink="/applications" class="inline-flex items-center gap-[5px] p-[5px_9px] rounded bg-transparent border border-jb-border text-jb-text-mid text-sm no-underline">
+        <jb-icon name="arrow-left" [size]="11" /> {{ 'nav.applications' | translate }}
+      </a>
+      <span class="text-sm text-jb-text-dim">/</span>
+      <span class="text-base text-jb-text-mid">{{ app?.jobCompanyName || ('jobDetails.loadingCrumb' | translate) }}</span>
+      <div class="ml-auto flex gap-1.5 items-center">
+        <jb-button small icon="sparkle" routerLink="/apply">{{ 'jobDetails.regenerate' | translate }}</jb-button>
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="p-12 text-center text-jb-text-dim">{{ 'applicationDetail.loading' | translate }}</div>
+    } @else if (app) {
+      <div class="flex-1 overflow-auto p-6 jb-scroll">
+        <div class="max-w-[800px]">
+          <!-- Header -->
+          <div class="flex items-center gap-3.5 mb-5">
+            <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="48" />
+            <div>
+              <div class="text-[18px] font-medium tracking-tight">{{ app.jobTitle || ('pipeline.untitledRole' | translate) }}</div>
+              <div class="text-base text-jb-text-dim">{{ app.jobCompanyName || ('pipeline.unknown' | translate) }}</div>
+            </div>
+            <div class="ml-auto flex items-center gap-2.5">
+              <jb-pill [tone]="stageTone(app.status)">{{ stageLabel(app.status) | translate }}</jb-pill>
+              <jb-fit-bar [value]="app.matchScore ?? 0" />
+            </div>
+          </div>
+
+          <!-- Application text -->
+          @if (app.applicationText) {
+            <div class="card p-[18px] mb-4">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'applicationDetail.applicationText' | translate }}</div>
+              <pre class="m-0 text-base leading-loose whitespace-pre-wrap text-jb-text" style="font-family:var(--font-sans,Geist,sans-serif);">{{ app.applicationText }}</pre>
+            </div>
+          }
+
+          <!-- Cover letter -->
+          @if (app.coverLetterText) {
+            <div class="card p-[18px] mb-4">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'documents.type.coverLetter' | translate }}</div>
+              <pre class="m-0 text-base leading-loose whitespace-pre-wrap text-jb-text" style="font-family:var(--font-sans,Geist,sans-serif);">{{ app.coverLetterText }}</pre>
+            </div>
+          }
+
+          <!-- Notes -->
+          @if (app.notes) {
+            <div class="card p-[18px] mb-4">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'jobDetails.tab.notes' | translate }}</div>
+              <div class="text-base leading-relaxed">{{ app.notes }}</div>
+            </div>
+          }
+
+          <!-- Recruiter info -->
+          @if (app.recruiterName || app.recruiterEmail) {
+            <div class="card p-[18px] mb-4">
+              <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'applicationDetail.recruiter' | translate }}</div>
+              <div class="grid gap-1.5 text-sm grid-cols-[80px_1fr]">
+                @if (app.recruiterName) {
+                  <div class="text-jb-text-dim">{{ 'applicationDetail.name' | translate }}</div><div>{{ app.recruiterName }}</div>
+                }
+                @if (app.recruiterEmail) {
+                  <div class="text-jb-text-dim">{{ 'auth.email' | translate }}</div><div class="mono">{{ app.recruiterEmail }}</div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Outcome — shown once the application is past the preparing stage -->
+          @if (showOutcome()) {
+            <div class="card p-[18px] mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-xs text-jb-text-dim tracking-widest uppercase">{{ 'applicationDetail.outcome' | translate }}</div>
+                <span class="text-2xs text-jb-text-dim">{{ outcomeSaved() ? ('common.saved' | translate) : '' }}</span>
+              </div>
+              <div class="text-xs text-jb-text-dim mb-2.5">
+                {{ 'applicationDetail.outcomeHint' | translate }}
+              </div>
+              <div class="flex flex-col gap-2.5">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'applicationDetail.feedbackReceived' | translate }}</span>
+                  <textarea [(ngModel)]="outcomeFeedback" rows="2" class="input resize-y text-sm leading-relaxed"
+                    [placeholder]="'applicationDetail.feedbackPlaceholder' | translate"></textarea>
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'applicationDetail.lessons' | translate }}</span>
+                  <textarea [(ngModel)]="outcomeLessons" rows="2" class="input resize-y text-sm leading-relaxed"
+                    [placeholder]="'applicationDetail.lessonsPlaceholder' | translate"></textarea>
+                </label>
+                <jb-button small class="self-end" [primary]="true" [disabled]="savingOutcome()" (clicked)="saveOutcome()">
+                  {{ (savingOutcome() ? 'common.saving' : 'applicationDetail.saveOutcome') | translate }}
+                </jb-button>
+              </div>
+            </div>
+          }
+
+          <!-- Metadata -->
+          <div class="card p-[18px]">
+            <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'applicationDetail.details' | translate }}</div>
+            <div class="grid gap-1.5 text-sm grid-cols-[80px_1fr]">
+              <div class="text-jb-text-dim">{{ 'applicationDetail.status' | translate }}</div><div>{{ stageLabel(app.status) | translate }}</div>
+              <div class="text-jb-text-dim">{{ 'applicationDetail.created' | translate }}</div><div>{{ app.createdAt | date:'mediumDate' }}</div>
+              @if (app.appliedAt) {
+                <div class="text-jb-text-dim">{{ 'pipeline.stage.applied' | translate }}</div><div>{{ app.appliedAt | date:'mediumDate' }}</div>
+              }
+              @if (app.matchScore) {
+                <div class="text-jb-text-dim">{{ 'jobDetails.fit' | translate }}</div><div>{{ app.matchScore }} / 100</div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="p-12 text-center text-jb-text-dim">{{ 'applicationDetail.notFound' | translate }}</div>
+    }

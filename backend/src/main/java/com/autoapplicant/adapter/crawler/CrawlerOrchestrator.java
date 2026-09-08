@@ -1,7 +1,10 @@
 package com.autoapplicant.adapter.crawler;
 
+import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
+import com.autoapplicant.port.out.crawler.CrawlOrchestrationPort;
+import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.crawler.JobSourceConnectorPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import org.slf4j.Logger;
@@ -9,12 +12,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class CrawlerOrchestrator {
+public class CrawlerOrchestrator implements CrawlOrchestrationPort {
 
     private static final Logger log = LoggerFactory.getLogger(CrawlerOrchestrator.class);
 
@@ -31,22 +36,36 @@ public class CrawlerOrchestrator {
     private final List<JobSourceConnectorPort> connectors;
     private final IngestionPipeline ingestionPipeline;
     private final JobRepositoryPort jobRepository;
+    private final CrawlerStateRepositoryPort crawlerStateRepo;
     private final Executor crawlerTaskExecutor;
 
     public CrawlerOrchestrator(List<JobSourceConnectorPort> connectors,
                                 IngestionPipeline ingestionPipeline,
                                 JobRepositoryPort jobRepository,
+                                CrawlerStateRepositoryPort crawlerStateRepo,
                                 Executor crawlerTaskExecutor) {
         this.connectors = connectors;
         this.ingestionPipeline = ingestionPipeline;
         this.jobRepository = jobRepository;
+        this.crawlerStateRepo = crawlerStateRepo;
         this.crawlerTaskExecutor = crawlerTaskExecutor;
+    }
+
+    /**
+     * Connectors that participate in the bulk "run all sources" operations. Sources
+     * with their own controlled cadence (e.g. LinkedIn) opt out via
+     * {@link JobSourceConnectorPort#includeInDefaultSchedule()} and are only ever run
+     * by an explicit per-source trigger.
+     */
+    private List<JobSourceConnectorPort> scheduledConnectors() {
+        return connectors.stream().filter(JobSourceConnectorPort::includeInDefaultSchedule).toList();
     }
 
     @Scheduled(cron = "${app.crawler.cron:0 0 */4 * * *}")
     public void runAllCrawlers() {
-        log.info("Starting scheduled crawl for {} sources", connectors.size());
-        connectors.forEach(connector ->
+        var scheduled = scheduledConnectors();
+        log.info("Starting scheduled crawl for {} sources", scheduled.size());
+        scheduled.forEach(connector ->
                 CompletableFuture.runAsync(() -> runConnector(connector), crawlerTaskExecutor));
     }
 
@@ -59,6 +78,14 @@ public class CrawlerOrchestrator {
     }
 
     private void runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
+        String sourceName = connector.getSource().name();
+        AtomicInteger jobsFound = new AtomicInteger(0);
+        Instant startedAt = Instant.now();
+
+        // Mark crawl as running
+        crawlerStateRepo.save(new CrawlerState(
+                sourceName, 0, startedAt, null, 0, 0, null, true, Instant.now()));
+
         try {
             log.info("Crawling source: {} (force={})", connector.getSource(), force);
             CrawlConfig config = new CrawlConfig(
@@ -67,13 +94,25 @@ public class CrawlerOrchestrator {
                     300L,
                     List.of(),
                     guid -> jobRepository.existsBySourceAndSourceJobId(connector.getSource(), guid),
-                    ingestionPipeline::ingest,
+                    raw -> {
+                        jobsFound.incrementAndGet();
+                        ingestionPipeline.ingest(raw);
+                    },
                     force
             );
             connector.fetchJobs(config);
-            log.info("Finished crawling: {}", connector.getSource());
+            log.info("Finished crawling: {} — {} jobs found", connector.getSource(), jobsFound.get());
+
+            // Mark crawl as finished successfully
+            crawlerStateRepo.save(new CrawlerState(
+                    sourceName, 0, startedAt, Instant.now(),
+                    jobsFound.get(), jobsFound.get(), null, false, Instant.now()));
+
         } catch (Exception e) {
             log.error("Crawl failed for {}: {}", connector.getSource(), e.getMessage(), e);
+            crawlerStateRepo.save(new CrawlerState(
+                    sourceName, 0, startedAt, Instant.now(),
+                    jobsFound.get(), 0, e.getMessage(), false, Instant.now()));
         }
     }
 
@@ -94,15 +133,17 @@ public class CrawlerOrchestrator {
     }
 
     public void runAllForce() {
-        log.info("Starting force crawl for {} sources", connectors.size());
-        connectors.forEach(connector ->
+        var scheduled = scheduledConnectors();
+        log.info("Starting force crawl for {} sources", scheduled.size());
+        scheduled.forEach(connector ->
                 CompletableFuture.runAsync(() -> runConnectorForce(connector), crawlerTaskExecutor));
     }
 
     /** Synchronous variants used by the CLI runner — blocks until all connectors finish. */
     public void runAllSync() {
-        log.info("Starting synchronous crawl for {} sources", connectors.size());
-        connectors.forEach(this::runConnector);
+        var scheduled = scheduledConnectors();
+        log.info("Starting synchronous crawl for {} sources", scheduled.size());
+        scheduled.forEach(this::runConnector);
         log.info("All sources finished.");
     }
 
@@ -116,8 +157,9 @@ public class CrawlerOrchestrator {
     }
 
     public void runAllSyncForce() {
-        log.info("Starting synchronous force crawl for {} sources", connectors.size());
-        connectors.forEach(this::runConnectorForce);
+        var scheduled = scheduledConnectors();
+        log.info("Starting synchronous force crawl for {} sources", scheduled.size());
+        scheduled.forEach(this::runConnectorForce);
         log.info("All sources finished (force mode).");
     }
 

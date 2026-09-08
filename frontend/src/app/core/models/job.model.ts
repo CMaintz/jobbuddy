@@ -21,6 +21,10 @@ export interface Job {
   aiTags?: string[];
   duplicateGroupId?: string;
   jobCategory?: string;
+  /** ISO date of the stated application deadline. Null/absent = unknown or ASAP. */
+  applicationDeadline?: string;
+  /** false once the posting disappears from crawls or is expired. */
+  active?: boolean;
 }
 
 export interface JobSearchResult {

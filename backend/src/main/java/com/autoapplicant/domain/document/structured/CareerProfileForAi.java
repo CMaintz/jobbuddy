@@ -13,5 +13,15 @@ public record CareerProfileForAi(
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,
         List<StructuredDocumentItem> certifications,
-        List<String> strengths
+        List<String> strengths,
+        /** Declared target role-archetypes to frame generation toward. Identity-free. */
+        List<String> targetArchetypes,
+        /** One-line statement of the ideal next role / direction. */
+        String northStar,
+        /** Positioning narrative distinct from the CV summary. */
+        String narrative,
+        /** Self-declared career stage (e.g. NEW_GRAD, SENIOR) driving stage-appropriate framing. */
+        String careerStage,
+        /** Skill name → category (e.g. "Java" → "Languages"), so the CV can group skills. */
+        java.util.Map<String, String> skillCategories
 ) {}

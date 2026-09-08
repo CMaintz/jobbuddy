@@ -1,0 +1,10 @@
+
+    @if (skills && skills.length > 0) {
+      <div class="flex flex-wrap gap-1 mt-1">
+        @for (skill of skills; track skill) {
+          <span class="inline-block p-[2px_8px] text-xs rounded-sm bg-jb-surface-2 text-jb-text-dim border border-jb-border">
+            {{ skill }}
+          </span>
+        }
+      </div>
+    }

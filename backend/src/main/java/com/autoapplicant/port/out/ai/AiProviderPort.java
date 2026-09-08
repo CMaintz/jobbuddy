@@ -1,11 +1,10 @@
 package com.autoapplicant.port.out.ai;
 
-import com.autoapplicant.domain.document.PromptComposition;
-
-public interface AiProviderPort {
-    String generate(PromptComposition composition);
-    String generateJson(PromptComposition composition);
-    float[] embed(String text);
-    String embeddingModelName();
-    String chatModelName();
+/**
+ * A provider that can do both text generation and embeddings (OpenAI/Gemini). Used where a
+ * single component needs both — notably the enrichment path (JSON generation + embeddings).
+ * Generation-only use cases should depend on {@link ChatProviderPort} instead, so the
+ * CLI-agent (chat-only) can substitute for them.
+ */
+public interface AiProviderPort extends ChatProviderPort, EmbeddingProviderPort {
 }

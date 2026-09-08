@@ -1,0 +1,72 @@
+
+    <div class="flex flex-col items-center gap-4">
+      <!-- PDF controls -->
+      <div class="flex gap-2 w-full max-w-[794px]">
+        <jb-button primary icon="download" (clicked)="downloadPdf()">{{ 'resumeBuilder.preview.pdfDesigned' | translate }}</jb-button>
+        <jb-button icon="doc" [title]="'resumeBuilder.preview.atsTitle' | translate"
+          (clicked)="downloadAtsPdf()">{{ 'resumeBuilder.preview.pdfAts' | translate }}</jb-button>
+        <jb-button icon="copy" (clicked)="printResume()">{{ 'resumeBuilder.preview.print' | translate }}</jb-button>
+      </div>
+
+      <!-- Preview container -->
+      <div
+        #previewContainer
+        id="previewContainer"
+        [style]="'background:#fff;box-shadow:0 18px 60px rgba(0,0,0,0.45);overflow:hidden;' + typographyVars"
+        [style.width.px]="docWidth"
+        [style.min-height.px]="docHeight"
+        [style.font-family]="state.settings().fontFamily"
+      >
+        @switch (state.settings().template) {
+          @case ('classic') {
+            @defer (on idle) {
+              <app-classic-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('modern') {
+            @defer (on idle) {
+              <app-modern-1col-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('modern-2col') {
+            @defer (on idle) {
+              <app-modern-2col-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('minimal') {
+            @defer (on idle) {
+              <app-minimal-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('executive') {
+            @defer (on idle) {
+              <app-executive-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @case ('creative') {
+            @defer (on idle) {
+              <app-creative-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+          @default {
+            @defer (on idle) {
+              <app-classic-layout />
+            } @placeholder {
+              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
+            }
+          }
+        }
+      </div>
+    </div>

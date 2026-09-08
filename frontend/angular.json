@@ -21,10 +21,20 @@
             "outputPath": "dist/frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.json",
-            "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles.css"],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css",
+              "src/styles/effects.css",
+              "src/styles/document-render.css",
+              "src/styles/resume-forms.css"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -66,9 +76,15 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "autoapplicant:build:production" },
-            "development": { "buildTarget": "autoapplicant:build:development" },
-            "local": { "buildTarget": "autoapplicant:build:local" }
+            "production": {
+              "buildTarget": "autoapplicant:build:production"
+            },
+            "development": {
+              "buildTarget": "autoapplicant:build:development"
+            },
+            "local": {
+              "buildTarget": "autoapplicant:build:local"
+            }
           },
           "defaultConfiguration": "development",
           "options": {
@@ -78,14 +94,39 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
             "tsConfig": "tsconfig.spec.json",
-            "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles.css"],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css",
+              "src/styles/effects.css",
+              "src/styles/document-render.css",
+              "src/styles/resume-forms.css"
+            ],
             "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         }
       }
     }
+  },
+  "cli": {
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   }
 }

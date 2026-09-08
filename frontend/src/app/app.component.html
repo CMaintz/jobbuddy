@@ -1,0 +1,189 @@
+
+    <!-- Auth screens: no shell -->
+    @if (!auth.isAuthenticated()) {
+      <router-outlet />
+    } @else if (isFullscreenRoute()) {
+      <router-outlet />
+    } @else {
+      <!-- Main app shell -->
+      <div class="h-screen grid overflow-hidden bg-jb-bg text-jb-text grid-cols-1 md:grid-cols-[212px_1fr]">
+
+        <!-- Mobile overlay backdrop -->
+        @if (sidebarOpen()) {
+          <div class="fixed inset-0 bg-black/50 z-40 md:hidden" (click)="sidebarOpen.set(false)"></div>
+        }
+
+        <!-- ═══ Sidebar ═══ -->
+        <aside class="jb-sidebar flex flex-col border-r border-jb-border overflow-y-auto jb-scroll bg-jb-surface py-3.5 px-2.5 gap-3.5 fixed inset-y-0 left-0 w-[212px] z-50 md:relative md:inset-auto md:z-auto md:w-auto transition-transform duration-200"
+               [class.jb-sidebar-open]="sidebarOpen()">
+
+          <!-- Brand -->
+          <div class="flex items-center gap-2.5 px-1.5 pb-2 pt-1">
+            <div class="w-[22px] h-[22px] rounded-md flex items-center justify-center font-mono text-[13px] font-bold text-[#1c1004] bg-[var(--jb-accent-gradient)] shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_4px_10px_rgba(245,166,35,0.12)]">
+              jb
+            </div>
+            <span class="font-semibold text-lg tracking-snug">Jobbuddy</span>
+            <span class="ml-auto font-mono text-2xs text-jb-text-dim">v0.4</span>
+          </div>
+
+          <!-- Main nav -->
+          <nav class="flex flex-col gap-0.5">
+            @for (item of mainNav; track item.id) {
+              <a [routerLink]="item.route"
+                 routerLinkActive="jb-nav-active"
+                 class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"
+                 [style.color]="isActive(item.route) ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+                 [style.background]="isActive(item.route) ? 'var(--jb-surface-3)' : 'transparent'"
+                 [style.font-weight]="isActive(item.route) ? '500' : '400'">
+                <jb-icon [name]="item.icon" [size]="14"
+                         [style.color]="item.accent ? 'var(--jb-accent)' : 'inherit'" />
+                <span>{{ item.label | translate }}</span>
+                @if (item.badge) {
+                  <span class="ml-auto px-1.5 rounded-full text-[9.5px] font-semibold tracking-wider uppercase bg-jb-accent-soft border border-jb-accent-border text-jb-accent-2"
+                        style="padding: 1px 6px;">
+                    {{ item.badge }}
+                  </span>
+                }
+                @if (!item.badge && item.count != null) {
+                  <span class="ml-auto font-mono text-2xs text-jb-text-dim">{{ item.count }}</span>
+                }
+                @if (!item.badge && item.count == null && item.kbd) {
+                  <span class="ml-auto" style="opacity: 0.7;"><span class="kbd">{{ item.kbd }}</span></span>
+                }
+              </a>
+            }
+          </nav>
+
+          <!-- Track group -->
+          <nav class="flex flex-col gap-0.5">
+            <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'nav.group.track' | translate }}</div>
+            @for (item of trackNav; track item.id) {
+              <a [routerLink]="item.route"
+                 routerLinkActive="jb-nav-active"
+                 class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"
+                 [style.color]="isActive(item.route) ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+                 [style.background]="isActive(item.route) ? 'var(--jb-surface-3)' : 'transparent'"
+                 [style.font-weight]="isActive(item.route) ? '500' : '400'">
+                <jb-icon [name]="item.icon" [size]="14" />
+                <span>{{ item.label | translate }}</span>
+                @if (item.count != null) {
+                  <span class="ml-auto font-mono text-2xs"
+                        [style.color]="item.hot ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">{{ item.count }}</span>
+                }
+              </a>
+            }
+          </nav>
+
+          <!-- Library group -->
+          <nav class="flex flex-col gap-0.5">
+            <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'nav.group.library' | translate }}</div>
+            @for (item of libraryNav; track item.id) {
+              <a [routerLink]="item.route"
+                 routerLinkActive="jb-nav-active"
+                 class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"
+                 [style.color]="isActive(item.route) ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+                 [style.background]="isActive(item.route) ? 'var(--jb-surface-3)' : 'transparent'"
+                 [style.font-weight]="isActive(item.route) ? '500' : '400'">
+                <jb-icon [name]="item.icon" [size]="14" />
+                <span>{{ item.label | translate }}</span>
+                @if (item.count != null) {
+                  <span class="ml-auto font-mono text-2xs text-jb-text-dim">{{ item.count }}</span>
+                }
+              </a>
+            }
+          </nav>
+
+          <!-- Old Frontend (collapsible) -->
+          <nav class="flex flex-col gap-0.5">
+            <button (click)="oldFrontendOpen.set(!oldFrontendOpen())"
+                    class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-dim bg-transparent border-none">
+              <jb-icon name="layers" [size]="14" />
+              <span>{{ 'nav.oldFrontend' | translate }}</span>
+              <jb-icon [name]="oldFrontendOpen() ? 'chev-down' : 'chev-right'" [size]="11" class="ml-auto" />
+            </button>
+            @if (oldFrontendOpen()) {
+              @for (item of oldFrontendNav; track item.id) {
+                <a [routerLink]="item.route"
+                   class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none text-xs text-jb-text-dim"
+                   style="padding: 5px 8px 5px 26px;">
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            }
+          </nav>
+
+          <!-- Footer -->
+          <div class="mt-auto flex flex-col gap-0.5">
+            <!-- Streak -->
+            <div class="flex items-center gap-2.5 rounded-md py-1.5 px-2 text-base text-jb-text-mid">
+              <jb-icon name="flame" [size]="14" class="text-jb-accent" />
+              <span>{{ 'nav.streak' | translate:{ count: 12 } }}</span>
+            </div>
+
+            <!-- Theme toggle -->
+            <button (click)="theme.toggle()"
+                    class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-mid bg-transparent border-none">
+              <jb-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" [size]="14" />
+              <span>{{ (theme.theme() === 'dark' ? 'nav.lightMode' : 'nav.darkMode') | translate }}</span>
+            </button>
+
+            <!-- Language toggle -->
+            <button (click)="language.toggle()"
+                    class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-mid bg-transparent border-none">
+              <jb-icon name="globe" [size]="14" />
+              <span>{{ 'nav.language' | translate }}</span>
+              <span class="ml-auto font-mono text-2xs text-jb-text-dim uppercase">{{ language.lang() }}</span>
+            </button>
+
+            <!-- Career profile -->
+            <a routerLink="/career-profile"
+               routerLinkActive="jb-nav-active"
+               class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"
+               [style.color]="isActive('/career-profile') ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+               [style.background]="isActive('/career-profile') ? 'var(--jb-surface-3)' : 'transparent'">
+              <jb-icon name="target" [size]="14" />
+              <span>{{ 'nav.careerProfile' | translate }}</span>
+            </a>
+
+            <!-- Settings -->
+            <a routerLink="/settings"
+               routerLinkActive="jb-nav-active"
+               class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"
+               [style.color]="isActive('/settings') ? 'var(--jb-text)' : 'var(--jb-text-mid)'"
+               [style.background]="isActive('/settings') ? 'var(--jb-surface-3)' : 'transparent'">
+              <jb-icon name="settings" [size]="14" />
+              <span>{{ 'nav.settings' | translate }}</span>
+            </a>
+
+            <!-- User -->
+            <div class="flex items-center gap-2 mt-1 py-1.5 px-2">
+              <div class="w-[26px] h-[26px] rounded-md flex items-center justify-center text-xs font-semibold bg-jb-surface-3 border border-jb-border-strong">
+                {{ userInitials() }}
+              </div>
+              <div class="flex flex-col min-w-0">
+                <div class="text-sm font-medium truncate">{{ userName() }}</div>
+                <div class="font-mono text-2xs text-jb-text-dim">{{ userEmail() }}</div>
+              </div>
+              <button (click)="logout()"
+                      class="ml-auto p-1 rounded cursor-pointer bg-transparent border-none text-jb-text-dim"
+                      [title]="'common.logout' | translate">
+                <jb-icon name="arrow-right" [size]="12" />
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- ═══ Main area ═══ -->
+        <div class="flex flex-col min-w-0 min-h-0">
+          <!-- Mobile topbar with hamburger -->
+          <div class="flex items-center gap-2 h-11 px-3 border-b border-jb-border md:hidden">
+            <button class="p-1.5 rounded-md bg-transparent border-none text-jb-text cursor-pointer" (click)="sidebarOpen.set(!sidebarOpen())">
+              <jb-icon name="list" [size]="18" />
+            </button>
+            <div class="w-[22px] h-[22px] rounded-md flex items-center justify-center font-mono text-[13px] font-bold text-[#1c1004] bg-[var(--jb-accent-gradient)]">jb</div>
+            <span class="font-semibold text-base">Jobbuddy</span>
+          </div>
+          <router-outlet />
+        </div>
+      </div>
+    }

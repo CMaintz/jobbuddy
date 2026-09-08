@@ -1,0 +1,13 @@
+    <div class="flex gap-[3px]">
+      @for (week of weeks; track $index) {
+        <div class="flex flex-col gap-[3px]">
+          @for (day of week; track $index) {
+            <div
+              [style.width.px]="cellSize" [style.height.px]="cellSize"
+              [style.border-radius.px]="2"
+              [style.background]="cellColor(day)">
+            </div>
+          }
+        </div>
+      }
+    </div>

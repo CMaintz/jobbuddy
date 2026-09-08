@@ -17,6 +17,7 @@ import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.port.in.document.GetDocumentsForJobUseCase;
 import com.autoapplicant.port.in.job.*;
+import com.autoapplicant.port.in.job.ReportJobInactiveUseCase;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import java.net.URI;
 import java.time.Instant;
@@ -49,6 +50,9 @@ public class JobController {
     private final CreateManualJobUseCase createManualJob;
     private final SubmitRecommendationFeedbackUseCase feedbackUseCase;
     private final GetDocumentsForJobUseCase getDocsForJob;
+    private final ReportJobInactiveUseCase reportJobInactive;
+    private final GetSimilarJobsUseCase getSimilarJobs;
+    private final SemanticSearchJobsUseCase semanticSearch;
     private final SecurityContextHelper secCtx;
 
     public JobController(GetJobsUseCase getJobs, GetJobByIdUseCase getJobById,
@@ -58,6 +62,9 @@ public class JobController {
                          CreateManualJobUseCase createManualJob,
                          SubmitRecommendationFeedbackUseCase feedbackUseCase,
                          GetDocumentsForJobUseCase getDocsForJob,
+                         ReportJobInactiveUseCase reportJobInactive,
+                         GetSimilarJobsUseCase getSimilarJobs,
+                         SemanticSearchJobsUseCase semanticSearch,
                          SecurityContextHelper secCtx) {
         this.getJobs = getJobs;
         this.getJobById = getJobById;
@@ -70,6 +77,9 @@ public class JobController {
         this.createManualJob = createManualJob;
         this.feedbackUseCase = feedbackUseCase;
         this.getDocsForJob = getDocsForJob;
+        this.reportJobInactive = reportJobInactive;
+        this.getSimilarJobs = getSimilarJobs;
+        this.semanticSearch = semanticSearch;
         this.secCtx = secCtx;
     }
 
@@ -142,6 +152,14 @@ public class JobController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Report a job as taken down — hides it for the user and verifies the URL server-side")
+    @ApiResponse(responseCode = "202", description = "Report accepted; verification runs in the background")
+    @PostMapping("/{id}/report-inactive")
+    public ResponseEntity<Void> reportInactive(@PathVariable UUID id) {
+        reportJobInactive.reportInactive(secCtx.getCurrentUserId(), id);
+        return ResponseEntity.accepted().build();
+    }
+
     @Operation(summary = "Unignore a job")
     @DeleteMapping("/{id}/ignore")
     public ResponseEntity<Void> unignore(@PathVariable UUID id) {
@@ -184,19 +202,39 @@ public class JobController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Semantic job search — embeds the query and ranks by vector distance")
+    @GetMapping("/search/semantic")
+    public ResponseEntity<List<JobResponse>> searchSemantic(@RequestParam String q,
+                                                            @RequestParam(defaultValue = "30") int limit) {
+        List<JobResponse> result = semanticSearch.semanticSearch(q, Math.min(Math.max(limit, 1), 100))
+                .stream().map(JobResponse::from).toList();
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Semantically similar active jobs (embedding nearest-neighbors)")
+    @GetMapping("/{id}/similar")
+    public ResponseEntity<List<JobResponse>> similar(@PathVariable UUID id,
+                                                     @RequestParam(defaultValue = "5") int limit) {
+        List<JobResponse> result = getSimilarJobs.getSimilarJobs(id, Math.min(Math.max(limit, 1), 20))
+                .stream().map(JobResponse::from).toList();
+        return ResponseEntity.ok(result);
+    }
+
     @Operation(summary = "Add job manually")
     @ApiResponse(responseCode = "201", description = "Job created")
     @PostMapping("/manual")
     public ResponseEntity<JobResponse> addManually(@Valid @RequestBody ManualJobRequest req) {
-        Job job = new Job(null, JobSource.MANUAL, null, req.url(),
-                req.title(), null, req.companyName(),
-                req.description(), req.description(),
-                req.employmentType() != null ? EmploymentType.valueOf(req.employmentType()) : null,
-                null, req.remoteType() != null ? RemoteType.valueOf(req.remoteType()) : null,
-                req.location(), null, null, null,
-                req.salaryMin(), req.salaryMax(), req.currency() != null ? req.currency() : "DKK",
-                List.of(), List.of(), List.of(),
-                Instant.now(), Instant.now(), null, List.of(), null, null, true, null, null, null, null);
+        Job job = Job.builder()
+                .source(JobSource.MANUAL).url(req.url()).title(req.title()).companyName(req.companyName())
+                .descriptionRaw(req.description()).descriptionClean(req.description())
+                .employmentType(req.employmentType() != null ? EmploymentType.valueOf(req.employmentType()) : null)
+                .remoteType(req.remoteType() != null ? RemoteType.valueOf(req.remoteType()) : null)
+                .location(req.location())
+                .salaryMin(req.salaryMin()).salaryMax(req.salaryMax())
+                .currency(req.currency() != null ? req.currency() : "DKK")
+                .postedAt(Instant.now()).scrapedAt(Instant.now())
+                .isActive(true).lastSeenAt(Instant.now())
+                .build();
         Job saved = createManualJob.createManualJob(job);
         return ResponseEntity.created(URI.create("/api/v1/jobs/" + saved.id())).body(JobResponse.from(saved));
     }

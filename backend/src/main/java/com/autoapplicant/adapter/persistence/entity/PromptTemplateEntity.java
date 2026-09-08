@@ -1,6 +1,9 @@
 package com.autoapplicant.adapter.persistence.entity;
 
+import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -44,6 +47,13 @@ public class PromptTemplateEntity {
     @Column(name = "version_number", nullable = false)
     private int versionNumber;
 
+    @Type(StringArrayType.class)
+    @Column(columnDefinition = "text[]")
+    private String[] tags;
+
+    @Column(name = "usage_count", nullable = false)
+    private int usageCount = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -77,6 +87,10 @@ public class PromptTemplateEntity {
     public void setParentTemplateId(UUID parentTemplateId) { this.parentTemplateId = parentTemplateId; }
     public int getVersionNumber() { return versionNumber; }
     public void setVersionNumber(int versionNumber) { this.versionNumber = versionNumber; }
+    public String[] getTags() { return tags; }
+    public void setTags(String[] tags) { this.tags = tags; }
+    public int getUsageCount() { return usageCount; }
+    public void setUsageCount(int usageCount) { this.usageCount = usageCount; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

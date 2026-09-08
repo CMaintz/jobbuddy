@@ -1,0 +1,52 @@
+<jb-topbar [title]="'pack.title' | translate">
+  <ng-container jb-topbar-actions>
+    <jb-button small icon="arrow-left" routerLink="/applications">{{ 'common.back' | translate }}</jb-button>
+  </ng-container>
+</jb-topbar>
+
+<jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+<div class="flex-1 min-h-0 overflow-auto p-[24px_28px_48px] jb-scroll">
+  <div class="max-w-[900px] mx-auto">
+    @if (loading()) {
+      <div class="p-10 text-center text-jb-text-dim">{{ 'pack.loading' | translate }}</div>
+    } @else {
+      <p class="text-base text-jb-text-dim mb-4">{{ 'pack.intro' | translate }}</p>
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-2">
+
+        <!-- Tailored CV -->
+        <div class="card p-4 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs text-jb-text-dim tracking-widest uppercase">{{ 'pack.tailoredCv' | translate }}</div>
+            @if (cv()) {
+              <jb-button small icon="edit" [routerLink]="['/applications', appId, 'cv']">{{ 'pack.openEdit' | translate }}</jb-button>
+            }
+          </div>
+          @if (cv()) {
+            <pre class="m-0 text-sm leading-relaxed whitespace-pre-wrap text-jb-text-mid flex-1" style="font-family:var(--font-sans,Geist,sans-serif)">{{ preview(cv()) }}</pre>
+            <div class="mt-3"><jb-button small icon="copy" (clicked)="copy(cv())">{{ 'pack.copy' | translate }}</jb-button></div>
+          } @else {
+            <div class="text-sm text-jb-text-dim">{{ 'pack.notReady' | translate }}</div>
+          }
+        </div>
+
+        <!-- Cover letter -->
+        <div class="card p-4 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs text-jb-text-dim tracking-widest uppercase">{{ 'pack.coverLetter' | translate }}</div>
+            @if (cover()) {
+              <jb-button small icon="edit" [routerLink]="['/applications', appId, 'output']" [queryParams]="{ format: 'cl' }">{{ 'pack.openEdit' | translate }}</jb-button>
+            }
+          </div>
+          @if (cover()) {
+            <pre class="m-0 text-sm leading-relaxed whitespace-pre-wrap text-jb-text-mid flex-1" style="font-family:var(--font-sans,Geist,sans-serif)">{{ preview(cover()) }}</pre>
+            <div class="mt-3"><jb-button small icon="copy" (clicked)="copy(cover())">{{ 'pack.copy' | translate }}</jb-button></div>
+          } @else {
+            <div class="text-sm text-jb-text-dim">{{ 'pack.notReady' | translate }}</div>
+          }
+        </div>
+
+      </div>
+    }
+  </div>
+</div>

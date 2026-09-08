@@ -1,0 +1,12 @@
+    <div class="flex flex-col gap-1.5">
+      @for (stage of stages; track stage.label) {
+        <div class="flex items-center gap-3">
+          <span class="w-[70px] text-xs text-jb-text-mid text-right">{{ stage.label }}</span>
+          <div class="flex-1 h-[18px] rounded-sm overflow-hidden bg-jb-surface-3">
+            <div [style.width.%]="(stage.value / maxVal) * 100" [style.height.px]="18"
+              [style.background]="stage.color" class="rounded-sm transition-[width] duration-300"></div>
+          </div>
+          <span class="mono text-xs min-w-[24px] text-jb-text-mid">{{ stage.value }}</span>
+        </div>
+      }
+    </div>

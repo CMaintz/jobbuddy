@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { ResumeStateService } from '../services/resume-state.service';
+import { AiTailorFormComponent } from './forms/ai-tailor-form.component';
 import { PersonalInfoFormComponent } from './forms/personal-info-form.component';
 import { ExperienceFormComponent } from './forms/experience-form.component';
 import { EducationFormComponent } from './forms/education-form.component';
@@ -25,6 +28,8 @@ interface EditorSection {
   standalone: true,
   imports: [
     CommonModule,
+    TranslateModule,
+    AiTailorFormComponent,
     PersonalInfoFormComponent,
     ExperienceFormComponent,
     EducationFormComponent,
@@ -38,62 +43,31 @@ interface EditorSection {
     LayoutFormComponent,
     CustomSectionsFormComponent,
   ],
-  template: `
-    <div class="divide-y divide-gray-100">
-      @for (section of sections; track section.id) {
-        <div>
-          <button
-            class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-            (click)="section.open = !section.open"
-          >
-            <div class="flex items-center gap-2.5">
-              <span class="text-base">{{ section.icon }}</span>
-              <span class="text-sm font-medium text-gray-800">{{ section.label }}</span>
-            </div>
-            <svg
-              class="w-4 h-4 text-gray-400 transition-transform"
-              [class.rotate-180]="section.open"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </button>
-          @if (section.open) {
-            <div class="px-4 pb-4 pt-1">
-              @switch (section.id) {
-                @case ('personal') { <app-personal-info-form /> }
-                @case ('experience') { <app-experience-form /> }
-                @case ('education') { <app-education-form /> }
-                @case ('skills') { <app-skills-form /> }
-                @case ('projects') { <app-projects-form /> }
-                @case ('languages') { <app-languages-form /> }
-                @case ('certifications') { <app-certifications-form /> }
-                @case ('strengths') { <app-strengths-form /> }
-                @case ('socials') { <app-socials-form /> }
-                @case ('settings') { <app-settings-form /> }
-                @case ('layout') { <app-layout-form /> }
-                @case ('custom') { <app-custom-sections-form /> }
-              }
-            </div>
-          }
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './resume-editor.component.html',
 })
 export class ResumeEditorComponent {
+  private state = inject(ResumeStateService);
+
+  /** The AI panel only makes sense for job-linked (tailored) drafts. */
+  get visibleSections(): EditorSection[] {
+    return this.state.draftJobId()
+      ? this.sections
+      : this.sections.filter(s => s.id !== 'ai-tailor');
+  }
+
   sections: EditorSection[] = [
-    { id: 'personal', label: 'Personal Info', icon: '👤', open: true },
-    { id: 'experience', label: 'Work Experience', icon: '💼', open: false },
-    { id: 'education', label: 'Education', icon: '🎓', open: false },
-    { id: 'skills', label: 'Skills', icon: '⚡', open: false },
-    { id: 'projects', label: 'Projects', icon: '🚀', open: false },
-    { id: 'languages', label: 'Languages', icon: '🌍', open: false },
-    { id: 'certifications', label: 'Certifications', icon: '🏅', open: false },
-    { id: 'strengths', label: 'Strengths', icon: '💪', open: false },
-    { id: 'socials', label: 'Social Links', icon: '🔗', open: false },
-    { id: 'settings', label: 'Settings', icon: '⚙️', open: false },
-    { id: 'layout', label: 'Layout & Template', icon: '🎨', open: false },
-    { id: 'custom', label: 'Custom Sections', icon: '✏️', open: false },
+    { id: 'ai-tailor', label: 'resumeBuilder.section.aiTailor', icon: '✦', open: true },
+    { id: 'personal', label: 'resumeBuilder.section.personal', icon: '👤', open: true },
+    { id: 'experience', label: 'resumeBuilder.section.experience', icon: '💼', open: false },
+    { id: 'education', label: 'resumeBuilder.section.education', icon: '🎓', open: false },
+    { id: 'skills', label: 'resumeBuilder.section.skills', icon: '⚡', open: false },
+    { id: 'projects', label: 'resumeBuilder.section.projects', icon: '🚀', open: false },
+    { id: 'languages', label: 'resumeBuilder.section.languages', icon: '🌍', open: false },
+    { id: 'certifications', label: 'resumeBuilder.section.certifications', icon: '🏅', open: false },
+    { id: 'strengths', label: 'resumeBuilder.section.strengths', icon: '💪', open: false },
+    { id: 'socials', label: 'resumeBuilder.section.socials', icon: '🔗', open: false },
+    { id: 'settings', label: 'resumeBuilder.section.settings', icon: '⚙️', open: false },
+    { id: 'layout', label: 'resumeBuilder.section.layout', icon: '🎨', open: false },
+    { id: 'custom', label: 'resumeBuilder.section.custom', icon: '✏️', open: false },
   ];
 }

@@ -1,0 +1,88 @@
+/* ═══════════════════════════════════════════════════════════════
+   Jobbuddy — CV Builder form controls (rb-*)
+   Only builder-specific controls live here. Plain inputs, labels,
+   selects, cards and switches use the shared app classes/components
+   (.input, .label, .card, jb-toggle) so the builder matches the
+   rest of the UI.
+   ═══════════════════════════════════════════════════════════════ */
+
+.rb-remove {
+  color: var(--jb-danger);
+  font-size: 11px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.rb-remove:hover { filter: brightness(1.15); }
+
+.rb-add {
+  width: 100%;
+  padding: 8px;
+  font-size: 13px;
+  color: var(--jb-accent);
+  border: 2px dashed var(--jb-border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.rb-add:hover { border-color: var(--jb-accent); }
+
+.rb-chip {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--jb-border);
+  background: transparent;
+  color: var(--jb-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rb-chip.active {
+  border-color: var(--jb-accent);
+  background: var(--jb-accent);
+  color: #1c1004;
+}
+
+.rb-toggle {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid var(--jb-border);
+  background: transparent;
+  color: var(--jb-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rb-toggle.active {
+  background: var(--jb-accent);
+  color: #1c1004;
+  border-color: var(--jb-accent);
+  font-weight: 500;
+}
+
+.rb-tpl-card {
+  padding: 12px;
+  text-align: left;
+  border-radius: 8px;
+  border: 2px solid var(--jb-border);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rb-tpl-card.active {
+  border-color: var(--jb-accent);
+  background: var(--jb-accent-soft);
+}
+.rb-tpl-card:hover { border-color: var(--jb-border-strong); }
+
+.rb-section-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--jb-surface-2);
+  border-radius: 6px;
+  border: 1px solid var(--jb-border);
+}

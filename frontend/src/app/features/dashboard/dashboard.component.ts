@@ -1,194 +1,288 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { DashboardApiService, DashboardData } from '../../core/api/dashboard.api';
-import { RemindersApiService, FollowUpReminder } from '../../core/api/reminders.api';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
+import { forkJoin, of, catchError } from 'rxjs';
+import { DashboardApiService, DetailedMetrics, WeeklyTrend } from '../../core/api/dashboard.api';
+import { RemindersApiService } from '../../core/api/reminders.api';
+import { NudgesApiService, Nudge } from '../../core/api/nudges.api';
+import { ApplicationsApiService } from '../../core/api/applications.api';
+import { JobsApiService } from '../../core/api/jobs.api';
+import { Application } from '../../core/models/application.model';
+import { UserPreferences } from '../../core/models/user.model';
+import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+import { SparklineComponent } from '../../shared/components/sparkline/sparkline.component';
+import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
+import { FunnelComponent } from '../../shared/components/funnel/funnel.component';
+import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
+import { activityStreak, buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
+
+const HEATMAP_WEEKS = 14;
+
+type PeriodKey = '4w' | '3m' | '6m' | 'all';
+
+const PERIODS: { key: PeriodKey; labelKey: string; days: number; weeks: number }[] = [
+  { key: '4w', labelKey: 'dashboard.period.4w', days: 28, weeks: 4 },
+  { key: '3m', labelKey: 'dashboard.period.3m', days: 91, weeks: 13 },
+  { key: '6m', labelKey: 'dashboard.period.6m', days: 182, weeks: 26 },
+  { key: 'all', labelKey: 'dashboard.period.all', days: Infinity, weeks: 26 },
+];
+
+/** Statuses that mean the company replied in some form. */
+const RESPONDED_STATUSES = new Set([
+  'RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND', 'OFFER', 'REJECTED',
+]);
+const SENT_STATUSES = new Set([
+  'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND', 'OFFER', 'REJECTED', 'ARCHIVED',
+]);
+
+const STATUS_FEED: Record<string, { what: string; color: string }> = {
+  SAVED: { what: 'dashboard.status.saved', color: 'var(--jb-text-dim)' },
+  PREPARING: { what: 'dashboard.status.preparing', color: 'var(--jb-accent)' },
+  APPLIED: { what: 'dashboard.status.applied', color: 'var(--jb-info)' },
+  RECRUITER_CONTACT: { what: 'dashboard.status.recruiterContact', color: 'var(--jb-violet)' },
+  INTERVIEW: { what: 'dashboard.status.interview', color: 'var(--jb-accent)' },
+  TECHNICAL_TEST: { what: 'dashboard.status.technicalTest', color: 'var(--jb-accent)' },
+  FINAL_ROUND: { what: 'dashboard.status.finalRound', color: 'var(--jb-accent)' },
+  OFFER: { what: 'dashboard.status.offer', color: 'var(--jb-success)' },
+  REJECTED: { what: 'dashboard.status.rejected', color: 'var(--jb-danger)' },
+  ARCHIVED: { what: 'dashboard.status.archived', color: 'var(--jb-text-dim)' },
+};
+
+interface QueueItem {
+  time: string;
+  what: string;
+  detail: string;
+  tag: string;
+  tone: 'accent' | 'info' | 'danger' | 'neutral' | 'violet' | 'success';
+  hot: boolean;
+}
+
+interface FeedItem {
+  time: string;
+  what: string;
+  who: string;
+  color: string;
+}
+
+interface SavedPreview {
+  name: string;
+  age: string;
+  hot: boolean;
+}
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
-  template: `
-    <div class="space-y-6">
-      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-
-      @if (loading) {
-        <div class="text-center py-12 text-gray-500">Loading dashboard...</div>
-      } @else if (data) {
-        <!-- Stats Row -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <a routerLink="/applications" class="card text-center hover:shadow-md transition-shadow">
-            <div class="text-3xl font-bold text-blue-600">{{ data.appliedThisWeek ?? 0 }}</div>
-            <div class="text-sm text-gray-500 mt-1">Applied This Week</div>
-          </a>
-          <a routerLink="/applications" class="card text-center hover:shadow-md transition-shadow">
-            <div class="text-3xl font-bold text-yellow-600">{{ data.activeApplications ?? 0 }}</div>
-            <div class="text-sm text-gray-500 mt-1">Active Applications</div>
-          </a>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-purple-600">{{ data.upcomingInterviews.length }}</div>
-            <div class="text-sm text-gray-500 mt-1">Interviews</div>
-          </div>
-          <div class="card text-center">
-            <div class="text-3xl font-bold text-green-600">{{ data.recommendedJobs.length }}</div>
-            <div class="text-sm text-gray-500 mt-1">Recommendations</div>
-          </div>
-        </div>
-
-        <!-- Due Reminders -->
-        @if (dueReminders.length) {
-          <div class="card border-l-4"
-               [class.border-red-400]="overdueReminders > 0"
-               [class.border-yellow-400]="overdueReminders === 0">
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="text-base font-semibold text-gray-900">Follow-up Reminders</h2>
-              @if (overdueReminders > 0) {
-                <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
-                  {{ overdueReminders }} overdue
-                </span>
-              }
-            </div>
-            <div class="space-y-2">
-              @for (r of dueReminders; track r.id) {
-                <div class="flex items-center justify-between p-2.5 rounded-lg"
-                     [class.bg-red-50]="isOverdue(r)"
-                     [class.bg-yellow-50]="!isOverdue(r)">
-                  <div>
-                    <p class="text-sm font-medium text-gray-900">{{ r.note || 'Follow up' }}</p>
-                    <p class="text-xs" [class.text-red-600]="isOverdue(r)" [class.text-yellow-700]="!isOverdue(r)">
-                      {{ reminderDueLabel(r) }}
-                    </p>
-                  </div>
-                  <button (click)="completeReminder(r)"
-                          class="text-xs text-green-600 hover:text-green-700 font-medium shrink-0 ml-4">
-                    Mark done
-                  </button>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Quick Actions -->
-        <div class="card">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div class="flex flex-wrap gap-3">
-            <a routerLink="/jobs/search" class="btn-primary">Browse Jobs</a>
-            <a routerLink="/jobs/add" class="btn-secondary">Add Job Manually</a>
-            <a routerLink="/ai/generate" class="btn-secondary">Generate Application</a>
-            <a routerLink="/ai/cv" class="btn-secondary">Upload CV</a>
-            <a routerLink="/prompts" class="btn-secondary">Manage Prompts</a>
-          </div>
-        </div>
-
-        <!-- Recommended Jobs -->
-        @if (data.recommendedJobs.length) {
-          <div class="card">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-semibold text-gray-900">Recommended Jobs</h2>
-              <a routerLink="/jobs" class="text-sm text-blue-600 hover:underline">View all →</a>
-            </div>
-            <div class="space-y-3">
-              @for (match of data.recommendedJobs.slice(0, 5); track match.jobId) {
-                <div class="p-3 bg-gray-50 rounded-lg">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <div class="font-medium text-gray-900">{{ match.job?.title }}</div>
-                      <div class="text-sm text-gray-500">{{ match.job?.companyName }} • {{ match.job?.location }}</div>
-                    </div>
-                    <span class="text-xs font-medium px-2 py-1 rounded-full shrink-0 ml-2"
-                          [class]="matchLabelClass(match.matchLabel)">
-                      {{ match.totalScore }}%
-                    </span>
-                  </div>
-                  @if (match.matchReasons?.length) {
-                    <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">
-                      @for (reason of match.matchReasons; track reason) {
-                        <span class="text-xs text-green-700">✓ {{ reason }}</span>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Active Applications -->
-        @if (data.pendingApplications.length) {
-          <div class="card">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-semibold text-gray-900">Active Applications</h2>
-              <a routerLink="/applications" class="text-sm text-blue-600 hover:underline">View all →</a>
-            </div>
-            <div class="space-y-2">
-              @for (app of data.pendingApplications.slice(0, 5); track app.id) {
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span class="text-sm text-gray-700">Application #{{ app.id?.slice(0,8) }}</span>
-                  <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    {{ app.status }}
-                  </span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-      }
-    </div>
-  `
+  imports: [
+    CommonModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
+    StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,
+  ],
+  templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
+  private http = inject(HttpClient);
   private api = inject(DashboardApiService);
   private remindersApi = inject(RemindersApiService);
+  private nudgesApi = inject(NudgesApiService);
+  private appsApi = inject(ApplicationsApiService);
+  private jobsApi = inject(JobsApiService);
+  private translate = inject(TranslateService);
 
-  data: DashboardData | null = null;
-  loading = true;
-  dueReminders: FollowUpReminder[] = [];
+  layout = signal<'dense' | 'editorial'>('dense');
+  period = signal<PeriodKey>((localStorage.getItem('jb-dash-period') as PeriodKey) || '4w');
+  periods = PERIODS;
 
-  get overdueReminders(): number {
-    const now = new Date();
-    return this.dueReminders.filter(r => new Date(r.dueAt) < now).length;
+  appliedThisWeek = 0;
+  weeklyGoal = 10;
+  responseRate = 0;
+  /** Response-rate change vs the previous period of equal length, in points. Null for all-time. */
+  responseDelta: number | null = null;
+  sentInPeriod = 0;
+  streak = 0;
+  savedCount = 0;
+  overdueCount = 0;
+
+  private allApps: Application[] = [];
+
+  appsSpark: number[] = [];
+  weekData: number[] = [];
+  funnelStages: FunnelStage[] = [];
+  heatmapData: number[] = [];
+  heatmapWeeks = HEATMAP_WEEKS;
+  savedPreview: SavedPreview[] = [];
+  todayQueue: QueueItem[] = [];
+  recentFeed: FeedItem[] = [];
+
+  get remainingApps(): number {
+    return Math.max(0, this.weeklyGoal - this.appliedThisWeek);
+  }
+
+  get greeting(): string {
+    const hour = new Date().getHours();
+    return hour < 5 ? 'dashboard.greeting.late'
+      : hour < 12 ? 'dashboard.greeting.morning'
+      : hour < 18 ? 'dashboard.greeting.afternoon'
+      : 'dashboard.greeting.evening';
   }
 
   ngOnInit(): void {
-    this.api.getDashboard().subscribe({
-      next: (d) => { this.data = d; this.loading = false; },
-      error: () => this.loading = false
+    forkJoin({
+      metrics: this.api.getDetailedAnalytics(),
+      trend: this.api.getWeeklyTrend(),
+      apps: this.appsApi.getAll(),
+      saved: this.jobsApi.getSaved(),
+      reminders: this.remindersApi.getOpenReminders(),
+      nudges: this.nudgesApi.getNudges().pipe(catchError(() => of([] as Nudge[]))),
+      prefs: this.http.get<UserPreferences>('/api/v1/users/me/preferences'),
+    }).subscribe({
+      next: ({ metrics, trend, apps, saved, reminders, nudges, prefs }) => {
+        this.allApps = apps;
+        this.applyMetrics(metrics, trend, prefs);
+        this.applyPeriod();
+        this.recentFeed = this.buildFeed(apps);
+        this.savedCount = saved.length;
+        this.savedPreview = saved.slice(0, 3).map(job => ({
+          name: job.companyName ?? job.title,
+          age: this.ageLabel(job.postedAt),
+          hot: false,
+        }));
+        this.buildQueue(reminders, apps, nudges);
+      },
+      error: () => {} // cards keep their zero states
     });
-    this.remindersApi.getDueReminders().subscribe({
-      next: rs => this.dueReminders = rs,
-      error: () => {}
+  }
+
+  private applyMetrics(metrics: DetailedMetrics, trend: WeeklyTrend, prefs: UserPreferences): void {
+    this.appliedThisWeek = metrics.appliedThisWeek;
+    this.weeklyGoal = prefs.weeklyApplicationGoal ?? 10;
+    this.appsSpark = (trend.daily ?? []).map(d => d.count);
+    this.weekData = this.appsSpark.slice(-7);
+  }
+
+  // ── Period-scoped stats ───────────────────────────────────────
+
+  get periodDef() {
+    return PERIODS.find(p => p.key === this.period()) ?? PERIODS[0];
+  }
+
+  setPeriod(key: PeriodKey): void {
+    this.period.set(key);
+    localStorage.setItem('jb-dash-period', key);
+    this.applyPeriod();
+  }
+
+  private applyPeriod(): void {
+    const def = this.periodDef;
+    const now = Date.now();
+    const from = def.days === Infinity ? 0 : now - def.days * 86400000;
+    const prevFrom = def.days === Infinity ? 0 : from - def.days * 86400000;
+
+    const inPeriod = this.allApps.filter(a => this.sentTime(a) >= from);
+    this.sentInPeriod = inPeriod.filter(a => SENT_STATUSES.has(a.status)).length;
+    this.responseRate = this.rateOf(inPeriod);
+
+    if (def.days === Infinity) {
+      this.responseDelta = null;
+    } else {
+      const previous = this.allApps.filter(a => {
+        const t = this.sentTime(a);
+        return t >= prevFrom && t < from;
+      });
+      const prevSent = previous.filter(a => SENT_STATUSES.has(a.status)).length;
+      this.responseDelta = prevSent > 0 ? this.responseRate - this.rateOf(previous) : null;
+    }
+
+    this.funnelStages = buildFunnelStages(inPeriod);
+    this.heatmapWeeks = def.weeks;
+    this.heatmapData = buildHeatmapData(inPeriod, def.weeks);
+    this.streak = activityStreak(buildHeatmapData(this.allApps, 26));
+  }
+
+  private sentTime(app: Application): number {
+    return new Date(app.appliedAt ?? app.createdAt).getTime();
+  }
+
+  /** Share of sent applications that got any reply, in whole percent. */
+  private rateOf(apps: Application[]): number {
+    const sent = apps.filter(a => SENT_STATUSES.has(a.status));
+    if (sent.length === 0) return 0;
+    return Math.round((sent.filter(a => RESPONDED_STATUSES.has(a.status)).length / sent.length) * 100);
+  }
+
+  private buildFeed(apps: Application[]): FeedItem[] {
+    return [...apps]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 6)
+      .map(app => ({
+        time: this.ageLabel(app.updatedAt),
+        what: STATUS_FEED[app.status]?.what ?? app.status,
+        who: `${app.jobCompanyName ?? ''}${app.jobTitle ? ' · ' + app.jobTitle : ''}` || '—',
+        color: STATUS_FEED[app.status]?.color ?? 'var(--jb-text-dim)',
+      }));
+  }
+
+  private buildQueue(reminders: { note: string | null; dueAt: string; applicationId: string }[], apps: Application[], nudges: Nudge[]): void {
+    const appMap = new Map(apps.map(a => [a.id, a]));
+    const now = Date.now();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const dueSoon = reminders.filter(r => new Date(r.dueAt).getTime() <= endOfDay.getTime());
+    this.overdueCount = reminders.filter(r => new Date(r.dueAt).getTime() < now).length;
+    const reminderItems: QueueItem[] = dueSoon.map(r => {
+      const app = appMap.get(r.applicationId);
+      const overdue = new Date(r.dueAt).getTime() < now;
+      return {
+        time: overdue ? 'dashboard.queue.now' : new Date(r.dueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        what: r.note || 'dashboard.queue.followUp',
+        detail: app ? `${app.jobCompanyName ?? ''} · ${app.jobTitle ?? ''}` : '',
+        tag: 'dashboard.tag.followUp',
+        tone: overdue ? 'danger' : 'info',
+        hot: overdue,
+      };
     });
+
+    // Manual reminders lead; computed nudges fill the remaining slots
+    this.todayQueue = [...reminderItems, ...nudges.map(n => this.nudgeItem(n))].slice(0, 5);
   }
 
-  completeReminder(r: FollowUpReminder): void {
-    this.remindersApi.complete(r.id).subscribe(() => {
-      this.dueReminders = this.dueReminders.filter(item => item.id !== r.id);
-    });
-  }
-
-  isOverdue(r: FollowUpReminder): boolean {
-    return new Date(r.dueAt) < new Date();
-  }
-
-  reminderDueLabel(r: FollowUpReminder): string {
-    const due = new Date(r.dueAt);
-    const now = new Date();
-    const diffMs = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
-    if (diffDays === 0) return 'Due today';
-    if (diffDays === 1) return 'Due tomorrow';
-    return `Due in ${diffDays} days`;
-  }
-
-  matchLabelClass(label: string): string {
-    const map: Record<string, string> = {
-      EXCELLENT: 'bg-green-100 text-green-800',
-      STRONG: 'bg-blue-100 text-blue-800',
-      MODERATE: 'bg-yellow-100 text-yellow-800',
-      WEAK: 'bg-gray-100 text-gray-600'
+  private nudgeItem(n: Nudge): QueueItem {
+    const detail = `${n.companyName ?? ''}${n.jobTitle ? ' · ' + n.jobTitle : ''}` || '—';
+    if (n.type === 'DEADLINE_SOON') {
+      const daysLeft = Math.max(0, Math.ceil((new Date(n.deadline ?? '').getTime() - Date.now()) / 86400000));
+      return {
+        time: daysLeft === 0 ? 'dashboard.queue.today' : `${daysLeft}d`,
+        what: 'dashboard.queue.applyDeadline',
+        detail,
+        tag: 'dashboard.tag.deadline',
+        tone: daysLeft <= 2 ? 'danger' : 'info',
+        hot: daysLeft <= 2,
+      };
+    }
+    return {
+      time: `${n.daysSinceApplied}d`,
+      what: 'dashboard.queue.noReply',
+      detail,
+      tag: 'dashboard.tag.noReply',
+      tone: 'violet',
+      hot: false,
     };
-    return map[label] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  ageLabel(iso?: string): string {
+    if (!iso) return '—';
+    const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 60) return this.translate.instant('time.compact.minutes', { n: Math.max(mins, 1) });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return this.translate.instant('time.compact.hours', { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 7) return this.translate.instant('time.compact.days', { n: days });
+    return this.translate.instant('time.compact.weeks', { n: Math.floor(days / 7) });
   }
 }

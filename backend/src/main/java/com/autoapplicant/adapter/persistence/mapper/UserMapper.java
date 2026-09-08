@@ -12,7 +12,7 @@ public final class UserMapper {
         return new User(
                 e.getId(), e.getEmail(), e.getGoogleId(),
                 e.getLinkedinId(), e.getFirebaseUid(), UserRole.valueOf(e.getRole()),
-                e.isEmailVerified(), e.getCreatedAt(), e.getUpdatedAt()
+                e.isEmailVerified(), e.isOnboardingComplete(), e.getCreatedAt(), e.getUpdatedAt()
         );
     }
 
@@ -25,6 +25,7 @@ public final class UserMapper {
         e.setFirebaseUid(d.firebaseUid());
         e.setRole(d.role().name());
         e.setEmailVerified(d.emailVerified());
+        e.setOnboardingComplete(d.onboardingComplete());
         return e;
     }
 }
