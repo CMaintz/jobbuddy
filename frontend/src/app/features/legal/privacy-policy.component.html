@@ -1,0 +1,62 @@
+
+    <div class="min-h-screen overflow-auto">
+      <div class="max-w-[720px] mx-auto p-[32px_20px_64px]">
+        <a routerLink="/" class="jb-link text-sm">{{ 'legal.back' | translate }}</a>
+
+        <h1 class="text-2xl font-semibold tracking-tight mt-6 mb-1">{{ 'legal.title' | translate }}</h1>
+        <p class="text-sm text-jb-text-dim mb-8">{{ 'legal.lastUpdated' | translate:{ date: lastUpdated } }}</p>
+
+        <div class="flex flex-col gap-6 text-base leading-relaxed">
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.whoTitle' | translate }}</h2>
+            <p>{{ 'legal.whoBody' | translate }}</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.storeTitle' | translate }}</h2>
+            <ul class="list-disc pl-5 flex flex-col gap-1">
+              <li [innerHTML]="'legal.store.account' | translate"></li>
+              <li [innerHTML]="'legal.store.profile' | translate"></li>
+              <li [innerHTML]="'legal.store.apps' | translate"></li>
+              <li [innerHTML]="'legal.store.style' | translate"></li>
+              <li [innerHTML]="'legal.store.prefs' | translate"></li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.aiTitle' | translate }}</h2>
+            <p [innerHTML]="'legal.aiBody' | translate"></p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.cookiesTitle' | translate }}</h2>
+            <p [innerHTML]="'legal.cookiesBody' | translate"></p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.legalBasisTitle' | translate }}</h2>
+            <p>{{ 'legal.legalBasisBody' | translate }}</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.rightsTitle' | translate }}</h2>
+            <ul class="list-disc pl-5 flex flex-col gap-1">
+              <li [innerHTML]="'legal.rights.access' | translate"></li>
+              <li [innerHTML]="'legal.rights.rectification' | translate"></li>
+              <li [innerHTML]="'legal.rights.erasure' | translate"></li>
+              <li [innerHTML]="'legal.rights.complaint' | translate"></li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.transfersTitle' | translate }}</h2>
+            <p>{{ 'legal.transfersBody' | translate }}</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-medium mb-2">{{ 'legal.changesTitle' | translate }}</h2>
+            <p>{{ 'legal.changesBody' | translate }}</p>
+          </section>
+        </div>
+      </div>
+    </div>

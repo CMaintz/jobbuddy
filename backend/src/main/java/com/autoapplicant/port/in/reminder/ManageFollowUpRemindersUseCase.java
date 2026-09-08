@@ -9,6 +9,7 @@ import java.util.UUID;
 public interface ManageFollowUpRemindersUseCase {
     List<FollowUpReminder> getForApplication(UUID applicationId, UUID userId);
     List<FollowUpReminder> getDueReminders(UUID userId);
+    List<FollowUpReminder> getOpenReminders(UUID userId);
     FollowUpReminder createReminder(UUID applicationId, UUID userId, String note, Instant dueAt);
     FollowUpReminder completeReminder(UUID reminderId, UUID userId);
     void deleteReminder(UUID reminderId, UUID userId);

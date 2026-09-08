@@ -1,0 +1,402 @@
+import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Observable, forkJoin, of } from 'rxjs';
+import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
+import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
+import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
+import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
+import { PhotoCropDialogComponent } from '../resume-builder/shared/photo-crop-dialog.component';
+import { AiRefineMenuComponent } from '../resume-builder/shared/ai-refine-menu.component';
+import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
+import { MasterCvPreviewComponent } from './master-cv-preview.component';
+import { McvStrengthsSectionComponent } from './sections/mcv-strengths-section.component';
+import { McvExperienceSectionComponent } from './sections/mcv-experience-section.component';
+import { McvEducationSectionComponent } from './sections/mcv-education-section.component';
+import { McvProjectsSectionComponent } from './sections/mcv-projects-section.component';
+import { McvCertificationsSectionComponent } from './sections/mcv-certifications-section.component';
+import { McvLanguagesSectionComponent } from './sections/mcv-languages-section.component';
+import { McvSocialsSectionComponent } from './sections/mcv-socials-section.component';
+import { AtsPdfService, structuredDocToAts } from '../../shared/services/ats-pdf.service';
+import { AiApiService } from '../../core/api/ai.api';
+import { StructuredDocument } from '../../core/models/structured-document.model';
+import { ProfileSectionsApiService, FullProfileResponse } from '../../core/api/profile-sections.api';
+import { ProfilePrivateApiService } from '../../core/api/profile-private.api';
+import { ProfileStrengthApiService } from '../../core/api/profile-strength.api';
+import { ProfileSocialApiService } from '../../core/api/profile-social.api';
+import { Profile, ProfilePrivateInfo } from '../../core/models/user.model';
+import {
+  WorkExperience, Education, Project, Certification,
+  SpokenLanguage, ProfileSocial, ProfileStrength
+} from '../../core/models/profile-section.model';
+
+interface CvSection {
+  key: string;
+  label: string;
+  count: string;
+  empty?: boolean;
+}
+
+@Component({
+  selector: 'app-master-cv-builder',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule, RouterLink,
+    JbTopbarComponent, JbIconComponent, JbButtonComponent, JbToastComponent,
+    TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent,
+    JbDropdownComponent, MasterCvPreviewComponent,
+    McvStrengthsSectionComponent, McvExperienceSectionComponent, McvEducationSectionComponent,
+    McvProjectsSectionComponent, McvCertificationsSectionComponent,
+    McvLanguagesSectionComponent, McvSocialsSectionComponent,
+    TranslateModule,
+  ],
+  templateUrl: './master-cv-builder.component.html'
+})
+export class MasterCvBuilderComponent implements OnInit {
+  private http = inject(HttpClient);
+  private translate = inject(TranslateService);
+  private profileApi = inject(ProfileSectionsApiService);
+  private privateApi = inject(ProfilePrivateApiService);
+  private strengthApi = inject(ProfileStrengthApiService);
+  private socialApi = inject(ProfileSocialApiService);
+  private aiApi = inject(AiApiService);
+  private atsPdf = inject(AtsPdfService);
+
+  loading = true;
+  saving = signal(false);
+  dirty = signal(false);
+  toast = signal('');
+  activeSec = signal('Header');
+
+  profile: Profile = {};
+  privateInfo: ProfilePrivateInfo = {};
+  experienceList: WorkExperience[] = [];
+  educationList: Education[] = [];
+  projectsList: Project[] = [];
+  certificationsList: Certification[] = [];
+  languagesList: SpokenLanguage[] = [];
+  socialsList: ProfileSocial[] = [];
+  strengthsList: ProfileStrength[] = [];
+
+  @ViewChild(McvCertificationsSectionComponent) certSection?: McvCertificationsSectionComponent;
+
+  cropSrc = signal<string | null>(null);
+  uploadingPhoto = signal(false);
+
+  // ATS-safe PDF export (full or anonymised)
+  exportingPdf = signal(false);
+
+  get skillsList(): string[] { return this.profile.skills ?? []; }
+  get technologiesList(): string[] { return this.profile.technologies ?? []; }
+
+  get coverage(): number {
+    const checks = [
+      (this.profile.summary?.length ?? 0) > 60,
+      this.strengthsList.length >= 3,
+      this.experienceList.length >= 2,
+      this.skillsList.length >= 6,
+      this.educationList.length >= 1,
+      this.languagesList.length >= 1,
+      this.experienceList.some(j => (j.description?.length ?? 0) > 50),
+      this.projectsList.length >= 1,
+    ];
+    return Math.round((checks.filter(Boolean).length / 8) * 100);
+  }
+
+  sections(): CvSection[] {
+    return [
+      { key: 'Header', label: 'masterCv.sec.header', count: this.translate.instant('masterCv.count.fields', { n: 5 }) },
+      { key: 'Profile', label: 'masterCv.sec.profile', count: this.translate.instant('masterCv.count.words', { n: (this.profile.summary ?? '').trim().split(/\s+/).filter(Boolean).length }) },
+      { key: 'Strengths', label: 'masterCv.sec.strengths', count: `${this.strengthsList.length}` },
+      { key: 'Experience', label: 'masterCv.sec.experience', count: this.translate.instant('masterCv.count.roles', { n: this.experienceList.length }) },
+      { key: 'Skills', label: 'masterCv.sec.skills', count: `${this.skillsList.length + this.technologiesList.length}` },
+      { key: 'Education', label: 'masterCv.sec.education', count: `${this.educationList.length}` },
+      { key: 'Projects', label: 'masterCv.sec.projects', count: `${this.projectsList.length}`, empty: this.projectsList.length === 0 },
+      { key: 'Certifications', label: 'masterCv.sec.certifications', count: `${this.certificationsList.length}`, empty: this.certificationsList.length === 0 },
+      { key: 'Languages', label: 'masterCv.sec.languages', count: `${this.languagesList.length}` },
+      { key: 'Socials', label: 'masterCv.sec.socials', count: `${this.socialsList.length}`, empty: this.socialsList.length === 0 },
+    ];
+  }
+
+  sectionHint(): string {
+    const hints: Record<string, string> = {
+      Header: 'masterCv.hint.header',
+      Profile: 'masterCv.hint.profile',
+      Strengths: 'masterCv.hint.strengths',
+      Experience: 'masterCv.hint.experience',
+      Skills: 'masterCv.hint.skills',
+      Education: 'masterCv.hint.education',
+      Projects: 'masterCv.hint.projects',
+      Certifications: 'masterCv.hint.certifications',
+      Languages: 'masterCv.hint.languages',
+      Socials: 'masterCv.hint.socials',
+    };
+    const key = hints[this.activeSec()];
+    return key ? this.translate.instant(key) : '';
+  }
+
+  ngOnInit(): void {
+    forkJoin({
+      full: this.profileApi.getFullProfile(),
+      priv: this.privateApi.getPrivateInfo(),
+    }).subscribe({
+      next: ({ full, priv }) => {
+        this.applyFullProfile(full);
+        this.privateInfo = priv ?? {};
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.toast.set(this.translate.instant('masterCv.toast.loadFailed'));
+      }
+    });
+  }
+
+  private applyFullProfile(resp: FullProfileResponse): void {
+    this.profile = resp.profile ?? {};
+    this.experienceList = resp.experience || [];
+    this.educationList = resp.education || [];
+    this.projectsList = resp.projects || [];
+    this.certificationsList = resp.certifications || [];
+    this.languagesList = resp.languages || [];
+    this.socialsList = resp.socials || [];
+    this.strengthsList = resp.strengths || [];
+  }
+
+  markDirty(): void {
+    this.dirty.set(true);
+  }
+
+  // ── PDF export ────────────────────────────────────────────────
+
+  /**
+   * Text-based ATS-safe PDF of the master CV, optionally anonymised.
+   * Styled/designed exports live in the CV Builder — the master CV is
+   * plain by design, so its export is always parseable text.
+   */
+  exportPdf(anonymised: boolean): void {
+    if (this.exportingPdf()) return;
+    this.exportingPdf.set(true);
+    this.aiApi.getCvRenderModel().subscribe({
+      next: async doc => {
+        try {
+          const model = structuredDocToAts(anonymised ? this.anonymiseDoc(doc) : doc);
+          const filename = anonymised
+            ? 'master-cv-anonymised'
+            : `${this.privateInfo.fullName || 'master-cv'} - CV`;
+          await this.atsPdf.downloadResume(model, filename);
+        } catch {
+          this.toast.set(this.translate.instant('masterCv.toast.pdfFailed'));
+        } finally {
+          this.exportingPdf.set(false);
+        }
+      },
+      error: () => {
+        this.exportingPdf.set(false);
+        this.toast.set(this.translate.instant('masterCv.toast.renderFailed'));
+      }
+    });
+  }
+
+  /** Masks identity: initials only, no contact details, links, or photo. */
+  private anonymiseDoc(doc: StructuredDocument): StructuredDocument {
+    const initials = (doc.identity?.name ?? '').trim().split(/\s+/).filter(Boolean)
+      .map(p => p[0].toUpperCase() + '.').join(' ');
+    return {
+      ...doc,
+      identity: {
+        name: initials || this.translate.instant('masterCv.candidate'),
+        headline: doc.identity?.headline,
+        location: doc.identity?.location,
+      },
+      options: { ...(doc.options ?? { showProfileImage: false }), showProfileImage: false },
+    };
+  }
+
+  // ── Profile photo ─────────────────────────────────────────────
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => this.cropSrc.set(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  recropPhoto(): void {
+    if (this.privateInfo.photoUrl) this.cropSrc.set(this.privateInfo.photoUrl);
+  }
+
+  onPhotoCropped(dataUrl: string): void {
+    this.cropSrc.set(null);
+    this.uploadingPhoto.set(true);
+    const formData = new FormData();
+    formData.append('file', dataUrlToBlob(dataUrl), 'photo.jpg');
+    this.http.post<{ url: string }>('/api/v1/users/me/profile/photo', formData).subscribe({
+      next: res => {
+        this.privateInfo.photoUrl = res.url;
+        this.uploadingPhoto.set(false);
+        this.toast.set(this.translate.instant('masterCv.toast.photoUpdated'));
+      },
+      error: () => {
+        this.uploadingPhoto.set(false);
+        this.toast.set(this.translate.instant('masterCv.toast.photoFailed'));
+      }
+    });
+  }
+
+  removePhoto(): void {
+    this.privateInfo.photoUrl = '';
+    this.privateApi.updatePrivateInfo({ photoUrl: '' }).subscribe({
+      error: () => this.toast.set(this.translate.instant('masterCv.toast.photoRemoveFailed'))
+    });
+  }
+
+  onSkillsChange(value: string[]): void {
+    this.profile.skills = value;
+    this.markDirty();
+  }
+
+  onTechnologiesChange(value: string[]): void {
+    this.profile.technologies = value;
+    this.markDirty();
+  }
+
+  // ── Add / remove list entries (persisted on Save) ─────────────
+
+  addExperience(): void {
+    this.experienceList.unshift({ companyName: '', title: '', startDate: '', isCurrent: false, description: '' });
+    this.markDirty();
+  }
+
+  addEducation(): void {
+    this.educationList.unshift({ institution: '', degree: '' });
+    this.markDirty();
+  }
+
+  addProject(): void {
+    this.projectsList.unshift({ name: '', description: '' });
+    this.markDirty();
+  }
+
+  addLanguage(): void {
+    this.languagesList.push({ language: '', proficiency: 'FLUENT', displayOrder: this.languagesList.length });
+    this.markDirty();
+  }
+
+  addSocial(): void {
+    this.socialsList.push({ platform: 'GitHub', url: '', iconKey: 'github', displayOrder: this.socialsList.length });
+    this.markDirty();
+  }
+
+  addStrength(): void {
+    this.strengthsList.push({ title: '', description: '', iconKey: 'star', displayOrder: this.strengthsList.length });
+    this.markDirty();
+  }
+
+  removeExperience(i: number): void { this.removeEntry(this.experienceList, i, id => this.profileApi.deleteExperience(id)); }
+  removeEducation(i: number): void { this.removeEntry(this.educationList, i, id => this.profileApi.deleteEducation(id)); }
+  removeProject(i: number): void { this.removeEntry(this.projectsList, i, id => this.profileApi.deleteProject(id)); }
+  removeLanguage(i: number): void { this.removeEntry(this.languagesList, i, id => this.profileApi.deleteLanguage(id)); }
+  removeSocial(i: number): void { this.removeEntry(this.socialsList, i, id => this.socialApi.deleteSocial(id)); }
+  removeStrength(i: number): void { this.removeEntry(this.strengthsList, i, id => this.strengthApi.deleteStrength(id)); }
+  removeCertification(i: number): void { this.removeEntry(this.certificationsList, i, id => this.profileApi.deleteCertification(id)); }
+
+  private removeEntry<T extends { id?: string }>(list: T[], index: number, deleteFn: (id: string) => Observable<void>): void {
+    const entry = list[index];
+    list.splice(index, 1);
+    if (entry?.id) {
+      deleteFn(entry.id).subscribe({
+        error: () => {
+          list.splice(index, 0, entry);
+          this.toast.set(this.translate.instant('masterCv.toast.deleteFailed'));
+        }
+      });
+    }
+  }
+
+  /** Certifications persist immediately; the child form resets once the API call succeeds. */
+  saveCertification(cert: Certification): void {
+    this.profileApi.addCertification(cert).subscribe({
+      next: saved => {
+        this.certificationsList.push(saved);
+        this.certSection?.reset();
+      },
+      error: () => this.toast.set(this.translate.instant('masterCv.toast.certFailed'))
+    });
+  }
+
+  // ── Save everything ───────────────────────────────────────────
+
+  saveAll(): void {
+    if (this.saving()) return;
+    this.saving.set(true);
+
+    const ops: Observable<unknown>[] = [
+      this.http.patch('/api/v1/users/me/profile', {
+        headline: this.profile.headline,
+        summary: this.profile.summary,
+        yearsExperience: this.profile.yearsExperience,
+        technologies: this.profile.technologies ?? [],
+        skills: this.profile.skills ?? [],
+      }),
+      this.privateApi.updatePrivateInfo({
+        fullName: this.privateInfo.fullName,
+        phone: this.privateInfo.phone,
+        location: this.privateInfo.location,
+        contactEmail: this.privateInfo.contactEmail,
+      }),
+      ...this.upsertOps(this.experienceList, e => !!(e.companyName?.trim() && e.title?.trim() && e.startDate?.trim()),
+        e => this.profileApi.addExperience(e), (id, e) => this.profileApi.updateExperience(id, e)),
+      ...this.upsertOps(this.educationList, e => !!e.institution?.trim(),
+        e => this.profileApi.addEducation(e), (id, e) => this.profileApi.updateEducation(id, e)),
+      ...this.upsertOps(this.projectsList, p => !!p.name?.trim(),
+        p => this.profileApi.addProject(p), (id, p) => this.profileApi.updateProject(id, p)),
+      ...this.upsertOps(this.languagesList, l => !!l.language?.trim(),
+        l => this.profileApi.addLanguage(l), (id, l) => this.profileApi.updateLanguage(id, l)),
+      ...this.upsertOps(this.socialsList, s => !!(s.platform?.trim() && s.url?.trim()),
+        s => this.socialApi.createSocial(s), (id, s) => this.socialApi.updateSocial(id, s)),
+      ...this.upsertOps(this.strengthsList, s => !!s.title?.trim(),
+        s => this.strengthApi.createStrength(s), (id, s) => this.strengthApi.updateStrength(id, s)),
+    ];
+
+    forkJoin(ops.length ? ops : [of(null)]).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.dirty.set(false);
+        this.toast.set(this.translate.instant('masterCv.toast.saved'));
+        // Refresh lists so newly created entries get their server ids
+        this.profileApi.getFullProfile().subscribe(full => this.applyFullProfile(full));
+      },
+      error: () => {
+        this.saving.set(false);
+        this.toast.set(this.translate.instant('masterCv.toast.saveFailed'));
+      }
+    });
+  }
+
+  /** For each valid entry: PUT when it has an id, POST when it doesn't. Invalid entries stay local. */
+  private upsertOps<T extends { id?: string }>(
+    list: T[],
+    isValid: (entry: T) => boolean,
+    create: (entry: T) => Observable<T>,
+    update: (id: string, entry: T) => Observable<T>,
+  ): Observable<unknown>[] {
+    return list.filter(isValid).map(entry => entry.id ? update(entry.id, entry) : create(entry));
+  }
+}
+
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, base64] = dataUrl.split(',');
+  const mime = meta.match(/data:(.*?);/)?.[1] ?? 'image/jpeg';
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}

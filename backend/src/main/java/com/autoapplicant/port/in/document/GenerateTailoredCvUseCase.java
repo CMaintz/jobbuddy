@@ -9,5 +9,6 @@ public interface GenerateTailoredCvUseCase {
     StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                           String customInstructions, String targetLanguage,
                                           String templateId, UUID promptTemplateId,
-                                          boolean showProfileImage, DocumentTheme theme);
+                                          boolean showProfileImage, DocumentTheme theme,
+                                          String lengthPreference);
 }

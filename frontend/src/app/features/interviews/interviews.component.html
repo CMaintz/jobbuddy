@@ -1,0 +1,241 @@
+    <jb-topbar [title]="'nav.interviews' | translate">
+      <ng-container jb-topbar-actions>
+        <span class="hidden sm:inline text-xs text-jb-text-dim mr-1">{{ 'interviews.inStages' | translate:{ count: interviews().length } }}</span>
+        <jb-button small icon="calendar" [disabled]="exportingIcs()" (clicked)="exportCalendar()">
+          {{ (exportingIcs() ? 'interviews.exporting' : 'interviews.syncCalendar') | translate }}
+        </jb-button>
+        <jb-button small [primary]="true" icon="plus" (clicked)="openLog()">{{ 'interviews.logInterview' | translate }}</jb-button>
+      </ng-container>
+    </jb-topbar>
+
+    <!-- Log interview modal -->
+    @if (logOpen()) {
+      <jb-modal [width]="440" (closed)="logOpen.set(false)">
+        <ng-container jb-modal-header>
+          <div class="text-md font-medium flex-1">{{ 'interviews.logModalTitle' | translate }}</div>
+        </ng-container>
+
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'interviews.application' | translate }}</span>
+          <select class="input" [(ngModel)]="logAppId">
+            @for (app of allApps; track app.id) {
+              <option [value]="app.id">{{ app.jobCompanyName }} — {{ app.jobTitle }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'interviews.round' | translate }}</span>
+          <select class="input" [(ngModel)]="logStage">
+            @for (s of logStages; track s.key) {
+              <option [value]="s.key">{{ s.label | translate }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'interviews.when' | translate }}</span>
+          <input type="datetime-local" class="input mono" [(ngModel)]="logWhen" />
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'interviews.note' | translate }} <span class="text-jb-text-dim normal-case">{{ 'interviews.optional' | translate }}</span></span>
+          <input class="input" [(ngModel)]="logNote" [placeholder]="'interviews.notePlaceholder' | translate" />
+        </label>
+        <div class="text-xs text-jb-text-dim">
+          {{ 'interviews.logHint' | translate }}
+        </div>
+
+        <ng-container jb-modal-footer>
+          <div class="ml-auto flex items-center gap-2">
+            <jb-button small ghost (clicked)="logOpen.set(false)">{{ 'common.cancel' | translate }}</jb-button>
+            <jb-button small [primary]="true" icon="check" [disabled]="logSaving() || !logAppId || !logWhen"
+              (clicked)="saveLog()">{{ (logSaving() ? 'common.saving' : 'interviews.logInterview') | translate }}</jb-button>
+          </div>
+        </ng-container>
+      </jb-modal>
+    }
+
+    <!-- Mock interview roleplay modal -->
+    @if (roleplayOpen()) {
+      <jb-modal [width]="600" (closed)="roleplayOpen.set(false)">
+        <ng-container jb-modal-header>
+          <div class="flex-1">
+            <div class="text-md font-medium">{{ 'interviews.mockInterview' | translate }}</div>
+            <div class="text-xs text-jb-text-dim mt-0.5">
+              {{ selected()?.jobCompanyName }} — {{ selected()?.jobTitle }} · {{ 'interviews.mockSubtitle' | translate }}
+            </div>
+          </div>
+        </ng-container>
+
+        <div class="flex flex-col gap-2.5 max-h-[46vh] overflow-auto jb-scroll pr-1">
+          @for (turn of roleplayTurns(); track $index) {
+            <div class="flex" [class.justify-end]="turn.role === 'candidate'">
+              <div class="max-w-[85%] rounded-md p-[8px_11px] text-sm leading-relaxed whitespace-pre-wrap"
+                [style.background]="turn.role === 'candidate' ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+                [style.border]="'1px solid ' + (turn.role === 'candidate' ? 'var(--jb-accent-border)' : 'var(--jb-border)')">
+                {{ turn.content }}
+              </div>
+            </div>
+          }
+          @if (roleplayBusy()) {
+            <div class="text-xs text-jb-text-dim px-1">
+              {{ roleplayFeedback() ? '' : roleplayTurns().length === 0 ? ('interviews.starting' | translate) : ('interviews.thinking' | translate) }}
+            </div>
+          }
+          @if (roleplayFeedback()) {
+            <div class="card p-3.5 mt-1">
+              <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'interviews.coachFeedback' | translate }}</div>
+              <div class="text-sm text-jb-text-mid leading-relaxed whitespace-pre-wrap">{{ roleplayFeedback() }}</div>
+            </div>
+          }
+        </div>
+
+        @if (!roleplayFeedback()) {
+          <textarea rows="3" class="input resize-y text-sm leading-relaxed" [(ngModel)]="roleplayInput"
+            [disabled]="roleplayBusy()"
+            (keydown.control.enter)="sendRoleplayAnswer()"
+            [placeholder]="'interviews.answerPlaceholder' | translate"></textarea>
+        }
+
+        <ng-container jb-modal-footer>
+          <div class="ml-auto flex items-center gap-2">
+            @if (roleplayFeedback()) {
+              <jb-button small (clicked)="openRoleplay()">{{ 'interviews.startOver' | translate }}</jb-button>
+              <jb-button small [primary]="true" icon="check" (clicked)="roleplayOpen.set(false)">{{ 'common.done' | translate }}</jb-button>
+            } @else {
+              <jb-button small ghost [disabled]="roleplayBusy() || roleplayTurns().length < 2"
+                (clicked)="endRoleplay()">{{ 'interviews.endFeedback' | translate }}</jb-button>
+              <jb-button small [primary]="true" icon="arrow-right" [disabled]="roleplayBusy() || !roleplayInput.trim()"
+                (clicked)="sendRoleplayAnswer()">{{ 'interviews.sendAnswer' | translate }}</jb-button>
+            }
+          </div>
+        </ng-container>
+      </jb-modal>
+    }
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+    @if (loading()) {
+      <div class="p-12 text-center text-jb-text-dim">{{ 'common.loading' | translate }}</div>
+    } @else if (interviews().length === 0) {
+      <div class="flex-1 flex items-center justify-center">
+        <div class="p-10 text-center max-w-[420px]">
+          <jb-icon name="briefcase" [size]="24" class="text-jb-text-dim" />
+          <div class="text-md font-medium mt-3 mb-1">{{ 'interviews.emptyTitle' | translate }}</div>
+          <div class="text-sm text-jb-text-dim">
+            {{ 'interviews.emptyDesc' | translate }}
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[320px_1fr]">
+        <!-- Interview list -->
+        <aside class="border-r border-jb-border overflow-auto jb-scroll">
+          @for (app of interviews(); track app.id) {
+            <div (click)="select(app)"
+              class="flex items-center gap-2.5 p-[12px_14px] border-b border-jb-border-faint cursor-pointer"
+              [style.background]="selected()?.id === app.id ? 'var(--jb-surface-2)' : 'transparent'">
+              <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="30" />
+              <div class="flex-1 min-w-0">
+                <div class="text-base font-medium truncate">{{ app.jobCompanyName }}</div>
+                <div class="text-xs text-jb-text-dim truncate">{{ app.jobTitle }}</div>
+              </div>
+              <jb-pill tone="accent">{{ stageLabel(app.status) | translate }}</jb-pill>
+            </div>
+          }
+        </aside>
+
+        <!-- Prep panel -->
+        <div class="overflow-auto p-5 jb-scroll">
+          @if (selected(); as app) {
+            <div class="max-w-[720px]">
+              <div class="flex items-center gap-3 mb-4">
+                <div>
+                  <div class="text-xl font-medium">{{ app.jobCompanyName }} — {{ app.jobTitle }}</div>
+                  <div class="text-xs text-jb-text-dim mt-0.5">
+                    {{ 'interviews.stagePrefix' | translate }} {{ stageLabel(app.status) | translate }}
+                    @if (questions().length > 0) {
+                      · {{ 'interviews.practiced' | translate:{ done: practicedCount(), total: questions().length } }}
+                    }
+                  </div>
+                </div>
+                <div class="ml-auto flex gap-2">
+                  <jb-button small (clicked)="openApplication(app)">{{ 'interviews.openApplication' | translate }}</jb-button>
+                  <jb-button small icon="chat" (clicked)="openRoleplay()">{{ 'interviews.mockInterview' | translate }}</jb-button>
+                  <jb-button small [primary]="true" icon="sparkle" [disabled]="generating()" (clicked)="generate()">
+                    {{ (generating() ? 'interviews.generatingLong' : questions().length > 0 ? 'interviews.regeneratePack' : 'interviews.generatePack') | translate }}
+                  </jb-button>
+                </div>
+              </div>
+
+              <!-- Consistency brief: claims from the submitted documents to defend -->
+              @if (consistencyBrief().length) {
+                <div class="card p-3.5 mb-3">
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'interviews.consistencyBrief' | translate }}</div>
+                  <div class="flex flex-col gap-1.5">
+                    @for (claim of consistencyBrief(); track claim) {
+                      <div class="flex items-start gap-2 text-sm">
+                        <jb-icon name="clipboard" [size]="12" class="text-jb-accent mt-0.5 flex-shrink-0" />
+                        <span class="text-jb-text-mid leading-relaxed">{{ claim }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Questions to ask the interviewer -->
+              @if (questionsToAsk().length) {
+                <div class="card p-3.5 mb-3">
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-2">{{ 'interviews.questionsToAsk' | translate }}</div>
+                  <div class="flex flex-col gap-1.5">
+                    @for (q of questionsToAsk(); track q) {
+                      <div class="flex items-start gap-2 text-sm">
+                        <jb-icon name="chat" [size]="12" class="text-jb-info mt-0.5 flex-shrink-0" />
+                        <span class="text-jb-text-mid leading-relaxed">{{ q }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (loadingQuestions()) {
+                <div class="p-8 text-center text-jb-text-dim">{{ 'interviews.loadingQuestions' | translate }}</div>
+              } @else if (questions().length === 0) {
+                <div class="p-8 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md">
+                  <jb-icon name="lightbulb" [size]="20" class="text-jb-accent" />
+                  <div class="text-base text-jb-text-mid mt-2">{{ 'interviews.noQuestions' | translate }}</div>
+                  <div class="text-xs text-jb-text-dim mt-1">{{ 'interviews.noQuestionsDesc' | translate }}</div>
+                </div>
+              } @else {
+                <div class="flex flex-col gap-2">
+                  @for (q of questions(); track q.id) {
+                    <div class="card p-3">
+                      <div class="flex items-start gap-2.5">
+                        <button (click)="togglePracticed(q)" [title]="'interviews.markPracticed' | translate"
+                          class="w-4 h-4 mt-0.5 rounded flex items-center justify-center bg-transparent cursor-pointer shrink-0" style="border:1.5px solid var(--jb-border-strong);"
+                          [style.background]="q.practiced ? 'var(--jb-accent)' : 'transparent'"
+                          [style.border-color]="q.practiced ? 'var(--jb-accent)' : 'var(--jb-border-strong)'">
+                          @if (q.practiced) { <jb-icon name="check" [size]="9" [strokeWidth]="3" style="color:#1c1004;" /> }
+                        </button>
+                        <div class="flex-1 min-w-0 cursor-pointer" (click)="expandedQuestion.set(expandedQuestion() === q.id ? null : q.id)">
+                          <div class="text-base" [style.opacity]="q.practiced ? '0.6' : '1'">{{ q.question }}</div>
+                        </div>
+                        <jb-pill [tone]="categoryTone(q.category)">{{ ('interviews.category.' + q.category.toLowerCase()) | translate }}</jb-pill>
+                        <jb-icon [name]="expandedQuestion() === q.id ? 'chev-down' : 'chev-right'" [size]="12" class="text-jb-text-dim mt-1" />
+                      </div>
+                      @if (expandedQuestion() === q.id) {
+                        <div class="mt-3 pl-[26px]">
+                          <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'interviews.starAnswer' | translate }}</div>
+                          <textarea #answer rows="4" class="input resize-y text-sm leading-relaxed"
+                            [value]="q.starAnswer ?? ''"
+                            (blur)="saveAnswer(q, answer.value)"
+                            [placeholder]="'interviews.starPlaceholder' | translate"></textarea>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }

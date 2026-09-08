@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface PersistGeneratedDocumentUseCase {
     StructuredDocument save(UUID userId, UUID jobId, StructuredDocument document, String modelUsed);
     List<GeneratedDocument> listByUserId(UUID userId);
+    GeneratedDocument attachToApplication(UUID userId, UUID generatedDocumentId, UUID applicationId);
 }

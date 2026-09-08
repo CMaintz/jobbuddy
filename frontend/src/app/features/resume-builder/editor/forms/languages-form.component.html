@@ -1,0 +1,16 @@
+
+    <div class="flex flex-col gap-2.5">
+      @for (lang of languages; track lang.id) {
+        <div class="flex items-center gap-2">
+          <input class="input" style="flex:1;" [value]="lang.name" (input)="update(lang.id, 'name', $any($event.target).value)" placeholder="English" />
+          <select class="input w-auto"
+            [value]="lang.proficiency" (change)="update(lang.id, 'proficiency', $any($event.target).value)">
+            @for (p of proficiencies; track p) {
+              <option [value]="p">{{ p }}</option>
+            }
+          </select>
+          <button class="rb-remove" (click)="remove(lang.id)">✕</button>
+        </div>
+      }
+      <button class="rb-add" (click)="add()">{{ 'resumeBuilder.form.addLanguage' | translate }}</button>
+    </div>

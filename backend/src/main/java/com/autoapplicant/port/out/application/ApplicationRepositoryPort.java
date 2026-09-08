@@ -14,4 +14,7 @@ public interface ApplicationRepositoryPort {
     List<Application> findByUserId(UUID userId);
     Page<Application> findByUserId(UUID userId, Pageable pageable);
     Optional<Application> findByIdAndUserId(UUID id, UUID userId);
+    boolean existsByUserIdAndJobId(UUID userId, UUID jobId);
+    /** Most recent non-empty outcome lessons for the user, newest first. */
+    List<String> findRecentOutcomeLessons(UUID userId, int limit);
 }

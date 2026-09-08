@@ -1,22 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-file-upload-button',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <input #fileInput type="file" [accept]="accept" class="hidden" (change)="onFileSelected($event)" />
-    <button type="button" (click)="fileInput.click()" [disabled]="loading"
-            [class]="buttonClass">
-      {{ loading ? loadingLabel : label }}
-    </button>
-  `
+  imports: [CommonModule, TranslateModule],
+  templateUrl: './file-upload-button.component.html'
 })
 export class FileUploadButtonComponent {
   @Input() accept = '';
-  @Input() label = 'Upload';
-  @Input() loadingLabel = 'Uploading...';
+  @Input() label = 'shared.upload';
+  @Input() loadingLabel = 'shared.uploading';
   @Input() loading = false;
   @Input() buttonClass = 'btn-secondary text-sm px-3 py-1.5';
   @Output() fileSelected = new EventEmitter<File>();

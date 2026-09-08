@@ -39,6 +39,13 @@ public class CompanyEntity {
     @Column(name = "is_recruiting_agency")
     private boolean isRecruitingAgency;
 
+    /** AI-extracted verified facts from the company's own website, for cover-letter grounding. */
+    @Column(name = "researched_facts", columnDefinition = "text")
+    private String researchedFacts;
+
+    @Column(name = "facts_researched_at")
+    private Instant factsResearchedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -72,6 +79,10 @@ public class CompanyEntity {
     public void setConsulting(boolean consulting) { isConsulting = consulting; }
     public boolean isRecruitingAgency() { return isRecruitingAgency; }
     public void setRecruitingAgency(boolean recruitingAgency) { isRecruitingAgency = recruitingAgency; }
+    public String getResearchedFacts() { return researchedFacts; }
+    public void setResearchedFacts(String researchedFacts) { this.researchedFacts = researchedFacts; }
+    public Instant getFactsResearchedAt() { return factsResearchedAt; }
+    public void setFactsResearchedAt(Instant factsResearchedAt) { this.factsResearchedAt = factsResearchedAt; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

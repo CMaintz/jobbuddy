@@ -10,6 +10,7 @@ import java.util.UUID;
 public interface FollowUpReminderRepositoryPort {
     List<FollowUpReminder> findByApplicationIdAndUserId(UUID applicationId, UUID userId);
     List<FollowUpReminder> findDueByUserId(UUID userId, Instant upTo);
+    List<FollowUpReminder> findOpenByUserId(UUID userId);
     Optional<FollowUpReminder> findByIdAndUserId(UUID id, UUID userId);
     FollowUpReminder save(FollowUpReminder reminder);
     void deleteByIdAndUserId(UUID id, UUID userId);

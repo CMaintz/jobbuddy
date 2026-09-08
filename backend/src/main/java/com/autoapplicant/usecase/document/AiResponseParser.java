@@ -15,6 +15,13 @@ public final class AiResponseParser {
         return json.substring(first, last + 1).trim();
     }
 
+    /** Replaces em/en dashes with regular hyphens — house style for all AI output. */
+    public static String sanitize(String text) {
+        if (text == null) return null;
+        return text.replace('—', '-')   // em dash
+                   .replace('–', '-');   // en dash
+    }
+
     public static String stripCodeFence(String value) {
         if (value.startsWith("```")) {
             int firstLine = value.indexOf('\n');

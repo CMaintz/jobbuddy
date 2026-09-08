@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.PromptTemplate;
+import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.user.Profile;
@@ -11,8 +12,10 @@ import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
+import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -36,10 +39,14 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final ProfileSocialRepositoryPort socialRepo;
     private final JobRepositoryPort jobRepo;
     private final PromptTemplateRepositoryPort promptTemplateRepo;
+    private final WritingProfileRepositoryPort writingProfileRepo;
     private final CareerProfileContextService careerProfileContext;
     private final CvDocumentAssembler cvAssembler;
     private final TailoredCvGenerator tailoredCvGenerator;
+    private final TailoredCvReviewer tailoredCvReviewer;
     private final AtsReportBuilder atsReportBuilder;
+    private final ApplicationRepositoryPort applicationRepo;
+    private final GeneratedContentGuards contentGuards;
 
     public StructuredDocumentService(UserRepositoryPort userRepo,
                                      ProfileRepositoryPort profileRepo,
@@ -47,20 +54,28 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      ProfileSocialRepositoryPort socialRepo,
                                      JobRepositoryPort jobRepo,
                                      PromptTemplateRepositoryPort promptTemplateRepo,
+                                     WritingProfileRepositoryPort writingProfileRepo,
                                      CareerProfileContextService careerProfileContext,
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
-                                     AtsReportBuilder atsReportBuilder) {
+                                     TailoredCvReviewer tailoredCvReviewer,
+                                     AtsReportBuilder atsReportBuilder,
+                                     ApplicationRepositoryPort applicationRepo,
+                                     GeneratedContentGuards contentGuards) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.privateInfoRepo = privateInfoRepo;
         this.socialRepo = socialRepo;
         this.jobRepo = jobRepo;
         this.promptTemplateRepo = promptTemplateRepo;
+        this.writingProfileRepo = writingProfileRepo;
         this.careerProfileContext = careerProfileContext;
         this.cvAssembler = cvAssembler;
         this.tailoredCvGenerator = tailoredCvGenerator;
+        this.tailoredCvReviewer = tailoredCvReviewer;
         this.atsReportBuilder = atsReportBuilder;
+        this.applicationRepo = applicationRepo;
+        this.contentGuards = contentGuards;
     }
 
     public StructuredDocument buildCv(UUID userId, String templateId) {
@@ -144,21 +159,22 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                                  String customInstructions, String targetLanguage,
                                                  String templateId) {
         return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage,
-                templateId, null, false, DocumentTheme.defaults());
+                templateId, null, false, DocumentTheme.defaults(), null);
     }
 
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
                                                  String templateId, boolean showProfileImage) {
         return generateTailoredCv(userId, jobId, rawJobDescription, customInstructions, targetLanguage,
-                templateId, null, showProfileImage, DocumentTheme.defaults());
+                templateId, null, showProfileImage, DocumentTheme.defaults(), null);
     }
 
     @Override
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
                                                  String customInstructions, String targetLanguage,
                                                  String templateId, UUID promptTemplateId,
-                                                 boolean showProfileImage, DocumentTheme theme) {
+                                                 boolean showProfileImage, DocumentTheme theme,
+                                                 String lengthPreference) {
         Profile profile = profileRepo.findByUserId(userId).orElse(null);
         ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
         List<ProfileSocial> socials = socialRepo.findByUserId(userId);
@@ -167,19 +183,49 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
         String jobDescription = resolveJobDescription(jobId, rawJobDescription);
         PromptTemplate promptTemplate = resolvePromptTemplate(promptTemplateId, CV_TAILORING_CATEGORY);
+        WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
-                source, jobDescription, customInstructions, targetLanguage, promptTemplate);
+                source, jobDescription, customInstructions, targetLanguage, promptTemplate,
+                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
+        // Drafter→reviewer pass on the structured CV (config-gated); non-fatal on failure.
+        tailored = tailoredCvReviewer.review(tailored, jobDescription, writingProfile, targetLanguage);
+        // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
+        contentGuards.verify(userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
                 exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
                 showProfileImage, resolveTheme(theme));
     }
 
+    /** Flattens the tailored CV's rewritten text so the guards can check it like a letter body. */
+    private static String cvText(TailoredCvContent t) {
+        StringBuilder sb = new StringBuilder();
+        if (t.selectedProfile() != null) sb.append(t.selectedProfile()).append('\n');
+        if (t.selectedSkills() != null) sb.append(String.join(", ", t.selectedSkills())).append('\n');
+        appendItems(sb, t.experience());
+        appendItems(sb, t.projects());
+        appendItems(sb, t.education());
+        appendItems(sb, t.certifications());
+        return sb.toString();
+    }
+
+    private static void appendItems(StringBuilder sb,
+                                    List<com.autoapplicant.domain.document.structured.StructuredDocumentItem> items) {
+        if (items == null) return;
+        for (var it : items) {
+            if (it.title() != null) sb.append(it.title()).append(' ');
+            if (it.subtitle() != null) sb.append(it.subtitle()).append(' ');
+            if (it.description() != null) sb.append(it.description()).append('\n');
+            if (it.bullets() != null) for (String b : it.bullets()) sb.append(b).append('\n');
+        }
+    }
+
     /** Loads the prompt template by explicit ID, or falls back to the system default for the category. */
     private PromptTemplate resolvePromptTemplate(UUID promptTemplateId, String fallbackCategory) {
-        if (promptTemplateId != null) {
-            return promptTemplateRepo.findById(promptTemplateId).orElse(null);
-        }
-        return promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
+        PromptTemplate resolved = promptTemplateId != null
+                ? promptTemplateRepo.findById(promptTemplateId).orElse(null)
+                : promptTemplateRepo.findSystemDefault(fallbackCategory).orElse(null);
+        if (resolved != null) promptTemplateRepo.incrementUsage(resolved.id());
+        return resolved;
     }
 
     private String resolveJobDescription(UUID jobId, String rawJobDescription) {

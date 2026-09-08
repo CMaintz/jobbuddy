@@ -28,6 +28,7 @@ public class CareerProfileContextService {
     private final ProfileSkillRepositoryPort skillRepo;
     private final SpokenLanguageRepositoryPort languageRepo;
     private final ProfileStrengthRepositoryPort strengthRepo;
+    private final CareerTargetRepositoryPort careerTargetRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -38,6 +39,7 @@ public class CareerProfileContextService {
                                        ProfileSkillRepositoryPort skillRepo,
                                        SpokenLanguageRepositoryPort languageRepo,
                                        ProfileStrengthRepositoryPort strengthRepo,
+                                       CareerTargetRepositoryPort careerTargetRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;
@@ -47,6 +49,7 @@ public class CareerProfileContextService {
         this.skillRepo = skillRepo;
         this.languageRepo = languageRepo;
         this.strengthRepo = strengthRepo;
+        this.careerTargetRepo = careerTargetRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -63,6 +66,13 @@ public class CareerProfileContextService {
                 ? skillNames
                 : listOrEmpty(profile != null ? profile.skills() : null);
 
+        // Skill → category (e.g. "Java" → "Languages"), so the tailored CV can group skills.
+        // Sourced from the user's own categorised profile skills; last write wins on duplicates.
+        Map<String, String> skillCategories = new LinkedHashMap<>();
+        profileSkills.stream()
+                .filter(s -> s.skillName() != null && s.category() != null && !s.category().isBlank())
+                .forEach(s -> skillCategories.put(s.skillName(), s.category()));
+
         List<String> spokenLanguages = languageRepo.findByUserId(userId).stream()
                 .map(lang -> lang.language() + " (" + formatProficiency(lang.proficiency()) + ")")
                 .toList();
@@ -73,6 +83,8 @@ public class CareerProfileContextService {
                         ? s.title() + ": " + s.description()
                         : s.title())
                 .toList();
+
+        CareerTarget target = careerTargetRepo.findByUserId(userId).orElse(null);
 
         return new CareerProfileForAi(
                 profile != null ? profile.headline() : null,
@@ -85,7 +97,12 @@ public class CareerProfileContextService {
                 projectRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 educationRepo.findByUserId(userId).stream().map(this::toItem).toList(),
                 certRepo.findByUserId(userId).stream().map(this::toItem).toList(),
-                strengths
+                strengths,
+                target != null ? listOrEmpty(target.targetArchetypes()) : List.of(),
+                target != null ? target.northStar() : null,
+                target != null ? target.narrative() : null,
+                target != null && target.careerStage() != null ? target.careerStage().name() : null,
+                skillCategories
         );
     }
 
@@ -119,7 +136,8 @@ public class CareerProfileContextService {
                 listOrEmpty(exp.achievements()),
                 listOrEmpty(exp.technologies()),
                 List.of(),
-                toSkillNames(exp.skills()));
+                toSkillNames(exp.skills()),
+                null);
     }
 
     private StructuredDocumentItem toItem(Project project) {
@@ -140,7 +158,8 @@ public class CareerProfileContextService {
                 bullets,
                 listOrEmpty(project.technologies()),
                 links,
-                toSkillNames(project.skills()));
+                toSkillNames(project.skills()),
+                null);
     }
 
     private StructuredDocumentItem toItem(Education education) {
@@ -154,7 +173,8 @@ public class CareerProfileContextService {
                 education.grade() != null && !education.grade().isBlank() ? List.of(education.grade()) : List.of(),
                 List.of(),
                 List.of(),
-                toSkillNames(education.skills()));
+                toSkillNames(education.skills()),
+                null);
     }
 
     private StructuredDocumentItem toItem(Certification certification) {
@@ -170,7 +190,8 @@ public class CareerProfileContextService {
                 List.of(),
                 List.of(),
                 links,
-                List.of());
+                List.of(),
+                null);
     }
 
     private String dateRange(LocalDate start, LocalDate end, boolean current) {

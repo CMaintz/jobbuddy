@@ -1,4 +1,4 @@
-export type PromptCategory = 'COVER_LETTER' | 'APPLICATION' | 'RECRUITER_MESSAGE' | 'CV_ANALYSIS' | 'GENERAL';
+export type PromptCategory = 'COVER_LETTER' | 'APPLICATION' | 'RECRUITER_MESSAGE' | 'CV_TAILORING' | 'CV_ANALYSIS' | 'GENERAL';
 
 export interface PromptTemplate {
   id: string;
@@ -15,4 +15,9 @@ export interface PromptTemplate {
   versionNumber: number;
   createdAt: string;
   updatedAt: string;
+  tags?: string[];
+  /** How many generations used this template. */
+  usageCount?: number;
+  /** Per-user star. */
+  favourite?: boolean;
 }

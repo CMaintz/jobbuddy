@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.quartz)
+    implementation(libs.spring.boot.starter.mail)
     implementation(libs.springdoc.openapi)
 
     // Database

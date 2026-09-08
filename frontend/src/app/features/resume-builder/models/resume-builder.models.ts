@@ -49,6 +49,8 @@ export interface ResumeSkill {
   id: string;
   name: string;
   level?: number; // 1-5
+  /** Optional grouping label (e.g. "Languages", "Frameworks", "Tools"). */
+  category?: string;
 }
 
 export interface ResumeLanguage {
@@ -117,6 +119,12 @@ export interface SectionConfig {
 export interface SectionTypography {
   fontSize?: 'sm' | 'md' | 'lg' | 'xl';
   headingSize?: 'sm' | 'md' | 'lg' | 'xl';
+  fontFamily?: string;
+  /** Text size multiplier for the whole section (1 = template default). */
+  sizeScale?: number;
+  bold?: boolean;
+  italic?: boolean;
+  color?: string;
 }
 
 export interface ResumeSettings {
@@ -130,6 +138,18 @@ export interface ResumeSettings {
   sectionTypography: Record<string, SectionTypography>;
   photoStyle?: 'square' | 'rounded' | 'circle';
   showSkillLevel: boolean;
+  /** Body text colour (headings keep the theme colour). Optional for drafts saved before this existed. */
+  textColor?: string;
+  /** Unitless line-height multiplier for body text, e.g. 1.5. */
+  lineSpacing?: number;
+  /** Vertical gap between sections in px. */
+  sectionSpacing?: number;
+  /** Photo edge length in px; unset = the layout's default size. */
+  photoSize?: number;
+  /** Photo side within the header, where the layout supports it. */
+  photoPlacement?: 'left' | 'right';
+  /** Mask personal details (name → initials, no contact/photo/links) in preview & PDF. */
+  anonymise?: boolean;
 }
 
 export interface ResumeDraft {
@@ -196,4 +216,7 @@ export const INITIAL_SETTINGS: ResumeSettings = {
   sectionTypography: {},
   photoStyle: 'circle',
   showSkillLevel: true,
+  textColor: '#1f2937',
+  lineSpacing: 1.5,
+  sectionSpacing: 20,
 };

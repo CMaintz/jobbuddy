@@ -1,0 +1,11 @@
+
+    <div class="min-h-screen flex items-center justify-center">
+      <div class="text-center">
+        @if (error) {
+          <div class="bg-red-50 text-red-700 rounded-md p-4 text-sm">{{ error | translate }}</div>
+          <a routerLink="/login" class="mt-4 text-blue-600 hover:underline text-sm block">{{ 'auth.backToLogin' | translate }}</a>
+        } @else {
+          <div class="text-gray-600">{{ 'auth.completingSignIn' | translate }}</div>
+        }
+      </div>
+    </div>

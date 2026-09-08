@@ -1,0 +1,58 @@
+    <jb-topbar [title]="'nav.savedRoles' | translate">
+      <jb-pill tone="accent">{{ savedJobs.length }}</jb-pill>
+      <ng-container jb-topbar-actions>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">{{ 'nav.newApplication' | translate }}</jb-button>
+      </ng-container>
+    </jb-topbar>
+
+    @if (loading) {
+      <div class="p-12 text-center text-jb-text-dim">{{ 'savedRoles.loading' | translate }}</div>
+    } @else {
+      <div class="flex-1 overflow-auto jb-scroll overflow-x-auto">
+        <div class="min-w-[500px]">
+        <!-- Column headers -->
+        <div class="grid gap-3 p-[8px_18px] text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint grid-cols-[1fr_120px_100px_80px]">
+          <span>{{ 'savedRoles.colRole' | translate }}</span>
+          <span>{{ 'savedRoles.colLocation' | translate }}</span>
+          <span>{{ 'savedRoles.colSource' | translate }}</span>
+          <span></span>
+        </div>
+
+        @for (job of savedJobs; track job.id) {
+          <a [routerLink]="['/jobs', job.id]" class="jb-row grid gap-3 p-[12px_18px] items-center border-b border-jb-border-faint cursor-pointer no-underline text-inherit grid-cols-[1fr_120px_100px_80px]">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <jb-company-mark [name]="job.companyName || '?'" [size]="28" />
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                    [style.opacity]="job.active === false ? '0.55' : '1'">{{ job.title }}</div>
+                  @if (job.active === false) {
+                    <jb-pill tone="danger">{{ 'savedRoles.noLongerActive' | translate }}</jb-pill>
+                  }
+                </div>
+                <div class="text-xs text-jb-text-dim">{{ job.companyName || ('savedRoles.unknown' | translate) }}</div>
+              </div>
+            </div>
+            <div class="text-sm text-jb-text-mid">{{ job.location || ('savedRoles.remote' | translate) }}</div>
+            <div class="text-sm text-jb-text-dim">{{ job.source || '—' }}</div>
+            <div class="flex gap-1.5 justify-end items-center">
+              @if (job.active !== false) {
+                <jb-button small icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job.id }">{{ 'savedRoles.apply' | translate }}</jb-button>
+              }
+              <button class="icon-btn" [title]="'savedRoles.removeTooltip' | translate" (click)="remove(job, $event)">
+                <jb-icon name="x" [size]="12" />
+              </button>
+            </div>
+          </a>
+        }
+
+        @if (savedJobs.length === 0) {
+          <div class="p-[48px_24px] text-center text-jb-text-dim">
+            <jb-icon name="bookmark" [size]="24" class="mb-2" />
+            <div class="text-md font-medium mb-[4px]">{{ 'savedRoles.emptyTitle' | translate }}</div>
+            <div class="text-sm">{{ 'savedRoles.emptyDesc' | translate }}</div>
+          </div>
+        }
+        </div>
+      </div>
+    }

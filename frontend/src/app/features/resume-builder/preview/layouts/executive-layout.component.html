@@ -1,0 +1,93 @@
+
+    <div class="p-10 flex flex-col gap-6 bg-white">
+      <!-- Executive header with full-width color band -->
+      <section rbSection="header" class="p-8 text-white -m-10 mb-0" [style.background-color]="themeColor">
+        <div class="flex justify-between items-end">
+          <div>
+            <h1 class="text-3xl font-semibold tracking-wide">{{ pi.fullName }}</h1>
+            <p class="text-base opacity-80 mt-1">{{ pi.title }}</p>
+          </div>
+          @if (pi.photoUrl) {
+            <img rbResumePhoto [src]="pi.photoUrl" [alt]="'resumeBuilder.cv.photo' | translate" class="w-20 h-20 object-cover border-2 border-white/30"
+              [class.rounded-full]="photoStyle === 'circle'"
+              [class.rounded-xl]="photoStyle === 'rounded'" />
+          }
+        </div>
+        <div class="flex flex-wrap gap-5 mt-4 text-xs opacity-75">
+          @if (pi.email) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0 fill-white" viewBox="0 0 24 24"><path [attr.d]="contactIcons.email"/></svg>{{ pi.email }}</span> }
+          @if (pi.phone) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0 fill-white" viewBox="0 0 24 24"><path [attr.d]="contactIcons.phone"/></svg>{{ pi.phone }}</span> }
+          @if (pi.location) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0 fill-white" viewBox="0 0 24 24"><path [attr.d]="contactIcons.location"/></svg>{{ pi.location }}</span> }
+          @for (s of socials; track s.id) {
+            <span class="flex items-center gap-1">
+              <lucide-icon [img]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" color="rgba(255,255,255,0.75)"></lucide-icon>
+              {{ s.username || s.url }}
+            </span>
+          }
+        </div>
+      </section>
+
+      <div class="mt-8 flex flex-col gap-6">
+        @if (pi.summary) {
+          <div class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor" [innerHTML]="pi.summary | richText"></div>
+        }
+        @if (experience.length > 0) {
+          <section rbSection="experience">
+            <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.professionalExperience' | translate }}</h2>
+            <div class="flex flex-col gap-5">
+              @for (exp of experience; track exp.id) {
+                <div>
+                  <div class="flex justify-between items-start">
+                    <div><h3 class="font-semibold text-sm">{{ exp.title }}</h3><p class="text-xs text-gray-500">{{ exp.company }}@if (exp.location) { · {{ exp.location }} }</p></div>
+                    <span class="text-xs text-gray-400">{{ exp.startDate }} – {{ exp.current ? ('resumeBuilder.cv.present' | translate) : exp.endDate }}</span>
+                  </div>
+                  @if (exp.description) { <div class="text-xs text-gray-600 mt-1.5 leading-relaxed" [innerHTML]="exp.description | richText"></div> }
+                  <app-skill-chip-list [skills]="exp.skills ?? []" />
+                </div>
+              }
+            </div>
+          </section>
+        }
+        <div class="grid grid-cols-2 gap-6">
+          @if (education.length > 0) {
+            <section rbSection="education">
+              <h2 class="font-semibold text-sm tracking-widest uppercase mb-3 pb-2 border-b" [style.color]="themeColor" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.education' | translate }}</h2>
+              @for (edu of education; track edu.id) {
+                <div class="mb-2"><p class="font-medium text-sm">{{ edu.degree }}</p><p class="text-xs text-gray-500">{{ edu.school }}</p></div>
+              }
+            </section>
+          }
+          @if (skills.length > 0) {
+            <section rbSection="skills">
+              <h2 class="font-semibold text-sm tracking-widest uppercase mb-3 pb-2 border-b" [style.color]="themeColor" [style.border-color]="themeColor">{{ 'resumeBuilder.cv.coreSkills' | translate }}</h2>
+              <div class="flex flex-col gap-2">
+                @for (group of skillGroups; track group.category) {
+                  @if (group.category) {
+                    <div class="text-2xs font-semibold uppercase tracking-widest" [style.color]="themeColor">{{ group.category }}</div>
+                  }
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (s of group.skills; track s.id) {
+                      <span class="text-xs px-2 py-0.5 rounded border" [style.border-color]="themeColor" [style.color]="themeColor">{{ s.name }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+          }
+        </div>
+
+        <!-- Custom Sections -->
+        @for (cs of customSections; track cs.id) {
+          <section rbSection="custom">
+            <h2 class="font-semibold text-sm tracking-widest uppercase mb-4 pb-2 border-b-2" [style.color]="themeColor" [style.border-color]="themeColor">{{ cs.heading }}</h2>
+            @if (cs.body) { <div class="text-sm leading-relaxed text-gray-600 border-l-4 pl-4" [style.border-color]="themeColor" [innerHTML]="cs.body | richText"></div> }
+            @if (cs.items && cs.items.length > 0) {
+              <ul class="list-disc list-inside flex flex-col gap-0.5 mt-1">
+                @for (item of cs.items; track item.id) {
+                  <li class="text-xs text-gray-600">{{ item.text }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      </div>
+    </div>

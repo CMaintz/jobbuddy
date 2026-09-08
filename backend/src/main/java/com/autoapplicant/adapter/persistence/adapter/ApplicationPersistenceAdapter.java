@@ -47,4 +47,14 @@ public class ApplicationPersistenceAdapter implements ApplicationRepositoryPort 
     public Optional<Application> findByIdAndUserId(UUID id, UUID userId) {
         return repo.findByIdAndUserId(id, userId).map(ApplicationMapper::toDomain);
     }
+
+    @Override
+    public boolean existsByUserIdAndJobId(UUID userId, UUID jobId) {
+        return repo.existsByUserIdAndJobId(userId, jobId);
+    }
+
+    @Override
+    public List<String> findRecentOutcomeLessons(UUID userId, int limit) {
+        return repo.findRecentOutcomeLessons(userId, org.springframework.data.domain.PageRequest.of(0, limit));
+    }
 }

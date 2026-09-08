@@ -1,0 +1,26 @@
+
+    <div class="flex flex-col gap-3.5">
+      @for (proj of projects; track proj.id) {
+        <div class="card p-3 flex flex-col gap-2">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-jb-text">{{ proj.name || ('resumeBuilder.form.newProject' | translate) }}</span>
+            <button class="rb-remove" (click)="remove(proj.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
+          </div>
+          <label class="label">{{ 'resumeBuilder.form.projectName' | translate }}</label>
+          <input class="input" [value]="proj.name" (input)="update(proj.id, 'name', $any($event.target).value)" placeholder="My Awesome Project" />
+          <label class="label">{{ 'resumeBuilder.form.linkUrl' | translate }}</label>
+          <input class="input" [value]="proj.link" (input)="update(proj.id, 'link', $any($event.target).value)" placeholder="https://github.com/you/project" />
+          <label class="label">{{ 'resumeBuilder.form.date' | translate }}</label>
+          <input class="input" [value]="proj.date" (input)="update(proj.id, 'date', $any($event.target).value)" placeholder="2024-01" />
+          <div class="flex justify-between items-center mb-1">
+            <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.form.description' | translate }}</label>
+            <app-ai-refine-menu [content]="proj.description" [jobDescription]="jobDescription"
+              (refined)="update(proj.id, 'description', $event)" />
+          </div>
+          <app-rich-text-editor [value]="proj.description" [placeholder]="'resumeBuilder.form.descPlaceholderProj' | translate" (debouncedChange)="update(proj.id, 'description', $event)" />
+          <label class="label">{{ 'resumeBuilder.form.skillsComma' | translate }}</label>
+          <input class="input" [value]="(proj.skills ?? []).join(', ')" (change)="updateSkills(proj.id, $any($event.target).value)" placeholder="React, Node.js, PostgreSQL" />
+        </div>
+      }
+      <button class="rb-add" (click)="add()">{{ 'resumeBuilder.form.addProject' | translate }}</button>
+    </div>

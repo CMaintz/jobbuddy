@@ -2,7 +2,7 @@ package com.autoapplicant.usecase.user;
 
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.in.user.ParseLinkedInProfileUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +11,9 @@ import java.util.UUID;
 @Service
 public class LinkedInProfileParseService implements ParseLinkedInProfileUseCase {
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
 
-    public LinkedInProfileParseService(@Qualifier("generationAiProvider") AiProviderPort aiProvider) {
+    public LinkedInProfileParseService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider) {
         this.aiProvider = aiProvider;
     }
 

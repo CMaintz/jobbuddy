@@ -1,0 +1,242 @@
+    <jb-topbar [title]="'nav.masterCv' | translate">
+      <ng-container jb-topbar-actions>
+        <span class="text-xs mono"
+          [style.color]="dirty() ? 'var(--jb-accent-2)' : 'var(--jb-text-dim)'">
+          {{ (saving() ? 'settings.status.saving' : dirty() ? 'settings.status.unsaved' : 'settings.status.saved') | translate }}
+        </span>
+        <jb-button small icon="check" [primary]="dirty()" [disabled]="saving() || !dirty()" (clicked)="saveAll()">{{ 'common.save' | translate }}</jb-button>
+        <!-- Export: direct PDF (full / anonymised) or the resume builder for styling -->
+        <jb-dropdown #exportDd [width]="250">
+          <jb-button jb-trigger small icon="download">
+            {{ (exportingPdf() ? 'masterCv.exporting' : 'masterCv.export') | translate }}
+          </jb-button>
+          <button class="jb-menu-item" (click)="exportPdf(false); exportDd.close()">
+            <jb-icon name="doc" [size]="13" class="text-jb-accent mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">{{ 'masterCv.pdfFull' | translate }}</span>
+              <span class="block text-xs text-jb-text-dim">{{ 'masterCv.pdfFullDesc' | translate }}</span>
+            </span>
+          </button>
+          <button class="jb-menu-item" (click)="exportPdf(true); exportDd.close()">
+            <jb-icon name="key" [size]="13" class="text-jb-accent mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">{{ 'masterCv.pdfAnon' | translate }}</span>
+              <span class="block text-xs text-jb-text-dim">{{ 'masterCv.pdfAnonDesc' | translate }}</span>
+            </span>
+          </button>
+          <button class="jb-menu-item" routerLink="/resume-builder" (click)="exportDd.close()">
+            <jb-icon name="edit" [size]="13" class="text-jb-text-mid mt-0.5" />
+            <span>
+              <span class="block text-sm font-medium">{{ 'masterCv.openInBuilder' | translate }}</span>
+              <span class="block text-xs text-jb-text-dim">{{ 'masterCv.openInBuilderDesc' | translate }}</span>
+            </span>
+          </button>
+        </jb-dropdown>
+        <jb-button small icon="upload" routerLink="/cv/import">{{ 'masterCv.import' | translate }}</jb-button>
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply">{{ 'masterCv.applyToJob' | translate }}</jb-button>
+      </ng-container>
+    </jb-topbar>
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+    @if (loading) {
+      <div class="p-12 text-center text-jb-text-dim">{{ 'masterCv.loadingProfile' | translate }}</div>
+    } @else {
+      <!-- Mobile section tabs -->
+      <div class="flex md:hidden items-center gap-1.5 px-3 py-2 border-b border-jb-border overflow-x-auto flex-shrink-0">
+        @for (sec of sections(); track sec.key) {
+          <button (click)="activeSec.set(sec.key)"
+            class="px-2.5 py-1 rounded-full cursor-pointer whitespace-nowrap text-xs font-medium flex-shrink-0"
+            [style.background]="activeSec() === sec.key ? 'var(--jb-surface-3)' : 'transparent'"
+            [style.border]="'1px solid ' + (activeSec() === sec.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+            [style.color]="activeSec() === sec.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+            {{ sec.label | translate }}
+          </button>
+        }
+      </div>
+
+      <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[186px_1fr] lg:grid-cols-[186px_1fr_1fr]">
+        <!-- Section tree -->
+        <aside class="hidden md:flex border-r border-jb-border p-[14px_8px] flex-col gap-[1px]">
+          <div class="text-2xs text-jb-text-dim tracking-[0.08em] uppercase p-[4px_10px_8px]">{{ 'masterCv.sections' | translate }}</div>
+          @for (sec of sections(); track sec.key) {
+            <button (click)="activeSec.set(sec.key)"
+              class="flex justify-between items-center p-[7px_10px] rounded text-base border-none cursor-pointer text-left"
+              [style.background]="activeSec() === sec.key ? 'var(--jb-surface-3)' : 'transparent'"
+              [style.color]="activeSec() === sec.key ? 'var(--jb-text)' : sec.empty ? 'var(--jb-text-dim)' : 'var(--jb-text-mid)'"
+              [style.font-weight]="activeSec() === sec.key ? '500' : '400'">
+              <span>{{ sec.label | translate }}</span>
+              <span class="mono text-2xs text-jb-text-dim">{{ sec.count }}</span>
+            </button>
+          }
+
+          <!-- Completeness -->
+          <div class="mt-auto p-2.5 border-t border-jb-border">
+            <div class="text-2xs text-jb-text-dim tracking-[0.08em] uppercase mb-1.5">{{ 'masterCv.completeness' | translate }}</div>
+            <div class="flex items-baseline gap-1">
+              <div class="text-4xl font-medium tracking-tighter"
+                [style.color]="coverage >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ coverage }}</div>
+              <div class="text-xs text-jb-text-dim">/ 100</div>
+            </div>
+            <div class="bar mt-1.5"><i [style.width]="coverage + '%'"></i></div>
+            <div class="mt-2 text-xs text-jb-text-dim">
+              {{ (coverage >= 80 ? 'masterCv.coverageStrong' : 'masterCv.coverageWeak') | translate }}
+            </div>
+          </div>
+        </aside>
+
+        <!-- Editor column -->
+        <div class="flex flex-col min-h-0 border-r border-jb-border">
+          <div class="p-[12px_18px] border-b border-jb-border flex justify-between items-center">
+            <div>
+              <div class="text-xl font-medium">{{ ('masterCv.sec.' + activeSec().toLowerCase()) | translate }}</div>
+              <div class="text-xs text-jb-text-dim">{{ sectionHint() }}</div>
+            </div>
+          </div>
+          <div class="flex-1 overflow-auto p-[18px] jb-scroll" (input)="markDirty()" (change)="markDirty()">
+            <!-- Header section -->
+            @if (activeSec() === 'Header') {
+              <!-- Photo -->
+              <div class="flex items-center gap-3 mb-4">
+                @if (privateInfo.photoUrl) {
+                  <img [src]="privateInfo.photoUrl" [alt]="'masterCv.photoAlt' | translate"
+                    class="w-14 h-14 rounded-full object-cover border border-jb-border" />
+                } @else {
+                  <div class="w-14 h-14 rounded-full flex items-center justify-center bg-jb-surface-2 border border-dashed border-jb-border-strong text-jb-text-dim text-xs">{{ 'masterCv.photo' | translate }}</div>
+                }
+                <div class="flex gap-1.5">
+                  <input type="file" accept="image/*" #photoInput style="display:none;" (change)="onPhotoSelected($event)" />
+                  <jb-button small (clicked)="photoInput.click()" [disabled]="uploadingPhoto()">
+                    {{ (uploadingPhoto() ? 'masterCv.uploading' : privateInfo.photoUrl ? 'masterCv.replace' : 'masterCv.uploadPhoto') | translate }}
+                  </jb-button>
+                  @if (privateInfo.photoUrl) {
+                    <jb-button small (clicked)="recropPhoto()">{{ 'masterCv.recrop' | translate }}</jb-button>
+                    <jb-button small ghost (clicked)="removePhoto()">{{ 'common.remove' | translate }}</jb-button>
+                  }
+                </div>
+                <div class="text-xs text-jb-text-dim ml-1">{{ 'masterCv.photoHint' | translate }}</div>
+              </div>
+
+              <div class="grid gap-3.5 grid-cols-[1fr_1fr]">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'onboarding.profile.fullName' | translate }}</span>
+                  <input [(ngModel)]="privateInfo.fullName" class="input" [placeholder]="'onboarding.profile.fullNamePlaceholder' | translate" />
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'masterCv.title2' | translate }}</span>
+                  <input [(ngModel)]="profile.headline" class="input" [placeholder]="'masterCv.titlePlaceholder' | translate" />
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'masterCv.contactEmail' | translate }}</span>
+                  <input [(ngModel)]="privateInfo.contactEmail" class="input mono" placeholder="you@example.com" />
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'masterCv.phone' | translate }}</span>
+                  <input [(ngModel)]="privateInfo.phone" class="input mono" placeholder="+45 1234 5678" />
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'apply.location' | translate }}</span>
+                  <input [(ngModel)]="privateInfo.location" class="input" [placeholder]="'masterCv.locationPlaceholder' | translate" />
+                </label>
+              </div>
+              <div class="mt-3 text-xs text-jb-text-dim">
+                {{ 'masterCv.contactPrivacy' | translate }}
+              </div>
+            }
+
+            <!-- Profile section -->
+            @if (activeSec() === 'Profile') {
+              <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-[5px]">
+                  <div class="flex items-center justify-between">
+                    <span class="label">{{ 'masterCv.profileSummary' | translate }}</span>
+                    <app-ai-refine-menu [plainOutput]="true" [content]="profile.summary || ''"
+                      (refined)="profile.summary = $event; markDirty()" />
+                  </div>
+                  <textarea [(ngModel)]="profile.summary" rows="6" class="input resize-y text-base leading-relaxed"
+                    [placeholder]="'masterCv.summaryPlaceholder' | translate"></textarea>
+                  <div class="text-xs text-jb-text-dim">{{ 'masterCv.summaryHint' | translate }}</div>
+                </div>
+                <label class="flex flex-col gap-[5px] self-start">
+                  <span class="label">{{ 'masterCv.yearsExp' | translate }}</span>
+                  <input [(ngModel)]="profile.yearsExperience" type="number" min="0" class="input mono w-24" placeholder="5" />
+                </label>
+              </div>
+            }
+
+            <!-- Strengths section -->
+            @if (activeSec() === 'Strengths') {
+              <app-mcv-strengths-section [list]="strengthsList"
+                (add)="addStrength()" (removeAt)="removeStrength($event)" />
+            }
+
+            <!-- Experience section -->
+            @if (activeSec() === 'Experience') {
+              <app-mcv-experience-section [list]="experienceList"
+                (add)="addExperience()" (removeAt)="removeExperience($event)" (dirty)="markDirty()" />
+            }
+
+            <!-- Skills section -->
+            @if (activeSec() === 'Skills') {
+              <div class="flex flex-col gap-4">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'masterCv.sec.skills' | translate }}</span>
+                  <jb-tag-input [value]="skillsList" (valueChange)="onSkillsChange($event)" [placeholder]="'masterCv.addSkill' | translate" />
+                  <div class="text-xs text-jb-text-dim">{{ 'masterCv.skillsHint' | translate }}</div>
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'masterCv.technologies' | translate }}</span>
+                  <jb-tag-input [value]="technologiesList" (valueChange)="onTechnologiesChange($event)" [placeholder]="'masterCv.addTech' | translate" />
+                  <div class="text-xs text-jb-text-dim">{{ 'masterCv.techHint' | translate }}</div>
+                </label>
+              </div>
+            }
+
+            <!-- Education section -->
+            @if (activeSec() === 'Education') {
+              <app-mcv-education-section [list]="educationList"
+                (add)="addEducation()" (removeAt)="removeEducation($event)" />
+            }
+
+            <!-- Projects section -->
+            @if (activeSec() === 'Projects') {
+              <app-mcv-projects-section [list]="projectsList"
+                (add)="addProject()" (removeAt)="removeProject($event)" (dirty)="markDirty()" />
+            }
+
+            <!-- Certifications section -->
+            @if (activeSec() === 'Certifications') {
+              <app-mcv-certifications-section [list]="certificationsList"
+                (removeAt)="removeCertification($event)" (save)="saveCertification($event)" />
+            }
+
+            <!-- Languages section -->
+            @if (activeSec() === 'Languages') {
+              <app-mcv-languages-section [list]="languagesList"
+                (add)="addLanguage()" (removeAt)="removeLanguage($event)" />
+            }
+
+            <!-- Socials section -->
+            @if (activeSec() === 'Socials') {
+              <app-mcv-socials-section [list]="socialsList"
+                (add)="addSocial()" (removeAt)="removeSocial($event)" (dirty)="markDirty()" />
+            }
+          </div>
+        </div>
+
+        <!-- Preview column -->
+        <div class="hidden lg:flex overflow-auto p-5 justify-center jb-scroll" style="background:radial-gradient(ellipse at top,rgba(26,30,37,0.5) 0%,transparent 60%);">
+          <app-master-cv-preview class="self-start w-full flex justify-center"
+            [profile]="profile" [privateInfo]="privateInfo"
+            [experience]="experienceList" [education]="educationList"
+            [projects]="projectsList" [certifications]="certificationsList"
+            [languages]="languagesList" [socials]="socialsList" [strengths]="strengthsList"
+            [skills]="skillsList" [technologies]="technologiesList" />
+        </div>
+      </div>
+    }
+
+    @if (cropSrc(); as src) {
+      <app-photo-crop-dialog [src]="src"
+        (cropped)="onPhotoCropped($event)" (cancelled)="cropSrc.set(null)" />
+    }

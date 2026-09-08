@@ -12,5 +12,6 @@ public record StructuredGenerateRequest(
         String templateId,
         UUID promptTemplateId,
         Boolean showProfileImage,
-        DocumentThemeRequest theme
+        DocumentThemeRequest theme,
+        String lengthPreference
 ) {}

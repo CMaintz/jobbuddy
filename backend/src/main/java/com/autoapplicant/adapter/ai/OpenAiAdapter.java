@@ -17,10 +17,17 @@ public class OpenAiAdapter implements AiProviderPort {
 
     private final OpenAIClient client;
     private final AppProperties props;
+    /** Tier-resolved chat model; when set, overrides the provider's default {@code model}. */
+    private final String modelOverride;
 
     public OpenAiAdapter(OpenAIClient client, AppProperties props) {
+        this(client, props, null);
+    }
+
+    public OpenAiAdapter(OpenAIClient client, AppProperties props, String modelOverride) {
         this.client = client;
         this.props = props;
+        this.modelOverride = modelOverride;
     }
 
     @Override
@@ -66,6 +73,7 @@ public class OpenAiAdapter implements AiProviderPort {
     }
 
     private String resolveChatModel() {
+        if (modelOverride != null && !modelOverride.isBlank()) return modelOverride;
         String configured = props.getOpenai().getModel();
         return configured != null && !configured.isBlank() ? configured : ChatModel.GPT_4O.toString();
     }

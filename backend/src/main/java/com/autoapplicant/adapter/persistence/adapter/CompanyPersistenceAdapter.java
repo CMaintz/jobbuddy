@@ -49,6 +49,17 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void backfillWebsite(UUID companyId, String website) {
+        repo.findById(companyId).ifPresent(e -> {
+            if (e.getWebsite() == null || e.getWebsite().isBlank()) {
+                e.setWebsite(website);
+                repo.save(e);
+            }
+        });
+    }
+
+    @Override
     public List<Company> search(String query, int page, int size) {
         return repo.findByNameContainingIgnoreCase(query, PageRequest.of(page, size))
                 .stream()
@@ -59,6 +70,24 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
     @Override
     public Optional<Company> findBySlug(String slug) {
         return repo.findBySlug(slug).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<com.autoapplicant.domain.company.CompanyFacts> findFacts(UUID companyId) {
+        return repo.findById(companyId)
+                .filter(e -> e.getResearchedFacts() != null && !e.getResearchedFacts().isBlank())
+                .map(e -> new com.autoapplicant.domain.company.CompanyFacts(
+                        e.getResearchedFacts(), e.getFactsResearchedAt()));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void saveFacts(UUID companyId, String facts) {
+        repo.findById(companyId).ifPresent(e -> {
+            e.setResearchedFacts(facts);
+            e.setFactsResearchedAt(java.time.Instant.now());
+            repo.save(e);
+        });
     }
 
     private Company toDomain(CompanyEntity e) {

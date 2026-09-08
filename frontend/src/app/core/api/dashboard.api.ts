@@ -3,11 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface DashboardData {
-  recommendedJobs: any[];
-  savedJobs: any[];
-  pendingApplications: any[];
-  upcomingInterviews: any[];
-  weeklyMetrics: any;
+  recommendedJobs: unknown[];
+  savedJobs: unknown[];
+  pendingApplications: unknown[];
+  upcomingInterviews: unknown[];
+  weeklyMetrics: unknown;
   appliedThisWeek?: number;
   activeApplications?: number;
 }
@@ -25,6 +25,21 @@ export interface WeeklyTrend {
   daily: DailyCount[];
 }
 
+export interface DetailedMetrics {
+  total: number;
+  saved: number;
+  applied: number;
+  pendingResponse: number;
+  activeInterviews: number;
+  offers: number;
+  appliedThisWeek: number;
+  appliedThisMonth: number;
+  responseRate: number;
+  interviewRate: number;
+  offerRate: number;
+  topCompanies: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
   private http = inject(HttpClient);
@@ -33,8 +48,12 @@ export class DashboardApiService {
     return this.http.get<DashboardData>('/api/v1/dashboard');
   }
 
-  getAnalytics(): Observable<any> {
+  getAnalytics(): Observable<unknown> {
     return this.http.get('/api/v1/analytics');
+  }
+
+  getDetailedAnalytics(): Observable<DetailedMetrics> {
+    return this.http.get<DetailedMetrics>('/api/v1/analytics/detailed');
   }
 
   getWeeklyTrend(): Observable<WeeklyTrend> {
