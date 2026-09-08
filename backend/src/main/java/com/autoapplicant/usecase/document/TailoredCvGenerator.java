@@ -1,9 +1,10 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.PromptTemplate;
+import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -13,12 +14,12 @@ import java.util.List;
 @Service
 public class TailoredCvGenerator {
 
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
     private final PromptCompositionBuilder promptBuilder;
 
     public TailoredCvGenerator(
-            @Qualifier("generationAiProvider") AiProviderPort aiProvider,
+            @Qualifier("generationAiProvider") ChatProviderPort aiProvider,
             ObjectMapper objectMapper,
             PromptCompositionBuilder promptBuilder) {
         this.aiProvider = aiProvider;
@@ -34,14 +35,16 @@ public class TailoredCvGenerator {
      */
     public TailoredCvContent generate(CareerProfileForAi source, String jobDescription,
                                       String customInstructions, String targetLanguage,
-                                      PromptTemplate styleTemplate) {
+                                      PromptTemplate styleTemplate, WritingProfile writingProfile,
+                                      List<String> outcomeLessons, String lengthPreference) {
         try {
             String sourceJson = objectMapper.writeValueAsString(source);
             String json = AiResponseParser.extractJsonObject(
-                    aiProvider.generateJson(
+                    AiResponseParser.sanitize(aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
                                     sourceJson, jobDescription, customInstructions,
-                                    targetLanguage, styleTemplate)
+                                    targetLanguage, styleTemplate, writingProfile, outcomeLessons,
+                                    lengthPreference))
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {

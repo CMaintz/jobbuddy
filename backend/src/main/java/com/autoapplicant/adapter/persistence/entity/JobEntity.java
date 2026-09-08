@@ -107,6 +107,22 @@ public class JobEntity {
     @Column(name = "short_description", columnDefinition = "text")
     private String shortDescription;
 
+    @Column(name = "last_seen_at")
+    private Instant lastSeenAt;
+
+    @Column(name = "application_deadline")
+    private java.time.LocalDate applicationDeadline;
+
+    @Column(name = "last_url_check_at")
+    private Instant lastUrlCheckAt;
+
+    @Column(name = "url_check_failures", nullable = false)
+    private int urlCheckFailures = 0;
+
+    /** 64-bit SimHash of the description for cross-listing dedup; entity-only (not on the domain record). */
+    @Column(name = "content_fingerprint")
+    private Long contentFingerprint;
+
     @PrePersist void prePersist() {
         if (scrapedAt == null) scrapedAt = Instant.now();
         createdAt = updatedAt = Instant.now();
@@ -177,4 +193,14 @@ public class JobEntity {
     public Instant getUpdatedAt() { return updatedAt; }
     public String getShortDescription() { return shortDescription; }
     public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
+    public Instant getLastSeenAt() { return lastSeenAt; }
+    public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
+    public java.time.LocalDate getApplicationDeadline() { return applicationDeadline; }
+    public void setApplicationDeadline(java.time.LocalDate applicationDeadline) { this.applicationDeadline = applicationDeadline; }
+    public Instant getLastUrlCheckAt() { return lastUrlCheckAt; }
+    public void setLastUrlCheckAt(Instant lastUrlCheckAt) { this.lastUrlCheckAt = lastUrlCheckAt; }
+    public int getUrlCheckFailures() { return urlCheckFailures; }
+    public void setUrlCheckFailures(int urlCheckFailures) { this.urlCheckFailures = urlCheckFailures; }
+    public Long getContentFingerprint() { return contentFingerprint; }
+    public void setContentFingerprint(Long contentFingerprint) { this.contentFingerprint = contentFingerprint; }
 }

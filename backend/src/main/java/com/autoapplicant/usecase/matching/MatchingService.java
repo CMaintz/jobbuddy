@@ -9,6 +9,7 @@ import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
@@ -18,6 +19,7 @@ import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
+import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,7 @@ public class MatchingService implements GetRecommendationsUseCase {
     private final AiProviderPort aiProvider;
     private final IgnoredJobRepositoryPort ignoredJobRepo;
     private final RecommendationFeedbackRepositoryPort feedbackRepo;
+    private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
 
     public MatchingService(JobEmbeddingRepositoryPort embeddingRepo,
                            JobRepositoryPort jobRepo,
@@ -59,7 +62,8 @@ public class MatchingService implements GetRecommendationsUseCase {
                            PreferencesRepositoryPort prefsRepo,
                            @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                            IgnoredJobRepositoryPort ignoredJobRepo,
-                           RecommendationFeedbackRepositoryPort feedbackRepo) {
+                           RecommendationFeedbackRepositoryPort feedbackRepo,
+                           ProfileEmbeddingRepositoryPort profileEmbeddingRepo) {
         this.embeddingRepo = embeddingRepo;
         this.jobRepo = jobRepo;
         this.profileRepo = profileRepo;
@@ -67,6 +71,7 @@ public class MatchingService implements GetRecommendationsUseCase {
         this.aiProvider = aiProvider;
         this.ignoredJobRepo = ignoredJobRepo;
         this.feedbackRepo = feedbackRepo;
+        this.profileEmbeddingRepo = profileEmbeddingRepo;
     }
 
     @Override
@@ -87,16 +92,28 @@ public class MatchingService implements GetRecommendationsUseCase {
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toSet());
 
-            float[] userEmbedding = aiProvider.embed(profileText);
+            // Use cached profile embedding when available; fall back to on-the-fly computation
+            float[] userEmbedding = profileEmbeddingRepo.findByUserId(userId)
+                    .map(ProfileEmbedding::embedding)
+                    .orElseGet(() -> aiProvider.embed(profileText));
             // Fetch extra candidates so we have room to discard hard-constraint failures
             List<UUID> nearestJobIds = embeddingRepo.findNearestNeighborJobIds(userEmbedding, limit * 5);
+
+            // Filter out ignored/hidden IDs before hitting the DB
+            List<UUID> candidateIds = nearestJobIds.stream()
+                    .filter(id -> !ignoredIds.contains(id) && !hiddenIds.contains(id))
+                    .toList();
+
+            // Batch-fetch all candidate jobs in a single query instead of N+1
+            Map<UUID, Job> jobMap = jobRepo.findByIds(candidateIds).stream()
+                    .collect(Collectors.toMap(Job::id, j -> j));
 
             Set<String> profileSkills = normalizedSet(profile.skills());
             Set<String> profileTech   = normalizedSet(profile.technologies());
 
-            return nearestJobIds.stream()
-                    .filter(id -> !ignoredIds.contains(id) && !hiddenIds.contains(id))
-                    .flatMap(jobId -> jobRepo.findById(jobId).stream())
+            return candidateIds.stream()
+                    .map(jobMap::get)
+                    .filter(Objects::nonNull)
                     .filter(job -> passesHardConstraints(job, prefs))
                     .limit(limit * 2L)
                     .map(job -> buildMatchResult(job, userId, profileSkills, profileTech, feedbackMap, prefs))

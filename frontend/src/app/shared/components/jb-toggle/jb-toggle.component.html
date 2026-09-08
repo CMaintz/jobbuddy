@@ -1,0 +1,7 @@
+    <button (click)="toggled.emit(!on)" [style.background]="on ? 'var(--jb-accent)' : 'var(--jb-surface-3)'"
+      [style.border-color]="on ? 'var(--jb-accent)' : 'var(--jb-border-strong)'"
+      class="w-8 h-[18px] rounded-full flex-shrink-0 p-0 relative cursor-pointer border">
+      <span [style.left.px]="on ? 15 : 1"
+        [style.background]="on ? '#1c1004' : 'var(--jb-text-dim)'"
+        class="absolute top-[1px] w-3.5 h-3.5 rounded-full transition-[left] duration-150"></span>
+    </button>

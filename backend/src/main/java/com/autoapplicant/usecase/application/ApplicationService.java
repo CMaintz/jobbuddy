@@ -3,12 +3,14 @@ package com.autoapplicant.usecase.application;
 import com.autoapplicant.domain.analytics.ResponseMetric;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
+import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
 import com.autoapplicant.port.out.analytics.ResponseMetricRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
+import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,17 +23,21 @@ import java.util.UUID;
 @Service
 public class ApplicationService implements
         CreateApplicationUseCase, UpdateApplicationStatusUseCase,
-        UpdateRecruiterInfoUseCase, GetApplicationsUseCase, GetApplicationByIdUseCase {
+        UpdateRecruiterInfoUseCase, UpdateOutcomeUseCase,
+        GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
     private final ResponseMetricRepositoryPort responseMetricRepo;
-    private final StructuredGeneratedDocumentService structuredGeneratedDocuments;
+    private final ApplicationStatusEventRepositoryPort statusEventRepo;
+    private final PersistGeneratedDocumentUseCase structuredGeneratedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
                               ResponseMetricRepositoryPort responseMetricRepo,
-                              StructuredGeneratedDocumentService structuredGeneratedDocuments) {
+                              ApplicationStatusEventRepositoryPort statusEventRepo,
+                              PersistGeneratedDocumentUseCase structuredGeneratedDocuments) {
         this.repo = repo;
         this.responseMetricRepo = responseMetricRepo;
+        this.statusEventRepo = statusEventRepo;
         this.structuredGeneratedDocuments = structuredGeneratedDocuments;
     }
 
@@ -44,11 +50,15 @@ public class ApplicationService implements
 
     @Override
     public Application createApplication(CreateApplicationCommand command) {
+        if (command.jobId() != null && repo.existsByUserIdAndJobId(command.userId(), command.jobId())) {
+            throw new IllegalStateException("An application for this job already exists");
+        }
         ApplicationStatus status = command.status() != null ? command.status() : ApplicationStatus.SAVED;
         Application app = new Application(null, command.userId(), command.jobId(), status,
                 status == ApplicationStatus.APPLIED ? Instant.now() : null,
                 null, null, command.coverLetterText(), command.applicationText(), command.recruiterMessage(),
-                null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null);
+                null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null,
+                null, null);
         Application saved = repo.save(app);
         if (command.generatedDocumentId() != null) {
             structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
@@ -64,14 +74,13 @@ public class ApplicationService implements
         GeneratedDocument document = structuredGeneratedDocuments.attachToApplication(userId, generatedDocumentId, applicationId);
         Application withContent = applyGeneratedContent(existing, document, generatedContent);
         ApplicationStatus targetStatus = status != null ? status : withContent.status();
-        Application updated = new Application(
-                withContent.id(), withContent.userId(), withContent.jobId(), targetStatus,
-                targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null ? Instant.now() : withContent.appliedAt(),
-                withContent.recruiterName(), withContent.recruiterEmail(),
-                withContent.coverLetterText(), withContent.applicationText(), withContent.recruiterMessage(),
-                withContent.recruiterReply(), withContent.cvVersionId(), withContent.promptTemplateId(), withContent.matchScore(),
-                notes != null ? notes : withContent.notes(),
-                withContent.createdAt(), Instant.now());
+        Application updated = withContent.toBuilder()
+                .status(targetStatus)
+                .appliedAt(targetStatus == ApplicationStatus.APPLIED && withContent.appliedAt() == null
+                        ? Instant.now() : withContent.appliedAt())
+                .notes(notes != null ? notes : withContent.notes())
+                .updatedAt(Instant.now())
+                .build();
         return repo.save(updated);
     }
 
@@ -85,19 +94,18 @@ public class ApplicationService implements
 
         switch (document.documentType()) {
             case COVER_LETTER -> coverLetterText = content;
-            case APPLICATION_TEXT -> applicationText = content;
+            case APPLICATION_TEXT, UNSOLICITED_APPLICATION -> applicationText = content;
             case RECRUITER_MESSAGE, FOLLOW_UP_MESSAGE -> recruiterMessage = content;
             default -> {
                 // CVs are attached as generated documents; application text fields stay unchanged.
             }
         }
 
-        return new Application(
-                application.id(), application.userId(), application.jobId(), application.status(),
-                application.appliedAt(), application.recruiterName(), application.recruiterEmail(),
-                coverLetterText, applicationText, recruiterMessage,
-                application.recruiterReply(), application.cvVersionId(), application.promptTemplateId(), application.matchScore(),
-                application.notes(), application.createdAt(), application.updatedAt());
+        return application.toBuilder()
+                .coverLetterText(coverLetterText)
+                .applicationText(applicationText)
+                .recruiterMessage(recruiterMessage)
+                .build();
     }
 
     @Override
@@ -110,15 +118,17 @@ public class ApplicationService implements
                     + existing.status() + " -> " + newStatus);
         }
 
-        Application updated = new Application(
-                existing.id(), existing.userId(), existing.jobId(), newStatus,
-                newStatus == ApplicationStatus.APPLIED ? java.time.Instant.now() : existing.appliedAt(),
-                existing.recruiterName(), existing.recruiterEmail(),
-                existing.coverLetterText(), existing.applicationText(), existing.recruiterMessage(),
-                existing.recruiterReply(), existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
-                notes != null ? notes : existing.notes(),
-                existing.createdAt(), java.time.Instant.now());
+        Application updated = existing.toBuilder()
+                .status(newStatus)
+                .appliedAt(newStatus == ApplicationStatus.APPLIED ? Instant.now() : existing.appliedAt())
+                .notes(notes != null ? notes : existing.notes())
+                .updatedAt(Instant.now())
+                .build();
         Application saved = repo.save(updated);
+
+        // Append-only transition ledger — every change, for funnel-velocity analytics.
+        statusEventRepo.save(new ApplicationStatusEvent(
+                null, applicationId, existing.userId(), existing.status(), newStatus, Instant.now()));
 
         String eventType = switch (newStatus) {
             case RECRUITER_CONTACT -> "RECRUITER_CONTACT";
@@ -143,16 +153,25 @@ public class ApplicationService implements
                                            String recruiterMessage, String recruiterReply) {
         Application existing = repo.findByIdAndUserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Application not found"));
-        Application updated = new Application(
-                existing.id(), existing.userId(), existing.jobId(), existing.status(),
-                existing.appliedAt(),
-                recruiterName    != null ? recruiterName    : existing.recruiterName(),
-                recruiterEmail   != null ? recruiterEmail   : existing.recruiterEmail(),
-                existing.coverLetterText(), existing.applicationText(),
-                recruiterMessage != null ? recruiterMessage : existing.recruiterMessage(),
-                recruiterReply   != null ? recruiterReply   : existing.recruiterReply(),
-                existing.cvVersionId(), existing.promptTemplateId(), existing.matchScore(),
-                existing.notes(), existing.createdAt(), Instant.now());
+        Application updated = existing.toBuilder()
+                .recruiterName(recruiterName    != null ? recruiterName    : existing.recruiterName())
+                .recruiterEmail(recruiterEmail   != null ? recruiterEmail   : existing.recruiterEmail())
+                .recruiterMessage(recruiterMessage != null ? recruiterMessage : existing.recruiterMessage())
+                .recruiterReply(recruiterReply   != null ? recruiterReply   : existing.recruiterReply())
+                .updatedAt(Instant.now())
+                .build();
+        return repo.save(updated);
+    }
+
+    @Override
+    public Application updateOutcome(UUID applicationId, UUID userId, String outcomeFeedback, String outcomeLessons) {
+        Application existing = repo.findByIdAndUserId(applicationId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        Application updated = existing.toBuilder()
+                .outcomeFeedback(outcomeFeedback != null ? outcomeFeedback : existing.outcomeFeedback())
+                .outcomeLessons(outcomeLessons  != null ? outcomeLessons  : existing.outcomeLessons())
+                .updatedAt(Instant.now())
+                .build();
         return repo.save(updated);
     }
 

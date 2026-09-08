@@ -15,5 +15,6 @@ public record GenerateDocumentRequest(
         String motivationText,
         String targetLanguage,
         Boolean showProfileImage,
-        DocumentThemeRequest theme
+        DocumentThemeRequest theme,
+        String lengthPreference
 ) {}

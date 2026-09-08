@@ -2,16 +2,14 @@
 
 # Job Sources
 
-Initial sources:
+Implemented crawler connectors (feed the shared ingestion pipeline):
 
-- LinkedIn Jobs
-- Jobindex
-- Computerworld / IT Jobbank
-- The Hub
-- Ofir
-- Jobnet
-- WorkinDenmark
-- company career pages
+- Jobindex, Jobnet, IT-Jobbank, Jobdanmark (Danish boards, RSS/JSON)
+- ATS boards: Greenhouse, Lever, Teamtailor, Cornerstone OnDemand
+- Careerjet (aggregator)
+- **LinkedIn Jobs** — personal-use, low-volume connector over the public `jobs-guest` endpoints (`LinkedInConnector`). Kept off the shared 4-hour schedule; runs on its own jittered `LinkedInCrawlScheduler`. Search keywords come from per-user **LLM-generated query plans** (`linkedin_query_plan`), crossed with configured locations, rotated per run, recency-filtered, with randomized delays and a per-run cap.
+
+Planned / not yet implemented: The Hub, Ofir, WorkinDenmark, generic company career pages.
 
 ---
 
@@ -27,6 +25,19 @@ Crawler
 → Search Index
 → Matching Engine
 ```
+
+## Deduplication & Liveness
+
+- **Exact dedup** — by `source` + `sourceJobId` (re-crawls refresh `lastSeenAt` instead of re-inserting).
+- **Cross-listing dedup** — a 64-bit **SimHash** content fingerprint (`SimHash`, from an external reference implementation)
+  of the cleaned description clusters the same role re-listed under a different company/URL (the
+  agency-repost case) via a shared `duplicate_group_id`. Flag-only — jobs are grouped, never dropped.
+- **Liveness (3-state)** — `JobUrlProbePort` classifies postings as ALIVE / INCONCLUSIVE / GONE /
+  GONE_SOFT. Only 404/410 (and, after two sightings, "no longer available" markers incl. Danish)
+  deactivate a posting; 403/429/5xx are treated as inconclusive (bot protection), **never** as
+  proof the job is gone. Complements crawl-presence staleness expiry.
+- **SSRF guard** — `UrlSafetyValidator` requires http(s) and rejects URLs resolving to loopback /
+  private / link-local addresses before the probe fetches an (untrusted, crawled) posting URL.
 
 ---
 
@@ -164,6 +175,16 @@ Users maintain:
 
 The AI should generate tailored outputs from this structured profile.
 
+## Career Targeting (archetypes / North-Star)
+
+A `career_target` record (`GET`/`PUT /api/v1/profile/career-target`) stores the identity-free
+targeting layer behind archetype-aware generation: **target archetypes** (declared role-types),
+a **North-Star** statement, a positioning **narrative** (distinct from the CV summary), and
+**culture requirements**. These are folded into the contact-free AI context (`CareerProfileForAi`),
+so generation leads with the candidate's declared archetypes/North-Star when they align with the
+posting. (Compensation expectations and document style already exist as `Profile.desiredSalary*`
+and `DocumentTheme`.)
+
 ---
 
 # Project-Centric AI Grounding
@@ -191,6 +212,31 @@ The AI should emphasize the most relevant projects per role.
 - readability improvements
 - role-specific tailoring
 
+## Posting Risk Assessment
+
+The CV-vs-job analysis (`/api/v1/ai/analyze`) returns a **risk block kept strictly separate
+from the fit score** (`RiskAssessment`, framing from an external reference implementation):
+- **Legitimacy** — HIGH_CONFIDENCE / CAUTION / SUSPICIOUS / NOT_ASSESSED (ghost-posting cues:
+  stale/vague postings, contradictory or unrealistic requirements, no concrete team/role detail).
+- **Risk signals** — a short list of `{label, severity, note}` items.
+- **Compensation reliability** — HIGH / MEDIUM / LOW / UNKNOWN (how far advertised pay is real
+  base vs variable / "up to" / commission).
+
+Risk **never** adjusts the 0-100 score or its dimensions. The prompt is instructed to surface
+signals, never accuse, and note legitimate explanations — the human decides. Surfaced in the
+analysis UI as its own card (legitimacy + pay-reliability pills, signal list).
+
+## ATS Render Hardening
+
+At PDF render time (`PdfRenderingService`, techniques from an external reference implementation):
+- **Unicode→ASCII text-layer normalization** — smart quotes, en/em dashes, ellipses,
+  non-breaking/thin spaces, and zero-width characters are folded to plain ASCII so ATS
+  parsers (which read the embedded text, not the glyphs) extract clean keywords. Models
+  routinely emit these characters; decorative separators are left intact.
+- **Post-render page-budget check** — measures the true page count of the rendered PDF
+  (CV ≤ 2 pages, other documents ≤ 1) and warns, or fails when
+  `app.pdf.page-budget.strict=true`. Layout is never silently mutated to fit.
+
 ---
 
 # AI Application Generation
@@ -212,6 +258,88 @@ The AI should emphasize the most relevant projects per role.
 - editable application text
 - recruiter outreach message
 - follow-up messages
+
+---
+
+# Automatic Reviewer Loop
+
+After generation, a fresh-context **reviewer pass** critiques the draft (a "demanding hiring
+manager") against the posting and the user's writing profile — missed keywords, weak/generic
+framing, overreaching claims, style mismatches — then returns a revised version plus a critique
+list. Wired into document generation (`AiService.generateDocument`), config-gated:
+
+- `app.ai.auto-review.enabled` (default `true`) — each pass is one extra LLM call.
+- `app.ai.auto-review.max-iterations` (default `1`) — loop stops early once a pass reports no further critique.
+
+Also available as a manual on-demand endpoint (`ReviewDocumentUseCase`). This realizes part of
+the "optimization loops" idea from Future Features.
+
+---
+
+# Prompt Safety & Anti-Fabrication
+
+Fixed, server-side guardrails on every generation/analysis prompt (not user-editable):
+
+- **No fabrication** of skills, experience, credentials, or outcomes — frame adjacent experience or leave the gap visible.
+- **No tool-of-trade conflation** — using a technology is not building it; never claim the candidate authored a project/tool unless the profile attributes it.
+- **Silence beats invention** — omit details not in the profile rather than manufacture them.
+- **Untrusted-input guard** — scraped/posted job text (incl. crawled LinkedIn/board HTML) is treated as data to evaluate, never as instructions (prompt-injection defense).
+- **Privacy** — identity fields (name, contact, photo, links) are never sent to the AI.
+
+## Company Grounding
+
+Cover-letter accuracy's biggest risk is fabricated company praise ("I admire your work on X").
+`CompanyGroundingService` addresses it: on generation it supplies **verified company facts** to the
+prompt, extracted from the company's **own website** (never a URL from the untrusted posting).
+
+- **Cached in the DB** (`companies.researched_facts` / `facts_researched_at`, V060) — fetched and
+  extracted once, reused until stale (`app.ai.company-grounding.staleness-days`, default 60), so no
+  needless re-scraping. Extraction uses the cheap enrichment-tier model.
+- **SSRF-guarded fetch** (`WebPageFetchPort` + `UrlSafetyValidator`); the page text is capped.
+- The facts appear in a **"Verified Company Facts"** prompt block marked as trustworthy and distinct
+  from the untrusted posting; a HONESTY rule requires any company reference to be grounded in it.
+- Best-effort and cached — if there's no known website or the fetch fails, generation just proceeds
+  without the block. Config: `app.ai.company-grounding.enabled` (default true).
+
+## Deterministic Fact Gate
+
+A model-free backstop (`DocumentFactGuard`, ported from an external reference implementation's `verify-cv-facts.mjs`):
+after generation it extracts metric-like claims — percentages, currency figures, multipliers,
+and `<number> <metric-noun>` counts — from the document and flags any not supported by the
+source career profile, catching invented or inflated numbers at **zero token cost**. Digit-folding
+(multilingual) and thousands-separator normalization are applied symmetrically to document and
+source, so a truthful number never false-fails. Config: `app.ai.fact-guard.enabled` (default `true`),
+`app.ai.fact-guard.mode` = `warn` (log, default) | `block` (fail generation). Complements the LLM
+reviewer loop — the reviewer's honesty rules are the first line of defense, the fact gate is the
+deterministic net.
+
+**Coverage:** the fact gate and the retracted-claims gate run on **both cover letters/application
+docs AND tailored CVs**, via a shared `GeneratedContentGuards` service (so the two paths can never
+drift). The CV's rewritten text (profile + bullets) is flattened and checked exactly like a letter
+body. Note: the LLM drafter→reviewer loop currently runs on the letter path only — it reviews a text
+body, whereas the CV is structured JSON, so a structured CV reviewer is a separate follow-up. The CV
+path still carries the prompt-level honesty/anti-fabrication + targeting rules.
+
+---
+
+# AI Provider Options
+
+Generation is provider-pluggable via `app.ai.generation-provider`:
+
+- `openai` (default) / `gemini` — API providers.
+- `claude-cli` / `codex` / `cli` — a **local CLI agent** (Claude Code / Codex): prompts are piped to
+  the agent's stdin (`app.ai.cli.command`, default `claude -p`), so generation runs on a flat-fee
+  subscription instead of per-token API cost.
+
+Embeddings (`app.ai.enrichment-provider`) must remain a real API — CLI agents produce text, not
+vectors. The split (generation → CLI, embeddings → cheap API) captures the cost savings while
+keeping semantic search working. Best for on-demand generation, not high-throughput bulk enrichment.
+
+**Spend tiers** — each operation class routes to a model tier: `app.ai.enrichment-tier` (default
+`economy`) and `app.ai.generation-tier` (default `standard`), each resolving to the provider's
+`economy-model` / `standard-model` / `premium-model` (falling back to `model`). So bulk enrichment
+runs on the cheap/fast model while on-demand generation can be dialled up to premium — a single knob
+for cost vs quality. Defaults preserve the current models (no behaviour change).
 
 ---
 
@@ -292,6 +420,18 @@ Generate applications that sound authentic.
 
 ---
 
+# Interview Story Bank & Integrity Gates
+
+- **STAR+R story bank** (`interview_story`, `/api/v1/interview/stories`) — reusable Situation /
+  Task / Action / Result / **Reflection** stories (the "+R" is the junior-vs-senior differentiator).
+  The interview analogue of the writing-style memory: `InterviewPrepService` folds the candidate's
+  stories into prep-pack generation, mapping behavioral questions to their real stories.
+- **Retracted-claims gate** (`retracted_claim`, `/api/v1/profile/retracted-claims`) — claims the
+  user explicitly disowns; `RetractedClaimsGuard` checks every generated document body so a
+  retracted claim can never resurface (`app.ai.retracted-claims.mode` = `warn` | `block`).
+
+---
+
 # Application Tracking
 
 ```text
@@ -306,6 +446,15 @@ Saved
 → Rejected
 → Archived
 ```
+
+---
+
+# Funnel Velocity
+
+Every application status change writes an immutable row to an append-only ledger
+(`application_status_event`). `GET /api/v1/analytics/funnel-velocity` derives the **average
+time-in-stage** between consecutive transitions (e.g. how long roles sit in "applied" before
+"interview"), enabling velocity / rejection-latency analytics beyond the current status alone.
 
 ---
 

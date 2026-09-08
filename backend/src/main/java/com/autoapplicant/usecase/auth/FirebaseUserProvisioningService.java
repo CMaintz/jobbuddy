@@ -49,7 +49,7 @@ public class FirebaseUserProvisioningService implements ProvisionFirebaseUserUse
             User user = byEmail.get();
             User linked = new User(user.id(), user.email(), user.googleId(),
                     user.linkedinId(), firebaseUid, user.role(), true,
-                    user.createdAt(), user.updatedAt());
+                    user.onboardingComplete(), user.createdAt(), user.updatedAt());
             User saved = userRepo.save(linked);
             syncRoleClaim(firebaseUid, saved.role());
             return saved;
@@ -57,7 +57,7 @@ public class FirebaseUserProvisioningService implements ProvisionFirebaseUserUse
 
         // Brand new user — create account and default profile
         User newUser = new User(null, email, null, null, firebaseUid,
-                UserRole.USER, true, null, null);
+                UserRole.USER, true, false, null, null);
         User saved = userRepo.save(newUser);
 
         profileRepo.save(new Profile(null, saved.id(), null, null, null,
@@ -79,7 +79,7 @@ public class FirebaseUserProvisioningService implements ProvisionFirebaseUserUse
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         User updated = new User(user.id(), user.email(), user.googleId(),
                 user.linkedinId(), user.firebaseUid(), newRole, user.emailVerified(),
-                user.createdAt(), user.updatedAt());
+                user.onboardingComplete(), user.createdAt(), user.updatedAt());
         User saved = userRepo.save(updated);
         if (saved.firebaseUid() != null) {
             syncRoleClaim(saved.firebaseUid(), newRole);

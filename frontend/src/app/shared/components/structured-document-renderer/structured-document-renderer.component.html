@@ -1,0 +1,22 @@
+    @if (document) {
+      <article class="sheet" [ngClass]="sheetClasses" [ngStyle]="themeStyles">
+        <app-document-header
+          [identity]="document.identity"
+          [showProfileImage]="showProfileImage">
+        </app-document-header>
+
+        <main class="content">
+          @if (isCv) {
+            @for (section of document.sections; track section.id) {
+              <app-document-section [section]="section"></app-document-section>
+            }
+          } @else {
+            <div class="body">
+              @for (paragraph of bodyParagraphs; track paragraph) {
+                <p>{{ paragraph }}</p>
+              }
+            </div>
+          }
+        </main>
+      </article>
+    }

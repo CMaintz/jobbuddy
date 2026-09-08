@@ -1,89 +1,48 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
-import { TemplateType, SectionConfig } from '../../models/resume-builder.models';
+import { TemplateType, SectionConfig, SectionTypography } from '../../models/resume-builder.models';
+import { FONT_FAMILIES } from '../../data/font-families';
 
 const TEMPLATES: { type: TemplateType; label: string; description: string }[] = [
-  { type: 'classic', label: 'Classic', description: 'Two-column with dark sidebar' },
-  { type: 'modern', label: 'Modern (1-col)', description: 'Clean single-column layout' },
-  { type: 'modern-2col', label: 'Modern (2-col)', description: 'Dark left column' },
-  { type: 'minimal', label: 'Minimal', description: 'Minimalist with timeline' },
-  { type: 'executive', label: 'Executive', description: 'Executive with header band' },
-  { type: 'creative', label: 'Creative', description: 'Colorful accent style' },
+  { type: 'classic', label: 'resumeBuilder.layout.tpl.classic.label', description: 'resumeBuilder.layout.tpl.classic.description' },
+  { type: 'modern', label: 'resumeBuilder.layout.tpl.modern.label', description: 'resumeBuilder.layout.tpl.modern.description' },
+  { type: 'modern-2col', label: 'resumeBuilder.layout.tpl.modern2col.label', description: 'resumeBuilder.layout.tpl.modern2col.description' },
+  { type: 'minimal', label: 'resumeBuilder.layout.tpl.minimal.label', description: 'resumeBuilder.layout.tpl.minimal.description' },
+  { type: 'executive', label: 'resumeBuilder.layout.tpl.executive.label', description: 'resumeBuilder.layout.tpl.executive.description' },
+  { type: 'creative', label: 'resumeBuilder.layout.tpl.creative.label', description: 'resumeBuilder.layout.tpl.creative.description' },
+];
+
+/** Sections that can carry typography overrides (matches rbSection tags in the layouts). */
+const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
+  { id: 'header', label: 'resumeBuilder.layout.typoSection.header' },
+  { id: 'summary', label: 'resumeBuilder.layout.typoSection.summary' },
+  { id: 'experience', label: 'resumeBuilder.layout.typoSection.experience' },
+  { id: 'education', label: 'resumeBuilder.layout.typoSection.education' },
+  { id: 'projects', label: 'resumeBuilder.layout.typoSection.projects' },
+  { id: 'skills', label: 'resumeBuilder.layout.typoSection.skills' },
+  { id: 'languages', label: 'resumeBuilder.layout.typoSection.languages' },
+  { id: 'certifications', label: 'resumeBuilder.layout.typoSection.certifications' },
+  { id: 'strengths', label: 'resumeBuilder.layout.typoSection.strengths' },
+  { id: 'socials', label: 'resumeBuilder.layout.typoSection.socials' },
+  { id: 'custom', label: 'resumeBuilder.layout.typoSection.custom' },
 ];
 
 @Component({
   selector: 'app-layout-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="flex flex-col gap-5">
-      <!-- Template picker -->
-      <div>
-        <label class="form-label">Template</label>
-        <div class="grid grid-cols-2 gap-2">
-          @for (tpl of templates; track tpl.type) {
-            <button
-              class="p-3 text-left rounded-lg border-2 transition-colors"
-              [class.border-blue-600]="settings.template === tpl.type"
-              [class.bg-blue-50]="settings.template === tpl.type"
-              [class.border-gray-200]="settings.template !== tpl.type"
-              (click)="selectTemplate(tpl.type)"
-            >
-              <p class="text-xs font-semibold text-gray-800">{{ tpl.label }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ tpl.description }}</p>
-            </button>
-          }
-        </div>
-      </div>
-
-      <!-- Left column sections -->
-      <div>
-        <label class="form-label">Left Column Sections</label>
-        <div class="flex flex-col gap-1">
-          @for (section of leftColumn; track section.id; let i = $index) {
-            <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
-              <span class="text-gray-400 cursor-move text-xs">⠿</span>
-              <span class="flex-1 text-xs text-gray-700">{{ section.name }}</span>
-              <button
-                class="text-xs px-2 py-0.5 rounded"
-                [class.text-green-700]="section.visible"
-                [class.text-gray-400]="!section.visible"
-                (click)="toggleSection('leftColumn', i)"
-              >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Right column sections -->
-      <div>
-        <label class="form-label">Right Column Sections</label>
-        <div class="flex flex-col gap-1">
-          @for (section of rightColumn; track section.id; let i = $index) {
-            <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
-              <span class="text-gray-400 cursor-move text-xs">⠿</span>
-              <span class="flex-1 text-xs text-gray-700">{{ section.name }}</span>
-              <button
-                class="text-xs px-2 py-0.5 rounded"
-                [class.text-green-700]="section.visible"
-                [class.text-gray-400]="!section.visible"
-                (click)="toggleSection('rightColumn', i)"
-              >{{ section.visible ? 'Visible' : 'Hidden' }}</button>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .form-label { @apply block text-xs font-medium text-gray-600 mb-1; }
-  `],
+  imports: [CommonModule, FormsModule, DragDropModule, TranslateModule],
+  templateUrl: './layout-form.component.html',
 })
 export class LayoutFormComponent {
   private state = inject(ResumeStateService);
   templates = TEMPLATES;
+  typographySections = TYPOGRAPHY_SECTIONS;
+  fonts = FONT_FAMILIES;
+  expandedTypo = signal<string | null>(null);
 
   get settings() { return this.state.settings(); }
   get leftColumn() { return this.state.settings().leftColumn; }
@@ -97,5 +56,35 @@ export class LayoutFormComponent {
     const cols = [...this.state.settings()[column]];
     cols[index] = { ...cols[index], visible: !cols[index].visible };
     this.state.updateLayoutColumn(column, cols);
+  }
+
+  drop(column: 'leftColumn' | 'rightColumn', event: CdkDragDrop<SectionConfig[]>): void {
+    const cols = [...this.state.settings()[column]];
+    moveItemInArray(cols, event.previousIndex, event.currentIndex);
+    this.state.updateLayoutColumn(column, cols);
+  }
+
+  // ── Per-section typography ────────────────────────────────────
+
+  typo(id: string): SectionTypography {
+    return this.state.settings().sectionTypography?.[id] ?? {};
+  }
+
+  hasOverrides(id: string): boolean {
+    const t = this.typo(id);
+    return !!(t.fontFamily || (t.sizeScale && t.sizeScale !== 1) || t.bold || t.italic || t.color);
+  }
+
+  setTypo(id: string, patch: Partial<SectionTypography>): void {
+    const current = this.state.settings().sectionTypography ?? {};
+    this.state.updateSettings({
+      sectionTypography: { ...current, [id]: { ...current[id], ...patch } },
+    });
+  }
+
+  resetTypo(id: string): void {
+    const current = { ...(this.state.settings().sectionTypography ?? {}) };
+    delete current[id];
+    this.state.updateSettings({ sectionTypography: current });
   }
 }

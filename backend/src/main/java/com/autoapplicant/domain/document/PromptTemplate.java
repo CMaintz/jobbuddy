@@ -1,6 +1,7 @@
 package com.autoapplicant.domain.document;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record PromptTemplate(
@@ -17,5 +18,7 @@ public record PromptTemplate(
         int versionNumber,
         Instant createdAt,
         Instant updatedAt,
-        boolean isSystem
+        boolean isSystem,
+        List<String> tags,
+        int usageCount
 ) {}

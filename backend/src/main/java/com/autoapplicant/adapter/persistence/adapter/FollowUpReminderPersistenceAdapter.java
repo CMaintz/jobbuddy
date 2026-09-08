@@ -35,6 +35,12 @@ public class FollowUpReminderPersistenceAdapter implements FollowUpReminderRepos
     }
 
     @Override
+    public List<FollowUpReminder> findOpenByUserId(UUID userId) {
+        return repo.findByUserIdAndCompletedFalseOrderByDueAtAsc(userId)
+                .stream().map(this::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<FollowUpReminder> findByIdAndUserId(UUID id, UUID userId) {
         return repo.findByIdAndUserId(id, userId).map(this::toDomain);
     }

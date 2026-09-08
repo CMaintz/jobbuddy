@@ -1,0 +1,221 @@
+    <jb-topbar [title]="'nav.prompts' | translate">
+      <ng-container jb-topbar-actions>
+        <jb-button [primary]="true" icon="plus" (clicked)="showCreate.set(true)">{{ 'prompts.newPrompt' | translate }}</jb-button>
+      </ng-container>
+    </jb-topbar>
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+    <!-- Filter tabs -->
+    <div class="py-3 px-[22px] flex items-center gap-1.5 border-b border-jb-border">
+      <button (click)="activeKind.set('all')"
+        class="py-[5px] px-2.5 rounded-full cursor-pointer text-sm font-medium"
+        [style.background]="activeKind() === 'all' ? 'var(--jb-surface-3)' : 'transparent'"
+        [style.border]="'1px solid ' + (activeKind() === 'all' ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+        [style.color]="activeKind() === 'all' ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+        {{ 'common.all' | translate }} <span class="mono text-xs text-jb-text-dim">{{ prompts.length }}</span>
+      </button>
+      @for (kind of promptKinds; track kind.key) {
+        <button (click)="activeKind.set(kind.key)"
+          class="py-[5px] px-2.5 rounded-full cursor-pointer text-sm font-medium inline-flex items-center gap-[5px]"
+          [style.background]="activeKind() === kind.key ? 'var(--jb-surface-3)' : 'transparent'"
+          [style.border]="'1px solid ' + (activeKind() === kind.key ? 'var(--jb-border-strong)' : 'var(--jb-border)')"
+          [style.color]="activeKind() === kind.key ? 'var(--jb-text)' : 'var(--jb-text-mid)'">
+          {{ kind.label | translate }}
+        </button>
+      }
+    </div>
+
+    <!-- Card grid -->
+    <div class="flex-1 overflow-auto p-[22px] jb-scroll">
+      @if (loading()) {
+        <div class="p-10 text-center text-jb-text-dim">{{ 'prompts.loading' | translate }}</div>
+      } @else if (filteredPrompts().length === 0) {
+        <div class="p-10 text-center bg-jb-surface border border-dashed border-jb-border-strong rounded-md max-w-[560px] mx-auto">
+          <jb-icon name="lightbulb" [size]="20" class="text-jb-accent" />
+          <div class="text-base text-jb-text-mid mt-2">{{ 'prompts.emptyTitle' | translate }}</div>
+          <div class="text-xs text-jb-text-dim mt-1 mb-3">{{ 'prompts.emptyDesc' | translate }}</div>
+          <jb-button [primary]="true" small icon="plus" (clicked)="showCreate.set(true)">{{ 'prompts.createFirst' | translate }}</jb-button>
+        </div>
+      } @else {
+        <div class="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          @for (p of filteredPrompts(); track p.id) {
+            <div (click)="openPrompt.set(p)" class="card jb-liftcard p-3.5 cursor-pointer flex flex-col gap-2.5 min-h-[158px]">
+              <!-- Header -->
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded shrink-0 bg-jb-surface-2 border border-jb-border flex items-center justify-center"
+                  [style.color]="kindConfig(p.category).color">
+                  <jb-icon [name]="kindConfig(p.category).icon" [size]="12" />
+                </div>
+                <div class="text-2xs text-jb-text-dim tracking-widest uppercase font-medium">{{ kindConfig(p.category).label | translate }}</div>
+                <div class="ml-auto flex items-center gap-1.5">
+                  @if (p.isSystem) {
+                    <jb-pill tone="neutral">{{ 'prompts.system' | translate }}</jb-pill>
+                  }
+                  <button class="icon-btn" [title]="(p.favourite ? 'prompts.unfavourite' : 'prompts.favourite') | translate"
+                    (click)="toggleFavourite(p, $event)"
+                    [style.color]="p.favourite ? 'var(--jb-accent)' : 'var(--jb-text-dim)'">
+                    <jb-icon name="star" [size]="13" [strokeWidth]="p.favourite ? 2.5 : 1.5" />
+                  </button>
+                </div>
+              </div>
+              <!-- Title -->
+              <div class="text-lg font-medium leading-[1.3] tracking-[-0.01em]">{{ p.name }}</div>
+              <!-- Body preview -->
+              <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden line-clamp-3">{{ p.description || p.userPrompt }}</div>
+              <!-- Tags -->
+              @if (p.tags?.length) {
+                <div class="flex flex-wrap gap-1">
+                  @for (tag of p.tags; track tag) {
+                    <span class="pill pill-neutral">{{ tag }}</span>
+                  }
+                </div>
+              }
+              <!-- Footer -->
+              <div class="flex items-center gap-1.5 mt-auto">
+                @if (p.usageCount) {
+                  <span class="text-2xs text-jb-text-dim">{{ 'prompts.usedCount' | translate:{ count: p.usageCount } }}</span>
+                }
+                <div class="ml-auto flex items-center gap-2 text-2xs text-jb-text-dim">
+                  <span class="mono">v{{ p.versionNumber }}</span>
+                  <span>·</span>
+                  <span>{{ ageLabel(p.updatedAt) }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Modal detail -->
+    @if (openPrompt(); as p) {
+      <jb-modal (closed)="closeModal()">
+        <ng-container jb-modal-header>
+          <jb-pill tone="neutral">{{ kindConfig(p.category).label | translate }}</jb-pill>
+          <div class="text-xl font-medium flex-1">{{ editing() ? ('prompts.editPrompt' | translate) : p.name }}</div>
+          @if (p.isSystem) {
+            <jb-pill tone="info">{{ 'prompts.system' | translate }}</jb-pill>
+          }
+        </ng-container>
+            @if (editing()) {
+              <div class="grid gap-2.5 grid-cols-[1.6fr_1fr]">
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'prompts.name' | translate }}</span>
+                  <input [(ngModel)]="editName" class="input" />
+                </label>
+                <label class="flex flex-col gap-[5px]">
+                  <span class="label">{{ 'prompts.type' | translate }}</span>
+                  <select [(ngModel)]="editCategory" class="input">
+                    @for (kind of promptKinds; track kind.key) {
+                      <option [ngValue]="kind.key">{{ kind.label | translate }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">{{ 'prompts.description' | translate }}</span>
+                <input [(ngModel)]="editDescription" class="input" />
+              </label>
+              <label class="flex flex-col gap-[5px]">
+                <span class="label">{{ 'prompts.prompt' | translate }}</span>
+                <textarea [(ngModel)]="editBody" rows="8" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"></textarea>
+              </label>
+              <div class="flex flex-col gap-[5px]">
+                <span class="label">{{ 'prompts.tags' | translate }}</span>
+                <jb-tag-input [value]="editTags" (valueChange)="editTags = $event" [placeholder]="'prompts.addTag' | translate" />
+              </div>
+            } @else {
+              @if (p.description) {
+                <div class="text-sm text-jb-text-mid">{{ p.description }}</div>
+              }
+              <div>
+                <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.prompt' | translate }}</div>
+                <pre class="w-full min-h-[120px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-sm leading-relaxed text-jb-text whitespace-pre-wrap m-0" style="font-family:var(--font-mono,JetBrains Mono,monospace);">{{ p.userPrompt }}</pre>
+              </div>
+              @if (p.systemPrompt) {
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.systemPrompt' | translate }}</div>
+                  <pre class="w-full p-3 bg-jb-surface-2 border border-jb-border rounded-md text-xs leading-relaxed text-jb-text-mid whitespace-pre-wrap m-0" style="font-family:var(--font-mono,JetBrains Mono,monospace);">{{ p.systemPrompt }}</pre>
+                </div>
+              }
+              <div class="grid gap-2.5 grid-cols-[1fr_1fr_1fr]">
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.type' | translate }}</div>
+                  <div class="text-base">{{ kindConfig(p.category).label | translate }}</div>
+                </div>
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.version' | translate }}</div>
+                  <div class="mono text-base">v{{ p.versionNumber }}</div>
+                </div>
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.updated' | translate }}</div>
+                  <div class="text-base">{{ ageLabel(p.updatedAt) }}</div>
+                </div>
+              </div>
+            }
+
+        <ng-container jb-modal-footer>
+          @if (canModify(p) && !editing()) {
+            <button class="text-xs text-jb-danger cursor-pointer bg-transparent border-none" (click)="deletePrompt(p)">{{ 'common.delete' | translate }}</button>
+          }
+          <div class="ml-auto flex items-center gap-2">
+            @if (editing()) {
+              <jb-button small (clicked)="editing.set(false)">{{ 'common.cancel' | translate }}</jb-button>
+              <jb-button small [primary]="true" icon="check" [disabled]="savingEdit()" (clicked)="saveEdit(p)">
+                {{ (savingEdit() ? 'common.saving' : 'prompts.saveChanges') | translate }}
+              </jb-button>
+            } @else {
+              <jb-button small icon="copy" (clicked)="duplicate(p)">{{ 'prompts.duplicate' | translate }}</jb-button>
+              @if (canModify(p)) {
+                <jb-button small [primary]="true" icon="edit" (clicked)="startEdit(p)">{{ 'common.edit' | translate }}</jb-button>
+              }
+            }
+          </div>
+        </ng-container>
+      </jb-modal>
+    }
+
+    <!-- Create modal -->
+    @if (showCreate()) {
+      <jb-modal (closed)="showCreate.set(false)">
+        <ng-container jb-modal-header>
+          <div class="text-xl font-medium flex-1">{{ 'prompts.newPrompt' | translate }}</div>
+        </ng-container>
+
+        <div class="grid gap-2.5 grid-cols-[1.6fr_1fr]">
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">{{ 'prompts.name' | translate }}</span>
+            <input [(ngModel)]="newName" class="input" [placeholder]="'prompts.namePlaceholder' | translate" />
+          </label>
+          <label class="flex flex-col gap-[5px]">
+            <span class="label">{{ 'prompts.type' | translate }}</span>
+            <select [(ngModel)]="newCategory" class="input">
+              @for (kind of promptKinds; track kind.key) {
+                <option [ngValue]="kind.key">{{ kind.label | translate }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'prompts.descriptionOptional' | translate }}</span>
+          <input [(ngModel)]="newDescription" class="input" [placeholder]="'prompts.descPlaceholder' | translate" />
+        </label>
+        <label class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'prompts.prompt' | translate }}</span>
+          <textarea [(ngModel)]="newBody" rows="7" class="input resize-y text-sm leading-relaxed" style="font-family:var(--font-mono,JetBrains Mono,monospace);"
+            [placeholder]="'prompts.bodyPlaceholder' | translate"></textarea>
+        </label>
+        <div class="flex flex-col gap-[5px]">
+          <span class="label">{{ 'prompts.tagsOptional' | translate }}</span>
+          <jb-tag-input [value]="newTags" (valueChange)="newTags = $event" [placeholder]="'prompts.tagsPlaceholder' | translate" />
+        </div>
+
+        <ng-container jb-modal-footer>
+          <div class="ml-auto flex items-center gap-2">
+            <jb-button small (clicked)="showCreate.set(false)">{{ 'common.cancel' | translate }}</jb-button>
+            <jb-button [primary]="true" icon="check" [disabled]="creating()" (clicked)="create()">{{ (creating() ? 'prompts.creating' : 'prompts.createPrompt') | translate }}</jb-button>
+          </div>
+        </ng-container>
+      </jb-modal>
+    }

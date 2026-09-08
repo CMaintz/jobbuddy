@@ -32,6 +32,17 @@ public class WritingProfileEntity {
     @Column(name = "example_excerpts", columnDefinition = "text[]")
     private String[] exampleExcerpts;
 
+    @Type(StringArrayType.class)
+    @Column(name = "style_dos", columnDefinition = "text[]")
+    private String[] dos;
+
+    @Type(StringArrayType.class)
+    @Column(name = "style_donts", columnDefinition = "text[]")
+    private String[] donts;
+
+    @Column(name = "structure_notes", columnDefinition = "text")
+    private String structureNotes;
+
     @Column(name = "last_analyzed_at")
     private Instant lastAnalyzedAt;
 
@@ -56,6 +67,12 @@ public class WritingProfileEntity {
     public void setPhrasing_patterns(String[] phrasingPatterns) { this.phrasingPatterns = phrasingPatterns; }
     public String[] getExampleExcerpts() { return exampleExcerpts; }
     public void setExampleExcerpts(String[] exampleExcerpts) { this.exampleExcerpts = exampleExcerpts; }
+    public String[] getDos() { return dos; }
+    public void setDos(String[] dos) { this.dos = dos; }
+    public String[] getDonts() { return donts; }
+    public void setDonts(String[] donts) { this.donts = donts; }
+    public String getStructureNotes() { return structureNotes; }
+    public void setStructureNotes(String structureNotes) { this.structureNotes = structureNotes; }
     public Instant getLastAnalyzedAt() { return lastAnalyzedAt; }
     public void setLastAnalyzedAt(Instant lastAnalyzedAt) { this.lastAnalyzedAt = lastAnalyzedAt; }
     public Instant getCreatedAt() { return createdAt; }

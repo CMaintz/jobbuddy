@@ -1,0 +1,21 @@
+    <!-- Topbar -->
+    <div class="flex items-center gap-2.5 px-[18px] h-11 border-b border-jb-border flex-[0_0_auto]">
+      <a routerLink="/cv" class="inline-flex items-center gap-[5px] py-[5px] px-[9px] rounded bg-transparent border border-jb-border text-jb-text-mid text-sm no-underline">
+        <jb-icon name="arrow-left" [size]="11" /> {{ 'nav.masterCv' | translate }}
+      </a>
+      <span class="text-sm text-jb-text-dim">/</span>
+      <span class="text-base text-jb-text-mid">{{ 'masterCv.import' | translate }}</span>
+    </div>
+
+    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
+
+    <div class="flex-1 overflow-auto p-10 flex flex-col items-center gap-7 jb-scroll">
+      <div class="max-w-[640px] w-full text-center">
+        <div class="text-[20px] font-medium tracking-tight">{{ 'masterCv.importTitle' | translate }}</div>
+        <div class="text-base text-jb-text-dim mt-1">{{ 'masterCv.importDesc' | translate }}</div>
+      </div>
+
+      <div class="max-w-[720px] w-full">
+        <jb-cv-import-panel (applied)="onApplied()" (failed)="toast.set($event)" />
+      </div>
+    </div>

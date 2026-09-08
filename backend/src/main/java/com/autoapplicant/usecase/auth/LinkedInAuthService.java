@@ -41,12 +41,12 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
             User existing = byEmail.get();
             User updated = new User(existing.id(), existing.email(),
                     existing.googleId(), linkedinSub, existing.firebaseUid(), existing.role(),
-                    existing.emailVerified(), existing.createdAt(), existing.updatedAt());
+                    existing.emailVerified(), existing.onboardingComplete(), existing.createdAt(), existing.updatedAt());
             return userRepo.save(updated);
         }
 
         // New user — create with linkedinId; firebaseUid gets set when they sign in via custom token
-        User newUser = new User(null, email, null, linkedinSub, null, UserRole.USER, true, null, null);
+        User newUser = new User(null, email, null, linkedinSub, null, UserRole.USER, true, false, null, null);
         User savedUser = userRepo.save(newUser);
 
         Profile profile = new Profile(null, savedUser.id(), null, null, null,

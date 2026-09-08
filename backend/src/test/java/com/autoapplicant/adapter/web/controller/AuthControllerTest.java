@@ -7,6 +7,7 @@ import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserRole;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
+import com.autoapplicant.port.in.user.CompleteOnboardingUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import org.junit.jupiter.api.Test;
@@ -30,8 +31,9 @@ class AuthControllerTest {
 
     @Autowired MockMvc mvc;
 
-    @MockBean GetUserProfileUseCase      getUserProfileUseCase;
-    @MockBean ResolveLinkedInUserUseCase resolveLinkedInUser;
+    @MockBean GetUserProfileUseCase       getUserProfileUseCase;
+    @MockBean ResolveLinkedInUserUseCase  resolveLinkedInUser;
+    @MockBean CompleteOnboardingUseCase   completeOnboardingUseCase;
     @MockBean ProvisionFirebaseUserUseCase provisionUser;
     @MockBean SecurityContextHelper      secCtx;
     @MockBean AppProperties              appProperties;
@@ -44,7 +46,7 @@ class AuthControllerTest {
     void me_returns_user_info_for_authenticated_user() throws Exception {
         when(secCtx.getCurrentUserId()).thenReturn(userId);
         User user = new User(userId, "alice@example.com", null, null, "firebase-uid",
-                UserRole.USER, true, Instant.now(), Instant.now());
+                UserRole.USER, true, true, Instant.now(), Instant.now());
         when(getUserProfileUseCase.getUser(userId)).thenReturn(Optional.of(user));
 
         mvc.perform(get("/api/v1/auth/me"))

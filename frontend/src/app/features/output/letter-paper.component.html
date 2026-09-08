@@ -1,0 +1,41 @@
+<div [style.background]="tpl.bg"
+     [style.color]="tpl.fg"
+     [style.font-family]="tpl.font"
+     [style.font-size.px]="tpl.size"
+     [style.line-height]="tpl.lineH"
+     class="rounded-md w-full relative max-w-[720px] p-[56px_64px] shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+  <!-- Rail accent -->
+  @if (tpl.rail) {
+    <div class="absolute left-0 top-14 bottom-14 w-1 bg-jb-accent"></div>
+  }
+  <!-- Header (identity is assembled server-side, never sent to the AI) -->
+  @if (identity.name) {
+    @if (tpl.headerStyle === 'centered') {
+      <div class="text-center mb-8 pb-4" [style.border-bottom]="'1px solid ' + tpl.divider">
+        <div class="text-[22px] font-semibold tracking-[-0.01em]">{{ identity.name }}</div>
+        <div class="mt-1" [style.color]="tpl.muted" style="font-size:11.5px;">
+          {{ identity.headline }}{{ identity.email ? ' - ' + identity.email : '' }}
+        </div>
+      </div>
+    } @else {
+      <div class="mb-8">
+        <div class="text-[18px] font-medium tracking-[-0.01em]">{{ identity.name }}</div>
+        <div [style.color]="tpl.muted" style="font-size:11.5px;">
+          {{ identity.headline }}{{ identity.email ? ' - ' + identity.email : '' }}
+        </div>
+      </div>
+    }
+  }
+  <!-- Body content -->
+  @if (editing) {
+    <app-rich-text-editor [value]="content" (debouncedChange)="edited.emit($event)" />
+  } @else if (isRich) {
+    <div class="rte-rendered" [innerHTML]="richHtml() | richText"></div>
+  } @else {
+    <div class="flex flex-col gap-3.5">
+      @for (para of paragraphs; track $index) {
+        <p class="m-0 [text-wrap:pretty] whitespace-pre-line" [innerHTML]="paraHtml(para)"></p>
+      }
+    </div>
+  }
+</div>

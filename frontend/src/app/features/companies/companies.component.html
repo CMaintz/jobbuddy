@@ -1,0 +1,76 @@
+    <jb-topbar [title]="'nav.companies' | translate">
+      <div class="hidden sm:flex flex-1 max-w-[300px] items-center gap-2 py-[5px] px-2.5 ml-3 bg-jb-surface border border-jb-border rounded-md text-jb-text-dim text-sm">
+        <jb-icon name="search" [size]="12" />
+        <input [(ngModel)]="query" (ngModelChange)="onQueryChange($event)" [placeholder]="'companies.searchPlaceholder' | translate"
+          class="border-none bg-none outline-none text-jb-text text-sm flex-1" />
+      </div>
+      <ng-container jb-topbar-actions>
+        <div class="text-xs text-jb-text-dim">{{ 'companies.count' | translate:{ count: companies().length } }}</div>
+      </ng-container>
+    </jb-topbar>
+
+    <div class="flex-1 grid min-h-0 overflow-hidden grid-cols-1 md:grid-cols-[1fr_340px]">
+      <!-- List -->
+      <div class="overflow-y-auto border-r border-jb-border jb-scroll">
+        @if (loading()) {
+          <div class="py-12 px-6 text-center text-jb-text-dim text-base">{{ 'companies.loading' | translate }}</div>
+        } @else if (companies().length === 0) {
+          <div class="py-12 px-6 text-center text-jb-text-dim text-base">
+            {{ 'companies.empty' | translate }}
+          </div>
+        } @else {
+          @for (c of companies(); track c.id) {
+            <div (click)="selected.set(c)"
+              class="jb-row flex items-center gap-3 p-[12px_16px] cursor-pointer border-b border-jb-border-faint"
+              [style.background]="selected()?.id === c.id ? 'var(--jb-surface-2)' : 'transparent'">
+              <jb-company-mark [name]="c.name" [size]="32" />
+              <div class="flex-1 min-w-0">
+                <div class="text-base font-medium truncate">{{ c.name }}</div>
+                <div class="text-xs text-jb-text-dim truncate">
+                  {{ c.industry || '—' }}{{ c.country ? ' · ' + c.country : '' }}{{ c.sizeRange ? ' · ' + c.sizeRange : '' }}
+                </div>
+              </div>
+              @if (c.isConsulting) { <jb-pill tone="violet">{{ 'companies.consulting' | translate }}</jb-pill> }
+              @if (c.isRecruitingAgency) { <jb-pill tone="info">{{ 'companies.agency' | translate }}</jb-pill> }
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Detail -->
+      <div class="hidden md:block overflow-y-auto p-5 jb-scroll">
+        @if (selected(); as c) {
+          <div class="flex items-center gap-3 mb-4">
+            <jb-company-mark [name]="c.name" [size]="44" />
+            <div>
+              <div class="text-xl font-medium">{{ c.name }}</div>
+              <div class="text-sm text-jb-text-dim">{{ c.industry || '' }}{{ c.country ? ' · ' + c.country : '' }}</div>
+            </div>
+          </div>
+
+          @if (c.description) {
+            <div class="card p-3.5 mb-3 text-sm text-jb-text-mid leading-relaxed">{{ c.description }}</div>
+          }
+
+          <div class="card p-3.5">
+            <div class="grid grid-cols-2 gap-2.5">
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'companies.size' | translate }}</div><div class="text-sm mt-0.5">{{ c.sizeRange || '—' }}</div></div>
+              <div><div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'companies.country' | translate }}</div><div class="text-sm mt-0.5">{{ c.country || '—' }}</div></div>
+              <div class="col-span-2">
+                <div class="text-2xs text-jb-text-dim uppercase tracking-widest">{{ 'companies.links' | translate }}</div>
+                <div class="text-sm mt-1 flex flex-col gap-1">
+                  @if (c.website) { <a class="jb-link self-start" [href]="c.website" target="_blank" rel="noopener">{{ 'companies.website' | translate }}</a> }
+                  @if (c.linkedinUrl) { <a class="jb-link self-start" [href]="c.linkedinUrl" target="_blank" rel="noopener">LinkedIn</a> }
+                  @if (!c.website && !c.linkedinUrl) { <span class="text-jb-text-dim">—</span> }
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="flex flex-col items-center justify-center h-full text-jb-text-dim text-center">
+            <jb-icon name="building" [size]="24" class="mb-2" />
+            <div class="text-base">{{ 'companies.selectCompany' | translate }}</div>
+          </div>
+        }
+      </div>
+    </div>

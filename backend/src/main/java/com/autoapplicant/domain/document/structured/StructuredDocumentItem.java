@@ -12,5 +12,7 @@ public record StructuredDocumentItem(
         List<String> bullets,
         List<String> technologies,
         List<String> links,
-        List<String> skills
+        List<String> skills,
+        /** Grouping label for skill items (e.g. "Languages", "Frameworks"); null for other item types. */
+        String category
 ) {}

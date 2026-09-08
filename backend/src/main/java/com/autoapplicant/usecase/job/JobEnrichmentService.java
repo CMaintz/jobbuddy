@@ -42,7 +42,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                                 "You are a job data enrichment assistant. Respond only with JSON.",
                                 prompt, "", "", "", "", prompt
                         );
-                String response = aiProvider.generate(composition);
+                String response = aiProvider.generateJson(composition);
                 return CompletableFuture.completedFuture(applyEnrichment(job, response));
             } catch (Exception e) {
                 String msg = e.getMessage() != null ? e.getMessage() : "";
@@ -98,6 +98,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                   "salaryMax": null,
                   "currency": null,
                   "municipality": "primary Danish municipality name or null",
+                  "applicationDeadline": "YYYY-MM-DD or null",
                   "jobCategory": "SOFTWARE_IT|DATA_ANALYTICS|DESIGN_UX|MARKETING|SALES|FINANCE|HR|ENGINEERING|OPERATIONS_LOGISTICS|CUSTOMER_SERVICE|LEGAL|HEALTHCARE|MANAGEMENT|EDUCATION|CREATIVE_MEDIA|OTHER"
                 }
 
@@ -108,6 +109,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
                 - Only include salary if numbers are explicitly stated in the posting
                 - municipality: match to a known Danish kommune name (e.g. "København", "Aarhus", "Odense")
+                - applicationDeadline: the stated application deadline (e.g. "Ansøgningsfrist"); null when not stated or "as soon as possible"
                 - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits.
 
                 Job title: %s
@@ -123,10 +125,7 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     @SuppressWarnings("unchecked")
     private Job applyEnrichment(Job job, String jsonResponse) {
         try {
-            String cleaned = jsonResponse.trim();
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceFirst("```json", "").replaceFirst("```", "").trim();
-            }
+            String cleaned = sanitizeJsonResponse(jsonResponse);
             Map<String, Object> parsed = objectMapper.readValue(cleaned, new TypeReference<>() {});
 
             // AI-extracted clean description (replaces the raw page-text version from TextCleaningService)
@@ -184,20 +183,61 @@ public class JobEnrichmentService implements EnrichJobUseCase {
                 }
             }
 
-            return new Job(job.id(), job.source(), job.sourceJobId(), job.url(), job.title(),
-                    job.companyId(), job.companyName(), job.descriptionRaw(), descriptionClean,
-                    employmentType, job.seniority(), remoteType,
-                    job.location(), municipality, job.region(), job.country(),
-                    salaryMin, salaryMax, currency,
-                    mergedTech, mergedSkills, job.languages(),
-                    job.postedAt(), job.scrapedAt(),
-                    summary, tags, aiSeniority,
-                    job.duplicateGroupId(), job.isActive(), jobCategory, job.createdAt(), job.updatedAt(),
-                    shortDescription);
+            // Crawler-provided deadline wins; the AI extraction is the fallback
+            java.time.LocalDate applicationDeadline = job.applicationDeadline();
+            if (applicationDeadline == null && parsed.get("applicationDeadline") instanceof String rawDeadline) {
+                try { applicationDeadline = java.time.LocalDate.parse(rawDeadline); }
+                catch (java.time.format.DateTimeParseException ignored) {}
+            }
+
+            return job.toBuilder()
+                    .descriptionClean(descriptionClean)
+                    .employmentType(employmentType)
+                    .remoteType(remoteType)
+                    .municipality(municipality)
+                    .salaryMin(salaryMin).salaryMax(salaryMax).currency(currency)
+                    .technologies(mergedTech).skills(mergedSkills)
+                    .aiSummary(summary).aiTags(tags).aiSeniorityEstimate(aiSeniority)
+                    .jobCategory(jobCategory)
+                    .shortDescription(shortDescription)
+                    .applicationDeadline(applicationDeadline)
+                    .build();
         } catch (Exception e) {
             log.warn("Failed to parse AI enrichment response: {}", e.getMessage());
             return job;
         }
+    }
+
+    /**
+     * Cleans up common AI response artifacts that break JSON parsing:
+     * markdown fences, semicolons used instead of commas, trailing commas.
+     */
+    static String sanitizeJsonResponse(String raw) {
+        if (raw == null) return "{}";
+        String cleaned = raw.trim();
+
+        // Strip markdown code fences
+        if (cleaned.startsWith("```")) {
+            int firstNewline = cleaned.indexOf('\n');
+            if (firstNewline > 0) cleaned = cleaned.substring(firstNewline + 1);
+            if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length() - 3).trim();
+        }
+
+        // Extract the JSON object if surrounded by extra text
+        int firstBrace = cleaned.indexOf('{');
+        int lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
+
+        // Replace semicolons between JSON entries with commas
+        // Matches: "value"; or ]; or }; followed by whitespace and a quote or bracket
+        cleaned = cleaned.replaceAll(";(\\s*[\"{}\\[\\]])", ",$1");
+
+        // Remove trailing commas before } or ]
+        cleaned = cleaned.replaceAll(",\\s*([}\\]])", "$1");
+
+        return cleaned;
     }
 
     @SuppressWarnings("unchecked")

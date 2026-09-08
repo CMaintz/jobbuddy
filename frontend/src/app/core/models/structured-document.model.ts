@@ -2,6 +2,7 @@ export type StructuredDocumentType =
   | 'CV'
   | 'COVER_LETTER'
   | 'APPLICATION_TEXT'
+  | 'UNSOLICITED_APPLICATION'
   | 'RECRUITER_MESSAGE'
   | 'FOLLOW_UP_MESSAGE'
   | 'CV_ANALYSIS_REPORT';
@@ -29,6 +30,8 @@ export interface StructuredDocumentItem {
   technologies?: string[];
   links?: string[];
   skills?: string[];
+  /** Grouping label for skill items (e.g. "Languages"); absent for other item types. */
+  category?: string;
 }
 
 export interface StructuredDocumentSection {
