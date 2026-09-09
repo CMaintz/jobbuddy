@@ -99,6 +99,28 @@ app:
     cron: "${DUE_REMINDER_CRON:0 0 7 * * *}"
   crawler:
     cron: "0 0 */4 * * *"
+  job:
+    # A posting not seen for this long is deactivated.
+    stale-days: ${JOB_STALE_DAYS:30}
+    url-check:
+      # This is the liveness mechanism, not the crawl. Connectors stop after a page or two of
+      # postings they already know, so they never revisit the deep end of a listing — which is
+      # most of it. Probing is what confirms those are still up: a live URL refreshes lastSeenAt,
+      # which is exactly what the staleness sweep reads.
+      enabled: ${JOB_URL_CHECK_ENABLED:true}
+      cron: ${JOB_URL_CHECK_CRON:0 30 */6 * * *}
+      # Target: every active posting probed at least this often. Must stay well under
+      # stale-days or live postings get retired for never having been looked at.
+      recheck-days: ${JOB_URL_CHECK_RECHECK_DAYS:3}
+      # Size the batch from the corpus rather than fixing it. A fixed 150 covered 600 a day,
+      # so 17,000 postings took 28 days to get round — against a 30-day threshold.
+      adaptive-batch: ${JOB_URL_CHECK_ADAPTIVE:true}
+      batch-size: ${JOB_URL_CHECK_BATCH:150}
+      # Ceiling, so a runaway corpus count cannot turn into a runaway crawl.
+      max-batch-size: ${JOB_URL_CHECK_MAX_BATCH:3000}
+      # Must match the cron above; the batch maths needs to know how often it runs.
+      runs-per-day: ${JOB_URL_CHECK_RUNS_PER_DAY:4}
+      politeness-delay-ms: ${JOB_URL_CHECK_DELAY_MS:300}
   enrichment:
     # A posting is given up on after this many failed attempts, so one the model can
     # never summarise stops consuming quota on every sweep.
