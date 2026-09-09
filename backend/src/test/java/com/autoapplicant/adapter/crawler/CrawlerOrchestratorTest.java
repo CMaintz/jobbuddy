@@ -72,8 +72,8 @@ class CrawlerOrchestratorTest {
     @Test
     void theSummaryDistinguishesNewFromMerelySeen() {
         when(pipeline.ingest(any()))
-                .thenReturn(IngestionPipeline.IngestOutcome.NEW)
-                .thenReturn(IngestionPipeline.IngestOutcome.REFRESHED);
+                .thenReturn(new IngestionPipeline.IngestResult(IngestionPipeline.IngestOutcome.NEW, false))
+                .thenReturn(new IngestionPipeline.IngestResult(IngestionPipeline.IngestOutcome.REFRESHED, false));
 
         JobSourceConnectorPort connector = connector(config -> {
             config.onJobFound().accept(raw("new-1"));       // NEW
@@ -100,7 +100,8 @@ class CrawlerOrchestratorTest {
         // Greenhouse's shape: it never consults isKnownGuid, so every posting comes through
         // ingest and comes back REFRESHED on a re-crawl. That is correct — it is what keeps
         // lastSeenAt fresh — and the summary should say "0 new", not "50 collected".
-        when(pipeline.ingest(any())).thenReturn(IngestionPipeline.IngestOutcome.REFRESHED);
+        when(pipeline.ingest(any())).thenReturn(
+                new IngestionPipeline.IngestResult(IngestionPipeline.IngestOutcome.REFRESHED, false));
 
         JobSourceConnectorPort connector = connector(config -> {
             for (int i = 0; i < 50; i++) config.onJobFound().accept(raw("gh-" + i));

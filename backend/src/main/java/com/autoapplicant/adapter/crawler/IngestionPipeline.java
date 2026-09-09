@@ -45,7 +45,17 @@ public class IngestionPipeline {
      */
     public enum IngestOutcome { NEW, REFRESHED, FAILED }
 
-    public IngestOutcome ingest(RawJobData raw) {
+    /**
+     * @param crossListed the posting was clustered with an existing one — the same role
+     *                    re-listed under a different company, URL or ATS. Reported as a count
+     *                    at the end of the crawl rather than a line each: on a large run it was
+     *                    thousands of lines saying the system worked.
+     */
+    public record IngestResult(IngestOutcome outcome, boolean crossListed) {
+        static IngestResult of(IngestOutcome outcome) { return new IngestResult(outcome, false); }
+    }
+
+    public IngestResult ingest(RawJobData raw) {
         try {
             // Deduplication check — refresh lastSeenAt for existing jobs so stale detection
             // works, and pick up a deadline the source published (or changed) after first crawl.
@@ -58,7 +68,7 @@ public class IngestionPipeline {
                     // Targeted update in the adapter (like markUrlAlive) — no whole-Job rebuild.
                     jobRepo.refreshLastSeen(seen.id(), Instant.now(), deadline);
                     log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
-                    return IngestOutcome.REFRESHED;
+                    return IngestResult.of(IngestOutcome.REFRESHED);
                 }
             }
 
@@ -82,7 +92,7 @@ public class IngestionPipeline {
 
             // Cross-listing dedup: fingerprint the description and cluster verbatim re-posts
             // (same role re-listed under a different company/URL) via duplicate_group_id.
-            fingerprintAndCluster(saved, cleanText);
+            boolean crossListed = fingerprintAndCluster(saved, cleanText);
 
             // Enrichment is NOT fired from here. The posting is saved PENDING and the
             // enrichment worker drains that queue at a rate the AI provider can sustain.
@@ -93,11 +103,11 @@ public class IngestionPipeline {
             // same two threads. The database column is the queue now: durable, countable, and
             // impossible to overflow.
 
-            return IngestOutcome.NEW;
+            return new IngestResult(IngestOutcome.NEW, crossListed);
 
         } catch (Exception e) {
             log.error("Ingestion failed for raw job from {}: {}", raw.source(), e.getMessage(), e);
-            return IngestOutcome.FAILED;
+            return IngestResult.of(IngestOutcome.FAILED);
         }
     }
 
@@ -106,21 +116,31 @@ public class IngestionPipeline {
      * the fingerprint, clusters both under a shared duplicate_group_id — catching agency
      * re-posts of the same role under a different company/URL that source+id dedup misses.
      * Flag-only (never drops a job); best-effort so a failure never breaks ingestion.
+     *
+     * <p>The group is the storage: both postings carry the same duplicate_group_id, so every
+     * alternative URL for one role is a query away — which is what a reader needs when one ATS
+     * is broken and another is not. Detection is logged at DEBUG and counted, because a busy
+     * crawl produced thousands of INFO lines whose only news was that the feature worked.
+     *
+     * @return true when this posting was clustered with an existing one
      */
-    private void fingerprintAndCluster(Job saved, String cleanText) {
+    private boolean fingerprintAndCluster(Job saved, String cleanText) {
         try {
             long fp = SimHash.fingerprint(cleanText);
-            if (fp == 0L) return; // too little content to fingerprint reliably
-            jobRepo.findActiveDuplicateByFingerprint(fp, saved.id()).ifPresent(other -> {
+            if (fp == 0L) return false; // too little content to fingerprint reliably
+            boolean clustered = jobRepo.findActiveDuplicateByFingerprint(fp, saved.id()).map(other -> {
                 UUID group = other.duplicateGroupId() != null ? other.duplicateGroupId() : UUID.randomUUID();
                 if (other.duplicateGroupId() == null) jobRepo.assignDuplicateGroup(other.id(), group);
                 jobRepo.assignDuplicateGroup(saved.id(), group);
-                log.info("Cross-listing detected: job {} ({}) duplicates {} — group {}",
+                log.debug("Cross-listing: job {} ({}) duplicates {} — group {}",
                         saved.id(), saved.source(), other.id(), group);
-            });
+                return true;
+            }).orElse(false);
             jobRepo.assignContentFingerprint(saved.id(), fp);
+            return clustered;
         } catch (Exception e) {
             log.warn("Fingerprint/dedup failed for job {}: {}", saved.id(), e.getMessage());
+            return false;
         }
     }
 
