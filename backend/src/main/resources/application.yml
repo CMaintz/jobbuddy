@@ -138,7 +138,13 @@ app:
       interval-ms: ${ENRICHMENT_SWEEP_INTERVAL_MS:300000}
       # Let the app finish starting before the first drain.
       initial-delay-ms: ${ENRICHMENT_SWEEP_INITIAL_DELAY_MS:60000}
-      batch-size: ${ENRICHMENT_SWEEP_BATCH:200}
+      batch-size: ${ENRICHMENT_SWEEP_BATCH:500}
+      # Postings in flight at once. The old ingest path ran two concurrently, so anything
+      # less here would make the primary path slower than what it replaced.
+      concurrency: ${ENRICHMENT_SWEEP_CONCURRENCY:2}
+      # Gap between windows. Small: this is the only enrichment path now, not a recovery pass,
+      # and a two-second sleep per posting is two seconds of tax on every one of thousands.
+      delay-ms: ${ENRICHMENT_SWEEP_DELAY_MS:250}
       # Time budget per tick — the batch stops here and the next tick continues.
       budget: ${ENRICHMENT_SWEEP_BUDGET:PT20M}
   # Embeddings have their own queue and their own state, because they have their own failure
@@ -150,7 +156,10 @@ app:
       interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:300000}
       # Offset from the enrichment worker's first tick; they share one thread anyway.
       initial-delay-ms: ${EMBEDDING_SWEEP_INITIAL_DELAY_MS:120000}
-      batch-size: ${EMBEDDING_SWEEP_BATCH:200}
+      batch-size: ${EMBEDDING_SWEEP_BATCH:500}
+      # Texts per API call. The embeddings endpoint takes an array and returns vectors in
+      # order, so a chunk is one round trip rather than `chunk-size` of them.
+      chunk-size: ${EMBEDDING_SWEEP_CHUNK:100}
       budget: ${EMBEDDING_SWEEP_BUDGET:PT10M}
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}

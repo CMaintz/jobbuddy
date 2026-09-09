@@ -40,28 +40,35 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
     private final EmbeddingProviderPort embeddingProvider;
     private final int maxAttempts;
     private final Duration retryDelay;
+    /** Texts per API call. The endpoint accepts an array; there is no reason to send one. */
+    private final int chunkSize;
 
     public JobEmbeddingService(JobRepositoryPort jobRepo,
                                JobEmbeddingRepositoryPort embeddingRepo,
                                @Qualifier("enrichmentAiProvider") EmbeddingProviderPort embeddingProvider,
                                @Value("${app.enrichment.max-attempts:4}") int maxAttempts,
-                               @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay) {
+                               @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay,
+                               @Value("${app.embedding.sweep.chunk-size:100}") int chunkSize) {
         this.jobRepo = jobRepo;
         this.embeddingRepo = embeddingRepo;
         this.embeddingProvider = embeddingProvider;
         this.maxAttempts = maxAttempts;
         this.retryDelay = retryDelay;
+        this.chunkSize = Math.max(1, chunkSize);
     }
 
     @Override
     public boolean embed(Job job) {
-        String text = textFor(job);
-        if (text.isBlank()) return false;
-        float[] vector = embeddingProvider.embed(text);
+        float[] vector = embedVector(job);
         if (vector == null || vector.length == 0) return false;
         embeddingRepo.save(new JobEmbedding(null, job.id(), vector,
                 embeddingProvider.embeddingModelName(), Instant.now()));
         return true;
+    }
+
+    private float[] embedVector(Job job) {
+        String text = textFor(job);
+        return text.isBlank() ? null : embeddingProvider.embed(text);
     }
 
     @Override
@@ -79,26 +86,51 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
         int succeeded = 0;
         int failed = 0;
         int gaveUp = 0;
-        for (int i = 0; i < total; i++) {
+
+        // Chunked rather than one-at-a-time: the embeddings endpoint takes an array and returns
+        // vectors in order, so a chunk is one round trip instead of `chunkSize` of them. On a
+        // backlog of thousands that is the difference between minutes and hours.
+        for (int start = 0; start < total; start += chunkSize) {
             if (Instant.now().isAfter(deadline)) {
-                log.info("Embedding: time budget spent after {} of {}", i, total);
+                log.info("Embedding: time budget spent after {} of {}", start, total);
                 break;
             }
-            Job job = queue.get(i);
+            List<Job> chunk = queue.subList(start, Math.min(start + chunkSize, total));
+            List<String> texts = chunk.stream().map(JobEmbeddingService::textFor).toList();
+
+            List<float[]> vectors;
             try {
-                if (embed(job)) {
-                    jobRepo.markEmbedded(job.id());
-                    succeeded++;
-                } else {
-                    if (jobRepo.markEmbeddingFailed(job.id(), "no vector returned", maxAttempts)) gaveUp++;
+                vectors = embeddingProvider.embedAll(texts);
+            } catch (Exception e) {
+                // One bad chunk should not sink the batch; fall back so a single unembeddable
+                // posting is isolated rather than taking its neighbours down with it.
+                log.warn("Embedding: batch of {} failed ({}) — retrying individually",
+                        chunk.size(), e.getMessage());
+                vectors = List.of();
+            }
+
+            for (int i = 0; i < chunk.size(); i++) {
+                Job job = chunk.get(i);
+                try {
+                    float[] vector = i < vectors.size() ? vectors.get(i) : null;
+                    if (vector == null || vector.length == 0) vector = embedVector(job);
+                    if (vector != null && vector.length > 0) {
+                        embeddingRepo.save(new JobEmbedding(null, job.id(), vector,
+                                embeddingProvider.embeddingModelName(), Instant.now()));
+                        jobRepo.markEmbedded(job.id());
+                        succeeded++;
+                    } else {
+                        if (jobRepo.markEmbeddingFailed(job.id(), "no vector returned", maxAttempts)) gaveUp++;
+                        failed++;
+                    }
+                } catch (Exception e) {
+                    log.warn("Embedding failed for job {} ({}): {}", job.id(), job.title(), e.getMessage());
+                    if (jobRepo.markEmbeddingFailed(job.id(), e.getMessage(), maxAttempts)) gaveUp++;
                     failed++;
                 }
-            } catch (Exception e) {
-                log.warn("Embedding failed for job {} ({}): {}", job.id(), job.title(), e.getMessage());
-                if (jobRepo.markEmbeddingFailed(job.id(), e.getMessage(), maxAttempts)) gaveUp++;
-                failed++;
             }
-            if (i < total - 1) {
+
+            if (start + chunkSize < total) {
                 try {
                     Thread.sleep(DELAY_MS);
                 } catch (InterruptedException ie) {

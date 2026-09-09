@@ -32,8 +32,10 @@ class EnrichmentSweepServiceTest {
     void setUp() {
         jobRepo = mock(JobRepositoryPort.class);
         enrichJob = mock(EnrichJobUseCase.class);
+        // No delay and no concurrency in tests: the behaviour under test is the bookkeeping,
+        // not the pacing.
         service = new EnrichmentSweepService(jobRepo, enrichJob, MAX_ATTEMPTS, Duration.ofHours(6),
-                Duration.ofMinutes(5));
+                Duration.ofMinutes(5), 0L, 1);
     }
 
     private static Job job(String summary) {

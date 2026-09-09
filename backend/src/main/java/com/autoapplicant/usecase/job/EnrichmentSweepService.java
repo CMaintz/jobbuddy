@@ -30,8 +30,18 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(EnrichmentSweepService.class);
 
-    /** Courtesy gap between AI calls, so a long drain does not hammer the provider. */
-    private static final long DELAY_MS = 2_000;
+    /**
+     * Courtesy gap between windows. Small on purpose: this is the only enrichment path now, not
+     * a recovery pass, so a two-second sleep per posting was two seconds of pure tax on every
+     * one of thousands.
+     */
+    private final long delayMs;
+
+    /**
+     * Postings in flight at once. The old ingest path ran two concurrently; going strictly
+     * one-at-a-time here would have made the primary path slower than the thing it replaced.
+     */
+    private final int concurrency;
 
     /** Progress is reported on a clock, not per job, so a slow batch still shows movement. */
     private static final Duration PROGRESS_EVERY = Duration.ofSeconds(30);
@@ -46,12 +56,17 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
                                   EnrichJobUseCase enrichJob,
                                   @Value("${app.enrichment.max-attempts:4}") int maxAttempts,
                                   @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay,
-                                  @Value("${app.enrichment.call-timeout:PT5M}") Duration callTimeout) {
+                                  @Value("${app.enrichment.call-timeout:PT5M}") Duration callTimeout,
+                                  @Value("${app.enrichment.sweep.delay-ms:250}") long delayMs,
+                                  @Value("${app.enrichment.sweep.concurrency:2}") int concurrency) {
         this.jobRepo = jobRepo;
         this.enrichJob = enrichJob;
         this.maxAttempts = maxAttempts;
         this.retryDelay = retryDelay;
         this.callTimeout = callTimeout;
+        this.delayMs = Math.max(0, delayMs);
+        // Capped: the provider pool is two threads deep, and asking for more just queues.
+        this.concurrency = Math.max(1, Math.min(concurrency, 8));
     }
 
     @Override
@@ -84,52 +99,63 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
 
         log.info("Enrichment: starting batch of {} ({} pending overall)", total, pending);
 
-        for (int i = 0; i < total; i++) {
+        // Windowed: `concurrency` postings are submitted together and awaited together, so the
+        // provider is kept busy without an unbounded number of calls in flight.
+        int done = 0;
+        outer:
+        for (int start = 0; start < total; start += concurrency) {
             if (Instant.now().isAfter(deadline)) {
                 log.info("Enrichment: time budget spent after {} of {} — handing back, "
-                         + "the next run continues where this stopped", i, total);
+                         + "the next run continues where this stopped", done, total);
                 break;
             }
-            Job job = queue.get(i);
+            List<Job> window = queue.subList(start, Math.min(start + concurrency, total));
+            List<Map.Entry<Job, java.util.concurrent.CompletableFuture<Job>>> inFlight =
+                    window.stream().map(j -> Map.entry(j, enrichJob.enrich(j))).toList();
 
-            try {
-                // Bounded: an unbounded get() on a pool that can reject leaves a future nobody
-                // will ever complete, and the thread waits on it forever.
-                Job enriched = enrichJob.enrich(job).get(callTimeout.toMillis(), TimeUnit.MILLISECONDS);
-                if (enriched.aiSummary() != null) {
-                    jobRepo.save(enriched);
-                    jobRepo.markEnriched(job.id());
-                    succeeded++;
-                } else {
-                    // Not an exception, but not a result either — count it as an attempt
-                    // so it cannot loop forever.
-                    if (jobRepo.markEnrichmentFailed(job.id(), "no summary returned", maxAttempts)) gaveUp++;
+            for (Map.Entry<Job, java.util.concurrent.CompletableFuture<Job>> entry : inFlight) {
+                Job job = entry.getKey();
+                try {
+                    // Bounded: an unbounded get() on a pool that can reject leaves a future
+                    // nobody will ever complete, and the thread waits on it forever.
+                    Job enriched = entry.getValue().get(callTimeout.toMillis(), TimeUnit.MILLISECONDS);
+                    if (enriched.aiSummary() != null) {
+                        jobRepo.save(enriched);
+                        jobRepo.markEnriched(job.id());
+                        succeeded++;
+                    } else {
+                        // Not an exception, but not a result either — count it as an attempt
+                        // so it cannot loop forever.
+                        if (jobRepo.markEnrichmentFailed(job.id(), "no summary returned", maxAttempts)) gaveUp++;
+                        failed++;
+                    }
+                } catch (TimeoutException te) {
+                    // The provider or the pool is not keeping up. That is not this posting's
+                    // fault, so it keeps its attempts and stays PENDING; stopping is honest.
+                    log.warn("Enrichment: timed out after {} on job {} — provider or pool is "
+                             + "saturated, ending this batch with {} of {} done",
+                            callTimeout, job.id(), done, total);
+                    break outer;
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.info("Enrichment: interrupted after {} of {}", done, total);
+                    break outer;
+                } catch (Exception e) {
+                    log.warn("Enrichment failed for job {} ({}): {}", job.id(), job.title(), e.getMessage());
+                    if (jobRepo.markEnrichmentFailed(job.id(), e.getMessage(), maxAttempts)) gaveUp++;
                     failed++;
                 }
-            } catch (TimeoutException te) {
-                // The provider or the pool is not keeping up. That is not this posting's fault,
-                // so it keeps its attempts and stays PENDING; stopping is the honest response.
-                log.warn("Enrichment: timed out after {} on job {} — provider or pool is saturated, "
-                         + "ending this batch with {} of {} done", callTimeout, job.id(), i, total);
-                break;
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                log.info("Enrichment: interrupted after {} of {}", i, total);
-                break;
-            } catch (Exception e) {
-                log.warn("Enrichment failed for job {} ({}): {}", job.id(), job.title(), e.getMessage());
-                if (jobRepo.markEnrichmentFailed(job.id(), e.getMessage(), maxAttempts)) gaveUp++;
-                failed++;
+                done++;
             }
 
             if (Duration.between(lastProgressAt, Instant.now()).compareTo(PROGRESS_EVERY) >= 0) {
-                logProgress(succeeded, failed, i + 1, total, pending, startedAt);
+                logProgress(succeeded, failed, done, total, pending, startedAt);
                 lastProgressAt = Instant.now();
             }
 
-            if (i < total - 1) {
+            if (delayMs > 0 && start + concurrency < total) {
                 try {
-                    Thread.sleep(DELAY_MS);
+                    Thread.sleep(delayMs);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;
