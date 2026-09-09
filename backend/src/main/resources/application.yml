@@ -32,6 +32,11 @@ app:
   ai:
     # enrichment-provider must be a real API (openai/gemini) — it produces embeddings for search.
     enrichment-provider: ${ENRICHMENT_AI_PROVIDER:openai}
+    # Extraction (summary, skills, requirements) is chat-only, so it may run on the local CLI
+    # agent even though embeddings cannot. This is the high-volume half — one call per posting,
+    # thousands per crawl — so pointing it at a flat-fee CLI is what keeps a backfill cheap.
+    # Blank = same as enrichment-provider. Values: openai | gemini | claude-cli | codex | cli
+    enrichment-chat-provider: ${ENRICHMENT_CHAT_AI_PROVIDER:}
     # generation-provider: openai | gemini | claude-cli | codex | cli
     # claude-cli/codex/cli pipe prompts to a local agent CLI (flat-fee subscription) instead of an API.
     generation-provider: ${GENERATION_AI_PROVIDER:openai}

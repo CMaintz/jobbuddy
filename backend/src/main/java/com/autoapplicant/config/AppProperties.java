@@ -29,12 +29,20 @@ public class AppProperties {
 
     public static class Ai {
         private String enrichmentProvider = "gemini";
+        /**
+         * Provider for enrichment's extraction calls. Blank means "same as enrichmentProvider".
+         * Accepts the CLI values (claude-cli / codex / cli), which enrichmentProvider cannot,
+         * because extraction is chat-only while enrichmentProvider must also embed.
+         */
+        private String enrichmentChatProvider = "";
         private String generationProvider = "openai";
         /** Spend tier per operation class: economy | standard | premium. Resolves to a model via the provider's tier map. */
         private String enrichmentTier = "economy";
         private String generationTier = "standard";
         private Cli cli = new Cli();
         public String getEnrichmentProvider() { return enrichmentProvider; }
+        public String getEnrichmentChatProvider() { return enrichmentChatProvider; }
+        public void setEnrichmentChatProvider(String enrichmentChatProvider) { this.enrichmentChatProvider = enrichmentChatProvider; }
         public void setEnrichmentProvider(String enrichmentProvider) { this.enrichmentProvider = enrichmentProvider; }
         public String getGenerationProvider() { return generationProvider; }
         public void setGenerationProvider(String generationProvider) { this.generationProvider = generationProvider; }
