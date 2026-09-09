@@ -135,7 +135,9 @@ app:
       # often, works for a bounded slice, and hands its thread back.
       enabled: ${ENRICHMENT_SWEEP_ENABLED:true}
       # Gap between ticks. A tick arriving while the last is still working is skipped.
-      interval-ms: ${ENRICHMENT_SWEEP_INTERVAL_MS:300000}
+      # Short, because a tick that lands mid-batch is skipped anyway. Keeping it short is what
+      # stops the worker idling between batches while a backlog is still waiting.
+      interval-ms: ${ENRICHMENT_SWEEP_INTERVAL_MS:60000}
       # Let the app finish starting before the first drain.
       initial-delay-ms: ${ENRICHMENT_SWEEP_INITIAL_DELAY_MS:60000}
       batch-size: ${ENRICHMENT_SWEEP_BATCH:500}
@@ -146,21 +148,24 @@ app:
       # and a two-second sleep per posting is two seconds of tax on every one of thousands.
       delay-ms: ${ENRICHMENT_SWEEP_DELAY_MS:250}
       # Time budget per tick — the batch stops here and the next tick continues.
-      budget: ${ENRICHMENT_SWEEP_BUDGET:PT20M}
+      # The batch stops here and the next tick continues from where it left off. Long enough
+      # to make real progress on a backlog of thousands, bounded so a stuck provider cannot
+      # hold the worker thread indefinitely.
+      budget: ${ENRICHMENT_SWEEP_BUDGET:PT1H}
   # Embeddings have their own queue and their own state, because they have their own failure
   # mode: extraction can succeed while embedding never runs, leaving a posting that looks
   # complete and is invisible to search and matching.
   embedding:
     sweep:
       enabled: ${EMBEDDING_SWEEP_ENABLED:true}
-      interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:300000}
+      interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:60000}
       # Offset from the enrichment worker's first tick; they share one thread anyway.
       initial-delay-ms: ${EMBEDDING_SWEEP_INITIAL_DELAY_MS:120000}
       batch-size: ${EMBEDDING_SWEEP_BATCH:500}
       # Texts per API call. The embeddings endpoint takes an array and returns vectors in
       # order, so a chunk is one round trip rather than `chunk-size` of them.
       chunk-size: ${EMBEDDING_SWEEP_CHUNK:100}
-      budget: ${EMBEDDING_SWEEP_BUDGET:PT10M}
+      budget: ${EMBEDDING_SWEEP_BUDGET:PT30M}
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}
