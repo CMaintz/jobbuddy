@@ -3,13 +3,10 @@ package com.autoapplicant.adapter.crawler;
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
-import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.job.JobCategoryClassifier;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.domain.job.SimHash;
-import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
-import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,21 +25,15 @@ public class IngestionPipeline {
 
 
     private final JobRepositoryPort jobRepo;
-    private final JobEmbeddingRepositoryPort embeddingRepo;
-    private final AiProviderPort aiProvider;
     private final TextCleaningService textCleaner;
     /** Pure domain service — stateless keyword classifier, no injection needed. */
     private final JobCategoryClassifier categoryClassifier = new JobCategoryClassifier();
     private final CompanyRepositoryPort companyRepo;
 
     public IngestionPipeline(JobRepositoryPort jobRepo,
-                              JobEmbeddingRepositoryPort embeddingRepo,
-                              @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                               TextCleaningService textCleaner,
                               CompanyRepositoryPort companyRepo) {
         this.jobRepo = jobRepo;
-        this.embeddingRepo = embeddingRepo;
-        this.aiProvider = aiProvider;
         this.textCleaner = textCleaner;
         this.companyRepo = companyRepo;
     }
@@ -155,21 +146,4 @@ public class IngestionPipeline {
         }
     }
 
-    /**
-     * Runs on the enrichment callback's thread (already the AI task executor).
-     * Deliberately not {@code @Async}: a self-invocation would bypass the Spring
-     * proxy anyway, so the annotation would only mislead.
-     */
-    private void embed(Job job) {
-        try {
-            String textToEmbed = job.title() + " " +
-                    (job.descriptionClean() != null ? job.descriptionClean() : "");
-            float[] vector = aiProvider.embed(textToEmbed);
-            JobEmbedding embedding = new JobEmbedding(null, job.id(), vector,
-                    aiProvider.embeddingModelName(), Instant.now());
-            embeddingRepo.save(embedding);
-        } catch (Exception e) {
-            log.warn("Failed to create embedding for job {}: {}", job.id(), e.getMessage());
-        }
-    }
 }

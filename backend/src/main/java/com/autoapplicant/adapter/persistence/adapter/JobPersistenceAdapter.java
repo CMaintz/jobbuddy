@@ -291,6 +291,50 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
         return counts;
     }
 
+    @Override
+    public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore) {
+        return repo.findForEmbedding(maxAttempts, retryBefore, PageRequest.of(0, limit))
+                .stream().map(JobMapper::toDomain).toList();
+    }
+
+    @Override
+    public void markEmbedded(UUID jobId) {
+        repo.findById(jobId).ifPresent(e -> {
+            e.setEmbeddingStatus(com.autoapplicant.domain.job.EmbeddingStatus.EMBEDDED.name());
+            e.setEmbeddingAttempts(e.getEmbeddingAttempts() + 1);
+            e.setEmbeddingLastAttemptAt(Instant.now());
+            e.setEmbeddingLastError(null);
+            repo.save(e);
+        });
+    }
+
+    @Override
+    public boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts) {
+        return repo.findById(jobId).map(e -> {
+            int attempts = e.getEmbeddingAttempts() + 1;
+            boolean givingUp = attempts >= maxAttempts;
+            e.setEmbeddingAttempts(attempts);
+            e.setEmbeddingLastAttemptAt(Instant.now());
+            e.setEmbeddingLastError(truncate(reason));
+            e.setEmbeddingStatus((givingUp
+                    ? com.autoapplicant.domain.job.EmbeddingStatus.FAILED
+                    : com.autoapplicant.domain.job.EmbeddingStatus.PENDING).name());
+            repo.save(e);
+            return givingUp;
+        }).orElse(false);
+    }
+
+    @Override
+    public Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> countByEmbeddingStatus() {
+        Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> counts =
+                new EnumMap<>(com.autoapplicant.domain.job.EmbeddingStatus.class);
+        for (Object[] row : repo.countByEmbeddingStatus()) {
+            counts.merge(com.autoapplicant.domain.job.EmbeddingStatus.parse((String) row[0]),
+                    ((Number) row[1]).longValue(), Long::sum);
+        }
+        return counts;
+    }
+
     /** The column is text, but an unbounded provider error has no business filling it. */
     private static String truncate(String reason) {
         if (reason == null) return null;

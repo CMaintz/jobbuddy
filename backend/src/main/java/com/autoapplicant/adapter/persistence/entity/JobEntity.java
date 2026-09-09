@@ -56,6 +56,18 @@ public class JobEntity {
     @Column(name = "enrichment_last_error", columnDefinition = "text")
     private String enrichmentLastError;
 
+    @Column(name = "embedding_status", nullable = false, length = 20)
+    private String embeddingStatus = "PENDING";
+
+    @Column(name = "embedding_attempts", nullable = false)
+    private int embeddingAttempts;
+
+    @Column(name = "embedding_last_attempt_at")
+    private Instant embeddingLastAttemptAt;
+
+    @Column(name = "embedding_last_error", columnDefinition = "text")
+    private String embeddingLastError;
+
     @Column(name = "employment_type")
     private String employmentType;
 
@@ -188,6 +200,15 @@ public class JobEntity {
     public void setCompanyName(String companyName) { this.companyName = companyName; }
     public String getDescriptionRaw() { return descriptionRaw; }
     public void setDescriptionRaw(String descriptionRaw) { this.descriptionRaw = descriptionRaw; }
+    public String getEmbeddingStatus() { return embeddingStatus; }
+    public void setEmbeddingStatus(String embeddingStatus) { this.embeddingStatus = embeddingStatus; }
+    public int getEmbeddingAttempts() { return embeddingAttempts; }
+    public void setEmbeddingAttempts(int embeddingAttempts) { this.embeddingAttempts = embeddingAttempts; }
+    public Instant getEmbeddingLastAttemptAt() { return embeddingLastAttemptAt; }
+    public void setEmbeddingLastAttemptAt(Instant at) { this.embeddingLastAttemptAt = at; }
+    public String getEmbeddingLastError() { return embeddingLastError; }
+    public void setEmbeddingLastError(String e) { this.embeddingLastError = e; }
+
     public String getEnrichmentStatus() { return enrichmentStatus; }
     public void setEnrichmentStatus(String enrichmentStatus) { this.enrichmentStatus = enrichmentStatus; }
     public int getEnrichmentAttempts() { return enrichmentAttempts; }

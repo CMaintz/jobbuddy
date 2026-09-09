@@ -119,6 +119,17 @@ app:
       batch-size: ${ENRICHMENT_SWEEP_BATCH:200}
       # Time budget per tick — the batch stops here and the next tick continues.
       budget: ${ENRICHMENT_SWEEP_BUDGET:PT20M}
+  # Embeddings have their own queue and their own state, because they have their own failure
+  # mode: extraction can succeed while embedding never runs, leaving a posting that looks
+  # complete and is invisible to search and matching.
+  embedding:
+    sweep:
+      enabled: ${EMBEDDING_SWEEP_ENABLED:true}
+      interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:300000}
+      # Offset from the enrichment worker's first tick; they share one thread anyway.
+      initial-delay-ms: ${EMBEDDING_SWEEP_INITIAL_DELAY_MS:120000}
+      batch-size: ${EMBEDDING_SWEEP_BATCH:200}
+      budget: ${EMBEDDING_SWEEP_BUDGET:PT10M}
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}

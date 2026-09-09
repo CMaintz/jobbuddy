@@ -39,6 +39,19 @@ public interface JobRepositoryPort {
      */
     boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts);
 
+    // ── Embedding queue (same shape as enrichment: state on the job, vectors elsewhere) ──
+    /** Postings enriched but not yet embedded, never-attempted first. */
+    List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore);
+
+    /** A vector was stored; stop asking about this one. */
+    void markEmbedded(UUID jobId);
+
+    /** Returns true when this was the attempt that gave up on the posting. */
+    boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts);
+
+    /** How many jobs sit in each embedding state. */
+    java.util.Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> countByEmbeddingStatus();
+
     /** How many jobs sit in each enrichment state — for the sweep's own reporting. */
     java.util.Map<com.autoapplicant.domain.job.EnrichmentStatus, Long> countByEnrichmentStatus();
     List<UUID> findStaleActiveJobIds(java.time.Instant cutoff);
