@@ -68,6 +68,14 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j.id FROM JobEntity j WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
     List<UUID> findStaleActiveJobIds(@Param("cutoff") Instant cutoff);
 
+    /** Seen again by a connector that skipped re-emitting it — liveness only, nothing else. */
+    @Modifying
+    @Query("UPDATE JobEntity j SET j.lastSeenAt = :lastSeenAt "
+         + "WHERE j.source = :source AND j.sourceJobId = :sourceJobId")
+    int markSeenBySourceJobId(@Param("source") String source,
+                              @Param("sourceJobId") String sourceJobId,
+                              @Param("lastSeenAt") Instant lastSeenAt);
+
     @Modifying
     @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
     int deactivateStaleJobs(@Param("cutoff") Instant cutoff);

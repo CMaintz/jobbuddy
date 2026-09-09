@@ -231,6 +231,7 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                 if (seenInRun.contains(guid)) continue;
 
                 if (config.isKnownGuid().test(guid)) {
+                    config.onKnownJobSeen().accept(guid);
                     log.debug("Jobindex: skipping known guid {}", guid);
                     continue;
                 }

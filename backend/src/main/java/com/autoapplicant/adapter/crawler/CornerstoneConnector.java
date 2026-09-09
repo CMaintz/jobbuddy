@@ -161,6 +161,8 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
 
                 String guid = "csod-" + tenantName + "-" + reqId;
                 if (config.isKnownGuid().test(guid)) {
+                    // Seen alive — say so, or the expiry sweep will retire an open role.
+                    config.onKnownJobSeen().accept(guid);
                     log.debug("CSOD [{}]: skipping known guid {}", tenantName, guid);
                     continue;
                 }

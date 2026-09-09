@@ -70,6 +70,13 @@ public interface JobRepositoryPort {
     List<Job> findUrlCheckCandidates(java.time.Instant recheckCutoff, int limit);
     /** Re-crawl of an existing posting: bump lastSeenAt (and pick up a changed deadline). */
     void refreshLastSeen(UUID jobId, java.time.Instant lastSeenAt, java.time.LocalDate applicationDeadline);
+
+    /**
+     * Marks a posting seen when the connector recognised it and skipped re-emitting it.
+     * Addressed by source + id because that is all a skipping connector holds. Returns true
+     * when a row was touched; false means the guid is not ours, which is worth noticing.
+     */
+    boolean markSeenBySourceJobId(JobSource source, String sourceJobId, java.time.Instant lastSeenAt);
     /** Probe confirmed the posting is live: reset failures and refresh lastSeenAt. */
     void markUrlAlive(UUID jobId);
     /** Probe couldn't tell (bot-blocked, server error): just record the attempt. */

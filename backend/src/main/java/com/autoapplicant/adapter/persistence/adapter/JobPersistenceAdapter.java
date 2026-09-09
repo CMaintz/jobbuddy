@@ -196,6 +196,14 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    public boolean markSeenBySourceJobId(com.autoapplicant.domain.job.JobSource source,
+                                         String sourceJobId, Instant lastSeenAt) {
+        if (source == null || sourceJobId == null || sourceJobId.isBlank()) return false;
+        return repo.markSeenBySourceJobId(source.name(), sourceJobId, lastSeenAt) > 0;
+    }
+
+    @Override
     public void markUrlAlive(UUID jobId) {
         repo.findById(jobId).ifPresent(e -> {
             e.setUrlCheckFailures(0);

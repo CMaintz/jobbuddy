@@ -72,6 +72,7 @@ public class ItJobbankConnector extends AbstractJobSourceConnector {
                 if (seenInRun.contains(guid)) continue;
 
                 if (config.isKnownGuid().test(guid)) {
+                    config.onKnownJobSeen().accept(guid);
                     log.debug("IT-Jobbank: skipping known guid {}", guid);
                     continue;
                 }

@@ -108,6 +108,7 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
                 if (seenInRun.contains(guid)) continue;
 
                 if (config.isKnownGuid().test(guid)) {
+                    config.onKnownJobSeen().accept(guid);
                     log.debug("Teamtailor: skipping known guid {}", guid);
                     continue;
                 }

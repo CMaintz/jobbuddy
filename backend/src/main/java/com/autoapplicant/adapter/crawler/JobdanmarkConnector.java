@@ -70,7 +70,10 @@ public class JobdanmarkConnector extends AbstractJobSourceConnector {
                 String relativeUrl = item.path("url").asText("");
                 String slug = relativeUrl.replaceFirst("^/job/", "");
                 if (slug.isBlank()) continue;
-                if (config.isKnownGuid().test(slug)) continue;
+                if (config.isKnownGuid().test(slug)) {
+                    config.onKnownJobSeen().accept(slug);
+                    continue;
+                }
 
                 try {
                     Thread.sleep(config.delayMs());

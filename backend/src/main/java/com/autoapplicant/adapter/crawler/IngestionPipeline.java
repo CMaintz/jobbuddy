@@ -55,7 +55,14 @@ public class IngestionPipeline {
         this.companyRepo = companyRepo;
     }
 
-    public void ingest(RawJobData raw) {
+    /**
+     * What became of one raw posting. Returned rather than logged so the crawl summary can
+     * say how many postings were new instead of how many were looked at — the two used to be
+     * reported as one number, which made a re-crawl of unchanged jobs read as a fresh haul.
+     */
+    public enum IngestOutcome { NEW, REFRESHED, FAILED }
+
+    public IngestOutcome ingest(RawJobData raw) {
         try {
             // Deduplication check — refresh lastSeenAt for existing jobs so stale detection
             // works, and pick up a deadline the source published (or changed) after first crawl.
@@ -68,7 +75,7 @@ public class IngestionPipeline {
                     // Targeted update in the adapter (like markUrlAlive) — no whole-Job rebuild.
                     jobRepo.refreshLastSeen(seen.id(), Instant.now(), deadline);
                     log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
-                    return;
+                    return IngestOutcome.REFRESHED;
                 }
             }
 
@@ -115,8 +122,11 @@ public class IngestionPipeline {
                 return null;
             });
 
+            return IngestOutcome.NEW;
+
         } catch (Exception e) {
             log.error("Ingestion failed for raw job from {}: {}", raw.source(), e.getMessage(), e);
+            return IngestOutcome.FAILED;
         }
     }
 
