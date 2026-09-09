@@ -155,7 +155,10 @@ public class LinkedInConnector extends AbstractJobSourceConnector {
             for (JobCard card : cards) {
                 if (fetched >= maxJobsPerRun) break;
                 if (!seenInRun.add(card.id)) continue;
-                if (config.isKnownGuid().test(card.id)) continue;
+                if (config.isKnownGuid().test(card.id)) {
+                    config.onKnownJobSeen().accept(card.id);
+                    continue;
+                }
 
                 sleepJitter();
                 String detailHtml = fetchHtml(DETAIL_URL + "/" + card.id);

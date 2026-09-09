@@ -65,8 +65,52 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
     public void runAllCrawlers() {
         var scheduled = scheduledConnectors();
         log.info("Starting scheduled crawl for {} sources", scheduled.size());
-        scheduled.forEach(connector ->
-                CompletableFuture.runAsync(() -> runConnector(connector), crawlerTaskExecutor));
+        reportConnectorHealth();
+        var runs = scheduled.stream()
+                .map(connector -> CompletableFuture.runAsync(() -> runConnector(connector), crawlerTaskExecutor))
+                .toArray(CompletableFuture[]::new);
+        // One line saying the whole run is over. Without it a finished crawl and a hung one
+        // look identical in the log.
+        CompletableFuture.allOf(runs).whenComplete((ignored, error) -> {
+            if (error != null) {
+                log.error("Crawl run finished with errors: {}", error.getMessage(), error);
+            } else {
+                log.info("Crawl run complete — all {} sources finished", runs.length);
+            }
+            reportConnectorHealth();
+        });
+    }
+
+    /**
+     * Which sources are actually producing, and which have gone quiet.
+     *
+     * <p>A connector that silently stops working — a feed moves, a site adds a bot wall, a
+     * company slug changes — looks exactly like a connector with nothing new to report. The
+     * difference is only visible next to the other sources and against the clock, so it is
+     * printed as a table rather than left for someone to notice.
+     */
+    public void reportConnectorHealth() {
+        var states = crawlerStateRepo.findAll();
+        if (states.isEmpty()) return;
+        StringBuilder table = new StringBuilder("Connector health:\n");
+        states.stream()
+                .sorted(java.util.Comparator.comparing(CrawlerState::source))
+                .forEach(state -> {
+                    String age = state.lastCrawlFinishedAt() == null ? "never run"
+                            : humanAge(java.time.Duration.between(state.lastCrawlFinishedAt(), Instant.now()));
+                    String health = state.lastError() != null ? "ERROR: " + state.lastError()
+                            : state.jobsFound() == 0 ? "produced nothing last run"
+                            : "ok";
+                    table.append(String.format("  %-14s last run %-12s seen %-6d new %-6d  %s%n",
+                            state.source(), age, state.jobsFound(), state.jobsIngested(), health));
+                });
+        log.info(table.toString().stripTrailing());
+    }
+
+    private static String humanAge(java.time.Duration d) {
+        if (d.toHours() >= 48) return d.toDays() + "d ago";
+        if (d.toHours() >= 1) return d.toHours() + "h ago";
+        return Math.max(0, d.toMinutes()) + "m ago";
     }
 
     public void runConnector(JobSourceConnectorPort connector) {
@@ -79,7 +123,16 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
 
     private void runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
         String sourceName = connector.getSource().name();
-        AtomicInteger jobsFound = new AtomicInteger(0);
+        // Four numbers, because one was hiding three different things. A connector that
+        // re-emits everything (Greenhouse) and one that skips what it recognises (Teamtailor)
+        // used to report the same field, so their totals meant different things and could not
+        // be compared.
+        AtomicInteger emitted = new AtomicInteger(0);
+        AtomicInteger ingestedNew = new AtomicInteger(0);
+        AtomicInteger refreshed = new AtomicInteger(0);
+        AtomicInteger knownSkipped = new AtomicInteger(0);
+        AtomicInteger failed = new AtomicInteger(0);
+        AtomicInteger crossListed = new AtomicInteger(0);
         Instant startedAt = Instant.now();
 
         // Mark crawl as running
@@ -95,24 +148,44 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     List.of(),
                     guid -> jobRepository.existsBySourceAndSourceJobId(connector.getSource(), guid),
                     raw -> {
-                        jobsFound.incrementAndGet();
-                        ingestionPipeline.ingest(raw);
+                        emitted.incrementAndGet();
+                        var result = ingestionPipeline.ingest(raw);
+                        switch (result.outcome()) {
+                            case NEW -> ingestedNew.incrementAndGet();
+                            case REFRESHED -> refreshed.incrementAndGet();
+                            case FAILED -> failed.incrementAndGet();
+                        }
+                        if (result.crossListed()) crossListed.incrementAndGet();
+                    },
+                    // A posting the connector recognised and did not re-emit is still a posting
+                    // we have just seen alive. Without this its lastSeenAt ages until the expiry
+                    // sweep deactivates a role that is open and advertised.
+                    guid -> {
+                        knownSkipped.incrementAndGet();
+                        jobRepository.markSeenBySourceJobId(connector.getSource(), guid, Instant.now());
                     },
                     force
             );
             connector.fetchJobs(config);
-            log.info("Finished crawling: {} — {} jobs found", connector.getSource(), jobsFound.get());
+            int seen = emitted.get() + knownSkipped.get();
+            log.info("Finished crawling: {} — {} postings seen: {} new, {} refreshed, "
+                     + "{} already known (skipped by connector), {} failed, {} cross-listings",
+                    connector.getSource(), seen, ingestedNew.get(), refreshed.get(),
+                    knownSkipped.get(), failed.get(), crossListed.get());
 
-            // Mark crawl as finished successfully
+            // Mark crawl as finished successfully. jobsFound is everything the source showed us;
+            // jobsIngested is what was actually new. They were the same number before, which made
+            // a re-crawl of unchanged postings look like a fresh haul.
             crawlerStateRepo.save(new CrawlerState(
                     sourceName, 0, startedAt, Instant.now(),
-                    jobsFound.get(), jobsFound.get(), null, false, Instant.now()));
+                    seen, ingestedNew.get(), null, false, Instant.now()));
 
         } catch (Exception e) {
             log.error("Crawl failed for {}: {}", connector.getSource(), e.getMessage(), e);
             crawlerStateRepo.save(new CrawlerState(
                     sourceName, 0, startedAt, Instant.now(),
-                    jobsFound.get(), 0, e.getMessage(), false, Instant.now()));
+                    emitted.get() + knownSkipped.get(), ingestedNew.get(),
+                    e.getMessage(), false, Instant.now()));
         }
     }
 

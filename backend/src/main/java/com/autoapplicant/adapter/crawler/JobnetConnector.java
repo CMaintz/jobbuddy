@@ -68,7 +68,10 @@ public class JobnetConnector extends AbstractJobSourceConnector {
             for (JsonNode ad : jobAds) {
                 String id = ad.path("jobAdId").asText(null);
                 if (id == null || id.isBlank()) continue;
-                if (config.isKnownGuid().test(id)) continue;
+                if (config.isKnownGuid().test(id)) {
+                    config.onKnownJobSeen().accept(id);
+                    continue;
+                }
 
                 try {
                     Thread.sleep(config.delayMs());

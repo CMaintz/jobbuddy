@@ -53,6 +53,24 @@ public class OpenAiAdapter implements AiProviderPort {
     }
 
     @Override
+    public List<float[]> embedAll(List<String> texts) {
+        if (texts == null || texts.isEmpty()) return List.of();
+        // One request for the whole batch. The embeddings endpoint takes an array and returns
+        // vectors in the same order, so a 200-posting batch is one round trip instead of 200.
+        EmbeddingCreateParams params = EmbeddingCreateParams.builder()
+                .model(resolveEmbeddingModel())
+                .inputOfArrayOfStrings(texts)
+                .build();
+        CreateEmbeddingResponse response = client.embeddings().create(params);
+        return response.data().stream().map(datum -> {
+            List<Float> values = datum.embedding();
+            float[] vector = new float[values.size()];
+            for (int i = 0; i < values.size(); i++) vector[i] = values.get(i);
+            return vector;
+        }).toList();
+    }
+
+    @Override
     public float[] embed(String text) {
         EmbeddingCreateParams params = EmbeddingCreateParams.builder()
                 .model(resolveEmbeddingModel())

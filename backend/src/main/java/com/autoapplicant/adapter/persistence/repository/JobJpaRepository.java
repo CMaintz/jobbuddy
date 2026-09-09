@@ -68,6 +68,33 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j.id FROM JobEntity j WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
     List<UUID> findStaleActiveJobIds(@Param("cutoff") Instant cutoff);
 
+    /**
+     * The embedding queue: enriched postings without a vector, never-attempted first. Enriched
+     * only, because the text worth embedding is the cleaned description enrichment produces.
+     */
+    @Query("""
+            SELECT j FROM JobEntity j
+            WHERE j.embeddingStatus = 'PENDING'
+              AND j.enrichmentStatus = 'ENRICHED'
+              AND j.embeddingAttempts < :maxAttempts
+              AND (j.embeddingLastAttemptAt IS NULL OR j.embeddingLastAttemptAt < :retryBefore)
+            ORDER BY j.embeddingLastAttemptAt ASC NULLS FIRST, j.createdAt ASC
+            """)
+    List<JobEntity> findForEmbedding(@Param("maxAttempts") int maxAttempts,
+                                     @Param("retryBefore") Instant retryBefore,
+                                     Pageable pageable);
+
+    @Query("SELECT j.embeddingStatus, COUNT(j) FROM JobEntity j GROUP BY j.embeddingStatus")
+    List<Object[]> countByEmbeddingStatus();
+
+    /** Seen again by a connector that skipped re-emitting it — liveness only, nothing else. */
+    @Modifying
+    @Query("UPDATE JobEntity j SET j.lastSeenAt = :lastSeenAt "
+         + "WHERE j.source = :source AND j.sourceJobId = :sourceJobId")
+    int markSeenBySourceJobId(@Param("source") String source,
+                              @Param("sourceJobId") String sourceJobId,
+                              @Param("lastSeenAt") Instant lastSeenAt);
+
     @Modifying
     @Query("UPDATE JobEntity j SET j.isActive = false WHERE j.isActive = true AND j.lastSeenAt < :cutoff AND j.source <> 'MANUAL'")
     int deactivateStaleJobs(@Param("cutoff") Instant cutoff);

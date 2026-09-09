@@ -1,6 +1,5 @@
 package com.autoapplicant.adapter.cli;
 
-import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
@@ -8,55 +7,45 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Enriches jobs that were saved without AI enrichment (ai_summary IS NULL).
- * Runs as a one-shot CLI command and exits.
+ * Drains the enrichment queue, then the embedding queue, as a one-shot CLI command.
  *
- * Usage (from repo root):
+ * <p>Usage (from repo root):
+ * <pre>
  *   ./gradlew :backend:bootRun --args="--spring.profiles.active=enrich"
- *
- * Optional: limit number of jobs processed per run (default: 500)
  *   ./gradlew :backend:bootRun --args="--spring.profiles.active=enrich --enrich.limit=100"
+ * </pre>
  *
- * Rate limiting: Gemini free tier allows 30 req/min. This runner sleeps 2 seconds
- * between enrichment calls (= 30/min) to stay within the limit.
+ * <p>Without a limit it runs until both queues are empty, rather than stopping after one batch
+ * and asking to be run again — with a backlog in the thousands that meant typing the same
+ * command twenty times. Pacing (delay between calls, postings in flight) comes from
+ * {@code app.enrichment.sweep.*}, so it matches the scheduled worker instead of hard-coding a
+ * rate that was written for a since-changed provider.
  */
 @Component
 @Profile("enrich")
 @Order(2)
 public class EnrichmentSweepRunner implements ApplicationRunner {
 
-    private static final int DEFAULT_LIMIT = 500;
+    private final QueueDrainer drainer;
 
-    private final SweepUnenrichedJobsUseCase sweepUseCase;
-
-    public EnrichmentSweepRunner(SweepUnenrichedJobsUseCase sweepUseCase) {
-        this.sweepUseCase = sweepUseCase;
+    public EnrichmentSweepRunner(QueueDrainer drainer) {
+        this.drainer = drainer;
     }
 
     @Override
     public void run(ApplicationArguments args) {
         int limit = args.containsOption("enrich.limit")
                 ? Integer.parseInt(args.getOptionValues("enrich.limit").get(0))
-                : DEFAULT_LIMIT;
+                : Integer.MAX_VALUE;
 
-        SweepUnenrichedJobsUseCase.SweepResult result = sweepUseCase.sweep(limit);
+        drainer.drainEnrichment(limit);
+        drainer.drainEmbedding();
 
         System.out.println();
-        if (result.total() == 0) {
-            System.out.println("============================================");
-            System.out.println("  No unenriched jobs found. All done!");
-            System.out.println("============================================");
-        } else {
-            System.out.println("============================================");
-            System.out.printf("  Enrichment sweep complete%n");
-            System.out.printf("  Processed : %d / %d%n", result.total(), result.total());
-            System.out.printf("  Succeeded : %d%n", result.succeeded());
-            System.out.printf("  Failed    : %d%n", result.failed());
-            if (result.total() == limit) {
-                System.out.println("  NOTE: limit reached — run again for more.");
-            }
-            System.out.println("============================================");
-        }
+        System.out.println("============================================");
+        System.out.println("  Enrichment and embedding queues drained");
+        System.out.println("  (see logs/enrichment.log for the detail)");
+        System.out.println("============================================");
         System.out.println();
     }
 }

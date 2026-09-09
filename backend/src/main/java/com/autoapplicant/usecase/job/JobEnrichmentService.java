@@ -10,6 +10,7 @@ import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +26,11 @@ import java.util.concurrent.CompletableFuture;
 public class JobEnrichmentService implements EnrichJobUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(JobEnrichmentService.class);
-    private final AiProviderPort aiProvider;
+    private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
 
-    public JobEnrichmentService(@Qualifier("enrichmentAiProvider") AiProviderPort aiProvider, ObjectMapper objectMapper) {
+    public JobEnrichmentService(@Qualifier("enrichmentChatProvider") ChatProviderPort aiProvider,
+                                ObjectMapper objectMapper) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
     }

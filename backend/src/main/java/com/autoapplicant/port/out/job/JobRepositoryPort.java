@@ -39,6 +39,19 @@ public interface JobRepositoryPort {
      */
     boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts);
 
+    // ── Embedding queue (same shape as enrichment: state on the job, vectors elsewhere) ──
+    /** Postings enriched but not yet embedded, never-attempted first. */
+    List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore);
+
+    /** A vector was stored; stop asking about this one. */
+    void markEmbedded(UUID jobId);
+
+    /** Returns true when this was the attempt that gave up on the posting. */
+    boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts);
+
+    /** How many jobs sit in each embedding state. */
+    java.util.Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> countByEmbeddingStatus();
+
     /** How many jobs sit in each enrichment state — for the sweep's own reporting. */
     java.util.Map<com.autoapplicant.domain.job.EnrichmentStatus, Long> countByEnrichmentStatus();
     List<UUID> findStaleActiveJobIds(java.time.Instant cutoff);
@@ -70,6 +83,13 @@ public interface JobRepositoryPort {
     List<Job> findUrlCheckCandidates(java.time.Instant recheckCutoff, int limit);
     /** Re-crawl of an existing posting: bump lastSeenAt (and pick up a changed deadline). */
     void refreshLastSeen(UUID jobId, java.time.Instant lastSeenAt, java.time.LocalDate applicationDeadline);
+
+    /**
+     * Marks a posting seen when the connector recognised it and skipped re-emitting it.
+     * Addressed by source + id because that is all a skipping connector holds. Returns true
+     * when a row was touched; false means the guid is not ours, which is worth noticing.
+     */
+    boolean markSeenBySourceJobId(JobSource source, String sourceJobId, java.time.Instant lastSeenAt);
     /** Probe confirmed the posting is live: reset failures and refresh lastSeenAt. */
     void markUrlAlive(UUID jobId);
     /** Probe couldn't tell (bot-blocked, server error): just record the attempt. */

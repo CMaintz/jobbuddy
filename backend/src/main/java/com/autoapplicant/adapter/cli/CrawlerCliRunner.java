@@ -30,9 +30,11 @@ public class CrawlerCliRunner implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(CrawlerCliRunner.class);
 
     private final TriggerCrawlUseCase triggerCrawl;
+    private final QueueDrainer drainer;
 
-    public CrawlerCliRunner(TriggerCrawlUseCase triggerCrawl) {
+    public CrawlerCliRunner(TriggerCrawlUseCase triggerCrawl, QueueDrainer drainer) {
         this.triggerCrawl = triggerCrawl;
+        this.drainer = drainer;
     }
 
     @Override
@@ -60,12 +62,18 @@ public class CrawlerCliRunner implements ApplicationRunner {
             }
         }
 
-        log.info("Crawl finished — waiting for AI enrichment queue to drain before exit...");
+        banner("Crawl complete" + (source != null ? " [" + source + "]" : " [all sources]"));
+
+        // The scheduled worker never gets a turn in CLI mode — the process exits. Draining here
+        // is what makes "the command finished" mean "the postings are usable".
+        drainer.drainAll();
+        banner("Done — postings are crawled, enriched and embedded");
+    }
+
+    private static void banner(String message) {
         System.out.println();
         System.out.println("============================================");
-        System.out.println("  Crawl complete" + (source != null ? " [" + source + "]" : " [all sources]"));
-        System.out.println("  Waiting for enrichment to finish (watch");
-        System.out.println("  logs for progress every 50 jobs)...");
+        System.out.println("  " + message);
         System.out.println("============================================");
         System.out.println();
     }

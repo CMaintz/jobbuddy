@@ -48,6 +48,9 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
     private final int recheckDays;
     private final int batchSize;
     private final long politenessDelayMs;
+    private final boolean adaptiveBatch;
+    private final int maxBatchSize;
+    private final int runsPerDay;
 
     public JobUrlCheckService(JobRepositoryPort jobRepo, JobUrlProbePort urlProbe,
                               IgnoredJobRepositoryPort ignoredJobRepo,
@@ -55,7 +58,10 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
                               @Value("${app.job.url-check.enabled:true}") boolean enabled,
                               @Value("${app.job.url-check.recheck-days:3}") int recheckDays,
                               @Value("${app.job.url-check.batch-size:150}") int batchSize,
-                              @Value("${app.job.url-check.politeness-delay-ms:300}") long politenessDelayMs) {
+                              @Value("${app.job.url-check.politeness-delay-ms:300}") long politenessDelayMs,
+                              @Value("${app.job.url-check.adaptive-batch:true}") boolean adaptiveBatch,
+                              @Value("${app.job.url-check.max-batch-size:3000}") int maxBatchSize,
+                              @Value("${app.job.url-check.runs-per-day:4}") int runsPerDay) {
         this.jobRepo = jobRepo;
         this.urlProbe = urlProbe;
         this.ignoredJobRepo = ignoredJobRepo;
@@ -64,13 +70,16 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
         this.recheckDays = recheckDays;
         this.batchSize = batchSize;
         this.politenessDelayMs = politenessDelayMs;
+        this.adaptiveBatch = adaptiveBatch;
+        this.maxBatchSize = maxBatchSize;
+        this.runsPerDay = runsPerDay;
     }
 
     @Scheduled(cron = "${app.job.url-check.cron:0 30 */6 * * *}")
     public void checkJobUrls() {
         if (!enabled) return;
         Instant cutoff = Instant.now().minus(Duration.ofDays(recheckDays));
-        List<Job> candidates = jobRepo.findUrlCheckCandidates(cutoff, batchSize);
+        List<Job> candidates = jobRepo.findUrlCheckCandidates(cutoff, effectiveBatchSize());
         if (candidates.isEmpty()) return;
 
         int deactivated = 0;
@@ -83,7 +92,8 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
                 break;
             }
         }
-        log.info("URL check: probed {} jobs, deactivated {}", candidates.size(), deactivated);
+        log.info("URL check: probed {} of {} active postings, deactivated {} — full cycle every {} days",
+                candidates.size(), jobRepo.countActive(), deactivated, recheckDays);
     }
 
     @Override
@@ -102,6 +112,35 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
                         log.info("User-reported job {} confirmed gone and deactivated", job.id());
                     }
                 }));
+    }
+
+    /**
+     * How many postings to probe this run, sized so the whole corpus is covered within
+     * {@code recheckDays}.
+     *
+     * <p>This is the liveness mechanism, not the crawl. A connector stops after a couple of pages
+     * of postings it already knows, so it never revisits the deep end of a source's listing —
+     * which is most of it. The probe is what confirms those are still up, because
+     * {@code markUrlAlive} refreshes {@code lastSeenAt} and that is what the expiry sweep reads.
+     *
+     * <p>A fixed batch is therefore a trap that scales with success: at 150 per run, four runs a
+     * day covers 600, so a corpus of 17,000 takes 28 days to get all the way round — against a
+     * 30-day staleness threshold. Two days of margin, and any pause deactivates live postings
+     * wholesale. The batch is now derived from the corpus instead, and capped so a runaway count
+     * cannot turn into a runaway crawl.
+     */
+    private int effectiveBatchSize() {
+        if (!adaptiveBatch) return batchSize;
+        long active = jobRepo.countActive();
+        if (active <= 0) return batchSize;
+        long runsPerCycle = Math.max(1, runsPerDay * (long) recheckDays);
+        long needed = (long) Math.ceil(active / (double) runsPerCycle);
+        int sized = (int) Math.min(maxBatchSize, Math.max(batchSize, needed));
+        if (sized > batchSize) {
+            log.debug("URL check: {} active postings over {} runs per {}-day cycle — probing {} this run",
+                    active, runsPerCycle, recheckDays, sized);
+        }
+        return sized;
     }
 
     /** Probes one job and applies the outcome. Returns true when the job was deactivated. */

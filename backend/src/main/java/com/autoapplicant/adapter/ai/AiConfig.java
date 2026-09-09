@@ -17,6 +17,9 @@ import java.time.Duration;
 @Configuration
 public class AiConfig {
 
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(AiConfig.class);
+
     static final String GEMINI_BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/openai/";
 
@@ -37,12 +40,44 @@ public class AiConfig {
                 .build();
     }
 
+    /**
+     * Enrichment's embedding side. Always a real API: a local CLI agent has no embedding
+     * endpoint, and search ranking depends on these vectors.
+     */
     @Bean("enrichmentAiProvider")
     public AiProviderPort enrichmentAiProvider(
             @Qualifier("openAiHttpClient") OpenAIClient openAi,
             @Qualifier("geminiHttpClient") OpenAIClient gemini,
             AppProperties props) {
         String provider = props.getAi().getEnrichmentProvider();
+        String tier = props.getAi().getEnrichmentTier();
+        return "gemini".equalsIgnoreCase(provider)
+                ? new GeminiAdapter(gemini, props, tierModel("gemini", tier, props))
+                : new OpenAiAdapter(openAi, props, tierModel("openai", tier, props));
+    }
+
+    /**
+     * Enrichment's extraction side, which is where the volume is: one call per posting, and a
+     * crawl brings thousands. It may run on the local CLI agent, so a flat-fee subscription can
+     * absorb a backfill that would otherwise be billed per token.
+     *
+     * <p>Separate from {@link #enrichmentAiProvider} because the two halves have different
+     * constraints — this one only needs chat, and chat is the half a CLI agent can do.
+     * {@code app.ai.enrichment-chat-provider} defaults to whatever enrichment-provider is set to,
+     * so an install that has not thought about it keeps its current behaviour.
+     */
+    @Bean("enrichmentChatProvider")
+    public ChatProviderPort enrichmentChatProvider(
+            @Qualifier("openAiHttpClient") OpenAIClient openAi,
+            @Qualifier("geminiHttpClient") OpenAIClient gemini,
+            AppProperties props) {
+        String provider = firstNonBlank(props.getAi().getEnrichmentChatProvider(),
+                props.getAi().getEnrichmentProvider());
+        if (isCliProvider(provider)) {
+            log.info("Enrichment extraction runs on the local CLI agent ({}); embeddings still "
+                     + "use {}.", provider, props.getAi().getEnrichmentProvider());
+            return new CliAgentAdapter(props);
+        }
         String tier = props.getAi().getEnrichmentTier();
         return "gemini".equalsIgnoreCase(provider)
                 ? new GeminiAdapter(gemini, props, tierModel("gemini", tier, props))

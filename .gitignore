@@ -39,3 +39,4 @@ application-*.local.yml
 
 # Claude Code internal state
 .claude/
+logs/

@@ -27,10 +27,10 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setMaxPoolSize(2);
         executor.setQueueCapacity(5000);
         executor.setThreadNamePrefix("ai-");
-        // Discard enrichment tasks when the queue is full rather than blocking the
-        // crawler thread. Jobs are already saved as titled drafts at this point;
-        // the enrichment sweep will pick them up later.
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        // Nothing should reach this now that ingest leaves postings PENDING for the worker
+        // rather than submitting them, but a silent DiscardPolicy is how thousands of
+        // enrichments disappeared unnoticed. If the pool ever saturates again, it says so.
+        executor.setRejectedExecutionHandler(new CountingDiscardPolicy("aiTaskPool"));
         // Wait for queued enrichment tasks to complete before JVM exits (CLI mode).
         // Without this, Spring closes the context while thousands of enrichment tasks
         // are still queued, resulting in silent data loss.
@@ -83,6 +83,43 @@ public class AsyncConfig implements AsyncConfigurer {
     @Bean(name = "userAiTaskExecutor")
     public Executor userAiTaskExecutor(@Qualifier("userAiTaskPool") ThreadPoolTaskExecutor pool) {
         return new DelegatingSecurityContextAsyncTaskExecutor(pool);
+    }
+
+    /**
+     * The pool behind every {@code @Scheduled} method.
+     *
+     * <p>Spring's default is a single thread, which it never says out loud. Seven scheduled jobs
+     * shared it, so one slow or blocked job stopped all of them — and the enrichment sweep, which
+     * waits on AI calls, is exactly such a job. Sized so a long-running sweep cannot stop the
+     * expiry, URL-check and reminder jobs from running.
+     */
+    @Bean(name = "taskScheduler")
+    public org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler taskScheduler() {
+        var scheduler = new org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(4);
+        scheduler.setThreadNamePrefix("sched-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(false);
+        scheduler.setAwaitTerminationSeconds(20);
+        return scheduler;
+    }
+
+    /**
+     * The enrichment worker's own thread. Single, because enrichment is rate-limited by the AI
+     * provider rather than by local CPU, and because one drain at a time keeps the progress log
+     * readable and the backlog arithmetic honest.
+     */
+    @Bean(name = "enrichmentWorkerExecutor")
+    public Executor enrichmentWorkerExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1);
+        executor.setThreadNamePrefix("enrich-worker-");
+        executor.setRejectedExecutionHandler(new CountingDiscardPolicy("enrichmentWorker"));
+        executor.setWaitForTasksToCompleteOnShutdown(false);
+        executor.setAwaitTerminationSeconds(30);
+        executor.initialize();
+        return executor;
     }
 
     @Bean(name = "crawlerTaskExecutor")
