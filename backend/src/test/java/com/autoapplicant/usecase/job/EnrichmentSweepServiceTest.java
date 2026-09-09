@@ -32,7 +32,8 @@ class EnrichmentSweepServiceTest {
     void setUp() {
         jobRepo = mock(JobRepositoryPort.class);
         enrichJob = mock(EnrichJobUseCase.class);
-        service = new EnrichmentSweepService(jobRepo, enrichJob, MAX_ATTEMPTS, Duration.ofHours(6));
+        service = new EnrichmentSweepService(jobRepo, enrichJob, MAX_ATTEMPTS, Duration.ofHours(6),
+                Duration.ofMinutes(5));
     }
 
     private static Job job(String summary) {

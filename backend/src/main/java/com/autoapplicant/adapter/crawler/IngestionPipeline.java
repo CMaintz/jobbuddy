@@ -7,7 +7,6 @@ import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.job.JobCategoryClassifier;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.domain.job.SimHash;
-import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
@@ -21,20 +20,16 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class IngestionPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(IngestionPipeline.class);
 
-    private final AtomicInteger enrichedCount = new AtomicInteger(0);
 
     private final JobRepositoryPort jobRepo;
-    private final int maxEnrichmentAttempts;
     private final JobEmbeddingRepositoryPort embeddingRepo;
     private final AiProviderPort aiProvider;
-    private final EnrichJobUseCase enrichJob;
     private final TextCleaningService textCleaner;
     /** Pure domain service — stateless keyword classifier, no injection needed. */
     private final JobCategoryClassifier categoryClassifier = new JobCategoryClassifier();
@@ -43,15 +38,12 @@ public class IngestionPipeline {
     public IngestionPipeline(JobRepositoryPort jobRepo,
                               JobEmbeddingRepositoryPort embeddingRepo,
                               @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
-                              EnrichJobUseCase enrichJob, TextCleaningService textCleaner,
-                              CompanyRepositoryPort companyRepo,
-                              @Value("${app.enrichment.max-attempts:4}") int maxEnrichmentAttempts) {
+                              TextCleaningService textCleaner,
+                              CompanyRepositoryPort companyRepo) {
         this.jobRepo = jobRepo;
         this.embeddingRepo = embeddingRepo;
         this.aiProvider = aiProvider;
-        this.enrichJob = enrichJob;
         this.textCleaner = textCleaner;
-        this.maxEnrichmentAttempts = maxEnrichmentAttempts;
         this.companyRepo = companyRepo;
     }
 
@@ -101,26 +93,14 @@ public class IngestionPipeline {
             // (same role re-listed under a different company/URL) via duplicate_group_id.
             fingerprintAndCluster(saved, cleanText);
 
-            // Async: AI enrichment
-            enrichJob.enrich(saved).thenAccept(enriched -> {
-                jobRepo.save(enriched);
-                // Recording the outcome is what lets the sweep tell "never got to it"
-                // from "tried and failed" — and stop retrying the hopeless ones.
-                if (enriched.aiSummary() != null) {
-                    jobRepo.markEnriched(saved.id());
-                } else {
-                    jobRepo.markEnrichmentFailed(saved.id(), "no summary returned", maxEnrichmentAttempts);
-                }
-                embed(enriched);
-                int n = enrichedCount.incrementAndGet();
-                if (n % 50 == 0) {
-                    log.info("Enrichment progress: {} jobs enriched so far", n);
-                }
-            }).exceptionally(ex -> {
-                log.error("Enrichment failed for job {} ({}): {}", saved.id(), saved.sourceJobId(), ex.getMessage());
-                jobRepo.markEnrichmentFailed(saved.id(), ex.getMessage(), maxEnrichmentAttempts);
-                return null;
-            });
+            // Enrichment is NOT fired from here. The posting is saved PENDING and the
+            // enrichment worker drains that queue at a rate the AI provider can sustain.
+            //
+            // It used to be submitted to a two-thread pool behind a 5000-deep queue that
+            // discarded on overflow, which meant a large crawl silently dropped thousands of
+            // enrichments — and the sweep that was supposed to recover them competed for the
+            // same two threads. The database column is the queue now: durable, countable, and
+            // impossible to overflow.
 
             return IngestOutcome.NEW;
 

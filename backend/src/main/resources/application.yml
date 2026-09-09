@@ -100,12 +100,20 @@ app:
     max-attempts: ${ENRICHMENT_MAX_ATTEMPTS:4}
     # How long to leave a failed posting alone before trying it again.
     retry-delay: ${ENRICHMENT_RETRY_DELAY:PT6H}
+    # How long to wait on one AI call before deciding the provider is not keeping up.
+    call-timeout: ${ENRICHMENT_CALL_TIMEOUT:PT5M}
     sweep:
-      # Recovers postings the enrichment pool dropped and ones that failed. Offset from
-      # the crawler so the sweep is not competing with the ingest it cleans up after.
+      # The enrichment worker. Postings are saved PENDING by the crawler and only become
+      # enriched when this runs, so it is a worker rather than a clean-up pass: it ticks
+      # often, works for a bounded slice, and hands its thread back.
       enabled: ${ENRICHMENT_SWEEP_ENABLED:true}
-      cron: ${ENRICHMENT_SWEEP_CRON:0 30 * * * *}
-      batch-size: ${ENRICHMENT_SWEEP_BATCH:40}
+      # Gap between ticks. A tick arriving while the last is still working is skipped.
+      interval-ms: ${ENRICHMENT_SWEEP_INTERVAL_MS:300000}
+      # Let the app finish starting before the first drain.
+      initial-delay-ms: ${ENRICHMENT_SWEEP_INITIAL_DELAY_MS:60000}
+      batch-size: ${ENRICHMENT_SWEEP_BATCH:200}
+      # Time budget per tick — the batch stops here and the next tick continues.
+      budget: ${ENRICHMENT_SWEEP_BUDGET:PT20M}
   linkedin:
     client-id: ${LINKEDIN_CLIENT_ID:}
     client-secret: ${LINKEDIN_CLIENT_SECRET:}
