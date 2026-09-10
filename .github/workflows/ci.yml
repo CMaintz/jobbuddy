@@ -16,24 +16,25 @@ permissions:
 
 jobs:
   backend:
-    name: Backend tests
+    name: Backend gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: temurin
+          fetch-depth: 0 # Spotless ratchetFrom origin/main needs history, not a shallow tip
 
-      - uses: gradle/actions/setup-gradle@v4
+      # Runs the same verb a developer runs locally: `mise run backend:gate`
+      # (Spotless format check + compile + the offline test suite). mise pins
+      # java 21 + node 20 from mise.toml.
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          version: 2026.9.2
 
-      # The suite is offline by design — no database, no AI provider — so it needs no services.
-      - name: Test
-        run: ./gradlew :backend:test
+      - name: Gate (lint + typecheck + test)
+        run: mise run backend:gate
 
       - name: Publish test report
-        if: always()   # a failing run is exactly when the report is worth having
+        if: always() # a failing run is exactly when the report is worth having
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-report
@@ -67,6 +68,168 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    # gitleaks-action lists the PR's commits, which contents:read cannot do.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans history, not just the tip
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ruleset-guard:
+    name: Ruleset guard
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Stops a fixer weakening the gate in the same change that "fixes" it.
+      # Loosening (growing a suppression/snooze baseline, editing a config/threshold)
+      # needs a human label; tightening or an inert change does not. Per-entry, so
+      # the offset attack (fix one, suppress another) is caught. See scripts/ruleset_guard.py.
+      - name: Refuse loosening the gate alongside source changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|\.habit-hooks/|\.github/workflows/)'
+          SOURCE_RE: '^(backend/src/|frontend/src/|extension/)'
+          TEST_RE: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'
+          LABEL: 'ruleset-change'
+        run: |
+          set -euo pipefail
+
+          changed=$(git diff --name-only "$BASE" "$HEAD")
+          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
+
+          ruleset=$(echo "$changed" | grep -E "$RULESET_RE" || true)
+          source=$(echo "$changed" | grep -E "$SOURCE_RE" | grep -vE "$TEST_RE" || true)
+
+          if [ -z "$ruleset" ] || [ -z "$source" ]; then
+            echo "OK — no bundled ruleset+source change."
+            exit 0
+          fi
+
+          if echo "$LABELS" | tr ',' '\n' | grep -qx "$LABEL"; then
+            echo "::notice::'$LABEL' label present — deliberate ruleset change, allowing."
+            exit 0
+          fi
+
+          blob() { git show "$1:$2" 2>/dev/null || true; }
+
+          review=""
+          while IFS= read -r f; do
+            if [ -z "$f" ]; then continue; fi
+            old=$(blob "$BASE" "$f"); new=$(blob "$HEAD" "$f")
+
+            if [ "$(printf '%s' "$old" | tr -d '\r')" = "$(printf '%s' "$new" | tr -d '\r')" ]; then
+              echo "  safe (no semantic change): $f"; continue
+            fi
+
+            case "$f" in
+              *eslint-suppressions.json)
+                if python3 scripts/ruleset_guard.py eslint "$BASE" "$HEAD" "$f"; then
+                  echo "  safe (no suppression added): $f"
+                else echo "  REVIEW (suppression added/increased): $f"; review="$review $f"; fi
+                ;;
+              *snooze.json)
+                if python3 scripts/ruleset_guard.py snooze "$BASE" "$HEAD" "$f"; then
+                  echo "  safe (no snooze added): $f"
+                else echo "  REVIEW (snooze added): $f"; review="$review $f"; fi
+                ;;
+              *)
+                echo "  REVIEW (config — direction can't be proven): $f"; review="$review $f"
+                ;;
+            esac
+          done <<< "$ruleset"
+
+          if [ -n "$review" ]; then
+            echo "::error::This PR changes source AND makes ruleset changes that may loosen the gate, without the '$LABEL' label:"
+            echo "$review" | tr ' ' '\n' | sed '/^$/d;s/^/  /'
+            echo ""
+            echo "Tighten in a separate PR, or add the '$LABEL' label if the loosening is deliberate."
+            exit 1
+          fi
+          echo "::notice::Ruleset changes are tightening-only or inert — allowed without a label."
+
+  habits:
+    name: Structural smells
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Baseline present?
+        id: baseline
+        run: |
+          if [ -f .habit-hooks/snooze.json ]; then
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .habit-hooks/snooze.json yet - run the CI workflow manually (Run workflow) once to bootstrap it. Skipping smells."
+            echo "have=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/setup-python@v5
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          python-version: '3.12'
+      - name: Install PMD + habit-hooks
+        if: steps.baseline.outputs.have == 'true'
+        run: |
+          curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+          unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java
+      - name: Structural smells (fails only on smells beyond the snooze baseline)
+        if: steps.baseline.outputs.have == 'true'
+        run: habit-hooks
+
+  bootstrap-habits-baseline:
+    name: Bootstrap habit-hooks baseline
+    # Run once, manually (Actions tab -> CI -> Run workflow), ideally on main after
+    # merging. Generates the snooze baseline on Linux, where the full-repo file list
+    # does not blow the Windows command-line limit, and commits it.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PMD + habit-hooks
+        run: |
+          curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+          unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java
+      - name: Generate and commit baseline
+        run: |
+          habit-sensors --all | habit-snooze --snooze
+          git add .habit-hooks/snooze.json
+          if git diff --cached --quiet; then echo "baseline unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: bootstrap habit-hooks snooze baseline"
+          git push
 
   images:
     name: Publish images

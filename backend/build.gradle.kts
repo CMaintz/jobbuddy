@@ -2,6 +2,21 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     java
+    id("com.diffplug.spotless") version "6.25.0"
+}
+
+// Foundry `lint`/`fix` verbs. Deliberately minimal — no full reformat, just
+// import hygiene and whitespace — so enabling it doesn't churn the codebase.
+// ratchetFrom means only files changed vs origin/main are enforced: green on day one.
+spotless {
+    java {
+        target("src/**/*.java")
+        ratchetFrom("origin/main")
+        removeUnusedImports()
+        importOrder()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 java {

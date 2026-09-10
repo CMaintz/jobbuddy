@@ -1,0 +1,78 @@
+# Foundry verb interface — AutoApplicant monorepo. See github.com/CMaintz/foundry.
+#
+# One root config pins both toolchains and exposes the six verbs per package
+# (backend:*, frontend:*) plus aggregates. CI path-filters call the per-package
+# gate; `mise run gate` locally runs everything. The extension is static JS/HTML
+# with no build, so it has no verbs — its only check is the CI max-file gate.
+
+[tools]
+java = "21"
+node = "20"
+
+[env]
+_.path = ["./frontend/node_modules/.bin"]
+
+# ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
+# Smells (oversized-file/function, etc.) come from habit-hooks' Java/PMD plugin,
+# not from Gradle — so `lint` here is just formatting (Spotless, ratcheted).
+
+[tasks."backend:fix"]
+description = "Auto-format changed Java (Spotless)"
+run = "./gradlew :backend:spotlessApply"
+
+[tasks."backend:lint"]
+description = "Format check (ratcheted to origin/main — only changed files)"
+run = "./gradlew :backend:spotlessCheck"
+
+[tasks."backend:typecheck"]
+description = "Compilation is Java's type check"
+run = "./gradlew :backend:compileJava"
+
+[tasks."backend:test"]
+description = "Backend test suite (offline by design)"
+run = "./gradlew :backend:test"
+
+[tasks."backend:audit"]
+description = "Dependency vulnerabilities — TODO: add OWASP dependency-check"
+run = "echo 'backend audit not configured yet (skipped)'"
+
+[tasks."backend:gate"]
+run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
+
+# ---- frontend (Angular 17, npm) --------------------------------------------
+
+[tasks."frontend:fix"]
+description = "Auto-fix lint"
+dir = "frontend"
+run = "npm run lint -- --fix"
+
+[tasks."frontend:lint"]
+dir = "frontend"
+run = "npm run lint"
+
+[tasks."frontend:typecheck"]
+description = "TS type check (ng build in CI additionally checks templates)"
+dir = "frontend"
+run = "npx tsc --noEmit -p tsconfig.app.json"
+
+[tasks."frontend:test"]
+dir = "frontend"
+run = "npm run test:ci"
+
+[tasks."frontend:audit"]
+dir = "frontend"
+run = "npm audit --audit-level=critical"
+
+[tasks."frontend:gate"]
+run = [
+    "mise run frontend:lint",
+    "mise run frontend:typecheck",
+    "mise run frontend:test",
+    "mise run frontend:audit",
+]
+
+# ---- aggregate --------------------------------------------------------------
+
+[tasks.gate]
+description = "The oracle — every package's gate. Sequential, no `depends` (parallel, unordered)."
+run = ["mise run backend:gate", "mise run frontend:gate"]
