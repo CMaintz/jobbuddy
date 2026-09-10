@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.autoapplicant.usecase.common.KeywordMatcher;
+import com.autoapplicant.usecase.skills.SkillCanonicalizer;
 
 @Service
 public class MatchingService implements GetRecommendationsUseCase {
@@ -96,6 +97,7 @@ public class MatchingService implements GetRecommendationsUseCase {
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
     private final ProfileSkillRepositoryPort profileSkillRepo;
     private final ApplicationRepositoryPort applicationRepo;
+    private final SkillCanonicalizer skillCanonicalizer;
 
     public MatchingService(JobEmbeddingRepositoryPort embeddingRepo,
                            JobRepositoryPort jobRepo,
@@ -106,7 +108,8 @@ public class MatchingService implements GetRecommendationsUseCase {
                            RecommendationFeedbackRepositoryPort feedbackRepo,
                            ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
                            ProfileSkillRepositoryPort profileSkillRepo,
-                           ApplicationRepositoryPort applicationRepo) {
+                           ApplicationRepositoryPort applicationRepo,
+                           SkillCanonicalizer skillCanonicalizer) {
         this.embeddingRepo = embeddingRepo;
         this.jobRepo = jobRepo;
         this.profileRepo = profileRepo;
@@ -117,6 +120,7 @@ public class MatchingService implements GetRecommendationsUseCase {
         this.profileEmbeddingRepo = profileEmbeddingRepo;
         this.profileSkillRepo = profileSkillRepo;
         this.applicationRepo = applicationRepo;
+        this.skillCanonicalizer = skillCanonicalizer;
     }
 
     @Override
@@ -162,10 +166,13 @@ public class MatchingService implements GetRecommendationsUseCase {
             Map<UUID, Job> jobMap = jobRepo.findByIds(candidateIds).stream()
                     .collect(Collectors.toMap(Job::id, j -> j));
 
+            // Canonicalised so "Kubernetes" here answers a posting that asks for "k8s". The asked
+            // labels are canonicalised the same way at comparison time (see creditFor/scoreUntiered).
             Set<String> held = profileSkillRows.stream()
                     .map(ProfileSkill::skillName)
                     .filter(Objects::nonNull)
-                    .map(name -> name.toLowerCase().trim())
+                    .map(skillCanonicalizer::canonical)
+                    .filter(s -> !s.isEmpty())
                     .collect(Collectors.toSet());
             Map<String, Double> proficiencyCredit = buildProficiencyCredit(profileSkillRows);
             // "More like this" is a statement about a kind of job, so it has to reach jobs the
@@ -503,8 +510,8 @@ public class MatchingService implements GetRecommendationsUseCase {
      * requirement tiers existed, and a small top-up for one enriched after.
      */
     private int scoreUntiered(Job job, Set<String> held, List<String> reasons, int budget) {
-        Set<String> asks = new HashSet<>(normalizedSet(job.technologies()));
-        asks.addAll(normalizedSet(job.skills()));
+        Set<String> asks = new HashSet<>(canonicalSet(job.technologies()));
+        asks.addAll(canonicalSet(job.skills()));
         if (asks.isEmpty()) return 0;
 
         List<String> matched = held.stream().filter(asks::contains).sorted().toList();
@@ -527,7 +534,7 @@ public class MatchingService implements GetRecommendationsUseCase {
      */
     private double creditFor(String ask, Set<String> held, Map<String, Double> proficiencyCredit) {
         if (ask == null || ask.isBlank()) return 0;
-        String key = ask.toLowerCase().trim();
+        String key = skillCanonicalizer.canonical(ask);
         if (!held.contains(key)) return 0;
         return proficiencyCredit.getOrDefault(key, 1.0);
     }
@@ -544,7 +551,8 @@ public class MatchingService implements GetRecommendationsUseCase {
                 if (s.skillName() == null) continue;
                 boolean weak = "BEGINNER".equalsIgnoreCase(s.proficiencyLevel())
                         && !s.usedInProduction();
-                credit.put(s.skillName().toLowerCase().trim(),
+                // Keyed on the canonical form so creditFor's canonical lookup finds it.
+                credit.put(skillCanonicalizer.canonical(s.skillName()),
                         weak ? WEAK_PROFICIENCY_CREDIT : 1.0);
             }
             return credit;
@@ -657,9 +665,13 @@ public class MatchingService implements GetRecommendationsUseCase {
         return sb.toString().trim();
     }
 
-    private static Set<String> normalizedSet(List<String> list) {
+    private Set<String> canonicalSet(List<String> list) {
         if (list == null) return Set.of();
-        return list.stream().map(s -> s.toLowerCase().trim()).collect(Collectors.toSet());
+        return list.stream()
+                .filter(Objects::nonNull)
+                .map(skillCanonicalizer::canonical)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
     }
 
     private static boolean notEmpty(List<String> list) {

@@ -18,7 +18,9 @@ import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
+import com.autoapplicant.usecase.skills.SkillCanonicalizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,15 +49,18 @@ class MatchingServiceTest {
     @Mock ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
     @Mock ProfileSkillRepositoryPort profileSkillRepo;
     @Mock ApplicationRepositoryPort applicationRepo;
+    @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
+        // Empty taxonomy: canonicalisation falls back to plain normalisation, so these cases match
+        // exactly as before. Alias folding has its own dedicated test.
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
                 aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo,
-                applicationRepo);
+                applicationRepo, new SkillCanonicalizer(taxonomyRepo));
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────

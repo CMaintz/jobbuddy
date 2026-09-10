@@ -26,4 +26,10 @@ public interface SkillTaxonomyRepositoryPort {
 
     /** Children of the given nodes — the adjacency walk behind skill suggestions. */
     List<SkillTaxonomy> findByParentIds(java.util.Collection<java.util.UUID> parentIds);
+
+    /**
+     * Every taxonomy row, aliases included. Reference data in the low hundreds — read whole to
+     * build the canonicalisation map ({@code SkillCanonicalizer}) rather than queried per label.
+     */
+    List<SkillTaxonomy> findAll();
 }
