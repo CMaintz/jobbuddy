@@ -1,7 +1,6 @@
 package com.autoapplicant.usecase.common;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -38,26 +37,6 @@ public final class KeywordMatcher {
     public static boolean contains(String text, String keyword) {
         if (text == null || text.isBlank() || keyword == null || keyword.isBlank()) return false;
         return patternFor(keyword).matcher(text).find();
-    }
-
-    /** The keywords present in the text, in the order given, with duplicates and blanks dropped. */
-    public static List<String> presentIn(String text, List<String> keywords) {
-        if (keywords == null || keywords.isEmpty()) return List.of();
-        return keywords.stream()
-                .filter(k -> k != null && !k.isBlank())
-                .distinct()
-                .filter(k -> contains(text, k))
-                .toList();
-    }
-
-    /** The keywords the text does not contain, in the order given. */
-    public static List<String> absentFrom(String text, List<String> keywords) {
-        if (keywords == null || keywords.isEmpty()) return List.of();
-        return keywords.stream()
-                .filter(k -> k != null && !k.isBlank())
-                .distinct()
-                .filter(k -> !contains(text, k))
-                .toList();
     }
 
     private static Pattern patternFor(String keyword) {
