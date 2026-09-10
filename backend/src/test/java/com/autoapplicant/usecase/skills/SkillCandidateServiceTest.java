@@ -61,7 +61,8 @@ class SkillCandidateServiceTest {
             };
 
     private final SkillCandidateService service = new SkillCandidateService(
-            profileSkillRepo, taxonomyRepo, dismissalRepo, marketCorpus, parsedSuggestionRepo);
+            profileSkillRepo, taxonomyRepo, dismissalRepo, marketCorpus, parsedSuggestionRepo,
+            new SkillResolver(taxonomyRepo, new SkillCanonicalizer(taxonomyRepo)));
 
     @BeforeEach
     void setUp() {
