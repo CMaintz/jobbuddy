@@ -2,15 +2,24 @@ package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.structured.JobKeywords;
 import com.autoapplicant.domain.document.structured.KeywordCoverage;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import com.autoapplicant.usecase.skills.SkillCanonicalizer;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 class KeywordCoverageCalculatorTest {
 
-    private final KeywordCoverageCalculator calculator = new KeywordCoverageCalculator();
+    // No taxonomy rows, so canonicalisation is a no-op and every keyword matches only its own
+    // wording — the behaviour these cases were written against.
+    private final KeywordCoverageCalculator calculator =
+            new KeywordCoverageCalculator(new SkillCanonicalizer(
+                    Mockito.mock(SkillTaxonomyRepositoryPort.class)));
 
     private static final String CV = """
             Platform Engineer with ten years in production.
@@ -78,5 +87,24 @@ class KeywordCoverageCalculatorTest {
                 new JobKeywords(List.of("Kubernetes"), List.of("Terraform")));
 
         assertThat(coverage.matched()).containsExactly("Kubernetes", "Terraform");
+    }
+
+    @Test
+    void an_alias_in_the_document_covers_the_requirement_it_stands_for() {
+        // The CV writes "k8s"; the posting asks for "Kubernetes". With the alias known, that is
+        // covered — but the posting's own wording is what we report as matched.
+        SkillTaxonomyRepositoryPort taxonomy = Mockito.mock(SkillTaxonomyRepositoryPort.class);
+        when(taxonomy.findAll()).thenReturn(List.of(
+                new SkillTaxonomy(null, "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s", "kube"))));
+        KeywordCoverageCalculator aliasAware =
+                new KeywordCoverageCalculator(new SkillCanonicalizer(taxonomy));
+
+        KeywordCoverage coverage = aliasAware.measure(
+                "Ran k8s clusters in production.",
+                new JobKeywords(List.of("Kubernetes"), List.of()));
+
+        assertThat(coverage.percent()).isEqualTo(100);
+        assertThat(coverage.matched()).containsExactly("Kubernetes");
+        assertThat(coverage.missing()).isEmpty();
     }
 }

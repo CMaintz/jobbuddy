@@ -53,6 +53,11 @@ public class SkillTaxonomyPersistenceAdapter implements SkillTaxonomyRepositoryP
     }
 
     @Override
+    public List<SkillTaxonomy> findAll() {
+        return repo.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<SkillTaxonomy> findByCategory(String category) {
         return repo.findByCategoryOrderByName(category).stream().map(this::toDomain).toList();
     }
