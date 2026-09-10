@@ -161,6 +161,76 @@ jobs:
           fi
           echo "::notice::Ruleset changes are tightening-only or inert — allowed without a label."
 
+  habits:
+    name: Structural smells
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Baseline present?
+        id: baseline
+        run: |
+          if [ -f .habit-hooks/snooze.json ]; then
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .habit-hooks/snooze.json yet - run the CI workflow manually (Run workflow) once to bootstrap it. Skipping smells."
+            echo "have=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/setup-python@v5
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          python-version: '3.12'
+      - name: Install PMD + habit-hooks
+        if: steps.baseline.outputs.have == 'true'
+        run: |
+          curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+          unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java
+      - name: Structural smells (fails only on smells beyond the snooze baseline)
+        if: steps.baseline.outputs.have == 'true'
+        run: habit-hooks
+
+  bootstrap-habits-baseline:
+    name: Bootstrap habit-hooks baseline
+    # Run once, manually (Actions tab -> CI -> Run workflow), ideally on main after
+    # merging. Generates the snooze baseline on Linux, where the full-repo file list
+    # does not blow the Windows command-line limit, and commits it.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PMD + habit-hooks
+        run: |
+          curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+          unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java
+      - name: Generate and commit baseline
+        run: |
+          habit-sensors --all | habit-snooze --snooze
+          git add .habit-hooks/snooze.json
+          if git diff --cached --quiet; then echo "baseline unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: bootstrap habit-hooks snooze baseline"
+          git push
+
   images:
     name: Publish images
     # Only for the default branch: a PR proves the code builds, it does not earn a published tag.
