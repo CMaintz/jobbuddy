@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
  * embedding-matched market jobs, so the answer reflects both explicit interest
  * and the roles the matching engine considers reachable.
  */
-@Service
+@Service("marketSkillGapService")
 public class SkillGapService implements AnalyzeSkillGapsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(SkillGapService.class);

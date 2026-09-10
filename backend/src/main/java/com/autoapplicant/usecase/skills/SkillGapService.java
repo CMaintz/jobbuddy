@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Service
+@Service("jobSkillGapService")
 public class SkillGapService implements GetSkillGapUseCase {
 
     private final JobRepositoryPort jobs;
