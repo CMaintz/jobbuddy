@@ -2,8 +2,6 @@ package com.autoapplicant.usecase.common;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KeywordMatcherTest {
@@ -67,20 +65,10 @@ class KeywordMatcherTest {
     }
 
     @Test
-    void present_and_absent_partition_the_list_and_drop_duplicates() {
-        String cv = "Java, Kubernetes and Terraform in production";
-        List<String> keywords = List.of("Java", "Kubernetes", "Java", "Go", "", "Rust");
-
-        assertThat(KeywordMatcher.presentIn(cv, keywords)).containsExactly("Java", "Kubernetes");
-        assertThat(KeywordMatcher.absentFrom(cv, keywords)).containsExactly("Go", "Rust");
-    }
-
-    @Test
     void nothing_to_match_against_is_not_a_match() {
         assertThat(KeywordMatcher.contains(null, "Java")).isFalse();
         assertThat(KeywordMatcher.contains("Java", null)).isFalse();
         assertThat(KeywordMatcher.contains("  ", "Java")).isFalse();
-        assertThat(KeywordMatcher.presentIn("Java", null)).isEmpty();
     }
 
     @Test

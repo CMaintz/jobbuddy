@@ -19,10 +19,13 @@ public class SkillGapService implements GetSkillGapUseCase {
 
     private final JobRepositoryPort jobs;
     private final ProfileSkillRepositoryPort profileSkills;
+    private final SkillCanonicalizer skillCanonicalizer;
 
-    public SkillGapService(JobRepositoryPort jobs, ProfileSkillRepositoryPort profileSkills) {
+    public SkillGapService(JobRepositoryPort jobs, ProfileSkillRepositoryPort profileSkills,
+                           SkillCanonicalizer skillCanonicalizer) {
         this.jobs = jobs;
         this.profileSkills = profileSkills;
+        this.skillCanonicalizer = skillCanonicalizer;
     }
 
     @Override
@@ -40,17 +43,19 @@ public class SkillGapService implements GetSkillGapUseCase {
             return new SkillGapResult(List.of(), List.of(), 100);
         }
 
-        // User's skills (lowercase for case-insensitive comparison)
-        Set<String> userSkillsLower = profileSkills.findByUserId(userId).stream()
+        // User's skills, canonicalised so "Kubernetes" answers a requirement written "k8s". The
+        // requirement side is canonicalised the same way before comparison.
+        Set<String> heldCanonical = profileSkills.findByUserId(userId).stream()
                 .map(ProfileSkill::skillName)
-                .map(String::toLowerCase)
+                .map(skillCanonicalizer::canonical)
+                .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());
 
         List<String> matched = new ArrayList<>();
         List<String> missing = new ArrayList<>();
 
         for (String req : requirements) {
-            if (userSkillsLower.contains(req.toLowerCase())) {
+            if (heldCanonical.contains(skillCanonicalizer.canonical(req))) {
                 matched.add(req);
             } else {
                 missing.add(req);
