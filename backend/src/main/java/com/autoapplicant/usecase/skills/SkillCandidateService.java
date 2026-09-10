@@ -3,6 +3,7 @@ package com.autoapplicant.usecase.skills;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillCandidate;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.skill.SkillConfirmation;
 import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -59,17 +61,20 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
     private final SkillCandidateDismissalRepositoryPort dismissalRepo;
     private final MarketCorpusService marketCorpus;
     private final ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo;
+    private final SkillResolver resolver;
 
     public SkillCandidateService(ProfileSkillRepositoryPort profileSkillRepo,
                                  SkillTaxonomyRepositoryPort taxonomyRepo,
                                  SkillCandidateDismissalRepositoryPort dismissalRepo,
                                  MarketCorpusService marketCorpus,
-                                 ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo) {
+                                 ParsedSkillSuggestionRepositoryPort parsedSuggestionRepo,
+                                 SkillResolver resolver) {
         this.profileSkillRepo = profileSkillRepo;
         this.taxonomyRepo = taxonomyRepo;
         this.dismissalRepo = dismissalRepo;
         this.marketCorpus = marketCorpus;
         this.parsedSuggestionRepo = parsedSuggestionRepo;
+        this.resolver = resolver;
     }
 
     @Override
@@ -145,14 +150,20 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
     @Override
     public List<ProfileSkill> confirm(UUID userId, List<SkillConfirmation> confirmations) {
         if (confirmations == null || confirmations.isEmpty()) return List.of();
-        Map<String, String> claimed = claimedSkills(userId);
-        int displayOrder = profileSkillRepo.findByUserId(userId).size();
+        List<ProfileSkill> owned = profileSkillRepo.findByUserId(userId);
+        // Dedup on the canonical key so confirming "k8s" is a no-op when Kubernetes is already held.
+        Set<String> heldKeys = new HashSet<>();
+        owned.forEach(s -> heldKeys.add(resolver.key(s.skillName())));
+        int displayOrder = owned.size();
 
         List<ProfileSkill> added = new ArrayList<>();
         for (SkillConfirmation confirmation : confirmations) {
             String name = confirmation.name();
             if (name == null || name.isBlank() || confirmation.decision() == null) continue;
+            // Dismissals and the suggestion queue are keyed by the candidate's own spelling; the
+            // canonical key is only for recognising what the profile already holds.
             String normalized = normalize(name);
+            String key = resolver.key(name);
 
             switch (confirmation.decision()) {
                 case NO -> {
@@ -162,15 +173,20 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
                 case YES -> {
                     // Confirming something already on the profile is a no-op, not a duplicate row —
                     // but the question is answered either way, so it leaves the queue.
-                    if (claimed.containsKey(normalized)) {
+                    if (heldKeys.contains(key)) {
                         parsedSuggestionRepo.remove(userId, normalized);
                         continue;
                     }
+                    // Collapse onto the taxonomy master so a confirmed "k8s" is stored as Kubernetes.
+                    SkillTaxonomy master = resolver.master(name).orElse(null);
                     ProfileSkill saved = profileSkillRepo.save(new ProfileSkill(
-                            null, userId, name.strip(), taxonomyIdFor(normalized), null,
+                            null, userId,
+                            master != null ? master.name() : name.strip(),
+                            master != null ? master.id() : null,
+                            null,
                             confirmation.yearsExperience(), confirmation.usedInProduction(),
-                            displayOrder++, categoryFor(normalized)));
-                    claimed.put(normalized, saved.skillName());
+                            displayOrder++, master != null ? master.category() : null));
+                    heldKeys.add(key);
                     parsedSuggestionRepo.remove(userId, normalized);
                     added.add(saved);
                 }
@@ -247,14 +263,6 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
             }
         }
         return new Adjacency(adjacency, displayNames);
-    }
-
-    private UUID taxonomyIdFor(String normalized) {
-        return taxonomyRepo.findByNormalizedName(normalized).map(t -> t.id()).orElse(null);
-    }
-
-    private String categoryFor(String normalized) {
-        return taxonomyRepo.findByNormalizedName(normalized).map(t -> t.category()).orElse(null);
     }
 
     static String normalize(String name) {

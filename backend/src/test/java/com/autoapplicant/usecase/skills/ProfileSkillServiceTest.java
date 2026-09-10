@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,7 +35,8 @@ class ProfileSkillServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ProfileSkillService(repo, taxonomyRepo);
+        service = new ProfileSkillService(repo,
+                new SkillResolver(taxonomyRepo, new SkillCanonicalizer(taxonomyRepo)));
         lenient().when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
@@ -87,6 +89,42 @@ class ProfileSkillServiceTest {
         service.updateSkill(skill("Java", null, null));
 
         assertThat(captureSaved().category()).isEqualTo("Programming Language");
+    }
+
+    @Test
+    void an_alias_is_collapsed_onto_its_master_spelling() {
+        UUID taxonomyId = UUID.randomUUID();
+        SkillTaxonomy kube = new SkillTaxonomy(taxonomyId, "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s"));
+        when(taxonomyRepo.findAll()).thenReturn(List.of(kube));
+        when(taxonomyRepo.findByNormalizedName("kubernetes")).thenReturn(Optional.of(kube));
+
+        service.addSkill(skill("k8s", null, null));
+
+        ProfileSkill saved = captureSaved();
+        assertThat(saved.skillName()).isEqualTo("Kubernetes");   // stored under the master's spelling
+        assertThat(saved.taxonomyId()).isEqualTo(taxonomyId);
+        assertThat(saved.category()).isEqualTo("DevOps");
+    }
+
+    @Test
+    void adding_an_alias_of_a_held_skill_merges_into_it_rather_than_duplicating() {
+        UUID taxonomyId = UUID.randomUUID();
+        SkillTaxonomy kube = new SkillTaxonomy(taxonomyId, "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s"));
+        when(taxonomyRepo.findAll()).thenReturn(List.of(kube));
+        when(taxonomyRepo.findByNormalizedName("kubernetes")).thenReturn(Optional.of(kube));
+        UUID existingId = UUID.randomUUID();
+        when(repo.findByUserId(userId)).thenReturn(List.of(new ProfileSkill(
+                existingId, userId, "Kubernetes", taxonomyId, "INTERMEDIATE", null, false, 0, "DevOps")));
+
+        // Same skill, arriving as its alias with fresh detail the user supplied.
+        service.addSkill(new ProfileSkill(null, userId, "k8s", null, "ADVANCED", 3, true, 0, null));
+
+        ProfileSkill saved = captureSaved();
+        assertThat(saved.id()).isEqualTo(existingId);            // merged into the existing row
+        assertThat(saved.skillName()).isEqualTo("Kubernetes");
+        assertThat(saved.proficiencyLevel()).isEqualTo("ADVANCED");
+        assertThat(saved.yearsExperience()).isEqualTo(3);
+        assertThat(saved.usedInProduction()).isTrue();
     }
 
     private ProfileSkill captureSaved() {

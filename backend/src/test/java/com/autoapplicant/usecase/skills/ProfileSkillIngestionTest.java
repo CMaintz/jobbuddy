@@ -37,7 +37,8 @@ class ProfileSkillIngestionTest {
 
     @BeforeEach
     void setUp() {
-        ingestion = new ProfileSkillIngestion(skillRepo, taxonomyRepo);
+        ingestion = new ProfileSkillIngestion(skillRepo,
+                new SkillResolver(taxonomyRepo, new SkillCanonicalizer(taxonomyRepo)));
         lenient().when(skillRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(taxonomyRepo.findByNormalizedNames(anyCollection())).thenReturn(List.of());
     }
@@ -109,6 +110,37 @@ class ProfileSkillIngestionTest {
             assertThat(s.yearsExperience()).isNull();
             assertThat(s.usedInProduction()).isFalse();
         });
+    }
+
+    @Test
+    void an_imported_alias_is_stored_under_the_master_spelling() {
+        SkillTaxonomy kube = new SkillTaxonomy(
+                UUID.randomUUID(), "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s"));
+        when(taxonomyRepo.findAll()).thenReturn(List.of(kube));
+        when(taxonomyRepo.findByNormalizedNames(anyCollection())).thenReturn(List.of(kube));
+        when(skillRepo.findByUserId(userId)).thenReturn(List.of());
+
+        List<ProfileSkill> result = ingestion.ingest(userId, List.of("k8s"));
+
+        assertThat(result).singleElement().satisfies(s -> {
+            assertThat(s.skillName()).isEqualTo("Kubernetes");
+            assertThat(s.category()).isEqualTo("DevOps");
+        });
+    }
+
+    @Test
+    void an_imported_alias_of_a_held_skill_is_not_added_again() {
+        SkillTaxonomy kube = new SkillTaxonomy(
+                UUID.randomUUID(), "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s"));
+        when(taxonomyRepo.findAll()).thenReturn(List.of(kube));
+        ProfileSkill held = new ProfileSkill(
+                UUID.randomUUID(), userId, "Kubernetes", kube.id(), "EXPERT", 5, true, 0, "DevOps");
+        when(skillRepo.findByUserId(userId)).thenReturn(List.of(held));
+
+        List<ProfileSkill> result = ingestion.ingest(userId, List.of("k8s"));
+
+        verify(skillRepo, never()).save(any());
+        assertThat(result).containsExactly(held);
     }
 
     @Test

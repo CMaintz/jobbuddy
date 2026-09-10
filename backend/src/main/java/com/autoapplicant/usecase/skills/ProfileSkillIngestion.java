@@ -1,19 +1,15 @@
 package com.autoapplicant.usecase.skills;
 
-import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -41,12 +37,11 @@ public class ProfileSkillIngestion {
     private static final Logger log = LoggerFactory.getLogger(ProfileSkillIngestion.class);
 
     private final ProfileSkillRepositoryPort skillRepo;
-    private final SkillTaxonomyRepositoryPort taxonomyRepo;
+    private final SkillResolver resolver;
 
-    public ProfileSkillIngestion(ProfileSkillRepositoryPort skillRepo,
-                                 SkillTaxonomyRepositoryPort taxonomyRepo) {
+    public ProfileSkillIngestion(ProfileSkillRepositoryPort skillRepo, SkillResolver resolver) {
         this.skillRepo = skillRepo;
-        this.taxonomyRepo = taxonomyRepo;
+        this.resolver = resolver;
     }
 
     /**
@@ -61,31 +56,34 @@ public class ProfileSkillIngestion {
         List<ProfileSkill> existing = skillRepo.findByUserId(userId);
         if (names == null || names.isEmpty()) return existing;
 
+        // Dedup on the canonical key, so an imported "k8s" is recognised as already held when the
+        // profile has Kubernetes — and two aliases of one skill in the same document count once.
         Set<String> held = new HashSet<>();
-        existing.forEach(s -> held.add(normalize(s.skillName())));
+        existing.forEach(s -> held.add(resolver.key(s.skillName())));
 
         List<String> fresh = names.stream()
                 .filter(n -> n != null && !n.isBlank())
                 .map(String::strip)
-                .filter(n -> held.add(normalize(n)))   // dedupes within the batch too
+                .filter(n -> held.add(resolver.key(n)))
                 .toList();
         if (fresh.isEmpty()) return existing;
 
-        Map<String, SkillTaxonomy> taxonomy = lookup(fresh);
+        Map<String, SkillTaxonomy> masters = resolver.mastersByKey(fresh);
 
         List<ProfileSkill> added = new ArrayList<>();
         int order = existing.size();
         for (String name : fresh) {
-            SkillTaxonomy match = taxonomy.get(normalize(name));
+            SkillTaxonomy master = masters.get(resolver.key(name));
             try {
                 added.add(skillRepo.save(new ProfileSkill(
-                        null, userId, name,
-                        match != null ? match.id() : null,
+                        null, userId,
+                        master != null ? master.name() : name,   // collapse onto the master's spelling
+                        master != null ? master.id() : null,
                         null,                       // proficiency: the document does not say
                         null,                       // years: nor this
                         false,
                         order++,
-                        match != null ? match.category() : null)));
+                        master != null ? master.category() : null)));
             } catch (Exception e) {
                 // One unsaveable skill must not cost the user the whole import.
                 log.warn("Could not add parsed skill '{}' for user {}: {}", name, userId, e.getMessage());
@@ -95,18 +93,5 @@ public class ProfileSkillIngestion {
         List<ProfileSkill> all = new ArrayList<>(existing);
         all.addAll(added);
         return all;
-    }
-
-    private Map<String, SkillTaxonomy> lookup(List<String> names) {
-        Set<String> normalized = new HashSet<>();
-        names.forEach(n -> normalized.add(normalize(n)));
-        Map<String, SkillTaxonomy> byName = new HashMap<>();
-        taxonomyRepo.findByNormalizedNames(normalized)
-                .forEach(t -> byName.putIfAbsent(t.normalizedName(), t));
-        return byName;
-    }
-
-    private static String normalize(String value) {
-        return SkillNames.normalize(value);
     }
 }
