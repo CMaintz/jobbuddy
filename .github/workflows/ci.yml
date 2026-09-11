@@ -299,6 +299,30 @@ jobs:
           git commit -m "chore: bootstrap habit-hooks snooze baselines"
           git push
 
+  extension:
+    name: Extension max-file
+    runs-on: ubuntu-latest
+    # The extension is raw JS/HTML with no build, so its only structural check is
+    # a file-length cap (habit-hooks has no plugin for it). Grandfathers today's
+    # files (max is ~93 lines); fires only if one balloons.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Fail on oversized extension files
+        env:
+          MAX: '400'
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r -d '' f; do
+            n=$(wc -l < "$f")
+            if [ "$n" -gt "$MAX" ]; then
+              echo "::error file=$f::$f is $n lines (max $MAX)"
+              fail=1
+            fi
+          done < <(find extension -type f \( -name '*.js' -o -name '*.html' -o -name '*.css' \) -print0)
+          if [ "$fail" -ne 0 ]; then exit 1; fi
+          echo "All extension files within $MAX lines."
+
   images:
     name: Publish images
     # Only for the default branch: a PR proves the code builds, it does not earn a published tag.
