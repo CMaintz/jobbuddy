@@ -1,0 +1,33 @@
+# Static application security testing (SAST) via Semgrep.
+# CodeQL would be the GitHub-native choice, but it's free only on public repos;
+# this repo is private, so Semgrep (free, no GitHub Advanced Security) is used.
+#
+# Diff-aware: --baseline-commit means only findings the PR *introduces* fail, so
+# there's no day-one wall of pre-existing findings. That is the ratchet, applied
+# by diff rather than a baseline file.
+name: semgrep
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: SAST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # baseline diff needs the base commit
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install --disable-pip-version-check semgrep
+      - name: Semgrep (only new findings vs the PR base)
+        run: |
+          semgrep scan \
+            --config p/ci \
+            --baseline-commit "${{ github.event.pull_request.base.sha }}" \
+            --error
