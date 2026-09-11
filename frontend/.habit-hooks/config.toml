@@ -1,0 +1,5 @@
+# Frontend structural smells (habit-hooks TypeScript + generic plugins).
+# Run from frontend/ so eslint, knip, ts-morph and jscpd resolve from
+# frontend/node_modules. knip finds dead files/exports/deps; jscpd finds
+# duplication; the line-count sensor finds oversized files.
+plugins = ["typescript", "generic"]

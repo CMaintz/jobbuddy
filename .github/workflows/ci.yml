@@ -101,7 +101,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|\.habit-hooks/|\.github/workflows/)'
+          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.github/workflows/)'
           SOURCE_RE: '^(backend/src/|frontend/src/|extension/)'
           TEST_RE: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'
           LABEL: 'ruleset-change'
@@ -161,8 +161,8 @@ jobs:
           fi
           echo "::notice::Ruleset changes are tightening-only or inert — allowed without a label."
 
-  habits:
-    name: Structural smells
+  habits-backend:
+    name: Structural smells (backend)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -171,10 +171,10 @@ jobs:
       - name: Baseline present?
         id: baseline
         run: |
-          if [ -f .habit-hooks/snooze.json ]; then
+          if [ -f backend/.habit-hooks/snooze.json ]; then
             echo "have=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::No .habit-hooks/snooze.json yet - run the CI workflow manually (Run workflow) once to bootstrap it. Skipping smells."
+            echo "::notice::No backend/.habit-hooks/snooze.json yet - run CI manually (Run workflow) once to bootstrap. Skipping."
             echo "have=false" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/setup-java@v4
@@ -193,15 +193,54 @@ jobs:
           unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java
-      - name: Structural smells (fails only on smells beyond the snooze baseline)
+      - name: Smells (fails only on smells beyond the snooze baseline)
         if: steps.baseline.outputs.have == 'true'
+        working-directory: backend
         run: habit-hooks
 
+  habits-frontend:
+    name: Structural smells (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Baseline present?
+        id: baseline
+        run: |
+          if [ -f frontend/.habit-hooks/snooze.json ]; then
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No frontend/.habit-hooks/snooze.json yet - run CI manually (Run workflow) once to bootstrap. Skipping."
+            echo "have=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@v5
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          python-version: '3.12'
+      - name: Install deps + habit-hooks
+        if: steps.baseline.outputs.have == 'true'
+        run: |
+          (cd frontend && npm ci)
+          pip install --disable-pip-version-check habit-hooks habit-hooks-typescript
+      - name: Smells (fails only on smells beyond the snooze baseline)
+        if: steps.baseline.outputs.have == 'true'
+        working-directory: frontend
+        run: |
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          habit-hooks
+
   bootstrap-habits-baseline:
-    name: Bootstrap habit-hooks baseline
+    name: Bootstrap habit-hooks baselines
     # Run once, manually (Actions tab -> CI -> Run workflow), ideally on main after
-    # merging. Generates the snooze baseline on Linux, where the full-repo file list
-    # does not blow the Windows command-line limit, and commits it.
+    # merging. Generates both snooze baselines on Linux, where the full-repo file
+    # lists do not blow the Windows command-line limit, and commits them.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
@@ -212,23 +251,32 @@ jobs:
         with:
           java-version: '21'
           distribution: temurin
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install PMD + habit-hooks
+      - name: Install tools
         run: |
           curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
           unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
-          pip install --disable-pip-version-check habit-hooks habit-hooks-java
-      - name: Generate and commit baseline
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java habit-hooks-typescript
+          (cd frontend && npm ci)
+      - name: Generate baselines
         run: |
-          habit-sensors --all | habit-snooze --snooze
-          git add .habit-hooks/snooze.json
-          if git diff --cached --quiet; then echo "baseline unchanged"; exit 0; fi
+          (cd backend && habit-sensors --all | habit-snooze --snooze)
+          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all | habit-snooze --snooze)
+      - name: Commit baselines
+        run: |
+          git add backend/.habit-hooks/snooze.json frontend/.habit-hooks/snooze.json
+          if git diff --cached --quiet; then echo "baselines unchanged"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: bootstrap habit-hooks snooze baseline"
+          git commit -m "chore: bootstrap habit-hooks snooze baselines"
           git push
 
   images:

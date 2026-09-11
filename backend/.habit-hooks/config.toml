@@ -1,0 +1,5 @@
+# Backend structural smells via PMD (habit-hooks Java plugin).
+# Run from backend/ so PMD scans src/*.java. Generated in CI (Linux) — see the
+# bootstrap-habits-baseline job — because the full file list blows the Windows
+# command-line limit locally.
+plugins = ["java"]

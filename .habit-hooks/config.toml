@@ -1,4 +1,0 @@
-# Backend structural smells via PMD (habit-hooks Java plugin).
-# Frontend TypeScript + generic (jscpd) plugins are a follow-up once the
-# frontend node detectors are installed.
-plugins = ["java"]
