@@ -151,4 +151,3 @@ Managed by Flyway. Files live in:
 
 Naming: `V{NNN}__{description}.sql` — sequential, never modify an existing file, always add a new one.
 Migrations run automatically on backend startup.
-
