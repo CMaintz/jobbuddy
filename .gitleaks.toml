@@ -11,5 +11,6 @@ paths = [
   '''frontend/src/environments/environment\.ts$''',
   '''frontend/src/environments/environment\.prod\.ts$''',
   '''backend/src/test/java/com/autoapplicant/adapter/security/JwtTokenProviderTest\.java$''',
+  '''backend/src/test/java/com/autoapplicant/adapter/security/AesGcmSecretCipherTest\.java$''',
   '''backend/src/test/resources/application-test\.yml$''',
 ]
