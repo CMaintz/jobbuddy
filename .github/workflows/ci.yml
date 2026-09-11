@@ -304,6 +304,30 @@ jobs:
           if [ "$fail" -ne 0 ]; then exit 1; fi
           echo "All extension files within $MAX lines."
 
+  backend-audit:
+    name: Backend dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          version: 2026.9.2
+      - name: Install osv-scanner
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      # REPORT-ONLY: the backend is on an outdated Spring Boot with many known
+      # CVEs, so blocking every PR is unworkable until an upgrade. This surfaces
+      # them on the run summary. Flip to blocking (drop the `|| true`) after the
+      # dependency upgrade, listing any accepted CVEs in osv-scanner.toml.
+      - name: Audit backend dependencies (report-only)
+        run: |
+          ./gradlew :backend:dependencies --write-locks --console=plain
+          echo "## Backend dependency audit (report-only)" >> "$GITHUB_STEP_SUMMARY"
+          osv-scanner --lockfile=backend/gradle.lockfile --format markdown >> "$GITHUB_STEP_SUMMARY" || true
+
   images:
     name: Publish images
     # Only for the default branch: a PR proves the code builds, it does not earn a published tag.

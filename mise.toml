@@ -33,8 +33,11 @@ description = "Backend test suite (offline by design)"
 run = "./gradlew :backend:test"
 
 [tasks."backend:audit"]
-description = "Dependency vulnerabilities — TODO: add OWASP dependency-check"
-run = "echo 'backend audit not configured yet (skipped)'"
+description = "Dependency vulnerabilities (generates the lockfile, then osv-scanner; needs osv-scanner on PATH)"
+run = [
+    "./gradlew :backend:dependencies --write-locks",
+    "osv-scanner --lockfile=backend/gradle.lockfile",
+]
 
 [tasks."backend:gate"]
 run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
