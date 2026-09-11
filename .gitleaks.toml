@@ -1,0 +1,15 @@
+title = "AutoApplicant gitleaks config"
+
+# Start from gitleaks' built-in rules, then allow known-safe findings.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-safe: public Firebase web config (secured by Firebase rules, not secrecy) and test-only fixtures."
+# Paths are regexes matched against file paths. New secrets ELSEWHERE still fail.
+paths = [
+  '''frontend/src/environments/environment\.ts$''',
+  '''frontend/src/environments/environment\.prod\.ts$''',
+  '''backend/src/test/java/com/autoapplicant/adapter/security/JwtTokenProviderTest\.java$''',
+  '''backend/src/test/resources/application-test\.yml$''',
+]
