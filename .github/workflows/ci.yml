@@ -83,6 +83,7 @@ jobs:
       - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
   ruleset-guard:
     name: Ruleset guard
@@ -190,7 +191,7 @@ jobs:
         if: steps.baseline.outputs.have == 'true'
         run: |
           curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
-          unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          mkdir -p "$HOME/.local/opt" && unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java
       - name: Smells (fails only on smells beyond the snooze baseline)
@@ -262,7 +263,7 @@ jobs:
       - name: Install tools
         run: |
           curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
-          unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          mkdir -p "$HOME/.local/opt" && unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java habit-hooks-typescript
           (cd frontend && npm ci)
