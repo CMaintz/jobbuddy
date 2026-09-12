@@ -86,6 +86,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
+      # Turn a bare red X into actionable guidance. Runs only when gitleaks found
+      # something; points at the decision (real secret vs false positive) and the
+      # foundry-secret skill.
+      - name: Remediation guidance
+        if: failure()
+        run: |
+          {
+            echo "## 🔑 Secret scan found something"
+            echo ""
+            echo "**Decide first — is it a real secret, or a false positive?** (Ask if unsure.)"
+            echo ""
+            echo "- **Real secret** (a live credential): **rotate/revoke it at the provider first**, then remove from code, then purge from history (\`git filter-repo\`) and force-push. Never allowlist a real secret."
+            echo "- **False positive** (public-by-design config, a dummy test fixture): add the *specific file path* to \`.gitleaks.toml\` \`[allowlist] paths\`, with a note on why it is not a secret. Never allowlist a whole directory."
+            echo ""
+            echo "The **\`/foundry-secret\`** skill walks through either path."
+            echo ""
+            echo "> Routine push/PR scans are incremental (new commits only), so a real new secret is always caught; the allowlist only quiets the full-history audit for confirmed non-secrets."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   ruleset-guard:
     name: Ruleset guard
