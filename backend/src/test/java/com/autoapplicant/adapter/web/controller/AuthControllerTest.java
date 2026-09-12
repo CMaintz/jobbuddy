@@ -1,5 +1,9 @@
 package com.autoapplicant.adapter.web.controller;
 
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.autoapplicant.adapter.security.FirebaseTokenFilter;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.config.AppProperties;
@@ -10,20 +14,15 @@ import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.user.CompleteOnboardingUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.google.firebase.auth.FirebaseAuth;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -31,14 +30,14 @@ class AuthControllerTest {
 
     @Autowired MockMvc mvc;
 
-    @MockBean GetUserProfileUseCase       getUserProfileUseCase;
-    @MockBean ResolveLinkedInUserUseCase  resolveLinkedInUser;
-    @MockBean CompleteOnboardingUseCase   completeOnboardingUseCase;
-    @MockBean ProvisionFirebaseUserUseCase provisionUser;
-    @MockBean SecurityContextHelper      secCtx;
-    @MockBean AppProperties              appProperties;
-    @MockBean FirebaseAuth               firebaseAuth;
-    @MockBean FirebaseTokenFilter        firebaseTokenFilter;
+    @MockitoBean GetUserProfileUseCase       getUserProfileUseCase;
+    @MockitoBean ResolveLinkedInUserUseCase  resolveLinkedInUser;
+    @MockitoBean CompleteOnboardingUseCase   completeOnboardingUseCase;
+    @MockitoBean ProvisionFirebaseUserUseCase provisionUser;
+    @MockitoBean SecurityContextHelper      secCtx;
+    @MockitoBean AppProperties              appProperties;
+    @MockitoBean FirebaseAuth               firebaseAuth;
+    @MockitoBean FirebaseTokenFilter        firebaseTokenFilter;
 
     UUID userId = UUID.randomUUID();
 
