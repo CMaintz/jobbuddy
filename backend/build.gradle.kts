@@ -28,6 +28,20 @@ dependencyLocking {
     lockAllConfigurations()
 }
 
+// Security bumps: override Spring-managed transitive versions to clear known CVEs
+// surfaced by the osv-scanner audit. These are patch/minor bumps within the
+// versions Spring Boot 3.5 supports. commons-lang3 3.18.0 also unblocks SpotBugs
+// (it needs org.apache.commons.lang3.Strings). Re-check with `mise run backend:audit`.
+extra["tomcat.version"] = "10.1.59"        // GHSA-9xv2/gcx9/h3x4 (incl. 9.8); 10.1.58 was skipped
+extra["jackson-bom.version"] = "2.21.5"    // GHSA-5gvw/5jmj/mhm7
+extra["netty.version"] = "4.1.137.Final"   // 11 netty-codec/http/handler CVEs
+extra["log4j2.version"] = "2.25.5"         // GHSA-qv9r
+extra["postgresql.version"] = "42.7.12"    // GHSA-j92g
+extra["commons-lang3.version"] = "3.18.0"  // GHSA-j288 + unblocks SpotBugs
+extra["httpclient5.version"] = "5.6.3"     // GHSA-hjcp
+extra["httpcore5.version"] = "5.4.3"       // GHSA-hf6x/v3jc (7.5)
+extra["opentelemetry.version"] = "1.63.0"  // GHSA-rcgg
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
