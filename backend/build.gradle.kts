@@ -19,6 +19,15 @@ spotless {
     }
 }
 
+// Enables `--write-locks` so osv-scanner (the audit verb / CI job) can read a
+// gradle.lockfile. The lockfile is NOT committed and is generated on demand:
+// with locking enabled but no lockfile present, normal builds resolve freely
+// (no enforcement), so this never breaks the gate. Regenerate for a scan with:
+//   ./gradlew :backend:dependencies --write-locks
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)

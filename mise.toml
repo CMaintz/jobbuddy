@@ -33,8 +33,11 @@ description = "Backend test suite (offline by design)"
 run = "./gradlew :backend:test"
 
 [tasks."backend:audit"]
-description = "Dependency vulnerabilities — TODO: add OWASP dependency-check"
-run = "echo 'backend audit not configured yet (skipped)'"
+description = "Dependency CVEs (generates lockfile, then osv-scanner; needs osv-scanner on PATH)"
+run = [
+    "./gradlew :backend:dependencies --write-locks",
+    "osv-scanner --lockfile=backend/gradle.lockfile",
+]
 
 [tasks."backend:novar"]
 description = "Report all `var` uses in backend main (needs pmd on PATH). CI enforces this diff-scoped."

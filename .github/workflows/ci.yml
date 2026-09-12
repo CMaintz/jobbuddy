@@ -379,6 +379,34 @@ jobs:
           pmd check "${files[@]/#/-d=}" -R backend/config/pmd/no-var.xml \
             -f text --suppress-marker foundry-allow-var
 
+  backend-audit:
+    name: Backend dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.2
+      - name: Install osv-scanner
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64
+          chmod +x "$HOME/.local/bin/osv-scanner"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      # REPORT-ONLY. The full CI-resolved lockfile (229 pkgs) has ~25 CVEs, almost
+      # all in deep transitives (netty/grpc/protobuf via firebase-admin; jackson/
+      # tomcat via spring). They are not all quickly bumpable, so this surfaces
+      # them on the run summary without blocking. Flip to blocking (drop `|| true`)
+      # once the count is driven down; accept residual CVEs in backend/osv-scanner.toml.
+      #
+      # NB: a local `osv-scanner` run resolves a thinner graph than CI and can
+      # under-report — trust this job, not a laptop scan.
+      - name: Audit backend dependencies (report-only)
+        run: |
+          ./gradlew :backend:dependencies --write-locks --console=plain
+          echo "## Backend dependency audit (report-only)" >> "$GITHUB_STEP_SUMMARY"
+          osv-scanner --lockfile=backend/gradle.lockfile --format markdown >> "$GITHUB_STEP_SUMMARY" || true
+
   images:
     name: Publish images
     # Only for the default branch: a PR proves the code builds, it does not earn a published tag.
