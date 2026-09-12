@@ -40,3 +40,6 @@ application-*.local.yml
 # Claude Code internal state
 .claude/
 logs/
+
+# Generated on demand for osv-scanner audits; resolution is not committed.
+backend/gradle.lockfile
