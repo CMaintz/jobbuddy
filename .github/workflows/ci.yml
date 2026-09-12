@@ -104,7 +104,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.github/workflows/)'
+          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.github/workflows/)'
           SOURCE_RE: '^(backend/src/|frontend/src/|extension/)'
           TEST_RE: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'
           LABEL: 'ruleset-change'
@@ -322,6 +322,44 @@ jobs:
           done < <(find extension -type f \( -name '*.js' -o -name '*.html' -o -name '*.css' \) -print0)
           if [ "$fail" -ne 0 ]; then exit 1; fi
           echo "All extension files within $MAX lines."
+
+  no-var:
+    name: No unjustified var (backend)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Cache PMD
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.local/opt/pmd-bin-7.27.0
+          key: pmd-7.27.0
+      - name: Install PMD
+        run: |
+          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
+            mkdir -p "$HOME/.local/opt"
+            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          fi
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+      # Ratchet by diff: enforce the no-var rule only on backend main .java files
+      # this PR changed, so the ~48 pre-existing uses are untouched until touched.
+      - name: Check changed Java files for unjustified var
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE" "$HEAD" \
+            | grep -E '^backend/src/main/java/.*\.java$' || true)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No backend main Java files changed — nothing to check."; exit 0
+          fi
+          printf 'Checking %d changed file(s):\n' "${#files[@]}"; printf '  %s\n' "${files[@]}"
+          pmd check "${files[@]/#/-d=}" -R backend/config/pmd/no-var.xml \
+            -f text --suppress-marker foundry-allow-var
 
   images:
     name: Publish images

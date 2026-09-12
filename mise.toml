@@ -36,6 +36,10 @@ run = "./gradlew :backend:test"
 description = "Dependency vulnerabilities — TODO: add OWASP dependency-check"
 run = "echo 'backend audit not configured yet (skipped)'"
 
+[tasks."backend:novar"]
+description = "Report all `var` uses in backend main (needs pmd on PATH). CI enforces this diff-scoped."
+run = "pmd check -d backend/src/main/java -R backend/config/pmd/no-var.xml -f text --suppress-marker foundry-allow-var"
+
 [tasks."backend:gate"]
 run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
 
