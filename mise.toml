@@ -43,6 +43,10 @@ run = [
 description = "Report all `var` uses in backend main (needs pmd on PATH). CI enforces this diff-scoped."
 run = "pmd check -d backend/src/main/java -R backend/config/pmd/no-var.xml -f text --suppress-marker foundry-allow-var"
 
+[tasks."backend:spotbugs"]
+description = "SpotBugs bug-pattern analysis (report-only; findings print to console)"
+run = "./gradlew :backend:spotbugsMain"
+
 [tasks."backend:gate"]
 run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
 

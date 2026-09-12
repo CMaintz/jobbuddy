@@ -401,6 +401,20 @@ jobs:
           ./gradlew :backend:dependencies --write-locks --console=plain
           osv-scanner --lockfile=backend/gradle.lockfile
 
+  spotbugs:
+    name: SpotBugs (backend, report-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.2
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+      # Report-only (spotbugs.ignoreFailures = true): findings print to the log.
+      # Baseline-ratchet (fail on new only) is a follow-up.
+      - name: SpotBugs
+        run: mise run backend:spotbugs
+
   images:
     name: Publish images
     # Only for the default branch: a PR proves the code builds, it does not earn a published tag.

@@ -3,6 +3,14 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
     java
     id("com.diffplug.spotless") version "6.25.0"
+    id("com.github.spotbugs") version "6.5.11"
+}
+
+// SpotBugs bug-pattern analysis, report-only for now (findings print to the log).
+// Runs only because commons-lang3 is overridden to 3.18.0 above — SpotBugs needs
+// org.apache.commons.lang3.Strings, which Spring's managed 3.17.0 lacked.
+spotbugs {
+    ignoreFailures.set(true)
 }
 
 // Foundry `lint`/`fix` verbs. Deliberately minimal — no full reformat, just
