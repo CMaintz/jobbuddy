@@ -3,3 +3,7 @@
 # frontend/node_modules. knip finds dead files/exports/deps; jscpd finds
 # duplication; the line-count sensor finds oversized files.
 plugins = ["typescript", "generic"]
+
+# Tests are not structural-smell-gated — spec files legitimately have long,
+# repetitive arrange/act/assert blocks.
+files = ["!**/*.spec.ts"]
