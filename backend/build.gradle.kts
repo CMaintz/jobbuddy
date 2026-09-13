@@ -6,11 +6,16 @@ plugins {
     id("com.github.spotbugs") version "6.5.11"
 }
 
-// SpotBugs bug-pattern analysis, report-only for now (findings print to the log).
-// Runs only because commons-lang3 is overridden to 3.18.0 above — SpotBugs needs
-// org.apache.commons.lang3.Strings, which Spring's managed 3.17.0 lacked.
+// SpotBugs bug-pattern analysis — BLOCKING (fails the build on findings).
+// config/spotbugs/exclude.xml carries the two accepted noise categories (EI/EI2
+// mutable-exposure on JPA/records, and prompt-string \n); individual false
+// positives are suppressed at the method with @SuppressFBWarnings + justification.
+// Every other (real) finding fails the build. Runs only because commons-lang3 is
+// overridden to 3.18.0 above — SpotBugs needs org.apache.commons.lang3.Strings,
+// which Spring's managed 3.17.0 lacked.
 spotbugs {
-    ignoreFailures.set(true)
+    ignoreFailures.set(false)
+    excludeFilter.set(file("config/spotbugs/exclude.xml"))
 }
 
 // Foundry `lint`/`fix` verbs. Deliberately minimal — no full reformat, just
@@ -78,6 +83,11 @@ dependencies {
 
     // AI
     implementation(libs.openai.java)
+
+    // SpotBugs annotations — compile-only; used to suppress specific bug patterns
+    // (e.g. REC_CATCH_EXCEPTION) on methods whose try blocks genuinely throw a
+    // checked exception, so catching Exception is required.
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.9.8")
 
     // Utilities
     implementation(libs.jsoup)

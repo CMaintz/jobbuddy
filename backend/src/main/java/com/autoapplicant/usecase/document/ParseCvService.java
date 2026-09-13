@@ -1,27 +1,26 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
-import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
+import com.autoapplicant.usecase.ai.AiOperations;
 import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
 import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import com.autoapplicant.usecase.ai.AiOperations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ParseCvService implements ParseCvUseCase {
@@ -96,6 +95,11 @@ public class ParseCvService implements ParseCvUseCase {
     }
 
     @Override
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readTree throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures (NPE etc.) so a bad AI response falls "
+                    + "back to an empty profile rather than propagating.")
     public Profile parseCvText(UUID userId, String rawCvText) {
         try {
             PromptComposition composition = new PromptComposition(

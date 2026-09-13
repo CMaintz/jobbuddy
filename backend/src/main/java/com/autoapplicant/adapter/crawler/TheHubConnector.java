@@ -5,16 +5,15 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Crawls The Hub (thehub.io) by:
@@ -168,6 +167,11 @@ public class TheHubConnector extends AbstractJobSourceConnector {
      * Finds the first <script type="application/ld+json"> block that contains
      * a JobPosting and returns its raw JSON string.
      */
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "Parses untrusted JSON-LD from external sites; objectMapper.readTree "
+                    + "throws the checked JsonProcessingException, and the catch must also absorb "
+                    + "runtime failures so a single malformed script block skips to the next.")
     private String extractJsonLd(Document doc) {
         Elements scripts = doc.select("script[type=application/ld+json]");
         for (Element script : scripts) {
@@ -209,6 +213,11 @@ public class TheHubConnector extends AbstractJobSourceConnector {
      * Converts a schema.org/JobPosting JSON-LD node into readable text
      * for the ingestion pipeline's text cleaning and AI enrichment stages.
      */
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "Parses untrusted JSON-LD from external sites; objectMapper.readTree "
+                    + "throws the checked JsonProcessingException, and the catch must also absorb "
+                    + "runtime failures (NPE etc.) to fall back to the raw string.")
     private String buildContentFromJsonLd(String jsonLd, String jobUrl) {
         try {
             JsonNode job = objectMapper.readTree(jsonLd);
@@ -242,6 +251,9 @@ public class TheHubConnector extends AbstractJobSourceConnector {
 
             return sb.length() > 0 ? sb.toString() : jsonLd;
         } catch (Exception e) {
+            // Defensive: JSON-LD from external sites can be malformed — this parses
+            // untrusted data and must catch both the checked JsonProcessingException
+            // and runtime exceptions (NPE etc.). Fall back to the raw string.
             return jsonLd;
         }
     }
