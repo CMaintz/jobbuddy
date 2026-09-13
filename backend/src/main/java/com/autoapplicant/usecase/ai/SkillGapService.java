@@ -5,7 +5,6 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.ai.AnalyzeSkillGapsUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.JobLanguageDetector;
@@ -13,17 +12,15 @@ import com.autoapplicant.usecase.document.MarketConventions;
 import com.autoapplicant.usecase.job.MarketCorpusService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The "upskill" analysis: what skills does the market the user is actually
