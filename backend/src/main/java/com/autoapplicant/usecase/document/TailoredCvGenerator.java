@@ -6,12 +6,11 @@ import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.usecase.ai.AiOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class TailoredCvGenerator {
@@ -36,6 +35,11 @@ public class TailoredCvGenerator {
      *                      pass {@code null} to use the built-in default
      * @param posting       the posting's text, country, and named contact; may be {@link PostingContext#EMPTY}
      */
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.writeValueAsString and readValue throw the checked "
+                    + "JsonProcessingException; the catch also absorbs runtime failures so a "
+                    + "tailoring failure falls back to the untailored master profile.")
     public TailoredCvContent generate(CareerProfileForAi source, PostingContext posting,
                                       String customInstructions, String targetLanguage,
                                       PromptTemplate styleTemplate, WritingProfile writingProfile,

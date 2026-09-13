@@ -3,24 +3,22 @@ package com.autoapplicant.usecase.job;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobContact;
-import com.autoapplicant.domain.job.JobText;
-import com.autoapplicant.domain.job.RequirementTier;
-import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.JobRequirement;
+import com.autoapplicant.domain.job.JobText;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.RequirementTier;
 import com.autoapplicant.port.in.job.EnrichJobUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class JobEnrichmentService implements EnrichJobUseCase {
@@ -159,6 +157,11 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     }
 
     @SuppressWarnings("unchecked")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readValue throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures (bad casts on untrusted model output) "
+                    + "so a malformed response returns the un-enriched job.")
     // Package-private so the contact-extraction rules can be driven with realistic model
     // responses without a live provider.
     Job applyEnrichment(Job job, String jsonResponse) {

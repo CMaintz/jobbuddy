@@ -18,28 +18,28 @@ import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvVersionRepositoryPort;
 import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
+import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.QualityScoreRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
-import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.ClicheGuard;
+import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.JobLanguageDetector;
 import com.autoapplicant.usecase.document.MarketConventions;
-import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.autoapplicant.usecase.eval.DocumentQualityEvaluator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, ReviewDocumentUseCase, GenerateDocumentUseCase {
@@ -270,7 +270,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         PromptComposition composition = new PromptComposition(
                 systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
         try {
-            var node = objectMapper.readTree(AiResponseParser.extractJsonObject(
+            JsonNode node = objectMapper.readTree(AiResponseParser.extractJsonObject(
                     sanitizeAiText(aiProvider.generateJson(composition, AiOperations.DOCUMENT_REVIEW))));
             String revised = node.path("revisedContent").asText(null);
             if (revised == null || revised.isBlank()) {
@@ -286,6 +286,11 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
     @Override
     @Async("userAiTaskExecutor")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readValue throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures so any generation error fails the "
+                    + "returned future rather than escaping the async executor.")
     public CompletableFuture<StructuredDocument> generateDocument(
             UUID userId, String documentType, UUID jobId, String rawJobDescription,
             String templateId, UUID promptTemplateId, String customInstructions,

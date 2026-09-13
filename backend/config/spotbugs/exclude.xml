@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SpotBugs exclusions. Everything NOT excluded here is BLOCKING (build.gradle.kts
+     sets spotbugs.ignoreFailures = false), so new correctness bugs fail the build.
+
+     Two whole categories are excluded as deliberate policy for this codebase (not
+     per-instance snoozes):
+
+     * EI_EXPOSE_REP / EI_EXPOSE_REP2 — the domain layer is Java records and the
+       persistence layer is JPA entities exposing collections/arrays. Defensive
+       copies there are churn at best and, for JPA arrays, break Hibernate
+       dirty-checking. ~500 findings, all non-bugs here.
+
+     * VA_FORMAT_STRING_USES_NEWLINE — our formatted() strings are LLM prompt
+       templates where literal \n is intended, not a platform separator; %n would
+       wrongly emit \r\n on Windows runners.
+
+     Individual false positives elsewhere are suppressed at the method with
+     @SuppressFBWarnings + a justification, not added here. -->
+<FindBugsFilter>
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP"/>
+  </Match>
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+  </Match>
+  <Match>
+    <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+  </Match>
+</FindBugsFilter>

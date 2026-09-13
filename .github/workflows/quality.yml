@@ -163,7 +163,7 @@ jobs:
             -f text --suppress-marker foundry-allow-var
 
   spotbugs:
-    name: SpotBugs (backend, report-only)
+    name: SpotBugs (backend)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -171,7 +171,7 @@ jobs:
         with:
           version: 2026.9.2
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-      # Report-only (spotbugs.ignoreFailures = true): findings print to the log.
-      # Baseline-ratchet (fail on new only) is a follow-up.
+      # Blocking: fails on any finding not excluded (config/spotbugs/exclude.xml)
+      # or suppressed (@SuppressFBWarnings + justification). The current tree is clean.
       - name: SpotBugs
         run: mise run backend:spotbugs
