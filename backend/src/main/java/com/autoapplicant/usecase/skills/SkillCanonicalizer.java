@@ -3,11 +3,10 @@ package com.autoapplicant.usecase.skills;
 import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Component;
 
 /**
  * Folds the many surface forms of one skill onto a single key, so a profile that says
@@ -93,35 +92,57 @@ public class SkillCanonicalizer {
         Map<String, String> forward = new java.util.HashMap<>();
         Map<String, List<String>> groups = new java.util.HashMap<>();
 
-        // Pass 1: every row's own names are authoritative keys. Done first so a distinct taxonomy
-        // row can never be captured as another row's alias, whatever order findAll() returns.
+        seedCanonicalKeys(rows, forward);
+        resolveAliasesAndGroups(rows, forward, groups);
+
+        this.groupMap = groups;
+        this.forwardMap = forward;
+    }
+
+    /**
+     * Pass 1: every row's own names are authoritative keys. Done first so a distinct taxonomy row
+     * can never be captured as another row's alias, whatever order {@code findAll()} returns.
+     */
+    private static void seedCanonicalKeys(List<SkillTaxonomy> rows, Map<String, String> forward) {
         for (SkillTaxonomy row : rows) {
             String key = SkillNames.normalize(row.normalizedName());
             if (key.isEmpty()) continue;
             forward.put(key, key);
             if (row.name() != null) forward.put(SkillNames.normalize(row.name()), key);
         }
+    }
 
-        // Pass 2: aliases resolve to their row's key, but only where they don't shadow a real row.
+    /**
+     * Pass 2: aliases resolve to their row's key (only where they don't shadow a real row seeded in
+     * Pass 1), and each row's raw searchable forms are recorded as its group.
+     */
+    private static void resolveAliasesAndGroups(List<SkillTaxonomy> rows, Map<String, String> forward,
+                                                Map<String, List<String>> groups) {
         for (SkillTaxonomy row : rows) {
             String key = SkillNames.normalize(row.normalizedName());
             if (key.isEmpty()) continue;
+            groups.put(key, collectSurfaceForms(row, key, forward));
+        }
+    }
 
-            LinkedHashSet<String> rawForms = new LinkedHashSet<>();
-            if (row.name() != null && !row.name().isBlank()) rawForms.add(row.name().strip());
-            rawForms.add(row.normalizedName());
-            if (row.aliases() != null) {
-                for (String alias : row.aliases()) {
-                    if (alias != null && !alias.isBlank()) {
-                        rawForms.add(alias.strip());
-                        forward.putIfAbsent(SkillNames.normalize(alias), key);
-                    }
+    /**
+     * The raw searchable forms for one taxonomy row — its display name, normalised name and aliases
+     * — registering each alias onto {@code key} in {@code forward} as it goes (never shadowing a
+     * canonical key a real row already claimed). Returns the row's group of forms.
+     */
+    private static List<String> collectSurfaceForms(SkillTaxonomy row, String key,
+                                                     Map<String, String> forward) {
+        LinkedHashSet<String> rawForms = new LinkedHashSet<>();
+        if (row.name() != null && !row.name().isBlank()) rawForms.add(row.name().strip());
+        rawForms.add(row.normalizedName());
+        if (row.aliases() != null) {
+            for (String alias : row.aliases()) {
+                if (alias != null && !alias.isBlank()) {
+                    rawForms.add(alias.strip());
+                    forward.putIfAbsent(SkillNames.normalize(alias), key);
                 }
             }
-            groups.put(key, List.copyOf(rawForms));
         }
-
-        this.groupMap = groups;
-        this.forwardMap = forward;
+        return List.copyOf(rawForms);
     }
 }
