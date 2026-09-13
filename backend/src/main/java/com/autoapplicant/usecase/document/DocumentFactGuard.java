@@ -211,29 +211,42 @@ public class DocumentFactGuard {
      * "nearly three" is not lying, and the guard should not arbitrate that.
      */
     static Set<String> derivedDurationClaims(String sourceText) {
-        Set<String> claims = new java.util.LinkedHashSet<>();
-        if (sourceText == null || sourceText.isBlank()) return claims;
+        if (sourceText == null || sourceText.isBlank()) return new java.util.LinkedHashSet<>();
+        return durationClaimsFor(roleSpansMonths(stripMarkup(sourceText)));
+    }
 
-        Matcher m = DATE_RANGE.matcher(stripMarkup(sourceText));
-        int totalMonths = 0;
+    /** The month span of each date range in the text, in order; unparseable or non-positive spans dropped. */
+    private static List<Integer> roleSpansMonths(String text) {
+        List<Integer> spans = new ArrayList<>();
+        Matcher m = DATE_RANGE.matcher(text);
         while (m.find()) {
-            Integer startMonth = monthOf(m.group(1));
-            if (startMonth == null) continue;
-            int startYear = Integer.parseInt(m.group(2));
-            int endMonth;
-            int endYear;
-            if (m.group(3) != null) {
-                Integer parsed = monthOf(m.group(3));
-                if (parsed == null) continue;
-                endMonth = parsed;
-                endYear = Integer.parseInt(m.group(4));
-            } else {
-                java.time.LocalDate today = java.time.LocalDate.now();
-                endMonth = today.getMonthValue();
-                endYear = today.getYear();
-            }
-            int months = (endYear - startYear) * 12 + (endMonth - startMonth);
-            if (months <= 0) continue;
+            int months = spanMonths(m);
+            if (months > 0) spans.add(months);
+        }
+        return spans;
+    }
+
+    /** Months between the two ends of one matched date range, or 0 if either end is unparseable. */
+    private static int spanMonths(Matcher m) {
+        java.time.YearMonth start = yearMonth(m.group(1), m.group(2));
+        java.time.YearMonth end = m.group(3) != null
+                ? yearMonth(m.group(3), m.group(4))
+                : java.time.YearMonth.now();
+        if (start == null || end == null) return 0;
+        return (int) start.until(end, java.time.temporal.ChronoUnit.MONTHS);
+    }
+
+    /** A year-month from a matched "month-name year" pair, or null when the month name is unknown. */
+    private static java.time.YearMonth yearMonth(String monthName, String year) {
+        Integer month = monthOf(monthName);
+        return month == null ? null : java.time.YearMonth.of(Integer.parseInt(year), month);
+    }
+
+    /** Every reasonable rounding of each role's span and of their total across roles. */
+    private static Set<String> durationClaimsFor(List<Integer> spans) {
+        Set<String> claims = new java.util.LinkedHashSet<>();
+        int totalMonths = 0;
+        for (int months : spans) {
             totalMonths += months;
             addDurationClaims(claims, months);
         }
@@ -282,12 +295,27 @@ public class DocumentFactGuard {
     static Map<String, String> metricClaimsWithSpelling(String text) {
         String clean = foldNumberWords(stripMarkup(text));
         Map<String, String> claims = new java.util.LinkedHashMap<>();
+        // Order is load-bearing: putIfAbsent keeps the first spelling seen for a normalized key.
+        addSymbolClaims(claims, clean);
+        addCurrencyUnitClaims(claims, clean);
+        addCountClaims(claims, clean);
+        return claims;
+    }
+
+    /** Percent, symbol-prefixed currency and multiplier claims ("30%", "$5k", "3x"). */
+    private static void addSymbolClaims(Map<String, String> claims, String clean) {
         for (Pattern p : List.of(PERCENT, CURRENCY, MULTIPLIER)) {
             Matcher m = p.matcher(clean);
             while (m.find()) claims.putIfAbsent(normalizeClaim(m.group()), m.group().trim());
         }
-        // Suffix and prefix currency both normalize to "<amount> <code>", so "550.000 kr." and
-        // "DKK 550.000" compare equal to each other and to "550.000 kroner".
+    }
+
+    /**
+     * Nordic currency claims where the unit trails the number ("550.000 kr.") or leads it as a code
+     * ("DKK 550.000"). Both normalize to "&lt;amount&gt; &lt;code&gt;", so "550.000 kr." and
+     * "DKK 550.000" compare equal to each other and to "550.000 kroner".
+     */
+    private static void addCurrencyUnitClaims(Map<String, String> claims, String clean) {
         Matcher suffix = SUFFIX_CURRENCY.matcher(clean);
         while (suffix.find()) {
             claims.putIfAbsent(normalizeClaim(suffix.group(1) + " " + currencyCode(suffix.group(2))),
@@ -298,7 +326,10 @@ public class DocumentFactGuard {
             claims.putIfAbsent(normalizeClaim(prefix.group(2) + " " + currencyCode(prefix.group(1))),
                     prefix.group().trim());
         }
+    }
 
+    /** "&lt;number&gt; &lt;metric-noun&gt;" counts, folding noun synonyms to one canonical form. */
+    private static void addCountClaims(Map<String, String> claims, String clean) {
         Matcher m = COUNT.matcher(clean);
         while (m.find()) {
             String noun = m.group(2).toLowerCase();
@@ -306,7 +337,6 @@ public class DocumentFactGuard {
             claims.putIfAbsent(normalizeClaim(m.group(1) + " " + canonical),
                     (m.group(1) + " " + m.group(2)).trim());
         }
-        return claims;
     }
 
     /**
@@ -336,13 +366,7 @@ public class DocumentFactGuard {
         Matcher m = MAGNITUDE.matcher(text);
         StringBuilder out = new StringBuilder();
         while (m.find()) {
-            double value = Double.parseDouble(m.group(1));
-            long factor = switch (m.group(2)) {
-                case "k" -> 1_000L;
-                case "m" -> 1_000_000L;
-                default -> 1_000_000_000L;
-            };
-            double expanded = value * factor;
+            double expanded = Double.parseDouble(m.group(1)) * magnitudeFactor(m.group(2));
             // "1.5x" is a multiplier, not a magnitude; and a fractional expansion means the suffix
             // was not a magnitude at all, so leave the text as it was.
             String replacement = expanded == Math.floor(expanded) && !Double.isInfinite(expanded)
@@ -352,6 +376,15 @@ public class DocumentFactGuard {
         }
         m.appendTail(out);
         return out.toString();
+    }
+
+    /** The numeric factor a magnitude suffix stands for: k → thousand, m → million, b → billion. */
+    private static long magnitudeFactor(String suffix) {
+        return switch (suffix) {
+            case "k" -> 1_000L;
+            case "m" -> 1_000_000L;
+            default -> 1_000_000_000L;
+        };
     }
 
     /**
