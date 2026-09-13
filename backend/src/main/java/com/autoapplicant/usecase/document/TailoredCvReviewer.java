@@ -51,11 +51,11 @@ public class TailoredCvReviewer {
         try {
             String draftJson = objectMapper.writeValueAsString(draft);
             String jobDescription = posting != null ? posting.description() : null;
-            // Same language/market resolution as the drafting prompt, so the reviewer cannot
+            // The same guardrail envelope the CV drafting prompt uses, so the reviewer cannot
             // quietly switch language or drop the market conventions the draft was written to.
-            String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
-            String marketRules = MarketConventions.cvRules(MarketConventions.resolve(
-                    resolvedLanguage, posting != null ? posting.country() : null));
+            GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                    GenerationGuardrails.Medium.CV, targetLanguage, jobDescription,
+                    posting != null ? posting.country() : null);
 
             String system = """
                     You are a demanding hiring manager reviewing a candidate's tailored CV with fresh \
@@ -66,17 +66,17 @@ public class TailoredCvReviewer {
                     never invent employers, titles, dates, schools, credentials, technologies, outcomes, \
                     or metrics not already present; you may only reselect, reorder within a section, and \
                     rewrite phrasing. revised content. Respond with ONLY valid JSON."""
-                    + "\n\n" + GenerationGuardrails.UNTRUSTED_JOB_INPUT;
-            if (resolvedLanguage != null) {
-                system += "\nWrite all rewritten text in " + resolvedLanguage + ".";
+                    + "\n\n" + guardrails.untrustedInputBlock();
+            if (guardrails.resolvedLanguage() != null) {
+                system += "\nWrite all rewritten text in " + guardrails.resolvedLanguage() + ".";
             }
 
             String styleMemory = promptBuilder.buildStyleMemory(writingProfile);
             String user = "## Draft CV (JSON)\n" + draftJson
                     + "\n\n## Job Description\n" + (jobDescription != null ? jobDescription : "(none provided)")
                     + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
-                    + (marketRules.isBlank() ? "" : "\n\n" + marketRules)
-                    + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
+                    + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules())
+                    + "\n\n" + guardrails.clicheBlock()
                     + "\n\nReturn the revised CV in exactly the same JSON shape as the draft above.";
 
             PromptComposition composition = new PromptComposition(system, user, "", "", "", "", user);
