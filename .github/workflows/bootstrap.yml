@@ -1,0 +1,59 @@
+# Manual, one-shot: generate the habit-hooks snooze baselines on Linux (the
+# full-repo file list blows the Windows command-line limit locally) and commit
+# them. Run from the Actions tab -> bootstrap -> Run workflow, after the
+# quality.yml smell jobs first appear as soft-passing.
+name: bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-habits-baseline:
+    name: Bootstrap habit-hooks baselines
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Cache PMD
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.local/opt/pmd-bin-7.27.0
+          key: pmd-7.27.0
+      - name: Install tools
+        run: |
+          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
+            mkdir -p "$HOME/.local/opt"
+            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          fi
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java habit-hooks-typescript
+          (cd frontend && npm ci)
+      - name: Generate baselines
+        run: |
+          (cd backend && habit-sensors --all | habit-snooze --snooze)
+          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all | habit-snooze --snooze)
+      - name: Commit baselines
+        run: |
+          git add backend/.habit-hooks/snooze.json frontend/.habit-hooks/snooze.json
+          if git diff --cached --quiet; then echo "baselines unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: bootstrap habit-hooks snooze baselines"
+          git push
