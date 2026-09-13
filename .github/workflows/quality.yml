@@ -153,6 +153,10 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
+          # Merge-base (3-dot), not the raw base tip: base.sha goes stale when main
+          # advances (pull_request doesn't re-fire), which would drag in main's
+          # changed files and false-flag var on code this PR never touched.
+          BASE=$(git merge-base "$BASE" "$HEAD")
           mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE" "$HEAD" \
             | grep -E '^backend/src/main/java/.*\.java$' || true)
           if [ "${#files[@]}" -eq 0 ]; then
