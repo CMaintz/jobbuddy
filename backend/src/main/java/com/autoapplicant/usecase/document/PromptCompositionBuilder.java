@@ -31,14 +31,18 @@ public class PromptCompositionBuilder {
         String jobDescription = posting != null ? posting.description() : null;
         String jobCountry = posting != null ? posting.country() : null;
 
-        // Resolve the output language deterministically instead of asking the model to guess:
-        // the user's explicit choice wins, otherwise the posting's detected language. The result
-        // also selects the market conventions and the banned-phrase list below.
-        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
-        String languageInstruction = resolvedLanguage != null
-                ? "Write the document body in " + resolvedLanguage + "."
+        // Short recruiter/follow-up messages are outreach, not prose letters: same market, a
+        // different medium, and the way they fail is sounding like sales rather than generic.
+        boolean isLetter = isProseLetter(documentType);
+        // Every cross-cutting guardrail resolved once for this medium: output language (the user's
+        // explicit choice wins, otherwise the posting's detected language), market conventions, the
+        // injection guard, and the banned-phrase block.
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                isLetter ? GenerationGuardrails.Medium.LETTER : GenerationGuardrails.Medium.OUTREACH,
+                targetLanguage, jobDescription, jobCountry);
+        String languageInstruction = guardrails.resolvedLanguage() != null
+                ? "Write the document body in " + guardrails.resolvedLanguage() + "."
                 : "Write in the same language as the job description when clear, otherwise Danish.";
-        MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, jobCountry);
 
         String docLabel = switch (documentType != null ? documentType.toUpperCase() : "") {
             case "COVER_LETTER" -> "a compelling cover letter";
@@ -71,7 +75,7 @@ public class PromptCompositionBuilder {
                 + "Do not ask for, infer, invent, or output those private identity fields."
                 + "\nReturn ONLY valid JSON — no markdown fences, no commentary.\n"
                 + languageInstruction
-                + "\n\n" + GenerationGuardrails.UNTRUSTED_JOB_INPUT;
+                + "\n\n" + guardrails.untrustedInputBlock();
 
         // Style guidance from template, if any
         String styleGuidance = styleTemplate != null && styleTemplate.userPrompt() != null
@@ -90,15 +94,9 @@ public class PromptCompositionBuilder {
 
         // Structural scaffolding for prose letters (not the short recruiter/follow-up messages,
         // which carry their own word caps in docLabel).
-        boolean isLetter = isProseLetter(documentType);
         String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
-        // Short outreach gets its own conventions: same market, different medium, and the way it
-        // fails is sounding like sales rather than sounding generic.
-        String marketRules = isLetter
-                ? MarketConventions.letterRules(market)
-                : MarketConventions.outreachRules(market);
-        String marketBlock = marketRules.isBlank() ? "" : "\n\n" + marketRules;
+        String marketBlock = guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules();
         // A posting-supplied contact is the one named recipient the letter may address. Everything
         // else about the recipient stays unnamed, per the structure block.
         String contactBlock = posting != null && posting.hasContactPerson()
@@ -118,7 +116,7 @@ public class PromptCompositionBuilder {
                 + contactBlock
                 + structure
                 + lengthGuidance
-                + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
+                + "\n\n" + guardrails.clicheBlock()
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
@@ -157,18 +155,19 @@ public class PromptCompositionBuilder {
 
         String jobDescription = posting != null ? posting.description() : null;
         String jobCountry = posting != null ? posting.country() : null;
-        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
-        String languageInstruction = resolvedLanguage != null
-                ? "Write all rewritten text in " + resolvedLanguage + "."
+        // Every cross-cutting guardrail for the CV medium, resolved once (see the application path).
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.CV, targetLanguage, jobDescription, jobCountry);
+        String languageInstruction = guardrails.resolvedLanguage() != null
+                ? "Write all rewritten text in " + guardrails.resolvedLanguage() + "."
                 : "Write rewritten text in the same language as the job description when clear.";
-        MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, jobCountry);
-        String marketRules = MarketConventions.cvRules(market);
+        String marketRules = guardrails.marketRules();
 
         String baseSystem = styleTemplate != null && styleTemplate.systemPrompt() != null
                 ? styleTemplate.systemPrompt()
                 : defaultCvTailoringSystemPrompt();
         String systemPrompt = baseSystem + "\n" + languageInstruction + "\n\n"
-                + GenerationGuardrails.UNTRUSTED_JOB_INPUT;
+                + guardrails.untrustedInputBlock();
 
         String styleGuidance = styleTemplate != null && styleTemplate.userPrompt() != null
                 && !styleTemplate.userPrompt().isBlank()
@@ -212,7 +211,7 @@ public class PromptCompositionBuilder {
                 + "the oldest ones. A dated bullet that hits posting keywords outranks a recent one that does not."
                 + (marketRules.isBlank() ? "" : "\n\n" + marketRules)
                 + "\n\n## Length\n" + cvLengthGuidance(lengthPreference)
-                + "\n\n" + ClicheGuard.promptBlock(resolvedLanguage)
+                + "\n\n" + guardrails.clicheBlock()
                 + "\n\nReturn only valid JSON matching exactly this shape:\n" + schema
                 + "\n\n## Contact-Free Master Career Profile JSON\n"
                 + (careerProfileJson != null ? careerProfileJson : "")
