@@ -26,8 +26,7 @@ import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.ClicheGuard;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
-import com.autoapplicant.usecase.document.JobLanguageDetector;
-import com.autoapplicant.usecase.document.MarketConventions;
+import com.autoapplicant.usecase.document.GenerationGuardrails;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.autoapplicant.usecase.eval.DocumentQualityEvaluator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -119,12 +118,14 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     : careerProfileContext.buildJson(userId);
             Job analysisJob = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
             String jobDesc = analysisJob != null ? analysisJob.descriptionClean() : rawJobDescription;
-            String prompt = buildAnalysisPrompt(cvContent, jobDesc,
+            GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                    GenerationGuardrails.Medium.ANALYSIS, null, jobDesc,
                     analysisJob != null ? analysisJob.country() : null);
+            String prompt = buildAnalysisPrompt(cvContent, jobDesc, guardrails.marketRules());
             PromptComposition composition = new PromptComposition(
                     "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
                     + "Never assume skills or experience the CV does not state.\n\n"
-                    + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT,
+                    + guardrails.untrustedInputBlock(),
                     prompt, "", "", "", "", prompt);
             String response = sanitizeAiText(aiProvider.generateJson(composition, AiOperations.CV_ANALYSIS));
             return CompletableFuture.completedFuture(analysisParser.parse(response));
@@ -138,14 +139,14 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     @Async("userAiTaskExecutor")
     public CompletableFuture<RefineDocumentResult> refine(RefineDocumentRequest request) {
         try {
-            // Refinement produces text the user sends. It was the one generation path with no
-            // honesty rules, no banned phrases, no market conventions and no guard on its output —
-            // so "make it stronger" was an unchecked invitation to invent.
+            // Refinement produces text the user sends, so it carries the same guardrail envelope as
+            // a first draft — market conventions, banned phrases, the injection guard and language —
+            // plus an inline honesty instruction and the deterministic fact gate on its output below.
+            // "Make it stronger" must never become licence to invent.
             String contactFreeJson = careerProfileContext.buildJson(request.userId());
-            String resolvedLanguage = JobLanguageDetector.resolve(
-                    request.targetLanguage(), request.jobDescription());
-            MarketConventions.Market market = MarketConventions.resolve(resolvedLanguage, null);
-            String marketRules = MarketConventions.letterRules(market);
+            GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                    GenerationGuardrails.Medium.LETTER, request.targetLanguage(),
+                    request.jobDescription(), null);
 
             StringBuilder systemPrompt = new StringBuilder(
                     "You are a professional editor helping refine a job application document. "
@@ -154,9 +155,9 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                     + "not add a fact the draft does not already contain. A request to make the "
                     + "document stronger is a request to write better, never to claim more. "
                     + "Return ONLY the improved document text — no commentary, no explanations.");
-            systemPrompt.append("\n\n").append(PromptCompositionBuilder.UNTRUSTED_JOB_INPUT);
-            if (resolvedLanguage != null) {
-                systemPrompt.append("\nWrite in ").append(resolvedLanguage).append(".");
+            systemPrompt.append("\n\n").append(guardrails.untrustedInputBlock());
+            if (guardrails.resolvedLanguage() != null) {
+                systemPrompt.append("\nWrite in ").append(guardrails.resolvedLanguage()).append(".");
             }
 
             StringBuilder userPrompt = new StringBuilder();
@@ -165,8 +166,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 userPrompt.append("## Job Description Context\n").append(request.jobDescription()).append("\n\n");
             }
             userPrompt.append("## Refinement Request\n").append(request.userMessage());
-            if (!marketRules.isBlank()) userPrompt.append("\n\n").append(marketRules);
-            userPrompt.append("\n\n").append(ClicheGuard.promptBlock(resolvedLanguage));
+            if (!guardrails.marketRules().isBlank()) {
+                userPrompt.append("\n\n").append(guardrails.marketRules());
+            }
+            userPrompt.append("\n\n").append(guardrails.clicheBlock());
 
             PromptComposition composition = new PromptComposition(
                     systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
@@ -214,11 +217,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
     private ReviewOutcome reviewContent(UUID userId, String documentType, String currentContent,
                                         String jobDescription, String targetLanguage, String jobCountry) {
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
-        // Resolve language and market exactly as the drafting prompt did, so a review pass can
-        // neither switch language nor lose the market conventions the draft was written to.
-        String resolvedLanguage = JobLanguageDetector.resolve(targetLanguage, jobDescription);
-        String marketRules = MarketConventions.letterRules(
-                MarketConventions.resolve(resolvedLanguage, jobCountry));
+        // The same guardrail envelope the drafting prompt uses, so a review pass can neither switch
+        // language nor lose the market conventions the draft was written to.
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.LETTER, targetLanguage, jobDescription, jobCountry);
         // Deterministic filler findings are handed to the reviewer as concrete work: it is far
         // better at removing a phrase it has been shown than at avoiding one in the abstract.
         List<String> flaggedPhrases = clicheGuard.audit(currentContent).phrases();
@@ -231,9 +233,10 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 revised version that fixes what you flagged. Never invent skills or experience \
                 the draft does not already claim, and never claim the candidate built a tool they \
                 merely used. Respond with ONLY valid JSON.""");
-        systemPrompt.append("\n\n").append(PromptCompositionBuilder.UNTRUSTED_JOB_INPUT);
-        if (resolvedLanguage != null) {
-            systemPrompt.append(" Write the revised document in ").append(resolvedLanguage).append(".");
+        systemPrompt.append("\n\n").append(guardrails.untrustedInputBlock());
+        if (guardrails.resolvedLanguage() != null) {
+            systemPrompt.append(" Write the revised document in ")
+                    .append(guardrails.resolvedLanguage()).append(".");
         }
 
         StringBuilder userPrompt = new StringBuilder();
@@ -246,8 +249,8 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         if (!styleMemory.isBlank()) {
             userPrompt.append(styleMemory).append("\n\n");
         }
-        if (!marketRules.isBlank()) {
-            userPrompt.append(marketRules).append("\n\n");
+        if (!guardrails.marketRules().isBlank()) {
+            userPrompt.append(guardrails.marketRules()).append("\n\n");
         }
         if (!flaggedPhrases.isEmpty()) {
             userPrompt.append("## Flagged Filler Phrases\n")
@@ -257,7 +260,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
             flaggedPhrases.forEach(phrase -> userPrompt.append("- \"").append(phrase).append("\"\n"));
             userPrompt.append('\n');
         }
-        userPrompt.append(ClicheGuard.promptBlock(resolvedLanguage)).append("\n\n");
+        userPrompt.append(guardrails.clicheBlock()).append("\n\n");
         userPrompt.append("""
                 Return only valid JSON in exactly this shape:
                 {
@@ -453,15 +456,13 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         return out;
     }
 
-    private static String buildAnalysisPrompt(String cvContent, String jobDescription, String jobCountry) {
+    private static String buildAnalysisPrompt(String cvContent, String jobDescription, String marketRules) {
         StringBuilder sb = new StringBuilder();
         sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
         sb.append("## CV Content\n").append(cvContent).append("\n\n");
         if (jobDescription != null && !jobDescription.isBlank()) {
             sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
             sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
-            String marketRules = MarketConventions.jobReadingRules(MarketConventions.resolve(
-                    JobLanguageDetector.detect(jobDescription), jobCountry));
             if (!marketRules.isBlank()) sb.append('\n').append(marketRules).append('\n');
             sb.append("""
 

@@ -5,13 +5,13 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.usecase.ai.AiOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.autoapplicant.usecase.ai.AiOperations;
 
 /**
  * Drafter→reviewer pass for the structured CV — the CV-side counterpart to the cover-letter
@@ -66,7 +66,7 @@ public class TailoredCvReviewer {
                     never invent employers, titles, dates, schools, credentials, technologies, outcomes, \
                     or metrics not already present; you may only reselect, reorder within a section, and \
                     rewrite phrasing. revised content. Respond with ONLY valid JSON."""
-                    + "\n\n" + PromptCompositionBuilder.UNTRUSTED_JOB_INPUT;
+                    + "\n\n" + GenerationGuardrails.UNTRUSTED_JOB_INPUT;
             if (resolvedLanguage != null) {
                 system += "\nWrite all rewritten text in " + resolvedLanguage + ".";
             }
