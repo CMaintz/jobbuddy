@@ -73,6 +73,13 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Diff from the merge-base (3-dot), not the raw base tip. pull_request
+          # events don't re-fire when main advances, so base.sha goes stale on a
+          # PR whose branch sits untouched — and a 2-dot diff then reports files
+          # main changed but this PR never touched (phantom loosening). merge-base
+          # scopes to this PR's own commits, matching `gh pr diff`.
+          BASE=$(git merge-base "$BASE" "$HEAD")
+
           changed=$(git diff --name-only "$BASE" "$HEAD")
           echo "Changed files:"; echo "$changed" | sed 's/^/  /'
 
