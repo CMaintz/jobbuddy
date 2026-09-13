@@ -286,6 +286,11 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
 
     @Override
     @Async("userAiTaskExecutor")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readValue throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures so any generation error fails the "
+                    + "returned future rather than escaping the async executor.")
     public CompletableFuture<StructuredDocument> generateDocument(
             UUID userId, String documentType, UUID jobId, String rawJobDescription,
             String templateId, UUID promptTemplateId, String customInstructions,

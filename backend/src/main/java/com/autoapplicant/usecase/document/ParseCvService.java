@@ -96,6 +96,11 @@ public class ParseCvService implements ParseCvUseCase {
     }
 
     @Override
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readTree throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures (NPE etc.) so a bad AI response falls "
+                    + "back to an empty profile rather than propagating.")
     public Profile parseCvText(UUID userId, String rawCvText) {
         try {
             PromptComposition composition = new PromptComposition(

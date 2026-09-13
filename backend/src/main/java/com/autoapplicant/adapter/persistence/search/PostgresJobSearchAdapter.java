@@ -40,7 +40,6 @@ public class PostgresJobSearchAdapter implements JobSearchPort {
         boolean hasText = !text.isBlank();
 
         StringBuilder where = new StringBuilder(" WHERE j.is_active = true");
-        List<Object> params = new ArrayList<>();
 
         if (hasText) {
             where.append(" AND j.search_vector @@ websearch_to_tsquery(:cfg, :q)");

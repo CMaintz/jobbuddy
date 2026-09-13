@@ -159,6 +159,11 @@ public class JobEnrichmentService implements EnrichJobUseCase {
     }
 
     @SuppressWarnings("unchecked")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readValue throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures (bad casts on untrusted model output) "
+                    + "so a malformed response returns the un-enriched job.")
     // Package-private so the contact-extraction rules can be driven with realistic model
     // responses without a live provider.
     Job applyEnrichment(Job job, String jsonResponse) {
