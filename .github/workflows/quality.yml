@@ -1,0 +1,177 @@
+# Structural-quality checks: habit-hooks smells (per package), the no-var rule,
+# the extension file-length cap, and SpotBugs. Advisory/ratcheted — they guard
+# against decay without blocking on pre-existing debt.
+name: quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  habits-backend:
+    name: Structural smells (backend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Baseline present?
+        id: baseline
+        run: |
+          if [ -f backend/.habit-hooks/snooze.json ]; then
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No backend/.habit-hooks/snooze.json yet - run bootstrap.yml once. Skipping."
+            echo "have=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          python-version: '3.12'
+      - name: Cache PMD
+        if: steps.baseline.outputs.have == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.local/opt/pmd-bin-7.27.0
+          key: pmd-7.27.0
+      - name: Install PMD + habit-hooks
+        if: steps.baseline.outputs.have == 'true'
+        run: |
+          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
+            mkdir -p "$HOME/.local/opt"
+            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          fi
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+          pip install --disable-pip-version-check habit-hooks habit-hooks-java
+      - name: Smells (fails only on smells beyond the snooze baseline)
+        if: steps.baseline.outputs.have == 'true'
+        working-directory: backend
+        run: habit-hooks
+
+  habits-frontend:
+    name: Structural smells (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Baseline present?
+        id: baseline
+        run: |
+          if [ -f frontend/.habit-hooks/snooze.json ]; then
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No frontend/.habit-hooks/snooze.json yet - run bootstrap.yml once. Skipping."
+            echo "have=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: steps.baseline.outputs.have == 'true'
+        with:
+          python-version: '3.12'
+      - name: Install deps + habit-hooks
+        if: steps.baseline.outputs.have == 'true'
+        run: |
+          (cd frontend && npm ci)
+          pip install --disable-pip-version-check habit-hooks habit-hooks-typescript
+      - name: Smells (fails only on smells beyond the snooze baseline)
+        if: steps.baseline.outputs.have == 'true'
+        working-directory: frontend
+        run: |
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          habit-hooks
+
+  extension:
+    name: Extension max-file
+    runs-on: ubuntu-latest
+    # The extension is raw JS/HTML with no build, so its only structural check is
+    # a file-length cap (habit-hooks has no plugin for it). Grandfathers today's
+    # files (max is ~93 lines); fires only if one balloons.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Fail on oversized extension files
+        env:
+          MAX: '400'
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r -d '' f; do
+            n=$(wc -l < "$f")
+            if [ "$n" -gt "$MAX" ]; then
+              echo "::error file=$f::$f is $n lines (max $MAX)"
+              fail=1
+            fi
+          done < <(find extension -type f \( -name '*.js' -o -name '*.html' -o -name '*.css' \) -print0)
+          if [ "$fail" -ne 0 ]; then exit 1; fi
+          echo "All extension files within $MAX lines."
+
+  no-var:
+    name: No unjustified var (backend)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Cache PMD
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.local/opt/pmd-bin-7.27.0
+          key: pmd-7.27.0
+      - name: Install PMD
+        run: |
+          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
+            mkdir -p "$HOME/.local/opt"
+            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
+            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
+          fi
+          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
+      # Ratchet by diff: enforce the no-var rule only on backend main .java files
+      # this PR changed, so the ~48 pre-existing uses are untouched until touched.
+      - name: Check changed Java files for unjustified var
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE" "$HEAD" \
+            | grep -E '^backend/src/main/java/.*\.java$' || true)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No backend main Java files changed — nothing to check."; exit 0
+          fi
+          printf 'Checking %d changed file(s):\n' "${#files[@]}"; printf '  %s\n' "${files[@]}"
+          pmd check "${files[@]/#/-d=}" -R backend/config/pmd/no-var.xml \
+            -f text --suppress-marker foundry-allow-var
+
+  spotbugs:
+    name: SpotBugs (backend, report-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.2
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+      # Report-only (spotbugs.ignoreFailures = true): findings print to the log.
+      # Baseline-ratchet (fail on new only) is a follow-up.
+      - name: SpotBugs
+        run: mise run backend:spotbugs
