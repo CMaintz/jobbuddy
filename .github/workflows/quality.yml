@@ -88,10 +88,21 @@ jobs:
         if: steps.baseline.outputs.have == 'true'
         with:
           python-version: '3.12'
+      # Shares gate.yml's node_modules cache (same key) — skip the ~107s npm ci
+      # rebuild whenever the lockfile is unchanged.
+      - name: Cache node_modules
+        if: steps.baseline.outputs.have == 'true'
+        id: node_modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('frontend/package-lock.json') }}
       - name: Install deps + habit-hooks
         if: steps.baseline.outputs.have == 'true'
         run: |
-          (cd frontend && npm ci)
+          if [ "${{ steps.node_modules.outputs.cache-hit }}" != 'true' ]; then
+            (cd frontend && npm ci)
+          fi
           pip install --disable-pip-version-check habit-hooks habit-hooks-typescript
       - name: Smells (fails only on smells beyond the snooze baseline)
         if: steps.baseline.outputs.have == 'true'
@@ -153,6 +164,10 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
+          # Merge-base (3-dot), not the raw base tip: base.sha goes stale when main
+          # advances (pull_request doesn't re-fire), which would drag in main's
+          # changed files and false-flag var on code this PR never touched.
+          BASE=$(git merge-base "$BASE" "$HEAD")
           mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE" "$HEAD" \
             | grep -E '^backend/src/main/java/.*\.java$' || true)
           if [ "${#files[@]}" -eq 0 ]; then

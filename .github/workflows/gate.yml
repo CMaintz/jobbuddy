@@ -60,7 +60,19 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci
+      # setup-node's npm cache only restores the download tarballs (~/.npm); npm ci
+      # still wipes and rebuilds node_modules every run (~107s). Cache node_modules
+      # itself, keyed on the lockfile, and skip the install on a hit. Shared with
+      # habits-frontend via the same key.
+      - name: Cache node_modules
+        id: node_modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('frontend/package-lock.json') }}
+
+      - if: steps.node_modules.outputs.cache-hit != 'true'
+        run: npm ci
 
       # Warnings are advisory here: the existing accessibility warnings are real but pre-date this
       # pipeline, and failing on them would make CI useless on day one. Errors still fail the run.
