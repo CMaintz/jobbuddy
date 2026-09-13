@@ -6,12 +6,11 @@ import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.usecase.ai.AiOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import com.autoapplicant.usecase.ai.AiOperations;
 
 @Service
 public class TailoredCvGenerator {

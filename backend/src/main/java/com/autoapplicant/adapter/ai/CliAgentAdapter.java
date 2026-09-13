@@ -4,15 +4,14 @@ import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generation provider that shells out to a locally-installed AI coding CLI

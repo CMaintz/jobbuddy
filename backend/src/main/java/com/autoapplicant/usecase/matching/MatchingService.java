@@ -3,36 +3,35 @@ package com.autoapplicant.usecase.matching;
 import com.autoapplicant.domain.job.DanishMunicipalityCoordinates;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
+import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.job.RemoteType;
 import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
+import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.Profile;
-import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
-import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import com.autoapplicant.domain.skill.ProfileSkill;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.stream.Collectors;
 import com.autoapplicant.usecase.common.KeywordMatcher;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.util.*;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 @Service
 public class MatchingService implements GetRecommendationsUseCase {

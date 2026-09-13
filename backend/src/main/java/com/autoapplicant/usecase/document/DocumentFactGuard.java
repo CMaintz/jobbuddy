@@ -1,7 +1,5 @@
 package com.autoapplicant.usecase.document;
 
-import org.springframework.stereotype.Service;
-
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Service;
 
 /**
  * Deterministic, model-free fact gate. Extracts metric-like claims (percentages,

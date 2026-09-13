@@ -5,16 +5,15 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Crawls The Hub (thehub.io) by:
