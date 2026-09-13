@@ -581,7 +581,7 @@ public class MatchingService implements GetRecommendationsUseCase {
      * nothing and anything closer tapers over a nominal 50 km.
      */
     private int gradedProximityBonus(double km, Integer maxCommuteKm) {
-        double band = maxCommuteKm != null ? maxCommuteKm : 50;
+        double band = maxCommuteKm != null ? maxCommuteKm.doubleValue() : 50.0;
         if (band <= 0 || km >= band) return 0;
         return (int) Math.round(LOCATION_MATCH_BONUS * (1.0 - km / band));
     }

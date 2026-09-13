@@ -57,6 +57,11 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
 
     @Override
     @Async("userAiTaskExecutor")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "REC_CATCH_EXCEPTION",
+            justification = "objectMapper.readTree throws the checked JsonProcessingException; the "
+                    + "catch also absorbs runtime failures so any analysis error fails the "
+                    + "returned future rather than escaping the async executor.")
     public CompletableFuture<SkillGapReport> analyzeSkillGaps(UUID userId) {
         try {
             List<Job> jobs = marketCorpus.collect(userId, true);

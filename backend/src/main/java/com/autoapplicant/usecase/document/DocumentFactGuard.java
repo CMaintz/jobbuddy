@@ -328,6 +328,11 @@ public class DocumentFactGuard {
             Pattern.compile("\\b(\\d+(?:\\.\\d+)?)\\s?([kmb])\\b");
 
     /** "50k" → "50000", "1.5m" → "1500000". Left alone when the result would not be a whole number. */
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "FE_FLOATING_POINT_EQUALITY",
+            justification = "`expanded == Math.floor(expanded)` is the exact integrality test — "
+                    + "floor introduces no rounding, so equality is the correct idiom for "
+                    + "'is this a whole number', not an approximate comparison.")
     private static String expandMagnitude(String text) {
         Matcher m = MAGNITUDE.matcher(text);
         StringBuilder out = new StringBuilder();

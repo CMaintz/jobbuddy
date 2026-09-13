@@ -67,7 +67,9 @@ public class CliAgentAdapter implements ChatProviderPort {
             Thread stderrDrainer = new Thread(() -> {
                 try {
                     stderr.append(new String(proc.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
-                } catch (IOException ignored) { /* process ended */ }
+                } catch (IOException e) {
+                    log.debug("CLI agent stderr drain ended: {}", e.getMessage());
+                }
             });
             stdinWriter.start();
             stderrDrainer.start();

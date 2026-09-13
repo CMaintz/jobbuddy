@@ -21,7 +21,10 @@ import java.util.Base64;
  * secret is worse than the feature being unavailable.
  */
 @Component
-public class AesGcmSecretCipher implements SecretCipherPort {
+// final: the constructor validates and can throw, so sealing the class prevents
+// a finalizer-attack subclass from capturing a partially-constructed instance
+// (SpotBugs CT_CONSTRUCTOR_THROW).
+public final class AesGcmSecretCipher implements SecretCipherPort {
 
     private static final int IV_BYTES = 12;
     private static final int TAG_BITS = 128;
