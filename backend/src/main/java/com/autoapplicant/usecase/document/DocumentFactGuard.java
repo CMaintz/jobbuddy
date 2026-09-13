@@ -1,7 +1,5 @@
 package com.autoapplicant.usecase.document;
 
-import org.springframework.stereotype.Service;
-
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Service;
 
 /**
  * Deterministic, model-free fact gate. Extracts metric-like claims (percentages,
@@ -328,6 +327,11 @@ public class DocumentFactGuard {
             Pattern.compile("\\b(\\d+(?:\\.\\d+)?)\\s?([kmb])\\b");
 
     /** "50k" → "50000", "1.5m" → "1500000". Left alone when the result would not be a whole number. */
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "FE_FLOATING_POINT_EQUALITY",
+            justification = "`expanded == Math.floor(expanded)` is the exact integrality test — "
+                    + "floor introduces no rounding, so equality is the correct idiom for "
+                    + "'is this a whole number', not an approximate comparison.")
     private static String expandMagnitude(String text) {
         Matcher m = MAGNITUDE.matcher(text);
         StringBuilder out = new StringBuilder();

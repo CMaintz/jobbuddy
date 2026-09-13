@@ -4,15 +4,14 @@ import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generation provider that shells out to a locally-installed AI coding CLI
@@ -67,7 +66,9 @@ public class CliAgentAdapter implements ChatProviderPort {
             Thread stderrDrainer = new Thread(() -> {
                 try {
                     stderr.append(new String(proc.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
-                } catch (IOException ignored) { /* process ended */ }
+                } catch (IOException e) {
+                    log.debug("CLI agent stderr drain ended: {}", e.getMessage());
+                }
             });
             stdinWriter.start();
             stderrDrainer.start();
