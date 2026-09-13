@@ -84,6 +84,27 @@ cd frontend; npm run lint
 
 ---
 
+## Code conventions (the CI gate enforces these — follow them up front)
+
+These are checked in CI; writing to them here means the agent avoids the failure
+in the first place rather than discovering it at PR time.
+
+- **Backend Java: never use `var`.** Use an explicit type. Local type inference
+  hides the concrete type at the use site, which hurts readability for humans and
+  agents. The `no-var` CI check enforces this on changed `src/main` files. If a
+  `var` is genuinely warranted (an unspeakable or very long generic type), keep it
+  and add a trailing `// foundry-allow-var: <reason>` comment on that line.
+- **Keep constructors/methods under 8 parameters.** Beyond that is a "this class
+  does too much" signal (`too-many-parameters`); introduce a parameter object or
+  split responsibilities rather than adding another argument.
+- **Don't hand-format.** `./gradlew :backend:spotlessApply` (Java) and
+  `npm run lint -- --fix` (frontend) are the source of truth; CI runs the checks.
+- **Never weaken a rule to pass it** — no disabling a check, lowering a threshold,
+  or growing a suppression/snooze baseline. That's a separate, labelled decision
+  (`ruleset-change`), and `ruleset-guard` blocks it otherwise.
+
+---
+
 ## Service URLs (local dev)
 
 | Service | URL |
