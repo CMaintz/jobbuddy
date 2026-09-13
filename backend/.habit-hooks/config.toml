@@ -1,13 +1,19 @@
 # Backend structural smells via PMD (habit-hooks Java plugin).
 # Run from backend/ so PMD scans src/*.java. Baseline generated in CI (Linux) —
 # see bootstrap.yml — because the full file list blows the Windows command-line
-# limit locally.
+# limit locally. The tuned ruleset (pmd/ruleset.xml — ExcessiveParameterList
+# minimum raised 4 -> 8) is picked up automatically by the sensor's project-
+# ruleset discovery.
 plugins = ["java"]
 
 # Tests are not structural-smell-gated. Long, mock-heavy test methods and many
 # fixtures are normal and fine; CI should police production maintainability, not
 # test structure. (no-var already scopes to src/main only.)
 files = ["!**/src/test/**/*.java"]
+
+# Silence PMD's progressbar / incremental-analysis WARN lines on CI stdout.
+[sensors.pmd]
+args = "--no-progress"
 
 # unused-import: PMD's UnnecessaryImport runs here without an aux-classpath, so it
 # cannot resolve wildcard-import usage and false-flags e.g. `jakarta.persistence.*`

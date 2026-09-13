@@ -160,7 +160,7 @@ jobs:
           fi
           printf 'Checking %d changed file(s):\n' "${#files[@]}"; printf '  %s\n' "${files[@]}"
           pmd check "${files[@]/#/-d=}" -R backend/config/pmd/no-var.xml \
-            -f text --suppress-marker foundry-allow-var
+            -f text --no-progress --suppress-marker foundry-allow-var
 
   spotbugs:
     name: SpotBugs (backend)
