@@ -8,10 +8,9 @@ import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 
 @Service
 public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
@@ -29,23 +28,30 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
 
     @Override
     public User resolve(String linkedinSub, String email, String fullName) {
-        // Try existing LinkedIn user
         Optional<User> byLinkedinId = userRepo.findByLinkedinId(linkedinSub);
         if (byLinkedinId.isPresent()) {
             return byLinkedinId.get();
         }
-
-        // Link to existing email account
         Optional<User> byEmail = userRepo.findByEmail(email);
         if (byEmail.isPresent()) {
-            User existing = byEmail.get();
-            User updated = new User(existing.id(), existing.email(),
-                    existing.googleId(), linkedinSub, existing.firebaseUid(), existing.role(),
-                    existing.emailVerified(), existing.onboardingComplete(), existing.createdAt(), existing.updatedAt());
-            return userRepo.save(updated);
+            return linkLinkedInToExisting(byEmail.get(), linkedinSub);
         }
+        return createLinkedInUser(linkedinSub, email, fullName);
+    }
 
-        // New user — create with linkedinId; firebaseUid gets set when they sign in via custom token
+    /** Attach the LinkedIn identity to an account already registered under this email. */
+    private User linkLinkedInToExisting(User existing, String linkedinSub) {
+        User updated = new User(existing.id(), existing.email(),
+                existing.googleId(), linkedinSub, existing.firebaseUid(), existing.role(),
+                existing.emailVerified(), existing.onboardingComplete(), existing.createdAt(), existing.updatedAt());
+        return userRepo.save(updated);
+    }
+
+    /**
+     * First LinkedIn sign-in: create the user with their linkedinId (firebaseUid gets set when they
+     * later sign in via custom token), a blank default profile, and — when provided — their name.
+     */
+    private User createLinkedInUser(String linkedinSub, String email, String fullName) {
         User newUser = new User(null, email, null, linkedinSub, null, UserRole.USER, true, false, null, null);
         User savedUser = userRepo.save(newUser);
 
