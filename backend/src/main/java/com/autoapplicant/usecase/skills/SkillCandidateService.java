@@ -94,7 +94,8 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         // from what strangers are hiring for, and its quoted line is the reason the user can judge.
         for (ParsedSkillSuggestion suggestion : parsedSuggestionRepo.findByUserId(userId)) {
             String normalized = suggestion.normalizedName();
-            if (normalized == null || claimed.containsKey(normalized) || dismissed.contains(normalized)) continue;
+            if (normalized == null || claimed.containsKey(resolver.key(suggestion.skillName()))
+                    || dismissed.contains(normalized)) continue;
             candidates.put(normalized, new SkillCandidate(
                     suggestion.skillName(), null,
                     market.containsKey(normalized) ? market.get(normalized).count() : 0,
@@ -104,7 +105,7 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         }
 
         market.forEach((normalized, mention) -> {
-            if (claimed.containsKey(normalized) || dismissed.contains(normalized)
+            if (claimed.containsKey(resolver.key(mention.displayName())) || dismissed.contains(normalized)
                     || candidates.containsKey(normalized)) return;
             List<String> related = adjacency.getOrDefault(normalized, List.of());
             candidates.put(normalized, new SkillCandidate(mention.displayName(), null,
@@ -196,13 +197,18 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         return added;
     }
 
-    /** Normalized name → display name for everything already on the profile. */
+    /**
+     * Canonical key → display name for everything already on the profile. Keyed on the alias-folded
+     * key so a skill held under one spelling ("Kubernetes") is recognised as claimed when a
+     * candidate arrives under another ("k8s"), and so the adjacency walk resolves held aliases to
+     * their master node.
+     */
     private Map<String, String> claimedSkills(UUID userId) {
         Map<String, String> claimed = new HashMap<>();
         profileSkillRepo.findByUserId(userId).stream()
                 .map(ProfileSkill::skillName)
                 .filter(Objects::nonNull)
-                .forEach(name -> claimed.put(normalize(name), name));
+                .forEach(name -> claimed.put(resolver.key(name), name));
         return claimed;
     }
 

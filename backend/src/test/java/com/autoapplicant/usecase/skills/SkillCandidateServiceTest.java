@@ -113,6 +113,30 @@ class SkillCandidateServiceTest {
     }
 
     @Test
+    void aSkillHeldUnderTheMasterSpellingIsNotReSuggestedUnderAnAlias() {
+        // Own mocks so the canonicalizer sees the k8s->Kubernetes alias (the shared instance caches
+        // an empty taxonomy). The user holds Kubernetes; a posting asks for "k8s".
+        SkillTaxonomy kube = new SkillTaxonomy(
+                UUID.randomUUID(), "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s"));
+        SkillTaxonomyRepositoryPort tax = Mockito.mock(SkillTaxonomyRepositoryPort.class);
+        when(tax.findAll()).thenReturn(List.of(kube));
+        when(tax.findByNormalizedName(any())).thenReturn(Optional.empty());
+        when(tax.findByParentIds(any())).thenReturn(List.of());
+        ProfileSkillRepositoryPort skills = Mockito.mock(ProfileSkillRepositoryPort.class);
+        when(skills.findByUserId(USER)).thenReturn(List.of(new ProfileSkill(
+                UUID.randomUUID(), USER, "Kubernetes", kube.id(), null, null, false, 0, "DevOps")));
+        MarketCorpusService market = Mockito.mock(MarketCorpusService.class);
+        when(market.collect(any(), anyBoolean())).thenReturn(List.of(
+                Job.builder().id(UUID.randomUUID()).title("Role")
+                        .technologies(List.of("k8s")).skills(List.of()).build()));
+        SkillCandidateService svc = new SkillCandidateService(skills, tax, dismissalRepo, market,
+                parsedSuggestionRepo, new SkillResolver(tax, new SkillCanonicalizer(tax)));
+
+        assertThat(svc.suggest(USER, 10)).extracting(SkillCandidate::name)
+                .doesNotContain("k8s", "Kubernetes");
+    }
+
+    @Test
     void aPostingNamingTheSameSkillTwiceStillCountsOnce() {
         profileWith("Java");
         market(posting(List.of("Kubernetes"), List.of("Kubernetes")));
