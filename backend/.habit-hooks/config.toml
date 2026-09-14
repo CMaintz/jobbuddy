@@ -13,13 +13,12 @@ plugins = ["java"]
 # silently disables the whole smell scan. Include all Java, then drop tests.
 files = ["**/*.java", "!**/src/test/**/*.java"]
 
-# Name the tuned ruleset explicitly with -R (ExcessiveParameterList minimum=8),
-# rather than relying on cwd-relative discovery: if the file were ever missing or
-# habit-hooks were run from the wrong dir, discovery falls back to the bundled
-# minimum=4 SILENTLY -- a gate-weakening the system exists to forbid. -R turns
-# that into a loud "ruleset not found". --no-progress silences PMD's WARN lines.
+# args MUST be a TOML array, not a string: habit-hooks mangles a string arg into
+# per-character ruleset refs (each char becomes a bogus `-R` value). As an array,
+# each element is a clean token. -R names the tuned ruleset (ExcessiveParameterList
+# minimum=8); --no-progress silences PMD's progress-bar WARN.
 [sensors.pmd]
-args = "--no-progress -R pmd/ruleset.xml"
+args = ["--no-progress", "-R", "pmd/ruleset.xml"]
 
 # unused-import: PMD's UnnecessaryImport runs here without an aux-classpath, so it
 # cannot resolve wildcard-import usage and false-flags e.g. `jakarta.persistence.*`
