@@ -93,7 +93,8 @@ public class SkillCanonicalizer {
         Map<String, List<String>> groups = new java.util.HashMap<>();
 
         seedCanonicalKeys(rows, forward);
-        resolveAliasesAndGroups(rows, forward, groups);
+        registerAliases(rows, forward);
+        buildGroups(rows, groups);
 
         this.groupMap = groups;
         this.forwardMap = forward;
@@ -113,34 +114,38 @@ public class SkillCanonicalizer {
     }
 
     /**
-     * Pass 2: aliases resolve to their row's key (only where they don't shadow a real row seeded in
-     * Pass 1), and each row's raw searchable forms are recorded as its group.
+     * Pass 2: every alias resolves to its row's key, but only where it doesn't shadow a real row
+     * seeded in Pass 1 ({@code putIfAbsent}).
      */
-    private static void resolveAliasesAndGroups(List<SkillTaxonomy> rows, Map<String, String> forward,
-                                                Map<String, List<String>> groups) {
+    private static void registerAliases(List<SkillTaxonomy> rows, Map<String, String> forward) {
         for (SkillTaxonomy row : rows) {
             String key = SkillNames.normalize(row.normalizedName());
-            if (key.isEmpty()) continue;
-            groups.put(key, collectSurfaceForms(row, key, forward));
+            if (key.isEmpty() || row.aliases() == null) continue;
+            for (String alias : row.aliases()) {
+                if (alias != null && !alias.isBlank()) {
+                    forward.putIfAbsent(SkillNames.normalize(alias), key);
+                }
+            }
         }
     }
 
-    /**
-     * The raw searchable forms for one taxonomy row — its display name, normalised name and aliases
-     * — registering each alias onto {@code key} in {@code forward} as it goes (never shadowing a
-     * canonical key a real row already claimed). Returns the row's group of forms.
-     */
-    private static List<String> collectSurfaceForms(SkillTaxonomy row, String key,
-                                                     Map<String, String> forward) {
+    /** Pass 3: record each row's raw searchable forms (name, normalised name, aliases) as its group. */
+    private static void buildGroups(List<SkillTaxonomy> rows, Map<String, List<String>> groups) {
+        for (SkillTaxonomy row : rows) {
+            String key = SkillNames.normalize(row.normalizedName());
+            if (key.isEmpty()) continue;
+            groups.put(key, surfaceFormsOf(row));
+        }
+    }
+
+    /** The raw searchable forms for one taxonomy row: its display name, normalised name and aliases. */
+    private static List<String> surfaceFormsOf(SkillTaxonomy row) {
         LinkedHashSet<String> rawForms = new LinkedHashSet<>();
         if (row.name() != null && !row.name().isBlank()) rawForms.add(row.name().strip());
         rawForms.add(row.normalizedName());
         if (row.aliases() != null) {
             for (String alias : row.aliases()) {
-                if (alias != null && !alias.isBlank()) {
-                    rawForms.add(alias.strip());
-                    forward.putIfAbsent(SkillNames.normalize(alias), key);
-                }
+                if (alias != null && !alias.isBlank()) rawForms.add(alias.strip());
             }
         }
         return List.copyOf(rawForms);
