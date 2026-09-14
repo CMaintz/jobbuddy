@@ -89,6 +89,14 @@ cd frontend; npm run lint
 These are checked in CI; writing to them here means the agent avoids the failure
 in the first place rather than discovering it at PR time.
 
+- **A function does one thing.** Single level of abstraction, one reason to change
+  (SRP). If the honest name needs an "and", split it; separate *deciding* (which
+  branch) from *doing* (the work in each). The structural-smell gate enforces the
+  mechanical half — `high-complexity`, `oversized-function`, `too-many-parameters`,
+  `deep-nesting` are its tripwires — but clearing them is necessary, not sufficient;
+  "is this *one* thing?" is your judgement. Refactor toward the missing abstraction
+  (a value object, a strategy, a named step), never by splitting to a line count
+  (if the helper needs five parameters, the seam is wrong).
 - **Backend Java: never use `var`.** Use an explicit type. Local type inference
   hides the concrete type at the use site, which hurts readability for humans and
   agents. The `no-var` CI check enforces this on changed `src/main` files. If a
