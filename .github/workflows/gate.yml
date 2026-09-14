@@ -34,8 +34,46 @@ jobs:
       # Cache Gradle deps + build across runs (mise pins the JDK but not ~/.gradle).
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      - name: Gate (lint + typecheck + test)
-        run: mise run backend:gate
+      # `mise run backend:gate` decomposed one verb per step, so a failure reddens
+      # the exact verb in the UI and gets a targeted fix instead of a wall of Gradle
+      # output. The composite still runs locally / in /ship.
+      - name: 'backend: lint (Spotless)'
+        id: lint
+        run: mise run backend:lint
+      - name: How to fix (lint)
+        if: failure() && steps.lint.outcome == 'failure'
+        run: |
+          {
+            echo "## ❌ Backend gate failed at \`lint\` — Spotless formatting"
+            echo ""
+            echo "**This is 100% mechanical.** Run it, commit, push — done:"
+            echo '```'
+            echo "mise run backend:fix     # = ./gradlew :backend:spotlessApply"
+            echo '```'
+            echo "The exact files are in the **backend: lint** step log above. (Structural smells are the separate 'Structural smells (backend)' job, not this.)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: 'backend: typecheck (compile)'
+        id: typecheck
+        run: mise run backend:typecheck
+      - name: How to fix (typecheck)
+        if: failure() && steps.typecheck.outcome == 'failure'
+        run: |
+          {
+            echo "## ❌ Backend gate failed at \`typecheck\` — compilation"
+            echo ""
+            echo "Not auto-fixable. The file:line is in the **backend: typecheck** step log above; reproduce with \`mise run backend:typecheck\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: 'backend: test'
+        id: test
+        run: mise run backend:test
+      - name: How to fix (test)
+        if: failure() && steps.test.outcome == 'failure'
+        run: |
+          {
+            echo "## ❌ Backend gate failed at \`test\`"
+            echo ""
+            echo "A test failed. See the **backend: test** step log and the uploaded test-report artifact; reproduce with \`mise run backend:test\`."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish test report
         if: always() # a failing run is exactly when the report is worth having
