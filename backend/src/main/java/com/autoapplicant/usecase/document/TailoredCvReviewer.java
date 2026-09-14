@@ -76,6 +76,7 @@ public class TailoredCvReviewer {
                     + "\n\n## Job Description\n" + (jobDescription != null ? jobDescription : "(none provided)")
                     + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                     + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules())
+                    + "\n\n" + guardrails.honestyRules()
                     + "\n\n" + guardrails.clicheBlock()
                     + "\n\nReturn the revised CV in exactly the same JSON shape as the draft above.";
 

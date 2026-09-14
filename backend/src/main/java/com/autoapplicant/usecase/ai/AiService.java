@@ -166,6 +166,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
                 userPrompt.append("## Job Description Context\n").append(request.jobDescription()).append("\n\n");
             }
             userPrompt.append("## Refinement Request\n").append(request.userMessage());
+            userPrompt.append("\n\n").append(guardrails.honestyRules());
             if (!guardrails.marketRules().isBlank()) {
                 userPrompt.append("\n\n").append(guardrails.marketRules());
             }
@@ -249,6 +250,7 @@ public class AiService implements AnalyzeCvUseCase, RefineDocumentUseCase, Revie
         if (!styleMemory.isBlank()) {
             userPrompt.append(styleMemory).append("\n\n");
         }
+        userPrompt.append(guardrails.honestyRules()).append("\n\n");
         if (!guardrails.marketRules().isBlank()) {
             userPrompt.append(guardrails.marketRules()).append("\n\n");
         }

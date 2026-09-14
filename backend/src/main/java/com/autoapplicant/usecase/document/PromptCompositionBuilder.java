@@ -110,7 +110,7 @@ public class PromptCompositionBuilder {
                 + "and job description provided." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
                 + buildOutcomeLearnings(outcomeLessons)
-                + "\n\n" + HONESTY_RULES
+                + "\n\n" + guardrails.honestyRules()
                 + "\n\n" + TARGETING_RULES
                 + marketBlock
                 + contactBlock
@@ -204,7 +204,7 @@ public class PromptCompositionBuilder {
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
-                + "\n\n" + HONESTY_RULES
+                + "\n\n" + guardrails.honestyRules()
                 + "\n\n" + TARGETING_RULES
                 + "\n- When content must be condensed, drop the bullets with the lowest combination of "
                 + "relevance to this posting's keywords and uniqueness within the document — not simply "
@@ -330,23 +330,6 @@ public class PromptCompositionBuilder {
             default -> "STANDARD";
         };
     }
-
-    /** Fixed guardrails appended to every generation prompt — never user-editable. */
-    private static final String HONESTY_RULES = """
-            ## Honesty & ATS Rules
-            - Never fabricate skills, experience, credentials, or outcomes. When the profile lacks a \
-            requirement, frame genuinely adjacent experience instead of inventing a match — or leave the \
-            gap visible rather than papering over it.
-            - Never claim the candidate authored or built a project, repository, library, tool, or \
-            framework unless the profile explicitly attributes it to them. Using or working with a \
-            technology is not building it — this tool-of-trade conflation is the most common fabrication \
-            pattern and is forbidden.
-            - Silence beats invention: if a detail is not in the profile, omit it rather than manufacture \
-            it. Reformulate and reframe what the profile supports; never invent to fill a gap.
-            - Mirror the posting's exact terminology for skills the profile genuinely supports (ATS \
-            scanners match literal keywords), but never stuff keywords the profile cannot back up.
-            - Any praise of, or specific reference to, the company must be grounded in the "Verified \
-            Company Facts" block when one is provided; never invent facts about the employer.""";
 
     /**
      * Targeting discipline — archetype-aware framing and metrics precedence. Sharpens
