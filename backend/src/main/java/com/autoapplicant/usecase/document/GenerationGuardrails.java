@@ -72,7 +72,47 @@ public record GenerationGuardrails(
      *       verdict rather than a delivered document.</li>
      * </ul>
      */
-    public enum Medium { LETTER, CV, OUTREACH, ANALYSIS, INTERVIEW }
+    public enum Medium {
+        LETTER(true), CV(true), OUTREACH(true), ANALYSIS(false), INTERVIEW(false);
+
+        private final boolean writesDeliveredDocument;
+
+        Medium(boolean writesDeliveredDocument) {
+            this.writesDeliveredDocument = writesDeliveredDocument;
+        }
+
+        /**
+         * Whether a prompt of this medium produces text the candidate delivers (a letter, CV, or
+         * outreach message) rather than a JSON verdict about a posting. The delivered-document media
+         * carry the honesty and banned-phrase blocks on the way in and the deterministic content
+         * guards on the way out; the reading media ({@link #ANALYSIS}, {@link #INTERVIEW}) carry
+         * neither. This one predicate decides applicability for BOTH ends.
+         */
+        public boolean writesDeliveredDocument() {
+            return writesDeliveredDocument;
+        }
+
+        /**
+         * The medium a given document type or generation operation belongs to — the single mapping
+         * from the app's document-type vocabulary onto the framing register, so a caller declares the
+         * operation once and both the prompt envelope ({@link GenerationGuardrails#forDocument}) and
+         * the output guards ({@link GeneratedContentGuards#verify}) derive from it instead of each
+         * picking a medium by hand. Unknown or absent types default to {@link #LETTER}: a delivered
+         * document framed and guarded as a cover letter, the safe assumption for a writing surface.
+         */
+        public static Medium forDocumentType(String documentType) {
+            if (documentType == null) {
+                return LETTER;
+            }
+            return switch (documentType.trim().toUpperCase(java.util.Locale.ROOT)) {
+                case "CV", "CV_TAILORING" -> CV;
+                case "RECRUITER_MESSAGE", "FOLLOW_UP_MESSAGE" -> OUTREACH;
+                case "CV_ANALYSIS", "CV_ANALYSIS_REPORT", "CV_PARSE", "ANALYSIS" -> ANALYSIS;
+                case "INTERVIEW", "INTERVIEW_PREP" -> INTERVIEW;
+                default -> LETTER;
+            };
+        }
+    }
 
     /**
      * Resolves the full guardrail set for a prompt of the given medium.
@@ -85,24 +125,42 @@ public record GenerationGuardrails(
      */
     public static GenerationGuardrails forMedium(Medium medium, String targetLanguage,
                                                  String jobDescription, String jobCountry) {
-        boolean writing = medium == Medium.LETTER || medium == Medium.CV || medium == Medium.OUTREACH;
+        boolean writing = medium.writesDeliveredDocument();
         // Writing honours the user's explicit choice first; reading a posting detects its language.
         String language = writing
                 ? JobLanguageDetector.resolve(targetLanguage, jobDescription)
                 : JobLanguageDetector.detect(jobDescription);
         MarketConventions.Market market = MarketConventions.resolve(language, jobCountry);
-        String marketRules = switch (medium) {
-            case LETTER -> MarketConventions.letterRules(market);
-            case CV -> MarketConventions.cvRules(market);
-            case OUTREACH -> MarketConventions.outreachRules(market);
-            case ANALYSIS -> MarketConventions.jobReadingRules(market);
-            case INTERVIEW -> MarketConventions.interviewRules(market);
-        };
+        String marketRules = marketRules(medium, market);
         // Only delivered documents carry the banned-phrase block and honesty rules; a JSON verdict
         // never writes prose the candidate sends.
         String clicheBlock = writing ? ClicheGuard.promptBlock(language) : "";
         String honestyRules = writing ? HONESTY_RULES : "";
         return new GenerationGuardrails(
                 language, marketRules, UNTRUSTED_JOB_INPUT, clicheBlock, honestyRules);
+    }
+
+    /**
+     * The market-conventions text for a medium — the single place the medium → rules mapping lives,
+     * so {@link #forMedium} assembles the guardrail set and this decides which rules text it carries.
+     */
+    private static String marketRules(Medium medium, MarketConventions.Market market) {
+        return switch (medium) {
+            case LETTER -> MarketConventions.letterRules(market);
+            case CV -> MarketConventions.cvRules(market);
+            case OUTREACH -> MarketConventions.outreachRules(market);
+            case ANALYSIS -> MarketConventions.jobReadingRules(market);
+            case INTERVIEW -> MarketConventions.interviewRules(market);
+        };
+    }
+
+    /**
+     * Convenience over {@link #forMedium} for callers that hold a document-type string rather than a
+     * {@link Medium}. Resolves the medium via {@link Medium#forDocumentType} so the operation is
+     * declared once and drives the framing — and so a review of a CV is framed as a CV, not a letter.
+     */
+    public static GenerationGuardrails forDocument(String documentType, String targetLanguage,
+                                                   String jobDescription, String jobCountry) {
+        return forMedium(Medium.forDocumentType(documentType), targetLanguage, jobDescription, jobCountry);
     }
 }
