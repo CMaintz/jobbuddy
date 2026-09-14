@@ -16,8 +16,42 @@ permissions:
   contents: read
 
 jobs:
+  # Which parts of the monorepo changed — see gate.yml for the rationale.
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.f.outputs.backend }}
+      frontend: ${{ steps.f.outputs.frontend }}
+      extension: ${{ steps.f.outputs.extension }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - id: f
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          emit() { { echo "backend=$1"; echo "frontend=$2"; echo "extension=$3"; } >> "$GITHUB_OUTPUT"; }
+          if [ "${{ github.event_name }}" != "pull_request" ]; then emit true true true; exit 0; fi
+          base=$(git merge-base "$BASE" "$HEAD")
+          diff=$(git diff --name-only "$base" "$HEAD")
+          echo "Changed files:"; echo "$diff" | sed 's/^/  /'
+          if echo "$diff" | grep -qE '^(mise\.toml|\.github/workflows/|gradlew|gradle/|settings\.gradle|build\.gradle|\.gitleaks\.toml|scripts/)'; then
+            echo "shared/root file changed -> run everything"; emit true true true; exit 0
+          fi
+          be=false; fe=false; ex=false
+          echo "$diff" | grep -qE '^backend/'   && be=true || true
+          echo "$diff" | grep -qE '^frontend/'  && fe=true || true
+          echo "$diff" | grep -qE '^extension/' && ex=true || true
+          emit "$be" "$fe" "$ex"
+
   habits-backend:
     name: Structural smells (backend)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -64,6 +98,8 @@ jobs:
 
   habits-frontend:
     name: Structural smells (frontend)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -113,6 +149,8 @@ jobs:
 
   extension:
     name: Extension max-file
+    needs: changes
+    if: needs.changes.outputs.extension == 'true'
     runs-on: ubuntu-latest
     # The extension is raw JS/HTML with no build, so its only structural check is
     # a file-length cap (habit-hooks has no plugin for it). Grandfathers today's
@@ -137,8 +175,9 @@ jobs:
 
   no-var:
     name: No unjustified var (backend)
+    needs: changes
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -179,6 +218,8 @@ jobs:
 
   spotbugs:
     name: SpotBugs (backend)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -190,3 +231,17 @@ jobs:
       # or suppressed (@SuppressFBWarnings + justification). The current tree is clean.
       - name: SpotBugs
         run: mise run backend:spotbugs
+
+  # Single required check for this workflow — always runs so a path-skipped job
+  # never wedges. Fails only if a job that ran failed.
+  quality-ok:
+    name: quality-ok
+    needs: [changes, habits-backend, habits-frontend, extension, no-var, spotbugs]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for r in "${{ needs.changes.result }}" "${{ needs['habits-backend'].result }}" "${{ needs['habits-frontend'].result }}" "${{ needs.extension.result }}" "${{ needs['no-var'].result }}" "${{ needs.spotbugs.result }}"; do
+            case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
+          done
+          echo "quality-ok"
