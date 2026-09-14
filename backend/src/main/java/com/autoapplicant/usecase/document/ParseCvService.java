@@ -105,47 +105,11 @@ public class ParseCvService implements ParseCvUseCase {
             PromptComposition composition = new PromptComposition(
                     SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
             String json = aiProvider.generate(composition, AiOperations.CV_PARSE);
+            JsonNode node = objectMapper.readTree(AiResponseParser.stripCodeFence(json.trim()));
 
-            String cleaned = AiResponseParser.stripCodeFence(json.trim());
-
-            JsonNode node = objectMapper.readTree(cleaned);
-
-            // Save PII separately
-            String fullName = textOrNull(node, "fullName");
-            String location  = textOrNull(node, "location");
-            if (fullName != null || location != null) {
-                ProfilePrivateInfo existing = privateInfoRepo.findByUserId(userId).orElse(null);
-                if (existing == null) {
-                    privateInfoRepo.save(new ProfilePrivateInfo(null, userId,
-                            fullName, null, null, location, null, null, null, null));
-                } else {
-                    privateInfoRepo.save(new ProfilePrivateInfo(existing.id(), userId,
-                            fullName != null ? fullName : existing.fullName(),
-                            existing.phone(), existing.photoUrl(),
-                            location != null ? location : existing.location(),
-                            existing.municipality(), existing.contactEmail(),
-                            existing.createdAt(), null));
-                }
-            }
-
-            // Save social links separately
-            int order = socialRepo.findByUserId(userId).size();
-            saveSocialIfPresent(userId, node, "linkedinUrl", "LinkedIn", "linkedin", order);
-            saveSocialIfPresent(userId, node, "githubUrl",   "GitHub",   "github",   order + 1);
-            saveSocialIfPresent(userId, node, "websiteUrl",  "Website",  "globe",    order + 2);
-
-            List<String> stated = new java.util.ArrayList<>(arrayOrEmpty(node, "skills"));
-            stated.addAll(arrayOrEmpty(node, "technologies"));
-
-            // Inferences never join the extracted list — they are queued as questions instead.
-            impliedSkills.queue(userId, node, stated, ParsedSkillSuggestion.Source.CV_PARSE);
-
-            // Skills are written straight to the profile's skill rows rather than handed back on
-            // the Profile for the client to save. They are the same skills whichever way they
-            // arrived, so they get the same taxonomy link and category, and everything built on
-            // that — grouped CV sections, proficiency-weighted matching, category-aware
-            // suggestions — works for an imported CV exactly as for a hand-typed skill.
-            skillIngestion.ingest(userId, stated);
+            savePrivateInfo(userId, node);
+            saveSocialLinks(userId, node);
+            captureCvSkills(userId, node);
 
             return new Profile(
                     null, userId,
@@ -161,6 +125,47 @@ public class ParseCvService implements ParseCvUseCase {
             return new Profile(null, userId, null, null, null, List.of(),
                     List.of(), null, null, "DKK", null, null, null, null);
         }
+    }
+
+    /** Persist the CV's name and location as private info, merging into any existing record. */
+    private void savePrivateInfo(UUID userId, JsonNode node) {
+        String fullName = textOrNull(node, "fullName");
+        String location = textOrNull(node, "location");
+        if (fullName == null && location == null) return;
+        ProfilePrivateInfo existing = privateInfoRepo.findByUserId(userId).orElse(null);
+        if (existing == null) {
+            privateInfoRepo.save(new ProfilePrivateInfo(null, userId,
+                    fullName, null, null, location, null, null, null, null));
+        } else {
+            privateInfoRepo.save(new ProfilePrivateInfo(existing.id(), userId,
+                    fullName != null ? fullName : existing.fullName(),
+                    existing.phone(), existing.photoUrl(),
+                    location != null ? location : existing.location(),
+                    existing.municipality(), existing.contactEmail(),
+                    existing.createdAt(), null));
+        }
+    }
+
+    /** Persist any LinkedIn / GitHub / website URLs the CV listed, after the user's existing links. */
+    private void saveSocialLinks(UUID userId, JsonNode node) {
+        int order = socialRepo.findByUserId(userId).size();
+        saveSocialIfPresent(userId, node, "linkedinUrl", "LinkedIn", "linkedin", order);
+        saveSocialIfPresent(userId, node, "githubUrl",   "GitHub",   "github",   order + 1);
+        saveSocialIfPresent(userId, node, "websiteUrl",  "Website",  "globe",    order + 2);
+    }
+
+    /**
+     * Capture the CV's skills, in the two ways the profile keeps them: ingest the stated ones
+     * straight into the profile's skill rows (same taxonomy link and category as a hand-typed skill,
+     * so grouped sections and proficiency-weighted matching work for an imported CV too), and queue
+     * the inferred ones as questions — inferences never join the extracted list, so a wrong guess
+     * costs one dismissed suggestion rather than a fabricated skill.
+     */
+    private void captureCvSkills(UUID userId, JsonNode node) {
+        List<String> stated = new java.util.ArrayList<>(arrayOrEmpty(node, "skills"));
+        stated.addAll(arrayOrEmpty(node, "technologies"));
+        impliedSkills.queue(userId, node, stated, ParsedSkillSuggestion.Source.CV_PARSE);
+        skillIngestion.ingest(userId, stated);
     }
 
     private void saveSocialIfPresent(UUID userId, JsonNode node, String field,
