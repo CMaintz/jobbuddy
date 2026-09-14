@@ -15,6 +15,32 @@ permissions:
   contents: read
 
 jobs:
+  # Only backend-audit is path-gated; secret scan + ruleset-guard always run
+  # (cheap, and they must see every change). See gate.yml for the rationale.
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.f.outputs.backend }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - id: f
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          base=$(git merge-base "$BASE" "$HEAD")
+          diff=$(git diff --name-only "$base" "$HEAD")
+          if echo "$diff" | grep -qE '^(mise\.toml|\.github/workflows/|gradlew|gradle/|settings\.gradle|build\.gradle|scripts/|backend/)'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
@@ -135,6 +161,8 @@ jobs:
 
   backend-audit:
     name: Backend dependency audit
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -154,3 +182,18 @@ jobs:
         run: |
           ./gradlew :backend:dependencies --write-locks --console=plain
           osv-scanner --lockfile=backend/gradle.lockfile
+
+  # Single required check for this workflow — always runs. secret-scan and
+  # ruleset-guard always run; backend-audit may be path-skipped. Fails only if a
+  # job that ran failed.
+  security-ok:
+    name: security-ok
+    needs: [changes, secrets, ruleset-guard, backend-audit]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for r in "${{ needs.changes.result }}" "${{ needs.secrets.result }}" "${{ needs['ruleset-guard'].result }}" "${{ needs['backend-audit'].result }}"; do
+            case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
+          done
+          echo "security-ok"
