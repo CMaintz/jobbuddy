@@ -1,11 +1,22 @@
-# Manual, one-shot: generate the habit-hooks snooze baselines on Linux (the
-# full-repo file list blows the Windows command-line limit locally) and commit
-# them. Run from the Actions tab -> bootstrap -> Run workflow, after the
-# quality.yml smell jobs first appear as soft-passing.
+# Manual: refresh the habit-hooks snooze baselines on Linux (the full-repo file
+# list blows the Windows command-line limit locally) and open a PR with the delta.
+# Run from the Actions tab -> bootstrap -> Run workflow.
+#
+#   mode=prune  (default) — SHRINK: drop entries whose smells are now fixed. The
+#                normal refresh, run after a batch of fixes lands (or a threshold
+#                change makes findings disappear). Never adds entries.
+#   mode=snooze — first-time bootstrap only: baseline every current smell. Use to
+#                seed the baseline; a source PR must never grow it afterwards.
 name: bootstrap
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "prune = shrink (drop fixed entries); snooze = seed baseline (first time only)"
+        type: choice
+        options: [prune, snooze]
+        default: prune
 
 permissions:
   contents: read
@@ -49,10 +60,10 @@ jobs:
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java habit-hooks-typescript
           (cd frontend && npm ci)
-      - name: Generate baselines
+      - name: Refresh baselines (${{ inputs.mode }})
         run: |
-          (cd backend && habit-sensors --all | habit-snooze --snooze)
-          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all | habit-snooze --snooze)
+          (cd backend && habit-sensors --all | habit-snooze --${{ inputs.mode }})
+          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all | habit-snooze --${{ inputs.mode }})
       - name: Open a PR with the regenerated baselines
         env:
           GH_TOKEN: ${{ github.token }}
