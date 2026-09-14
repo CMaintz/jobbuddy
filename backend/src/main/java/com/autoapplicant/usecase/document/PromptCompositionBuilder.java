@@ -37,9 +37,8 @@ public class PromptCompositionBuilder {
         // Every cross-cutting guardrail resolved once for this medium: output language (the user's
         // explicit choice wins, otherwise the posting's detected language), market conventions, the
         // injection guard, and the banned-phrase block.
-        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
-                isLetter ? GenerationGuardrails.Medium.LETTER : GenerationGuardrails.Medium.OUTREACH,
-                targetLanguage, jobDescription, jobCountry);
+        GenerationGuardrails guardrails = GenerationGuardrails.forDocument(
+                documentType, targetLanguage, jobDescription, jobCountry);
         String languageInstruction = guardrails.resolvedLanguage() != null
                 ? "Write the document body in " + guardrails.resolvedLanguage() + "."
                 : "Write in the same language as the job description when clear, otherwise Danish.";
