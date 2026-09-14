@@ -2,13 +2,12 @@ package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.usecase.ai.RetractedClaimsGuard;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Runtime integrity checks applied to EVERY generated candidate-facing document — cover letters,
@@ -54,6 +53,13 @@ public class GeneratedContentGuards {
      * a finding the user never sees is a finding that never gets fixed.
      */
     public ContentGuardFindings verify(UUID userId, String body, String sourceProfileJson, String documentType) {
+        // Applicability comes from the same medium mapping the prompt envelope uses: a reading surface
+        // (a JSON verdict, never delivered text) is a no-op here rather than depending on each caller
+        // to remember not to guard it — the one decision that a surface writes a delivered document
+        // now drives both the input framing and this output check.
+        if (!GenerationGuardrails.Medium.forDocumentType(documentType).writesDeliveredDocument()) {
+            return ContentGuardFindings.NONE;
+        }
         DocumentFactGuard.FactAudit factAudit = auditFacts(body, sourceProfileJson, documentType);
         return new ContentGuardFindings(
                 factAudit.inventedMetrics(),
