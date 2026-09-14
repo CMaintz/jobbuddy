@@ -35,11 +35,18 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           base=$(git merge-base "$BASE" "$HEAD")
           diff=$(git diff --name-only "$base" "$HEAD")
-          if echo "$diff" | grep -qE '^(mise\.toml|\.github/workflows/|gradlew|gradle/|settings\.gradle|build\.gradle|scripts/|backend/)'; then
-            echo "backend=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "backend=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "Changed files:"; echo "$diff" | sed 's/^/  /'
+          # FAIL SAFE: run the backend audit unless every changed file is clearly
+          # not backend (frontend/extension/docs). An unclassified path runs it.
+          b=false
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              frontend/*|extension/*|*.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*|.gitleaks.toml) : ;;
+              *) b=true ;;
+            esac
+          done < <(printf '%s\n' "$diff")
+          echo "backend=$b" >> "$GITHUB_OUTPUT"
 
   secrets:
     name: Secret scan

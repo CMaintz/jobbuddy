@@ -12,6 +12,11 @@ node = "20"
 [env]
 _.path = ["./frontend/node_modules/.bin"]
 
+# Run tasks through bash on Windows too (not cmd), so `./gradlew` and vendor bins
+# resolve. Pinned in-repo so it doesn't depend on a contributor's global mise config.
+[settings]
+windows_default_inline_shell_args = "bash -c"
+
 # ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
 # Smells (oversized-file/function, etc.) come from habit-hooks' Java/PMD plugin,
 # not from Gradle — so `lint` here is just formatting (Spotless, ratcheted).
@@ -83,6 +88,28 @@ run = [
 ]
 
 # ---- aggregate --------------------------------------------------------------
+# Top-level verbs run every package's, so the six-verb contract holds at the root
+# too (`mise run typecheck` etc.), not just per package. Sequential — no `depends`.
+
+[tasks.fix]
+description = "Auto-fix every package"
+run = ["mise run backend:fix", "mise run frontend:fix"]
+
+[tasks.lint]
+description = "Lint every package"
+run = ["mise run backend:lint", "mise run frontend:lint"]
+
+[tasks.typecheck]
+description = "Type-check every package"
+run = ["mise run backend:typecheck", "mise run frontend:typecheck"]
+
+[tasks.test]
+description = "Test every package"
+run = ["mise run backend:test", "mise run frontend:test"]
+
+[tasks.audit]
+description = "Audit every package"
+run = ["mise run backend:audit", "mise run frontend:audit"]
 
 [tasks.gate]
 description = "The oracle — every package's gate. Sequential, no `depends` (parallel, unordered)."
