@@ -1,34 +1,32 @@
 package com.autoapplicant.usecase.interview;
 
-import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.interview.InterviewPrepPack;
 import com.autoapplicant.domain.interview.InterviewQuestion;
 import com.autoapplicant.domain.interview.MockInterviewTurn;
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.user.InterviewStory;
 import com.autoapplicant.port.in.interview.GenerateInterviewPrepUseCase;
 import com.autoapplicant.port.in.interview.GenerateInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.ManageInterviewQuestionsUseCase;
 import com.autoapplicant.port.in.interview.MockInterviewUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.interview.InterviewQuestionRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.usecase.ai.AiOperations;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
-import com.autoapplicant.usecase.document.JobLanguageDetector;
-import com.autoapplicant.usecase.document.MarketConventions;
+import com.autoapplicant.usecase.document.GenerationGuardrails;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.autoapplicant.usecase.ai.AiOperations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 @Service
 public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
@@ -48,10 +46,16 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
     /** Questions are only useful if they are the ones this market actually asks. */
     private String questionSystemPrompt(Job job) {
-        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
-                JobLanguageDetector.detect(job != null ? job.descriptionClean() : null),
-                job != null ? job.country() : null));
-        return marketRules.isBlank() ? SYSTEM_PROMPT : SYSTEM_PROMPT + "\n" + marketRules;
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.INTERVIEW, null,
+                job != null ? job.descriptionClean() : null,
+                job != null ? job.country() : null);
+        String base = guardrails.marketRules().isBlank()
+                ? SYSTEM_PROMPT
+                : SYSTEM_PROMPT + "\n" + guardrails.marketRules();
+        // The posting text reaches the model as data; guard it as instructions the same way the
+        // document surfaces do.
+        return base + "\n\n" + guardrails.untrustedInputBlock();
     }
 
     private final InterviewQuestionRepositoryPort repo;
@@ -80,7 +84,7 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
     /** Renders the candidate's STAR+R story bank as a prompt block; empty when there are none. */
     private String buildStoryBank(UUID userId) {
-        var stories = storyRepo.findByUserId(userId);
+        List<InterviewStory> stories = storyRepo.findByUserId(userId);
         if (stories.isEmpty()) return "";
         StringBuilder sb = new StringBuilder("\n## Candidate's STAR+R story bank (map behavioral questions to these real stories)\n");
         stories.stream().limit(12).forEach(s -> {
@@ -175,15 +179,16 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
         String profileJson = careerProfileContext.buildJson(userId);
 
-        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
-                JobLanguageDetector.detect(job.descriptionClean()), job.country()));
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.INTERVIEW, null, job.descriptionClean(), job.country());
 
         String systemPrompt = """
                 You are an expert interview coach preparing a candidate for an interview.
                 Never invent experience the candidate does not have; where the profile shows a gap
                 against the posting, prepare the candidate to address it honestly.
                 Return ONLY valid JSON — no markdown, no commentary."""
-                + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
+                + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules())
+                + "\n\n" + guardrails.untrustedInputBlock();
 
         String userPrompt = """
                 Build an interview prep pack.
@@ -246,8 +251,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
 
         // The mock interviewer has to behave like a local one, or practising against it teaches
         // the wrong register: a Danish hiring manager probes differently from an American one.
-        String marketRules = MarketConventions.interviewRules(MarketConventions.resolve(
-                JobLanguageDetector.detect(job.descriptionClean()), job.country()));
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.INTERVIEW, null, job.descriptionClean(), job.country());
 
         String systemPrompt = """
                 You are roleplaying as an experienced hiring manager at %s interviewing a candidate \
@@ -257,7 +262,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                 where the candidate's profile looks weakest against it. Keep each message under \
                 120 words. Never break character, never mention being an AI, and output plain \
                 conversational text only — no JSON, no markdown headers.""".formatted(company, job.title())
-                + (marketRules.isBlank() ? "" : "\n\n" + marketRules);
+                + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules())
+                + "\n\n" + guardrails.untrustedInputBlock();
 
         StringBuilder convo = new StringBuilder();
         for (MockInterviewTurn turn : transcript) {
@@ -273,7 +279,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
                     Give the candidate honest, specific feedback on their answers: what landed, \
                     what fell flat, and how to improve each weak answer — quote their own words \
                     where useful. Be encouraging but do not sugar-coat. End with the three changes \
-                    that would most improve their next real interview. Plain text, short paragraphs.""";
+                    that would most improve their next real interview. Plain text, short paragraphs."""
+                    + "\n\n" + guardrails.untrustedInputBlock();
             instruction = "Give your coaching feedback on the interview.";
         } else if (convo.isEmpty()) {
             instruction = "Open the interview: greet the candidate briefly and ask your first question.";
