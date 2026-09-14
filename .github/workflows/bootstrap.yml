@@ -15,8 +15,15 @@ on:
         type: choice
         options: [prune, snooze]
         default: prune
-  schedule:
-    - cron: '0 6 * * 1' # Mondays 06:00 UTC — auto-prune
+  # Part of the flow: when source lands on main (a repo-align fix merged, a
+  # threshold was tuned), re-prune and open a shrink PR if anything became clean.
+  # The `!snooze.json` exclusion stops the baseline-only shrink PR from re-triggering.
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '!**/.habit-hooks/snooze.json'
 
 permissions:
   contents: read
