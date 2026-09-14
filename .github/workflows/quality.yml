@@ -39,13 +39,21 @@ jobs:
           base=$(git merge-base "$BASE" "$HEAD")
           diff=$(git diff --name-only "$base" "$HEAD")
           echo "Changed files:"; echo "$diff" | sed 's/^/  /'
-          if echo "$diff" | grep -qE '^(mise\.toml|\.github/workflows/|gradlew|gradle/|settings\.gradle|build\.gradle|\.gitleaks\.toml|scripts/)'; then
-            echo "shared/root file changed -> run everything"; emit true true true; exit 0
-          fi
-          be=false; fe=false; ex=false
-          echo "$diff" | grep -qE '^backend/'   && be=true || true
-          echo "$diff" | grep -qE '^frontend/'  && fe=true || true
-          echo "$diff" | grep -qE '^extension/' && ex=true || true
+          be=false; fe=false; ex=false; all=false
+          # FAIL SAFE: a path we can't classify runs everything (never silently skip
+          # a check). Only known docs/metadata are treated as "affects no area".
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              backend/*)   be=true ;;
+              frontend/*)  fe=true ;;
+              extension/*) ex=true ;;
+              *.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*) : ;;
+              mise.toml|.github/workflows/*|gradlew|gradlew.bat|gradle/*|settings.gradle*|build.gradle*|.gitleaks.toml|osv-scanner.toml|scripts/*) all=true ;;
+              *) echo "  unclassified path '$f' -> running everything (fail-safe)"; all=true ;;
+            esac
+          done < <(printf '%s\n' "$diff")
+          if [ "$all" = true ]; then be=true; fe=true; ex=true; fi
           emit "$be" "$fe" "$ex"
 
   habits-backend:
