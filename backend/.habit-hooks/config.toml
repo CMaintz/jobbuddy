@@ -11,9 +11,13 @@ plugins = ["java"]
 # test structure. (no-var already scopes to src/main only.)
 files = ["!**/src/test/**/*.java"]
 
-# Silence PMD's progressbar / incremental-analysis WARN lines on CI stdout.
+# Name the tuned ruleset explicitly with -R (ExcessiveParameterList minimum=8),
+# rather than relying on cwd-relative discovery: if the file were ever missing or
+# habit-hooks were run from the wrong dir, discovery falls back to the bundled
+# minimum=4 SILENTLY -- a gate-weakening the system exists to forbid. -R turns
+# that into a loud "ruleset not found". --no-progress silences PMD's WARN lines.
 [sensors.pmd]
-args = "--no-progress"
+args = "--no-progress -R pmd/ruleset.xml"
 
 # unused-import: PMD's UnnecessaryImport runs here without an aux-classpath, so it
 # cannot resolve wildcard-import usage and false-flags e.g. `jakarta.persistence.*`
