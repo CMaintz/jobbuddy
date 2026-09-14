@@ -8,15 +8,12 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.domain.job.SimHash;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class IngestionPipeline {
@@ -57,58 +54,62 @@ public class IngestionPipeline {
 
     public IngestResult ingest(RawJobData raw) {
         try {
-            // Deduplication check — refresh lastSeenAt for existing jobs so stale detection
-            // works, and pick up a deadline the source published (or changed) after first crawl.
-            if (raw.sourceJobId() != null) {
-                var existing = jobRepo.findBySourceAndSourceJobId(raw.source(), raw.sourceJobId());
-                if (existing.isPresent()) {
-                    Job seen = existing.get();
-                    var deadline = raw.applicationDeadline() != null
-                            ? raw.applicationDeadline() : seen.applicationDeadline();
-                    // Targeted update in the adapter (like markUrlAlive) — no whole-Job rebuild.
-                    jobRepo.refreshLastSeen(seen.id(), Instant.now(), deadline);
-                    log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
-                    return IngestResult.of(IngestOutcome.REFRESHED);
-                }
-            }
-
-            String cleanText = textCleaner.clean(raw.rawHtml());
-            String title = textCleaner.extractTitle(raw.rawHtml());
-            JobCategory category = categoryClassifier.classify(raw.rawCategories(), title, cleanText);
-            UUID companyId = resolveCompany(raw);
-
-            Job draft = Job.builder()
-                    .source(raw.source()).sourceJobId(raw.sourceJobId()).url(raw.url())
-                    .title(title).companyId(companyId).companyName(raw.companyName())
-                    .descriptionRaw(raw.rawHtml()).descriptionClean(cleanText)
-                    .location(raw.location()).country("DK").currency("DKK")
-                    .postedAt(raw.postedAt()).scrapedAt(raw.scrapedAt())
-                    .isActive(true).jobCategory(category)
-                    .shortDescription(raw.shortDescription()).lastSeenAt(Instant.now())
-                    .applicationDeadline(raw.applicationDeadline())
-                    .build();
-
-            Job saved = jobRepo.save(draft);
-
-            // Cross-listing dedup: fingerprint the description and cluster verbatim re-posts
-            // (same role re-listed under a different company/URL) via duplicate_group_id.
-            boolean crossListed = fingerprintAndCluster(saved, cleanText);
-
-            // Enrichment is NOT fired from here. The posting is saved PENDING and the
-            // enrichment worker drains that queue at a rate the AI provider can sustain.
-            //
-            // It used to be submitted to a two-thread pool behind a 5000-deep queue that
-            // discarded on overflow, which meant a large crawl silently dropped thousands of
-            // enrichments — and the sweep that was supposed to recover them competed for the
-            // same two threads. The database column is the queue now: durable, countable, and
-            // impossible to overflow.
-
-            return new IngestResult(IngestOutcome.NEW, crossListed);
-
+            Optional<IngestResult> refreshed = tryRefreshExisting(raw);
+            return refreshed.isPresent() ? refreshed.get() : ingestNew(raw);
         } catch (Exception e) {
             log.error("Ingestion failed for raw job from {}: {}", raw.source(), e.getMessage(), e);
             return IngestResult.of(IngestOutcome.FAILED);
         }
+    }
+
+    /**
+     * Deduplication check: when the posting carries a source job id we've already stored, refresh
+     * its lastSeenAt (so stale detection works) and pick up a deadline the source published or
+     * changed after first crawl, then report REFRESHED. Empty when this is a posting to ingest anew.
+     */
+    private Optional<IngestResult> tryRefreshExisting(RawJobData raw) {
+        if (raw.sourceJobId() == null) return Optional.empty();
+        Optional<Job> existing = jobRepo.findBySourceAndSourceJobId(raw.source(), raw.sourceJobId());
+        if (existing.isEmpty()) return Optional.empty();
+        Job seen = existing.get();
+        java.time.LocalDate deadline = raw.applicationDeadline() != null
+                ? raw.applicationDeadline() : seen.applicationDeadline();
+        // Targeted update in the adapter (like markUrlAlive) — no whole-Job rebuild.
+        jobRepo.refreshLastSeen(seen.id(), Instant.now(), deadline);
+        log.debug("Refreshed lastSeenAt for existing job: {} / {}", raw.source(), raw.sourceJobId());
+        return Optional.of(IngestResult.of(IngestOutcome.REFRESHED));
+    }
+
+    /**
+     * Build, save and fingerprint a posting not seen before. Enrichment is NOT fired from here: the
+     * posting is saved PENDING and the enrichment worker drains that queue at a rate the AI provider
+     * can sustain. (It used to go to a two-thread pool behind a 5000-deep queue that discarded on
+     * overflow, silently dropping thousands of enrichments on a large crawl; the database column is
+     * the queue now — durable, countable, impossible to overflow.)
+     */
+    private IngestResult ingestNew(RawJobData raw) {
+        String cleanText = textCleaner.clean(raw.rawHtml());
+        String title = textCleaner.extractTitle(raw.rawHtml());
+        JobCategory category = categoryClassifier.classify(raw.rawCategories(), title, cleanText);
+        UUID companyId = resolveCompany(raw);
+
+        Job draft = Job.builder()
+                .source(raw.source()).sourceJobId(raw.sourceJobId()).url(raw.url())
+                .title(title).companyId(companyId).companyName(raw.companyName())
+                .descriptionRaw(raw.rawHtml()).descriptionClean(cleanText)
+                .location(raw.location()).country("DK").currency("DKK")
+                .postedAt(raw.postedAt()).scrapedAt(raw.scrapedAt())
+                .isActive(true).jobCategory(category)
+                .shortDescription(raw.shortDescription()).lastSeenAt(Instant.now())
+                .applicationDeadline(raw.applicationDeadline())
+                .build();
+
+        Job saved = jobRepo.save(draft);
+
+        // Cross-listing dedup: fingerprint the description and cluster verbatim re-posts
+        // (same role re-listed under a different company/URL) via duplicate_group_id.
+        boolean crossListed = fingerprintAndCluster(saved, cleanText);
+        return new IngestResult(IngestOutcome.NEW, crossListed);
     }
 
     /**
@@ -128,20 +129,28 @@ public class IngestionPipeline {
         try {
             long fp = SimHash.fingerprint(cleanText);
             if (fp == 0L) return false; // too little content to fingerprint reliably
-            boolean clustered = jobRepo.findActiveDuplicateByFingerprint(fp, saved.id()).map(other -> {
-                UUID group = other.duplicateGroupId() != null ? other.duplicateGroupId() : UUID.randomUUID();
-                if (other.duplicateGroupId() == null) jobRepo.assignDuplicateGroup(other.id(), group);
-                jobRepo.assignDuplicateGroup(saved.id(), group);
-                log.debug("Cross-listing: job {} ({}) duplicates {} — group {}",
-                        saved.id(), saved.source(), other.id(), group);
-                return true;
-            }).orElse(false);
+            boolean clustered = jobRepo.findActiveDuplicateByFingerprint(fp, saved.id())
+                    .map(other -> clusterWith(saved, other))
+                    .orElse(false);
             jobRepo.assignContentFingerprint(saved.id(), fp);
             return clustered;
         } catch (Exception e) {
             log.warn("Fingerprint/dedup failed for job {}: {}", saved.id(), e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Put {@code saved} and its verbatim re-post {@code other} under one duplicate_group_id,
+     * creating the group when the other posting has none yet. Returns true — the two are clustered.
+     */
+    private boolean clusterWith(Job saved, Job other) {
+        UUID group = other.duplicateGroupId() != null ? other.duplicateGroupId() : UUID.randomUUID();
+        if (other.duplicateGroupId() == null) jobRepo.assignDuplicateGroup(other.id(), group);
+        jobRepo.assignDuplicateGroup(saved.id(), group);
+        log.debug("Cross-listing: job {} ({}) duplicates {} — group {}",
+                saved.id(), saved.source(), other.id(), group);
+        return true;
     }
 
     /**
@@ -153,16 +162,20 @@ public class IngestionPipeline {
         if (name == null || name.isBlank()) return null;
         try {
             Company company = companyRepo.findOrCreate(name.trim());
-            String website = raw.companyWebsiteUrl();
-            if (website != null && !website.isBlank()
-                    && (company.website() == null || company.website().isBlank())) {
-                // Targeted single-field backfill in the adapter — no whole-Company rebuild.
-                companyRepo.backfillWebsite(company.id(), website.trim());
-            }
+            backfillWebsiteIfMissing(company, raw.companyWebsiteUrl());
             return company.id();
         } catch (Exception e) {
             log.warn("Company resolution failed for '{}': {}", name, e.getMessage());
             return null;
+        }
+    }
+
+    /** Fill in the company homepage from the crawl when the record still has none. */
+    private void backfillWebsiteIfMissing(Company company, String website) {
+        if (website != null && !website.isBlank()
+                && (company.website() == null || company.website().isBlank())) {
+            // Targeted single-field backfill in the adapter — no whole-Company rebuild.
+            companyRepo.backfillWebsite(company.id(), website.trim());
         }
     }
 
