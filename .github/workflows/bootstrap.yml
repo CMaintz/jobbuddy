@@ -77,8 +77,10 @@ jobs:
           MODE: ${{ github.event.inputs.mode || 'prune' }}
         run: |
           echo "Regenerating in '$MODE' mode"
-          (cd backend && habit-sensors --all | habit-snooze --"$MODE")
-          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all | habit-snooze --"$MODE")
+          # --no-snooze: feed RAW findings. prune needs them to see which baselined
+          # files no longer have smells; snooze needs them to baseline all current.
+          (cd backend && habit-sensors --all --no-snooze | habit-snooze --"$MODE")
+          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all --no-snooze | habit-snooze --"$MODE")
       - name: Open a PR if the baseline changed
         env:
           GH_TOKEN: ${{ github.token }}

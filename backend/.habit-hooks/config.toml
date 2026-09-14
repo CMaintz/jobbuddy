@@ -9,7 +9,9 @@ plugins = ["java"]
 # Tests are not structural-smell-gated. Long, mock-heavy test methods and many
 # fixtures are normal and fine; CI should police production maintainability, not
 # test structure. (no-var already scopes to src/main only.)
-files = ["!**/src/test/**/*.java"]
+# A positive include is REQUIRED — a bare "!exclusion" matches nothing, which
+# silently disables the whole smell scan. Include all Java, then drop tests.
+files = ["**/*.java", "!**/src/test/**/*.java"]
 
 # Name the tuned ruleset explicitly with -R (ExcessiveParameterList minimum=8),
 # rather than relying on cwd-relative discovery: if the file were ever missing or
