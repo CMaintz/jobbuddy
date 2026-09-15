@@ -27,6 +27,23 @@ git fetch origin && git switch -c <type>/<short-desc> origin/main
 Only continue on an existing branch if it is unambiguously yours. One branch → one
 PR → one concern.
 
+## Delegate to sub-agents
+
+Default to spinning up sub-agents for work that is independent, read-heavy, or
+parallelisable — don't grind through it all in the main thread (the common failure).
+
+- **Exploring / reading many files** → an exploration sub-agent returns the
+  conclusion, not twenty file dumps in your context. Use it whenever answering means
+  sweeping the backend/frontend/extension for where something lives.
+- **Independent slices** → fan out one agent per file/module when they don't touch
+  the same code; batch them so they run concurrently (own git worktree if they'll
+  edit in parallel).
+- **Verify / adversarial** → a fresh agent prompted to *refute* a finding catches
+  what your own thread has rationalised away.
+
+Keep the main thread as the orchestrator that decides and integrates. Rule of thumb:
+about to read your fifth file to answer one question? That's a sub-agent.
+
 ## Shell Environment
 
 The development environment uses **git-bash** (Git for Windows) — POSIX `sh`/bash,
