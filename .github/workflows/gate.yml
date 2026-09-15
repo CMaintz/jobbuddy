@@ -4,10 +4,15 @@
 # deploy.yml, bootstrap.yml, semgrep.yml.
 name: gate
 
+# PR-only. main is branch-protected and we rebase-merge, so the merged commit is the
+# same code the PR already gated. A push:main re-run has never (empirically, 28 runs)
+# caught an integration break the PR missed — and the next PR's gate runs `mise run
+# gate` against current main anyway, so any integration break surfaces there, one PR
+# later. Not worth a run on every merge. deploy.yml/bootstrap.yml still fire on
+# push:main; workflow_dispatch is the manual full-run for after a risky merge.
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: gate-${{ github.ref }}
@@ -18,8 +23,9 @@ permissions:
 
 jobs:
   # Detect which parts of the monorepo this PR touches, so a frontend-only change
-  # doesn't spin up the backend gate (and vice versa). On push to main, everything
-  # runs. Shared/root files (workflows, mise, gradle, scripts) run everything too.
+  # doesn't spin up the backend gate (and vice versa). A manual workflow_dispatch run
+  # isn't a PR, so it runs everything. Shared/root files (workflows, mise, gradle,
+  # scripts) run everything too.
   changes:
     name: changes
     runs-on: ubuntu-latest
