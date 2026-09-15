@@ -1,5 +1,8 @@
 package com.autoapplicant.usecase.document;
 
+import java.util.Locale;
+import java.util.Map;
+
 /**
  * The cross-cutting guardrails every generation prompt carries: the resolved output language,
  * the market-conventions block for the medium, the prompt-injection guard for untrusted postings,
@@ -93,6 +96,25 @@ public record GenerationGuardrails(
         }
 
         /**
+         * The document types and generation operations that resolve to a non-default medium. Held as
+         * a lookup table rather than a switch: the mapping IS data, and reading a table of
+         * document-type → medium is lower cognitive load than tracing branches. Anything absent —
+         * COVER_LETTER, APPLICATION_TEXT, UNSOLICITED_APPLICATION and the refine/review operations —
+         * resolves to {@link #LETTER}, exactly as the previous switch's default did.
+         */
+        private static final Map<String, Medium> BY_DOCUMENT_TYPE = Map.ofEntries(
+                Map.entry("CV", CV),
+                Map.entry("CV_TAILORING", CV),
+                Map.entry("RECRUITER_MESSAGE", OUTREACH),
+                Map.entry("FOLLOW_UP_MESSAGE", OUTREACH),
+                Map.entry("CV_ANALYSIS", ANALYSIS),
+                Map.entry("CV_ANALYSIS_REPORT", ANALYSIS),
+                Map.entry("CV_PARSE", ANALYSIS),
+                Map.entry("ANALYSIS", ANALYSIS),
+                Map.entry("INTERVIEW", INTERVIEW),
+                Map.entry("INTERVIEW_PREP", INTERVIEW));
+
+        /**
          * The medium a given document type or generation operation belongs to — the single mapping
          * from the app's document-type vocabulary onto the framing register, so a caller declares the
          * operation once and both the prompt envelope ({@link GenerationGuardrails#forDocument}) and
@@ -104,13 +126,7 @@ public record GenerationGuardrails(
             if (documentType == null) {
                 return LETTER;
             }
-            return switch (documentType.trim().toUpperCase(java.util.Locale.ROOT)) {
-                case "CV", "CV_TAILORING" -> CV;
-                case "RECRUITER_MESSAGE", "FOLLOW_UP_MESSAGE" -> OUTREACH;
-                case "CV_ANALYSIS", "CV_ANALYSIS_REPORT", "CV_PARSE", "ANALYSIS" -> ANALYSIS;
-                case "INTERVIEW", "INTERVIEW_PREP" -> INTERVIEW;
-                default -> LETTER;
-            };
+            return BY_DOCUMENT_TYPE.getOrDefault(documentType.trim().toUpperCase(Locale.ROOT), LETTER);
         }
     }
 
