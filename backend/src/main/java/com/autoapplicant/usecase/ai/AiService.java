@@ -10,8 +10,6 @@ import com.autoapplicant.domain.document.structured.JobKeywords;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
-import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
-import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
@@ -24,7 +22,6 @@ import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.DocumentReviewer;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
-import com.autoapplicant.usecase.document.GenerationGuardrails;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.autoapplicant.usecase.eval.DocumentQualityEvaluator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +35,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AiService implements RefineDocumentUseCase, ReviewDocumentUseCase, GenerateDocumentUseCase {
+public class AiService implements GenerateDocumentUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
@@ -88,78 +85,6 @@ public class AiService implements RefineDocumentUseCase, ReviewDocumentUseCase, 
         this.qualityScoreRepo = qualityScoreRepo;
         this.companyGrounding = companyGrounding;
         this.objectMapper = objectMapper;
-    }
-
-    @Override
-    @Async("userAiTaskExecutor")
-    public CompletableFuture<RefineDocumentResult> refine(RefineDocumentRequest request) {
-        try {
-            // Refinement produces text the user sends, so it carries the same guardrail envelope as
-            // a first draft — market conventions, banned phrases, the injection guard and language —
-            // plus an inline honesty instruction and the deterministic fact gate on its output below.
-            // "Make it stronger" must never become licence to invent.
-            String contactFreeJson = careerProfileContext.buildJson(request.userId());
-            GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
-                    GenerationGuardrails.Medium.LETTER, request.targetLanguage(),
-                    request.jobDescription(), null);
-
-            StringBuilder systemPrompt = new StringBuilder(
-                    "You are a professional editor helping refine a job application document. "
-                    + "The user will provide their current draft and a specific refinement request. "
-                    + "Edit what is there: you may cut, reorder, sharpen and rephrase, but you may "
-                    + "not add a fact the draft does not already contain. A request to make the "
-                    + "document stronger is a request to write better, never to claim more. "
-                    + "Return ONLY the improved document text — no commentary, no explanations.");
-            systemPrompt.append("\n\n").append(guardrails.untrustedInputBlock());
-            if (guardrails.resolvedLanguage() != null) {
-                systemPrompt.append("\nWrite in ").append(guardrails.resolvedLanguage()).append(".");
-            }
-
-            StringBuilder userPrompt = new StringBuilder();
-            userPrompt.append("## Current Document\n").append(request.currentContent()).append("\n\n");
-            if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
-                userPrompt.append("## Job Description Context\n").append(request.jobDescription()).append("\n\n");
-            }
-            userPrompt.append("## Refinement Request\n").append(request.userMessage());
-            userPrompt.append("\n\n").append(guardrails.honestyRules());
-            if (!guardrails.marketRules().isBlank()) {
-                userPrompt.append("\n\n").append(guardrails.marketRules());
-            }
-            userPrompt.append("\n\n").append(guardrails.clicheBlock());
-
-            PromptComposition composition = new PromptComposition(
-                    systemPrompt.toString(), userPrompt.toString(), "", "", "", "", userPrompt.toString());
-            String refined = sanitizeAiText(aiProvider.generate(composition, AiOperations.DOCUMENT_REFINE));
-
-            // Same backstops as generation: an edit can introduce a fabrication just as easily.
-            contentGuards.verify(request.userId(), refined, contactFreeJson, "REFINEMENT");
-
-            return CompletableFuture.completedFuture(
-                    new RefineDocumentResult(refined, aiProvider.chatModelName()));
-        } catch (Exception e) {
-            log.error("Document refinement failed: {}", e.getMessage(), e);
-            return CompletableFuture.failedFuture(e);
-        }
-    }
-
-    @Override
-    @Async("userAiTaskExecutor")
-    public CompletableFuture<ReviewDocumentResult> review(ReviewDocumentRequest request) {
-        try {
-            DocumentReviewer.ReviewOutcome outcome = reviewer.review(
-                    new DocumentReviewer.ReviewContext(request.userId(), request.documentType(),
-                            request.jobDescription(), request.targetLanguage(), null),
-                    request.currentContent());
-            // The reviewer rewrites the whole document, so its output needs the same backstops as a
-            // first draft — it was previously handed back unchecked.
-            contentGuards.verify(request.userId(), outcome.revised(),
-                    careerProfileContext.buildJson(request.userId()), request.documentType());
-            return CompletableFuture.completedFuture(
-                    new ReviewDocumentResult(outcome.revised(), outcome.critique(), aiProvider.chatModelName()));
-        } catch (Exception e) {
-            log.error("Document review failed: {}", e.getMessage(), e);
-            return CompletableFuture.failedFuture(e);
-        }
     }
 
     @Override
