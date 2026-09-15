@@ -25,13 +25,17 @@ import org.springframework.stereotype.Service;
  * untrusted-input guard and the market's posting-reading rules, but no honesty/cliche framing and
  * no output content guards, because its output is a JSON verdict the candidate never sends.
  *
- * <p>Split out of {@code AiService} so the four AI operations no longer share one class; the framing
- * comes from the same {@link GenerationGuardrails} envelope every other surface uses.
+ * <p>The framing comes from the same {@link GenerationGuardrails} envelope every other surface uses.
  */
 @Service
 public class CvAnalysisService implements AnalyzeCvUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(CvAnalysisService.class);
+
+    /** The analyst persona — a fresh ATS reviewer/coach that never assumes unstated skills. */
+    private static final String ANALYST_PERSONA =
+            "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
+            + "Never assume skills or experience the CV does not state.";
 
     private final ChatProviderPort aiProvider;
     private final JobRepositoryPort jobRepo;
@@ -84,9 +88,7 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
         GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
                 GenerationGuardrails.Medium.ANALYSIS, null, jobDesc, jobCountry);
         String prompt = buildAnalysisPrompt(cvContent, jobDesc, guardrails.marketRules());
-        String system = "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
-                + "Never assume skills or experience the CV does not state.\n\n"
-                + guardrails.untrustedInputBlock();
+        String system = ANALYST_PERSONA + "\n\n" + guardrails.untrustedInputBlock();
         return new PromptComposition(system, prompt, "", "", "", "", prompt);
     }
 

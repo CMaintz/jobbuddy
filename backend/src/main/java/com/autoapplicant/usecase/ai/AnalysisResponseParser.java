@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Pure, deterministic parser for the AI CV-analysis JSON response. Extracted from
- * {@code AiService} so the mapping (dimensions, server-side score weighting, risk block)
+ * Pure, deterministic parser for the AI CV-analysis JSON response. The mapping (dimensions, server-side score weighting, risk block)
  * can be regression-tested against a golden set of recorded responses without invoking a model.
  */
 @Service

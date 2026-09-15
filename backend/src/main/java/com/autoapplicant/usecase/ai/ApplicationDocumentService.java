@@ -35,9 +35,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AiService implements GenerateDocumentUseCase {
+public class ApplicationDocumentService implements GenerateDocumentUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(AiService.class);
+    private static final Logger log = LoggerFactory.getLogger(ApplicationDocumentService.class);
 
     private final ChatProviderPort aiProvider;
     private final JobRepositoryPort jobRepo;
@@ -55,7 +55,7 @@ public class AiService implements GenerateDocumentUseCase {
     private final CompanyGroundingService companyGrounding;
     private final ObjectMapper objectMapper;
 
-    public AiService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
+    public ApplicationDocumentService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                      JobRepositoryPort jobRepo,
                      PromptTemplateRepositoryPort promptTemplateRepo,
                      WritingProfileRepositoryPort writingProfileRepo,
