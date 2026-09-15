@@ -56,21 +56,10 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
     public CompletableFuture<AiAnalysisResult> analyze(UUID userId, UUID cvVersionId,
                                                        UUID jobId, String rawJobDescription) {
         try {
-            // Explicit CV version wins; otherwise the PII-free master profile JSON.
-            String cvContent = cvVersionId != null
-                    ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("")
-                    : careerProfileContext.buildJson(userId);
-            Job analysisJob = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
-            String jobDesc = analysisJob != null ? analysisJob.descriptionClean() : rawJobDescription;
-            GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
-                    GenerationGuardrails.Medium.ANALYSIS, null, jobDesc,
-                    analysisJob != null ? analysisJob.country() : null);
-            String prompt = buildAnalysisPrompt(cvContent, jobDesc, guardrails.marketRules());
-            PromptComposition composition = new PromptComposition(
-                    "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
-                    + "Never assume skills or experience the CV does not state.\n\n"
-                    + guardrails.untrustedInputBlock(),
-                    prompt, "", "", "", "", prompt);
+            Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
+            String jobDesc = job != null ? job.descriptionClean() : rawJobDescription;
+            PromptComposition composition = analysisComposition(
+                    resolveCvContent(userId, cvVersionId), jobDesc, job != null ? job.country() : null);
             String response =
                     AiResponseParser.sanitize(aiProvider.generateJson(composition, AiOperations.CV_ANALYSIS));
             return CompletableFuture.completedFuture(analysisParser.parse(response));
@@ -80,62 +69,97 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
         }
     }
 
+    /** Explicit CV version wins; otherwise the PII-free master profile JSON. */
+    private String resolveCvContent(UUID userId, UUID cvVersionId) {
+        return cvVersionId != null
+                ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("")
+                : careerProfileContext.buildJson(userId);
+    }
+
+    /**
+     * The analysis prompt as a reading-surface composition: the untrusted-input guard and the
+     * market's posting-reading rules, but no honesty/cliche framing — the output is a JSON verdict.
+     */
+    private PromptComposition analysisComposition(String cvContent, String jobDesc, String jobCountry) {
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.ANALYSIS, null, jobDesc, jobCountry);
+        String prompt = buildAnalysisPrompt(cvContent, jobDesc, guardrails.marketRules());
+        String system = "You are an expert ATS reviewer and career coach. Analyze CVs and respond with JSON only. "
+                + "Never assume skills or experience the CV does not state.\n\n"
+                + guardrails.untrustedInputBlock();
+        return new PromptComposition(system, prompt, "", "", "", "", prompt);
+    }
+
     private static String buildAnalysisPrompt(String cvContent, String jobDescription, String marketRules) {
+        return jobDescription != null && !jobDescription.isBlank()
+                ? targetedAnalysisPrompt(cvContent, jobDescription, marketRules)
+                : generalAnalysisPrompt(cvContent);
+    }
+
+    /** CV judged against a specific posting: keyword/experience/gap analysis plus a separate risk verdict. */
+    private static String targetedAnalysisPrompt(String cvContent, String jobDescription, String marketRules) {
         StringBuilder sb = new StringBuilder();
         sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
         sb.append("## CV Content\n").append(cvContent).append("\n\n");
-        if (jobDescription != null && !jobDescription.isBlank()) {
-            sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
-            sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
-            if (!marketRules.isBlank()) sb.append('\n').append(marketRules).append('\n');
-            sb.append("""
-
-                    Respond with ONLY a JSON object in exactly this shape:
-                    {
-                      "score": <0-100 overall score>,
-                      "summary": "<2-3 sentence overall verdict>",
-                      "strengths": ["<what already works well>", ...],
-                      "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
-                      "suggestions": ["<concrete, actionable improvement — one per entry>", ...],
-                      "dimensions": {
-                        "technicalSkills": <0-100 — required/preferred skills coverage>,
-                        "experience": <0-100 — work-history domain and role-type alignment>,
-                        "cultureFit": <0-100 — company culture signals vs the candidate's profile>,
-                        "careerAlignment": <0-100 — growth path and motivation fit for this role>,
-                        "location": "PASS|FLAG|FAIL — commute/remote/relocation feasibility",
-                        "locationNote": "<one sentence explaining the location verdict, or null>"
-                      },
-                      "risk": {
-                        "legitimacy": "HIGH_CONFIDENCE|CAUTION|SUSPICIOUS - is this a real, active opening?",
-                        "legitimacyNote": "<one sentence on the legitimacy verdict>",
-                        "signals": [{"label":"<short risk label>","severity":"LOW|MEDIUM|HIGH","note":"<one sentence>"}],
-                        "compensationReliability": "HIGH|MEDIUM|LOW|UNKNOWN - trust in advertised pay as real base",
-                        "compensationNote": "<one sentence, or null>"
-                      }
-                    }
-                    Assess "risk" (posting legitimacy, risk signals, compensation reliability) SEPARATELY
-                    from the score - it must NEVER change the score or any dimension. Surface signals,
-                    never accuse; note legitimate explanations. Use ghost-posting cues (stale or vague
-                    posting, contradictory or unrealistic requirements, no concrete team or role detail),
-                    and classify how far the advertised comp is trustworthy base pay vs variable / "up to" /
-                    commission. Give 0-4 risk signals; omit the array if none.
-                    Score each dimension independently; do not average them yourself.
-                    Be honest about gaps — never assume skills the CV does not state.
-                    Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
-        } else {
-            sb.append("No target job given — judge the CV on general strength: clarity, quantified achievements, ATS readiness.\n");
-            sb.append("""
-
-                    Respond with ONLY a JSON object in exactly this shape:
-                    {
-                      "score": <0-100 overall score>,
-                      "summary": "<2-3 sentence overall verdict>",
-                      "strengths": ["<what already works well>", ...],
-                      "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
-                      "suggestions": ["<concrete, actionable improvement — one per entry>", ...]
-                    }
-                    Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
+        sb.append("## Target Job Description\n").append(jobDescription).append("\n\n");
+        sb.append("Judge the CV against THIS job: ATS keyword matching, experience alignment, and gaps.\n");
+        if (!marketRules.isBlank()) {
+            sb.append('\n').append(marketRules).append('\n');
         }
+        sb.append("""
+
+                Respond with ONLY a JSON object in exactly this shape:
+                {
+                  "score": <0-100 overall score>,
+                  "summary": "<2-3 sentence overall verdict>",
+                  "strengths": ["<what already works well>", ...],
+                  "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                  "suggestions": ["<concrete, actionable improvement — one per entry>", ...],
+                  "dimensions": {
+                    "technicalSkills": <0-100 — required/preferred skills coverage>,
+                    "experience": <0-100 — work-history domain and role-type alignment>,
+                    "cultureFit": <0-100 — company culture signals vs the candidate's profile>,
+                    "careerAlignment": <0-100 — growth path and motivation fit for this role>,
+                    "location": "PASS|FLAG|FAIL — commute/remote/relocation feasibility",
+                    "locationNote": "<one sentence explaining the location verdict, or null>"
+                  },
+                  "risk": {
+                    "legitimacy": "HIGH_CONFIDENCE|CAUTION|SUSPICIOUS - is this a real, active opening?",
+                    "legitimacyNote": "<one sentence on the legitimacy verdict>",
+                    "signals": [{"label":"<short risk label>","severity":"LOW|MEDIUM|HIGH","note":"<one sentence>"}],
+                    "compensationReliability": "HIGH|MEDIUM|LOW|UNKNOWN - trust in advertised pay as real base",
+                    "compensationNote": "<one sentence, or null>"
+                  }
+                }
+                Assess "risk" (posting legitimacy, risk signals, compensation reliability) SEPARATELY
+                from the score - it must NEVER change the score or any dimension. Surface signals,
+                never accuse; note legitimate explanations. Use ghost-posting cues (stale or vague
+                posting, contradictory or unrealistic requirements, no concrete team or role detail),
+                and classify how far the advertised comp is trustworthy base pay vs variable / "up to" /
+                commission. Give 0-4 risk signals; omit the array if none.
+                Score each dimension independently; do not average them yourself.
+                Be honest about gaps — never assume skills the CV does not state.
+                Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
+        return sb.toString();
+    }
+
+    /** CV judged on general strength when no posting is given. */
+    private static String generalAnalysisPrompt(String cvContent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
+        sb.append("## CV Content\n").append(cvContent).append("\n\n");
+        sb.append("No target job given — judge the CV on general strength: clarity, quantified achievements, ATS readiness.\n");
+        sb.append("""
+
+                Respond with ONLY a JSON object in exactly this shape:
+                {
+                  "score": <0-100 overall score>,
+                  "summary": "<2-3 sentence overall verdict>",
+                  "strengths": ["<what already works well>", ...],
+                  "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
+                  "suggestions": ["<concrete, actionable improvement — one per entry>", ...]
+                }
+                Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
         return sb.toString();
     }
 }

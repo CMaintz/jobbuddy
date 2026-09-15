@@ -146,9 +146,10 @@ public class AiService implements RefineDocumentUseCase, ReviewDocumentUseCase, 
     @Async("userAiTaskExecutor")
     public CompletableFuture<ReviewDocumentResult> review(ReviewDocumentRequest request) {
         try {
-            DocumentReviewer.ReviewOutcome outcome = reviewer.review(request.userId(),
-                    request.documentType(), request.currentContent(),
-                    request.jobDescription(), request.targetLanguage(), null);
+            DocumentReviewer.ReviewOutcome outcome = reviewer.review(
+                    new DocumentReviewer.ReviewContext(request.userId(), request.documentType(),
+                            request.jobDescription(), request.targetLanguage(), null),
+                    request.currentContent());
             // The reviewer rewrites the whole document, so its output needs the same backstops as a
             // first draft — it was previously handed back unchecked.
             contentGuards.verify(request.userId(), outcome.revised(),
@@ -212,8 +213,10 @@ public class AiService implements RefineDocumentUseCase, ReviewDocumentUseCase, 
             // Automatic drafter→reviewer loop: a fresh reviewer critiques and revises the
             // body before assembly. Config-gated (each pass is one extra LLM call); stops
             // early once a pass reports no further critique.
-            String body = reviewer.autoReview(userId, documentType, aiResponse.body(), jobDescription,
-                    targetLanguage, job != null ? job.country() : null);
+            String body = reviewer.autoReview(
+                    new DocumentReviewer.ReviewContext(userId, documentType, jobDescription,
+                            targetLanguage, job != null ? job.country() : null),
+                    aiResponse.body());
 
             // Deterministic backstops (fact gate + retracted claims + filler), shared with the CV
             // path. The findings ride along into the ATS report so the user sees them.
