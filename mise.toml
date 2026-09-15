@@ -10,12 +10,35 @@ java = "21"
 node = "20"
 
 [env]
-_.path = ["./frontend/node_modules/.bin"]
+# PMD is a JVM app (launcher + jars) whose GitHub release asset carries no OS in its
+# name, so it can't be a clean mise [tools] entry. Pin the version here; the
+# `setup:pmd` task installs it idempotently and `mise install` runs that via the
+# postinstall hook — so PMD is provisioned identically locally and in CI, and the
+# habit-hooks Java sensor + the no-var check find it with no manual PATH surgery.
+PMD_VERSION = "7.27.0"
+_.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env.PMD_VERSION}}/bin"]
 
 # Run tasks through bash on Windows too (not cmd), so `./gradlew` and vendor bins
 # resolve. Pinned in-repo so it doesn't depend on a contributor's global mise config.
 [settings]
 windows_default_inline_shell_args = "bash -c"
+
+# PMD can't be a [tools] entry (see [env]) — provision it as a task instead. `mise
+# install` runs it via the postinstall hook, so a fresh checkout is one command.
+[hooks]
+postinstall = "mise run setup:pmd"
+
+[tasks."setup:pmd"]
+description = "Install the pinned PMD if absent (habit-hooks Java sensor + no-var need it)"
+run = """
+dst="$HOME/.local/opt/pmd-bin-$PMD_VERSION"
+if [ -x "$dst/bin/pmd" ]; then exit 0; fi
+echo "Installing PMD $PMD_VERSION -> $dst"
+mkdir -p "$HOME/.local/opt"
+curl -fsSL -o "/tmp/pmd-$PMD_VERSION.zip" "https://github.com/pmd/pmd/releases/download/pmd_releases/$PMD_VERSION/pmd-dist-$PMD_VERSION-bin.zip"
+unzip -q -o "/tmp/pmd-$PMD_VERSION.zip" -d "$HOME/.local/opt"
+rm -f "/tmp/pmd-$PMD_VERSION.zip"
+"""
 
 # ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
 # Smells (oversized-file/function, etc.) come from habit-hooks' Java/PMD plugin,
@@ -45,7 +68,8 @@ run = [
 ]
 
 [tasks."backend:novar"]
-description = "Report all `var` uses in backend main (needs pmd on PATH). CI enforces this diff-scoped."
+description = "Report all `var` uses in backend main. CI enforces this diff-scoped."
+depends = ["setup:pmd"]
 run = "pmd check -d backend/src/main/java -R backend/config/pmd/no-var.xml -f text --suppress-marker foundry-allow-var"
 
 [tasks."backend:spotbugs"]
