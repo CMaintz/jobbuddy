@@ -104,9 +104,13 @@ jobs:
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java
       - name: Smells (fails only on smells beyond the snooze baseline)
+        id: smells
         if: steps.baseline.outputs.have == 'true'
         working-directory: backend
         run: habit-hooks
+      - name: How to read these smells
+        if: failure() && steps.smells.outcome == 'failure'
+        run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
 
   habits-frontend:
     name: Structural smells (frontend)
@@ -153,11 +157,15 @@ jobs:
           fi
           pip install --disable-pip-version-check habit-hooks habit-hooks-typescript
       - name: Smells (fails only on smells beyond the snooze baseline)
+        id: smells
         if: steps.baseline.outputs.have == 'true'
         working-directory: frontend
         run: |
           export PATH="$PWD/node_modules/.bin:$PATH"
           habit-hooks
+      - name: How to read these smells
+        if: failure() && steps.smells.outcome == 'failure'
+        run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
 
   extension:
     name: Extension max-file
