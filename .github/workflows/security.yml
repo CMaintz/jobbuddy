@@ -2,10 +2,13 @@
 # the backend dependency audit. SAST (Semgrep) lives in semgrep.yml.
 name: security
 
+# PR-only. main is branch-protected and we rebase-merge, so the merged commit is the
+# same code the PR gated; a push:main re-run has never caught anything the PR missed,
+# and the next PR re-scans integrated main anyway. workflow_dispatch is the manual
+# full-run escape hatch.
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: security-${{ github.ref }}
