@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +83,9 @@ public class DocumentReviewer {
     /** Carrier for one reviewer pass: the revised draft and what the reviewer changed or flagged. */
     public record ReviewOutcome(String revised, List<String> critique) {}
 
+    /** The result of one auto-review attempt: the best draft so far, and whether the loop should stop. */
+    private record ReviewPass(String text, boolean done) {}
+
     /**
      * One drafter→reviewer pass: a fresh context critiques the draft against the posting and the
      * user's writing profile, then returns a revised version. Shared by the public review endpoint
@@ -106,7 +108,8 @@ public class DocumentReviewer {
         return parseReviewOutcome(aiProvider.generateJson(composition, AiOperations.DOCUMENT_REVIEW));
     }
 
-    private static String reviewSystemPrompt(GenerationGuardrails guardrails) {
+    /** The reviewer system prompt: persona, the untrusted-input guard, and the resolved language. */
+    static String reviewSystemPrompt(GenerationGuardrails guardrails) {
         StringBuilder sb = new StringBuilder(REVIEWER_PERSONA);
         sb.append("\n\n").append(guardrails.untrustedInputBlock());
         if (guardrails.resolvedLanguage() != null) {
@@ -115,24 +118,34 @@ public class DocumentReviewer {
         return sb.toString();
     }
 
-    private String reviewUserPrompt(ReviewContext ctx, String content, WritingProfile writingProfile,
-                                    GenerationGuardrails guardrails, List<String> flaggedPhrases) {
+    /** The reviewer user prompt: the draft plus each applicable context/guardrail section, then the JSON contract. */
+    String reviewUserPrompt(ReviewContext ctx, String content, WritingProfile writingProfile,
+                            GenerationGuardrails guardrails, List<String> flaggedPhrases) {
+        List<String> sections = List.of(
+                draftBlock(ctx, content),
+                jobDescriptionBlock(ctx),
+                compositionBuilder.buildStyleMemory(writingProfile),
+                guardrails.honestyRules(),
+                guardrails.marketRules(),
+                flaggedPhrasesBlock(flaggedPhrases),
+                guardrails.clicheBlock());
         StringBuilder sb = new StringBuilder();
-        sb.append("## Draft (").append(ctx.documentType() != null ? ctx.documentType() : "document")
-                .append(")\n").append(content).append("\n\n");
-        if (ctx.jobDescription() != null && !ctx.jobDescription().isBlank()) {
-            appendBlock(sb, "## Job Description\n" + ctx.jobDescription());
-        }
-        appendBlock(sb, compositionBuilder.buildStyleMemory(writingProfile));
-        appendBlock(sb, guardrails.honestyRules());
-        appendBlock(sb, guardrails.marketRules());
-        sb.append(flaggedPhrasesBlock(flaggedPhrases));
-        appendBlock(sb, guardrails.clicheBlock());
+        sections.forEach(section -> appendBlock(sb, section));
         sb.append(REVIEW_JSON_INSTRUCTION);
         return sb.toString();
     }
 
-    /** Appends a non-blank block followed by a blank line; a no-op for absent guardrails. */
+    private static String draftBlock(ReviewContext ctx, String content) {
+        String label = ctx.documentType() != null ? ctx.documentType() : "document";
+        return "## Draft (" + label + ")\n" + content;
+    }
+
+    private static String jobDescriptionBlock(ReviewContext ctx) {
+        return ctx.jobDescription() == null || ctx.jobDescription().isBlank()
+                ? "" : "## Job Description\n" + ctx.jobDescription();
+    }
+
+    /** Appends a non-blank block followed by a blank line; a no-op for absent sections. */
     private static void appendBlock(StringBuilder sb, String block) {
         if (block != null && !block.isBlank()) {
             sb.append(block).append("\n\n");
@@ -140,16 +153,15 @@ public class DocumentReviewer {
     }
 
     /** The flagged-filler-phrases section, or empty when the draft carried none. */
-    private static String flaggedPhrasesBlock(List<String> flaggedPhrases) {
+    static String flaggedPhrasesBlock(List<String> flaggedPhrases) {
         if (flaggedPhrases.isEmpty()) {
             return "";
         }
         StringBuilder sb = new StringBuilder("## Flagged Filler Phrases\n")
                 .append("A deterministic check found these phrases in the draft. Rewrite every one "
                         + "of them into something concrete and specific to this candidate and "
-                        + "posting — do not simply delete the sentence if it carried a real point:\n");
-        flaggedPhrases.forEach(phrase -> sb.append("- \"").append(phrase).append("\"\n"));
-        sb.append('\n');
+                        + "posting — do not simply delete the sentence if it carried a real point:");
+        flaggedPhrases.forEach(phrase -> sb.append("\n- \"").append(phrase).append("\""));
         return sb.toString();
     }
 
@@ -181,27 +193,28 @@ public class DocumentReviewer {
         String current = body;
         int passes = Math.max(1, autoReviewMaxIterations);
         for (int i = 1; i <= passes; i++) {
-            Optional<ReviewOutcome> outcome = tryReviewPass(ctx, current, i, passes);
-            if (outcome.isEmpty()) {
-                break; // a failed pass keeps the best draft so far
-            }
-            current = outcome.get().revised();
-            if (outcome.get().critique().isEmpty()) {
-                break; // reviewer found nothing more to fix
+            ReviewPass pass = reviewPass(ctx, current, i, passes);
+            current = pass.text();
+            if (pass.done()) {
+                break;
             }
         }
         return current;
     }
 
-    /** One auto-review attempt: the outcome, or empty when the pass failed (logged, non-fatal). */
-    private Optional<ReviewOutcome> tryReviewPass(ReviewContext ctx, String current, int index, int passes) {
+    /**
+     * One auto-review attempt. On success returns the revised draft and whether the reviewer is
+     * exhausted (no further critique); on failure logs and returns the unchanged draft marked done,
+     * so a broken pass ends the loop without breaking generation.
+     */
+    private ReviewPass reviewPass(ReviewContext ctx, String current, int index, int passes) {
         try {
             ReviewOutcome outcome = review(ctx, current);
             log.info("Auto-review pass {}/{}: {} change(s) flagged", index, passes, outcome.critique().size());
-            return Optional.of(outcome);
+            return new ReviewPass(outcome.revised(), outcome.critique().isEmpty());
         } catch (Exception e) {
             log.warn("Auto-review pass {} failed, keeping current draft: {}", index, e.getMessage());
-            return Optional.empty();
+            return new ReviewPass(current, true);
         }
     }
 }
