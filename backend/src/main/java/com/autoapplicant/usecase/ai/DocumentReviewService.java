@@ -17,8 +17,7 @@ import org.springframework.stereotype.Service;
 /**
  * The public "review my draft" endpoint: runs the shared {@link DocumentReviewer} pass, then applies
  * the same deterministic content guards a first draft gets — the reviewer rewrites the whole
- * document, so its output needs the same backstops. Split out of {@code AiService} so reviewing has
- * one reason to change, separate from analysis, refinement, and generation.
+ * document, so its output needs the same backstops.
  */
 @Service
 public class DocumentReviewService implements ReviewDocumentUseCase {

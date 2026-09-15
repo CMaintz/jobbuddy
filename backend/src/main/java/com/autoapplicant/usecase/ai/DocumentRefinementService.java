@@ -22,8 +22,7 @@ import org.springframework.stereotype.Service;
  * Refines an existing draft against a user request. It produces text the candidate sends, so it
  * carries the same guardrail envelope as a first draft — market conventions, banned phrases, the
  * injection guard and language — plus an inline honesty instruction and the deterministic fact gate
- * on its output. "Make it stronger" must never become licence to invent. Split out of
- * {@code AiService} so refinement has one reason to change.
+ * on its output. "Make it stronger" must never become licence to invent.
  */
 @Service
 public class DocumentRefinementService implements RefineDocumentUseCase {

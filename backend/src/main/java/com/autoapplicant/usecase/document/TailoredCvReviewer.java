@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Drafter→reviewer pass for the structured CV — the CV-side counterpart to the cover-letter
- * reviewer in {@code AiService}. A fresh context critiques the tailored CV JSON against the
+ * reviewer {@code DocumentReviewer}. A fresh context critiques the tailored CV JSON against the
  * posting and the writing profile and returns a revised {@link TailoredCvContent} in the SAME
  * schema, preserving {@code sourceId}s so the assembler can still map items back to the master
  * profile. Any failure is non-fatal: the original draft is returned unchanged.
