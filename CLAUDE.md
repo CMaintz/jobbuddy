@@ -69,13 +69,13 @@ cp .env.example .env
 ## Build & Run Commands
 
 ### Full stack (Docker)
-```powershell
-Copy-Item .env.example .env   # first time only — then fill in secrets
+```bash
+cp .env.example .env   # first time only — then fill in secrets
 docker compose --env-file .env -f infra/docker-compose.yml up --build
 ```
 
 ### Local development (backend)
-```powershell
+```bash
 # Start dependencies only
 docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 
@@ -84,20 +84,20 @@ docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 ```
 
 ### Local development (frontend)
-```powershell
+```bash
 cd frontend
 npm install
 npm run start:local   # uses proxy.conf.json to forward /api to :8080
 ```
 
 ### Build
-```powershell
+```bash
 ./gradlew :backend:build          # compile + test backend
-cd frontend; npm run build        # production Angular build
+cd frontend && npm run build      # production Angular build
 ```
 
 ### Tests
-```powershell
+```bash
 # All backend tests
 ./gradlew :backend:test
 
@@ -108,15 +108,15 @@ cd frontend; npm run build        # production Angular build
 ./gradlew :backend:test --tests "*PromptEvalHarnessTest*" --info
 
 # Frontend tests (watch mode, opens a browser)
-cd frontend; npm test
+cd frontend && npm test
 
 # Frontend tests, headless — what CI runs
-cd frontend; npm run test:ci
+cd frontend && npm run test:ci
 ```
 
 ### Lint
-```powershell
-cd frontend; npm run lint
+```bash
+cd frontend && npm run lint
 ```
 
 ---
