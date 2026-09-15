@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * The drafter→reviewer pass, extracted out of {@code AiService}: a fresh context critiques a draft
+ * The drafter→reviewer pass: a fresh context critiques a draft
  * against the posting and the user's writing profile and returns a revised version, plus the
  * config-gated loop that runs it automatically after generation. Shared by the public review
  * endpoint and the generation path — a plain collaborator (in the vein of {@link CvDocumentAssembler}
