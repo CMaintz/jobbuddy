@@ -30,7 +30,7 @@ class GuardedPathsTest {
     private static final List<Path> TEXT_PRODUCING_SERVICES = List.of(
             SRC.resolve("usecase/ai/DocumentRefinementService.java"),
             SRC.resolve("usecase/ai/DocumentReviewService.java"),
-            SRC.resolve("usecase/ai/ApplicationDocumentService.java"), // generateDocument
+            SRC.resolve("usecase/ai/GeneratedDocumentFinalizer.java"), // generation (guards on assemble+persist)
             SRC.resolve("usecase/document/StructuredDocumentService.java")); // tailored CV
 
     @Test

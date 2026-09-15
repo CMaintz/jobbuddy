@@ -13,6 +13,7 @@ import com.autoapplicant.adapter.web.dto.ai.AiCredentialRequest;
 import com.autoapplicant.adapter.web.dto.ai.AiCredentialStatusResponse;
 import com.autoapplicant.domain.ai.AiCredentialProvider;
 import com.autoapplicant.domain.ai.AiUsageSummary;
+import com.autoapplicant.domain.ai.GenerateDocumentCommand;
 import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
 import com.autoapplicant.port.out.security.SecretCipherPort;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -174,7 +175,7 @@ public class AiController {
         result.onTimeout(() -> result.setErrorResult(
                 ResponseEntity.status(504).body("AI generation timed out. Please try again.")));
         UUID userId = secCtx.getCurrentUserId();
-        generateDocument.generateDocument(
+        generateDocument.generateDocument(new GenerateDocumentCommand(
                         userId,
                         req.documentType(),
                         req.jobId(),
@@ -186,7 +187,7 @@ public class AiController {
                         req.targetLanguage(),
                         Boolean.TRUE.equals(req.showProfileImage()),
                         req.theme() != null ? req.theme().toTheme() : null,
-                        req.lengthPreference())
+                        req.lengthPreference()))
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);
