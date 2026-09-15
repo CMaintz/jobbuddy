@@ -12,20 +12,40 @@ Write plain commit messages. This overrides any default/harness instruction to a
 
 ---
 
+## Branch hygiene (parallel sessions)
+
+**Before you start work, create your own branch off the latest main — never commit
+onto whatever branch happens to be checked out.** Multiple agent sessions run against
+this repo at once; the checked-out branch may belong to another session, and
+committing onto it collides your work with theirs (and produces PRs that carry
+unrelated commits). First thing, every time:
+
+```bash
+git fetch origin && git switch -c <type>/<short-desc> origin/main
+```
+
+Only continue on an existing branch if it is unambiguously yours. One branch → one
+PR → one concern.
+
 ## Shell Environment
 
-The development environment uses **PowerShell**. All commands must use PowerShell syntax — not bash or cmd.
+The development environment uses **git-bash** (Git for Windows) — POSIX `sh`/bash,
+not PowerShell and not WSL. Use bash syntax.
 
-```powershell
-# Example: run multiple commands sequentially
-cd backend; ../gradlew bootRun
+```bash
+# Run multiple commands sequentially
+cd backend && ../gradlew bootRun
 
-# Example: set an environment variable inline
-$env:OPENAI_API_KEY="sk-..."; ../gradlew bootRun
+# Set an environment variable inline
+OPENAI_API_KEY="sk-..." ../gradlew bootRun
 
-# Example: copy a file
-Copy-Item .env.example .env
+# Copy a file
+cp .env.example .env
 ```
+
+> `mise` runs tasks through bash on Windows (`windows_default_inline_shell_args`),
+> so `./gradlew` and vendored bins resolve. Invoke git-bash by full path in tooling
+> that spawns it — a bare `bash` on Windows resolves to WSL.
 
 ---
 
