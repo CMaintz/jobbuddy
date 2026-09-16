@@ -44,6 +44,24 @@ parallelisable — don't grind through it all in the main thread (the common fai
 Keep the main thread as the orchestrator that decides and integrates. Rule of thumb:
 about to read your fifth file to answer one question? That's a sub-agent.
 
+## The loop — how you reach "done"
+
+You work in a loop with a **deterministic oracle**: `mise run gate` (and the Stop
+hook's smell coaching) decides *done*, you propose. **"Done" is a green gate from a
+clean tree, never your own say-so** — a claim you fixed something isn't evidence, the
+exit code is.
+
+Each change: **run the oracle → read the specific feedback (failing verb, named smell
++ its guide) → fix the *cause* it points at, not the symptom → re-run → repeat until
+green.** Then self-check: could you defend this as one genuine fix, or is it a dodge
+(split-to-pass, `any`-cast, a 5-param helper, snooze-to-win)? A dodge is worse than
+the smell — it hides it. If you can't go green without weakening a rule (disabling a
+check, lowering a threshold, growing a baseline), **stop and surface it** — that's a
+labelled decision, not a fix.
+
+For a debt-paydown pass, work a **bounded target** (one file, or one small area) and
+loop it to 100% clean — don't try to zero the whole repo baseline in a session.
+
 ## Shell Environment
 
 The development environment uses **git-bash** (Git for Windows) — POSIX `sh`/bash,
