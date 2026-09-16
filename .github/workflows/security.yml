@@ -176,9 +176,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Restore PMD so the mise.toml postinstall hook (setup:pmd) no-ops instead of
+      # re-downloading it — this audit job doesn't use PMD, the hook just fires on
+      # `mise install`. Keyed on the pinned version.
+      - name: Cache PMD
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.local/opt/pmd-bin-7.27.0
+          key: pmd-7.27.0
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           version: 2026.9.2
+          cache: true
       - name: Install osv-scanner
         run: |
           mkdir -p "$HOME/.local/bin"

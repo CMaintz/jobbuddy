@@ -75,12 +75,22 @@ jobs:
         with:
           fetch-depth: 0 # Spotless ratchetFrom origin/main needs history, not a shallow tip
 
+      # Restore PMD before mise installs: the mise.toml postinstall hook provisions
+      # PMD (setup:pmd), which no-ops when this cache hits — so the gate job doesn't
+      # re-download it every run. Keyed on the pinned version. (mise-action itself
+      # caches java/node under ~/.local/share/mise; PMD lives in ~/.local/opt.)
+      - name: Cache PMD
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.local/opt/pmd-bin-7.27.0
+          key: pmd-7.27.0
       # Runs the same verb a developer runs locally: `mise run backend:gate`
       # (Spotless format check + compile + the offline test suite). mise pins
       # java 21 + node 20 from mise.toml.
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           version: 2026.9.2
+          cache: true
       # Cache Gradle deps + build across runs (mise pins the JDK but not ~/.gradle).
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
