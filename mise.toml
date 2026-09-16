@@ -18,10 +18,11 @@ node = "20"
 PMD_VERSION = "7.27.0"
 _.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env.PMD_VERSION}}/bin"]
 
-# Run tasks through bash on Windows too (not cmd), so `./gradlew` and vendor bins
-# resolve. Pinned in-repo so it doesn't depend on a contributor's global mise config.
-[settings]
-windows_default_inline_shell_args = "bash -c"
+# Tasks run through bash on Windows (not cmd) so `./gradlew` and vendor bins resolve.
+# This MUST live in GLOBAL mise config — mise ignores `windows_default_inline_shell_args`
+# in a project config for security (and warns on every run). One-time per machine:
+#   mise settings set windows_default_inline_shell_args "bash -c"
+# (foundry-init does this.) Kept out of the repo config so mise stops warning.
 
 # PMD can't be a [tools] entry (see [env]) — provision it as a task instead. `mise
 # install` runs it via the postinstall hook, so a fresh checkout is one command.
