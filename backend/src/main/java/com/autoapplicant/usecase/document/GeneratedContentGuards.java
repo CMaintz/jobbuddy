@@ -81,23 +81,17 @@ public class GeneratedContentGuards {
                     label(documentType), audit.unverifiedMetrics());
         }
         if (audit.inventedMetrics().isEmpty()) return audit;
-        String msg = "Fact guard: metric claim(s) not supported by the profile in "
-                + label(documentType) + ": " + audit.inventedMetrics();
-        if ("block".equalsIgnoreCase(factGuardMode)) {
-            throw new IllegalStateException(msg + " — generation blocked (app.ai.fact-guard.mode=block)");
-        }
-        log.warn(msg);
+        enforceOrWarn(factGuardMode, "app.ai.fact-guard.mode",
+                "Fact guard: metric claim(s) not supported by the profile in "
+                        + label(documentType) + ": " + audit.inventedMetrics());
         return audit;
     }
 
     private List<String> applyRetractedClaimsGuard(UUID userId, String body, String documentType) {
         List<String> violations = retractedClaimsGuard.findViolations(userId, body);
         if (violations.isEmpty()) return List.of();
-        String msg = "Retracted claim(s) resurfaced in " + label(documentType) + ": " + violations;
-        if ("block".equalsIgnoreCase(retractedClaimsMode)) {
-            throw new IllegalStateException(msg + " — generation blocked (app.ai.retracted-claims.mode=block)");
-        }
-        log.warn(msg);
+        enforceOrWarn(retractedClaimsMode, "app.ai.retracted-claims.mode",
+                "Retracted claim(s) resurfaced in " + label(documentType) + ": " + violations);
         return violations;
     }
 
@@ -110,13 +104,22 @@ public class GeneratedContentGuards {
         if (!clicheGuardEnabled) return List.of();
         ClicheGuard.ClicheAudit audit = clicheGuard.audit(body);
         if (audit.clean()) return List.of();
-        String msg = "Cliche guard: filler phrase(s) survived review in "
-                + label(documentType) + ": " + audit.phrases();
-        if ("block".equalsIgnoreCase(clicheGuardMode)) {
-            throw new IllegalStateException(msg + " — generation blocked (app.ai.cliche-guard.mode=block)");
-        }
-        log.warn(msg);
+        enforceOrWarn(clicheGuardMode, "app.ai.cliche-guard.mode",
+                "Cliche guard: filler phrase(s) survived review in "
+                        + label(documentType) + ": " + audit.phrases());
         return audit.phrases();
+    }
+
+    /**
+     * Applies a guard's configured mode to a finding: {@code block} fails generation, anything else
+     * (warn) logs and lets it through. The mode's property name is named in the block message so an
+     * operator can see which toggle stopped the document.
+     */
+    private void enforceOrWarn(String mode, String modeProperty, String message) {
+        if ("block".equalsIgnoreCase(mode)) {
+            throw new IllegalStateException(message + " — generation blocked (" + modeProperty + "=block)");
+        }
+        log.warn(message);
     }
 
     private static String label(String documentType) {
