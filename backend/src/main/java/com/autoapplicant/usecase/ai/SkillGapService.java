@@ -67,44 +67,49 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
             }
 
             String profileJson = careerProfileContext.buildJson(userId);
-            // Read the corpus the way a local recruiter would: a missing "det er en fordel" is an
-            // opportunity, not a gap, and reporting it as one sends the candidate off to learn
-            // something nobody required. Market resolved from the first posting (the whole set is
-            // the user's own bounded pipeline). The corpus is scraped third-party text, so the
-            // injection guard rides along the same as on the document surfaces.
-            Job first = jobs.getFirst();
-            GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
-                    GenerationGuardrails.Medium.ANALYSIS, null, first.descriptionClean(), first.country());
-            String prompt = buildPrompt(profileJson, jobs)
-                    + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules());
-            PromptComposition composition = new PromptComposition(
-                    "You are a career development analyst. Compare a candidate profile against real job "
-                    + "postings and identify concrete skill gaps. Never flag skills the profile already covers. "
-                    + "Respond with ONLY valid JSON.\n\n" + guardrails.untrustedInputBlock(),
-                    prompt, "", "", "", "", prompt);
-
+            PromptComposition composition = composePrompt(profileJson, jobs);
             JsonNode root = objectMapper.readTree(
                     AiResponseParser.extractJsonObject(aiProvider.generateJson(composition, AiOperations.SKILL_GAP)));
-
-            List<SkillGapReport.SkillGap> gaps = new ArrayList<>();
-            for (JsonNode g : root.path("gaps")) {
-                String skill = g.path("skill").asText(null);
-                if (skill == null || skill.isBlank()) continue;
-                List<String> resources = new ArrayList<>();
-                g.path("resources").forEach(r -> resources.add(r.asText()));
-                gaps.add(new SkillGapReport.SkillGap(
-                        skill,
-                        g.path("demand").asInt(1),
-                        g.path("priority").asText("MEDIUM"),
-                        g.path("why").asText(null),
-                        resources));
-            }
-            return CompletableFuture.completedFuture(new SkillGapReport(
-                    gaps, root.path("summary").asText(null), jobs.size()));
+            return CompletableFuture.completedFuture(parseReport(root, jobs.size()));
         } catch (Exception e) {
             log.error("Skill-gap analysis failed for user {}: {}", userId, e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    private static PromptComposition composePrompt(String profileJson, List<Job> jobs) {
+        // Read the corpus the way a local recruiter would: a missing "det er en fordel" is an
+        // opportunity, not a gap, and reporting it as one sends the candidate off to learn
+        // something nobody required. Market resolved from the first posting (the whole set is
+        // the user's own bounded pipeline). The corpus is scraped third-party text, so the
+        // injection guard rides along the same as on the document surfaces.
+        Job first = jobs.getFirst();
+        GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
+                GenerationGuardrails.Medium.ANALYSIS, null, first.descriptionClean(), first.country());
+        String prompt = buildPrompt(profileJson, jobs)
+                + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules());
+        return new PromptComposition(
+                "You are a career development analyst. Compare a candidate profile against real job "
+                + "postings and identify concrete skill gaps. Never flag skills the profile already covers. "
+                + "Respond with ONLY valid JSON.\n\n" + guardrails.untrustedInputBlock(),
+                prompt, "", "", "", "", prompt);
+    }
+
+    private static SkillGapReport parseReport(JsonNode root, int jobCount) {
+        List<SkillGapReport.SkillGap> gaps = new ArrayList<>();
+        for (JsonNode g : root.path("gaps")) {
+            String skill = g.path("skill").asText(null);
+            if (skill == null || skill.isBlank()) continue;
+            List<String> resources = new ArrayList<>();
+            g.path("resources").forEach(r -> resources.add(r.asText()));
+            gaps.add(new SkillGapReport.SkillGap(
+                    skill,
+                    g.path("demand").asInt(1),
+                    g.path("priority").asText("MEDIUM"),
+                    g.path("why").asText(null),
+                    resources));
+        }
+        return new SkillGapReport(gaps, root.path("summary").asText(null), jobCount);
     }
 
     private static String buildPrompt(String profileJson, List<Job> jobs) {
