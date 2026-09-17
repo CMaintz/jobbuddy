@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class SkillGapServiceTest {
+class JobSkillGapServiceTest {
 
     private final JobRepositoryPort jobs = mock(JobRepositoryPort.class);
     private final ProfileSkillRepositoryPort profileSkills = mock(ProfileSkillRepositoryPort.class);
@@ -25,10 +25,10 @@ class SkillGapServiceTest {
     private final UUID jobId = UUID.randomUUID();
     private final UUID userId = UUID.randomUUID();
 
-    private SkillGapService serviceWithTaxonomy(SkillTaxonomy... rows) {
+    private JobSkillGapService serviceWithTaxonomy(SkillTaxonomy... rows) {
         SkillTaxonomyRepositoryPort taxonomy = mock(SkillTaxonomyRepositoryPort.class);
         when(taxonomy.findAll()).thenReturn(List.of(rows));
-        return new SkillGapService(jobs, profileSkills, new SkillCanonicalizer(taxonomy));
+        return new JobSkillGapService(jobs, profileSkills, new SkillCanonicalizer(taxonomy));
     }
 
     private void jobAsks(List<String> skills) {
@@ -45,7 +45,7 @@ class SkillGapServiceTest {
 
     @Test
     void a_held_skill_covers_a_requirement_written_as_its_alias() {
-        SkillGapService service = serviceWithTaxonomy(
+        JobSkillGapService service = serviceWithTaxonomy(
                 new SkillTaxonomy(null, "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s")));
         jobAsks(List.of("k8s"));
         userHolds("Kubernetes");
@@ -60,7 +60,7 @@ class SkillGapServiceTest {
 
     @Test
     void a_genuinely_absent_skill_is_still_reported_missing() {
-        SkillGapService service = serviceWithTaxonomy(
+        JobSkillGapService service = serviceWithTaxonomy(
                 new SkillTaxonomy(null, "Kubernetes", "kubernetes", null, "DevOps", List.of("k8s")));
         jobAsks(List.of("k8s", "Rust"));
         userHolds("Kubernetes");

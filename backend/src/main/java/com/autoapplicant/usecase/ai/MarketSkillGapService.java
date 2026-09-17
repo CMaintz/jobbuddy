@@ -30,9 +30,9 @@ import org.springframework.stereotype.Service;
  * and the roles the matching engine considers reachable.
  */
 @Service("marketSkillGapService")
-public class SkillGapService implements AnalyzeSkillGapsUseCase {
+public class MarketSkillGapService implements AnalyzeSkillGapsUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(SkillGapService.class);
+    private static final Logger log = LoggerFactory.getLogger(MarketSkillGapService.class);
 
     private static final int DESCRIPTION_CHARS = 1_200;
 
@@ -41,7 +41,7 @@ public class SkillGapService implements AnalyzeSkillGapsUseCase {
     private final MarketCorpusService marketCorpus;
     private final ObjectMapper objectMapper;
 
-    public SkillGapService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
+    public MarketSkillGapService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                            CareerProfileContextService careerProfileContext,
                            MarketCorpusService marketCorpus,
                            ObjectMapper objectMapper) {
