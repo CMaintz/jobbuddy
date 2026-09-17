@@ -56,22 +56,39 @@ public class ProfileSkillIngestion {
         List<ProfileSkill> existing = skillRepo.findByUserId(userId);
         if (names == null || names.isEmpty()) return existing;
 
-        // Dedup on the canonical key, so an imported "k8s" is recognised as already held when the
-        // profile has Kubernetes — and two aliases of one skill in the same document count once.
+        List<String> fresh = freshNames(existing, names);
+        if (fresh.isEmpty()) return existing;
+
+        List<ProfileSkill> all = new ArrayList<>(existing);
+        all.addAll(saveNewSkills(userId, fresh, existing.size()));
+        return all;
+    }
+
+    /**
+     * The stripped names this profile does not already hold, in input order.
+     *
+     * <p>Dedup on the canonical key, so an imported "k8s" is recognised as already held when the
+     * profile has Kubernetes — and two aliases of one skill in the same document count once.
+     */
+    private List<String> freshNames(List<ProfileSkill> existing, List<String> names) {
         Set<String> held = new HashSet<>();
         existing.forEach(s -> held.add(resolver.key(s.skillName())));
-
-        List<String> fresh = names.stream()
+        return names.stream()
                 .filter(n -> n != null && !n.isBlank())
                 .map(String::strip)
                 .filter(n -> held.add(resolver.key(n)))
                 .toList();
-        if (fresh.isEmpty()) return existing;
+    }
 
+    /**
+     * Persists each fresh name as a profile skill — resolved onto its taxonomy master where one
+     * exists, appended after the profile's existing skills. One unsaveable skill is logged and
+     * skipped rather than costing the user the whole import.
+     */
+    private List<ProfileSkill> saveNewSkills(UUID userId, List<String> fresh, int startOrder) {
         Map<String, SkillTaxonomy> masters = resolver.mastersByKey(fresh);
-
         List<ProfileSkill> added = new ArrayList<>();
-        int order = existing.size();
+        int order = startOrder;
         for (String name : fresh) {
             SkillTaxonomy master = masters.get(resolver.key(name));
             try {
@@ -85,13 +102,9 @@ public class ProfileSkillIngestion {
                         order++,
                         master != null ? master.category() : null)));
             } catch (Exception e) {
-                // One unsaveable skill must not cost the user the whole import.
                 log.warn("Could not add parsed skill '{}' for user {}: {}", name, userId, e.getMessage());
             }
         }
-
-        List<ProfileSkill> all = new ArrayList<>(existing);
-        all.addAll(added);
-        return all;
+        return added;
     }
 }
