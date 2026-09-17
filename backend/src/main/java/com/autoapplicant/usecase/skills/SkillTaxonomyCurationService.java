@@ -11,6 +11,7 @@ import com.autoapplicant.port.out.skills.TaxonomyRejectionRepositoryPort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +64,22 @@ public class SkillTaxonomyCurationService implements CurateSkillTaxonomyUseCase 
         Set<String> known = taxonomyRepo.findAllKnownNormalizedNames();
         Set<String> rejected = rejectionRepo.findRejectedNormalizedNames();
 
-        // The database folds case and space; this folds the rest, so "Node.js" and "node.js "
-        // are one candidate keyed exactly as every other skill lookup keys it.
+        List<TaxonomyCandidate> ranked = new ArrayList<>(mergeMarketCandidates(known, rejected));
+        ranked.removeIf(candidate -> candidate.postings() < MIN_POSTINGS);
+        ranked.sort(java.util.Comparator.comparingInt(TaxonomyCandidate::postings).reversed()
+                .thenComparing(TaxonomyCandidate::name, String.CASE_INSENSITIVE_ORDER));
+        return ranked.size() > limit ? List.copyOf(ranked.subList(0, limit)) : List.copyOf(ranked);
+    }
+
+    /**
+     * Folds the market's raw skill mentions into one candidate per normalized name, skipping labels
+     * the taxonomy already knows or an admin has rejected. Two spellings of one skill combine via
+     * {@link #combine}.
+     *
+     * <p>The database folds case and space; this folds the rest, so "Node.js" and "node.js " are
+     * one candidate keyed exactly as every other skill lookup keys it.
+     */
+    private Collection<TaxonomyCandidate> mergeMarketCandidates(Set<String> known, Set<String> rejected) {
         Map<String, TaxonomyCandidate> merged = new LinkedHashMap<>();
         for (SkillMention mention : jobRepo.findSkillMentions(MAX_MARKET_LABELS)) {
             String normalized = SkillNames.normalize(mention.label());
@@ -74,12 +89,7 @@ public class SkillTaxonomyCurationService implements CurateSkillTaxonomyUseCase 
                             mention.readAsTechnology()),
                     SkillTaxonomyCurationService::combine);
         }
-
-        List<TaxonomyCandidate> ranked = new ArrayList<>(merged.values());
-        ranked.removeIf(candidate -> candidate.postings() < MIN_POSTINGS);
-        ranked.sort(java.util.Comparator.comparingInt(TaxonomyCandidate::postings).reversed()
-                .thenComparing(TaxonomyCandidate::name, String.CASE_INSENSITIVE_ORDER));
-        return ranked.size() > limit ? List.copyOf(ranked.subList(0, limit)) : List.copyOf(ranked);
+        return merged.values();
     }
 
     /**
