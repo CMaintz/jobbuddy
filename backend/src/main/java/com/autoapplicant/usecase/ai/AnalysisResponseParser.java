@@ -32,12 +32,6 @@ public class AnalysisResponseParser {
     public AiAnalysisResult parse(String response) {
         try {
             JsonNode node = objectMapper.readTree(AiResponseParser.extractJsonObject(response));
-            List<String> suggestions = new ArrayList<>();
-            node.path("suggestions").forEach(s -> suggestions.add(s.asText()));
-            List<String> strengths = new ArrayList<>();
-            node.path("strengths").forEach(s -> strengths.add(s.asText()));
-            List<String> gaps = new ArrayList<>();
-            node.path("gaps").forEach(s -> gaps.add(s.asText()));
 
             // Dimensional scores (job-targeted analyses). When complete, the overall
             // score is computed server-side from the fixed weights, not trusted from the model.
@@ -46,13 +40,21 @@ public class AnalysisResponseParser {
                     ? dimensions.weightedScore()
                     : Math.max(0, Math.min(100, node.path("score").asInt(0)));
 
-            return new AiAnalysisResult(suggestions, score, response,
+            return new AiAnalysisResult(stringList(node, "suggestions"), score, response,
                     node.path("summary").asText(null),
-                    strengths, gaps, dimensions, parseRisk(node.path("risk")));
+                    stringList(node, "strengths"), stringList(node, "gaps"),
+                    dimensions, parseRisk(node.path("risk")));
         } catch (Exception e) {
             log.warn("Analysis response was not valid JSON — returning raw text: {}", e.getMessage());
             return AiAnalysisResult.unstructured(response);
         }
+    }
+
+    /** Collects a JSON array field into a list of its element texts, preserving order. */
+    private static List<String> stringList(JsonNode node, String field) {
+        List<String> values = new ArrayList<>();
+        node.path(field).forEach(element -> values.add(element.asText()));
+        return values;
     }
 
     /** Parses the posting/employer risk block (job-targeted analyses only); null when absent. */
