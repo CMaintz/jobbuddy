@@ -8,14 +8,13 @@ import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 /**
  * The postings that represent "this user's market": their pipeline (applied + saved — explicit

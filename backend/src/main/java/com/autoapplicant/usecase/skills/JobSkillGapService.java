@@ -5,14 +5,13 @@ import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.port.in.skills.GetSkillGapUseCase;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.stereotype.Service;
 
 @Service("jobSkillGapService")
 public class JobSkillGapService implements GetSkillGapUseCase {
