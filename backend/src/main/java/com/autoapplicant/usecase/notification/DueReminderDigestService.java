@@ -60,19 +60,28 @@ public class DueReminderDigestService implements SendDueRemindersUseCase {
 
         int sent = 0;
         for (UserPreferences prefs : optedIn) {
-            Optional<User> user = userRepo.findById(prefs.userId());
-            if (user.isEmpty() || user.get().email() == null || user.get().email().isBlank()) continue;
-
-            List<Nudge> due = nudges.getNudges(prefs.userId()).stream()
-                    .filter(nudge -> MAILED_TYPES.contains(nudge.type()))
-                    .toList();
-            if (due.isEmpty()) continue;   // nothing due is not news
-
-            notification.send(user.get().email(), subject(due), body(due));
-            sent++;
+            if (sendDigestTo(prefs)) sent++;
         }
         if (sent > 0) log.info("Due-reminder digest sent to {} user(s)", sent);
         return sent;
+    }
+
+    /**
+     * Mails one user their due-today digest, if there is anything to say. Returns whether a mail
+     * went out — false when the user has no usable email or nothing is actually due (nothing due is
+     * not news).
+     */
+    private boolean sendDigestTo(UserPreferences prefs) {
+        Optional<User> user = userRepo.findById(prefs.userId());
+        if (user.isEmpty() || user.get().email() == null || user.get().email().isBlank()) return false;
+
+        List<Nudge> due = nudges.getNudges(prefs.userId()).stream()
+                .filter(nudge -> MAILED_TYPES.contains(nudge.type()))
+                .toList();
+        if (due.isEmpty()) return false;
+
+        notification.send(user.get().email(), subject(due), body(due));
+        return true;
     }
 
     private static String subject(List<Nudge> due) {
