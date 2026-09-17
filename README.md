@@ -6,7 +6,7 @@ An AI-powered job application platform that helps candidates go from job posting
 
 - **Career profile management** — structured profile with experience, education, skills, and projects; can be bootstrapped by parsing an existing CV
 - **Job discovery** — multi-source job crawler (Jobindex, Jobnet, IT-Jobbank, Jobdanmark, + ATS boards) and Postgres full-text and pgvector semantic search
-- **LinkedIn job connector** — personal-use, low-volume connector over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated per-user keyword plans; runs on its own jittered schedule off the shared crawl (see `db.md` / `application.yml` `app.linkedin.*`)
+- **LinkedIn job connector** — personal-use, low-volume connector over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated per-user keyword plans; runs on its own jittered schedule off the shared crawl (see `docs/guides/db.md` / `application.yml` `app.linkedin.*`)
 - **AI document generation** — tailored CVs and cover letters generated against a specific posting, with a configurable **automatic drafter→reviewer loop** that critiques and revises each draft before assembly
 - **ATS reports** — automated analysis of how well a generated document matches the target posting
 - **Prompt-safety hardening** — anti-fabrication rules (incl. tool-of-trade conflation), a prompt-injection guard treating scraped/posted job text as untrusted data, and a **deterministic fact gate** that flags invented/inflated metrics not supported by the profile (model-free, zero token cost)
@@ -94,10 +94,17 @@ AI provider / feature toggles (all optional, sensible defaults):
 - `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE` — deterministic fact gate on generated metrics (`warn` default, or `block`).
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (see `app.linkedin.*` in `application.yml`).
 
+## Documentation
+
+Full docs live in [`docs/`](docs/) (see the [index](docs/README.md)): `specs/`,
+`architecture/`, `guides/` (setup, commands, testing, db), `product/` (strategy,
+features, the Danish-market playbook), and `archive/` for superseded material.
+Agent guidance is in [`CLAUDE.md`](CLAUDE.md).
+
 ## Tests
 
-```powershell
+```bash
 ./gradlew :backend:test          # backend
-cd frontend; npm test            # frontend
-cd frontend; npm run lint        # lint
+cd frontend && npm test          # frontend
+cd frontend && npm run lint      # lint
 ```
