@@ -33,36 +33,52 @@ public class FunnelVelocityService implements GetFunnelVelocityUseCase {
         Map<UUID, List<ApplicationStatusEvent>> byApp = eventRepo.findByUserId(userId).stream()
                 .collect(Collectors.groupingBy(ApplicationStatusEvent::applicationId));
 
-        // key "FROM->TO" -> [count, totalSeconds]; insertion-ordered for stable output
-        Map<String, long[]> agg = new LinkedHashMap<>();
-        Map<String, String[]> labels = new LinkedHashMap<>();
+        TransitionTally tally = new TransitionTally();
+        byApp.values().forEach(events -> tallyTransitions(events, tally));
+        return new FunnelVelocity(tally.toTransitions());
+    }
 
-        for (List<ApplicationStatusEvent> events : byApp.values()) {
-            events.sort(Comparator.comparing(ApplicationStatusEvent::occurredAt));
-            for (int i = 1; i < events.size(); i++) {
-                ApplicationStatusEvent prev = events.get(i - 1);
-                ApplicationStatusEvent cur = events.get(i);
-                String from = cur.fromStatus() != null ? cur.fromStatus().name()
-                        : (prev.toStatus() != null ? prev.toStatus().name() : "UNKNOWN");
-                String to = cur.toStatus().name();
-                String key = from + "->" + to;
-                long seconds = Math.max(0, Duration.between(prev.occurredAt(), cur.occurredAt()).getSeconds());
-                long[] a = agg.computeIfAbsent(key, k -> new long[2]);
-                a[0]++;
-                a[1] += seconds;
-                labels.putIfAbsent(key, new String[]{from, to});
+    /** Records each consecutive status change within one application's history, oldest first. */
+    private static void tallyTransitions(List<ApplicationStatusEvent> events, TransitionTally tally) {
+        events.sort(Comparator.comparing(ApplicationStatusEvent::occurredAt));
+        for (int i = 1; i < events.size(); i++) {
+            ApplicationStatusEvent prev = events.get(i - 1);
+            ApplicationStatusEvent cur = events.get(i);
+            String from = cur.fromStatus() != null ? cur.fromStatus().name()
+                    : (prev.toStatus() != null ? prev.toStatus().name() : "UNKNOWN");
+            long seconds = Math.max(0, Duration.between(prev.occurredAt(), cur.occurredAt()).getSeconds());
+            tally.record(from, cur.toStatus().name(), seconds);
+        }
+    }
+
+    /**
+     * Accumulates count and total time-in-stage per {@code FROM->TO} transition, insertion-ordered
+     * for stable output, and renders them as transitions sorted by frequency.
+     */
+    private static final class TransitionTally {
+        // key "FROM->TO" -> [count, totalSeconds]
+        private final Map<String, long[]> countAndSeconds = new LinkedHashMap<>();
+        private final Map<String, String[]> labels = new LinkedHashMap<>();
+
+        void record(String from, String to, long seconds) {
+            String key = from + "->" + to;
+            long[] a = countAndSeconds.computeIfAbsent(key, k -> new long[2]);
+            a[0]++;
+            a[1] += seconds;
+            labels.putIfAbsent(key, new String[]{from, to});
+        }
+
+        List<FunnelVelocity.Transition> toTransitions() {
+            List<FunnelVelocity.Transition> transitions = new ArrayList<>();
+            for (Map.Entry<String, long[]> e : countAndSeconds.entrySet()) {
+                long[] a = e.getValue();
+                String[] fl = labels.get(e.getKey());
+                double avgDays = a[0] == 0 ? 0 : (a[1] / (double) a[0]) / 86_400.0;
+                transitions.add(new FunnelVelocity.Transition(fl[0], fl[1], (int) a[0],
+                        Math.round(avgDays * 10.0) / 10.0));
             }
+            transitions.sort(Comparator.comparingInt(FunnelVelocity.Transition::count).reversed());
+            return transitions;
         }
-
-        List<FunnelVelocity.Transition> transitions = new ArrayList<>();
-        for (Map.Entry<String, long[]> e : agg.entrySet()) {
-            long[] a = e.getValue();
-            String[] fl = labels.get(e.getKey());
-            double avgDays = a[0] == 0 ? 0 : (a[1] / (double) a[0]) / 86_400.0;
-            transitions.add(new FunnelVelocity.Transition(fl[0], fl[1], (int) a[0],
-                    Math.round(avgDays * 10.0) / 10.0));
-        }
-        transitions.sort(Comparator.comparingInt(FunnelVelocity.Transition::count).reversed());
-        return new FunnelVelocity(transitions);
     }
 }
