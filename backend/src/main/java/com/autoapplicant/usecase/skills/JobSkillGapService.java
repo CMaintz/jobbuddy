@@ -15,13 +15,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service("jobSkillGapService")
-public class SkillGapService implements GetSkillGapUseCase {
+public class JobSkillGapService implements GetSkillGapUseCase {
 
     private final JobRepositoryPort jobs;
     private final ProfileSkillRepositoryPort profileSkills;
     private final SkillCanonicalizer skillCanonicalizer;
 
-    public SkillGapService(JobRepositoryPort jobs, ProfileSkillRepositoryPort profileSkills,
+    public JobSkillGapService(JobRepositoryPort jobs, ProfileSkillRepositoryPort profileSkills,
                            SkillCanonicalizer skillCanonicalizer) {
         this.jobs = jobs;
         this.profileSkills = profileSkills;
@@ -33,16 +33,23 @@ public class SkillGapService implements GetSkillGapUseCase {
         Job job = jobs.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("Job not found"));
 
-        // Collect job requirements from both skills and technologies lists
-        List<String> requirements = Stream.concat(
-                job.skills() != null ? job.skills().stream() : Stream.empty(),
-                job.technologies() != null ? job.technologies().stream() : Stream.empty()
-        ).distinct().toList();
-
+        List<String> requirements = requiredSkills(job);
         if (requirements.isEmpty()) {
             return new SkillGapResult(List.of(), List.of(), 100);
         }
+        return coverageOf(requirements, userId);
+    }
 
+    /** The posting's demands — skills and technologies merged and de-duplicated, in posting wording. */
+    private static List<String> requiredSkills(Job job) {
+        return Stream.concat(
+                job.skills() != null ? job.skills().stream() : Stream.empty(),
+                job.technologies() != null ? job.technologies().stream() : Stream.empty()
+        ).distinct().toList();
+    }
+
+    /** Partitions the requirements into matched/missing against the user's held skills, with a coverage %. */
+    private SkillGapResult coverageOf(List<String> requirements, UUID userId) {
         // User's skills, canonicalised so "Kubernetes" answers a requirement written "k8s". The
         // requirement side is canonicalised the same way before comparison.
         Set<String> heldCanonical = profileSkills.findByUserId(userId).stream()
@@ -53,7 +60,6 @@ public class SkillGapService implements GetSkillGapUseCase {
 
         List<String> matched = new ArrayList<>();
         List<String> missing = new ArrayList<>();
-
         for (String req : requirements) {
             if (heldCanonical.contains(skillCanonicalizer.canonical(req))) {
                 matched.add(req);

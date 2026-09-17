@@ -22,7 +22,7 @@ import java.util.UUID;
  * interest) plus the nearest embedding-matched jobs (roles the matching engine considers
  * reachable).
  *
- * <p>Extracted from {@code SkillGapService}, which needed exactly this corpus and had it private.
+ * <p>Extracted from {@code MarketSkillGapService}, which needed exactly this corpus and had it private.
  * Skill-candidate ranking needs the same definition, and two definitions of "my market" that drift
  * apart would give the user contradictory advice on two screens.
  */

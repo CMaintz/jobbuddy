@@ -32,7 +32,7 @@ candidate did with each skill, which a letter can cite and an interviewer can pr
 | `skill_taxonomy` (V012) | Hierarchical skills with parents, categories and aliases — seeded |
 | `profile_skill` | `proficiencyLevel`, `yearsExperience`, `usedInProduction`, `category` — **rich, and mostly empty** |
 | `interview_story` (V059) | STAR+R records with tags — an evidence store, already built |
-| `SkillGapService` | "What does my market demand that I lack", from the user's real pipeline plus embedding-matched jobs |
+| `MarketSkillGapService` | "What does my market demand that I lack", from the user's real pipeline plus embedding-matched jobs |
 | `DocumentQualityEvaluator` | Measures whether evidence actually reaches the output |
 
 The gap is not analysis and not storage. It is that nothing ever *asks*, so `profile_skill`'s
@@ -50,7 +50,7 @@ which keeps it short and relevant instead of exhaustive and generic.
 
 ### Pass 2 — Rank by what the user's market actually asks for (deterministic)
 Order the unclaimed candidates by frequency across the postings **this user matches**, which the
-crawler already stores per job as `technologies` and `skills`. `SkillGapService` does the
+crawler already stores per job as `technologies` and `skills`. `MarketSkillGapService` does the
 model-driven version of this; the cheap frequency count is enough to decide question order.
 
 The question stops being "which skills exist in your industry" and becomes "which of your unlisted
