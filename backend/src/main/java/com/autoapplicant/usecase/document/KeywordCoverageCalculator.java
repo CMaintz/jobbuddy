@@ -38,44 +38,48 @@ public class KeywordCoverageCalculator {
             return KeywordCoverage.NOT_MEASURED;
         }
 
-        List<String> matchedRequired = presentIn(documentText, keywords.required());
-        List<String> missingRequired = absentFrom(documentText, keywords.required());
-        List<String> matchedPreferred = presentIn(documentText, keywords.preferred());
-        List<String> missingPreferred = absentFrom(documentText, keywords.preferred());
+        Partition required = partition(documentText, keywords.required());
+        Partition preferred = partition(documentText, keywords.preferred());
 
-        int possible = (matchedRequired.size() + missingRequired.size()) * REQUIRED_WEIGHT
-                + (matchedPreferred.size() + missingPreferred.size()) * PREFERRED_WEIGHT;
+        int possible = required.total() * REQUIRED_WEIGHT + preferred.total() * PREFERRED_WEIGHT;
         if (possible == 0) return KeywordCoverage.NOT_MEASURED;
 
-        int earned = matchedRequired.size() * REQUIRED_WEIGHT + matchedPreferred.size() * PREFERRED_WEIGHT;
-
-        List<String> matched = new ArrayList<>(matchedRequired);
-        matched.addAll(matchedPreferred);
-        List<String> missing = new ArrayList<>(missingRequired);
-        missing.addAll(missingPreferred);
+        int earned = required.matched().size() * REQUIRED_WEIGHT + preferred.matched().size() * PREFERRED_WEIGHT;
 
         return new KeywordCoverage(true, Math.round(100f * earned / possible),
-                List.copyOf(matched), List.copyOf(missing), List.copyOf(missingRequired));
+                concat(required.matched(), preferred.matched()),
+                concat(required.missing(), preferred.missing()),
+                List.copyOf(required.missing()));
     }
 
-    /** The keywords present in the text, keeping the posting's own wording for display. */
-    private List<String> presentIn(String text, List<String> keywords) {
-        if (keywords == null) return List.of();
-        return keywords.stream()
-                .filter(k -> k != null && !k.isBlank())
-                .distinct()
-                .filter(k -> present(text, k))
-                .toList();
+    /** Required-then-preferred, in that order, as one unmodifiable list. */
+    private static List<String> concat(List<String> first, List<String> second) {
+        List<String> all = new ArrayList<>(first);
+        all.addAll(second);
+        return List.copyOf(all);
     }
 
-    /** The keywords absent from the text. */
-    private List<String> absentFrom(String text, List<String> keywords) {
-        if (keywords == null) return List.of();
-        return keywords.stream()
+    /**
+     * Splits a keyword set into those the text covers and those it does not, in a single pass over
+     * the posting's own wording (deduplicated, blanks dropped) — so each keyword is matched once,
+     * not once to find the present and again to find the absent.
+     */
+    private Partition partition(String text, List<String> keywords) {
+        if (keywords == null) return new Partition(List.of(), List.of());
+        List<String> matched = new ArrayList<>();
+        List<String> missing = new ArrayList<>();
+        keywords.stream()
                 .filter(k -> k != null && !k.isBlank())
                 .distinct()
-                .filter(k -> !present(text, k))
-                .toList();
+                .forEach(k -> (present(text, k) ? matched : missing).add(k));
+        return new Partition(List.copyOf(matched), List.copyOf(missing));
+    }
+
+    /** A keyword set divided into the matched and missing forms, keeping the posting's wording. */
+    private record Partition(List<String> matched, List<String> missing) {
+        int total() {
+            return matched.size() + missing.size();
+        }
     }
 
     /**
