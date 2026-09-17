@@ -254,7 +254,7 @@ jobCountry)` — the posting's country wins over its language, so a Copenhagen e
 English still gets Danish conventions. The output language itself is resolved deterministically by
 `JobLanguageDetector` (user's explicit choice → detected posting language → model's own judgement),
 not left to the model. Adding a market means adding a constant plus a branch in `resolve` — never
-editing the prompt builder. The research behind the Danish rules lives in `danish_market_playbook.md`.
+editing the prompt builder. The research behind the Danish rules lives in `docs/product/danish_market_playbook.md`.
 
 ### Privacy Invariant
 
@@ -293,10 +293,10 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
 - `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
   restructuring a free-text answer). Off = template questions and the user's raw text; the feature
-  still works. See `skill_elicitation_design.md`.
+  still works. See `docs/product/skill_elicitation_design.md`.
 - `CLICHE_GUARD_ENABLED` / `CLICHE_GUARD_MODE` — deterministic Danish-floskel / AI-tell phrase check
   on generated documents (`warn` logs, `block` fails generation). Findings are also fed back into
-  the reviewer pass to be rewritten. See `danish_market_playbook.md`.
+  the reviewer pass to be rewritten. See `docs/product/danish_market_playbook.md`.
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (personal-use, low-volume).
 - `DUE_REMINDER_CRON` — daily "due today" email (default `0 0 7 * * *`). Sends only to users with
   notifications enabled who actually have something due; nothing due means no mail.

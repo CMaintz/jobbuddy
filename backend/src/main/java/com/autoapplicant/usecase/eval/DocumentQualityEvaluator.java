@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * model-free, so the same document always scores the same.
  *
  * <p>This exists so prompt changes can be measured instead of eyeballed. Every dimension is a
- * property the Danish-market research names as decisive (see {@code danish_market_playbook.md}):
+ * property the Danish-market research names as decisive (see {@code docs/product/danish_market_playbook.md}):
  * filler phrasing, proof anchored in real profile facts, posting-keyword coverage, whether the
  * letter merely retells the CV, invented numbers, and length discipline.
  *
