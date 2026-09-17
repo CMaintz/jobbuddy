@@ -4,16 +4,16 @@ import com.autoapplicant.domain.analytics.FunnelVelocity;
 import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.port.in.analytics.GetFunnelVelocityUseCase;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
 
 /**
  * Computes average time-in-stage between consecutive status transitions across a user's
@@ -32,37 +32,66 @@ public class FunnelVelocityService implements GetFunnelVelocityUseCase {
     public FunnelVelocity getFunnelVelocity(UUID userId) {
         Map<UUID, List<ApplicationStatusEvent>> byApp = eventRepo.findByUserId(userId).stream()
                 .collect(Collectors.groupingBy(ApplicationStatusEvent::applicationId));
+        return new FunnelVelocity(toTransitions(aggregate(byApp.values())));
+    }
 
-        // key "FROM->TO" -> [count, totalSeconds]; insertion-ordered for stable output
-        Map<String, long[]> agg = new LinkedHashMap<>();
-        Map<String, String[]> labels = new LinkedHashMap<>();
-
-        for (List<ApplicationStatusEvent> events : byApp.values()) {
-            events.sort(Comparator.comparing(ApplicationStatusEvent::occurredAt));
-            for (int i = 1; i < events.size(); i++) {
-                ApplicationStatusEvent prev = events.get(i - 1);
-                ApplicationStatusEvent cur = events.get(i);
-                String from = cur.fromStatus() != null ? cur.fromStatus().name()
-                        : (prev.toStatus() != null ? prev.toStatus().name() : "UNKNOWN");
-                String to = cur.toStatus().name();
-                String key = from + "->" + to;
-                long seconds = Math.max(0, Duration.between(prev.occurredAt(), cur.occurredAt()).getSeconds());
-                long[] a = agg.computeIfAbsent(key, k -> new long[2]);
-                a[0]++;
-                a[1] += seconds;
-                labels.putIfAbsent(key, new String[]{from, to});
-            }
+    /**
+     * Accumulates elapsed time per {@code FROM->TO} transition across every application's event
+     * stream. Keyed by {@code "FROM->TO"} in a {@link LinkedHashMap} so the output order is stable.
+     */
+    private static Map<String, TransitionAccumulator> aggregate(
+            Collection<List<ApplicationStatusEvent>> byApp) {
+        Map<String, TransitionAccumulator> agg = new LinkedHashMap<>();
+        for (List<ApplicationStatusEvent> events : byApp) {
+            accumulateApplication(events, agg);
         }
+        return agg;
+    }
 
-        List<FunnelVelocity.Transition> transitions = new ArrayList<>();
-        for (Map.Entry<String, long[]> e : agg.entrySet()) {
-            long[] a = e.getValue();
-            String[] fl = labels.get(e.getKey());
-            double avgDays = a[0] == 0 ? 0 : (a[1] / (double) a[0]) / 86_400.0;
-            transitions.add(new FunnelVelocity.Transition(fl[0], fl[1], (int) a[0],
-                    Math.round(avgDays * 10.0) / 10.0));
+    /** Folds one application's status ledger, in chronological order, into the shared accumulators. */
+    private static void accumulateApplication(
+            List<ApplicationStatusEvent> events, Map<String, TransitionAccumulator> agg) {
+        events.sort(Comparator.comparing(ApplicationStatusEvent::occurredAt));
+        for (int i = 1; i < events.size(); i++) {
+            ApplicationStatusEvent prev = events.get(i - 1);
+            ApplicationStatusEvent cur = events.get(i);
+            String from = cur.fromStatus() != null ? cur.fromStatus().name()
+                    : (prev.toStatus() != null ? prev.toStatus().name() : "UNKNOWN");
+            String to = cur.toStatus().name();
+            long seconds = Math.max(0, Duration.between(prev.occurredAt(), cur.occurredAt()).getSeconds());
+            agg.computeIfAbsent(from + "->" + to, k -> new TransitionAccumulator(from, to)).add(seconds);
         }
+    }
+
+    /** Renders the accumulated stats into transitions, busiest first. */
+    private static List<FunnelVelocity.Transition> toTransitions(Map<String, TransitionAccumulator> agg) {
+        List<FunnelVelocity.Transition> transitions = agg.values().stream()
+                .map(TransitionAccumulator::toTransition)
+                .collect(Collectors.toCollection(ArrayList::new));
         transitions.sort(Comparator.comparingInt(FunnelVelocity.Transition::count).reversed());
-        return new FunnelVelocity(transitions);
+        return transitions;
+    }
+
+    /** Mutable running total of time-in-stage for one {@code FROM->TO} transition. */
+    private static final class TransitionAccumulator {
+        private final String from;
+        private final String to;
+        private int count;
+        private long totalSeconds;
+
+        TransitionAccumulator(String from, String to) {
+            this.from = from;
+            this.to = to;
+        }
+
+        void add(long seconds) {
+            count++;
+            totalSeconds += seconds;
+        }
+
+        FunnelVelocity.Transition toTransition() {
+            double avgDays = count == 0 ? 0 : (totalSeconds / (double) count) / 86_400.0;
+            return new FunnelVelocity.Transition(from, to, count, Math.round(avgDays * 10.0) / 10.0);
+        }
     }
 }
