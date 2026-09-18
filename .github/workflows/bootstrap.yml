@@ -65,6 +65,7 @@ jobs:
           fi
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java habit-hooks-typescript
+          npm i -g jscpd   # backend generic-plugin duplication sensor (frontend gets it via npm ci)
           (cd frontend && npm ci)
       # `${{ github.* }}` goes through env, never straight into run: — interpolating
       # it inline is a shell-injection vector (semgrep run-shell-injection). Schedule
