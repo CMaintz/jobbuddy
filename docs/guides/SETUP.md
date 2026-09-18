@@ -47,7 +47,6 @@ FIREBASE_APP_ID=your-firebase-app-id
 
 # Optional — override only if running services outside Docker
 POSTGRES_PASSWORD=localdevpassword
-TYPESENSE_API_KEY=local-dev-key
 ```
 
 > **Security note:** Never commit `.env` to version control. It is already listed in `.gitignore`.
@@ -57,7 +56,7 @@ TYPESENSE_API_KEY=local-dev-key
 
 ## 3A — Full stack with Docker Compose (recommended)
 
-This starts PostgreSQL (with pgvector), Typesense, the Spring Boot backend, and the Angular frontend behind nginx.
+This starts PostgreSQL (with pgvector), the Spring Boot backend, and the Angular frontend behind nginx.
 
 ```bash
 # Run from the repo root so Docker Compose picks up .env automatically
@@ -66,12 +65,11 @@ docker compose -f infra/docker-compose.yml up --build
 
 First startup takes 3–5 minutes (Gradle build + npm install inside Docker). Subsequent starts are fast.
 
-Once all four services are healthy:
+Once all three services are healthy:
 
 - **App**: http://localhost
 - **API**: http://localhost:8080/api/v1
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **Typesense**: http://localhost:8108
 
 To run in the background:
 
@@ -101,7 +99,7 @@ Use this when you are actively developing and want hot-reload.
 
 ```bash
 cd infra
-docker compose up postgres typesense -d
+docker compose up postgres -d
 ```
 
 ### Run the backend
@@ -187,11 +185,10 @@ autoapplicant.yourdomain.com {
 
 ### Option B — Managed cloud (Railway / Render / Fly.io)
 
-Each service (postgres, typesense, backend, frontend) can be deployed separately on a managed platform. Pass environment variables through the platform's secrets UI.
+Each service (postgres, backend, frontend) can be deployed separately on a managed platform. Pass environment variables through the platform's secrets UI.
 
 Recommended split:
 - **Postgres**: use the platform's managed PostgreSQL add-on (must support the `pgvector` extension — Railway and Supabase both do)
-- **Typesense**: use Typesense Cloud (https://cloud.typesense.org/) or self-host on a separate container
 - **Backend**: deploy as a Docker container, set all env vars as secrets
 - **Frontend**: deploy the built static files to Vercel / Netlify, set `VITE_API_URL` / proxy config to point at the backend URL
 
@@ -225,9 +222,6 @@ Use the `docker-compose.yml` as a reference for pod specs, environment variables
 | `DB_URL` | No | `jdbc:postgresql://localhost:5432/autoapplicant` | JDBC URL (local dev only) |
 | `DB_USER` | No | `autoapplicant` | DB username (local dev only) |
 | `DB_PASS` | No | `POSTGRES_PASSWORD` or `localdevpassword` | DB password (local dev only) |
-| `TYPESENSE_API_KEY` | No | `local-dev-key` | Typesense admin API key |
-| `TYPESENSE_HOST` | No | `localhost` | Typesense hostname (local dev only) |
-| `TYPESENSE_PORT` | No | `8108` | Typesense port (local dev only) |
 
 ---
 
@@ -235,9 +229,6 @@ Use the `docker-compose.yml` as a reference for pod specs, environment variables
 
 **`relation "users" does not exist`**  
 Flyway migrations haven't run. Ensure `SPRING_DATASOURCE_URL` points at the correct host. In Docker Compose, the backend waits for postgres to be healthy before starting.
-
-**`Cannot connect to Typesense`**  
-Check `TYPESENSE_HOST` and `TYPESENSE_API_KEY`. In Docker Compose the host is `typesense` (the service name), not `localhost`.
 
 **`OpenAI: 401 Unauthorized`**  
 Your `OPENAI_API_KEY` is invalid or not set. Verify with:  

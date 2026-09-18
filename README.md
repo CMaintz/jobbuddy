@@ -84,7 +84,7 @@ cd frontend; npm install; npm run start:local
 - `OPENAI_API_KEY` — OpenAI key with access to `gpt-4o` and `text-embedding-3-small`
 - Firebase service account JSON at `.secrets/firebase-service-account.json`
 
-Optional: `DB_*`, `TYPESENSE_*`, `LINKEDIN_CLIENT_ID`/`SECRET`, `ALLOWED_ORIGINS` (all have local defaults).
+Optional: `DB_*`, `LINKEDIN_CLIENT_ID`/`SECRET`, `ALLOWED_ORIGINS` (all have local defaults).
 
 AI provider / feature toggles (all optional, sensible defaults):
 
