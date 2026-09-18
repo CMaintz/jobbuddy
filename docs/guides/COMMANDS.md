@@ -17,9 +17,9 @@ Alias for `docker compose` pointed at `infra/docker-compose.yml` + `.env`.
 ```powershell
 aac up --build          # build images and start all services (frontend + backend + DBs)
 aac up -d               # start all services in background (no rebuild)
-aac up postgres typesense -d   # start only the databases (for local dev / crawling)
+aac up postgres -d      # start only the database (for local dev / crawling)
 aac down                # stop all services, keep volumes (data preserved)
-aac down -v             # stop all services and wipe ALL volumes (DB, Typesense, uploads)
+aac down -v             # stop all services and wipe ALL volumes (DB, uploads)
 aac logs -f backend     # tail logs for a specific service
 aac ps                  # show running containers
 ```
@@ -43,9 +43,9 @@ aac-crawl it_jobbank -f        # force-crawl IT Jobbank
 **Sources:** `jobindex` `it_jobbank` `greenhouse` `lever` `teamtailor` `careerjet` `cornerstone_ondemand`
 **Case-insensitive** — `JOBINDEX` and `jobindex` both work.
 
-**What it does:** crawls → cleans text → classifies job category (RSS tags → keyword match → AI fallback) → saves to DB → async AI enrichment → Typesense indexing → embeddings.
+**What it does:** crawls → cleans text → classifies job category (RSS tags → keyword match → AI fallback) → saves to DB → async AI enrichment → embeddings.
 
-**Prerequisites:** `aac up postgres typesense -d` must be running. `aac-backend` is NOT needed.
+**Prerequisites:** `aac up postgres -d` must be running. `aac-backend` is NOT needed.
 
 **Force mode (`-f`):** disables the "caught-up" early stop — the crawl only halts when the feed returns an empty page or the 10,000-page safety ceiling is hit (~200k jobs). Use for first-time backfills or dev re-crawls.
 
@@ -74,7 +74,7 @@ aac-enrich              # enrich up to 500 unenriched jobs
 aac-enrich 100          # limit to 100 jobs this run
 ```
 
-**Prerequisites:** `aac up postgres typesense -d` must be running.
+**Prerequisites:** `aac up postgres -d` must be running.
 
 ---
 
@@ -110,9 +110,9 @@ npm run lint            # ESLint
 
 | Command | Compiles backend? | Compiles frontend? | Needs Docker? |
 |---|---|---|---|
-| `aac-crawl` | Yes (Gradle, on-the-fly) | No | postgres + typesense |
-| `aac-enrich` | Yes (Gradle, on-the-fly) | No | postgres + typesense |
-| `aac-backend` | Yes (Gradle, on-the-fly) | No | postgres + typesense |
+| `aac-crawl` | Yes (Gradle, on-the-fly) | No | postgres |
+| `aac-enrich` | Yes (Gradle, on-the-fly) | No | postgres |
+| `aac-backend` | Yes (Gradle, on-the-fly) | No | postgres |
 | `aac up --build` | Yes (Docker image) | Yes (Docker image) | Full stack |
 | `aac up -d` | No (uses existing image) | No (uses existing image) | Full stack |
 | `npm run start:local` | No | Yes (Angular) | `aac-backend` running |
@@ -127,7 +127,6 @@ npm run lint            # ESLint
 | Backend API | http://localhost:8080/api/v1 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI spec | http://localhost:8080/v3/api-docs |
-| Typesense | http://localhost:8108 |
 
 ---
 
