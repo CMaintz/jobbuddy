@@ -20,15 +20,12 @@ on:
         type: choice
         options: [prune, snooze]
         default: prune
-  # Part of the flow: when source lands on main (a repo-align fix merged, a
-  # threshold was tuned), re-prune and open a shrink PR if anything became clean.
-  # The `!snooze.json` exclusion stops the baseline-only shrink PR from re-triggering.
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '!**/.habit-hooks/snooze.json'
+  # Weekly auto-prune — the baseline still shrinks on its own as fixes land, but
+  # WITHOUT opening a PR on every merge. (A push:main trigger did exactly that: a
+  # burst of backend merges spawned one refresh PR each — PR-spam. Cadence, not
+  # per-commit; run it by hand via workflow_dispatch when you want it sooner.)
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays 06:00 UTC
 
 permissions:
   contents: read
