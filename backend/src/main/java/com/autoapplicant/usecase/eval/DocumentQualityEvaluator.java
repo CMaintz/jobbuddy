@@ -3,8 +3,6 @@ package com.autoapplicant.usecase.eval;
 import com.autoapplicant.domain.document.QualityScore;
 import com.autoapplicant.usecase.document.ClicheGuard;
 import com.autoapplicant.usecase.document.DocumentFactGuard;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -12,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Service;
 
 /**
  * Scores a generated application document against the posting and the profile it came from —
