@@ -4,6 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Code standards — read first
+
+The clean-code standard for this repo is **@docs/code-standards.md** — read it before
+writing code. It covers: functions do one thing (SRP / cohesion — length and
+complexity are *signals*, not the target), no magic numbers/strings, and the size
+limits (files ≤ 300 lines; lines ≤ 100–120). It is synced from foundry
+(`presets/code-standards.md`) — don't edit the vendored copy; change it upstream. This
+repo's *specific* enforcement (no-`var`, the fix commands) is under **Code conventions**
+below.
+
+---
+
 ## Git & Commit Messages
 
 **NEVER add AI attribution to commits or PR bodies.** No `Co-Authored-By: Claude ...`, no
@@ -144,19 +156,20 @@ cd frontend && npm run lint
 These are checked in CI; writing to them here means the agent avoids the failure
 in the first place rather than discovering it at PR time.
 
-- **A function does one thing.** Single level of abstraction, one reason to change
-  (SRP). If the honest name needs an "and", split it; separate *deciding* (which
-  branch) from *doing* (the work in each). The structural-smell gate enforces the
-  mechanical half — `high-complexity`, `oversized-function`, `too-many-parameters`,
-  `deep-nesting` are its tripwires — but clearing them is necessary, not sufficient;
-  "is this *one* thing?" is your judgement. Refactor toward the missing abstraction
-  (a value object, a strategy, a named step), never by splitting to a line count
-  (if the helper needs five parameters, the seam is wrong).
+- **Clean-code standard: `@docs/code-standards.md`** (read first, above) — one thing
+  per function (SRP/cohesion; length & complexity are signals, not the target), no
+  magic values, size limits. The structural-smell gate (`high-complexity`,
+  `oversized-function`, `too-many-parameters`, `deep-nesting`, `oversized-file`)
+  enforces the mechanical half; "is this *one* thing?" stays your judgement.
 - **Backend Java: never use `var`.** Use an explicit type. Local type inference
   hides the concrete type at the use site, which hurts readability for humans and
   agents. The `no-var` CI check enforces this on changed `src/main` files. If a
   `var` is genuinely warranted (an unspeakable or very long generic type), keep it
   and add a trailing `// foundry-allow-var: <reason>` comment on that line.
+- **Accepting a genuine non-seam.** For a linear data-carrier (a `toEntity`/`save`
+  mapper, a flat long builder) where extraction would be split-to-pass, accept the
+  structural finding with `// foundry-allow-smell: <reason>` — on the record and
+  reviewable. Sparingly, and never to dodge a real refactor.
 - **Keep constructors/methods under 8 parameters.** Beyond that is a "this class
   does too much" signal (`too-many-parameters`); introduce a parameter object or
   split responsibilities rather than adding another argument.
