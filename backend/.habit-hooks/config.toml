@@ -1,10 +1,12 @@
-# Backend structural smells via PMD (habit-hooks Java plugin).
+# Backend structural smells: the `java` plugin (PMD → oversized-function,
+# high-complexity, too-many-parameters, deep-nesting) + `generic` (jscpd duplication,
+# and line-count for oversized-file). Matches foundry's java preset.
 # Run from backend/ so PMD scans src/*.java. Baseline generated in CI (Linux) —
 # see bootstrap.yml — because the full file list blows the Windows command-line
 # limit locally. The tuned ruleset (pmd/ruleset.xml — ExcessiveParameterList
 # minimum raised 4 -> 8) is picked up automatically by the sensor's project-
 # ruleset discovery.
-plugins = ["java"]
+plugins = ["java", "generic"]
 
 # Tests are not structural-smell-gated. Long, mock-heavy test methods and many
 # fixtures are normal and fine; CI should police production maintainability, not
@@ -18,7 +20,15 @@ files = ["**/*.java", "!**/src/test/**/*.java"]
 # each element is a clean token. -R names the tuned ruleset (ExcessiveParameterList
 # minimum=8); --no-progress silences PMD's progress-bar WARN.
 [sensors.pmd]
-args = ["--no-progress", "-R", "pmd/ruleset.xml"]
+# --suppress-marker: `// foundry-allow-smell: <reason>` on a line accepts a genuine
+# non-seam (a linear toEntity/save mapper, a flat long builder) on the record —
+# reviewable, never a split-to-pass. Use sparingly, always with a reason.
+args = ["--no-progress", "-R", "pmd/ruleset.xml", "--suppress-marker", "foundry-allow-smell"]
+
+# File-length (generic line-count): flag files over 300 lines. Config/data/prose are
+# excluded by `files`; keep big prompts in their own resource file, not inline.
+[sensors.line-count]
+args = ["--max", "300"]
 
 # unused-import: PMD's UnnecessaryImport runs here without an aux-classpath, so it
 # cannot resolve wildcard-import usage and false-flags e.g. `jakarta.persistence.*`
