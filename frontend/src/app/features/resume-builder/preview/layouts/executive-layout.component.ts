@@ -12,7 +12,10 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 @Component({
   selector: 'app-executive-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
+  imports: [
+    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    SectionTypographyDirective, ResumePhotoDirective,
+  ],
   templateUrl: './executive-layout.component.html',
 })
 export class ExecutiveLayoutComponent {

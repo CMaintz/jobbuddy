@@ -13,7 +13,10 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-creative-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
+  imports: [
+    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    SectionTypographyDirective, ResumePhotoDirective,
+  ],
   templateUrl: './creative-layout.component.html',
 })
 export class CreativeLayoutComponent {

@@ -19,5 +19,7 @@ export class SettingsFormComponent {
   presetColors = ['#18324a', '#2563eb', '#16a34a', '#9333ea', '#dc2626', '#ea580c', '#0891b2', '#374151'];
   presetTextColors = ['#111827', '#1f2937', '#374151', '#0f172a', '#292524', '#1e3a5f'];
   get settings() { return this.state.settings(); }
-  update(field: string, value: unknown): void { this.state.updateSettings({ [field]: value } as Partial<ResumeSettings>); }
+  update(field: string, value: unknown): void {
+    this.state.updateSettings({ [field]: value } as Partial<ResumeSettings>);
+  }
 }

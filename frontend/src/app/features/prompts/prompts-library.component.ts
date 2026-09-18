@@ -27,7 +27,10 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
 @Component({
   selector: 'app-prompts-library',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent],
+  imports: [
+    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent,
+  ],
   templateUrl: './prompts-library.component.html'
 })
 export class PromptsLibraryComponent implements OnInit {

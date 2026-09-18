@@ -91,7 +91,9 @@ export class AtsPdfService {
     let y = MARGIN;
 
     if (opts.name) {
-      y = this.header(doc, { name: opts.name, headline: opts.headline, contactLine: opts.contactLine, sections: [] }, y);
+      y = this.header(
+        doc, { name: opts.name, headline: opts.headline, contactLine: opts.contactLine, sections: [] }, y,
+      );
     }
     for (const para of opts.paragraphs) {
       y = this.paragraph(doc, para, y, 10.5, 0, 5.2);

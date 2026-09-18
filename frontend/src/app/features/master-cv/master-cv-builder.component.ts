@@ -354,15 +354,25 @@ export class MasterCvBuilderComponent implements OnInit {
     this.markDirty();
   }
 
-  removeExperience(i: number): void { this.removeEntry(this.experienceList, i, id => this.profileApi.deleteExperience(id)); }
-  removeEducation(i: number): void { this.removeEntry(this.educationList, i, id => this.profileApi.deleteEducation(id)); }
+  removeExperience(i: number): void {
+    this.removeEntry(this.experienceList, i, id => this.profileApi.deleteExperience(id));
+  }
+  removeEducation(i: number): void {
+    this.removeEntry(this.educationList, i, id => this.profileApi.deleteEducation(id));
+  }
   removeProject(i: number): void { this.removeEntry(this.projectsList, i, id => this.profileApi.deleteProject(id)); }
   removeLanguage(i: number): void { this.removeEntry(this.languagesList, i, id => this.profileApi.deleteLanguage(id)); }
   removeSocial(i: number): void { this.removeEntry(this.socialsList, i, id => this.socialApi.deleteSocial(id)); }
-  removeStrength(i: number): void { this.removeEntry(this.strengthsList, i, id => this.strengthApi.deleteStrength(id)); }
-  removeCertification(i: number): void { this.removeEntry(this.certificationsList, i, id => this.profileApi.deleteCertification(id)); }
+  removeStrength(i: number): void {
+    this.removeEntry(this.strengthsList, i, id => this.strengthApi.deleteStrength(id));
+  }
+  removeCertification(i: number): void {
+    this.removeEntry(this.certificationsList, i, id => this.profileApi.deleteCertification(id));
+  }
 
-  private removeEntry<T extends { id?: string }>(list: T[], index: number, deleteFn: (id: string) => Observable<void>): void {
+  private removeEntry<T extends { id?: string }>(
+    list: T[], index: number, deleteFn: (id: string) => Observable<void>,
+  ): void {
     const entry = list[index];
     list.splice(index, 1);
     if (entry?.id) {

@@ -227,7 +227,10 @@ export class DashboardComponent implements OnInit {
       }));
   }
 
-  private buildQueue(reminders: { note: string | null; dueAt: string; applicationId: string }[], apps: Application[], nudges: Nudge[]): void {
+  private buildQueue(
+    reminders: { note: string | null; dueAt: string; applicationId: string }[],
+    apps: Application[], nudges: Nudge[],
+  ): void {
     const appMap = new Map(apps.map(a => [a.id, a]));
     const now = Date.now();
     const endOfDay = new Date();

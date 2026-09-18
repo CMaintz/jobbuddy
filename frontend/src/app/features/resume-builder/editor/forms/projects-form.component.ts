@@ -19,7 +19,9 @@ export class ProjectsFormComponent {
   get jobDescription() { return this.state.jobDescription() ?? undefined; }
   add(): void { this.state.addProject({ name: '', link: '', date: '', description: '', skills: [] }); }
   remove(id: string): void { this.state.removeProject(id); }
-  update(id: string, field: string, value: unknown): void { this.state.updateProject(id, { [field]: value } as Partial<ResumeProject>); }
+  update(id: string, field: string, value: unknown): void {
+    this.state.updateProject(id, { [field]: value } as Partial<ResumeProject>);
+  }
   updateSkills(id: string, value: string): void {
     const skills = value.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
     this.state.updateProject(id, { skills });

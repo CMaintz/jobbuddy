@@ -29,7 +29,10 @@ interface TaskRow {
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent],
+  imports: [
+    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbPillComponent, JbToastComponent, CompanyMarkComponent,
+  ],
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit {

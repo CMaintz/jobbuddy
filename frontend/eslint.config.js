@@ -3,6 +3,8 @@ const eslint = require("@eslint/js");
 const { defineConfig } = require("eslint/config");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
+// Foundry base (line-length gate) — vendored; see eslint.config.foundry.cjs.
+const foundry = require("./eslint.config.foundry.cjs");
 
 module.exports = defineConfig([
   {
@@ -16,6 +18,9 @@ module.exports = defineConfig([
       tseslint.configs.recommended,
       tseslint.configs.stylistic,
       angular.configs.tsRecommended,
+      // Line-length gate — scoped to TS here (not HTML templates), where long lines
+      // signal a statement that should be split or a value that wants a name.
+      ...foundry,
     ],
     processor: angular.processInlineTemplates,
     rules: {

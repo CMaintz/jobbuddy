@@ -89,7 +89,11 @@ interface StyleSnapshot {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent, DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent],
+  imports: [
+    CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent,
+    JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent,
+    DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent,
+  ],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {

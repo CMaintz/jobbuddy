@@ -42,7 +42,10 @@ export class PdfTemplatesApiService {
     return this.http.post('/api/v1/documents/export-structured-pdf', { document }, { responseType: 'blob' });
   }
 
-  buildStructuredApplication(documentType: string, content: string, templateId: string, showProfileImage = false, theme?: DocumentTheme): Observable<StructuredDocument> {
+  buildStructuredApplication(
+    documentType: string, content: string, templateId: string, showProfileImage = false,
+    theme?: DocumentTheme,
+  ): Observable<StructuredDocument> {
     return this.http.post<StructuredDocument>('/api/v1/documents/structured-application', {
       documentType,
       content,

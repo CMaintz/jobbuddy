@@ -11,7 +11,10 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-strengths-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent, DebouncedTextareaComponent],
+  imports: [
+    CommonModule, FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent,
+    DebouncedTextareaComponent,
+  ],
   templateUrl: './strengths-form.component.html',
 })
 export class StrengthsFormComponent {

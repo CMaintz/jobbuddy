@@ -13,7 +13,10 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-classic-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
+  imports: [
+    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    SectionTypographyDirective, ResumePhotoDirective,
+  ],
   templateUrl: './classic-layout.component.html',
   styleUrls: ['./classic-layout.component.css'],
 })

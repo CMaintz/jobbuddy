@@ -13,7 +13,10 @@ import { Job } from '../../core/models/job.model';
 @Component({
   selector: 'app-saved-roles',
   standalone: true,
-  imports: [CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, CompanyMarkComponent],
+  imports: [
+    CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbPillComponent, CompanyMarkComponent,
+  ],
   templateUrl: './saved-roles.component.html'
 })
 export class SavedRolesComponent implements OnInit {

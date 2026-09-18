@@ -19,7 +19,10 @@ const HEATMAP_WEEKS = 14;
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent, FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent],
+  imports: [
+    CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent,
+    FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent,
+  ],
   templateUrl: './analytics.component.html'
 })
 export class AnalyticsComponent implements OnInit {

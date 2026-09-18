@@ -45,7 +45,9 @@ export class ApplicationsApiService {
 
   create(jobId: string, cvVersionId?: string, notes?: string): Observable<Application>;
   create(payload: CreateApplicationPayload): Observable<Application>;
-  create(jobOrPayload: string | CreateApplicationPayload, cvVersionId?: string, notes?: string): Observable<Application> {
+  create(
+    jobOrPayload: string | CreateApplicationPayload, cvVersionId?: string, notes?: string,
+  ): Observable<Application> {
     const payload = typeof jobOrPayload === 'string'
       ? { jobId: jobOrPayload, cvVersionId, notes }
       : jobOrPayload;

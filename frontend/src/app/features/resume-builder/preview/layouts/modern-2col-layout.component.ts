@@ -13,7 +13,10 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-modern-2col-layout',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective, ResumePhotoDirective],
+  imports: [
+    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    SectionTypographyDirective, ResumePhotoDirective,
+  ],
   templateUrl: './modern-2col-layout.component.html',
 })
 export class Modern2ColLayoutComponent {
