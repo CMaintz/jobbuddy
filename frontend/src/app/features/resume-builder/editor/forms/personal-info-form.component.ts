@@ -11,7 +11,10 @@ import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.compone
 @Component({
   selector: 'app-personal-info-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent, AiRefineMenuComponent],
+  imports: [
+    CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent,
+    AiRefineMenuComponent,
+  ],
   templateUrl: './personal-info-form.component.html',
 })
 export class PersonalInfoFormComponent {

@@ -52,7 +52,10 @@ export class InterviewPrepApiService {
     return this.http.post<InterviewPrepPack>(`/api/v1/jobs/${jobId}/interview-prep/pack`, {});
   }
 
-  /** Stateless roleplay turn: send the full transcript, get the interviewer's next message (or feedback when wrapUp). */
+  /**
+   * Stateless roleplay turn: send the full transcript, get the interviewer's next
+   * message (or feedback when wrapUp).
+   */
   roleplay(jobId: string, messages: MockInterviewTurn[], wrapUp = false): Observable<{ reply: string }> {
     return this.http.post<{ reply: string }>(`/api/v1/jobs/${jobId}/interview-prep/roleplay`, { messages, wrapUp });
   }

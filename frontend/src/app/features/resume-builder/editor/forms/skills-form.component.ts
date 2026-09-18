@@ -16,5 +16,7 @@ export class SkillsFormComponent {
   get skills() { return this.state.skills(); }
   add(): void { this.state.addSkill({ name: '', level: 3 }); }
   remove(id: string): void { this.state.removeSkill(id); }
-  update(id: string, field: string, value: unknown): void { this.state.updateSkill(id, { [field]: value } as Partial<ResumeSkill>); }
+  update(id: string, field: string, value: unknown): void {
+    this.state.updateSkill(id, { [field]: value } as Partial<ResumeSkill>);
+  }
 }

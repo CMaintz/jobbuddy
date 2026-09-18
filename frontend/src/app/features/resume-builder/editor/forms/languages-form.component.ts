@@ -18,5 +18,7 @@ export class LanguagesFormComponent {
   get languages() { return this.state.languages(); }
   add(): void { this.state.addLanguage({ name: '', proficiency: 'Fluent' }); }
   remove(id: string): void { this.state.removeLanguage(id); }
-  update(id: string, field: string, value: unknown): void { this.state.updateLanguage(id, { [field]: value } as Partial<ResumeLanguage>); }
+  update(id: string, field: string, value: unknown): void {
+    this.state.updateLanguage(id, { [field]: value } as Partial<ResumeLanguage>);
+  }
 }

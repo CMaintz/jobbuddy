@@ -151,7 +151,9 @@ export class AuthService {
   private fetchMe(): Observable<MeResponse> {
     return this.http.get<MeResponse>('/api/v1/auth/me').pipe(
       tap(res => {
-        const user: User = { id: res.userId, email: res.email, role: res.role, onboardingComplete: res.onboardingComplete };
+        const user: User = {
+          id: res.userId, email: res.email, role: res.role, onboardingComplete: res.onboardingComplete,
+        };
         localStorage.setItem(this.USER_KEY, JSON.stringify(user));
         this.currentUserSubject.next(user);
       })

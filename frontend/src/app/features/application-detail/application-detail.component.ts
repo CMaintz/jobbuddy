@@ -15,7 +15,10 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
 @Component({
   selector: 'app-application-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    StatusChipComponent, CompanyMarkComponent, FitBarComponent,
+  ],
   templateUrl: './application-detail.component.html'
 })
 export class ApplicationDetailComponent implements OnInit {

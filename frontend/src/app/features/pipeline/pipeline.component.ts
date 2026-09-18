@@ -22,7 +22,10 @@ interface StageConfig {
 @Component({
   selector: 'app-pipeline',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbPillComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent,
+  ],
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {

@@ -74,7 +74,10 @@ export function yearsDemanded(text: string | undefined): number | null {
 @Component({
   selector: 'app-job-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, MatchBadgeComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent,
+    JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, MatchBadgeComponent,
+  ],
   templateUrl: './job-feed.component.html'
 })
 export class JobFeedComponent implements OnInit, OnDestroy {

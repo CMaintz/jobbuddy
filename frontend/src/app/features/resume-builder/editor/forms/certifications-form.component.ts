@@ -16,5 +16,7 @@ export class CertificationsFormComponent {
   get certifications() { return this.state.certifications(); }
   add(): void { this.state.addCertification({ name: '', issuer: '', date: '' }); }
   remove(id: string): void { this.state.removeCertification(id); }
-  update(id: string, field: string, value: unknown): void { this.state.updateCertification(id, { [field]: value } as Partial<ResumeCertification>); }
+  update(id: string, field: string, value: unknown): void {
+    this.state.updateCertification(id, { [field]: value } as Partial<ResumeCertification>);
+  }
 }

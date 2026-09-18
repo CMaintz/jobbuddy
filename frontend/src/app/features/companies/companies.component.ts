@@ -15,7 +15,10 @@ import { CompaniesApiService, Company, OutreachContact, OutreachStatus, Outreach
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent, CompanyMarkComponent, RouterLink],
+  imports: [
+    CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent,
+    CompanyMarkComponent, RouterLink,
+  ],
   templateUrl: './companies.component.html'
 })
 export class CompaniesComponent implements OnInit, OnDestroy {
