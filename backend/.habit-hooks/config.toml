@@ -30,6 +30,13 @@ args = ["--no-progress", "-R", "pmd/ruleset.xml", "--suppress-marker", "foundry-
 [sensors.line-count]
 args = ["--max", "300"]
 
+# jscpd (the other half of `generic`) is a Node CLI — the backend has no Node, so it
+# errors with `incomplete-run`. We keep `generic` only for its pure-Python line-count
+# (file-length above). To add Java duplication detection, install Node + `npm i -g
+# jscpd` in the smells job and locally, then remove this block.
+[sensors.jscpd]
+disabled = true
+
 # unused-import: PMD's UnnecessaryImport runs here without an aux-classpath, so it
 # cannot resolve wildcard-import usage and false-flags e.g. `jakarta.persistence.*`
 # on JPA entities. It is also redundant — Spotless `removeUnusedImports` already
