@@ -109,7 +109,7 @@ jobs:
           fi
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java
-          npm i -g jscpd
+          npm i -g jscpd@5.2.1   # pinned to match mise.toml — same duplication findings locally + CI
       - name: Smells (fails only on smells beyond the snooze baseline)
         id: smells
         if: steps.baseline.outputs.have == 'true'
