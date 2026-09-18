@@ -25,7 +25,7 @@ on:
   # burst of backend merges spawned one refresh PR each — PR-spam. Cadence, not
   # per-commit; run it by hand via workflow_dispatch when you want it sooner.)
   schedule:
-    - cron: '0 6 * * 1'   # Mondays 06:00 UTC
+    - cron: '0 6 * * *'   # daily 06:00 UTC — a fresh shrink PR at most once a day
 
 permissions:
   contents: read
