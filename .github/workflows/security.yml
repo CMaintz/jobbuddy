@@ -102,7 +102,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|backend/pmd/|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.github/workflows/)'
+          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|backend/pmd/|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|(backend|frontend)/\.jscpd\.json|\.github/workflows/)'
           SOURCE_RE: '^(backend/src/|frontend/src/|extension/)'
           TEST_RE: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'
           LABEL: 'ruleset-change'
