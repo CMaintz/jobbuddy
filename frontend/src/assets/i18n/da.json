@@ -1267,6 +1267,15 @@
       "loading": "Henter stillinger…",
       "empty": "Ingen opslag fra denne virksomhed endnu.",
       "closed": "Lukket"
+    },
+    "research": {
+      "heading": "Research",
+      "hint": "Indsæt din egen research om virksomheden. Den forankrer ansøgninger til deres stillinger — holdt adskilt fra det automatisk udtrukne og genbrugt på tværs af alle ansøgninger her.",
+      "placeholder": "Hvad de bygger, nyt om dem, deres tone, hvorfor du passer ind…",
+      "save": "Gem research",
+      "saving": "Gemmer…",
+      "saved": "Gemt",
+      "loadFailed": "Kunne ikke indlæse — vælg igen for at prøve igen"
     }
   },
   "documents": {

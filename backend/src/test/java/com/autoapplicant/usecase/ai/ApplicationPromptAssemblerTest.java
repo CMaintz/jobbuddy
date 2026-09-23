@@ -79,6 +79,6 @@ class ApplicationPromptAssemblerTest {
                 null, null, "English", false, null, "STANDARD"));
 
         verify(jobRepo, never()).findById(any());
-        verify(companyGrounding, never()).factsFor(any());
+        verify(companyGrounding, never()).contextFor(any());
     }
 }

@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 import com.autoapplicant.adapter.persistence.entity.CompanyEntity;
 import com.autoapplicant.adapter.persistence.repository.CompanyJpaRepository;
 import com.autoapplicant.domain.company.Company;
+import com.autoapplicant.domain.company.CompanyResearch;
 import com.autoapplicant.domain.company.CompanySize;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import org.springframework.data.domain.PageRequest;
@@ -77,6 +78,23 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
         repo.findById(companyId).ifPresent(e -> {
             e.setResearchedFacts(facts);
             e.setFactsResearchedAt(java.time.Instant.now());
+            repo.save(e);
+        });
+    }
+
+    @Override
+    public Optional<CompanyResearch> findResearch(UUID companyId) {
+        return repo.findById(companyId)
+                .filter(e -> e.getResearchNotes() != null && !e.getResearchNotes().isBlank())
+                .map(e -> new CompanyResearch(e.getResearchNotes(), e.getResearchNotesUpdatedAt()));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void saveResearch(UUID companyId, String notes) {
+        repo.findById(companyId).ifPresent(e -> {
+            e.setResearchNotes(notes != null && !notes.isBlank() ? notes : null);
+            e.setResearchNotesUpdatedAt(java.time.Instant.now());
             repo.save(e);
         });
     }

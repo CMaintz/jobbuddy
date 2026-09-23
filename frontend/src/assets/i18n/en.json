@@ -1267,6 +1267,15 @@
       "loading": "Loading roles…",
       "empty": "No postings from this company yet.",
       "closed": "Closed"
+    },
+    "research": {
+      "heading": "Research",
+      "hint": "Paste your own research on this company. It grounds cover letters written for their roles — kept separate from what's auto-extracted, and reused across every application here.",
+      "placeholder": "What they build, recent news, their tone, why you'd fit…",
+      "save": "Save research",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "loadFailed": "Couldn't load — reselect to retry"
     }
   },
   "documents": {

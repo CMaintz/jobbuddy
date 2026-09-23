@@ -25,11 +25,12 @@ public class PromptCompositionBuilder {
             PromptTemplate styleTemplate,
             WritingProfile writingProfile,
             java.util.List<String> outcomeLessons,
-            String companyFacts,
+            CompanyContext companyContext,
             String lengthPreference) {
 
         String jobDescription = posting != null ? posting.description() : null;
         String jobCountry = posting != null ? posting.country() : null;
+        CompanyContext company = companyContext != null ? companyContext : CompanyContext.EMPTY;
 
         // Short recruiter/follow-up messages are outreach, not prose letters: same market, a
         // different medium, and the way they fail is sounding like sales rather than generic.
@@ -122,9 +123,13 @@ public class PromptCompositionBuilder {
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
                 + requirementsBlock(posting)
-                + (companyFacts != null && !companyFacts.isBlank()
+                + (company.hasFacts()
                     ? "\n\n## Verified Company Facts\n(From the company's own website — trustworthy and safe "
-                      + "to reference; distinct from the untrusted posting above.)\n" + companyFacts : "")
+                      + "to reference; distinct from the untrusted posting above.)\n" + company.facts() : "")
+                + (company.hasResearch()
+                    ? "\n\n## Company Research (from the candidate)\n(Pasted by the candidate as background "
+                      + "— useful, but not independently verified; prefer the Verified Company Facts above for "
+                      + "any specific claim, and never contradict them.)\n" + company.researchNotes() : "")
                 + (customInstructions != null && !customInstructions.isBlank()
                     ? "\n\n## Additional Instructions\n" + customInstructions : "")
                 + (motivationText != null && !motivationText.isBlank()
@@ -268,7 +273,8 @@ public class PromptCompositionBuilder {
             - One evidence paragraph that proves fit with a concrete, NAMED role or project from the \
             profile and its most relevant quantified outcome — depth over a list.
             - A short company-fit paragraph connecting the candidate's direction to the employer; \
-            ground any company reference in the Verified Company Facts when provided.
+            ground any company reference in the Verified Company Facts, or the candidate's Company \
+            Research where the facts are silent, when either is provided.
             - Close with a brief, confident call to action.
             Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.
             If — and only if — the profile carries an "availability" value, state it as one short             factual clause near the close (employers routinely ask, and a candidate who volunteers             it reads as someone who has thought the move through). Never invent a notice period or             start date the profile does not state.""";

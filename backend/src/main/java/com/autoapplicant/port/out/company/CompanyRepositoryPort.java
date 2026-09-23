@@ -2,6 +2,7 @@ package com.autoapplicant.port.out.company;
 
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanyFacts;
+import com.autoapplicant.domain.company.CompanyResearch;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +19,8 @@ public interface CompanyRepositoryPort {
     // ── Cached company grounding facts ──────────────────────
     Optional<CompanyFacts> findFacts(UUID companyId);
     void saveFacts(UUID companyId, String facts);
+
+    // ── User-supplied company research ──────────────────────
+    Optional<CompanyResearch> findResearch(UUID companyId);
+    void saveResearch(UUID companyId, String notes);
 }

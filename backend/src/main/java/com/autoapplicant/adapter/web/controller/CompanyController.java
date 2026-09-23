@@ -1,14 +1,17 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.adapter.web.dto.company.SaveCompanyResearchRequest;
 import com.autoapplicant.adapter.web.dto.company.TrackOutreachRequest;
 import com.autoapplicant.adapter.web.dto.company.UpdateOutreachRequest;
 import com.autoapplicant.domain.company.Company;
+import com.autoapplicant.domain.company.CompanyResearch;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.company.OutreachContact;
 import com.autoapplicant.domain.company.OutreachTarget;
 import com.autoapplicant.port.in.company.FindOutreachTargetsUseCase;
 import com.autoapplicant.port.in.company.GetCompaniesUseCase;
+import com.autoapplicant.port.in.company.ManageCompanyResearchUseCase;
 import com.autoapplicant.port.in.company.ManageOutreachUseCase;
 import com.autoapplicant.port.in.job.GetJobsByCompanyUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,17 +29,20 @@ import java.util.UUID;
 public class CompanyController {
 
     private final GetCompaniesUseCase companies;
+    private final ManageCompanyResearchUseCase research;
     private final FindOutreachTargetsUseCase outreachTargets;
     private final ManageOutreachUseCase outreach;
     private final GetJobsByCompanyUseCase companyJobs;
     private final SecurityContextHelper secCtx;
 
     public CompanyController(GetCompaniesUseCase companies,
+                             ManageCompanyResearchUseCase research,
                              FindOutreachTargetsUseCase outreachTargets,
                              ManageOutreachUseCase outreach,
                              GetJobsByCompanyUseCase companyJobs,
                              SecurityContextHelper secCtx) {
         this.companies = companies;
+        this.research = research;
         this.outreachTargets = outreachTargets;
         this.outreach = outreach;
         this.companyJobs = companyJobs;
@@ -103,6 +109,25 @@ public class CompanyController {
     @GetMapping("/api/v1/companies/{id}")
     public ResponseEntity<Company> getById(@PathVariable UUID id) {
         return companies.getCompanyById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "The candidate's research notes for a company",
+            description = "Free-text research (typically from an external agent) used to ground "
+                    + "cover-letter references. Notes are null when none have been saved.")
+    @GetMapping("/api/v1/companies/{id}/research")
+    public ResponseEntity<CompanyResearch> getResearch(@PathVariable UUID id) {
+        return ResponseEntity.ok(research.getResearch(id).orElse(new CompanyResearch(null, null)));
+    }
+
+    @Operation(summary = "Save the candidate's research notes for a company",
+            description = "A blank body clears the notes.")
+    @ApiResponses(@ApiResponse(responseCode = "404", description = "Company not found"))
+    @PutMapping("/api/v1/companies/{id}/research")
+    public ResponseEntity<CompanyResearch> saveResearch(@PathVariable UUID id,
+                                                        @RequestBody SaveCompanyResearchRequest req) {
+        return research.saveResearch(id, req.notes())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

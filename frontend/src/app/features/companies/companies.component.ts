@@ -34,6 +34,16 @@ export class CompaniesComponent implements OnInit, OnDestroy {
   companyJobs = signal<Job[]>([]);
   companyJobsLoading = signal(false);
 
+  /** The candidate's research notes for the selected company; grounds cover letters. */
+  researchNotes = signal('');
+  researchUpdatedAt = signal<string | null>(null);
+  researchSaving = signal(false);
+  researchLoading = signal(false);
+  /** A failed load must NOT look like "no notes" — saving blank then would wipe real research. */
+  researchLoadFailed = signal(false);
+  /** Set once the user edits, so a slow load can't overwrite what they've started typing. */
+  researchDirty = signal(false);
+
   /**
    * 'all' browses every known company, 'targets' ranks them for unsolicited applications, and
    * 'tracked' is the outreach actually under way.
@@ -45,11 +55,16 @@ export class CompaniesComponent implements OnInit, OnDestroy {
   tracked = signal<OutreachContact[]>([]);
   trackedLoading = signal(false);
 
-  /** Selecting a company also pulls the postings we hold from them. */
+  /** Selecting a company also pulls the postings we hold from them and its research notes. */
   select(company: Company): void {
     this.selected.set(company);
     this.companyJobs.set([]);
     this.companyJobsLoading.set(true);
+    this.researchNotes.set('');
+    this.researchUpdatedAt.set(null);
+    this.researchDirty.set(false);
+    this.researchLoadFailed.set(false);
+    this.researchLoading.set(true);
     this.companiesApi.jobs(company.id).subscribe({
       next: jobs => {
         // A slower request for a company the user has since clicked away from must not
@@ -61,6 +76,46 @@ export class CompaniesComponent implements OnInit, OnDestroy {
       error: () => {
         if (this.selected()?.id === company.id) this.companyJobsLoading.set(false);
       }
+    });
+    this.companiesApi.getResearch(company.id).subscribe({
+      next: res => {
+        if (this.selected()?.id !== company.id) return;
+        this.researchLoading.set(false);
+        // The user may have started typing before this arrived — don't clobber their edit.
+        if (this.researchDirty()) return;
+        this.researchNotes.set(res.notes ?? '');
+        this.researchUpdatedAt.set(res.updatedAt);
+      },
+      error: () => {
+        if (this.selected()?.id !== company.id) return;
+        this.researchLoading.set(false);
+        this.researchLoadFailed.set(true);
+      },
+    });
+  }
+
+  /** Track edits so a late load can't overwrite them, and clear a prior load failure. */
+  onResearchInput(value: string): void {
+    this.researchNotes.set(value);
+    this.researchDirty.set(true);
+    this.researchLoadFailed.set(false);
+  }
+
+  /** Persist the research notes for the selected company; blank clears them. */
+  saveResearch(): void {
+    const company = this.selected();
+    // Never save while a load is in flight or failed: a blank save would wipe real notes.
+    if (!company || this.researchSaving() || this.researchLoading() || this.researchLoadFailed()) return;
+    this.researchSaving.set(true);
+    this.companiesApi.saveResearch(company.id, this.researchNotes()).subscribe({
+      next: res => {
+        if (this.selected()?.id === company.id) {
+          this.researchUpdatedAt.set(res.updatedAt);
+          this.researchDirty.set(false);
+        }
+        this.researchSaving.set(false);
+      },
+      error: () => this.researchSaving.set(false),
     });
   }
 
