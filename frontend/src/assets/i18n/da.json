@@ -1515,6 +1515,23 @@
       "cvTemplateHint": "Skabelon brugt til det tilpassede CV i Hurtig ansøgning.",
       "cvTemplateDefault": "Systemstandard"
     },
+    "sectionPrompts": {
+      "heading": "Sektionsinstruktioner",
+      "intro": "Stående retningslinjer for, hvordan hver CV-sektion skal skrives. Anvendes hver gang et CV tilpasses, og når du forfiner et felt — aldrig en tilladelse til at opfinde, altid underordnet ærlighedsreglerne.",
+      "placeholder": "f.eks. Start med målbar effekt; hold det til tre linjer.",
+      "save": "Gem instruktioner",
+      "saving": "Gemmer…",
+      "saved": "Gemt",
+      "loadFailed": "Kunne ikke indlæse dine instruktioner — åbn Indstillinger igen for at prøve igen.",
+      "field": {
+        "profile": "Profil",
+        "competencies": "Kompetencer",
+        "experience": "Erfaring",
+        "projects": "Projekter",
+        "education": "Uddannelse",
+        "certifications": "Certificeringer"
+      }
+    },
     "style": {
       "analyze": "Analysér min skrivning",
       "intro": "Hvordan AI'en skal lyde, når den skriver for dig. Hvert genereret brev, besked og tilpasset CV følger disse regler. Skriv dem selv, eller lad en analyse af dine egne tekster foreslå dem.",

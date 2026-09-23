@@ -16,6 +16,7 @@ import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-vi
 import { AiUsagePanelComponent } from './ai-usage-panel.component';
 import { SkillTaxonomyPanelComponent } from './skill-taxonomy-panel.component';
 import { AiKeyPanelComponent } from './ai-key-panel.component';
+import { CvSectionPromptsPanelComponent } from './cv-section-prompts-panel.component';
 import { ThemeService } from '../../core/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserPreferences } from '../../core/models/user.model';
@@ -93,6 +94,7 @@ interface StyleSnapshot {
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent,
     JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent,
     DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent,
+    CvSectionPromptsPanelComponent,
   ],
   templateUrl: './settings.component.html'
 })

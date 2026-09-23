@@ -1515,6 +1515,23 @@
       "cvTemplateHint": "Template used for the tailored CV in Quick apply.",
       "cvTemplateDefault": "System default"
     },
+    "sectionPrompts": {
+      "heading": "Section instructions",
+      "intro": "Standing guidance for how each CV section should be written. Applied every time a CV is tailored and when you refine a field — never a licence to invent, always subordinate to the honesty rules.",
+      "placeholder": "e.g. Lead with measurable impact; keep it to three lines.",
+      "save": "Save instructions",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "loadFailed": "Couldn't load your instructions — reopen Settings to try again.",
+      "field": {
+        "profile": "Profile",
+        "competencies": "Competencies",
+        "experience": "Experience",
+        "projects": "Projects",
+        "education": "Education",
+        "certifications": "Certifications"
+      }
+    },
     "style": {
       "analyze": "Analyze my writing",
       "intro": "How the AI should sound when it writes for you. Every generated letter, message, and tailored CV follows these rules. Write them yourself, or let an analysis of your own texts propose them.",

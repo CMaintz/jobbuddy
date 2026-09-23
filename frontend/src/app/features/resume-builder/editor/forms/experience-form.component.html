@@ -39,6 +39,7 @@
               <div class="flex justify-between items-center mb-1">
                 <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.form.description' | translate }}</label>
                 <app-ai-refine-menu [content]="exp.description" [jobDescription]="jobDescription"
+                  [sectionKey]="'experience'"
                   (refined)="update(exp.id, 'description', $event)" />
               </div>
               <app-rich-text-editor [value]="exp.description" [placeholder]="'resumeBuilder.form.descPlaceholderExp' | translate" (debouncedChange)="update(exp.id, 'description', $event)" />

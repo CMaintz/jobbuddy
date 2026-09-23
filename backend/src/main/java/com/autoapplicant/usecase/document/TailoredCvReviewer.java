@@ -1,8 +1,8 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.CvTailoringGuidance;
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
-import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
@@ -46,8 +46,9 @@ public class TailoredCvReviewer {
 
     /** Critiques and revises the tailored CV; returns the draft unchanged when disabled or on error. */
     public TailoredCvContent review(TailoredCvContent draft, PostingContext posting,
-                                    WritingProfile writingProfile, String targetLanguage) {
+                                    CvTailoringGuidance guidance, String targetLanguage) {
         if (!autoReviewEnabled || draft == null) return draft;
+        CvTailoringGuidance authoring = guidance != null ? guidance : CvTailoringGuidance.NONE;
         try {
             String draftJson = objectMapper.writeValueAsString(draft);
             String jobDescription = posting != null ? posting.description() : null;
@@ -71,10 +72,12 @@ public class TailoredCvReviewer {
                 system += "\nWrite all rewritten text in " + guardrails.resolvedLanguage() + ".";
             }
 
-            String styleMemory = promptBuilder.buildStyleMemory(writingProfile);
+            String styleMemory = promptBuilder.buildStyleMemory(authoring.writingProfile());
+            String sectionGuidance = PromptCompositionBuilder.sectionGuidanceBlock(authoring.sectionPrompts());
             String user = "## Draft CV (JSON)\n" + draftJson
                     + "\n\n## Job Description\n" + (jobDescription != null ? jobDescription : "(none provided)")
                     + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
+                    + sectionGuidance
                     + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules())
                     + "\n\n" + guardrails.honestyRules()
                     + "\n\n" + guardrails.clicheBlock()

@@ -151,6 +151,7 @@
                   <div class="flex items-center justify-between">
                     <span class="label">{{ 'masterCv.profileSummary' | translate }}</span>
                     <app-ai-refine-menu [plainOutput]="true" [content]="profile.summary || ''"
+                      [sectionKey]="'profile'"
                       (refined)="profile.summary = $event; markDirty()" />
                   </div>
                   <textarea [(ngModel)]="profile.summary" rows="6" class="input resize-y text-base leading-relaxed"

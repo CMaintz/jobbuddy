@@ -1,5 +1,7 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.CvSectionPrompts;
+import com.autoapplicant.domain.document.CvTailoringGuidance;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptTemplate;
@@ -15,6 +17,7 @@ import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
+import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -48,6 +51,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final KeywordCoverageCalculator coverageCalculator;
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
+    private final CvSectionPromptsRepositoryPort cvSectionPromptsRepo;
 
     public StructuredDocumentService(UserRepositoryPort userRepo,
                                      ProfileRepositoryPort profileRepo,
@@ -63,7 +67,8 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      AtsReportBuilder atsReportBuilder,
                                      KeywordCoverageCalculator coverageCalculator,
                                      ApplicationRepositoryPort applicationRepo,
-                                     GeneratedContentGuards contentGuards) {
+                                     GeneratedContentGuards contentGuards,
+                                     CvSectionPromptsRepositoryPort cvSectionPromptsRepo) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.privateInfoRepo = privateInfoRepo;
@@ -79,6 +84,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.coverageCalculator = coverageCalculator;
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
+        this.cvSectionPromptsRepo = cvSectionPromptsRepo;
     }
 
     public StructuredDocument buildCv(UUID userId, String templateId) {
@@ -200,11 +206,16 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                 job != null ? job.requirements() : java.util.List.of());
         PromptTemplate promptTemplate = resolvePromptTemplate(userId, promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
+        // The user's analysed style + their standing per-section instructions, travelling together
+        // so drafting and the review pass apply the same guidance.
+        CvSectionPrompts sectionPrompts = cvSectionPromptsRepo.findByUserId(userId)
+                .orElseGet(() -> CvSectionPrompts.empty(userId));
+        CvTailoringGuidance guidance = new CvTailoringGuidance(writingProfile, sectionPrompts);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
                 source, posting, customInstructions, targetLanguage, promptTemplate,
-                writingProfile, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
+                guidance, applicationRepo.findRecentOutcomeLessons(userId, 5), lengthPreference);
         // Drafter→reviewer pass on the structured CV (config-gated); non-fatal on failure.
-        tailored = tailoredCvReviewer.review(tailored, posting, writingProfile, targetLanguage);
+        tailored = tailoredCvReviewer.review(tailored, posting, guidance, targetLanguage);
         // Same deterministic backstops as cover letters: fact gate + retracted claims on the CV text.
         ContentGuardFindings findings = contentGuards.verify(
                 userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");

@@ -7,5 +7,7 @@ public record RefineDocumentRequest(
         String currentContent,
         String userMessage,
         String jobDescription,
-        String targetLanguage
+        String targetLanguage,
+        /** The CV section being refined (wire-key), or null for non-section refines. */
+        String sectionKey
 ) {}

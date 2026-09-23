@@ -227,7 +227,7 @@ public class AiController {
         UUID userId = secCtx.getCurrentUserId();
         RefineDocumentRequest request = new RefineDocumentRequest(
                 userId, req.currentContent(), req.userMessage(),
-                req.jobDescription(), req.targetLanguage());
+                req.jobDescription(), req.targetLanguage(), req.sectionKey());
         refine.refine(request)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {

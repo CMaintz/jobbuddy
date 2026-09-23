@@ -26,6 +26,7 @@ import { Project } from '../../../core/models/profile-section.model';
                 <div class="flex items-center justify-between">
                   <span class="label">{{ 'masterCv.form.description' | translate }}</span>
                   <app-ai-refine-menu [plainOutput]="true" [content]="proj.description || ''"
+                    [sectionKey]="'projects'"
                     (refined)="proj.description = $event; dirty.emit()" />
                 </div>
                 <input [(ngModel)]="proj.description" class="input" [placeholder]="'masterCv.form.descShortPlaceholder' | translate" />

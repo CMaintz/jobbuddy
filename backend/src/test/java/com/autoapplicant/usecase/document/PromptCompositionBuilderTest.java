@@ -1,5 +1,8 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.CvSection;
+import com.autoapplicant.domain.document.CvSectionPrompts;
+import com.autoapplicant.domain.document.CvTailoringGuidance;
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.job.JobRequirement;
@@ -37,6 +40,30 @@ class PromptCompositionBuilderTest {
     private PromptComposition letter(PostingContext posting, String targetLanguage) {
         return builder.composeStructuredApplicationPrompt("COVER_LETTER", "{}", posting, null, null,
                 targetLanguage, null, null, List.of(), null, "STANDARD");
+    }
+
+    @Test
+    void savedSectionPromptsBecomeALabelledGuidanceBlock() {
+        CvSectionPrompts prompts = new CvSectionPrompts(null, java.util.UUID.randomUUID(),
+                java.util.Map.of(CvSection.PROFILE, "Lead with leadership impact.",
+                        CvSection.SKILLS, "Foreground cloud skills."), null);
+        PromptComposition c = builder.composeCvTailoringPrompt("{}",
+                new PostingContext("posting", "Denmark", null), null, "English", null,
+                new CvTailoringGuidance(null, prompts), List.of(), "STANDARD");
+
+        assertThat(c.userPromptTemplate())
+                .contains("## Section Guidance")
+                .contains("Profile: Lead with leadership impact.")
+                // SKILLS is surfaced under the user-facing "Competencies" label.
+                .contains("Competencies: Foreground cloud skills.")
+                // Subordinate to the honesty rules, never a licence to invent.
+                .contains("never license inventing content");
+    }
+
+    @Test
+    void withoutSavedSectionPromptsThereIsNoGuidanceBlock() {
+        assertThat(cv("posting", "English", "Denmark").userPromptTemplate())
+                .doesNotContain("## Section Guidance");
     }
 
     private PromptComposition cv(String posting, String targetLanguage, String country) {
