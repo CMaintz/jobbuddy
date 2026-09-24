@@ -10,6 +10,7 @@ import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.web.WebPageFetchPort;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,7 @@ public class CompanyGroundingService {
     private String factsFor(UUID companyId) {
         if (!enabled || companyId == null) return null;
         try {
-            var cached = companyRepo.findFacts(companyId);
+            Optional<CompanyFacts> cached = companyRepo.findFacts(companyId);
             if (cached.isPresent() && isFresh(cached.get().researchedAt())) {
                 return cached.get().facts();
             }
