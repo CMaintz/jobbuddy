@@ -3,6 +3,7 @@ package com.autoapplicant.usecase.document;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.autoapplicant.domain.document.CompanyContext;
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import java.io.IOException;
@@ -39,7 +40,8 @@ class PromptCompositionBuilderGoldenTest {
                 "COVER_LETTER", PROFILE_JSON, posting,
                 "Keep it under one page.", "I admire the team's open-source work.", "English",
                 null, null, List.of("Emphasise the ML projects next time."),
-                "Acme builds developer tooling; founded 2010; HQ in Copenhagen.", "STANDARD");
+                new CompanyContext("Acme builds developer tooling; founded 2010; HQ in Copenhagen.", null),
+                "STANDARD");
         assertMatchesGolden("generation-cover-letter", composition);
     }
 

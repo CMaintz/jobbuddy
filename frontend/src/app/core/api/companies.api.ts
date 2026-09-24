@@ -18,6 +18,12 @@ export interface Company {
   isRecruitingAgency: boolean;
 }
 
+/** The candidate's free-text research for a company; grounds cover-letter references. */
+export interface CompanyResearch {
+  notes: string | null;
+  updatedAt: string | null;
+}
+
 /** One ranking reason: a translation key under `companies.targets.reason.` plus its arguments. */
 export interface OutreachReason {
   code: string;
@@ -99,5 +105,15 @@ export class CompaniesApiService {
 
   getById(id: string): Observable<Company> {
     return this.http.get<Company>(`/api/v1/companies/${id}`);
+  }
+
+  /** The candidate's research notes for a company; notes are null when none saved. */
+  getResearch(id: string): Observable<CompanyResearch> {
+    return this.http.get<CompanyResearch>(`/api/v1/companies/${id}/research`);
+  }
+
+  /** Save research notes for a company; a blank value clears them. */
+  saveResearch(id: string, notes: string): Observable<CompanyResearch> {
+    return this.http.put<CompanyResearch>(`/api/v1/companies/${id}/research`, { notes });
   }
 }
