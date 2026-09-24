@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.ai;
 
 import com.autoapplicant.domain.ai.GenerateDocumentCommand;
+import com.autoapplicant.domain.document.CompanyContext;
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.PromptTemplate;
@@ -52,16 +53,18 @@ public class ApplicationPromptAssembler {
         String jobDescription = job != null && job.descriptionClean() != null
                 ? job.descriptionClean() : cmd.rawJobDescription();
         String contactFreeJson = careerProfileContext.buildJson(cmd.userId());
-        // Grounded company facts (cached; from the company's own site) so company references in
-        // cover letters are accurate rather than parroted from the untrusted posting.
-        String companyFacts = job != null ? companyGrounding.factsFor(job.companyId()) : null;
+        // Company grounding (verified facts from the company's own site + the candidate's own
+        // research) so company references in cover letters are accurate rather than parroted from
+        // the untrusted posting.
+        CompanyContext companyContext = job != null
+                ? companyGrounding.contextFor(job.companyId()) : CompanyContext.EMPTY;
 
         PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                 cmd.documentType(), contactFreeJson, postingFor(job, jobDescription),
                 cmd.customInstructions(), cmd.motivationText(), cmd.targetLanguage(), resolveStyleTemplate(cmd),
                 writingProfileRepo.findByUserId(cmd.userId()).orElse(null),
                 applicationRepo.findRecentOutcomeLessons(cmd.userId(), 5),
-                companyFacts, cmd.lengthPreference());
+                companyContext, cmd.lengthPreference());
         return new GenerationInputs(composition, job, contactFreeJson, jobDescription);
     }
 

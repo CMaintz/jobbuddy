@@ -2,26 +2,28 @@ package com.autoapplicant.usecase.ai;
 
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanyFacts;
+import com.autoapplicant.domain.company.CompanyResearch;
+import com.autoapplicant.domain.document.CompanyContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.web.WebPageFetchPort;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.UUID;
-
 /**
- * Supplies verified company facts to ground cover-letter references. Cache-first: reuses facts
- * stored on the company until they go stale; on a miss it fetches the company's OWN website
- * (never a URL from the untrusted posting), extracts a few facts with a cheap model, and caches
- * them. Returns null when grounding is disabled, no website is known, or extraction fails — so
- * generation simply proceeds without a company-facts block.
+ * Supplies the company context that grounds a cover letter's employer references: verified facts
+ * and the candidate's own research. The facts are cache-first — reused until stale, and on a miss
+ * fetched from the company's OWN website (never a URL from the untrusted posting), extracted with a
+ * cheap model, and cached. The research notes are read as the candidate saved them. Any part may be
+ * absent, so generation simply proceeds without the block it lacks.
  */
 @Service
 public class CompanyGroundingService {
@@ -46,11 +48,27 @@ public class CompanyGroundingService {
         this.ai = ai;
     }
 
+    /** The verified facts and the candidate's research for a company, for prompt grounding. */
+    public CompanyContext contextFor(UUID companyId) {
+        if (companyId == null) return CompanyContext.EMPTY;
+        return new CompanyContext(factsFor(companyId), researchNotesFor(companyId));
+    }
+
+    /** The candidate's saved research notes, or null when none/unavailable. Never throws. */
+    private String researchNotesFor(UUID companyId) {
+        try {
+            return companyRepo.findResearch(companyId).map(CompanyResearch::notes).orElse(null);
+        } catch (Exception e) {
+            log.warn("Reading company research failed for {}: {}", companyId, e.getMessage());
+            return null;
+        }
+    }
+
     /** Verified facts for the company, or null when unavailable. Never throws. */
-    public String factsFor(UUID companyId) {
+    private String factsFor(UUID companyId) {
         if (!enabled || companyId == null) return null;
         try {
-            var cached = companyRepo.findFacts(companyId);
+            Optional<CompanyFacts> cached = companyRepo.findFacts(companyId);
             if (cached.isPresent() && isFresh(cached.get().researchedAt())) {
                 return cached.get().facts();
             }

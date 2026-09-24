@@ -1,0 +1,27 @@
+# Reviews dependency changes on a PR: flags newly-introduced vulnerable packages and
+# surfaces licenses, with a PR summary. Complements the existing CVE scans — osv-scanner
+# over the Gradle lockfile (backend:audit) and `npm audit` (frontend:audit) — by adding
+# a PR-diff-scoped view + license visibility that those don't give. Public repo → free.
+#
+# NB: it reads GitHub's dependency graph. npm (package-lock.json) is auto-parsed, so the
+# frontend/extension are covered well; full Gradle coverage needs a dependency-submission
+# step (gradle/actions) — a follow-up. osv-scanner already covers Gradle CVEs meanwhile.
+name: dependency-review
+
+on: pull_request
+
+permissions:
+  contents: read
+  pull-requests: write # post the summary comment on the PR
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # Block a PR that ADDS a high/critical-severity vulnerable dependency. Existing
+          # deps are the audit tools' job; this guards the incoming diff.
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

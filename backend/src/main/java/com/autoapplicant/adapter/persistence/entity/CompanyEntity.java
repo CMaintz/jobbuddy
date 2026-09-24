@@ -46,6 +46,13 @@ public class CompanyEntity {
     @Column(name = "facts_researched_at")
     private Instant factsResearchedAt;
 
+    /** User-pasted company research, for cover-letter grounding (semi-trusted; distinct from facts). */
+    @Column(name = "research_notes", columnDefinition = "text")
+    private String researchNotes;
+
+    @Column(name = "research_notes_updated_at")
+    private Instant researchNotesUpdatedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -83,6 +90,12 @@ public class CompanyEntity {
     public void setResearchedFacts(String researchedFacts) { this.researchedFacts = researchedFacts; }
     public Instant getFactsResearchedAt() { return factsResearchedAt; }
     public void setFactsResearchedAt(Instant factsResearchedAt) { this.factsResearchedAt = factsResearchedAt; }
+    public String getResearchNotes() { return researchNotes; }
+    public void setResearchNotes(String researchNotes) { this.researchNotes = researchNotes; }
+    public Instant getResearchNotesUpdatedAt() { return researchNotesUpdatedAt; }
+    public void setResearchNotesUpdatedAt(Instant researchNotesUpdatedAt) {
+        this.researchNotesUpdatedAt = researchNotesUpdatedAt;
+    }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

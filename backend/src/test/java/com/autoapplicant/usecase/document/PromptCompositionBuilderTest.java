@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.document;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.autoapplicant.domain.document.CompanyContext;
 import com.autoapplicant.domain.document.CvSection;
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.domain.document.CvTailoringGuidance;
@@ -31,6 +32,30 @@ class PromptCompositionBuilderTest {
             We are looking for a backend engineer to join our team in Berlin. You will work with Java
             and Spring Boot, and you will have the responsibility of building our services. We offer
             an informal workplace with skilled colleagues and good opportunities for growth.""";
+
+    @Test
+    void candidateResearchIsAddedAsItsOwnTrustLabelledBlock() {
+        PromptComposition c = builder.composeStructuredApplicationPrompt(
+                "COVER_LETTER", "{}", new PostingContext(ENGLISH_POSTING, "Germany", null),
+                null, null, "English", null, null, List.of(),
+                new CompanyContext("Founded 2010; HQ in Berlin.", "They just raised a Series B."),
+                "STANDARD");
+
+        assertThat(c.userPromptTemplate())
+                .contains("## Verified Company Facts")
+                .contains("## Company Research (from the candidate)")
+                .contains("They just raised a Series B.")
+                // Research is labelled as the weaker source, never elevated to verified.
+                .contains("not independently verified");
+    }
+
+    @Test
+    void withoutCompanyContextNeitherGroundingBlockAppears() {
+        PromptComposition c = letter(new PostingContext(ENGLISH_POSTING, "Germany", null), "English");
+        assertThat(c.userPromptTemplate())
+                .doesNotContain("## Verified Company Facts")
+                .doesNotContain("## Company Research");
+    }
 
     private PromptComposition letter(String posting, String targetLanguage, String country) {
         return letter(new PostingContext(posting, country, null), targetLanguage);

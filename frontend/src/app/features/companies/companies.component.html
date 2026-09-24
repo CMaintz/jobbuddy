@@ -173,6 +173,29 @@
             </div>
           </div>
 
+          <!-- Research the candidate pastes in; grounds cover letters for this company -->
+          <div class="mt-3">
+            <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">
+              {{ 'companies.research.heading' | translate }}
+            </div>
+            <div class="text-xs text-jb-text-dim leading-relaxed mb-2">{{ 'companies.research.hint' | translate }}</div>
+            <textarea [ngModel]="researchNotes()" (ngModelChange)="onResearchInput($event)"
+              [disabled]="researchLoading()"
+              [placeholder]="'companies.research.placeholder' | translate"
+              class="w-full min-h-[140px] p-3 bg-jb-surface-2 border border-jb-border rounded-md text-jb-text text-sm leading-relaxed jb-scroll resize-y disabled:opacity-50"></textarea>
+            <div class="flex items-center gap-3 mt-2">
+              <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer disabled:opacity-50"
+                [disabled]="researchSaving() || researchLoading() || researchLoadFailed()" (click)="saveResearch()">
+                {{ (researchSaving() ? 'companies.research.saving' : 'companies.research.save') | translate }}
+              </button>
+              @if (researchLoadFailed()) {
+                <span class="text-2xs text-jb-danger">{{ 'companies.research.loadFailed' | translate }}</span>
+              } @else if (researchUpdatedAt()) {
+                <span class="text-2xs text-jb-text-dim">{{ 'companies.research.saved' | translate }} {{ researchUpdatedAt() | date:'d MMM y, HH:mm' }}</span>
+              }
+            </div>
+          </div>
+
           <!-- Everything we hold from this company -->
           <div class="mt-3">
             <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-2">

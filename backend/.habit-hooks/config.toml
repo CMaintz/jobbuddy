@@ -13,6 +13,11 @@ plugins = ["java", "generic"]
 # test structure. (no-var already scopes to src/main only.)
 # A positive include is REQUIRED — a bare "!exclusion" matches nothing, which
 # silently disables the whole smell scan. Include all Java, then drop tests.
+#
+# NB: this `files` list scopes the line-based + PMD sensors ONLY. jscpd (the generic
+# plugin's duplication sensor) does its OWN directory walk and ignores this list — so
+# the test exclusion here does NOT reach it. jscpd's exclusions live in `.jscpd.json`
+# (test code + golden-prompt fixtures); keep the two in sync.
 files = ["**/*.java", "!**/src/test/**/*.java"]
 
 # args MUST be a TOML array, not a string: habit-hooks mangles a string arg into
