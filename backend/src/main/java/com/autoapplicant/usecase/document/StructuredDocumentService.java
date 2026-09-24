@@ -242,7 +242,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private static void appendItems(StringBuilder sb,
                                     List<com.autoapplicant.domain.document.structured.StructuredDocumentItem> items) {
         if (items == null) return;
-        for (var it : items) {
+        for (StructuredDocumentItem it : items) {
             if (it.title() != null) sb.append(it.title()).append(' ');
             if (it.subtitle() != null) sb.append(it.subtitle()).append(' ');
             if (it.description() != null) sb.append(it.description()).append('\n');
