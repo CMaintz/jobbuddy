@@ -5,11 +5,10 @@ import com.autoapplicant.domain.company.CompanyResearch;
 import com.autoapplicant.port.in.company.GetCompaniesUseCase;
 import com.autoapplicant.port.in.company.ManageCompanyResearchUseCase;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CompanyService implements GetCompaniesUseCase, ManageCompanyResearchUseCase {

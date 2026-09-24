@@ -6,13 +6,12 @@ import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanyResearch;
 import com.autoapplicant.domain.company.CompanySize;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
 
 @Component
 public class CompanyPersistenceAdapter implements CompanyRepositoryPort {

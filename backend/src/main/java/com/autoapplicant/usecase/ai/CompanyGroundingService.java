@@ -8,15 +8,14 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.web.WebPageFetchPort;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Supplies the company context that grounds a cover letter's employer references: verified facts

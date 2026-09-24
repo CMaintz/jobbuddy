@@ -6,9 +6,9 @@ import com.autoapplicant.adapter.web.dto.company.TrackOutreachRequest;
 import com.autoapplicant.adapter.web.dto.company.UpdateOutreachRequest;
 import com.autoapplicant.domain.company.Company;
 import com.autoapplicant.domain.company.CompanyResearch;
-import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.company.OutreachContact;
 import com.autoapplicant.domain.company.OutreachTarget;
+import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.company.FindOutreachTargetsUseCase;
 import com.autoapplicant.port.in.company.GetCompaniesUseCase;
 import com.autoapplicant.port.in.company.ManageCompanyResearchUseCase;
@@ -18,11 +18,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "Companies")
