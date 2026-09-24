@@ -110,11 +110,21 @@ jobs:
           echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
           pip install --disable-pip-version-check habit-hooks habit-hooks-java
           npm i -g jscpd@5.2.1   # pinned to match mise.toml — same duplication findings locally + CI
+      # --branch (below) scans only what this branch changed vs its base. A PR checkout
+      # is detached, so `main` has no local ref and habit-hooks errors rather than guess;
+      # point a local `main` at the PR base (in history from fetch-depth: 0).
+      - name: Make base ref resolvable for --branch
+        if: steps.baseline.outputs.have == 'true' && github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git branch -f main "$BASE_SHA"
       - name: Smells (fails only on smells beyond the snooze baseline)
         id: smells
         if: steps.baseline.outputs.have == 'true'
         working-directory: backend
-        run: habit-hooks
+        # --branch: unchanged files are already covered by the snooze baseline, so
+        # re-scanning the whole tree every PR is wasted work.
+        run: habit-hooks --branch
       - name: How to read these smells
         if: failure() && steps.smells.outcome == 'failure'
         run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
@@ -163,13 +173,19 @@ jobs:
             (cd frontend && npm ci)
           fi
           pip install --disable-pip-version-check habit-hooks habit-hooks-typescript
+      - name: Make base ref resolvable for --branch
+        if: steps.baseline.outputs.have == 'true' && github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git branch -f main "$BASE_SHA"
       - name: Smells (fails only on smells beyond the snooze baseline)
         id: smells
         if: steps.baseline.outputs.have == 'true'
         working-directory: frontend
+        # --branch: scan only files changed vs the base; the rest are in the baseline.
         run: |
           export PATH="$PWD/node_modules/.bin:$PATH"
-          habit-hooks
+          habit-hooks --branch
       - name: How to read these smells
         if: failure() && steps.smells.outcome == 'failure'
         run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
