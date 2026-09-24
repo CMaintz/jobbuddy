@@ -25,10 +25,9 @@ import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class StructuredDocumentService implements GetCvRenderModelUseCase, GenerateTailoredCvUseCase,

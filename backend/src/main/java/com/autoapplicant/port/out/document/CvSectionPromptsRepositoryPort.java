@@ -2,7 +2,6 @@ package com.autoapplicant.port.out.document;
 
 import com.autoapplicant.domain.document.CvSection;
 import com.autoapplicant.domain.document.CvSectionPrompts;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;

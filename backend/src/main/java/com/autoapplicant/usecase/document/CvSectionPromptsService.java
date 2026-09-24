@@ -4,10 +4,9 @@ import com.autoapplicant.domain.document.CvSection;
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.port.in.document.ManageCvSectionPromptsUseCase;
 import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CvSectionPromptsService implements ManageCvSectionPromptsUseCase {

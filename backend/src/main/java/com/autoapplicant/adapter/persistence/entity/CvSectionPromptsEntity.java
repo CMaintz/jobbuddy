@@ -2,11 +2,10 @@ package com.autoapplicant.adapter.persistence.entity;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
-
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "cv_section_prompts")

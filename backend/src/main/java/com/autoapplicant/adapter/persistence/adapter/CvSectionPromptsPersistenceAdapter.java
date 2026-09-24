@@ -5,13 +5,12 @@ import com.autoapplicant.adapter.persistence.repository.CvSectionPromptsJpaRepos
 import com.autoapplicant.domain.document.CvSection;
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class CvSectionPromptsPersistenceAdapter implements CvSectionPromptsRepositoryPort {

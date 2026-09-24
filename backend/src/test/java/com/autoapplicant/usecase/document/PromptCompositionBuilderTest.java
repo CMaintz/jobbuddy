@@ -1,5 +1,7 @@
 package com.autoapplicant.usecase.document;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.autoapplicant.domain.document.CvSection;
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.domain.document.CvTailoringGuidance;
@@ -8,11 +10,8 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.RequirementTier;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 /**
  * Guards the market/language wiring of the generation prompts: the blocks that must be present

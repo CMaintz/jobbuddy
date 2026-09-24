@@ -1,7 +1,6 @@
 package com.autoapplicant.adapter.web.dto.document;
 
 import com.autoapplicant.domain.document.CvSectionPrompts;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
