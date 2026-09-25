@@ -46,6 +46,7 @@ import { WorkExperience } from '../../../core/models/profile-section.model';
           <div class="flex items-center justify-between mb-2">
             <span class="text-2xs text-jb-text-dim tracking-widest uppercase">{{ 'masterCv.form.description' | translate }}</span>
             <app-ai-refine-menu [plainOutput]="true" [content]="exp.description || ''"
+              [sectionKey]="'experience'"
               (refined)="exp.description = $event; dirty.emit()" />
           </div>
           <textarea [(ngModel)]="exp.description" rows="3" class="input resize-y text-sm leading-normal"

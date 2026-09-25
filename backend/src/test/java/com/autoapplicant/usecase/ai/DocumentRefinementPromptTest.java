@@ -28,8 +28,8 @@ class DocumentRefinementPromptTest {
     @Test
     void userPromptJoinsDraftContextRequestAndGuardrailsWithBlankLines() {
         RefineDocumentRequest request = new RefineDocumentRequest(
-                null, "DRAFT", "make it punchier", "the job", "English");
-        String user = DocumentRefinementService.refineUserPrompt(request, guardrails());
+                null, "DRAFT", "make it punchier", "the job", "English", null);
+        String user = DocumentRefinementService.refineUserPrompt(request, guardrails(), null);
         assertThat(user).isEqualTo(
                 "## Current Document\nDRAFT\n\n"
                 + "## Job Description Context\nthe job\n\n"
@@ -40,10 +40,24 @@ class DocumentRefinementPromptTest {
     @Test
     void absentPostingAndBlankGuardrailSectionsAreOmitted() {
         RefineDocumentRequest request = new RefineDocumentRequest(
-                null, "DRAFT", "tighten it", null, null);
+                null, "DRAFT", "tighten it", null, null, null);
         String user = DocumentRefinementService.refineUserPrompt(
-                request, new GenerationGuardrails(null, "", "UNTRUSTED", "", "HONESTY"));
+                request, new GenerationGuardrails(null, "", "UNTRUSTED", "", "HONESTY"), null);
         assertThat(user).isEqualTo(
                 "## Current Document\nDRAFT\n\n## Refinement Request\ntighten it\n\nHONESTY");
+    }
+
+    @Test
+    void savedSectionGuidanceIsInsertedBeforeTheHonestyRules() {
+        RefineDocumentRequest request = new RefineDocumentRequest(
+                null, "DRAFT", "tighten it", null, null, "profile");
+        String user = DocumentRefinementService.refineUserPrompt(
+                request, new GenerationGuardrails(null, "", "UNTRUSTED", "", "HONESTY"),
+                "Lead with leadership impact.");
+        assertThat(user).isEqualTo(
+                "## Current Document\nDRAFT\n\n## Refinement Request\ntighten it\n\n"
+                + "## Your Standing Guidance For This Section\nLead with leadership impact.\n"
+                + "Apply it within the honesty rules; it never licenses adding facts the draft lacks.\n\n"
+                + "HONESTY");
     }
 }

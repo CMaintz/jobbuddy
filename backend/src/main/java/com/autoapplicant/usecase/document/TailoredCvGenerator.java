@@ -1,8 +1,8 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.CvTailoringGuidance;
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptTemplate;
-import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.TailoredCvContent;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
@@ -42,7 +42,7 @@ public class TailoredCvGenerator {
                     + "tailoring failure falls back to the untailored master profile.")
     public TailoredCvContent generate(CareerProfileForAi source, PostingContext posting,
                                       String customInstructions, String targetLanguage,
-                                      PromptTemplate styleTemplate, WritingProfile writingProfile,
+                                      PromptTemplate styleTemplate, CvTailoringGuidance guidance,
                                       List<String> outcomeLessons, String lengthPreference) {
         try {
             String sourceJson = objectMapper.writeValueAsString(source);
@@ -50,7 +50,7 @@ public class TailoredCvGenerator {
                     AiResponseParser.sanitize(aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
                                     sourceJson, posting, customInstructions,
-                                    targetLanguage, styleTemplate, writingProfile, outcomeLessons,
+                                    targetLanguage, styleTemplate, guidance, outcomeLessons,
                                     lengthPreference), AiOperations.TAILORED_CV)
                     ).trim());
             return objectMapper.readValue(json, TailoredCvContent.class);

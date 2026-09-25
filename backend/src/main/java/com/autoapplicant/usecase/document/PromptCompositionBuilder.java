@@ -153,12 +153,13 @@ public class PromptCompositionBuilder {
             String customInstructions,
             String targetLanguage,
             PromptTemplate styleTemplate,
-            WritingProfile writingProfile,
+            CvTailoringGuidance guidance,
             java.util.List<String> outcomeLessons,
             String lengthPreference) {
 
         String jobDescription = posting != null ? posting.description() : null;
         String jobCountry = posting != null ? posting.country() : null;
+        CvTailoringGuidance authoring = guidance != null ? guidance : CvTailoringGuidance.NONE;
         // Every cross-cutting guardrail for the CV medium, resolved once (see the application path).
         GenerationGuardrails guardrails = GenerationGuardrails.forMedium(
                 GenerationGuardrails.Medium.CV, targetLanguage, jobDescription, jobCountry);
@@ -189,7 +190,8 @@ public class PromptCompositionBuilder {
                   "notes": ["1-3 specific observations about gaps or opportunities — omit if none"]
                 }""";
 
-        String styleMemory = buildStyleMemory(writingProfile);
+        String styleMemory = buildStyleMemory(authoring.writingProfile());
+        String sectionGuidance = sectionGuidanceBlock(authoring.sectionPrompts());
 
         String userPrompt = "Tailor the CV content from the contact-free master career profile below "
                 + "to best match the job description. Your job is to SELECT and REWRITE the content "
@@ -198,6 +200,7 @@ public class PromptCompositionBuilder {
                 + "from the candidate's career stage and layout choices. Return the sections as named "
                 + "in the schema; do not attempt to reorder them." + styleGuidance
                 + (styleMemory.isBlank() ? "" : "\n\n" + styleMemory)
+                + sectionGuidance
                 + buildOutcomeLearnings(outcomeLessons)
                 + "\n\nThe profile's skillCategories map files each skill under a heading (Languages, "
                 + "Frameworks, Tools and so on), and the CV renders the skills section grouped by it. "
@@ -229,6 +232,34 @@ public class PromptCompositionBuilder {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
+
+    /** The candidate's standing per-section instructions, subordinate to the honesty rules. */
+    static String sectionGuidanceBlock(CvSectionPrompts sectionPrompts) {
+        if (sectionPrompts == null || sectionPrompts.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder("\n\n## Section Guidance\nThe candidate's standing "
+                + "instructions for specific sections. Follow them while still obeying the honesty and "
+                + "source-fact rules; they never license inventing content or overstating.");
+        for (CvSection section : CvSection.values()) {
+            String instruction = sectionPrompts.forSection(section);
+            if (instruction != null && !instruction.isBlank()) {
+                sb.append("\n- ").append(sectionLabel(section)).append(": ").append(instruction);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String sectionLabel(CvSection section) {
+        return switch (section) {
+            case PROFILE -> "Profile";
+            case SKILLS -> "Competencies";
+            case EXPERIENCE -> "Experience";
+            case PROJECTS -> "Projects";
+            case EDUCATION -> "Education";
+            case CERTIFICATIONS -> "Certifications";
+        };
+    }
 
     /** At most this many asks are listed; a posting demanding more is listing wishes, not requirements. */
     private static final int MAX_REQUIREMENTS = 25;

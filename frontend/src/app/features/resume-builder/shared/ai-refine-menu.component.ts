@@ -90,6 +90,8 @@ export class AiRefineMenuComponent {
   @Input() content = '';
   /** Optional job description so refinements are job-aware. */
   @Input() jobDescription?: string;
+  /** Optional CV section key so the refine applies the user's saved prompt for that section. */
+  @Input() sectionKey?: string;
   /** Emit plain text instead of rich-text HTML (master CV fields are plain by design). */
   @Input() plainOutput = false;
   /** Emits the refined content — HTML by default, plain text with plainOutput. */
@@ -113,6 +115,7 @@ export class AiRefineMenuComponent {
       currentContent: text,
       userMessage: prompt.trim(),
       jobDescription: this.jobDescription || undefined,
+      sectionKey: this.sectionKey || undefined,
     }).subscribe({
       next: resp => {
         this.busy.set(false);

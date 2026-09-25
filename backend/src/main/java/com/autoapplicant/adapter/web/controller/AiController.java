@@ -1,6 +1,8 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.adapter.web.dto.ai.AiCredentialRequest;
+import com.autoapplicant.adapter.web.dto.ai.AiCredentialStatusResponse;
 import com.autoapplicant.adapter.web.dto.ai.AnalyzeCvRequest;
 import com.autoapplicant.adapter.web.dto.ai.GenerateDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.ParseCvRequest;
@@ -9,14 +11,9 @@ import com.autoapplicant.adapter.web.dto.ai.ReviewRequest;
 import com.autoapplicant.adapter.web.dto.ai.SaveStructuredDocumentRequest;
 import com.autoapplicant.adapter.web.dto.ai.StructuredGenerateRequest;
 import com.autoapplicant.domain.ai.AiAnalysisResult;
-import com.autoapplicant.adapter.web.dto.ai.AiCredentialRequest;
-import com.autoapplicant.adapter.web.dto.ai.AiCredentialStatusResponse;
 import com.autoapplicant.domain.ai.AiCredentialProvider;
 import com.autoapplicant.domain.ai.AiUsageSummary;
 import com.autoapplicant.domain.ai.GenerateDocumentCommand;
-import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
-import com.autoapplicant.port.out.security.SecretCipherPort;
-import org.springframework.beans.factory.annotation.Qualifier;
 import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
 import com.autoapplicant.domain.ai.ReviewDocumentRequest;
@@ -26,27 +23,29 @@ import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.ai.AnalyzeCvUseCase;
+import com.autoapplicant.port.in.ai.AnalyzeSkillGapsUseCase;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
 import com.autoapplicant.port.in.ai.GetAiUsageUseCase;
-import com.autoapplicant.port.in.ai.AnalyzeSkillGapsUseCase;
+import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
+import com.autoapplicant.port.out.security.SecretCipherPort;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 
 @RestController
 @RequestMapping("/api/v1/ai")
@@ -227,7 +226,7 @@ public class AiController {
         UUID userId = secCtx.getCurrentUserId();
         RefineDocumentRequest request = new RefineDocumentRequest(
                 userId, req.currentContent(), req.userMessage(),
-                req.jobDescription(), req.targetLanguage());
+                req.jobDescription(), req.targetLanguage(), req.sectionKey());
         refine.refine(request)
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {

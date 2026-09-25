@@ -57,6 +57,7 @@
           <div class="flex justify-between items-center mb-1">
             <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.form.summary' | translate }}</label>
             <app-ai-refine-menu [content]="pi.summary" [jobDescription]="jobDescription"
+              [sectionKey]="'profile'"
               (refined)="update('summary', $event)" />
           </div>
           <app-rich-text-editor
