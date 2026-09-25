@@ -80,7 +80,10 @@ depends = ["setup:pmd"]
 run = "pmd check -d backend/src/main/java -R backend/config/pmd/no-var.xml -f text --suppress-marker foundry-allow-var"
 
 [tasks."backend:spotbugs"]
-description = "SpotBugs bug-pattern analysis (report-only; findings print to console)"
+# The task prints findings; CI (quality.yml) makes it BLOCKING — the spotbugs job fails
+# on any finding not in config/spotbugs/exclude.xml (the ratchet baseline). Not in
+# backend:gate (kept off the oracle), but it IS an enforced gate via its own CI job.
+description = "SpotBugs bug-pattern analysis (blocking in CI, ratcheted via exclude.xml)"
 run = "./gradlew :backend:spotbugsMain"
 
 [tasks."backend:gate"]

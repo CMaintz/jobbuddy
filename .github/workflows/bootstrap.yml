@@ -31,8 +31,51 @@ permissions:
   contents: read
 
 jobs:
+  # Skip the daily run on a quiet period. A prune only shrinks the baseline when some
+  # file's smells disappear — which needs that file (or a smell threshold) to have changed
+  # since the baseline was last updated. If nothing relevant changed, the run is a no-op.
+  decide:
+    name: Anything to prune?
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0 # need history to see what changed since the baseline last did
+      - id: check
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          # Manual dispatch always runs — a threshold change / re-seed is intentional.
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"; echo "manual dispatch — running"; exit 0
+          fi
+          # COARSE ON PURPOSE: check whole source/config dirs, not snooze.json's exact
+          # file list. A wrong path assumption against snooze.json would silently skip
+          # forever and let the baseline ossify — a stray no-op run is harmless; a silent
+          # no-prune is not. So we err toward running.
+          since=$(git log -1 --format=%H -- backend/.habit-hooks/snooze.json frontend/.habit-hooks/snooze.json 2>/dev/null || true)
+          if [ -z "$since" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"; echo "no baseline yet — running"; exit 0
+          fi
+          changed=$(git diff --name-only "$since" HEAD -- \
+            backend/src frontend/src \
+            backend/.habit-hooks frontend/.habit-hooks \
+            backend/pmd backend/config/pmd backend/.jscpd.json frontend/.jscpd.json 2>/dev/null || echo FORCE)
+          if [ -z "$changed" ]; then
+            echo "run=0" >> "$GITHUB_OUTPUT"
+            echo "No source or smell-config changed since the baseline's last update ($since) — nothing to prune. Skipping."
+          else
+            echo "run=1" >> "$GITHUB_OUTPUT"
+            echo "Changed since last baseline update:"; echo "$changed" | sed 's/^/  /'
+          fi
+
   refresh-habits-baseline:
     name: Refresh habit-hooks baselines
+    needs: decide
+    if: needs.decide.outputs.run == '1'
     runs-on: ubuntu-latest
     permissions:
       contents: write
