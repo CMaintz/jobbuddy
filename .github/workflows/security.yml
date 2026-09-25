@@ -45,7 +45,7 @@ jobs:
           while IFS= read -r f; do
             [ -z "$f" ] && continue
             case "$f" in
-              frontend/*|extension/*|*.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*|.gitleaks.toml) : ;;
+              */.habit-hooks/snooze.json|*/eslint-suppressions.json|frontend/*|extension/*|*.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*|.gitleaks.toml) : ;;
               *) b=true ;;
             esac
           done < <(printf '%s\n' "$diff")

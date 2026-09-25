@@ -54,6 +54,7 @@ jobs:
           while IFS= read -r f; do
             [ -z "$f" ] && continue
             case "$f" in
+              */.habit-hooks/snooze.json|*/eslint-suppressions.json) : ;; # tool-regenerated baseline — nothing to build/test
               backend/*)   be=true ;;
               frontend/*)  fe=true ;;
               extension/*) ex=true ;;
