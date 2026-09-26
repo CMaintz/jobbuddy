@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" width="880" height="400" font-family="-apple-system,Segoe UI,Roboto,sans-serif">
+  <rect width="880" height="400" rx="14" fill="#0d1117"/>
+  <text x="30" y="46" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="26" font-weight="800" fill="#e6edf3">Jobbuddy</text>
+  <text x="30" y="72" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14" font-weight="400" fill="#8b949e">from job posting to a tailored, ATS-ready application — powered by AI</text>
+  <g opacity="0">
+    <animate attributeName="opacity" dur="9s" begin="0s" repeatCount="indefinite"
+      values="0;0;1;1;0" keyTimes="0;0.05;0.08;0.92;1"
+      calcMode="spline" keySplines="0 0 1 1;.4 0 .2 1;0 0 1 1;.4 0 .2 1"/>
+    
+    <rect x="30" y="104" width="246" height="232" rx="12" fill="#161b22" stroke="#30363d"/>
+    <rect x="30" y="104" width="246" height="34" rx="12" fill="#58a6ff" opacity="0.14"/>
+    <text x="46" y="126" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="700" fill="#58a6ff">1 · JOB POSTING</text>
+    <text x="46" y="166" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="15" font-weight="600" fill="#e6edf3">Senior Frontend Engineer</text>
+    <text x="46" y="186" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="400" fill="#8b949e">Acme · Remote</text>
+   <rect x="46" y="204" width="200" height="7" rx="3" fill="#8b949e"/>
+   <rect x="46" y="220" width="214" height="7" rx="3" fill="#8b949e"/>
+   <rect x="46" y="236" width="180" height="7" rx="3" fill="#8b949e"/>
+   <rect x="46" y="252" width="206" height="7" rx="3" fill="#8b949e"/>
+   <rect x="46" y="268" width="150" height="7" rx="3" fill="#8b949e"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" dur="9s" begin="0s" repeatCount="indefinite"
+      values="0;0;1;1;0" keyTimes="0;0.24;0.27;0.92;1"
+      calcMode="spline" keySplines="0 0 1 1;.4 0 .2 1;0 0 1 1;.4 0 .2 1"/>
+    <path d="M284 220 h26" stroke="#8b949e" stroke-width="2" fill="none"/>
+   <path d="M306 215 l6 5 -6 5" stroke="#8b949e" stroke-width="2" fill="none"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" dur="9s" begin="0s" repeatCount="indefinite"
+      values="0;0;1;1;0" keyTimes="0;0.3;0.33;0.92;1"
+      calcMode="spline" keySplines="0 0 1 1;.4 0 .2 1;0 0 1 1;.4 0 .2 1"/>
+    
+    <rect x="317" y="104" width="246" height="232" rx="12" fill="#161b22" stroke="#30363d"/>
+    <rect x="317" y="104" width="246" height="34" rx="12" fill="#bc8cff" opacity="0.14"/>
+    <text x="333" y="126" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="700" fill="#bc8cff">2 · TAILORED CV</text>
+    <text x="333" y="166" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="15" font-weight="600" fill="#e6edf3">Rewritten for the role</text>
+    <rect x="333" y="196" width="200" height="7" rx="3" fill="#8b949e"/>
+   <rect x="333" y="212" width="210" height="7" rx="3" fill="#3fb950"/>
+   <rect x="333" y="228" width="170" height="7" rx="3" fill="#3fb950"/>
+   <rect x="333" y="244" width="200" height="7" rx="3" fill="#8b949e"/>
+   <rect x="333" y="260" width="186" height="7" rx="3" fill="#3fb950"/>
+   <text x="333" y="300" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="400" fill="#8b949e">+ cover letter</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" dur="9s" begin="0s" repeatCount="indefinite"
+      values="0;0;1;1;0" keyTimes="0;0.5;0.53;0.92;1"
+      calcMode="spline" keySplines="0 0 1 1;.4 0 .2 1;0 0 1 1;.4 0 .2 1"/>
+    <path d="M571 220 h26" stroke="#8b949e" stroke-width="2" fill="none"/>
+   <path d="M593 215 l6 5 -6 5" stroke="#8b949e" stroke-width="2" fill="none"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" dur="9s" begin="0s" repeatCount="indefinite"
+      values="0;0;1;1;0" keyTimes="0;0.57;0.60;0.92;1"
+      calcMode="spline" keySplines="0 0 1 1;.4 0 .2 1;0 0 1 1;.4 0 .2 1"/>
+    
+    <rect x="604" y="104" width="246" height="232" rx="12" fill="#161b22" stroke="#30363d"/>
+    <rect x="604" y="104" width="246" height="34" rx="12" fill="#3fb950" opacity="0.14"/>
+    <text x="620" y="126" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="700" fill="#3fb950">3 · ATS REPORT</text>
+    <text x="620" y="166" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="15" font-weight="600" fill="#e6edf3">Match score</text>
+    <text x="620" y="232" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="52" font-weight="800" fill="#3fb950">87%</text>
+   <text x="724" y="212" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="400" fill="#8b949e">keywords</text>
+   <text x="724" y="230" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="400" fill="#8b949e">covered</text>
+   <text x="620" y="272" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="400" fill="#3fb950">✓ React  ✓ TypeScript  ✓ CI</text>
+   <text x="620" y="294" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="400" fill="#8b949e">→ exported as PDF</text>
+  </g>
+</svg>

@@ -2,6 +2,8 @@
 
 An AI-powered job application platform that helps candidates go from job posting to polished, tailored application documents. AutoApplicant crawls and imports job postings, maintains a structured career profile, and uses AI to generate tailored CVs, cover letters, and ATS (Applicant Tracking System) reports — exported as professionally rendered PDFs.
 
+![Jobbuddy flow — job posting to a tailored, ATS-ready application](docs/storyboard.svg)
+
 ## Features
 
 - **Career profile management** — structured profile with experience, education, skills, and projects; can be bootstrapped by parsing an existing CV
