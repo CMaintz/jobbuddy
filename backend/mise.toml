@@ -1,0 +1,67 @@
+# Backend (Java 21, Spring Boot) — the six verbs the foundry gate.yml@v2 facade runs
+# (stack: java, working_directory: backend). backend/ is a subproject of the ROOT
+# Gradle build, so every task calls `../gradlew :backend:<task>` — the root wrapper,
+# the backend subproject.
+#
+# Tools (JDK, PMD, jscpd) and the setup:pmd hook are inherited from the root mise.toml
+# — mise loads this file merged with the parent, and CI's mise-action (run in backend/)
+# installs them. This file only overrides the six verbs so the facade, which calls the
+# unprefixed `mise run <verb>` from backend/, resolves them here (nearest config wins)
+# instead of falling through to the root's cross-package aggregates.
+
+[tasks.fix]
+description = "Auto-format changed Java (Spotless)"
+run = "../gradlew :backend:spotlessApply"
+
+[tasks.lint]
+description = "Format check (Spotless) + no-`var` on changed source. Smells run via habit-hooks (PMD)."
+run = ["../gradlew :backend:spotlessCheck", "mise run novar"]
+
+[tasks.typecheck]
+description = "Compilation is Java's type check"
+run = "../gradlew :backend:compileJava"
+
+[tasks.test]
+description = "Backend test suite (offline by design)"
+run = "../gradlew :backend:test"
+
+[tasks.audit]
+description = "Dependency CVEs via osv-scanner over the Gradle lockfile (needs osv-scanner on PATH)"
+run = [
+    "../gradlew :backend:dependencies --write-locks",
+    "osv-scanner --lockfile=gradle.lockfile",
+]
+
+# no-`var`, ratchet-scoped: fails only on NEW `var` since the merge-base, never legacy.
+# Base = FOUNDRY_BASE_REF (PR base SHA in CI; origin/main locally). `git diff` prints
+# repo-root-relative paths, so `../$f` from backend/ resolves back to the real file.
+# setup:pmd is inherited from the root config. Folded into `lint`.
+[tasks.novar]
+description = "no-`var` on changed backend Java (base = FOUNDRY_BASE_REF, default origin/main). Tag exceptions `// foundry-allow-var: reason`."
+depends = ["setup:pmd"]
+run = '''
+set -eu
+mb=$(git merge-base "${FOUNDRY_BASE_REF:-origin/main}" HEAD 2>/dev/null || true)
+if [ -z "$mb" ]; then echo "novar: cannot resolve base '${FOUNDRY_BASE_REF:-origin/main}'; skipping"; exit 0; fi
+files=$(git diff --name-only --diff-filter=ACMR "$mb" 2>/dev/null | grep -E '^backend/src/main/java/.*\.java$' || true)
+if [ -z "$files" ]; then echo "novar: no changed backend main Java files"; exit 0; fi
+set --
+for f in $files; do set -- "$@" "-d=../$f"; done
+pmd check "$@" -R config/pmd/no-var.xml -f text --no-progress --suppress-marker foundry-allow-var
+'''
+
+# SpotBugs — auxiliary, opt-in, NOT a contract verb and NOT in `gate`. The facade's
+# spotbugs job runs `mise run spotbugs` (foundry#36); blocking + ratcheted via
+# config/spotbugs/exclude.xml (the ratchet lives in the Gradle SpotBugs config).
+[tasks.spotbugs]
+description = "SpotBugs bug-pattern analysis (blocking in CI; ratcheted via config/spotbugs/exclude.xml)"
+run = "../gradlew :backend:spotbugsMain"
+
+[tasks.gate]
+description = "The oracle — lint, typecheck, test, audit, in order. Sequential (not `depends`, which is parallel)."
+run = [
+    "mise run lint",
+    "mise run typecheck",
+    "mise run test",
+    "mise run audit",
+]
