@@ -18,39 +18,9 @@ permissions:
   contents: read
 
 jobs:
-  # Only backend-audit is path-gated; secret scan + ruleset-guard always run
-  # (cheap, and they must see every change). See gate.yml for the rationale.
-  changes:
-    name: changes
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.f.outputs.backend }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - id: f
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" != "pull_request" ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; exit 0; fi
-          base=$(git merge-base "$BASE" "$HEAD")
-          diff=$(git diff --name-only "$base" "$HEAD")
-          echo "Changed files:"; echo "$diff" | sed 's/^/  /'
-          # FAIL SAFE: run the backend audit unless every changed file is clearly
-          # not backend (frontend/extension/docs). An unclassified path runs it.
-          b=false
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            case "$f" in
-              */.habit-hooks/snooze.json|*/eslint-suppressions.json|frontend/*|extension/*|*.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*|.gitleaks.toml) : ;;
-              *) b=true ;;
-            esac
-          done < <(printf '%s\n' "$diff")
-          echo "backend=$b" >> "$GITHUB_OUTPUT"
-
+  # Secret scan + ruleset-guard always run (cheap, and they must see every change).
+  # The backend dependency audit moved into the gate — it's the `audit` verb the
+  # foundry facade runs for stack=java (see gate.yml + backend/mise.toml).
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
@@ -169,50 +139,16 @@ jobs:
           fi
           echo "::notice::Ruleset changes are tightening-only or inert — allowed without a label."
 
-  backend-audit:
-    name: Backend dependency audit
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # Restore PMD so the mise.toml postinstall hook (setup:pmd) no-ops instead of
-      # re-downloading it — this audit job doesn't use PMD, the hook just fires on
-      # `mise install`. Keyed on the pinned version.
-      - name: Cache PMD
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.local/opt/pmd-bin-7.27.0
-          key: pmd-7.27.0
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          version: 2026.9.2
-          cache: true
-      - name: Install osv-scanner
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL -o "$HOME/.local/bin/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64
-          chmod +x "$HOME/.local/bin/osv-scanner"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      # BLOCKING: the dependency bumps took the audit to 0 CVEs, so this fails on
-      # any new vulnerability. Accept a specific CVE (only with justification) by
-      # adding it to backend/osv-scanner.toml.
-      - name: Audit backend dependencies
-        run: |
-          ./gradlew :backend:dependencies --write-locks --console=plain
-          osv-scanner --lockfile=backend/gradle.lockfile
-
-  # Single required check for this workflow — always runs. secret-scan and
-  # ruleset-guard always run; backend-audit may be path-skipped. Fails only if a
-  # job that ran failed.
+  # Single required check for this workflow — always runs. Fails only if a job that
+  # ran failed. (Backend dependency audit is now the gate's `audit` verb, not here.)
   security-ok:
     name: security-ok
-    needs: [changes, secrets, ruleset-guard, backend-audit]
+    needs: [secrets, ruleset-guard]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for r in "${{ needs.changes.result }}" "${{ needs.secrets.result }}" "${{ needs['ruleset-guard'].result }}" "${{ needs['backend-audit'].result }}"; do
+          for r in "${{ needs.secrets.result }}" "${{ needs['ruleset-guard'].result }}"; do
             case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
           done
           echo "security-ok"

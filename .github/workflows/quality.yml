@@ -61,78 +61,10 @@ jobs:
           if [ "$all" = true ]; then be=true; fe=true; ex=true; fi
           emit "$be" "$fe" "$ex"
 
-  habits-backend:
-    name: Structural smells (backend)
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - name: Baseline present?
-        id: baseline
-        run: |
-          if [ -f backend/.habit-hooks/snooze.json ]; then
-            echo "have=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::No backend/.habit-hooks/snooze.json yet - run bootstrap.yml once. Skipping."
-            echo "have=false" >> "$GITHUB_OUTPUT"
-          fi
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
-        if: steps.baseline.outputs.have == 'true'
-        with:
-          java-version: '21'
-          distribution: temurin
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        if: steps.baseline.outputs.have == 'true'
-        with:
-          python-version: '3.12'
-      - name: Cache PMD
-        if: steps.baseline.outputs.have == 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.local/opt/pmd-bin-7.27.0
-          key: pmd-7.27.0
-      # Node + jscpd: the generic plugin's duplication sensor is a Node CLI; without
-      # it habit-hooks dies with incomplete-run now that the backend enables generic.
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        if: steps.baseline.outputs.have == 'true'
-        with:
-          node-version: '20'
-      - name: Install PMD + habit-hooks + jscpd
-        if: steps.baseline.outputs.have == 'true'
-        run: |
-          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
-            mkdir -p "$HOME/.local/opt"
-            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
-            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
-          fi
-          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
-          pip install --disable-pip-version-check habit-hooks habit-hooks-java
-          npm i -g jscpd@5.2.1   # pinned to match mise.toml — same duplication findings locally + CI
-      # --branch (below) scans only what this branch changed vs its base. A PR checkout
-      # is detached, so `main` has no local ref and habit-hooks errors rather than guess;
-      # point a local `main` at the PR base (in history from fetch-depth: 0).
-      - name: Make base ref resolvable for --branch
-        if: steps.baseline.outputs.have == 'true' && github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git branch -f main "$BASE_SHA"
-      - name: Smells (fails only on smells beyond the snooze baseline)
-        id: smells
-        if: steps.baseline.outputs.have == 'true'
-        working-directory: backend
-        # --branch: unchanged files are already covered by the snooze baseline, so
-        # re-scanning the whole tree every PR is wasted work.
-        run: habit-hooks --branch
-      - name: How to read these smells
-        if: failure() && steps.smells.outcome == 'failure'
-        run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
-
-  # Frontend structural smells now run inside the foundry facade (gate.yml → _ts
-  # habits job), so the former habits-frontend job lives there. Backend smells stay
-  # here until the backend is migrated too.
+  # Structural smells (backend AND frontend) now run inside the foundry facade
+  # (gate.yml → the per-stack habits job), so the former habits-backend / habits-frontend
+  # jobs live there. What remains here is jobbuddy-specific: the extension file-length cap
+  # and (until foundry#36's `mise run spotbugs` verb ships in @v2) the SpotBugs job.
 
   extension:
     name: Extension max-file
@@ -160,49 +92,6 @@ jobs:
           if [ "$fail" -ne 0 ]; then exit 1; fi
           echo "All extension files within $MAX lines."
 
-  no-var:
-    name: No unjustified var (backend)
-    needs: changes
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true'
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - name: Cache PMD
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.local/opt/pmd-bin-7.27.0
-          key: pmd-7.27.0
-      - name: Install PMD
-        run: |
-          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
-            mkdir -p "$HOME/.local/opt"
-            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
-            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
-          fi
-          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
-      # Ratchet by diff: enforce the no-var rule only on backend main .java files
-      # this PR changed, so the ~48 pre-existing uses are untouched until touched.
-      - name: Check changed Java files for unjustified var
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          # Merge-base (3-dot), not the raw base tip: base.sha goes stale when main
-          # advances (pull_request doesn't re-fire), which would drag in main's
-          # changed files and false-flag var on code this PR never touched.
-          BASE=$(git merge-base "$BASE" "$HEAD")
-          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE" "$HEAD" \
-            | grep -E '^backend/src/main/java/.*\.java$' || true)
-          if [ "${#files[@]}" -eq 0 ]; then
-            echo "No backend main Java files changed — nothing to check."; exit 0
-          fi
-          printf 'Checking %d changed file(s):\n' "${#files[@]}"; printf '  %s\n' "${files[@]}"
-          pmd check "${files[@]/#/-d=}" -R backend/config/pmd/no-var.xml \
-            -f text --no-progress --suppress-marker foundry-allow-var
-
   spotbugs:
     name: SpotBugs (backend)
     needs: changes
@@ -224,12 +113,12 @@ jobs:
   # never wedges. Fails only if a job that ran failed.
   quality-ok:
     name: quality-ok
-    needs: [changes, habits-backend, extension, no-var, spotbugs]
+    needs: [changes, extension, spotbugs]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for r in "${{ needs.changes.result }}" "${{ needs['habits-backend'].result }}" "${{ needs.extension.result }}" "${{ needs['no-var'].result }}" "${{ needs.spotbugs.result }}"; do
+          for r in "${{ needs.changes.result }}" "${{ needs.extension.result }}" "${{ needs.spotbugs.result }}"; do
             case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
           done
           echo "quality-ok"
