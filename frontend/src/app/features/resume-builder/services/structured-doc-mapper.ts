@@ -114,7 +114,8 @@ export function structuredDocToResumeData(doc: StructuredDocument): ResumeData {
         heading: s.heading,
         body:    s.body || undefined,
         items:   (s.items ?? [])
-          .map(item => ({ id: crypto.randomUUID(), text: item.title ?? '' }))
+          // Keep the server sourceId so a tailored custom section round-trips with stable ids.
+          .map(item => ({ id: item.sourceId || crypto.randomUUID(), text: item.title ?? '' }))
           .filter(item => !!item.text),
       }))
       // A section with neither prose nor entries would render as a bare heading.
