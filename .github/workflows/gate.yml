@@ -71,16 +71,20 @@ jobs:
   # The verbs live in backend/mise.toml (../gradlew :backend: shim). This replaces the
   # inline lint/typecheck/test steps AND folds in the former quality.yml habits-backend
   # + no-var jobs and security.yml's backend-audit (audit is now a gate verb).
-  # SpotBugs stays a custom job in quality.yml until foundry's `mise run spotbugs` verb
-  # (foundry#36) is released into @v2 — then flip to `spotbugs: true` and drop that job.
+  # SpotBugs runs in the facade too (`spotbugs: true` -> `mise run spotbugs`, foundry#36).
+  #
+  # Pinned to foundry main (39dfaf8, after #42) rather than @v2: v2.3.0 still pins a
+  # setup-gradle SHA that doesn't exist, so the java job can't start. Move both refs
+  # back to @v2 once v2.4.0 is cut.
   backend:
     name: Backend gate
     needs: changes
     if: needs.changes.outputs.backend == 'true'
-    uses: CMaintz/foundry/.github/workflows/gate.yml@v2
+    uses: CMaintz/foundry/.github/workflows/gate.yml@39dfaf8c39d4299864f1d5ac6f75238b1f17c294 # main after #42
     with:
       stack: java
       working_directory: backend
+      spotbugs: true
 
   # Frontend consumes the foundry facade: stack=ts runs the six verbs one-per-step
   # (lint / typecheck=`ng build` / test / audit) plus a structural-smells job. The
@@ -91,7 +95,7 @@ jobs:
     name: Frontend gate
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    uses: CMaintz/foundry/.github/workflows/gate.yml@v2
+    uses: CMaintz/foundry/.github/workflows/gate.yml@39dfaf8c39d4299864f1d5ac6f75238b1f17c294 # main after #42
     with:
       stack: ts
       working_directory: frontend
