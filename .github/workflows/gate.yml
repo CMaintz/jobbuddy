@@ -66,83 +66,21 @@ jobs:
           if [ "$all" = true ]; then be=true; fe=true; ex=true; fi
           emit "$be" "$fe" "$ex"
 
+  # Backend consumes the foundry facade: stack=java runs the six verbs one-per-step
+  # (lint incl. no-var / typecheck / test / audit) plus a structural-smells (PMD) job.
+  # The verbs live in backend/mise.toml (../gradlew :backend: shim). This replaces the
+  # inline lint/typecheck/test steps AND folds in the former quality.yml habits-backend
+  # + no-var jobs and security.yml's backend-audit (audit is now a gate verb).
+  # SpotBugs stays a custom job in quality.yml until foundry's `mise run spotbugs` verb
+  # (foundry#36) is released into @v2 — then flip to `spotbugs: true` and drop that job.
   backend:
     name: Backend gate
     needs: changes
     if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0 # Spotless ratchetFrom origin/main needs history, not a shallow tip
-
-      # Restore PMD before mise installs: the mise.toml postinstall hook provisions
-      # PMD (setup:pmd), which no-ops when this cache hits — so the gate job doesn't
-      # re-download it every run. Keyed on the pinned version. (mise-action itself
-      # caches java/node under ~/.local/share/mise; PMD lives in ~/.local/opt.)
-      - name: Cache PMD
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.local/opt/pmd-bin-7.27.0
-          key: pmd-7.27.0
-      # Runs the same verb a developer runs locally: `mise run backend:gate`
-      # (Spotless format check + compile + the offline test suite). mise pins
-      # java 21 + node 20 from mise.toml.
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          version: 2026.9.2
-          cache: true
-      # Cache Gradle deps + build across runs (mise pins the JDK but not ~/.gradle).
-      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-
-      # `mise run backend:gate` decomposed one verb per step, so a failure reddens
-      # the exact verb in the UI and gets a targeted fix instead of a wall of Gradle
-      # output. The composite still runs locally / in /ship.
-      - name: 'backend: lint (Spotless)'
-        id: lint
-        run: mise run backend:lint
-      - name: How to fix (lint)
-        if: failure() && steps.lint.outcome == 'failure'
-        run: |
-          {
-            echo "## ❌ Backend gate failed at \`lint\` — Spotless formatting"
-            echo ""
-            echo "**This is 100% mechanical.** Run it, commit, push — done:"
-            echo '```'
-            echo "mise run backend:fix     # = ./gradlew :backend:spotlessApply"
-            echo '```'
-            echo "The exact files are in the **backend: lint** step log above. (Structural smells are the separate 'Structural smells (backend)' job, not this.)"
-          } >> "$GITHUB_STEP_SUMMARY"
-      - name: 'backend: typecheck (compile)'
-        id: typecheck
-        run: mise run backend:typecheck
-      - name: How to fix (typecheck)
-        if: failure() && steps.typecheck.outcome == 'failure'
-        run: |
-          {
-            echo "## ❌ Backend gate failed at \`typecheck\` — compilation"
-            echo ""
-            echo "Not auto-fixable. The file:line is in the **backend: typecheck** step log above; reproduce with \`mise run backend:typecheck\`."
-          } >> "$GITHUB_STEP_SUMMARY"
-      - name: 'backend: test'
-        id: test
-        run: mise run backend:test
-      - name: How to fix (test)
-        if: failure() && steps.test.outcome == 'failure'
-        run: |
-          {
-            echo "## ❌ Backend gate failed at \`test\`"
-            echo ""
-            echo "A test failed. See the **backend: test** step log and the uploaded test-report artifact; reproduce with \`mise run backend:test\`."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Publish test report
-        if: always() # a failing run is exactly when the report is worth having
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: backend-test-report
-          path: backend/build/reports/tests/test
-          retention-days: 7
+    uses: CMaintz/foundry/.github/workflows/gate.yml@v2
+    with:
+      stack: java
+      working_directory: backend
 
   # Frontend consumes the foundry facade: stack=ts runs the six verbs one-per-step
   # (lint / typecheck=`ng build` / test / audit) plus a structural-smells job. The
