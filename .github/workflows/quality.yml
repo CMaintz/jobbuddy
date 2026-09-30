@@ -92,33 +92,20 @@ jobs:
           if [ "$fail" -ne 0 ]; then exit 1; fi
           echo "All extension files within $MAX lines."
 
-  spotbugs:
-    name: SpotBugs (backend)
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          version: 2026.9.2
-          cache: true
-      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-      # Blocking: fails on any finding not excluded (config/spotbugs/exclude.xml)
-      # or suppressed (@SuppressFBWarnings + justification). The current tree is clean.
-      - name: SpotBugs
-        run: mise run backend:spotbugs
+  # SpotBugs now runs inside the foundry facade (gate.yml backend job → `spotbugs: true`
+  # → `mise run spotbugs`), so the former custom job is gone. The ratchet still lives in
+  # config/spotbugs/exclude.xml (read by the Gradle SpotBugs config the verb invokes).
 
   # Single required check for this workflow — always runs so a path-skipped job
   # never wedges. Fails only if a job that ran failed.
   quality-ok:
     name: quality-ok
-    needs: [changes, extension, spotbugs]
+    needs: [changes, extension]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for r in "${{ needs.changes.result }}" "${{ needs.extension.result }}" "${{ needs.spotbugs.result }}"; do
+          for r in "${{ needs.changes.result }}" "${{ needs.extension.result }}"; do
             case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
           done
           echo "quality-ok"
