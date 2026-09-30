@@ -1,12 +1,12 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.user.Education;
 import com.autoapplicant.port.in.user.ManageEducationUseCase;
 import com.autoapplicant.port.out.user.EducationRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class EducationService implements ManageEducationUseCase {
@@ -28,9 +28,12 @@ public class EducationService implements ManageEducationUseCase {
 
     @Override
     public Education updateEducation(UUID userId, UUID id, Education education) {
+        Education existing = repo.findById(id)
+                .filter(e -> userId.equals(e.userId()))
+                .orElseThrow(() -> new NotFoundException("Education not found"));
         Education updated = new Education(id, userId, education.institution(), education.degree(),
                 education.fieldOfStudy(), education.startDate(), education.endDate(),
-                education.description(), education.grade(), education.displayOrder(), null, null,
+                education.description(), education.grade(), education.displayOrder(), existing.createdAt(), null,
                 education.skills());
         return repo.save(updated);
     }

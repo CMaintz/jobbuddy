@@ -71,7 +71,8 @@ public class ApplicationPromptAssembler {
     /** The user's chosen template, else their default; usage is counted on the one that wins. */
     private PromptTemplate resolveStyleTemplate(GenerateDocumentCommand cmd) {
         PromptTemplate styleTemplate = cmd.promptTemplateId() != null
-                ? promptTemplateRepo.findById(cmd.promptTemplateId()).orElse(null)
+                ? promptTemplateRepo.findById(cmd.promptTemplateId())
+                        .filter(t -> t.isVisibleTo(cmd.userId())).orElse(null)
                 // The user's own chosen default when they have one, the app's seeded prompt
                 // otherwise — switching a default is their row, never a write to app content.
                 : promptTemplateRepo.findDefaultFor(cmd.userId(), cmd.documentType()).orElse(null);

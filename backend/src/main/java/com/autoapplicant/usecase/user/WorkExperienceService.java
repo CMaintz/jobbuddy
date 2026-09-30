@@ -1,12 +1,12 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.user.WorkExperience;
 import com.autoapplicant.port.in.user.ManageWorkExperienceUseCase;
 import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class WorkExperienceService implements ManageWorkExperienceUseCase {
@@ -29,11 +29,14 @@ public class WorkExperienceService implements ManageWorkExperienceUseCase {
 
     @Override
     public WorkExperience updateWorkExperience(UUID userId, UUID id, WorkExperience experience) {
+        WorkExperience existing = repo.findById(id)
+                .filter(e -> userId.equals(e.userId()))
+                .orElseThrow(() -> new NotFoundException("Work experience not found"));
         WorkExperience updated = new WorkExperience(id, userId, experience.companyName(),
                 experience.title(), experience.location(), experience.description(),
                 experience.startDate(), experience.endDate(), experience.isCurrent(),
                 experience.technologies(), experience.achievements(),
-                experience.displayOrder(), null, null, experience.skills());
+                experience.displayOrder(), existing.createdAt(), null, experience.skills());
         return repo.save(updated);
     }
 

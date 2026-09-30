@@ -1,12 +1,12 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.port.in.user.ManageProfileSocialUseCase;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ProfileSocialService implements ManageProfileSocialUseCase {
@@ -31,8 +31,10 @@ public class ProfileSocialService implements ManageProfileSocialUseCase {
 
     @Override
     public ProfileSocial updateSocial(UUID userId, UUID id, ProfileSocial social) {
-        ProfileSocial toSave = new ProfileSocial(id, userId, social.platform(),
-                social.url(), social.username(), social.iconKey(), social.displayOrder(), null, null);
+        ProfileSocial existing = repo.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new NotFoundException("Social link not found"));
+        ProfileSocial toSave = new ProfileSocial(id, userId, social.platform(), social.url(),
+                social.username(), social.iconKey(), social.displayOrder(), existing.createdAt(), null);
         return repo.save(toSave);
     }
 

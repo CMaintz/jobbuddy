@@ -1,23 +1,24 @@
 package com.autoapplicant.usecase.skills;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * The categorisation contract. A skill's category decides which group it appears under and is
@@ -86,9 +87,38 @@ class ProfileSkillServiceTest {
         when(taxonomyRepo.findByNormalizedName("java")).thenReturn(Optional.of(
                 new SkillTaxonomy(UUID.randomUUID(), "Java", "java", null, "Programming Language", null)));
 
-        service.updateSkill(skill("Java", null, null));
+        UUID skillId = UUID.randomUUID();
+        when(repo.findById(skillId)).thenReturn(Optional.of(new ProfileSkill(
+                skillId, userId, "Java", null, "INTERMEDIATE", null, false, 0, null)));
+
+        service.updateSkill(new ProfileSkill(skillId, userId, "Java", null,
+                "INTERMEDIATE", null, false, 0, null));
 
         assertThat(captureSaved().category()).isEqualTo("Programming Language");
+    }
+
+    @Test
+    void another_users_skill_cannot_be_overwritten() {
+        UUID skillId = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        when(repo.findById(skillId)).thenReturn(Optional.of(new ProfileSkill(
+                skillId, owner, "Java", null, "EXPERT", null, true, 0, null)));
+
+        assertThatThrownBy(() -> service.updateSkill(new ProfileSkill(skillId, userId, "Hijacked", null,
+                "INTERMEDIATE", null, false, 0, null)))
+                .isInstanceOf(NotFoundException.class);
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void another_users_skill_cannot_be_deleted() {
+        UUID skillId = UUID.randomUUID();
+        when(repo.findById(skillId)).thenReturn(Optional.of(new ProfileSkill(
+                skillId, UUID.randomUUID(), "Java", null, "EXPERT", null, true, 0, null)));
+
+        service.deleteSkill(skillId, userId);
+
+        verify(repo, never()).deleteById(any());
     }
 
     @Test

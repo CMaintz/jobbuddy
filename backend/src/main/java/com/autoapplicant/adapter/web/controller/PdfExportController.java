@@ -18,18 +18,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/documents")
@@ -63,7 +62,7 @@ public class PdfExportController {
     public ResponseEntity<byte[]> exportPdf(@RequestBody PdfExportRequest req) {
         UUID userId = secCtx.getCurrentUserId();
 
-        PdfTemplate template = pdfTemplates.getById(req.pdfTemplateId())
+        PdfTemplate template = pdfTemplates.getById(req.pdfTemplateId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PDF template not found"));
 
         Profile profile = getUserProfile.getProfile(userId).orElse(null);
