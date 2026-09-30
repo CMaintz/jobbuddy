@@ -9,5 +9,7 @@ public record TailoredCvContent(
         List<StructuredDocumentItem> projects,
         List<StructuredDocumentItem> education,
         List<StructuredDocumentItem> certifications,
+        /** Tailored custom sections in the SAME shape as the source; ids/sourceIds unchanged. */
+        List<StructuredDocumentSection> customSections,
         List<String> notes
 ) {}

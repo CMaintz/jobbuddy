@@ -1,5 +1,12 @@
 import { SkillTaxonomy } from './skill-taxonomy.model';
 
+/** A user-authored CV section (e.g. Publications). Ids are server-assigned and stable for tailoring. */
+export interface CustomSection {
+  id?: string;
+  heading: string;
+  items: { id?: string; text: string }[];
+}
+
 export interface WorkExperience {
   id?: string;
   userId?: string;

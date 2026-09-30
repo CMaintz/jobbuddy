@@ -1,25 +1,23 @@
 package com.autoapplicant.usecase.document;
 
-import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.structured.CareerProfileForAi;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
+import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
 import com.autoapplicant.domain.skill.ProfileSkill;
-import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.skill.SkillCategories;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
-import com.autoapplicant.domain.skill.SkillTaxonomy;
-import com.autoapplicant.domain.skill.SkillCategories;
-import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
 import com.autoapplicant.port.out.user.*;
+import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
+import com.autoapplicant.usecase.common.Values;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.springframework.stereotype.Service;
 
 @Service
 
@@ -38,6 +36,7 @@ public class CareerProfileContextService {
     private final ProfileStrengthRepositoryPort strengthRepo;
     private final CareerTargetRepositoryPort careerTargetRepo;
     private final InterviewStoryRepositoryPort storyRepo;
+    private final CustomSectionRepositoryPort customSectionRepo;
     private final ObjectMapper objectMapper;
 
     public CareerProfileContextService(ProfileRepositoryPort profileRepo,
@@ -51,6 +50,7 @@ public class CareerProfileContextService {
                                        ProfileStrengthRepositoryPort strengthRepo,
                                        CareerTargetRepositoryPort careerTargetRepo,
                                        InterviewStoryRepositoryPort storyRepo,
+                                       CustomSectionRepositoryPort customSectionRepo,
                                        ObjectMapper objectMapper) {
         this.profileRepo = profileRepo;
         this.workExpRepo = workExpRepo;
@@ -63,6 +63,7 @@ public class CareerProfileContextService {
         this.strengthRepo = strengthRepo;
         this.careerTargetRepo = careerTargetRepo;
         this.storyRepo = storyRepo;
+        this.customSectionRepo = customSectionRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -131,6 +132,10 @@ public class CareerProfileContextService {
 
         CareerTarget target = careerTargetRepo.findByUserId(userId).orElse(null);
 
+        List<StructuredDocumentSection> customSections = customSectionRepo.findByUserId(userId).stream()
+                .map(CareerProfileContextService::toCustomSection)
+                .toList();
+
         return new CareerProfileForAi(
                 profile != null ? profile.headline() : null,
                 profile != null ? profile.summary() : null,
@@ -150,8 +155,19 @@ public class CareerProfileContextService {
                 target != null ? target.narrative() : null,
                 target != null && target.careerStage() != null ? target.careerStage().name() : null,
                 skillCategories,
-                formatAvailability(target)
+                formatAvailability(target),
+                customSections
         );
+    }
+
+    /** A user-authored custom section, shaped like the typed sections so tailoring treats it alike. */
+    private static StructuredDocumentSection toCustomSection(CustomSection section) {
+        List<StructuredDocumentItem> items = Values.listOrEmpty(section.items()).stream()
+                .map(item -> new StructuredDocumentItem(item.id(), item.text(), null, null, null, null,
+                        List.of(), List.of(), List.of(), List.of(), null))
+                .toList();
+        return new StructuredDocumentSection(
+                section.id(), StructuredDocumentSection.TYPE_CUSTOM, section.heading(), null, items);
     }
 
     /**
