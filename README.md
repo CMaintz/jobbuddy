@@ -1,6 +1,8 @@
-# AutoApplicant
+# Jobbuddy
 
-An AI-powered job application platform that helps candidates go from job posting to polished, tailored application documents. AutoApplicant crawls and imports job postings, maintains a structured career profile, and uses AI to generate tailored CVs, cover letters, and ATS (Applicant Tracking System) reports — exported as professionally rendered PDFs.
+An AI-powered job application platform that helps candidates go from job posting to polished, tailored application documents. Jobbuddy crawls and imports job postings, maintains a structured career profile, and uses AI to generate tailored CVs, cover letters, and ATS (Applicant Tracking System) reports — exported as professionally rendered PDFs.
+
+> Formerly **AutoApplicant** — the Java package (`com.autoapplicant`) and the default database name still carry that name.
 
 ![Jobbuddy flow — job posting to a tailored, ATS-ready application](docs/storyboard.svg)
 
@@ -57,14 +59,14 @@ The frontend mirrors this discipline: `core/api` (HTTP services), `core/models` 
 
 ### Full stack (Docker)
 
-```powershell
-Copy-Item .env.example .env   # then fill in secrets
+```bash
+cp .env.example .env   # then fill in secrets
 docker compose --env-file .env -f infra/docker-compose.yml up --build
 ```
 
 ### Local development
 
-```powershell
+```bash
 # Dependencies only
 docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 
@@ -72,7 +74,7 @@ docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 ./gradlew :backend:bootRun
 
 # Frontend
-cd frontend; npm install; npm run start:local
+cd frontend && npm install && npm run start:local
 ```
 
 | Service | URL |
