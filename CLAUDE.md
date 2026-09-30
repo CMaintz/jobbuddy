@@ -36,6 +36,10 @@ unrelated commits). First thing, every time:
 git fetch origin && git switch -c <type>/<short-desc> origin/main
 ```
 
+In a fresh clone or worktree, run `mise install` once. Its postinstall provisions PMD
+and `frontend/node_modules`; without them the habit-hooks sensors report their tools
+as "not installed" instead of checking anything.
+
 Only continue on an existing branch if it is unambiguously yours. One branch → one
 PR → one concern.
 
