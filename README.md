@@ -106,7 +106,14 @@ Agent guidance is in [`CLAUDE.md`](CLAUDE.md).
 ## Tests
 
 ```bash
-./gradlew :backend:test          # backend
-cd frontend && npm test          # frontend
+./gradlew :backend:test          # backend: unit, web-layer, ArchUnit and Postgres integration tests
+cd frontend && npm run test:ci   # frontend, headless
 cd frontend && npm run lint      # lint
 ```
+
+- **Persistence tests** run against a real `pgvector/pgvector:pg16` container (Testcontainers), migrated by
+  Flyway — full-text ranking, pgvector nearest-neighbour search and the migration chain are exercised
+  against Postgres itself. They need Docker and are skipped when no Docker daemon is reachable; CI always runs them.
+- **Architecture rules** (`HexagonalArchitectureTest`, ArchUnit) enforce the layering described above.
+- **Coverage**: every backend test run writes a JaCoCo report to `backend/build/reports/jacoco/test/html`
+  and fails below the line-coverage floor set in `backend/build.gradle.kts` (a ratchet — raise it, never lower it).

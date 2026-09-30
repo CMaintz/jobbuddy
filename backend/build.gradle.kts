@@ -102,6 +102,11 @@ dependencies {
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.archunit.junit5)
+    constraints {
+        testImplementation("org.apache.commons:commons-compress:1.28.0") {
+            because("Testcontainers pulls 1.24.0: GHSA-4265-ccf5-phj5, GHSA-4g9r-vxhx-9pgx")
+        }
+    }
 }
 
 tasks.withType<Test> {
