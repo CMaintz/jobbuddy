@@ -16,6 +16,7 @@ import com.autoapplicant.domain.user.WorkExperience;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.user.*;
+import com.autoapplicant.port.in.user.ManageCustomSectionsUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -46,6 +47,7 @@ class ProfileSectionControllerTest {
     @MockitoBean ManageProfileSocialUseCase   socialUseCase;
     @MockitoBean ManageProfileStrengthUseCase strengthUseCase;
     @MockitoBean ManageSpokenLanguagesUseCase languageUseCase;
+    @MockitoBean ManageCustomSectionsUseCase  customSections;
     @MockitoBean SecurityContextHelper        secCtx;
     @MockitoBean ProvisionFirebaseUserUseCase provisionUser;
     @MockitoBean ResolveLinkedInUserUseCase   resolveLinkedInUser;
