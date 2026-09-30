@@ -113,8 +113,9 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// Coverage: every `:backend:test` run writes the HTML/XML report and enforces the
-// floor below. The floor is a ratchet: raise it as coverage grows, never lower it.
+// Coverage: every `:backend:test` run writes the HTML/XML report; full (unfiltered)
+// runs also enforce the floor below. The floor is a ratchet: raise it as coverage
+// grows, never lower it.
 val coverageFloor = "0.31".toBigDecimal()
 
 tasks.test {
@@ -131,6 +132,9 @@ tasks.jacocoTestReport {
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.test)
+    // A `--tests` run covers a slice of the code, so only a full run can honour the floor.
+    val filteredRun = gradle.startParameter.taskRequests.flatMap { it.args }.any { it.startsWith("--tests") }
+    onlyIf { !filteredRun }
     violationRules {
         rule {
             limit {

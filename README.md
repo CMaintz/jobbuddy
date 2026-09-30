@@ -116,4 +116,5 @@ cd frontend && npm run lint      # lint
   against Postgres itself. They need Docker and are skipped when no Docker daemon is reachable; CI always runs them.
 - **Architecture rules** (`HexagonalArchitectureTest`, ArchUnit) enforce the layering described above.
 - **Coverage**: every backend test run writes a JaCoCo report to `backend/build/reports/jacoco/test/html`
-  and fails below the line-coverage floor set in `backend/build.gradle.kts` (a ratchet — raise it, never lower it).
+  and a full (unfiltered) run fails below the line-coverage floor set in `backend/build.gradle.kts`
+  (a ratchet — raise it, never lower it). `--tests` runs report coverage without enforcing it.
