@@ -46,7 +46,7 @@ dependencyLocking {
 // versions Spring Boot 3.5 supports. commons-lang3 3.18.0 also unblocks SpotBugs
 // (it needs org.apache.commons.lang3.Strings). Re-check with `mise run backend:audit`.
 extra["tomcat.version"] = "10.1.59"        // GHSA-9xv2/gcx9/h3x4 (incl. 9.8); 10.1.58 was skipped
-extra["jackson-bom.version"] = "2.21.5"    // GHSA-5gvw/5jmj/mhm7
+extra["jackson-bom.version"] = "2.21.6"    // GHSA-5gvw/5jmj/mhm7; 2.21.6 clears GHSA-gx83/q4xh/wjgm (jackson-databind)
 extra["netty.version"] = "4.1.137.Final"   // 11 netty-codec/http/handler CVEs
 extra["log4j2.version"] = "2.25.5"         // GHSA-qv9r
 extra["postgresql.version"] = "42.7.12"    // GHSA-j92g

@@ -767,7 +767,12 @@
       "url": "URL",
       "socialsHint": "Links shown in your CV header. Never sent to the AI provider.",
       "noLinks": "No links added yet.",
-      "addLink": "Add link"
+      "addLink": "Add link",
+      "customHint": "Your own sections (e.g. Publications, Volunteering) — a heading and a few lines. The AI tailors within them and never invents entries.",
+      "customHeadingPlaceholder": "Section heading (e.g. Publications)",
+      "customItemPlaceholder": "One line / entry",
+      "addCustomItem": "Add line",
+      "addCustomSection": "Add custom section"
     },
     "section": {
       "profile": "Profile",
@@ -789,7 +794,8 @@
       "projects": "Projects",
       "certifications": "Certifications",
       "languages": "Languages",
-      "socials": "Socials"
+      "socials": "Socials",
+      "custom": "Custom"
     },
     "count": {
       "fields": "{{n}} fields",
@@ -806,7 +812,8 @@
       "projects": "Side projects & open source",
       "certifications": "Certificates & credentials",
       "languages": "Languages & levels",
-      "socials": "GitHub, LinkedIn & other links"
+      "socials": "GitHub, LinkedIn & other links",
+      "custom": "Your own sections — Publications, Volunteering, etc."
     },
     "toast": {
       "loadFailed": "Failed to load profile",

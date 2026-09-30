@@ -1,4 +1,4 @@
-# AutoApplicant — Setup & Deployment Guide
+# Jobbuddy — Setup & Deployment Guide
 
 ## Prerequisites
 
@@ -16,8 +16,8 @@ An **OpenAI API key** with access to `gpt-4o` and `text-embedding-3-small` is re
 ## 1 — Clone the repository
 
 ```bash
-git clone <repo-url> AutoApplicant
-cd AutoApplicant
+git clone https://github.com/CMaintz/jobbuddy.git
+cd jobbuddy
 ```
 
 ---
@@ -178,7 +178,7 @@ curl -X POST http://localhost:8080/api/v1/admin/crawler/trigger \
 Caddy example (`Caddyfile`):
 
 ```
-autoapplicant.yourdomain.com {
+jobbuddy.yourdomain.com {
     reverse_proxy localhost:80
 }
 ```
@@ -197,10 +197,10 @@ Recommended split:
 Build images and push to a registry:
 
 ```bash
-docker build -t your-registry/autoapplicant-backend:latest -f backend/Dockerfile .
-docker build -t your-registry/autoapplicant-frontend:latest frontend/
-docker push your-registry/autoapplicant-backend:latest
-docker push your-registry/autoapplicant-frontend:latest
+docker build -t your-registry/jobbuddy-backend:latest -f backend/Dockerfile .
+docker build -t your-registry/jobbuddy-frontend:latest frontend/
+docker push your-registry/jobbuddy-backend:latest
+docker push your-registry/jobbuddy-frontend:latest
 ```
 
 Use the `docker-compose.yml` as a reference for pod specs, environment variables, and health checks.

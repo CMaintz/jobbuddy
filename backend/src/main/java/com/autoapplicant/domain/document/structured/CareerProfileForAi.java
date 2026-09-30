@@ -37,5 +37,7 @@ public record CareerProfileForAi(
          * ("Notice period: 3 måneder; available from 1 Sep 2026"). Null when the user stated
          * neither. Identity-free — it says when, never who.
          */
-        String availability
+        String availability,
+        /** User-authored custom sections (e.g. Publications); each item is id-anchored for tailoring. */
+        List<StructuredDocumentSection> customSections
 ) {}
