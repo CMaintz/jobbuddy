@@ -130,66 +130,9 @@ jobs:
         if: failure() && steps.smells.outcome == 'failure'
         run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
 
-  habits-frontend:
-    name: Structural smells (frontend)
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - name: Baseline present?
-        id: baseline
-        run: |
-          if [ -f frontend/.habit-hooks/snooze.json ]; then
-            echo "have=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::No frontend/.habit-hooks/snooze.json yet - run bootstrap.yml once. Skipping."
-            echo "have=false" >> "$GITHUB_OUTPUT"
-          fi
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        if: steps.baseline.outputs.have == 'true'
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        if: steps.baseline.outputs.have == 'true'
-        with:
-          python-version: '3.12'
-      # Shares gate.yml's node_modules cache (same key) — skip the ~107s npm ci
-      # rebuild whenever the lockfile is unchanged.
-      - name: Cache node_modules
-        if: steps.baseline.outputs.have == 'true'
-        id: node_modules
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: frontend/node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('frontend/package-lock.json') }}
-      - name: Install deps + habit-hooks
-        if: steps.baseline.outputs.have == 'true'
-        run: |
-          if [ "${{ steps.node_modules.outputs.cache-hit }}" != 'true' ]; then
-            (cd frontend && npm ci)
-          fi
-          pip install --disable-pip-version-check habit-hooks habit-hooks-typescript
-      - name: Make base ref resolvable for --branch
-        if: steps.baseline.outputs.have == 'true' && github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git branch -f main "$BASE_SHA"
-      - name: Smells (fails only on smells beyond the snooze baseline)
-        id: smells
-        if: steps.baseline.outputs.have == 'true'
-        working-directory: frontend
-        # --branch: scan only files changed vs the base; the rest are in the baseline.
-        run: |
-          export PATH="$PWD/node_modules/.bin:$PATH"
-          habit-hooks --branch
-      - name: How to read these smells
-        if: failure() && steps.smells.outcome == 'failure'
-        run: bash .github/smell-legend.sh >> "$GITHUB_STEP_SUMMARY"
+  # Frontend structural smells now run inside the foundry facade (gate.yml → _ts
+  # habits job), so the former habits-frontend job lives there. Backend smells stay
+  # here until the backend is migrated too.
 
   extension:
     name: Extension max-file
@@ -281,12 +224,12 @@ jobs:
   # never wedges. Fails only if a job that ran failed.
   quality-ok:
     name: quality-ok
-    needs: [changes, habits-backend, habits-frontend, extension, no-var, spotbugs]
+    needs: [changes, habits-backend, extension, no-var, spotbugs]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for r in "${{ needs.changes.result }}" "${{ needs['habits-backend'].result }}" "${{ needs['habits-frontend'].result }}" "${{ needs.extension.result }}" "${{ needs['no-var'].result }}" "${{ needs.spotbugs.result }}"; do
+          for r in "${{ needs.changes.result }}" "${{ needs['habits-backend'].result }}" "${{ needs.extension.result }}" "${{ needs['no-var'].result }}" "${{ needs.spotbugs.result }}"; do
             case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
           done
           echo "quality-ok"
