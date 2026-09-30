@@ -236,6 +236,13 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         appendItems(sb, t.projects());
         appendItems(sb, t.education());
         appendItems(sb, t.certifications());
+        // Custom-section text must be flattened too, or the fact/retracted guards never see it.
+        if (t.customSections() != null) {
+            for (StructuredDocumentSection cs : t.customSections()) {
+                if (cs.heading() != null) sb.append(cs.heading()).append('\n');
+                appendItems(sb, cs.items());
+            }
+        }
         return sb.toString();
     }
 
