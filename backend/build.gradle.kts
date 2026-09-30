@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     java
+    jacoco
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.spotbugs") version "6.5.11"
 }
@@ -97,10 +98,42 @@ dependencies {
     // Test
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.security.test)
+    testImplementation(libs.spring.boot.testcontainers)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.archunit.junit5)
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Coverage: every `:backend:test` run writes the HTML/XML report and enforces the
+// floor below. The floor is a ratchet: raise it as coverage grows, never lower it.
+val coverageFloor = "0.31".toBigDecimal()
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = coverageFloor
+            }
+        }
+    }
 }
 
 // Run the crawler as a one-shot CLI command (no HTTP server starts):
