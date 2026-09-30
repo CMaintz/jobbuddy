@@ -6,11 +6,10 @@ import com.autoapplicant.domain.ai.AiOperationUsage;
 import com.autoapplicant.domain.ai.AiUsageRecord;
 import com.autoapplicant.domain.ai.AiUsageTotals;
 import com.autoapplicant.port.out.ai.AiUsageRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class AiUsagePersistenceAdapter implements AiUsageRepositoryPort {
@@ -36,7 +35,8 @@ public class AiUsagePersistenceAdapter implements AiUsageRepositoryPort {
 
     @Override
     public AiUsageTotals totalsSince(UUID userId, Instant since) {
-        AiUsageTotals totals = repo.totalsSince(userId, since);
+        // Postgres cannot type a bare `:since IS NULL`, so "all time" is the epoch instead.
+        AiUsageTotals totals = repo.totalsSince(userId, since == null ? Instant.EPOCH : since);
         return totals == null ? AiUsageTotals.NONE : totals;
     }
 
