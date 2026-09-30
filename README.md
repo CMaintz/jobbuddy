@@ -1,33 +1,33 @@
-# AutoApplicant
+# Jobbuddy
 
-An AI-powered job application platform that helps candidates go from job posting to polished, tailored application documents. AutoApplicant crawls and imports job postings, maintains a structured career profile, and uses AI to generate tailored CVs, cover letters, and ATS (Applicant Tracking System) reports — exported as professionally rendered PDFs.
+I built Jobbuddy for my own job search, because tailoring a CV and cover letter to every single posting by hand gets old fast. It pulls in job postings, keeps a structured career profile, and uses AI to draft a tailored CV, cover letter and ATS (Applicant Tracking System) report for a specific posting, exported as PDFs.
 
-![Jobbuddy flow — job posting to a tailored, ATS-ready application](docs/storyboard.svg)
+It used to be called AutoApplicant. The Java package (`com.autoapplicant`) and the default database name still carry that name.
 
-## Features
+![Jobbuddy flow: job posting to a tailored, ATS-ready application](docs/storyboard.svg)
 
-- **Career profile management** — structured profile with experience, education, skills, and projects; can be bootstrapped by parsing an existing CV
-- **Job discovery** — multi-source job crawler (Jobindex, Jobnet, IT-Jobbank, Jobdanmark, + ATS boards) and Postgres full-text and pgvector semantic search
-- **LinkedIn job connector** — personal-use, low-volume connector over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated per-user keyword plans; runs on its own jittered schedule off the shared crawl (see `docs/guides/db.md` / `application.yml` `app.linkedin.*`)
-- **AI document generation** — tailored CVs and cover letters generated against a specific posting, with a configurable **automatic drafter→reviewer loop** that critiques and revises each draft before assembly
-- **ATS reports** — automated analysis of how well a generated document matches the target posting
-- **Prompt-safety hardening** — anti-fabrication rules (incl. tool-of-trade conflation), a prompt-injection guard treating scraped/posted job text as untrusted data, and a **deterministic fact gate** that flags invented/inflated metrics not supported by the profile (model-free, zero token cost)
-- **Pluggable AI providers** — OpenAI, Gemini, or a **local CLI-agent** (Claude Code / Codex) for generation to run on a flat-fee subscription instead of API calls; embeddings always use a real API
-- **Structured document pipeline** — all AI output is structured JSON (never raw text blobs), assembled server-side into a `StructuredDocument` with identity, sections, and rendering options
-- **PDF export** — ATS-friendly and designed templates rendered server-side
-- **Privacy by design** — personally identifying fields (name, email, phone, photo, links) are *never* sent to the AI provider; identity is merged into documents after the AI call
-- **Authentication** — Firebase JWT; optional LinkedIn integration
-- **API documentation** — full OpenAPI spec with Swagger UI
+## What it does
 
-## Tech Stack
+- Career profile with experience, education, skills and projects. You can bootstrap it by parsing an existing CV.
+- Job discovery: a crawler over Jobindex, Jobnet, IT-Jobbank, Jobdanmark and a few ATS boards, plus Postgres full-text and pgvector semantic search.
+- LinkedIn connector: personal-use and low-volume, over LinkedIn's public `jobs-guest` endpoints, driven by LLM-generated keyword plans per user. It runs on its own jittered schedule, separate from the shared crawl (see `docs/guides/db.md` and `app.linkedin.*` in `application.yml`).
+- Document generation: CVs and cover letters tailored to one posting. An optional drafter/reviewer loop critiques and revises each draft before it's assembled.
+- ATS reports on how well a generated document matches the posting.
+- Guardrails against the model making stuff up: anti-fabrication rules (including not conflating tools of the trade), scraped job text treated as untrusted input, and a deterministic fact gate that flags metrics the profile doesn't support. The fact gate is plain code, no model call.
+- Pluggable providers: OpenAI, Gemini, or a local CLI agent (Claude Code / Codex) so generation can run on a flat-fee subscription instead of per-call API billing. Embeddings always use a real API.
+- All AI output is structured JSON, assembled server-side into a `StructuredDocument` (identity, sections, rendering options), then rendered to PDF with either an ATS-friendly or a designed template.
+- Name, email, phone, photo and links are never sent to the AI provider. Identity is merged into the document after the AI call.
+- Firebase JWT auth, optional LinkedIn integration, and an OpenAPI spec with Swagger UI.
+
+## Stack
 
 | Layer | Technology |
 |---|---|
 | Backend | Java, Spring Boot, Gradle (multi-module) |
-| Architecture | Hexagonal (Ports & Adapters) — `domain` / `port` / `usecase` / `adapter` |
+| Architecture | Hexagonal (ports and adapters): `domain` / `port` / `usecase` / `adapter` |
 | Frontend | Angular (standalone components, lazy-loaded routes) |
 | Database | PostgreSQL with Flyway migrations |
-| Search | Postgres full-text (`danish` config) + pgvector semantic search (`text-embedding-3-small`) |
+| Search | Postgres full-text (`danish` config) + pgvector (`text-embedding-3-small`) |
 | AI | OpenAI / Gemini API, or a local CLI agent (Claude Code / Codex) for generation |
 | Auth | Firebase Authentication (JWT), optional LinkedIn OAuth |
 | Docs | Springdoc OpenAPI / Swagger UI |
@@ -35,11 +35,11 @@ An AI-powered job application platform that helps candidates go from job posting
 
 ## Architecture
 
-The backend strictly follows hexagonal architecture — every cross-boundary interaction goes through a port interface:
+The backend is hexagonal. Anything crossing a boundary goes through a port interface:
 
 ```
 adapter/            Spring controllers, JPA adapters, AI client, crawler, PDF renderer
-  web/controller/   REST endpoints — depend on port/in interfaces only
+  web/controller/   REST endpoints, depend on port/in interfaces only
   persistence/      JPA entities + adapters implementing port/out
   ai/               OpenAI client implementing AiProviderPort
   crawler/          Job posting crawler
@@ -47,32 +47,28 @@ adapter/            Spring controllers, JPA adapters, AI client, crawler, PDF re
 port/
   in/               Use case interfaces (what the application can do)
   out/              Repository/external service interfaces (what the app needs)
-usecase/            Business logic — implements port/in, depends only on port/out
-domain/             Pure records/value objects — no framework dependencies
+usecase/            Business logic, implements port/in, depends only on port/out
+domain/             Plain records/value objects, no framework dependencies
 ```
 
-The frontend mirrors this discipline: `core/api` (HTTP services), `core/models` (interfaces mirroring backend records), `features` (routed components), `shared/components` (presentational).
+The frontend follows the same idea: `core/api` (HTTP services), `core/models` (interfaces mirroring the backend records), `features` (routed components), `shared/components` (presentational).
 
-## Getting Started
+## Running it
 
-### Full stack (Docker)
+Full stack in Docker:
 
-```powershell
-Copy-Item .env.example .env   # then fill in secrets
+```bash
+cp .env.example .env   # then fill in secrets
 docker compose --env-file .env -f infra/docker-compose.yml up --build
 ```
 
-### Local development
+Or locally, with only Postgres in Docker:
 
-```powershell
-# Dependencies only
+```bash
 docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 
-# Backend
-./gradlew :backend:bootRun
-
-# Frontend
-cd frontend; npm install; npm run start:local
+./gradlew :backend:bootRun                       # backend
+cd frontend && npm install && npm run start:local  # frontend
 ```
 
 | Service | URL |
@@ -81,27 +77,22 @@ cd frontend; npm install; npm run start:local
 | Backend API | http://localhost:8080/api/v1 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 
-### Required configuration
+### Configuration
 
-- `OPENAI_API_KEY` — OpenAI key with access to `gpt-4o` and `text-embedding-3-small`
-- Firebase service account JSON at `.secrets/firebase-service-account.json`
+You need:
+
+- `OPENAI_API_KEY`, with access to `gpt-4o` and `text-embedding-3-small`
+- a Firebase service account JSON at `.secrets/firebase-service-account.json`
 
 Optional: `DB_*`, `LINKEDIN_CLIENT_ID`/`SECRET`, `ALLOWED_ORIGINS` (all have local defaults).
 
-AI provider / feature toggles (all optional, sensible defaults):
+AI provider and feature toggles (optional, with defaults):
 
-- `GENERATION_AI_PROVIDER` — `openai` (default) · `gemini` · `claude-cli` / `codex` / `cli` (local agent). `ENRICHMENT_AI_PROVIDER` must stay a real API (produces embeddings).
-- `AI_CLI_COMMAND` — CLI invoked for generation when using a local agent (default `claude -p`; prompt piped to stdin).
-- `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
-- `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE` — deterministic fact gate on generated metrics (`warn` default, or `block`).
-- `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (see `app.linkedin.*` in `application.yml`).
-
-## Documentation
-
-Full docs live in [`docs/`](docs/) (see the [index](docs/README.md)): `specs/`,
-`architecture/`, `guides/` (setup, commands, testing, db), `product/` (strategy,
-features, the Danish-market playbook), and `archive/` for superseded material.
-Agent guidance is in [`CLAUDE.md`](CLAUDE.md).
+- `GENERATION_AI_PROVIDER`: `openai` (default), `gemini`, or `claude-cli` / `codex` / `cli` for a local agent. `ENRICHMENT_AI_PROVIDER` has to stay a real API because it produces embeddings.
+- `AI_CLI_COMMAND`: the CLI used for generation with a local agent (default `claude -p`, prompt piped to stdin).
+- `AUTO_REVIEW_ENABLED`: the reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
+- `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE`: the fact gate on generated metrics (`warn` by default, or `block`).
+- `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS`: the LinkedIn connector (see `app.linkedin.*` in `application.yml`).
 
 ## Tests
 
@@ -111,10 +102,8 @@ cd frontend && npm run test:ci   # frontend, headless
 cd frontend && npm run lint      # lint
 ```
 
-- **Persistence tests** run against a real `pgvector/pgvector:pg16` container (Testcontainers), migrated by
-  Flyway — full-text ranking, pgvector nearest-neighbour search and the migration chain are exercised
-  against Postgres itself. They need Docker and are skipped when no Docker daemon is reachable; CI always runs them.
-- **Architecture rules** (`HexagonalArchitectureTest`, ArchUnit) enforce the layering described above.
-- **Coverage**: every backend test run writes a JaCoCo report to `backend/build/reports/jacoco/test/html`
-  and a full (unfiltered) run fails below the line-coverage floor set in `backend/build.gradle.kts`
-  (a ratchet — raise it, never lower it). `--tests` runs report coverage without enforcing it.
+Persistence tests run against a real `pgvector/pgvector:pg16` container (Testcontainers) migrated by Flyway, so full-text ranking, vector search and the migrations are tested on actual Postgres. They need Docker and get skipped locally without it; CI always runs them. `HexagonalArchitectureTest` (ArchUnit) enforces the layering above, and a full test run fails if line coverage drops below the JaCoCo floor in `backend/build.gradle.kts` (only ever raise it).
+
+## Docs
+
+The rest lives in [`docs/`](docs/) (start at the [index](docs/README.md)): `specs/`, `architecture/`, `guides/` (setup, commands, testing, db), `product/` (strategy, features, notes on the Danish job market) and `archive/` for old material. Agent guidance is in [`CLAUDE.md`](CLAUDE.md).

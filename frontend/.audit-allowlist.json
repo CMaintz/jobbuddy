@@ -1,0 +1,5 @@
+{
+  "note": "Accepted npm-audit findings for the ratcheted `audit` verb (scripts/npm-audit-ratchet.mjs). A ratchet: every entry needs {package, reason}; it may only shrink. Prefer fixing (npm audit fix, or a targeted override) over accepting. A stale entry FAILS the check to force pruning.",
+  "level": "critical",
+  "accepted": []
+}

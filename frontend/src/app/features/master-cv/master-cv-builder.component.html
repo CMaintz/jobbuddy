@@ -222,6 +222,12 @@
               <app-mcv-socials-section [list]="socialsList"
                 (add)="addSocial()" (removeAt)="removeSocial($event)" (dirty)="markDirty()" />
             }
+
+            <!-- Custom sections -->
+            @if (activeSec() === 'Custom') {
+              <app-mcv-custom-sections-section [list]="customSectionsList"
+                (add)="addCustomSection()" (removeAt)="removeCustomSection($event)" (changed)="markDirty()" />
+            }
           </div>
         </div>
 

@@ -1,16 +1,15 @@
 package com.autoapplicant.usecase.document;
 
-import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.domain.user.User;
-import org.springframework.stereotype.Component;
-
+import com.autoapplicant.usecase.common.Values;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
 
 @Component
 
@@ -82,6 +81,14 @@ public class CvDocumentAssembler {
         }
         addSection(sections, "certifications", "certifications", labels.certifications(),
                 validateItems(tailored != null ? tailored.certifications() : null, source.certifications()));
+        // User-authored custom sections, tailored where the AI returned them and validated back to
+        // source by id — an AI-invented section or item (unknown id) is dropped, never rendered.
+        for (StructuredDocumentSection custom : customSections(
+                tailored != null ? tailored.customSections() : null, source.customSections())) {
+            if (custom.items() != null && !custom.items().isEmpty()) {
+                sections.add(custom);
+            }
+        }
         if (source.spokenLanguages() != null && !source.spokenLanguages().isEmpty()) {
             sections.add(new StructuredDocumentSection("languages", "languages", labels.languages(), null,
                     source.spokenLanguages().stream()
@@ -170,6 +177,31 @@ public class CvDocumentAssembler {
         if (!items.isEmpty()) {
             sections.add(new StructuredDocumentSection(id, type, heading, null, items));
         }
+    }
+
+    /**
+     * Custom sections in source order, each rewritten by the AI where it returned a matching id and
+     * validated item-by-item against source (dropping unknown-id items). Preserves the user's heading
+     * and every source section — a section the AI omitted is kept untailored, never lost.
+     */
+    private List<StructuredDocumentSection> customSections(List<StructuredDocumentSection> tailored,
+                                                           List<StructuredDocumentSection> source) {
+        if (source == null || source.isEmpty()) {
+            return List.of();
+        }
+        Map<String, StructuredDocumentSection> tailoredById = tailored == null ? Map.of()
+                : tailored.stream()
+                        .filter(s -> s.id() != null)
+                        .collect(Collectors.toMap(StructuredDocumentSection::id, s -> s, (a, b) -> a));
+        List<StructuredDocumentSection> out = new ArrayList<>();
+        for (StructuredDocumentSection src : source) {
+            StructuredDocumentSection match = tailoredById.get(src.id());
+            List<StructuredDocumentItem> items =
+                    match != null ? validateItems(match.items(), src.items()) : src.items();
+            out.add(new StructuredDocumentSection(
+                    src.id(), StructuredDocumentSection.TYPE_CUSTOM, src.heading(), src.body(), items));
+        }
+        return out;
     }
 
     private List<StructuredDocumentItem> validateItems(List<StructuredDocumentItem> tailored,

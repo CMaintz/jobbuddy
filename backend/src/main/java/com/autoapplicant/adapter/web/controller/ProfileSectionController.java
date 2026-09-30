@@ -6,13 +6,11 @@ import com.autoapplicant.port.in.user.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.net.URI;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -27,7 +25,8 @@ public class ProfileSectionController {
             List<Certification> certifications,
             List<SpokenLanguage> languages,
             List<ProfileSocial> socials,
-            List<ProfileStrength> strengths
+            List<ProfileStrength> strengths,
+            List<CustomSection> customSections
     ) {}
 
     private final ManageWorkExperienceUseCase workExpUseCase;
@@ -38,6 +37,7 @@ public class ProfileSectionController {
     private final ManageProfileSocialUseCase socialUseCase;
     private final ManageProfileStrengthUseCase strengthUseCase;
     private final ManageSpokenLanguagesUseCase languageUseCase;
+    private final ManageCustomSectionsUseCase customSectionsUseCase;
     private final SecurityContextHelper secCtx;
 
     public ProfileSectionController(ManageWorkExperienceUseCase workExpUseCase,
@@ -48,6 +48,7 @@ public class ProfileSectionController {
                                     ManageProfileSocialUseCase socialUseCase,
                                     ManageProfileStrengthUseCase strengthUseCase,
                                     ManageSpokenLanguagesUseCase languageUseCase,
+                                    ManageCustomSectionsUseCase customSectionsUseCase,
                                     SecurityContextHelper secCtx) {
         this.workExpUseCase = workExpUseCase;
         this.projectsUseCase = projectsUseCase;
@@ -57,6 +58,7 @@ public class ProfileSectionController {
         this.socialUseCase = socialUseCase;
         this.strengthUseCase = strengthUseCase;
         this.languageUseCase = languageUseCase;
+        this.customSectionsUseCase = customSectionsUseCase;
         this.secCtx = secCtx;
     }
 
@@ -74,8 +76,24 @@ public class ProfileSectionController {
                 certUseCase.getCertifications(userId),
                 languageUseCase.getLanguages(userId),
                 socialUseCase.getSocials(userId),
-                strengthUseCase.getStrengths(userId)
+                strengthUseCase.getStrengths(userId),
+                customSectionsUseCase.getCustomSections(userId)
         );
+    }
+
+    // ── Custom sections ─────────────────────────────────────────────────────────
+
+    @Operation(summary = "List the user's custom CV sections")
+    @GetMapping("/custom-sections")
+    public List<CustomSection> getCustomSections() {
+        return customSectionsUseCase.getCustomSections(secCtx.getCurrentUserId());
+    }
+
+    @Operation(summary = "Replace the user's custom CV sections",
+            description = "Whole-list replace; new sections/items get server-assigned ids, blanks are dropped.")
+    @PutMapping("/custom-sections")
+    public List<CustomSection> saveCustomSections(@RequestBody List<CustomSection> sections) {
+        return customSectionsUseCase.saveCustomSections(secCtx.getCurrentUserId(), sections);
     }
 
     // ── Work Experience ───────────────────────────────────────────────────────
