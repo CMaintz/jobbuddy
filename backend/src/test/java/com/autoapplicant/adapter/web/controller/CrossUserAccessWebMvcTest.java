@@ -17,6 +17,7 @@ import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import com.autoapplicant.port.in.user.*;
+import com.autoapplicant.port.in.user.ManageCustomSectionsUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +67,7 @@ class CrossUserAccessWebMvcTest {
 
     @MockitoBean ManagePdfTemplatesUseCase    pdfTemplates;
 
+    @MockitoBean ManageCustomSectionsUseCase  customSections;
     @MockitoBean SecurityContextHelper        secCtx;
     @MockitoBean ProvisionFirebaseUserUseCase provisionUser;
     @MockitoBean ResolveLinkedInUserUseCase   resolveLinkedInUser;
