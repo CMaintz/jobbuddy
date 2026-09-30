@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     java
+    jacoco
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.spotbugs") version "6.5.11"
 }
@@ -97,10 +98,51 @@ dependencies {
     // Test
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.security.test)
+    testImplementation(libs.spring.boot.testcontainers)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.archunit.junit5)
+    constraints {
+        testImplementation("org.apache.commons:commons-compress:1.28.0") {
+            because("Testcontainers pulls 1.24.0: GHSA-4265-ccf5-phj5, GHSA-4g9r-vxhx-9pgx")
+        }
+    }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Coverage: every `:backend:test` run writes the HTML/XML report; full (unfiltered)
+// runs also enforce the floor below. The floor is a ratchet: raise it as coverage
+// grows, never lower it.
+val coverageFloor = "0.31".toBigDecimal()
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+    // A `--tests` run covers a slice of the code, so only a full run can honour the floor.
+    val filteredRun = gradle.startParameter.taskRequests.flatMap { it.args }.any { it.startsWith("--tests") }
+    onlyIf { !filteredRun }
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = coverageFloor
+            }
+        }
+    }
 }
 
 // Run the crawler as a one-shot CLI command (no HTTP server starts):
