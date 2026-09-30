@@ -1,4 +1,4 @@
-# AutoApplicant — Architecture Notes
+# Jobbuddy — Architecture Notes
 
 > Last updated: 2026-05-21
 

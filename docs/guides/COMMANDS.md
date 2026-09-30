@@ -1,9 +1,9 @@
-# AutoApplicant — Commands Reference
+# Jobbuddy — Commands Reference
 
 ## Terminal
 
 **Shell:** PowerShell 7
-**Profile:** `C:\Users\akash\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
+**Profile:** your PowerShell profile (`$PROFILE`) — these helpers are personal shortcuts, not part of the repo
 Reload after edits: `. $PROFILE`
 
 All `aac-*` functions and the `aac` alias are defined in that profile and require PowerShell 7.
@@ -49,7 +49,7 @@ aac-crawl it_jobbank -f        # force-crawl IT Jobbank
 
 **Force mode (`-f`):** disables the "caught-up" early stop — the crawl only halts when the feed returns an empty page or the 10,000-page safety ceiling is hit (~200k jobs). Use for first-time backfills or dev re-crawls.
 
-**Log file:** `C:\Users\akash\IdeaProjects\AutoApplicant\crawler.log` (overwritten each run)
+**Log file:** `crawler.log` in the repo root (overwritten each run)
 
 ---
 
@@ -80,7 +80,7 @@ aac-enrich 100          # limit to 100 jobs this run
 
 ## Gradle (manual / CI)
 
-Run from the repo root (`C:\Users\akash\IdeaProjects\AutoApplicant`).
+Run from the repo root.
 
 ```powershell
 .\gradlew.bat :backend:build                         # compile + run all tests
