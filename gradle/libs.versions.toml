@@ -8,7 +8,8 @@ hypersistence-utils = "3.7.3"
 pgvector = "0.1.6"
 jsoup = "1.23.1"
 springdoc = "2.8.17"
-testcontainers = "1.19.7"
+testcontainers = "1.21.4"
+archunit = "1.5.1"
 flyway = "10.10.0"
 pdfbox = "2.0.27"
 openhtmltopdf = "1.0.10"
@@ -34,6 +35,8 @@ springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-u
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 h2 = { module = "com.h2database:h2" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 openhtmltopdf-pdfbox = { module = "com.openhtmltopdf:openhtmltopdf-pdfbox", version.ref = "openhtmltopdf" }

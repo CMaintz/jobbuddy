@@ -1,5 +1,9 @@
 package com.autoapplicant.usecase.interview;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.interview.InterviewQuestion;
 import com.autoapplicant.domain.interview.MockInterviewTurn;
@@ -11,20 +15,15 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * There is one set of interview questions per job, and the mock interview asks that set.
@@ -132,7 +131,7 @@ class InterviewPrepServiceTest {
 
     private void stubPrepPackJob() {
         when(jobRepo.findById(jobId)).thenReturn(Optional.of(job()));
-        when(documentRepo.findByJobId(jobId)).thenReturn(List.of());
+        when(documentRepo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());
         when(careerProfileContext.buildJson(userId)).thenReturn("{\"skills\":[\"Java\"]}");
         when(storyRepo.findByUserId(userId)).thenReturn(List.of());
         when(repo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());

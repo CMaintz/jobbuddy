@@ -1,13 +1,13 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.document.PdfTemplate;
 import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.out.document.PdfTemplateRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class PdfTemplateService implements ManagePdfTemplatesUseCase {
@@ -24,8 +24,8 @@ public class PdfTemplateService implements ManagePdfTemplatesUseCase {
     }
 
     @Override
-    public Optional<PdfTemplate> getById(UUID id) {
-        return repo.findById(id);
+    public Optional<PdfTemplate> getById(UUID id, UUID userId) {
+        return repo.findById(id).filter(t -> t.isSystem() || userId.equals(t.userId()));
     }
 
     @Override
@@ -39,9 +39,9 @@ public class PdfTemplateService implements ManagePdfTemplatesUseCase {
     @Override
     public PdfTemplate update(PdfTemplate template) {
         return repo.findById(template.id())
-                .filter(existing -> !existing.isSystem())
+                .filter(existing -> !existing.isSystem() && existing.userId().equals(template.userId()))
                 .map(existing -> repo.save(template))
-                .orElseThrow(() -> new IllegalArgumentException("Template not found or is a system template"));
+                .orElseThrow(() -> new NotFoundException("Template not found or is a system template"));
     }
 
     @Override

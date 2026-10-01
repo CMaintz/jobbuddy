@@ -2,38 +2,36 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.job.JobResponse;
-import com.autoapplicant.adapter.web.dto.job.MatchResultResponse;
 import com.autoapplicant.adapter.web.dto.job.ManualJobRequest;
+import com.autoapplicant.adapter.web.dto.job.MatchResultResponse;
+import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.job.EmploymentType;
+import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RemoteType;
 import com.autoapplicant.domain.matching.FeedbackType;
-import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.search.JobSearchFilters;
 import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
-import com.autoapplicant.domain.document.GeneratedDocument;
-import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.port.in.document.GetDocumentsForJobUseCase;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.job.ReportJobInactiveUseCase;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
-import java.net.URI;
-import java.time.Instant;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/jobs")
@@ -178,7 +176,7 @@ public class JobController {
     @Operation(summary = "List generated documents for a job")
     @GetMapping("/{id}/documents")
     public ResponseEntity<List<GeneratedDocument>> jobDocuments(@PathVariable UUID id) {
-        return ResponseEntity.ok(getDocsForJob.getDocumentsForJob(id));
+        return ResponseEntity.ok(getDocsForJob.getDocumentsForJob(id, secCtx.getCurrentUserId()));
     }
 
     @Operation(summary = "Submit recommendation feedback for a job")

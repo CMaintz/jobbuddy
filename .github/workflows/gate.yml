@@ -71,8 +71,7 @@ jobs:
   # The verbs live in backend/mise.toml (../gradlew :backend: shim). This replaces the
   # inline lint/typecheck/test steps AND folds in the former quality.yml habits-backend
   # + no-var jobs and security.yml's backend-audit (audit is now a gate verb).
-  # SpotBugs stays a custom job in quality.yml until foundry's `mise run spotbugs` verb
-  # (foundry#36) is released into @v2 — then flip to `spotbugs: true` and drop that job.
+  # SpotBugs runs in the facade too (`spotbugs: true` -> `mise run spotbugs`, foundry#36).
   backend:
     name: Backend gate
     needs: changes
@@ -81,6 +80,7 @@ jobs:
     with:
       stack: java
       working_directory: backend
+      spotbugs: true
 
   # Frontend consumes the foundry facade: stack=ts runs the six verbs one-per-step
   # (lint / typecheck=`ng build` / test / audit) plus a structural-smells job. The

@@ -170,8 +170,8 @@ public class InterviewPrepService implements ManageInterviewQuestionsUseCase,
         String jobDescription = job.descriptionClean() != null ? job.descriptionClean() : "";
 
         // Documents actually generated for this job — source of the consistency brief
-        String sentDocuments = documentRepo.findByJobId(jobId).stream()
-                .filter(d -> d.userId().equals(userId) && d.content() != null && !d.content().isBlank())
+        String sentDocuments = documentRepo.findByJobIdAndUserId(jobId, userId).stream()
+                .filter(d -> d.content() != null && !d.content().isBlank())
                 .limit(3)
                 .map(d -> "### " + d.documentType() + "\n"
                         + d.content().substring(0, Math.min(3000, d.content().length())))

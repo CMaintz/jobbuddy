@@ -4,10 +4,9 @@ import com.autoapplicant.domain.document.PromptCategory;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.port.in.document.*;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class PromptTemplateService implements
@@ -24,6 +23,7 @@ public class PromptTemplateService implements
     @Override
     public void favourite(UUID userId, UUID templateId) {
         repo.findById(templateId)
+                .filter(t -> t.isVisibleTo(userId))
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
         repo.addFavourite(userId, templateId);
     }
@@ -116,7 +116,7 @@ public class PromptTemplateService implements
         PromptTemplate template = repo.findById(templateId)
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
         // Someone else's private template is not theirs to make their default.
-        if (!template.isSystem() && !template.isPublic() && !userId.equals(template.userId())) {
+        if (!template.isVisibleTo(userId)) {
             throw new SecurityException("You can only default to your own templates or the app's");
         }
         if (template.category() != category) {
@@ -134,6 +134,7 @@ public class PromptTemplateService implements
     @Override
     public PromptTemplate duplicate(UUID templateId, UUID userId, String newName) {
         PromptTemplate original = repo.findById(templateId)
+                .filter(t -> t.isVisibleTo(userId))
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
         PromptTemplate copy = new PromptTemplate(null, userId,
                 newName != null ? newName : original.name() + " (copy)",

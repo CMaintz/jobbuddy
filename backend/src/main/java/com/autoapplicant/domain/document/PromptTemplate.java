@@ -37,4 +37,10 @@ public record PromptTemplate(
         int usageCount,
         boolean isProtected,
         boolean isDefault
-) {}
+) {
+
+    /** App templates and shared ones are visible to everyone; private ones only to their owner. */
+    public boolean isVisibleTo(UUID viewerId) {
+        return isSystem || isPublic || (viewerId != null && viewerId.equals(userId));
+    }
+}

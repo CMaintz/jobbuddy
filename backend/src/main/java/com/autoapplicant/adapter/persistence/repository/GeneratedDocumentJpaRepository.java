@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface GeneratedDocumentJpaRepository extends JpaRepository<GeneratedDocumentEntity, UUID> {
     List<GeneratedDocumentEntity> findByApplicationId(UUID applicationId);
     List<GeneratedDocumentEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
-    List<GeneratedDocumentEntity> findByJobIdOrderByCreatedAtDesc(UUID jobId);
+    List<GeneratedDocumentEntity> findByJobIdAndUserIdOrderByCreatedAtDesc(UUID jobId, UUID userId);
     java.util.Optional<GeneratedDocumentEntity> findByIdAndUserId(UUID id, UUID userId);
 
     @Query("SELECT e FROM GeneratedDocumentEntity e WHERE e.userId = :userId AND e.documentType = :documentType ORDER BY e.createdAt DESC")

@@ -112,21 +112,22 @@ public class CompanyController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "The candidate's research notes for a company",
+    @Operation(summary = "The current user's research notes for a company",
             description = "Free-text research (typically from an external agent) used to ground "
-                    + "cover-letter references. Notes are null when none have been saved.")
+                    + "cover-letter references. Private to the user who saved them. Notes are null "
+                    + "when none have been saved.")
     @GetMapping("/api/v1/companies/{id}/research")
     public ResponseEntity<CompanyResearch> getResearch(@PathVariable UUID id) {
-        return ResponseEntity.ok(research.getResearch(id).orElse(new CompanyResearch(null, null)));
+        return ResponseEntity.ok(research.getResearch(secCtx.getCurrentUserId(), id).orElse(new CompanyResearch(null, null)));
     }
 
-    @Operation(summary = "Save the candidate's research notes for a company",
+    @Operation(summary = "Save the current user's research notes for a company",
             description = "A blank body clears the notes.")
     @ApiResponses(@ApiResponse(responseCode = "404", description = "Company not found"))
     @PutMapping("/api/v1/companies/{id}/research")
     public ResponseEntity<CompanyResearch> saveResearch(@PathVariable UUID id,
                                                         @RequestBody SaveCompanyResearchRequest req) {
-        return research.saveResearch(id, req.notes())
+        return research.saveResearch(secCtx.getCurrentUserId(), id, req.notes())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

@@ -1,12 +1,12 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.user.ProfileStrength;
 import com.autoapplicant.port.in.user.ManageProfileStrengthUseCase;
 import com.autoapplicant.port.out.user.ProfileStrengthRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ProfileStrengthService implements ManageProfileStrengthUseCase {
@@ -31,8 +31,10 @@ public class ProfileStrengthService implements ManageProfileStrengthUseCase {
 
     @Override
     public ProfileStrength updateStrength(UUID userId, UUID id, ProfileStrength strength) {
-        ProfileStrength toSave = new ProfileStrength(id, userId, strength.title(),
-                strength.description(), strength.iconKey(), strength.displayOrder(), null, null);
+        ProfileStrength existing = repo.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new NotFoundException("Strength not found"));
+        ProfileStrength toSave = new ProfileStrength(id, userId, strength.title(), strength.description(),
+                strength.iconKey(), strength.displayOrder(), existing.createdAt(), null);
         return repo.save(toSave);
     }
 

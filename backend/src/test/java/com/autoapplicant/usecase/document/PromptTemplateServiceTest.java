@@ -1,23 +1,22 @@
 package com.autoapplicant.usecase.document;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.autoapplicant.domain.document.PromptCategory;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PromptTemplateServiceTest {
@@ -159,12 +158,34 @@ class PromptTemplateServiceTest {
     @Test
     void duplicate_assigns_requesting_user_id() {
         UUID anotherUser = UUID.randomUUID();
-        PromptTemplate original = template(templateId, userId, "T", 1);
+        PromptTemplate original = new PromptTemplate(templateId, userId, "T",
+                null, null, null, "prompt", null, true, null, 1, null, null, false, List.of(), 0,
+                false, false);
         when(repo.findById(templateId)).thenReturn(Optional.of(original));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         PromptTemplate copy = service.duplicate(templateId, anotherUser, null);
         assertThat(copy.userId()).isEqualTo(anotherUser);
+    }
+
+    @Test
+    void another_users_private_template_cannot_be_duplicated() {
+        UUID otherUser = UUID.randomUUID();
+        when(repo.findById(templateId)).thenReturn(Optional.of(template(templateId, userId, "Mine", 1)));
+
+        assertThatThrownBy(() -> service.duplicate(templateId, otherUser, null))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void another_users_private_template_cannot_be_favourited() {
+        UUID otherUser = UUID.randomUUID();
+        when(repo.findById(templateId)).thenReturn(Optional.of(template(templateId, userId, "Mine", 1)));
+
+        assertThatThrownBy(() -> service.favourite(otherUser, templateId))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(repo, never()).addFavourite(any(), any());
     }
 
 

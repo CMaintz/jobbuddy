@@ -28,6 +28,9 @@ public class PostgresJobSearchAdapter implements JobSearchPort {
     /** The stemmer the generated column was built with; the query must match it. */
     private static final String TEXT_CONFIG = "danish";
 
+    /** The config arrives as a bound string, which Postgres must be told is a regconfig. */
+    private static final String TSQUERY = "websearch_to_tsquery(CAST(:cfg AS regconfig), :q)";
+
     @PersistenceContext
     private EntityManager em;
 
@@ -40,12 +43,12 @@ public class PostgresJobSearchAdapter implements JobSearchPort {
         StringBuilder where = new StringBuilder(" WHERE j.is_active = true");
 
         if (hasText) {
-            where.append(" AND j.search_vector @@ websearch_to_tsquery(:cfg, :q)");
+            where.append(" AND j.search_vector @@ " + TSQUERY);
         }
         appendCategoryFilter(query.filters(), where);
 
         String order = hasText
-                ? " ORDER BY ts_rank_cd(j.search_vector, websearch_to_tsquery(:cfg, :q)) DESC, j.posted_at DESC NULLS LAST"
+                ? " ORDER BY ts_rank_cd(j.search_vector, " + TSQUERY + ") DESC, j.posted_at DESC NULLS LAST"
                 : " ORDER BY j.posted_at DESC NULLS LAST";
 
         int page = Math.max(0, query.page());

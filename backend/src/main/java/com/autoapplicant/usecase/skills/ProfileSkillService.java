@@ -1,14 +1,14 @@
 package com.autoapplicant.usecase.skills;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.in.skills.ManageProfileSkillsUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ProfileSkillService implements ManageProfileSkillsUseCase {
@@ -43,6 +43,9 @@ public class ProfileSkillService implements ManageProfileSkillsUseCase {
 
     @Override
     public ProfileSkill updateSkill(ProfileSkill skill) {
+        repo.findById(skill.id())
+                .filter(s -> s.userId().equals(skill.userId()))
+                .orElseThrow(() -> new NotFoundException("Skill not found"));
         return repo.save(resolve(skill));
     }
 

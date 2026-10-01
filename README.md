@@ -4,6 +4,14 @@ I built Jobbuddy for my own job search, because tailoring a CV and cover letter 
 
 It used to be called AutoApplicant. The Java package (`com.autoapplicant`) and the default database name still carry that name.
 
+![Dashboard](docs/screenshots/dashboard.png)
+
+| Pipeline | Company research notes |
+|---|---|
+| ![Application pipeline](docs/screenshots/pipeline.png) | ![Company page with research notes](docs/screenshots/company-research.png) |
+
+Screenshots are from a local run with a made-up account, companies and postings, signed in through the Firebase Auth emulator and with no AI key, so nothing AI-generated is shown.
+
 ![Jobbuddy flow: job posting to a tailored, ATS-ready application](docs/storyboard.svg)
 
 ## What it does
@@ -97,10 +105,12 @@ AI provider and feature toggles (optional, with defaults):
 ## Tests
 
 ```bash
-./gradlew :backend:test          # backend
-cd frontend && npm test          # frontend
+./gradlew :backend:test          # backend: unit, web-layer, ArchUnit and Postgres integration tests
+cd frontend && npm run test:ci   # frontend, headless
 cd frontend && npm run lint      # lint
 ```
+
+Persistence tests run against a real `pgvector/pgvector:pg16` container (Testcontainers) migrated by Flyway, so full-text ranking, vector search and the migrations are tested on actual Postgres. They need Docker and get skipped locally without it; CI always runs them. `HexagonalArchitectureTest` (ArchUnit) enforces the layering above, and a full test run fails if line coverage drops below the JaCoCo floor in `backend/build.gradle.kts` (only ever raise it).
 
 ## Docs
 
