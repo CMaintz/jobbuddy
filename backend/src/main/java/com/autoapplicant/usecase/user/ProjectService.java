@@ -1,12 +1,12 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.user.Project;
 import com.autoapplicant.port.in.user.ManageProjectsUseCase;
 import com.autoapplicant.port.out.user.ProjectRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ProjectService implements ManageProjectsUseCase {
@@ -29,11 +29,14 @@ public class ProjectService implements ManageProjectsUseCase {
 
     @Override
     public Project updateProject(UUID userId, UUID id, Project project) {
+        Project existing = repo.findById(id)
+                .filter(p -> userId.equals(p.userId()))
+                .orElseThrow(() -> new NotFoundException("Project not found"));
         Project updated = new Project(id, userId, project.name(), project.description(),
                 project.technologies(), project.githubUrl(), project.liveUrl(),
                 project.architectureNotes(), project.measurableOutcomes(), project.businessImpact(),
                 project.startDate(), project.endDate(), project.isFeatured(),
-                project.displayOrder(), null, null, project.skills());
+                project.displayOrder(), existing.createdAt(), null, project.skills());
         return repo.save(updated);
     }
 

@@ -4,13 +4,12 @@ import com.autoapplicant.adapter.persistence.mapper.DocumentMapper;
 import com.autoapplicant.adapter.persistence.repository.GeneratedDocumentJpaRepository;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
 
 @Component
 public class DocumentPersistenceAdapter implements GeneratedDocumentRepositoryPort {
@@ -39,8 +38,8 @@ public class DocumentPersistenceAdapter implements GeneratedDocumentRepositoryPo
     }
 
     @Override
-    public List<GeneratedDocument> findByJobId(UUID jobId) {
-        return repo.findByJobIdOrderByCreatedAtDesc(jobId).stream()
+    public List<GeneratedDocument> findByJobIdAndUserId(UUID jobId, UUID userId) {
+        return repo.findByJobIdAndUserIdOrderByCreatedAtDesc(jobId, userId).stream()
                 .map(DocumentMapper::toDomain).toList();
     }
 

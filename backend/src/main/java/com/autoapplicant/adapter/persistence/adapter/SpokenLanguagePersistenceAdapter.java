@@ -4,10 +4,9 @@ import com.autoapplicant.adapter.persistence.entity.SpokenLanguageEntity;
 import com.autoapplicant.adapter.persistence.repository.SpokenLanguageJpaRepository;
 import com.autoapplicant.domain.user.SpokenLanguage;
 import com.autoapplicant.port.out.user.SpokenLanguageRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class SpokenLanguagePersistenceAdapter implements SpokenLanguageRepositoryPort {
@@ -26,6 +25,11 @@ public class SpokenLanguagePersistenceAdapter implements SpokenLanguageRepositor
     @Override
     public List<SpokenLanguage> findByUserId(UUID userId) {
         return repo.findByUserIdOrderByDisplayOrder(userId).stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public boolean existsByIdAndUserId(UUID id, UUID userId) {
+        return repo.existsByIdAndUserId(id, userId);
     }
 
     @Override

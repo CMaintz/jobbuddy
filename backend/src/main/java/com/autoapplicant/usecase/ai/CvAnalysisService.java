@@ -76,7 +76,9 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
     /** Explicit CV version wins; otherwise the PII-free master profile JSON. */
     private String resolveCvContent(UUID userId, UUID cvVersionId) {
         return cvVersionId != null
-                ? cvRepo.findById(cvVersionId).map(CvVersion::content).orElse("")
+                ? cvRepo.findById(cvVersionId)
+                        .filter(cv -> userId.equals(cv.userId()))
+                        .map(CvVersion::content).orElse("")
                 : careerProfileContext.buildJson(userId);
     }
 
