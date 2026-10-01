@@ -1,0 +1,69 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivityStreakService, localTimeZone } from './activity-streak.service';
+
+describe('ActivityStreakService', () => {
+  let service: ActivityStreakService;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(ActivityStreakService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('starts at zero', () => {
+    expect(service.days()).toBe(0);
+  });
+
+  it("asks for the streak in the browser's time zone", () => {
+    service.refresh();
+
+    const req = http.expectOne(r => r.url === '/api/v1/analytics/streak');
+    expect(req.request.params.get('zone')).toBe(localTimeZone());
+    req.flush({ days: 5 });
+
+    expect(service.days()).toBe(5);
+  });
+
+  it('falls back to zero when the request fails', () => {
+    service.days.set(3);
+    service.refresh();
+
+    http.expectOne(r => r.url === '/api/v1/analytics/streak')
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+
+    expect(service.days()).toBe(0);
+  });
+
+  it('drops a stale response when refreshed again', () => {
+    service.refresh();
+    service.refresh();
+
+    const [stale, fresh] = http.match(r => r.url === '/api/v1/analytics/streak');
+    expect(stale.cancelled).toBeTrue();
+    fresh.flush({ days: 2 });
+
+    expect(service.days()).toBe(2);
+  });
+
+  it('clears on sign-out', () => {
+    service.refresh();
+    const req = http.expectOne(r => r.url === '/api/v1/analytics/streak');
+    service.clear();
+
+    expect(req.cancelled).toBeTrue();
+    expect(service.days()).toBe(0);
+  });
+});
+
+describe('localTimeZone', () => {
+  it('returns an IANA zone name', () => {
+    expect(localTimeZone()).toMatch(/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/);
+  });
+});

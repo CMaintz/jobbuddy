@@ -45,12 +45,3 @@ export function buildHeatmapData(apps: Application[], weeks: number): number[] {
   }
   return counts;
 }
-
-/** Consecutive days (ending today or yesterday) with at least one application. */
-export function activityStreak(dailyCounts: number[]): number {
-  let streak = 0;
-  let i = dailyCounts.length - 1;
-  if (dailyCounts[i] === 0) i--; // today can still be pending — don't break the streak yet
-  for (; i >= 0 && dailyCounts[i] > 0; i--) streak++;
-  return streak;
-}
