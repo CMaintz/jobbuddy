@@ -32,8 +32,11 @@ _.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env
 
 # PMD can't be a [tools] entry (see [env]) — provision it as a task instead. `mise
 # install` runs it via the postinstall hook, so a fresh checkout is one command.
+# setup:frontend does the same for frontend/node_modules, which the habit-hooks
+# eslint, knip and comment sensors read from. Without it a fresh clone or worktree
+# reports all three as "not installed".
 [hooks]
-postinstall = "mise run setup:pmd"
+postinstall = "mise run setup:pmd && mise run setup:frontend"
 
 [tasks."setup:pmd"]
 description = "Install the pinned PMD if absent (habit-hooks Java sensor + no-var need it)"
@@ -45,6 +48,16 @@ mkdir -p "$HOME/.local/opt"
 curl -fsSL -o "/tmp/pmd-$PMD_VERSION.zip" "https://github.com/pmd/pmd/releases/download/pmd_releases/$PMD_VERSION/pmd-dist-$PMD_VERSION-bin.zip"
 unzip -q -o "/tmp/pmd-$PMD_VERSION.zip" -d "$HOME/.local/opt"
 rm -f "/tmp/pmd-$PMD_VERSION.zip"
+"""
+
+[tasks."setup:frontend"]
+description = "npm ci in frontend/ when node_modules is missing or older than the lockfile"
+dir = "frontend"
+# CI installs node_modules itself (the facade caches it), so skip it there.
+run = """
+[ -n "${CI:-}" ] && exit 0
+[ node_modules/.package-lock.json -nt package-lock.json ] && exit 0
+npm ci --no-audit --no-fund
 """
 
 # ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
