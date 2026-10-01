@@ -100,6 +100,10 @@ export class DashboardComponent implements OnInit {
     return this.activityStreak.days();
   }
 
+  get weekData(): number[] {
+    return this.activityStreak.lastWeek();
+  }
+
   layout = signal<'dense' | 'editorial'>('dense');
   period = signal<PeriodKey>((localStorage.getItem('jb-dash-period') as PeriodKey) || '4w');
   periods = PERIODS;
@@ -116,7 +120,6 @@ export class DashboardComponent implements OnInit {
   private allApps: Application[] = [];
 
   appsSpark: number[] = [];
-  weekData: number[] = [];
   funnelStages: FunnelStage[] = [];
   heatmapData: number[] = [];
   heatmapWeeks = HEATMAP_WEEKS;
@@ -167,7 +170,6 @@ export class DashboardComponent implements OnInit {
     this.appliedThisWeek = metrics.appliedThisWeek;
     this.weeklyGoal = prefs.weeklyApplicationGoal ?? 10;
     this.appsSpark = (trend.daily ?? []).map(d => d.count);
-    this.weekData = this.appsSpark.slice(-7);
   }
 
   // ── Period-scoped stats ───────────────────────────────────────

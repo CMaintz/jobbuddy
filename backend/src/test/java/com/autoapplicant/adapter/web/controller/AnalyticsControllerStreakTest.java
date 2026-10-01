@@ -19,6 +19,7 @@ import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,17 +55,18 @@ class AnalyticsControllerStreakTest {
     @Test
     void counts_in_the_requested_zone() throws Exception {
         when(getActivityStreak.getActivityStreak(userId, ZoneId.of("Europe/Copenhagen")))
-                .thenReturn(new ActivityStreak(4));
+                .thenReturn(new ActivityStreak(4, List.of(0, 0, 0, 1, 1, 2, 1)));
 
         mvc.perform(get("/api/v1/analytics/streak").param("zone", "Europe/Copenhagen"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.days").value(4));
+                .andExpect(jsonPath("$.days").value(4))
+                .andExpect(jsonPath("$.lastWeek[5]").value(2));
     }
 
     @Test
     void defaults_to_utc_without_a_zone() throws Exception {
         when(getActivityStreak.getActivityStreak(userId, ZoneId.of("UTC")))
-                .thenReturn(new ActivityStreak(0));
+                .thenReturn(new ActivityStreak(0, List.of(0, 0, 0, 0, 0, 0, 0)));
 
         mvc.perform(get("/api/v1/analytics/streak"))
                 .andExpect(status().isOk())

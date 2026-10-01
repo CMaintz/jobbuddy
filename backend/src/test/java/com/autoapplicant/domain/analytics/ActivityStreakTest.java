@@ -16,7 +16,10 @@ class ActivityStreakTest {
 
     @Test
     void no_activity_is_no_streak() {
-        assertThat(ActivityStreak.of(List.of(), CPH, TODAY).days()).isZero();
+        ActivityStreak none = ActivityStreak.of(List.of(), CPH, TODAY);
+
+        assertThat(none.days()).isZero();
+        assertThat(none.lastWeek()).containsExactly(0, 0, 0, 0, 0, 0, 0);
     }
 
     @Test
@@ -84,6 +87,16 @@ class ActivityStreakTest {
         Instant after = LocalDateTime.of(2026, 3, 30, 0, 10).atZone(CPH).toInstant();
 
         assertThat(ActivityStreak.of(List.of(before, during, after), CPH, dstDay.plusDays(1)).days()).isEqualTo(3);
+    }
+
+    @Test
+    void counts_the_last_seven_days_oldest_first() {
+        ActivityStreak streak = ActivityStreak.of(
+                List.of(at(TODAY, 9), at(TODAY, 15), at(TODAY.minusDays(2), 9), at(TODAY.minusDays(6), 9),
+                        at(TODAY.minusDays(7), 9)),
+                CPH, TODAY);
+
+        assertThat(streak.lastWeek()).containsExactly(1, 0, 0, 0, 1, 0, 2);
     }
 
     private static int streak(Instant... activity) {

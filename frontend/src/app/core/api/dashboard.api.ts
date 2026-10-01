@@ -51,6 +51,8 @@ export interface FunnelTransition {
 /** Consecutive days with job-search activity, ending today or yesterday. */
 export interface ActivityStreak {
   days: number;
+  /** Activity count per day for the last seven days, oldest first, ending today. */
+  lastWeek: number[];
 }
 
 export interface FunnelVelocity {

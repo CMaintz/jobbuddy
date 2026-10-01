@@ -26,19 +26,22 @@ describe('ActivityStreakService', () => {
 
     const req = http.expectOne(r => r.url === '/api/v1/analytics/streak');
     expect(req.request.params.get('zone')).toBe(localTimeZone());
-    req.flush({ days: 5 });
+    req.flush({ days: 5, lastWeek: [0, 0, 1, 1, 1, 2, 1] });
 
     expect(service.days()).toBe(5);
+    expect(service.lastWeek()).toEqual([0, 0, 1, 1, 1, 2, 1]);
   });
 
   it('falls back to zero when the request fails', () => {
     service.days.set(3);
+    service.lastWeek.set([1, 1, 1, 0, 0, 0, 0]);
     service.refresh();
 
     http.expectOne(r => r.url === '/api/v1/analytics/streak')
       .flush('boom', { status: 500, statusText: 'Server Error' });
 
     expect(service.days()).toBe(0);
+    expect(service.lastWeek()).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
 
   it('drops a stale response when refreshed again', () => {
@@ -47,7 +50,7 @@ describe('ActivityStreakService', () => {
 
     const [stale, fresh] = http.match(r => r.url === '/api/v1/analytics/streak');
     expect(stale.cancelled).toBeTrue();
-    fresh.flush({ days: 2 });
+    fresh.flush({ days: 2, lastWeek: [0, 0, 0, 0, 0, 1, 1] });
 
     expect(service.days()).toBe(2);
   });
