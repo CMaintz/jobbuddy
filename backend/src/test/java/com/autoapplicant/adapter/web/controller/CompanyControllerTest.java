@@ -93,7 +93,7 @@ class CompanyControllerTest {
 
     @Test
     void get_research_returns_empty_notes_when_none_saved() throws Exception {
-        when(research.getResearch(companyId)).thenReturn(Optional.empty());
+        when(research.getResearch(userId, companyId)).thenReturn(Optional.empty());
 
         mvc.perform(get("/api/v1/companies/{id}/research", companyId))
                 .andExpect(status().isOk())
@@ -102,7 +102,7 @@ class CompanyControllerTest {
 
     @Test
     void save_research_returns_saved_notes() throws Exception {
-        when(research.saveResearch(companyId, "They ship weekly"))
+        when(research.saveResearch(userId, companyId, "They ship weekly"))
                 .thenReturn(Optional.of(new CompanyResearch("They ship weekly", Instant.now())));
 
         mvc.perform(put("/api/v1/companies/{id}/research", companyId)
@@ -116,7 +116,7 @@ class CompanyControllerTest {
 
     @Test
     void save_research_returns_404_for_unknown_company() throws Exception {
-        when(research.saveResearch(eq(companyId), any())).thenReturn(Optional.empty());
+        when(research.saveResearch(eq(userId), eq(companyId), any())).thenReturn(Optional.empty());
 
         mvc.perform(put("/api/v1/companies/{id}/research", companyId)
                         .contentType(MediaType.APPLICATION_JSON)
