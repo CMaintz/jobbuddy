@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.ai.GenerateDocumentCommand;
+import com.autoapplicant.domain.document.CompanyContext;
+import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
@@ -79,6 +81,26 @@ class ApplicationPromptAssemblerTest {
                 null, null, "English", false, null, "STANDARD"));
 
         verify(jobRepo, never()).findById(any());
-        verify(companyGrounding, never()).contextFor(any());
+        verify(companyGrounding, never()).contextFor(any(), any());
+    }
+
+    @Test
+    void groundsTheCompanyWithTheRequestingUsersOwnResearch() {
+        UUID jobId = UUID.randomUUID();
+        UUID companyId = UUID.randomUUID();
+        Job job = mock(Job.class);
+        when(job.companyId()).thenReturn(companyId);
+        when(jobRepo.findById(jobId)).thenReturn(Optional.of(job));
+        when(companyGrounding.contextFor(any(), any())).thenReturn(CompanyContext.EMPTY);
+        when(careerProfileContext.buildJson(any())).thenReturn(PROFILE_JSON);
+        when(promptTemplateRepo.findDefaultFor(any(), any())).thenReturn(Optional.empty());
+        when(writingProfileRepo.findByUserId(any())).thenReturn(Optional.empty());
+        when(applicationRepo.findRecentOutcomeLessons(any(), anyInt())).thenReturn(List.of());
+
+        assembler.assemble(new GenerateDocumentCommand(
+                USER, "COVER_LETTER", jobId, null, null, null,
+                null, null, "English", false, null, "STANDARD"));
+
+        verify(companyGrounding).contextFor(USER, companyId);
     }
 }

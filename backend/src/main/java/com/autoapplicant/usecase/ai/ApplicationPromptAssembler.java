@@ -57,7 +57,7 @@ public class ApplicationPromptAssembler {
         // research) so company references in cover letters are accurate rather than parroted from
         // the untrusted posting.
         CompanyContext companyContext = job != null
-                ? companyGrounding.contextFor(job.companyId()) : CompanyContext.EMPTY;
+                ? companyGrounding.contextFor(cmd.userId(), job.companyId()) : CompanyContext.EMPTY;
 
         PromptComposition composition = compositionBuilder.composeStructuredApplicationPrompt(
                 cmd.documentType(), contactFreeJson, postingFor(job, jobDescription),

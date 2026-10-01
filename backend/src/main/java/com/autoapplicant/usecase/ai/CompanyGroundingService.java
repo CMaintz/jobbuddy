@@ -7,6 +7,7 @@ import com.autoapplicant.domain.document.CompanyContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
+import com.autoapplicant.port.out.company.CompanyResearchRepositoryPort;
 import com.autoapplicant.port.out.web.WebPageFetchPort;
 import java.time.Duration;
 import java.time.Instant;
@@ -31,6 +32,7 @@ public class CompanyGroundingService {
     private static final Logger log = LoggerFactory.getLogger(CompanyGroundingService.class);
 
     private final CompanyRepositoryPort companyRepo;
+    private final CompanyResearchRepositoryPort researchRepo;
     private final WebPageFetchPort webFetch;
     private final ChatProviderPort ai;
 
@@ -41,23 +43,26 @@ public class CompanyGroundingService {
     private int stalenessDays;
 
     public CompanyGroundingService(CompanyRepositoryPort companyRepo,
+                                   CompanyResearchRepositoryPort researchRepo,
                                    WebPageFetchPort webFetch,
                                    @Qualifier("enrichmentAiProvider") ChatProviderPort ai) {
         this.companyRepo = companyRepo;
+        this.researchRepo = researchRepo;
         this.webFetch = webFetch;
         this.ai = ai;
     }
 
-    /** The verified facts and the candidate's research for a company, for prompt grounding. */
-    public CompanyContext contextFor(UUID companyId) {
+    /** The verified facts and this user's own research on a company, for prompt grounding. */
+    public CompanyContext contextFor(UUID userId, UUID companyId) {
         if (companyId == null) return CompanyContext.EMPTY;
-        return new CompanyContext(factsFor(companyId), researchNotesFor(companyId));
+        return new CompanyContext(factsFor(companyId), researchNotesFor(userId, companyId));
     }
 
-    /** The candidate's saved research notes, or null when none/unavailable. Never throws. */
-    private String researchNotesFor(UUID companyId) {
+    /** The user's saved research notes, or null when none/unavailable. Never throws. */
+    private String researchNotesFor(UUID userId, UUID companyId) {
         try {
-            return companyRepo.findResearch(companyId).map(CompanyResearch::notes).orElse(null);
+            return researchRepo.findResearch(userId, companyId)
+                    .map(CompanyResearch::notes).orElse(null);
         } catch (Exception e) {
             log.warn("Reading company research failed for {}: {}", companyId, e.getMessage());
             return null;
