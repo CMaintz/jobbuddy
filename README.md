@@ -4,6 +4,14 @@ I built Jobbuddy for my own job search, because tailoring a CV and cover letter 
 
 It used to be called AutoApplicant. The Java package (`com.autoapplicant`) and the default database name still carry that name.
 
+![Dashboard](docs/screenshots/dashboard.png)
+
+| Pipeline | Company research notes |
+|---|---|
+| ![Application pipeline](docs/screenshots/pipeline.png) | ![Company page with research notes](docs/screenshots/company-research.png) |
+
+Screenshots are from a local run with a made-up account, companies and postings, signed in through the Firebase Auth emulator and with no AI key, so nothing AI-generated is shown.
+
 ![Jobbuddy flow: job posting to a tailored, ATS-ready application](docs/storyboard.svg)
 
 ## What it does
