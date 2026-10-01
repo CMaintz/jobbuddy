@@ -8,4 +8,7 @@ public record StructuredDocumentSection(
         String heading,
         String body,
         List<StructuredDocumentItem> items
-) {}
+) {
+    /** The {@code type} for user-authored custom sections (shared across build, assemble, render). */
+    public static final String TYPE_CUSTOM = "custom";
+}

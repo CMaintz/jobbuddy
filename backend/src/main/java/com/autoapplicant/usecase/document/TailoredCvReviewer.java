@@ -81,7 +81,9 @@ public class TailoredCvReviewer {
                     + (guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules())
                     + "\n\n" + guardrails.honestyRules()
                     + "\n\n" + guardrails.clicheBlock()
-                    + "\n\nReturn the revised CV in exactly the same JSON shape as the draft above.";
+                    + "\n\nReturn the revised CV in exactly the same JSON shape as the draft above. Preserve "
+                    + "the customSections array: rewrite item text under the same rules, but keep every "
+                    + "section id and item sourceId, and add or remove nothing.";
 
             PromptComposition composition = new PromptComposition(system, user, "", "", "", "", user);
             String json = AiResponseParser.extractJsonObject(

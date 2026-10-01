@@ -767,7 +767,12 @@
       "url": "URL",
       "socialsHint": "Links vist i dit CV-hoved. Sendes aldrig til AI-udbyderen.",
       "noLinks": "Ingen links tilføjet endnu.",
-      "addLink": "Tilføj link"
+      "addLink": "Tilføj link",
+      "customHint": "Dine egne sektioner (f.eks. Publikationer, Frivilligt arbejde) — en overskrift og et par linjer. AI'en tilpasser inden for dem og opfinder aldrig poster.",
+      "customHeadingPlaceholder": "Sektionsoverskrift (f.eks. Publikationer)",
+      "customItemPlaceholder": "Én linje / post",
+      "addCustomItem": "Tilføj linje",
+      "addCustomSection": "Tilføj brugerdefineret sektion"
     },
     "section": {
       "profile": "Profil",
@@ -789,7 +794,8 @@
       "projects": "Projekter",
       "certifications": "Certificeringer",
       "languages": "Sprog",
-      "socials": "Sociale links"
+      "socials": "Sociale links",
+      "custom": "Brugerdefineret"
     },
     "count": {
       "fields": "{{n}} felter",
@@ -806,7 +812,8 @@
       "projects": "Sideprojekter & open source",
       "certifications": "Certifikater & credentials",
       "languages": "Sprog & niveauer",
-      "socials": "GitHub, LinkedIn & andre links"
+      "socials": "GitHub, LinkedIn & andre links",
+      "custom": "Dine egne sektioner — Publikationer, Frivilligt arbejde osv."
     },
     "toast": {
       "loadFailed": "Kunne ikke indlæse profil",

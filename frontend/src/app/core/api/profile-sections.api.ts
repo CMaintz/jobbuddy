@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { WorkExperience, Project, Education, Certification, SpokenLanguage, ProfileSocial, ProfileStrength } from '../models/profile-section.model';
+import { WorkExperience, Project, Education, Certification, SpokenLanguage, ProfileSocial, ProfileStrength, CustomSection } from '../models/profile-section.model';
 import { Profile } from '../models/user.model';
 
 export interface FullProfileResponse {
@@ -13,6 +13,7 @@ export interface FullProfileResponse {
   languages: SpokenLanguage[];
   socials: ProfileSocial[];
   strengths: ProfileStrength[];
+  customSections: CustomSection[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -76,6 +77,14 @@ export class ProfileSectionsApiService {
   // Full profile for resume builder prefill
   getFullProfile(): Observable<FullProfileResponse> {
     return this.http.get<FullProfileResponse>(`${this.base}/full`);
+  }
+
+  // Custom sections (whole-list replace)
+  getCustomSections(): Observable<CustomSection[]> {
+    return this.http.get<CustomSection[]>(`${this.base}/custom-sections`);
+  }
+  saveCustomSections(sections: CustomSection[]): Observable<CustomSection[]> {
+    return this.http.put<CustomSection[]>(`${this.base}/custom-sections`, sections);
   }
 
   // Spoken Languages

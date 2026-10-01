@@ -89,7 +89,13 @@ run = "./gradlew :backend:spotbugsMain"
 [tasks."backend:gate"]
 run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
 
-# ---- frontend (Angular 17, npm) --------------------------------------------
+# ---- frontend (Angular, npm) -----------------------------------------------
+# frontend/mise.toml is the authoritative copy — it's what the foundry gate.yml@v2
+# facade (stack: ts, working_directory: frontend) runs in CI. These root tasks mirror
+# it VERBATIM so local `mise run frontend:*`, the Stop hook, /ship and CI stay in lock-
+# step. KEEP IN SYNC with frontend/mise.toml. (Delegating via a nested `mise run` was
+# cleaner on paper but mise-invoking-mise swallowed `npm audit`'s output locally; a flat
+# mirror avoids that.) `ng build` is folded into `typecheck`; `audit` is ratcheted.
 
 [tasks."frontend:fix"]
 description = "Auto-fix lint"
@@ -101,21 +107,18 @@ dir = "frontend"
 run = "npm run lint"
 
 [tasks."frontend:typecheck"]
-description = "TS type check (ng build in CI additionally checks templates)"
+description = "ng build — the full template + type compile (build folded into typecheck)"
 dir = "frontend"
-# tsconfig.json IS the app build config here (see angular.json) — this repo has no
-# tsconfig.app.json (the Angular CLI default), it consolidated to a single root
-# tsconfig. --noEmit makes it a pure check. Pointing at the CLI-default name silently
-# failed with TS5058 (file not found), so the verb never actually type-checked.
-run = "npx tsc --noEmit -p tsconfig.json"
+run = "npm run build"
 
 [tasks."frontend:test"]
 dir = "frontend"
 run = "npm run test:ci"
 
 [tasks."frontend:audit"]
+description = "Ratcheted npm audit — fails on un-accepted criticals (.audit-allowlist.json)"
 dir = "frontend"
-run = "npm audit --audit-level=critical"
+run = "npm audit --json | node ../scripts/npm-audit-ratchet.mjs --level=critical --allowlist=.audit-allowlist.json"
 
 [tasks."frontend:gate"]
 run = [
