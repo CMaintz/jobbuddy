@@ -3,7 +3,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActivityStreakService } from '../../../core/activity-streak.service';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
-/** Sidebar flame badge. Hidden until there is a streak to show. */
 @Component({
   selector: 'jb-streak-badge',
   standalone: true,

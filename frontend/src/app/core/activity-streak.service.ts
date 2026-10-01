@@ -5,11 +5,10 @@ import { ActivityStreak, DashboardApiService } from './api/dashboard.api';
 const QUIET_WEEK: number[] = [0, 0, 0, 0, 0, 0, 0];
 const NO_STREAK: ActivityStreak = { days: 0, lastWeek: QUIET_WEEK };
 
-export function localTimeZone(): string {
+function localTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 }
 
-/** The user's current activity streak, shared by the sidebar and the dashboard. 0 when unknown. */
 @Injectable({ providedIn: 'root' })
 export class ActivityStreakService {
   private api = inject(DashboardApiService);

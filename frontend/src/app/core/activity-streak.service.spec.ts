@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivityStreakService, localTimeZone } from './activity-streak.service';
+import { ActivityStreakService } from './activity-streak.service';
 
 describe('ActivityStreakService', () => {
   let service: ActivityStreakService;
@@ -25,7 +25,7 @@ describe('ActivityStreakService', () => {
     service.refresh();
 
     const req = http.expectOne(r => r.url === '/api/v1/analytics/streak');
-    expect(req.request.params.get('zone')).toBe(localTimeZone());
+    expect(req.request.params.get('zone')).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
     req.flush({ days: 5, lastWeek: [0, 0, 1, 1, 1, 2, 1] });
 
     expect(service.days()).toBe(5);
@@ -62,11 +62,5 @@ describe('ActivityStreakService', () => {
 
     expect(req.cancelled).toBeTrue();
     expect(service.days()).toBe(0);
-  });
-});
-
-describe('localTimeZone', () => {
-  it('returns an IANA zone name', () => {
-    expect(localTimeZone()).toMatch(/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/);
   });
 });
