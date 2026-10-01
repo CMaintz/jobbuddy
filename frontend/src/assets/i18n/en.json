@@ -160,6 +160,12 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "greeting": {
+      "late": "Up late?",
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
     "searchPlaceholder": "Search jobs, companies, drafts…",
     "youre": "You're",
     "appCountOne": "{{count}} application",
