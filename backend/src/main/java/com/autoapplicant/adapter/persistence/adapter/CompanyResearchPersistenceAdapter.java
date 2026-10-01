@@ -32,12 +32,7 @@ public class CompanyResearchPersistenceAdapter implements CompanyResearchReposit
             repo.deleteById(key);
             return;
         }
-        UserCompanyNoteEntity entity = repo.findById(key).orElseGet(() -> {
-            UserCompanyNoteEntity created = new UserCompanyNoteEntity();
-            created.setUserId(userId);
-            created.setCompanyId(companyId);
-            return created;
-        });
+        UserCompanyNoteEntity entity = repo.findById(key).orElseGet(() -> new UserCompanyNoteEntity(key));
         entity.setNotes(notes);
         repo.saveAndFlush(entity);
     }
