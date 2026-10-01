@@ -21,6 +21,7 @@ import { McvProjectsSectionComponent } from './sections/mcv-projects-section.com
 import { McvCertificationsSectionComponent } from './sections/mcv-certifications-section.component';
 import { McvLanguagesSectionComponent } from './sections/mcv-languages-section.component';
 import { McvSocialsSectionComponent } from './sections/mcv-socials-section.component';
+import { McvCustomSectionsSectionComponent } from './sections/mcv-custom-sections-section.component';
 import { AtsPdfService, structuredDocToAts } from '../../shared/services/ats-pdf.service';
 import { AiApiService } from '../../core/api/ai.api';
 import { StructuredDocument } from '../../core/models/structured-document.model';
@@ -33,7 +34,7 @@ import { ProfileSkill, TECH_CATEGORIES } from '../../core/models/skill-taxonomy.
 import { Profile, ProfilePrivateInfo } from '../../core/models/user.model';
 import {
   WorkExperience, Education, Project, Certification,
-  SpokenLanguage, ProfileSocial, ProfileStrength
+  SpokenLanguage, ProfileSocial, ProfileStrength, CustomSection
 } from '../../core/models/profile-section.model';
 
 interface CvSection {
@@ -53,7 +54,7 @@ interface CvSection {
     JbDropdownComponent, MasterCvPreviewComponent,
     McvStrengthsSectionComponent, McvExperienceSectionComponent, McvEducationSectionComponent,
     McvProjectsSectionComponent, McvCertificationsSectionComponent,
-    McvLanguagesSectionComponent, McvSocialsSectionComponent,
+    McvLanguagesSectionComponent, McvSocialsSectionComponent, McvCustomSectionsSectionComponent,
     TranslateModule,
   ],
   templateUrl: './master-cv-builder.component.html'
@@ -84,6 +85,7 @@ export class MasterCvBuilderComponent implements OnInit {
   languagesList: SpokenLanguage[] = [];
   socialsList: ProfileSocial[] = [];
   strengthsList: ProfileStrength[] = [];
+  customSectionsList: CustomSection[] = [];
 
   @ViewChild(McvCertificationsSectionComponent) certSection?: McvCertificationsSectionComponent;
 
@@ -139,6 +141,7 @@ export class MasterCvBuilderComponent implements OnInit {
       { key: 'Certifications', label: 'masterCv.sec.certifications', count: `${this.certificationsList.length}`, empty: this.certificationsList.length === 0 },
       { key: 'Languages', label: 'masterCv.sec.languages', count: `${this.languagesList.length}` },
       { key: 'Socials', label: 'masterCv.sec.socials', count: `${this.socialsList.length}`, empty: this.socialsList.length === 0 },
+      { key: 'Custom', label: 'masterCv.sec.custom', count: `${this.customSectionsList.length}`, empty: this.customSectionsList.length === 0 },
     ];
   }
 
@@ -154,6 +157,7 @@ export class MasterCvBuilderComponent implements OnInit {
       Certifications: 'masterCv.hint.certifications',
       Languages: 'masterCv.hint.languages',
       Socials: 'masterCv.hint.socials',
+      Custom: 'masterCv.hint.custom',
     };
     const key = hints[this.activeSec()];
     return key ? this.translate.instant(key) : '';
@@ -187,6 +191,7 @@ export class MasterCvBuilderComponent implements OnInit {
     this.languagesList = resp.languages || [];
     this.socialsList = resp.socials || [];
     this.strengthsList = resp.strengths || [];
+    this.customSectionsList = resp.customSections || [];
   }
 
   markDirty(): void {
@@ -354,6 +359,17 @@ export class MasterCvBuilderComponent implements OnInit {
     this.markDirty();
   }
 
+  addCustomSection(): void {
+    this.customSectionsList.push({ heading: '', items: [{ text: '' }] });
+    this.markDirty();
+  }
+
+  /** Whole-list replace on save, so removal is a local splice — no per-entry delete call. */
+  removeCustomSection(i: number): void {
+    this.customSectionsList.splice(i, 1);
+    this.markDirty();
+  }
+
   removeExperience(i: number): void {
     this.removeEntry(this.experienceList, i, id => this.profileApi.deleteExperience(id));
   }
@@ -426,6 +442,8 @@ export class MasterCvBuilderComponent implements OnInit {
         s => this.socialApi.createSocial(s), (id, s) => this.socialApi.updateSocial(id, s)),
       ...this.upsertOps(this.strengthsList, s => !!s.title?.trim(),
         s => this.strengthApi.createStrength(s), (id, s) => this.strengthApi.updateStrength(id, s)),
+      // Custom sections are a whole-list replace (server assigns ids, drops blanks).
+      this.profileApi.saveCustomSections(this.customSectionsList.filter(s => s.heading?.trim())),
     ];
 
     forkJoin(ops.length ? ops : [of(null)]).subscribe({

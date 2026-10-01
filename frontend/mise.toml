@@ -1,0 +1,44 @@
+# Frontend (Angular) — the six-verb interface the foundry gate.yml@v2 facade calls
+# (stack: ts, working_directory: frontend). Verbs delegate to the package.json
+# scripts so there's a single source of truth for HOW each check runs.
+[tools]
+node = "20"
+
+[tasks.fix]
+description = "Auto-fix lint findings"
+run = "npm run lint -- --fix"
+
+[tasks.lint]
+description = "ng lint (warnings advisory, errors fail)"
+run = "npm run lint"
+
+# typecheck == the compile. `ng build` does the full template + type check that
+# `tsc --noEmit` misses — build is folded into typecheck here, exactly as Java's
+# typecheck is compileJava and .NET's is `dotnet build`. No separate "build" verb.
+[tasks.typecheck]
+description = "ng build — full template + type compile"
+run = "npm run build"
+
+[tasks.test]
+description = "ng test headless (Chrome ships on the GitHub ubuntu runner)"
+run = "npm run test:ci"
+
+[tasks.audit]
+description = "npm advisory DB — fail on un-accepted criticals (ratcheted allowlist)"
+# Ratcheted npm audit: fails on any critical NOT in .audit-allowlist.json, and on
+# stale allowlist entries (so accepted debt can only shrink). Allowlist is currently
+# empty — the one pre-existing critical (tar, via @angular/cli's build tooling) was
+# fixed with a `tar@7` override in package.json, not baselined.
+run = "npm audit --json | node ../scripts/npm-audit-ratchet.mjs --level=critical --allowlist=.audit-allowlist.json"
+
+[tasks.gate]
+description = "The deterministic gate — lint, typecheck (build), test, audit, in order"
+# Array form runs sequentially. NOT `depends`: mise runs dependencies in parallel
+# with no ordering guarantee, which interleaves ng build/test and hides which verb
+# failed first. (See foundry/mise/ts.toml.)
+run = [
+    "mise run lint",
+    "mise run typecheck",
+    "mise run test",
+    "mise run audit",
+]

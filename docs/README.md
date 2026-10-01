@@ -1,4 +1,4 @@
-# AutoApplicant documentation
+# Jobbuddy documentation
 
 Project docs, organised by area. (Agent guidance lives in [`../CLAUDE.md`](../CLAUDE.md); the project intro in [`../README.md`](../README.md).)
 

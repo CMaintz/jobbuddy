@@ -187,6 +187,7 @@ public class PromptCompositionBuilder {
                   "projects": [],
                   "education": [],
                   "certifications": [],
+                  "customSections": [{"id":"<keep existing>","heading":"<keep existing>","items":[{"sourceId":"<keep existing>","title":"..."}]}],
                   "notes": ["1-3 specific observations about gaps or opportunities — omit if none"]
                 }""";
 
@@ -211,6 +212,10 @@ public class PromptCompositionBuilder {
                 + "\n\nRules: use only source facts; you may rewrite profile text, descriptions, "
                 + "and bullets, but keep sourceId values unchanged. "
                 + "Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links."
+                + "\n- customSections: carry forward every custom section present in the source. You may "
+                + "rewrite item text to fit the posting, but keep each section id and item sourceId "
+                + "unchanged, and never add, remove, or rename a section or add items. Return [] if the "
+                + "source has none."
                 + "\n\n" + guardrails.honestyRules()
                 + "\n\n" + TARGETING_RULES
                 + "\n- When content must be condensed, drop the bullets with the lowest combination of "
