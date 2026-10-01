@@ -160,6 +160,12 @@
   },
   "dashboard": {
     "title": "Oversigt",
+    "greeting": {
+      "late": "Sent oppe?",
+      "morning": "Godmorgen",
+      "afternoon": "God eftermiddag",
+      "evening": "Godaften"
+    },
     "searchPlaceholder": "Søg job, virksomheder, kladder…",
     "youre": "Du er",
     "appCountOne": "{{count}} ansøgning",
