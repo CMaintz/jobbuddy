@@ -48,6 +48,13 @@ export interface FunnelTransition {
   avgDays: number;
 }
 
+/** Consecutive days with job-search activity, ending today or yesterday. */
+export interface ActivityStreak {
+  days: number;
+  /** Activity count per day for the last seven days, oldest first, ending today. */
+  lastWeek: number[];
+}
+
 export interface FunnelVelocity {
   transitions: FunnelTransition[];
 }
@@ -75,5 +82,10 @@ export class DashboardApiService {
   /** Average time each stage transition takes, from the status-event ledger. */
   getFunnelVelocity(): Observable<FunnelVelocity> {
     return this.http.get<FunnelVelocity>('/api/v1/analytics/funnel-velocity');
+  }
+
+  /** `zone` is an IANA time zone; days are counted in it so "today" matches the user's calendar. */
+  getActivityStreak(zone: string): Observable<ActivityStreak> {
+    return this.http.get<ActivityStreak>('/api/v1/analytics/streak', { params: { zone } });
   }
 }

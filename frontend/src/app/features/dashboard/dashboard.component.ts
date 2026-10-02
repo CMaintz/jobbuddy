@@ -10,6 +10,7 @@ import { NudgesApiService, Nudge } from '../../core/api/nudges.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { Application } from '../../core/models/application.model';
+import { ActivityStreakService } from '../../core/activity-streak.service';
 import { UserPreferences } from '../../core/models/user.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -20,7 +21,7 @@ import { SparklineComponent } from '../../shared/components/sparkline/sparkline.
 import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
 import { FunnelComponent } from '../../shared/components/funnel/funnel.component';
 import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
-import { activityStreak, buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
+import { buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
 
 const HEATMAP_WEEKS = 14;
 
@@ -93,6 +94,15 @@ export class DashboardComponent implements OnInit {
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
   private translate = inject(TranslateService);
+  private activityStreak = inject(ActivityStreakService);
+
+  get streak(): number {
+    return this.activityStreak.days();
+  }
+
+  get weekData(): number[] {
+    return this.activityStreak.lastWeek();
+  }
 
   layout = signal<'dense' | 'editorial'>('dense');
   period = signal<PeriodKey>((localStorage.getItem('jb-dash-period') as PeriodKey) || '4w');
@@ -104,14 +114,12 @@ export class DashboardComponent implements OnInit {
   /** Response-rate change vs the previous period of equal length, in points. Null for all-time. */
   responseDelta: number | null = null;
   sentInPeriod = 0;
-  streak = 0;
   savedCount = 0;
   overdueCount = 0;
 
   private allApps: Application[] = [];
 
   appsSpark: number[] = [];
-  weekData: number[] = [];
   funnelStages: FunnelStage[] = [];
   heatmapData: number[] = [];
   heatmapWeeks = HEATMAP_WEEKS;
@@ -162,7 +170,6 @@ export class DashboardComponent implements OnInit {
     this.appliedThisWeek = metrics.appliedThisWeek;
     this.weeklyGoal = prefs.weeklyApplicationGoal ?? 10;
     this.appsSpark = (trend.daily ?? []).map(d => d.count);
-    this.weekData = this.appsSpark.slice(-7);
   }
 
   // ── Period-scoped stats ───────────────────────────────────────
@@ -201,7 +208,6 @@ export class DashboardComponent implements OnInit {
     this.funnelStages = buildFunnelStages(inPeriod);
     this.heatmapWeeks = def.weeks;
     this.heatmapData = buildHeatmapData(inPeriod, def.weeks);
-    this.streak = activityStreak(buildHeatmapData(this.allApps, 26));
   }
 
   private sentTime(app: Application): number {

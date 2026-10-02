@@ -6,6 +6,8 @@ import { AuthService } from './core/auth/auth.service';
 import { ThemeService } from './core/theme.service';
 import { LanguageService } from './core/language.service';
 import { JbIconComponent } from './shared/components/jb-icon/jb-icon.component';
+import { StreakBadgeComponent } from './shared/components/streak-badge/streak-badge.component';
+import { ActivityStreakService } from './core/activity-streak.service';
 import { Subscription, filter } from 'rxjs';
 
 interface NavItem {
@@ -23,7 +25,9 @@ interface NavItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, TranslateModule, JbIconComponent],
+  imports: [
+    RouterOutlet, RouterLink, RouterLinkActive, CommonModule, TranslateModule, JbIconComponent, StreakBadgeComponent,
+  ],
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit, OnDestroy {
@@ -31,12 +35,14 @@ export class AppComponent implements OnInit, OnDestroy {
   theme = inject(ThemeService);
   language = inject(LanguageService);
   private router = inject(Router);
+  private streak = inject(ActivityStreakService);
   private userSub?: Subscription;
 
   sidebarOpen = signal(false);
   oldFrontendOpen = signal(false);
   private currentUserEmail = '';
   private currentUserName = '';
+  private signedIn = false;
 
   // ── Navigation definitions ──────────────────────────
   mainNav: NavItem[] = [
@@ -83,12 +89,16 @@ export class AppComponent implements OnInit, OnDestroy {
     this.userSub = this.auth.currentUser$.subscribe(user => {
       this.currentUserEmail = user?.email || '';
       this.currentUserName = user?.email?.split('@')[0] || 'User';
+      this.signedIn = !!user;
+      if (user) this.streak.refresh();
+      else this.streak.clear();
       if (user && !user.onboardingComplete && !this.router.url.startsWith('/onboarding')) {
         this.router.navigate(['/onboarding']);
       }
     });
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
       this.sidebarOpen.set(false);
+      if (this.signedIn) this.streak.refresh();
     });
   }
 

@@ -114,11 +114,7 @@
 
           <!-- Footer -->
           <div class="mt-auto flex flex-col gap-0.5">
-            <!-- Streak -->
-            <div class="flex items-center gap-2.5 rounded-md py-1.5 px-2 text-base text-jb-text-mid">
-              <jb-icon name="flame" [size]="14" class="text-jb-accent" />
-              <span>{{ 'nav.streak' | translate:{ count: 12 } }}</span>
-            </div>
+            <jb-streak-badge />
 
             <!-- Theme toggle -->
             <button (click)="theme.toggle()"

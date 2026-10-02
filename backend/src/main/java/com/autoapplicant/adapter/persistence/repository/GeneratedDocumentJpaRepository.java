@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.persistence.repository;
 
 import com.autoapplicant.adapter.persistence.entity.GeneratedDocumentEntity;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
@@ -15,4 +16,7 @@ public interface GeneratedDocumentJpaRepository extends JpaRepository<GeneratedD
 
     @Query("SELECT e FROM GeneratedDocumentEntity e WHERE e.userId = :userId AND e.documentType = :documentType ORDER BY e.createdAt DESC")
     List<GeneratedDocumentEntity> findRecentByUserIdAndType(UUID userId, String documentType, Pageable pageable);
+
+    @Query("SELECT e.createdAt FROM GeneratedDocumentEntity e WHERE e.userId = :userId AND e.createdAt >= :since")
+    List<Instant> findCreatedAtSince(UUID userId, Instant since);
 }
