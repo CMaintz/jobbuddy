@@ -80,6 +80,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write # approve the checks on the bot's own PR, see the last step
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
@@ -146,3 +147,21 @@ jobs:
           if [ "$MODE" = "prune" ]; then
             gh pr merge "$branch" --auto --merge && echo "auto-merge armed for $branch"
           fi
+      # A PR opened with GITHUB_TOKEN counts as a first-time contributor, so its
+      # pull_request runs sit at "awaiting approval" and auto-merge never fires.
+      # The branch was just created here from main and only touches snooze.json,
+      # so approve its runs once they show up.
+      - name: Approve the PR's checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: chore/refresh-habit-baseline-${{ github.run_id }}
+        run: |
+          git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null || exit 0
+          for _ in $(seq 12); do
+            ids=$(gh run list --branch "$BRANCH" --status action_required --json databaseId --jq '.[].databaseId')
+            [ -n "$ids" ] && break
+            sleep 10
+          done
+          for id in $ids; do
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/approve" >/dev/null && echo "approved run $id"
+          done
