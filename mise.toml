@@ -1,157 +1,80 @@
 # Foundry verb interface — AutoApplicant monorepo. See github.com/CMaintz/foundry.
 #
-# One root config pins both toolchains and exposes the six verbs per package
-# (backend:*, frontend:*) plus aggregates. CI path-filters call the per-package
-# gate; `mise run gate` locally runs everything. The extension is static JS/HTML
-# with no build, so it has no verbs — its only check is the CI max-file gate.
+# THIN root. Each package pins its OWN toolchain + the six verbs:
+#   backend/mise.toml  — JDK, PMD, jscpd + ../gradlew :backend: verbs
+#   frontend/mise.toml — Node + npm verbs (ng build, ratcheted npm audit)
+# That's exactly what the foundry facade runs per package in CI (one mise-action per
+# working_directory), so the frontend gate never installs a JDK/PMD it doesn't use,
+# and the backend gate never installs Node-for-nothing.
+#
+# These root tasks only DELEGATE into the sub-configs (dir + a nested `mise run`), so a
+# developer at the repo root still gets `mise run gate` across both packages. Nested
+# `mise run` resolves the nearer config, which is how each verb picks up its package's
+# toolchain. The extension is static JS/HTML with no build — its only check is the CI
+# max-file gate.
+#
+# (Windows one-time: `mise settings set windows_default_inline_shell_args "bash -c"`,
+# kept in GLOBAL config so ./gradlew + vendor bins resolve under bash.)
 
-[tools]
-java = "21"
-node = "20"
-# jscpd = the duplicated-code detector for the `generic` habit-hooks plugin (backend
-# + frontend). Pinned via mise so local runs, the Stop hook, and CI all resolve the
-# SAME version — an unpinned `npm i -g jscpd` can drift and shift duplication
-# findings between machines. `mise install` provisions it; mise's PATH puts it in
-# reach of the habit-hooks-guard Stop hook with no manual surgery.
-"npm:jscpd" = "5.2.1"
-
-[env]
-# PMD is a JVM app (launcher + jars) whose GitHub release asset carries no OS in its
-# name, so it can't be a clean mise [tools] entry. Pin the version here; the
-# `setup:pmd` task installs it idempotently and `mise install` runs that via the
-# postinstall hook — so PMD is provisioned identically locally and in CI, and the
-# habit-hooks Java sensor + the no-var check find it with no manual PATH surgery.
-PMD_VERSION = "7.27.0"
-_.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env.PMD_VERSION}}/bin"]
-
-# Tasks run through bash on Windows (not cmd) so `./gradlew` and vendor bins resolve.
-# This MUST live in GLOBAL mise config — mise ignores `windows_default_inline_shell_args`
-# in a project config for security (and warns on every run). One-time per machine:
-#   mise settings set windows_default_inline_shell_args "bash -c"
-# (foundry-init does this.) Kept out of the repo config so mise stops warning.
-
-# PMD can't be a [tools] entry (see [env]) — provision it as a task instead. `mise
-# install` runs it via the postinstall hook, so a fresh checkout is one command.
-[hooks]
-postinstall = "mise run setup:pmd"
-
-[tasks."setup:pmd"]
-description = "Install the pinned PMD if absent (habit-hooks Java sensor + no-var need it)"
-run = """
-dst="$HOME/.local/opt/pmd-bin-$PMD_VERSION"
-if [ -x "$dst/bin/pmd" ]; then exit 0; fi
-echo "Installing PMD $PMD_VERSION -> $dst"
-mkdir -p "$HOME/.local/opt"
-curl -fsSL -o "/tmp/pmd-$PMD_VERSION.zip" "https://github.com/pmd/pmd/releases/download/pmd_releases/$PMD_VERSION/pmd-dist-$PMD_VERSION-bin.zip"
-unzip -q -o "/tmp/pmd-$PMD_VERSION.zip" -d "$HOME/.local/opt"
-rm -f "/tmp/pmd-$PMD_VERSION.zip"
-"""
-
-# ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
-# Smells (oversized-file/function, etc.) come from habit-hooks' Java/PMD plugin,
-# not from Gradle — so `lint` here is just formatting (Spotless, ratcheted).
-
+# ---- backend delegators (toolchain + real commands live in backend/mise.toml) ----
 [tasks."backend:fix"]
-description = "Auto-format changed Java (Spotless)"
-run = "./gradlew :backend:spotlessApply"
-
+dir = "backend"
+run = "mise run fix"
 [tasks."backend:lint"]
-description = "Format check (ratcheted to origin/main — only changed files)"
-run = "./gradlew :backend:spotlessCheck"
-
+dir = "backend"
+run = "mise run lint"
 [tasks."backend:typecheck"]
-description = "Compilation is Java's type check"
-run = "./gradlew :backend:compileJava"
-
+dir = "backend"
+run = "mise run typecheck"
 [tasks."backend:test"]
-description = "Backend test suite (offline by design)"
-run = "./gradlew :backend:test"
-
+dir = "backend"
+run = "mise run test"
 [tasks."backend:audit"]
-description = "Dependency CVEs (generates lockfile, then osv-scanner; needs osv-scanner on PATH)"
-run = [
-    "./gradlew :backend:dependencies --write-locks",
-    "osv-scanner --lockfile=backend/gradle.lockfile",
-]
-
-[tasks."backend:novar"]
-description = "Report all `var` uses in backend main. CI enforces this diff-scoped."
-depends = ["setup:pmd"]
-run = "pmd check -d backend/src/main/java -R backend/config/pmd/no-var.xml -f text --suppress-marker foundry-allow-var"
-
+dir = "backend"
+run = "mise run audit"
 [tasks."backend:spotbugs"]
-# The task prints findings; CI (quality.yml) makes it BLOCKING — the spotbugs job fails
-# on any finding not in config/spotbugs/exclude.xml (the ratchet baseline). Not in
-# backend:gate (kept off the oracle), but it IS an enforced gate via its own CI job.
-description = "SpotBugs bug-pattern analysis (blocking in CI, ratcheted via exclude.xml)"
-run = "./gradlew :backend:spotbugsMain"
-
+dir = "backend"
+run = "mise run spotbugs"
 [tasks."backend:gate"]
-run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
+dir = "backend"
+run = "mise run gate"
 
-# ---- frontend (Angular, npm) -----------------------------------------------
-# frontend/mise.toml is the authoritative copy — it's what the foundry gate.yml@v2
-# facade (stack: ts, working_directory: frontend) runs in CI. These root tasks mirror
-# it VERBATIM so local `mise run frontend:*`, the Stop hook, /ship and CI stay in lock-
-# step. KEEP IN SYNC with frontend/mise.toml. (Delegating via a nested `mise run` was
-# cleaner on paper but mise-invoking-mise swallowed `npm audit`'s output locally; a flat
-# mirror avoids that.) `ng build` is folded into `typecheck`; `audit` is ratcheted.
-
+# ---- frontend delegators (toolchain + real commands live in frontend/mise.toml) ----
 [tasks."frontend:fix"]
-description = "Auto-fix lint"
 dir = "frontend"
-run = "npm run lint -- --fix"
-
+run = "mise run fix"
 [tasks."frontend:lint"]
 dir = "frontend"
-run = "npm run lint"
-
+run = "mise run lint"
 [tasks."frontend:typecheck"]
-description = "ng build — the full template + type compile (build folded into typecheck)"
 dir = "frontend"
-run = "npm run build"
-
+run = "mise run typecheck"
 [tasks."frontend:test"]
 dir = "frontend"
-run = "npm run test:ci"
-
+run = "mise run test"
 [tasks."frontend:audit"]
-description = "Ratcheted npm audit — fails on un-accepted criticals (.audit-allowlist.json)"
 dir = "frontend"
-run = "npm audit --json | node ../scripts/npm-audit-ratchet.mjs --level=critical --allowlist=.audit-allowlist.json"
-
+run = "mise run audit"
 [tasks."frontend:gate"]
-run = [
-    "mise run frontend:lint",
-    "mise run frontend:typecheck",
-    "mise run frontend:test",
-    "mise run frontend:audit",
-]
+dir = "frontend"
+run = "mise run gate"
 
-# ---- aggregate --------------------------------------------------------------
-# Top-level verbs run every package's, so the six-verb contract holds at the root
-# too (`mise run typecheck` etc.), not just per package. Sequential — no `depends`.
-
+# ---- aggregates — run every package's verb (sequential; NOT `depends`, which is parallel) ----
 [tasks.fix]
 description = "Auto-fix every package"
 run = ["mise run backend:fix", "mise run frontend:fix"]
-
 [tasks.lint]
 description = "Lint every package"
 run = ["mise run backend:lint", "mise run frontend:lint"]
-
 [tasks.typecheck]
 description = "Type-check every package"
 run = ["mise run backend:typecheck", "mise run frontend:typecheck"]
-
 [tasks.test]
 description = "Test every package"
 run = ["mise run backend:test", "mise run frontend:test"]
-
 [tasks.audit]
 description = "Audit every package"
 run = ["mise run backend:audit", "mise run frontend:audit"]
-
 [tasks.gate]
-description = "The oracle — every package's gate. Sequential, no `depends` (parallel, unordered)."
+description = "The oracle — every package's gate, sequential."
 run = ["mise run backend:gate", "mise run frontend:gate"]
