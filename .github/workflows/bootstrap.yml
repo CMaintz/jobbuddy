@@ -81,7 +81,19 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      # A PR opened with GITHUB_TOKEN counts as a first-time contributor, so its
+      # checks wait for approval and auto-merge never fires. Opened as the App, they
+      # run like on any other PR. Falls back to GITHUB_TOKEN if the App isn't set up.
+      - name: GitHub App token
+        id: app
+        if: vars.BOOTSTRAP_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.BOOTSTRAP_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BOOTSTRAP_APP_PRIVATE_KEY }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          token: ${{ steps.app.outputs.token || github.token }}
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
         with:
           java-version: '21'
@@ -124,15 +136,21 @@ jobs:
           (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all --no-snooze | habit-snooze --"$MODE")
       - name: Open a PR if the baseline changed
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
           MODE: ${{ github.event.inputs.mode || 'prune' }}
           RUN_ID: ${{ github.run_id }}
         run: |
           git add backend/.habit-hooks/snooze.json frontend/.habit-hooks/snooze.json
           if git diff --cached --quiet; then echo "baselines unchanged — nothing to do"; exit 0; fi
           branch="chore/refresh-habit-baseline-$RUN_ID"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$APP_SLUG" ]; then
+            bot="$APP_SLUG[bot]"; bot_id=$(gh api "/users/$bot" --jq .id)
+          else
+            bot="github-actions[bot]"; bot_id=41898282
+          fi
+          git config user.name "$bot"
+          git config user.email "$bot_id+$bot@users.noreply.github.com"
           git checkout -b "$branch"
           git commit -m "chore: refresh habit-hooks snooze baselines ($MODE)"
           git push -u origin "$branch"
