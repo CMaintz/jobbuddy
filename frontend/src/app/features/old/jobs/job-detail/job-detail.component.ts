@@ -15,7 +15,9 @@ import { Application } from '../../../../core/models/application.model';
 import { ConfirmDeleteButtonComponent } from '../../../../shared/components/ui/confirm-delete-button.component';
 import { EmptyStateComponent } from '../../../../shared/components/ui/empty-state.component';
 import { clearTextAfter, runAction } from '../../../../shared/utils/async-ui';
-import { LucideAngularModule, MapPin, Briefcase, Monitor, TrendingUp, Banknote } from 'lucide-angular';
+import {
+  LucideDynamicIcon, LucideMapPin, LucideBriefcase, LucideMonitor, LucideTrendingUp, LucideBanknote,
+} from '@lucide/angular';
 import { SkillGapApiService, SkillGapResult } from '../../../../core/api/skill-gap.api';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -34,15 +36,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'app-job-detail',
-  imports: [CommonModule, RouterLink, FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent, LucideAngularModule],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent, LucideDynamicIcon],
   templateUrl: './job-detail.component.html'
 })
 export class JobDetailComponent implements OnInit {
-  readonly MapPinIcon = MapPin;
-  readonly BriefcaseIcon = Briefcase;
-  readonly MonitorIcon = Monitor;
-  readonly TrendingUpIcon = TrendingUp;
-  readonly BanknoteIcon = Banknote;
+  readonly MapPinIcon = LucideMapPin;
+  readonly BriefcaseIcon = LucideBriefcase;
+  readonly MonitorIcon = LucideMonitor;
+  readonly TrendingUpIcon = LucideTrendingUp;
+  readonly BanknoteIcon = LucideBanknote;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);

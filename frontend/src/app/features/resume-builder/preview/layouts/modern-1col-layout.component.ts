@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
@@ -11,7 +11,7 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 @Component({
   selector: 'app-modern-1col-layout',
   imports: [
-    LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    LucideDynamicIcon, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './modern-1col-layout.component.html',
@@ -30,6 +30,5 @@ export class Modern1ColLayoutComponent {
   get themeColor() { return this.svc.settings().themeColor; }
   get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }
   readonly contactIcons = CONTACT_ICONS;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSocialIcon(key: string): any { return getSocialIcon(key); }
+  getSocialIcon(key: string): LucideIconInput { return getSocialIcon(key); }
 }

@@ -20,7 +20,7 @@
             @if (pi.location) { <span class="flex items-center gap-1"><svg class="w-3 h-3 flex-shrink-0" [style.fill]="themeColor" viewBox="0 0 24 24"><path [attr.d]="contactIcons.location"/></svg>{{ pi.location }}</span> }
             @for (s of socials; track s.id) {
               <span class="flex items-center gap-1">
-                <lucide-icon [img]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor"></lucide-icon>
+                <svg [lucideIcon]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor"></svg>
                 {{ s.username || s.url }}
               </span>
             }

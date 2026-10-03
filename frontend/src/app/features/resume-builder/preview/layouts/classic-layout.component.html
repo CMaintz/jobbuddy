@@ -190,7 +190,7 @@
               @for (s of strengths; track s.id) {
                 <div>
                   <p class="text-xs font-semibold text-gray-700 flex items-center gap-1">
-                    <lucide-icon [img]="getStrengthIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor" class="flex-shrink-0"></lucide-icon>
+                    <svg [lucideIcon]="getStrengthIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor" class="flex-shrink-0"></svg>
                     {{ s.title }}
                   </p>
                   @if (s.description) { <p class="text-xs text-gray-400 leading-relaxed">{{ s.description }}</p> }
@@ -207,7 +207,7 @@
             <div class="flex flex-col gap-1.5">
               @for (s of socials; track s.id) {
                 <div class="flex items-center gap-1.5">
-                  <lucide-icon [img]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor" class="flex-shrink-0"></lucide-icon>
+                  <svg [lucideIcon]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" [color]="themeColor" class="flex-shrink-0"></svg>
                   <span class="text-xs text-gray-600 truncate">{{ s.username || s.url }}</span>
                 </div>
               }

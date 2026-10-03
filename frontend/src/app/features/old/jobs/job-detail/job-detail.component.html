@@ -32,20 +32,20 @@
           <!-- Meta badges -->
           <div class="flex flex-wrap gap-2 text-sm text-gray-500">
             @if (job.location) {
-              <span class="flex items-center gap-1"><lucide-icon [img]="MapPinIcon" [size]="14" class="text-gray-400"></lucide-icon>{{ job.location }}</span>
+              <span class="flex items-center gap-1"><svg [lucideIcon]="MapPinIcon" [size]="14" class="text-gray-400"></svg>{{ job.location }}</span>
             }
             @if (job.employmentType) {
-              <span class="flex items-center gap-1"><lucide-icon [img]="BriefcaseIcon" [size]="14" class="text-gray-400"></lucide-icon>{{ job.employmentType }}</span>
+              <span class="flex items-center gap-1"><svg [lucideIcon]="BriefcaseIcon" [size]="14" class="text-gray-400"></svg>{{ job.employmentType }}</span>
             }
             @if (job.remoteType) {
-              <span class="flex items-center gap-1"><lucide-icon [img]="MonitorIcon" [size]="14" class="text-gray-400"></lucide-icon>{{ job.remoteType }}</span>
+              <span class="flex items-center gap-1"><svg [lucideIcon]="MonitorIcon" [size]="14" class="text-gray-400"></svg>{{ job.remoteType }}</span>
             }
             @if (job.seniority) {
-              <span class="flex items-center gap-1"><lucide-icon [img]="TrendingUpIcon" [size]="14" class="text-gray-400"></lucide-icon>{{ job.seniority }}</span>
+              <span class="flex items-center gap-1"><svg [lucideIcon]="TrendingUpIcon" [size]="14" class="text-gray-400"></svg>{{ job.seniority }}</span>
             }
             @if (job.salaryMin) {
               <span class="flex items-center gap-1">
-                <lucide-icon [img]="BanknoteIcon" [size]="14" class="text-gray-400"></lucide-icon>{{ job.salaryMin | number:'1.0-0' }}
+                <svg [lucideIcon]="BanknoteIcon" [size]="14" class="text-gray-400"></svg>{{ job.salaryMin | number:'1.0-0' }}
                 @if (job.salaryMax) { – {{ job.salaryMax | number:'1.0-0' }} }
                 {{ job.currency ?? 'DKK' }}/yr
               </span>

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
@@ -12,7 +12,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-modern-2col-layout',
   imports: [
-    LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    LucideDynamicIcon, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './modern-2col-layout.component.html',
@@ -34,8 +34,6 @@ export class Modern2ColLayoutComponent {
   get photoStyle() { return this.svc.settings().photoStyle ?? 'circle'; }
   get showSkillLevel() { return this.svc.settings().showSkillLevel; }
   readonly contactIcons = CONTACT_ICONS;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSocialIcon(key: string): any { return getSocialIcon(key); }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getStrengthIcon(key: string): any { return getStrengthIcon(key); }
+  getSocialIcon(key: string): LucideIconInput { return getSocialIcon(key); }
+  getStrengthIcon(key: string): LucideIconInput { return getStrengthIcon(key); }
 }
