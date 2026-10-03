@@ -1,15 +1,10 @@
-# Deterministic build gates — the core "does it compile, lint, type-check, test"
-# per package. Image publishing lives in deploy.yml (push-to-main only) so it
-# doesn't show as a skipped check on PRs. See also: quality.yml, security.yml,
-# deploy.yml, bootstrap.yml, semgrep.yml.
+# Deterministic build gates per package, on Foundry's gate facade. Image publishing
+# lives in deploy.yml (push-to-main only). See also: quality.yml, security.yml,
+# deploy.yml, bootstrap.yml.
 name: gate
 
-# PR-only. main is branch-protected and we rebase-merge, so the merged commit is the
-# same code the PR already gated. A push:main re-run has never (empirically, 28 runs)
-# caught an integration break the PR missed — and the next PR's gate runs `mise run
-# gate` against current main anyway, so any integration break surfaces there, one PR
-# later. Not worth a run on every merge. deploy.yml/bootstrap.yml still fire on
-# push:main; workflow_dispatch is the manual full-run for after a risky merge.
+# PR-only: main is protected and merges are rebased, so the merged commit is the code
+# the PR already gated. workflow_dispatch is the manual full run after a risky merge.
 on:
   pull_request:
   workflow_dispatch:
@@ -22,91 +17,52 @@ permissions:
   contents: read
 
 jobs:
-  # Detect which parts of the monorepo this PR touches, so a frontend-only change
-  # doesn't spin up the backend gate (and vice versa). A manual workflow_dispatch run
-  # isn't a PR, so it runs everything. Shared/root files (workflows, mise, gradle,
-  # scripts) run everything too.
   changes:
-    name: changes
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.f.outputs.backend }}
-      frontend: ${{ steps.f.outputs.frontend }}
-      extension: ${{ steps.f.outputs.extension }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - id: f
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          emit() { { echo "backend=$1"; echo "frontend=$2"; echo "extension=$3"; } >> "$GITHUB_OUTPUT"; }
-          if [ "${{ github.event_name }}" != "pull_request" ]; then emit true true true; exit 0; fi
-          base=$(git merge-base "$BASE" "$HEAD")
-          diff=$(git diff --name-only "$base" "$HEAD")
-          echo "Changed files:"; echo "$diff" | sed 's/^/  /'
-          be=false; fe=false; ex=false; all=false
-          # FAIL SAFE: a path we can't classify runs everything (never silently skip
-          # a check). Only known docs/metadata are treated as "affects no area".
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            case "$f" in
-              */.habit-hooks/snooze.json|*/eslint-suppressions.json) : ;; # tool-regenerated baseline — nothing to build/test
-              backend/*)   be=true ;;
-              frontend/*)  fe=true ;;
-              extension/*) ex=true ;;
-              *.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*) : ;;
-              mise.toml|.github/workflows/*|gradlew|gradlew.bat|gradle/*|settings.gradle*|build.gradle*|.gitleaks.toml|osv-scanner.toml|scripts/*) all=true ;;
-              *) echo "  unclassified path '$f' -> running everything (fail-safe)"; all=true ;;
-            esac
-          done < <(printf '%s\n' "$diff")
-          if [ "$all" = true ]; then be=true; fe=true; ex=true; fi
-          emit "$be" "$fe" "$ex"
+    uses: CMaintz/foundry/.github/workflows/changes.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    with:
+      packages: "backend frontend extension"
+      # Builds nothing for these; any other root-level file rebuilds everything (fail-safe).
+      ignore_globs: |
+        *.md
+        docs/*
+        .claude/*
+        LICENSE
+        .gitignore
+        .gitattributes
+        .editorconfig
+        */.habit-hooks/snooze.json
+        */eslint-suppressions.json
 
-  # Backend consumes the foundry facade: stack=java runs the six verbs one-per-step
-  # (lint incl. no-var / typecheck / test / audit) plus a structural-smells (PMD) job.
-  # The verbs live in backend/mise.toml (../gradlew :backend: shim). This replaces the
-  # inline lint/typecheck/test steps AND folds in the former quality.yml habits-backend
-  # + no-var jobs and security.yml's backend-audit (audit is now a gate verb).
-  # SpotBugs runs in the facade too (`spotbugs: true` -> `mise run spotbugs`, foundry#36).
   backend:
     name: Backend gate
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    uses: CMaintz/foundry/.github/workflows/gate.yml@v2
+    if: contains(fromJSON(needs.changes.outputs.changes), 'backend')
+    uses: CMaintz/foundry/.github/workflows/gate.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
     with:
       stack: java
       working_directory: backend
       spotbugs: true
 
-  # Frontend consumes the foundry facade: stack=ts runs the six verbs one-per-step
-  # (lint / typecheck=`ng build` / test / audit) plus a structural-smells job. The
-  # verbs live in frontend/mise.toml, where `ng build` is folded into `typecheck`
-  # (so the old separate Build step is gone). The smells job here replaces the former
-  # habits-frontend job in quality.yml.
   frontend:
     name: Frontend gate
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    uses: CMaintz/foundry/.github/workflows/gate.yml@v2
+    if: contains(fromJSON(needs.changes.outputs.changes), 'frontend')
+    uses: CMaintz/foundry/.github/workflows/gate.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
     with:
       stack: ts
       working_directory: frontend
 
-  # The single required check for this workflow. Always runs, so a skipped backend
-  # or frontend job (path-filtered) never leaves a required check stuck "Expected".
-  # Fails only if a job that DID run failed.
+  # The one required check: skipped packages are fine, failed or cancelled aren't.
   gate-ok:
     name: gate-ok
     needs: [changes, backend, frontend]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          for r in "${{ needs.changes.result }}" "${{ needs.backend.result }}" "${{ needs.frontend.result }}"; do
+      - env:
+          RESULTS: ${{ needs.changes.result }} ${{ needs.backend.result }} ${{ needs.frontend.result }}
+        run: |
+          for r in $RESULTS; do
             case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
           done
           echo "gate-ok"
