@@ -1,5 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -12,11 +11,11 @@ import { Job } from '../../core/models/job.model';
 
 @Component({
   selector: 'app-saved-roles',
-  standalone: true,
   imports: [
-    CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, CompanyMarkComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './saved-roles.component.html'
 })
 export class SavedRolesComponent implements OnInit {

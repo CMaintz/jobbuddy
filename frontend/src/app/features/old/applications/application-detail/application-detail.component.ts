@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -18,8 +18,8 @@ const NEXT_STATUSES: Partial<Record<ApplicationStatus, ApplicationStatus[]>> = {
 
 @Component({
   selector: 'app-application-detail',
-  standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-detail.component.html'
 })
 export class ApplicationDetailComponent implements OnInit {

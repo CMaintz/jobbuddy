@@ -1,9 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-toggle',
-  standalone: true,
   templateUrl: './jb-toggle.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./jb-toggle.component.css']
 })
 export class JbToggleComponent {

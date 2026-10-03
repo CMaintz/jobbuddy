@@ -1,5 +1,4 @@
-import { Component, Input, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 
 interface DiffSegment {
   text: string;
@@ -8,8 +7,8 @@ interface DiffSegment {
 
 @Component({
   selector: 'jb-diff-viewer',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './diff-viewer.component.html',
 })
 export class DiffViewerComponent {

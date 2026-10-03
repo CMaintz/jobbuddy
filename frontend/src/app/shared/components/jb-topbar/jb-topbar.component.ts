@@ -1,5 +1,4 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * The standard screen topbar strip: title on the left, actions on the right.
@@ -16,8 +15,8 @@ import { CommonModule } from '@angular/common';
  */
 @Component({
   selector: 'jb-topbar',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">
       @if (title) {

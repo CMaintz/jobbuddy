@@ -12,7 +12,7 @@
             [title]="icon.label"
             (click)="iconSelected.emit(icon.key)"
           >
-            <lucide-icon [img]="icon.icon" [size]="16" [strokeWidth]="1.5"></lucide-icon>
+            <svg [lucideIcon]="icon.icon" [size]="16" [strokeWidth]="1.5"></svg>
           </button>
         }
       </div>

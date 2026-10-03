@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-goal-ring',
-  standalone: true,
   templateUrl: './goal-ring.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./goal-ring.component.css']
 })
 export class GoalRingComponent {

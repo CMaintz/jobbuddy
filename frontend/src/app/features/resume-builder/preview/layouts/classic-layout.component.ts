@@ -1,6 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { LucideAngularModule } from 'lucide-angular';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
@@ -12,12 +11,12 @@ import { getStrengthIcon } from '../../data/strength-icons';
 
 @Component({
   selector: 'app-classic-layout',
-  standalone: true,
   imports: [
-    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    LucideDynamicIcon, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './classic-layout.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./classic-layout.component.css'],
 })
 export class ClassicLayoutComponent {
@@ -39,8 +38,6 @@ export class ClassicLayoutComponent {
   get showSkillLevel() { return this.stateService.settings().showSkillLevel; }
 
   readonly contactIcons = CONTACT_ICONS;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSocialIcon(key: string): any { return getSocialIcon(key); }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getStrengthIcon(key: string): any { return getStrengthIcon(key); }
+  getSocialIcon(key: string): LucideIconInput { return getSocialIcon(key); }
+  getStrengthIcon(key: string): LucideIconInput { return getStrengthIcon(key); }
 }

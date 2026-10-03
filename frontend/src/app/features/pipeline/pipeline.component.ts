@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -21,11 +20,11 @@ interface StageConfig {
 
 @Component({
   selector: 'app-pipeline',
-  standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {

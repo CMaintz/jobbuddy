@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,9 +12,9 @@ import { ResumeData, INITIAL_SETTINGS } from '../../resume-builder/models/resume
 
 @Component({
   selector: 'app-apply-wizard',
-  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './apply-wizard.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./apply-wizard.component.css'],
 })
 export class ApplyWizardComponent implements OnInit, OnDestroy {

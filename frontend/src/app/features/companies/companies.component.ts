@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -14,11 +14,11 @@ import { CompaniesApiService, Company, OutreachContact, OutreachStatus, Outreach
 
 @Component({
   selector: 'app-companies',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent,
     CompanyMarkComponent, RouterLink,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './companies.component.html'
 })
 export class CompaniesComponent implements OnInit, OnDestroy {

@@ -1,6 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeEducation } from '../../models/resume-builder.models';
@@ -8,8 +7,8 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
 
 @Component({
   selector: 'app-education-form',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MonthYearPickerComponent],
+  imports: [FormsModule, TranslateModule, MonthYearPickerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './education-form.component.html',
 })
 export class EducationFormComponent {

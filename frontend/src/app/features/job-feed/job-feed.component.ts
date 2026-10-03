@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -73,11 +73,11 @@ export function yearsDemanded(text: string | undefined): number | null {
 
 @Component({
   selector: 'app-job-feed',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent,
     JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, MatchBadgeComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './job-feed.component.html'
 })
 export class JobFeedComponent implements OnInit, OnDestroy {

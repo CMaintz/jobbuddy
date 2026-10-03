@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiApiService } from '../../../core/api/ai.api';
@@ -14,9 +14,9 @@ const SECTION_ORDER_KEY = 'cv_section_order';
 
 @Component({
   selector: 'app-cv-page',
-  standalone: true,
   imports: [CommonModule, FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
   styleUrls: ['./cv-page.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cv-page.component.html'
 })
 export class CvPageComponent implements OnInit {

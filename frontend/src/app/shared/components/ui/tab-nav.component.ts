@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 export interface TabNavItem<T extends string = string> {
   key: T;
@@ -8,8 +7,8 @@ export interface TabNavItem<T extends string = string> {
 
 @Component({
   selector: 'app-tab-nav',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tab-nav.component.html'
 })
 export class TabNavComponent<T extends string = string> {

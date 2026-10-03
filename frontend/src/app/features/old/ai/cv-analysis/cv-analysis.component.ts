@@ -1,5 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AiApiService } from '../../../../core/api/ai.api';
@@ -21,8 +20,8 @@ interface ParsedProfile {
 
 @Component({
   selector: 'app-cv-analysis',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {

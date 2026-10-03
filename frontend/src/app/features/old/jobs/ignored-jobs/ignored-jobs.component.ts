@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { JobsApiService, IgnoredJob } from '../../../../core/api/jobs.api';
@@ -7,8 +7,8 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-ignored-jobs',
-  standalone: true,
   imports: [CommonModule, RouterLink, EmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ignored-jobs.component.html'
 })
 export class IgnoredJobsComponent implements OnInit {

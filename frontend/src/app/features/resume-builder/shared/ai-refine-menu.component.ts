@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AiApiService } from '../../../core/api/ai.api';
@@ -22,8 +21,7 @@ const SUGGESTION_LABELS = ['resumeBuilder.refine.label.quantify', 'resumeBuilder
  */
 @Component({
   selector: 'app-ai-refine-menu',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent],
+  imports: [FormsModule, TranslateModule, DiffViewerComponent],
   template: `
     <div class="relative inline-block">
       <button type="button" class="airm-trigger" (click)="open.set(!open())" [title]="'resumeBuilder.refine.improveTitle' | translate">
@@ -61,6 +59,7 @@ const SUGGESTION_LABELS = ['resumeBuilder.refine.label.quantify', 'resumeBuilder
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .airm-trigger { padding:2px 8px; font-size:10.5px; font-weight:600; border-radius:99px; cursor:pointer;
       background:var(--jb-accent-soft); border:1px solid var(--jb-accent-border); color:var(--jb-accent-2); }

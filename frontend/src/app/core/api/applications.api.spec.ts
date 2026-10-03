@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationTimelineEntry, ApplicationsApiService } from './applications.api';
 import { Application } from '../models/application.model';
@@ -11,7 +11,7 @@ describe('ApplicationsApiService', () => {
   const application = { id: 'a1', jobId: 'j1', status: 'APPLIED' } as Application;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(withXhr()), provideHttpClientTesting()] });
     api = TestBed.inject(ApplicationsApiService);
     backend = TestBed.inject(HttpTestingController);
   });

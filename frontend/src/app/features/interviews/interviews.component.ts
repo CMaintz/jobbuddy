@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -24,11 +23,11 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
 
 @Component({
   selector: 'app-interviews',
-  standalone: true,
   imports: [
-    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, CompanyMarkComponent, JbModalComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './interviews.component.html'
 })
 export class InterviewsComponent implements OnInit {
