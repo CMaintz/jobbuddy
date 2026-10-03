@@ -1,11 +1,7 @@
-# Security & policy gates: secret scanning, the ruleset-guard (anti-gaming), and
-# the backend dependency audit. SAST (Semgrep) lives in semgrep.yml.
+# Secret scan, ruleset-guard and SAST (new findings only), on Foundry's security
+# facade. Branch protection requires `security / security-ok`.
 name: security
 
-# PR-only. main is branch-protected and we rebase-merge, so the merged commit is the
-# same code the PR gated; a push:main re-run has never caught anything the PR missed,
-# and the next PR re-scans integrated main anyway. workflow_dispatch is the manual
-# full-run escape hatch.
 on:
   pull_request:
   workflow_dispatch:
@@ -18,137 +14,13 @@ permissions:
   contents: read
 
 jobs:
-  # Secret scan + ruleset-guard always run (cheap, and they must see every change).
-  # The backend dependency audit moved into the gate — it's the `audit` verb the
-  # foundry facade runs for stack=java (see gate.yml + backend/mise.toml).
-  secrets:
-    name: Secret scan
-    runs-on: ubuntu-latest
-    # gitleaks-action lists the PR's commits, which contents:read cannot do.
+  security:
+    uses: CMaintz/foundry/.github/workflows/security.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
     permissions:
       contents: read
-      pull-requests: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0 # gitleaks scans history, not just the tip
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
-      # Turn a bare red X into actionable guidance. Runs only when gitleaks found
-      # something; points at the decision (real secret vs false positive) and the
-      # foundry-secret skill.
-      - name: Remediation guidance
-        if: failure()
-        run: |
-          {
-            echo "## 🔑 Secret scan found something"
-            echo ""
-            echo "**Decide first — is it a real secret, or a false positive?** (Ask if unsure.)"
-            echo ""
-            echo "- **Real secret** (a live credential): **rotate/revoke it at the provider first**, then remove from code, then purge from history (\`git filter-repo\`) and force-push. Never allowlist a real secret."
-            echo "- **False positive** (public-by-design config, a dummy test fixture): add the *specific file path* to \`.gitleaks.toml\` \`[allowlist] paths\`, with a note on why it is not a secret. Never allowlist a whole directory."
-            echo ""
-            echo "The **\`/foundry-secret\`** skill walks through either path."
-            echo ""
-            echo "> Routine push/PR scans are incremental (new commits only), so a real new secret is always caught; the allowlist only quiets the full-history audit for confirmed non-secrets."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  ruleset-guard:
-    name: Ruleset guard
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      # Stops a fixer weakening the gate in the same change that "fixes" it.
-      # Loosening (growing a suppression/snooze baseline, editing a config/threshold)
-      # needs a human label; tightening or an inert change does not. Per-entry, so
-      # the offset attack (fix one, suppress another) is caught. See scripts/ruleset_guard.py.
-      - name: Refuse loosening the gate alongside source changes
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-          RULESET_RE: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|backend/pmd/|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.github/workflows/)'
-          SOURCE_RE: '^(backend/src/|frontend/src/|extension/)'
-          TEST_RE: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'
-          LABEL: 'ruleset-change'
-        run: |
-          set -euo pipefail
-
-          # Diff from the merge-base (3-dot), not the raw base tip. pull_request
-          # events don't re-fire when main advances, so base.sha goes stale on a
-          # PR whose branch sits untouched — and a 2-dot diff then reports files
-          # main changed but this PR never touched (phantom loosening). merge-base
-          # scopes to this PR's own commits, matching `gh pr diff`.
-          BASE=$(git merge-base "$BASE" "$HEAD")
-
-          changed=$(git diff --name-only "$BASE" "$HEAD")
-          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
-
-          ruleset=$(echo "$changed" | grep -E "$RULESET_RE" || true)
-          source=$(echo "$changed" | grep -E "$SOURCE_RE" | grep -vE "$TEST_RE" || true)
-
-          if [ -z "$ruleset" ] || [ -z "$source" ]; then
-            echo "OK — no bundled ruleset+source change."
-            exit 0
-          fi
-
-          if echo "$LABELS" | tr ',' '\n' | grep -qx "$LABEL"; then
-            echo "::notice::'$LABEL' label present — deliberate ruleset change, allowing."
-            exit 0
-          fi
-
-          blob() { git show "$1:$2" 2>/dev/null || true; }
-
-          review=""
-          while IFS= read -r f; do
-            if [ -z "$f" ]; then continue; fi
-            old=$(blob "$BASE" "$f"); new=$(blob "$HEAD" "$f")
-
-            if [ "$(printf '%s' "$old" | tr -d '\r')" = "$(printf '%s' "$new" | tr -d '\r')" ]; then
-              echo "  safe (no semantic change): $f"; continue
-            fi
-
-            case "$f" in
-              *eslint-suppressions.json)
-                if python3 scripts/ruleset_guard.py eslint "$BASE" "$HEAD" "$f"; then
-                  echo "  safe (no suppression added): $f"
-                else echo "  REVIEW (suppression added/increased): $f"; review="$review $f"; fi
-                ;;
-              *snooze.json)
-                if python3 scripts/ruleset_guard.py snooze "$BASE" "$HEAD" "$f"; then
-                  echo "  safe (no snooze added): $f"
-                else echo "  REVIEW (snooze added): $f"; review="$review $f"; fi
-                ;;
-              *)
-                echo "  REVIEW (config — direction can't be proven): $f"; review="$review $f"
-                ;;
-            esac
-          done <<< "$ruleset"
-
-          if [ -n "$review" ]; then
-            echo "::error::This PR changes source AND makes ruleset changes that may loosen the gate, without the '$LABEL' label:"
-            echo "$review" | tr ' ' '\n' | sed '/^$/d;s/^/  /'
-            echo ""
-            echo "Tighten in a separate PR, or add the '$LABEL' label if the loosening is deliberate."
-            exit 1
-          fi
-          echo "::notice::Ruleset changes are tightening-only or inert — allowed without a label."
-
-  # Single required check for this workflow — always runs. Fails only if a job that
-  # ran failed. (Backend dependency audit is now the gate's `audit` verb, not here.)
-  security-ok:
-    name: security-ok
-    needs: [secrets, ruleset-guard]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          for r in "${{ needs.secrets.result }}" "${{ needs['ruleset-guard'].result }}"; do
-            case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
-          done
-          echo "security-ok"
+      pull-requests: read # gitleaks lists the PR's commits
+    with:
+      # Gate-defining files: changing these alongside source needs the ruleset-change label.
+      ruleset_paths: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|backend/pmd/|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.gitleaks\.toml|\.github/workflows/)'
+      source_paths: '^(backend/src/|frontend/src/|extension/)'
+      test_paths: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'

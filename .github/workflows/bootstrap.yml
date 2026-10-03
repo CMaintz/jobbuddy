@@ -1,166 +1,35 @@
-# Regenerate the habit-hooks snooze baselines on Linux (the full-repo file list
-# blows the Windows command-line limit locally) and open a PR with the delta.
-#
-# Runs WEEKLY in `prune` mode so the baseline shrinks automatically as repo-align
-# fixes and threshold tuning make findings disappear — plus on demand (Actions ->
-# bootstrap -> Run workflow). main is protected, so it opens a PR rather than
-# pushing; the PR is baseline-only, so ruleset-guard passes without a label.
+# Regenerate the habit-hooks snooze baselines on Linux (the full-repo file list blows
+# the Windows command-line limit locally) and open a PR per package with the delta.
+# A prune only shrinks the baseline, so its PR auto-merges once the checks pass; it's
+# opened as the bootstrap GitHub App so those checks run without a manual approval.
+# Run by hand from Actions -> bootstrap when you want it sooner.
 name: bootstrap
 
-#   mode=prune  (default) — SHRINK: drop entries whose smells are now fixed. The
-#                normal refresh, run after a batch of fixes lands (or a threshold
-#                change makes findings disappear). Never adds entries.
-#   mode=snooze — first-time bootstrap only: baseline every current smell. Use to
-#                seed the baseline; a source PR must never grow it afterwards.
 on:
   workflow_dispatch:
-    inputs:
-      mode:
-        description: "prune = SHRINK (drop fixed entries); snooze = seed the baseline the first time only"
-        type: choice
-        options: [prune, snooze]
-        default: prune
-  # Weekly auto-prune — the baseline still shrinks on its own as fixes land, but
-  # WITHOUT opening a PR on every merge. (A push:main trigger did exactly that: a
-  # burst of backend merges spawned one refresh PR each — PR-spam. Cadence, not
-  # per-commit; run it by hand via workflow_dispatch when you want it sooner.)
   schedule:
-    - cron: '0 6 * * *'   # daily 06:00 UTC — a fresh shrink PR at most once a day
+    - cron: '0 6 * * *'
 
 permissions:
   contents: read
 
 jobs:
-  # Skip the daily run on a quiet period. A prune only shrinks the baseline when some
-  # file's smells disappear — which needs that file (or a smell threshold) to have changed
-  # since the baseline was last updated. If nothing relevant changed, the run is a no-op.
-  decide:
-    name: Anything to prune?
-    runs-on: ubuntu-latest
-    outputs:
-      run: ${{ steps.check.outputs.run }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0 # need history to see what changed since the baseline last did
-      - id: check
-        env:
-          EVENT: ${{ github.event_name }}
-        run: |
-          set -euo pipefail
-          # Manual dispatch always runs — a threshold change / re-seed is intentional.
-          if [ "$EVENT" = "workflow_dispatch" ]; then
-            echo "run=1" >> "$GITHUB_OUTPUT"; echo "manual dispatch — running"; exit 0
-          fi
-          # COARSE ON PURPOSE: check whole source/config dirs, not snooze.json's exact
-          # file list. A wrong path assumption against snooze.json would silently skip
-          # forever and let the baseline ossify — a stray no-op run is harmless; a silent
-          # no-prune is not. So we err toward running.
-          since=$(git log -1 --format=%H -- backend/.habit-hooks/snooze.json frontend/.habit-hooks/snooze.json 2>/dev/null || true)
-          if [ -z "$since" ]; then
-            echo "run=1" >> "$GITHUB_OUTPUT"; echo "no baseline yet — running"; exit 0
-          fi
-          changed=$(git diff --name-only "$since" HEAD -- \
-            backend/src frontend/src \
-            backend/.habit-hooks frontend/.habit-hooks \
-            backend/pmd backend/config/pmd backend/.jscpd.json frontend/.jscpd.json 2>/dev/null || echo FORCE)
-          if [ -z "$changed" ]; then
-            echo "run=0" >> "$GITHUB_OUTPUT"
-            echo "No source or smell-config changed since the baseline's last update ($since) — nothing to prune. Skipping."
-          else
-            echo "run=1" >> "$GITHUB_OUTPUT"
-            echo "Changed since last baseline update:"; echo "$changed" | sed 's/^/  /'
-          fi
+  backend:
+    uses: CMaintz/foundry/.github/workflows/bootstrap.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    permissions: { contents: write, pull-requests: write }
+    secrets:
+      app_private_key: ${{ secrets.BOOTSTRAP_APP_PRIVATE_KEY }}
+    with:
+      working_directory: backend
+      habit_hooks_plugin: habit-hooks-java
+      app_client_id: ${{ vars.BOOTSTRAP_APP_CLIENT_ID }}
 
-  refresh-habits-baseline:
-    name: Refresh habit-hooks baselines
-    needs: decide
-    if: needs.decide.outputs.run == '1'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      # A PR opened with GITHUB_TOKEN counts as a first-time contributor, so its
-      # checks wait for approval and auto-merge never fires. Opened as the App, they
-      # run like on any other PR. Falls back to GITHUB_TOKEN if the App isn't set up.
-      - name: GitHub App token
-        id: app
-        if: vars.BOOTSTRAP_APP_CLIENT_ID != ''
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.BOOTSTRAP_APP_CLIENT_ID }}
-          private-key: ${{ secrets.BOOTSTRAP_APP_PRIVATE_KEY }}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          token: ${{ steps.app.outputs.token || github.token }}
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
-        with:
-          java-version: '21'
-          distribution: temurin
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: '3.12'
-      - name: Cache PMD
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.local/opt/pmd-bin-7.27.0
-          key: pmd-7.27.0
-      - name: Install tools
-        run: |
-          if [ ! -x "$HOME/.local/opt/pmd-bin-7.27.0/bin/pmd" ]; then
-            mkdir -p "$HOME/.local/opt"
-            curl -fsSL -o /tmp/pmd.zip https://github.com/pmd/pmd/releases/download/pmd_releases/7.27.0/pmd-dist-7.27.0-bin.zip
-            unzip -q /tmp/pmd.zip -d "$HOME/.local/opt"
-          fi
-          echo "$HOME/.local/opt/pmd-bin-7.27.0/bin" >> "$GITHUB_PATH"
-          pip install --disable-pip-version-check habit-hooks habit-hooks-java habit-hooks-typescript
-          npm i -g jscpd@5.2.1   # backend generic-plugin duplication sensor, pinned to match mise.toml (frontend gets it via npm ci)
-          (cd frontend && npm ci)
-      # `${{ github.* }}` goes through env, never straight into run: — interpolating
-      # it inline is a shell-injection vector (semgrep run-shell-injection). Schedule
-      # events carry no inputs, so MODE defaults to prune there too.
-      - name: Regenerate baselines
-        env:
-          MODE: ${{ github.event.inputs.mode || 'prune' }}
-        run: |
-          echo "Regenerating in '$MODE' mode"
-          # --no-snooze: feed RAW findings. prune needs them to see which baselined
-          # files no longer have smells; snooze needs them to baseline all current.
-          (cd backend && habit-sensors --all --no-snooze | habit-snooze --"$MODE")
-          (cd frontend && export PATH="$PWD/node_modules/.bin:$PATH" && habit-sensors --all --no-snooze | habit-snooze --"$MODE")
-      - name: Open a PR if the baseline changed
-        env:
-          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
-          APP_SLUG: ${{ steps.app.outputs.app-slug }}
-          MODE: ${{ github.event.inputs.mode || 'prune' }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          git add backend/.habit-hooks/snooze.json frontend/.habit-hooks/snooze.json
-          if git diff --cached --quiet; then echo "baselines unchanged — nothing to do"; exit 0; fi
-          branch="chore/refresh-habit-baseline-$RUN_ID"
-          if [ -n "$APP_SLUG" ]; then
-            bot="$APP_SLUG[bot]"; bot_id=$(gh api "/users/$bot" --jq .id)
-          else
-            bot="github-actions[bot]"; bot_id=41898282
-          fi
-          git config user.name "$bot"
-          git config user.email "$bot_id+$bot@users.noreply.github.com"
-          git checkout -b "$branch"
-          git commit -m "chore: refresh habit-hooks snooze baselines ($MODE)"
-          git push -u origin "$branch"
-          gh pr create --base main --head "$branch" \
-            --title "chore: refresh habit-hooks snooze baselines ($MODE)" \
-            --body "Regenerated by bootstrap in **$MODE** mode. \`prune\` only ever **shrinks** (drops entries for files with no findings left) and auto-merges once checks pass; \`snooze\` seeds/grows the baseline, so it waits for your review." \
-            --label ruleset-change
-          # prune only ever SHRINKS the baseline and ruleset-guard verifies that — so let
-          # it merge itself once the required checks pass. snooze GROWS the baseline; keep
-          # that human-reviewed. (Needs repo "Allow auto-merge" + branch-protection checks.)
-          if [ "$MODE" = "prune" ]; then
-            gh pr merge "$branch" --auto --merge && echo "auto-merge armed for $branch"
-          fi
+  frontend:
+    uses: CMaintz/foundry/.github/workflows/bootstrap.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    permissions: { contents: write, pull-requests: write }
+    secrets:
+      app_private_key: ${{ secrets.BOOTSTRAP_APP_PRIVATE_KEY }}
+    with:
+      working_directory: frontend
+      habit_hooks_plugin: habit-hooks-typescript
+      app_client_id: ${{ vars.BOOTSTRAP_APP_CLIENT_ID }}

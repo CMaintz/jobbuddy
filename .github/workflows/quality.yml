@@ -1,13 +1,7 @@
-# Structural-quality checks: habit-hooks smells (per package), the no-var rule,
-# and the extension file-length cap. Advisory/ratcheted — they guard
-# against decay without blocking on pre-existing debt.
+# Non-build quality checks. The extension is plain JS/HTML/CSS with no habit-hooks
+# plugin, so it gets Foundry's max-file-length gate instead.
 name: quality
 
-# PR-only. main is branch-protected and we rebase-merge, so the merged commit is the
-# same code the PR gated; a push:main re-run has never caught anything the PR missed,
-# and the next PR's gate re-tests integrated main anyway. These checks are also
-# advisory/ratcheted and now run in-loop via the habit-hooks-guard Stop hook.
-# workflow_dispatch is the manual full-run escape hatch.
 on:
   pull_request:
   workflow_dispatch:
@@ -20,88 +14,42 @@ permissions:
   contents: read
 
 jobs:
-  # Which parts of the monorepo changed — see gate.yml for the rationale.
   changes:
-    name: changes
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.f.outputs.backend }}
-      frontend: ${{ steps.f.outputs.frontend }}
-      extension: ${{ steps.f.outputs.extension }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - id: f
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          emit() { { echo "backend=$1"; echo "frontend=$2"; echo "extension=$3"; } >> "$GITHUB_OUTPUT"; }
-          if [ "${{ github.event_name }}" != "pull_request" ]; then emit true true true; exit 0; fi
-          base=$(git merge-base "$BASE" "$HEAD")
-          diff=$(git diff --name-only "$base" "$HEAD")
-          echo "Changed files:"; echo "$diff" | sed 's/^/  /'
-          be=false; fe=false; ex=false; all=false
-          # FAIL SAFE: a path we can't classify runs everything (never silently skip
-          # a check). Only known docs/metadata are treated as "affects no area".
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            case "$f" in
-              */.habit-hooks/snooze.json|*/eslint-suppressions.json) : ;; # tool-regenerated baseline — nothing to gate
-              backend/*)   be=true ;;
-              frontend/*)  fe=true ;;
-              extension/*) ex=true ;;
-              *.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docs/*|.claude/*) : ;;
-              mise.toml|.github/workflows/*|gradlew|gradlew.bat|gradle/*|settings.gradle*|build.gradle*|.gitleaks.toml|osv-scanner.toml|scripts/*) all=true ;;
-              *) echo "  unclassified path '$f' -> running everything (fail-safe)"; all=true ;;
-            esac
-          done < <(printf '%s\n' "$diff")
-          if [ "$all" = true ]; then be=true; fe=true; ex=true; fi
-          emit "$be" "$fe" "$ex"
-
-  # Structural smells (backend AND frontend) now run inside the foundry facade
-  # (gate.yml → the per-stack habits job), so the former habits-backend / habits-frontend
-  # jobs live there, and so does SpotBugs (`spotbugs: true`). What remains here is
-  # jobbuddy-specific: the extension file-length cap.
+    uses: CMaintz/foundry/.github/workflows/changes.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    with:
+      packages: "backend frontend extension"
+      # Builds nothing for these; any other root-level file rebuilds everything (fail-safe).
+      ignore_globs: |
+        *.md
+        docs/*
+        .claude/*
+        LICENSE
+        .gitignore
+        .gitattributes
+        .editorconfig
+        */.habit-hooks/snooze.json
+        */eslint-suppressions.json
 
   extension:
     name: Extension max-file
     needs: changes
-    if: needs.changes.outputs.extension == 'true'
-    runs-on: ubuntu-latest
-    # The extension is raw JS/HTML with no build, so its only structural check is
-    # a file-length cap (habit-hooks has no plugin for it). Grandfathers today's
-    # files (max is ~93 lines); fires only if one balloons.
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Fail on oversized extension files
-        env:
-          MAX: '400'
-        run: |
-          set -euo pipefail
-          fail=0
-          while IFS= read -r -d '' f; do
-            n=$(wc -l < "$f")
-            if [ "$n" -gt "$MAX" ]; then
-              echo "::error file=$f::$f is $n lines (max $MAX)"
-              fail=1
-            fi
-          done < <(find extension -type f \( -name '*.js' -o -name '*.html' -o -name '*.css' \) -print0)
-          if [ "$fail" -ne 0 ]; then exit 1; fi
-          echo "All extension files within $MAX lines."
+    if: contains(fromJSON(needs.changes.outputs.changes), 'extension')
+    uses: CMaintz/foundry/.github/workflows/web.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    with:
+      root: extension
+      extensions: "js html css"
+      max_lines: 400
 
-  # Single required check for this workflow — always runs so a path-skipped job
-  # never wedges. Fails only if a job that ran failed.
   quality-ok:
     name: quality-ok
     needs: [changes, extension]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          for r in "${{ needs.changes.result }}" "${{ needs.extension.result }}"; do
+      - env:
+          RESULTS: ${{ needs.changes.result }} ${{ needs.extension.result }}
+        run: |
+          for r in $RESULTS; do
             case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
           done
           echo "quality-ok"
