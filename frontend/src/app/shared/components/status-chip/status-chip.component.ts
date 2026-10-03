@@ -44,7 +44,6 @@ export function stageTone(status: ApplicationStatus | string): PillTone {
 
 @Component({
   selector: 'app-status-chip',
-  standalone: true,
   imports: [TranslateModule, JbPillComponent],
   templateUrl: './status-chip.component.html'
 })

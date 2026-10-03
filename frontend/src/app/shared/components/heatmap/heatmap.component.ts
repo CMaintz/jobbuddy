@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-heatmap',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './heatmap.component.html',
   styleUrls: ['./heatmap.component.css']

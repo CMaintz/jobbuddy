@@ -8,7 +8,6 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-prompt-list',
-  standalone: true,
   imports: [CommonModule, RouterLink, EmptyStateComponent],
   templateUrl: './prompt-list.component.html'
 })

@@ -11,7 +11,6 @@ import { StructuredDocumentRendererComponent } from '../../../shared/components/
 
 @Component({
   selector: 'app-pdf-templates',
-  standalone: true,
   imports: [CommonModule, StructuredDocumentRendererComponent],
   templateUrl: './pdf-templates.component.html'
 })

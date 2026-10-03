@@ -67,7 +67,6 @@ interface ApplyDraft {
 
 @Component({
   selector: 'app-apply',
-  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent],
   templateUrl: './apply.component.html',
   styleUrls: ['./apply.component.css']

@@ -6,7 +6,6 @@ import { ChatMessage } from './application-generator.types';
 
 @Component({
   selector: 'app-document-refine-panel',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './document-refine-panel.component.html'
 })

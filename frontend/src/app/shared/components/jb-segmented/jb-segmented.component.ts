@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-segmented',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './jb-segmented.component.html',
   styleUrls: ['./jb-segmented.component.css']

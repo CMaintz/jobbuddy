@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-skill-chip-list',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './skill-chip-list.component.html',
 })

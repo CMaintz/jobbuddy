@@ -21,7 +21,6 @@ interface ParsedProfile {
 
 @Component({
   selector: 'app-cv-analysis',
-  standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './cv-analysis.component.html'
 })

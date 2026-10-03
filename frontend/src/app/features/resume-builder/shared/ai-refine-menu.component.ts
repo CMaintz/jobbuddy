@@ -22,7 +22,6 @@ const SUGGESTION_LABELS = ['resumeBuilder.refine.label.quantify', 'resumeBuilder
  */
 @Component({
   selector: 'app-ai-refine-menu',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent],
   template: `
     <div class="relative inline-block">

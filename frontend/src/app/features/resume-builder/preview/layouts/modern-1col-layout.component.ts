@@ -11,7 +11,6 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 
 @Component({
   selector: 'app-modern-1col-layout',
-  standalone: true,
   imports: [
     CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,

@@ -9,7 +9,6 @@ type CheckState = 'idle' | 'checking' | 'found' | 'not-found';
 
 @Component({
   selector: 'app-job-add',
-  standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './job-add.component.html'
 })

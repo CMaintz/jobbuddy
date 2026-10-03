@@ -3,7 +3,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-confirm-delete-button',
-  standalone: true,
   imports: [TranslateModule],
   templateUrl: './confirm-delete-button.component.html'
 })

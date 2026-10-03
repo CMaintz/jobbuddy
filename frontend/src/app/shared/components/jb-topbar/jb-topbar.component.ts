@@ -16,7 +16,6 @@ import { CommonModule } from '@angular/common';
  */
 @Component({
   selector: 'jb-topbar',
-  standalone: true,
   imports: [CommonModule],
   template: `
     <div class="h-11 flex items-center px-4 border-b border-jb-border bg-jb-bg flex-[0_0_auto] gap-3">

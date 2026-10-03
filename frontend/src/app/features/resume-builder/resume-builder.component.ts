@@ -12,7 +12,6 @@ import { JobsApiService } from '../../core/api/jobs.api';
 
 @Component({
   selector: 'app-resume-builder',
-  standalone: true,
   imports: [CommonModule, TranslateModule, ResumeEditorComponent, ResumePreviewComponent],
   templateUrl: './resume-builder.component.html',
 })

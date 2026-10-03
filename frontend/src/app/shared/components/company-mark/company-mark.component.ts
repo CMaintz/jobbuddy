@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'jb-company-mark',
-  standalone: true,
   templateUrl: './company-mark.component.html',
   styleUrls: ['./company-mark.component.css']
 })

@@ -4,7 +4,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-file-upload-button',
-  standalone: true,
   imports: [CommonModule, TranslateModule],
   templateUrl: './file-upload-button.component.html'
 })

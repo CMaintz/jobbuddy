@@ -28,7 +28,6 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-ai-tailor-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent],
   templateUrl: './ai-tailor-form.component.html',
 })

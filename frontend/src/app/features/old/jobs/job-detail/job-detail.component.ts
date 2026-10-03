@@ -34,7 +34,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'app-job-detail',
-  standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent, LucideAngularModule],
   templateUrl: './job-detail.component.html'
 })

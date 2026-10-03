@@ -8,7 +8,6 @@ export interface TabNavItem<T extends string = string> {
 
 @Component({
   selector: 'app-tab-nav',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './tab-nav.component.html'
 })

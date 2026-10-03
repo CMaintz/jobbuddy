@@ -10,7 +10,6 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-cv-upload',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, FormActionsComponent],
   templateUrl: './cv-upload.component.html'
 })

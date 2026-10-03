@@ -9,7 +9,6 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-prompt-editor',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, FormActionsComponent],
   templateUrl: './prompt-editor.component.html'
 })

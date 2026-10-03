@@ -6,7 +6,6 @@ import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-linkedin-callback',
-  standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
   templateUrl: './linkedin-callback.component.html'
 })

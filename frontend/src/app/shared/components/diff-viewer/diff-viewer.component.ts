@@ -8,7 +8,6 @@ interface DiffSegment {
 
 @Component({
   selector: 'jb-diff-viewer',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './diff-viewer.component.html',
 })

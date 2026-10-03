@@ -19,7 +19,6 @@ interface Step {
 
 @Component({
   selector: 'app-onboarding',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
   templateUrl: './onboarding.component.html'
 })

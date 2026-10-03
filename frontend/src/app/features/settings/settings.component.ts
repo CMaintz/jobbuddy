@@ -89,7 +89,6 @@ interface StyleSnapshot {
 
 @Component({
   selector: 'app-settings',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent,
     JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent,

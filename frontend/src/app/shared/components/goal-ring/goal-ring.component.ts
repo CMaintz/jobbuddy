@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'jb-goal-ring',
-  standalone: true,
   templateUrl: './goal-ring.component.html',
   styleUrls: ['./goal-ring.component.css']
 })

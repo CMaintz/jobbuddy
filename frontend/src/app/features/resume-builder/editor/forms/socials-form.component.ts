@@ -8,7 +8,6 @@ import { SOCIAL_PLATFORMS, SOCIAL_ICON_LIBRARY } from '../../data/social-platfor
 
 @Component({
   selector: 'app-socials-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, IconPickerComponent],
   templateUrl: './socials-form.component.html',
 })

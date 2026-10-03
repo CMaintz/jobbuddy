@@ -10,7 +10,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-strengths-tab',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,

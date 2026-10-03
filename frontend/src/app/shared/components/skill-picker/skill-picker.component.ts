@@ -8,7 +8,6 @@ import { SkillTaxonomy } from '../../../core/models/skill-taxonomy.model';
 
 @Component({
   selector: 'app-skill-picker',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './skill-picker.component.html'
 })

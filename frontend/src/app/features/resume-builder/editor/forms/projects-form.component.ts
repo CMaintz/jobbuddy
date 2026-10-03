@@ -9,7 +9,6 @@ import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 
 @Component({
   selector: 'app-projects-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, AiRefineMenuComponent],
   templateUrl: './projects-form.component.html',
 })

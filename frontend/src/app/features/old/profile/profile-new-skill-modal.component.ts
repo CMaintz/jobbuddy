@@ -6,7 +6,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-new-skill-modal',
-  standalone: true,
   imports: [CommonModule, FormsModule, ModalShellComponent],
   templateUrl: './profile-new-skill-modal.component.html'
 })

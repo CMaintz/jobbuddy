@@ -18,7 +18,6 @@ const NEXT_STATUSES: Partial<Record<ApplicationStatus, ApplicationStatus[]>> = {
 
 @Component({
   selector: 'app-application-detail',
-  standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './application-detail.component.html'
 })

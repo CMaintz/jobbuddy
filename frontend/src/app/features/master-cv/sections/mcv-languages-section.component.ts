@@ -11,7 +11,6 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
 /** Master CV editor — spoken languages list. */
 @Component({
   selector: 'app-mcv-languages-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">

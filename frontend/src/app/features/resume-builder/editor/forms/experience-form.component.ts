@@ -10,7 +10,6 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
 
 @Component({
   selector: 'app-experience-form',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, MonthYearPickerComponent,
     AiRefineMenuComponent,

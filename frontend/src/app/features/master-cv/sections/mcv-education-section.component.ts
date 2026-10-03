@@ -9,7 +9,6 @@ import { Education } from '../../../core/models/profile-section.model';
 /** Master CV editor — education list. */
 @Component({
   selector: 'app-mcv-education-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">

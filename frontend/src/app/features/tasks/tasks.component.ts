@@ -28,7 +28,6 @@ interface TaskRow {
 
 @Component({
   selector: 'app-tasks',
-  standalone: true,
   imports: [
     CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, CompanyMarkComponent,

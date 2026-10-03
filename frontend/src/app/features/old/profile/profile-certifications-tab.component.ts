@@ -10,7 +10,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-certifications-tab',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
   templateUrl: './profile-certifications-tab.component.html'
 })

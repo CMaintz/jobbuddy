@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
  */
 @Component({
   selector: 'jb-icon',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './jb-icon.component.html',
   styleUrls: ['./jb-icon.component.css'],

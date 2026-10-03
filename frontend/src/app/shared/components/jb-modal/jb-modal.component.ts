@@ -17,7 +17,6 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
  */
 @Component({
   selector: 'jb-modal',
-  standalone: true,
   imports: [CommonModule, JbIconComponent],
   template: `
     <div (click)="closed.emit()" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">

@@ -4,7 +4,6 @@ import { DocumentIdentity } from '../../../core/models/structured-document.model
 
 @Component({
   selector: 'app-document-header',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './document-header.component.html'
 })

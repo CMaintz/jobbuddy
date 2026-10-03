@@ -5,7 +5,6 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-streak-badge',
-  standalone: true,
   imports: [TranslateModule, JbIconComponent],
   template: `
     @if (streak.days() > 0) {

@@ -23,7 +23,6 @@ import {
 
 @Component({
   selector: 'app-jobs-list',
-  standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule, FormsModule, EmptyStateComponent],
   templateUrl: './jobs-list.component.html'
 })

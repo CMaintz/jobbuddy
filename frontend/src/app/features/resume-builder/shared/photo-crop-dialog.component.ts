@@ -12,7 +12,6 @@ const OUTPUT = 400;
  */
 @Component({
   selector: 'app-photo-crop-dialog',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   template: `
     <div class="fixed inset-0 z-[300] flex items-center justify-center" style="background:rgba(0,0,0,0.6);" (click)="cancelled.emit()">

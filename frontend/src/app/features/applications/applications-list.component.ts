@@ -16,7 +16,6 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
 
 @Component({
   selector: 'app-applications-list',
-  standalone: true,
   imports: [
     CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbDropdownComponent,

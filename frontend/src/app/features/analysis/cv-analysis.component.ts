@@ -21,7 +21,6 @@ interface JobOption {
 
 @Component({
   selector: 'app-cv-analysis',
-  standalone: true,
   imports: [
     CommonModule, JbTopbarComponent, FormsModule, RouterLink, TranslateModule, JbIconComponent,
     JbButtonComponent, JbToastComponent, GoalRingComponent, JbPillComponent,

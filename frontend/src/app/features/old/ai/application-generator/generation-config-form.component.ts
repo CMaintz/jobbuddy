@@ -7,7 +7,6 @@ import { AiApiService } from '../../../../core/api/ai.api';
 
 @Component({
   selector: 'app-generation-config-form',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './generation-config-form.component.html'
 })

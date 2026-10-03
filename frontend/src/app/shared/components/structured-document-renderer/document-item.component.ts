@@ -4,7 +4,6 @@ import { StructuredDocumentItem } from '../../../core/models/structured-document
 
 @Component({
   selector: 'app-document-item',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './document-item.component.html'
 })

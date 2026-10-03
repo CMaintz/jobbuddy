@@ -16,7 +16,6 @@ const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 
 
 @Component({
   selector: 'app-custom-sections-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent],
   templateUrl: './custom-sections-form.component.html',
 })

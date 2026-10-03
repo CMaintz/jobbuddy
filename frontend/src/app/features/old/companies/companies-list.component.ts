@@ -6,7 +6,6 @@ import { CompaniesApiService, Company } from '../../../core/api/companies.api';
 
 @Component({
   selector: 'app-companies-list',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './companies-list.component.html'
 })

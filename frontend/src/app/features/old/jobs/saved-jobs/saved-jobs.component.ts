@@ -8,7 +8,6 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-saved-jobs',
-  standalone: true,
   imports: [CommonModule, RouterLink, EmptyStateComponent],
   templateUrl: './saved-jobs.component.html'
 })

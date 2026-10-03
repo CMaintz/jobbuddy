@@ -3,7 +3,6 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-toast',
-  standalone: true,
   imports: [JbIconComponent],
   templateUrl: './jb-toast.component.html'
 })

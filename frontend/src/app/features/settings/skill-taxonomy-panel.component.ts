@@ -14,7 +14,6 @@ import { SkillsApiService, TaxonomyCandidate } from '../../core/api/skills.api';
  */
 @Component({
   selector: 'app-skill-taxonomy-panel',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbButtonComponent],
   templateUrl: './skill-taxonomy-panel.component.html'
 })

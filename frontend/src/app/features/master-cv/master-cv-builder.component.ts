@@ -46,7 +46,6 @@ interface CvSection {
 
 @Component({
   selector: 'app-master-cv-builder',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink,
     JbTopbarComponent, JbIconComponent, JbButtonComponent, JbToastComponent,

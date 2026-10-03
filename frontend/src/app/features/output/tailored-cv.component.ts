@@ -33,7 +33,6 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbToastComponent],
   templateUrl: './tailored-cv.component.html',
 })

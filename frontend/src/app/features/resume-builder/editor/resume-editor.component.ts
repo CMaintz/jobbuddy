@@ -25,7 +25,6 @@ interface EditorSection {
 
 @Component({
   selector: 'app-resume-editor',
-  standalone: true,
   imports: [
     CommonModule,
     TranslateModule,

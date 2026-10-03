@@ -24,7 +24,6 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
 
 @Component({
   selector: 'app-interviews',
-  standalone: true,
   imports: [
     CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, CompanyMarkComponent, JbModalComponent,

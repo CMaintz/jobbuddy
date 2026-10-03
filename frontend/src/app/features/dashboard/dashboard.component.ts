@@ -79,7 +79,6 @@ interface SavedPreview {
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [
     CommonModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
     StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,

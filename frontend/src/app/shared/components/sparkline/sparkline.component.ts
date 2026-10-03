@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-sparkline',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './sparkline.component.html',
   styleUrls: ['./sparkline.component.css']

@@ -21,7 +21,6 @@ const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT'
 
 @Component({
   selector: 'app-job-details',
-  standalone: true,
   imports: [
     CommonModule, RouterLink, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     StatusChipComponent, CompanyMarkComponent, FitBarComponent,

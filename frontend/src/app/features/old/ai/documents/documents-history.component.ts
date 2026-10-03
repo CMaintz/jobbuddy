@@ -8,7 +8,6 @@ import { copyText } from '../../../../shared/utils/file-download';
 
 @Component({
   selector: 'app-documents-history',
-  standalone: true,
   imports: [CommonModule, EmptyStateComponent],
   templateUrl: './documents-history.component.html'
 })

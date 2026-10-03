@@ -33,7 +33,6 @@ const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
 
 @Component({
   selector: 'app-layout-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, DragDropModule, TranslateModule],
   templateUrl: './layout-form.component.html',
 })

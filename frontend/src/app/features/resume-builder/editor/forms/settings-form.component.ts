@@ -9,7 +9,6 @@ import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-to
 
 @Component({
   selector: 'app-settings-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbToggleComponent],
   templateUrl: './settings-form.component.html',
 })

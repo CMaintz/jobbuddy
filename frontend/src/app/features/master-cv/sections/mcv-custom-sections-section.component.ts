@@ -6,7 +6,6 @@ import { CustomSection } from '../../../core/models/profile-section.model';
 
 @Component({
   selector: 'app-mcv-custom-sections-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   template: `
     <div class="flex flex-col gap-3">

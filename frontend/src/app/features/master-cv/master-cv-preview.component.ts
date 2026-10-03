@@ -10,7 +10,6 @@ import {
 /** Read-only paper preview of the master CV, shown beside the section editor. */
 @Component({
   selector: 'app-master-cv-preview',
-  standalone: true,
   imports: [CommonModule, TranslateModule],
   templateUrl: './master-cv-preview.component.html',
 })

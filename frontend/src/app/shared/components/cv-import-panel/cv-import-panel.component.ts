@@ -38,7 +38,6 @@ interface ParsedCvResponse {
  */
 @Component({
   selector: 'jb-cv-import-panel',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   templateUrl: './cv-import-panel.component.html',
 })

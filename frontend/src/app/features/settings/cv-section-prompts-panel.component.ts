@@ -12,7 +12,6 @@ interface SectionField { key: string; label: string; }
  */
 @Component({
   selector: 'app-cv-section-prompts-panel',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   template: `
     <div class="py-3 border-b border-jb-border-faint">

@@ -41,7 +41,6 @@ import { ProfileStrengthsTabComponent } from './profile-strengths-tab.component'
 
 @Component({
   selector: 'app-profile',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,

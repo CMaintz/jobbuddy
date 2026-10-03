@@ -11,7 +11,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-projects-tab',
-  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent, SkillPickerComponent],
   templateUrl: './profile-projects-tab.component.html'
 })

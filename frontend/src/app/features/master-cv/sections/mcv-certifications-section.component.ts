@@ -13,7 +13,6 @@ import { Certification } from '../../../core/models/profile-section.model';
  */
 @Component({
   selector: 'app-mcv-certifications-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">

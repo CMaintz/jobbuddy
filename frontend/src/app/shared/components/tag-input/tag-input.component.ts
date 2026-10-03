@@ -6,7 +6,6 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-tag-input',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent],
   templateUrl: './tag-input.component.html',
   styleUrls: ['./tag-input.component.css']

@@ -10,7 +10,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-socials-tab',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,

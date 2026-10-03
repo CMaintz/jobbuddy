@@ -18,7 +18,6 @@ const HEATMAP_WEEKS = 14;
 
 @Component({
   selector: 'app-analytics',
-  standalone: true,
   imports: [
     CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent,
     FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent,

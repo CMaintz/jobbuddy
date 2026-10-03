@@ -9,7 +9,6 @@ import { TranslateModule } from '@ngx-translate/core';
  */
 @Component({
   selector: 'app-privacy-policy',
-  standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
   templateUrl: './privacy-policy.component.html',
 })

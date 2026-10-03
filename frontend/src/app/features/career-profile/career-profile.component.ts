@@ -17,7 +17,6 @@ type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
 @Component({
   selector: 'app-career-profile',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbTopbarComponent, JbButtonComponent,
     JbToastComponent, JbIconComponent, TagInputComponent],
   host: { class: 'flex flex-col h-full min-h-0' },

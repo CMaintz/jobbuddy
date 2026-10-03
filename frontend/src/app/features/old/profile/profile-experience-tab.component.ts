@@ -11,7 +11,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-experience-tab',
-  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent, SkillPickerComponent],
   templateUrl: './profile-experience-tab.component.html'
 })

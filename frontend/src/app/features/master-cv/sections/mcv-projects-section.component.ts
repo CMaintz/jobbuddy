@@ -10,7 +10,6 @@ import { Project } from '../../../core/models/profile-section.model';
 /** Master CV editor — projects list with per-entry AI polish. */
 @Component({
   selector: 'app-mcv-projects-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
   template: `
     <div class="flex flex-col gap-3">

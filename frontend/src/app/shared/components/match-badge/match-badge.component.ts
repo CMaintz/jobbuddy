@@ -32,7 +32,6 @@ export function matchLabelKey(label: MatchLabel | undefined): string {
  */
 @Component({
   selector: 'app-match-badge',
-  standalone: true,
   imports: [TranslateModule],
   templateUrl: './match-badge.component.html'
 })

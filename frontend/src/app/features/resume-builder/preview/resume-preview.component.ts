@@ -14,7 +14,6 @@ import { JbButtonComponent } from '../../../shared/components/jb-button/jb-butto
 
 @Component({
   selector: 'app-resume-preview',
-  standalone: true,
   imports: [
     CommonModule,
     TranslateModule,

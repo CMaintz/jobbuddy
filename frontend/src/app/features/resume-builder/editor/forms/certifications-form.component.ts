@@ -7,7 +7,6 @@ import { ResumeCertification } from '../../models/resume-builder.models';
 
 @Component({
   selector: 'app-certifications-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './certifications-form.component.html',
 })

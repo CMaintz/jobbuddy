@@ -8,7 +8,6 @@ import { CvImportPanelComponent } from '../../shared/components/cv-import-panel/
 
 @Component({
   selector: 'app-master-cv-import',
-  standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule, JbIconComponent, JbToastComponent, CvImportPanelComponent],
   templateUrl: './master-cv-import.component.html'
 })

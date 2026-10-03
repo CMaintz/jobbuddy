@@ -10,7 +10,6 @@ import { WorkExperience } from '../../../core/models/profile-section.model';
 /** Master CV editor — work experience list with per-entry AI polish. */
 @Component({
   selector: 'app-mcv-experience-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
   template: `
     <div class="flex flex-col gap-4">

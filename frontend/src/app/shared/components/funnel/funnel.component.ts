@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-funnel',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './funnel.component.html',
   styleUrls: ['./funnel.component.css']

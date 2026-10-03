@@ -14,7 +14,6 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
  */
 @Component({
   selector: 'app-application-pack',
-  standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent, JbToastComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
   templateUrl: './application-pack.component.html'

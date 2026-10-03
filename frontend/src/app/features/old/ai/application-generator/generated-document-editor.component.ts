@@ -9,7 +9,6 @@ import { ActiveGeneratedDocument } from './application-generator.types';
 
 @Component({
   selector: 'app-generated-document-editor',
-  standalone: true,
   imports: [CommonModule, FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
   styleUrls: ['./generated-document-editor.component.css'],
   templateUrl: './generated-document-editor.component.html'

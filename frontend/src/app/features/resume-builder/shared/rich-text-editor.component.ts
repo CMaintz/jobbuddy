@@ -44,7 +44,6 @@ const FONT_SIZES = ['10px', '11px', '12px', '13px', '14px', '16px', '18px', '21p
  */
 @Component({
   selector: 'app-rich-text-editor',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <div class="rte" [class.rte-focused]="focused()">

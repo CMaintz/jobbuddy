@@ -12,7 +12,6 @@ import { AiApiService, AiCredentialStatus } from '../../core/api/ai.api';
  */
 @Component({
   selector: 'app-ai-key-panel',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbButtonComponent],
   templateUrl: './ai-key-panel.component.html'
 })

@@ -9,7 +9,6 @@ import { ProfileStrength } from '../../../core/models/profile-section.model';
 /** Master CV editor — strengths list. Items are edited in place (parent owns the array). */
 @Component({
   selector: 'app-mcv-strengths-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">

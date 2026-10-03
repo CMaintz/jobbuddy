@@ -9,7 +9,6 @@ import { AiApiService, AiUsageSummary } from '../../core/api/ai.api';
  */
 @Component({
   selector: 'app-ai-usage-panel',
-  standalone: true,
   imports: [CommonModule, TranslateModule],
   templateUrl: './ai-usage-panel.component.html'
 })

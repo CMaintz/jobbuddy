@@ -10,7 +10,6 @@ import { getStrengthIcon } from '../../data/strength-icons';
 
 @Component({
   selector: 'app-strengths-form',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent,
     DebouncedTextareaComponent,

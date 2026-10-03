@@ -4,7 +4,6 @@ import { AtsReport } from '../../../../core/models/structured-document.model';
 
 @Component({
   selector: 'app-ats-report-panel',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './ats-report-panel.component.html'
 })

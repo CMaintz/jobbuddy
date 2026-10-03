@@ -12,7 +12,6 @@ import { ResumeData, INITIAL_SETTINGS } from '../../resume-builder/models/resume
 
 @Component({
   selector: 'app-apply-wizard',
-  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './apply-wizard.component.html',
   styleUrls: ['./apply-wizard.component.css'],

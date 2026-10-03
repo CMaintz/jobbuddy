@@ -8,7 +8,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-overview-tab',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FileUploadButtonComponent, FormActionsComponent, ModalShellComponent],
   templateUrl: './profile-overview-tab.component.html'
 })

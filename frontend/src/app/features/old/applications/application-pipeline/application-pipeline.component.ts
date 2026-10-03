@@ -16,7 +16,6 @@ const COLUMNS: { status: ApplicationStatus; label: string; color: string }[] = [
 
 @Component({
   selector: 'app-application-pipeline',
-  standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './application-pipeline.component.html'
 })

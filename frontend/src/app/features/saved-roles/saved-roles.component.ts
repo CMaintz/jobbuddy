@@ -12,7 +12,6 @@ import { Job } from '../../core/models/job.model';
 
 @Component({
   selector: 'app-saved-roles',
-  standalone: true,
   imports: [
     CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, CompanyMarkComponent,

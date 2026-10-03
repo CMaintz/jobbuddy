@@ -8,7 +8,6 @@ import { LANGUAGE_PROFICIENCIES } from '../../data/language-proficiencies';
 
 @Component({
   selector: 'app-languages-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './languages-form.component.html',
 })

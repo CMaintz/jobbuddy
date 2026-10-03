@@ -7,7 +7,6 @@ const TONES = ['Professional', 'Conversational', 'Confident', 'Humble', 'Enthusi
 
 @Component({
   selector: 'app-writing-style',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './writing-style.component.html'
 })

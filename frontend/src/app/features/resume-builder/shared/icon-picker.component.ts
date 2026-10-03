@@ -5,7 +5,6 @@ import { STRENGTH_ICONS } from '../data/strength-icons';
 
 @Component({
   selector: 'app-icon-picker',
-  standalone: true,
   imports: [CommonModule, LucideAngularModule],
   templateUrl: './icon-picker.component.html',
   styleUrls: ['./icon-picker.component.css'],

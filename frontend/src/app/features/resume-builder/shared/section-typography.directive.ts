@@ -8,7 +8,7 @@ import { SectionConfig } from '../models/resume-builder.models';
  * visibility (leftColumn/rightColumn). Ordering works via flex `order` since
  * sections are children of flex columns in every template.
  */
-@Directive({ selector: '[rbSection]', standalone: true })
+@Directive({ selector: '[rbSection]' })
 export class SectionTypographyDirective {
   @Input('rbSection') sectionId = '';
 

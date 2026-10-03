@@ -4,7 +4,6 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-button',
-  standalone: true,
   imports: [CommonModule, JbIconComponent],
   templateUrl: './jb-button.component.html',
   styleUrls: ['./jb-button.component.css']

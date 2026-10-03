@@ -27,7 +27,6 @@ interface SparklineBar {
 
 @Component({
   selector: 'app-analytics',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './analytics.component.html'
 })

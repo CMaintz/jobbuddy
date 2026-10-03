@@ -9,7 +9,6 @@ import { CONTACT_ICONS } from '../../data/social-platforms';
 
 @Component({
   selector: 'app-minimal-layout',
-  standalone: true,
   imports: [CommonModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective],
   templateUrl: './minimal-layout.component.html',
 })

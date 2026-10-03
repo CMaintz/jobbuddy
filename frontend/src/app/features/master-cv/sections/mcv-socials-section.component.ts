@@ -11,7 +11,6 @@ const SOCIAL_PLATFORMS = ['GitHub', 'LinkedIn', 'Website', 'X', 'Mastodon', 'Oth
 /** Master CV editor — social/profile links. */
 @Component({
   selector: 'app-mcv-socials-section',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">

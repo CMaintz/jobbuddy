@@ -3,7 +3,6 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-form-actions',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './form-actions.component.html'
 })

@@ -7,7 +7,6 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-ignored-jobs',
-  standalone: true,
   imports: [CommonModule, RouterLink, EmptyStateComponent],
   templateUrl: './ignored-jobs.component.html'
 })

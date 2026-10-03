@@ -20,7 +20,6 @@ function strongPassword(c: AbstractControl) {
 
 @Component({
   selector: 'app-register',
-  standalone: true,
   imports: [ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './register.component.html'
 })

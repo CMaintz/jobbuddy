@@ -7,7 +7,6 @@ import { Application } from '../../../../core/models/application.model';
 
 @Component({
   selector: 'app-application-list',
-  standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './application-list.component.html'
 })

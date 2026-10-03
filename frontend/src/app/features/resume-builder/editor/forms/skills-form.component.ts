@@ -7,7 +7,6 @@ import { ResumeSkill } from '../../models/resume-builder.models';
 
 @Component({
   selector: 'app-skills-form',
-  standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './skills-form.component.html',
 })

@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-debounced-textarea',
-  standalone: true,
   imports: [FormsModule],
   templateUrl: './debounced-textarea.component.html',
 })

@@ -14,7 +14,6 @@ import { CommonModule } from '@angular/common';
  */
 @Component({
   selector: 'jb-dropdown',
-  standalone: true,
   imports: [CommonModule],
   template: `
     <div class="relative">

@@ -23,7 +23,6 @@ import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_T
 
 @Component({
   selector: 'app-application-output',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbDropdownComponent, DiffViewerComponent, LetterPaperComponent,

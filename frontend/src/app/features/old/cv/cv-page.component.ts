@@ -14,7 +14,6 @@ const SECTION_ORDER_KEY = 'cv_section_order';
 
 @Component({
   selector: 'app-cv-page',
-  standalone: true,
   imports: [CommonModule, FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
   styleUrls: ['./cv-page.component.css'],
   templateUrl: './cv-page.component.html'

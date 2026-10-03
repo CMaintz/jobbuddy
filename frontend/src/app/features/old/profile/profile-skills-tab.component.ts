@@ -10,7 +10,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-skills-tab',
-  standalone: true,
   imports: [CommonModule, FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent, FormActionsComponent, InlineFormPanelComponent, SectionHeaderComponent],
   templateUrl: './profile-skills-tab.component.html'
 })

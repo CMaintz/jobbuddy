@@ -24,7 +24,6 @@ interface NavItem {
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, CommonModule, TranslateModule, JbIconComponent, StreakBadgeComponent,
   ],

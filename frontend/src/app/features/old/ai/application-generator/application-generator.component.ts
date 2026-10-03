@@ -19,7 +19,6 @@ import * as generatorActions from './application-generator.actions';
 
 @Component({
   selector: 'app-application-generator',
-  standalone: true,
   imports: [CommonModule, GenerationConfigFormComponent, GeneratedDocumentEditorComponent, DocumentRefinePanelComponent],
   templateUrl: './application-generator.component.html'
 })

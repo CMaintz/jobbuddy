@@ -6,7 +6,6 @@ import { DocumentSectionComponent } from './document-section.component';
 
 @Component({
   selector: 'app-structured-document-renderer',
-  standalone: true,
   imports: [CommonModule, DocumentHeaderComponent, DocumentSectionComponent],
   encapsulation: ViewEncapsulation.None,
   styleUrls: ['./structured-document-renderer.component.css'],

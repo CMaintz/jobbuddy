@@ -8,7 +8,7 @@ import { toHtml } from './rich-text-editor.component';
  * acceptable here: it is authored by the user in their own workspace and
  * Angular's sanitizer would otherwise strip the inline font/colour styles.
  */
-@Pipe({ name: 'richText', standalone: true })
+@Pipe({ name: 'richText' })
 export class RichTextPipe implements PipeTransform {
   private sanitizer = inject(DomSanitizer);
 

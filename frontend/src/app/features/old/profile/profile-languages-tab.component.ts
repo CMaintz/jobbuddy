@@ -10,7 +10,6 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-languages-tab',
-  standalone: true,
   imports: [CommonModule, FormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
   templateUrl: './profile-languages-tab.component.html'
 })

@@ -40,7 +40,6 @@ interface DocRow {
 
 @Component({
   selector: 'app-documents',
-  standalone: true,
   imports: [CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent],
   templateUrl: './documents.component.html'
 })

@@ -5,7 +5,6 @@ import { DocumentItemComponent } from './document-item.component';
 
 @Component({
   selector: 'app-document-section',
-  standalone: true,
   imports: [CommonModule, DocumentItemComponent],
   templateUrl: './document-section.component.html'
 })

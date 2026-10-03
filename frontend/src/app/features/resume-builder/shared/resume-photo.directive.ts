@@ -6,7 +6,7 @@ import { ResumeStateService } from '../services/resume-state.service';
  * photoPlacement settings, and lets the user drag on the photo to resize it
  * (Canva-style) — dragging away from the top-left corner grows it.
  */
-@Directive({ selector: 'img[rbResumePhoto]', standalone: true })
+@Directive({ selector: 'img[rbResumePhoto]' })
 export class ResumePhotoDirective implements OnDestroy {
   private el = inject(ElementRef<HTMLImageElement>).nativeElement;
   private state = inject(ResumeStateService);

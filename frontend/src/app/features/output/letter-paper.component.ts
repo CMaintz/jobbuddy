@@ -13,7 +13,6 @@ import { LetterTemplate } from './letter-templates';
  */
 @Component({
   selector: 'app-letter-paper',
-  standalone: true,
   imports: [CommonModule, RichTextEditorComponent, RichTextPipe],
   templateUrl: './letter-paper.component.html',
 })
