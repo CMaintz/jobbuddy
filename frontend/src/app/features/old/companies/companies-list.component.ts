@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
 import { CompaniesApiService, Company } from '../../../core/api/companies.api';
@@ -6,6 +6,7 @@ import { CompaniesApiService, Company } from '../../../core/api/companies.api';
 @Component({
   selector: 'app-companies-list',
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './companies-list.component.html'
 })
 export class CompaniesListComponent implements OnInit {

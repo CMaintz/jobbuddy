@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -19,6 +19,7 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
     JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbDropdownComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './applications-list.component.html'
 })
 export class ApplicationsListComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Dropdown shell: projected trigger + floating panel with a click-away backdrop.
@@ -14,6 +14,7 @@ import { Component, Input, signal } from '@angular/core';
 @Component({
   selector: 'jb-dropdown',
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="relative">
       <div (click)="toggle()">

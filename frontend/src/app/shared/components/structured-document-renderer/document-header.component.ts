@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DocumentIdentity } from '../../../core/models/structured-document.model';
 
 @Component({
   selector: 'app-document-header',
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './document-header.component.html'
 })
 export class DocumentHeaderComponent {

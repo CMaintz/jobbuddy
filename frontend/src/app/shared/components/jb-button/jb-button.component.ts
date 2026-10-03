@@ -1,10 +1,11 @@
-import { Component, HostBinding, Input, Output, EventEmitter, booleanAttribute } from '@angular/core';
+import { Component, HostBinding, Input, Output, EventEmitter, booleanAttribute, ChangeDetectionStrategy } from '@angular/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-button',
   imports: [JbIconComponent],
   templateUrl: './jb-button.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./jb-button.component.css']
 })
 export class JbButtonComponent {

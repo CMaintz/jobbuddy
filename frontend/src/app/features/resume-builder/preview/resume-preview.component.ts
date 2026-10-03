@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { PdfExportService } from '../services/pdf-export.service';
@@ -23,6 +23,7 @@ import { JbButtonComponent } from '../../../shared/components/jb-button/jb-butto
     ExecutiveLayoutComponent,
     CreativeLayoutComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './resume-preview.component.html',
 })
 export class ResumePreviewComponent {

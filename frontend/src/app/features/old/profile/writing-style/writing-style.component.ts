@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WritingProfileApiService, WritingProfile } from '../../../../core/api/writing-profile.api';
 
@@ -7,6 +7,7 @@ const TONES = ['Professional', 'Conversational', 'Confident', 'Humble', 'Enthusi
 @Component({
   selector: 'app-writing-style',
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './writing-style.component.html'
 })
 export class WritingStyleComponent implements OnInit {

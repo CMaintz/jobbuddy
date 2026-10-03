@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { AiApiService, AiUsageSummary } from '../../core/api/ai.api';
@@ -10,6 +10,7 @@ import { AiApiService, AiUsageSummary } from '../../core/api/ai.api';
 @Component({
   selector: 'app-ai-usage-panel',
   imports: [CommonModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ai-usage-panel.component.html'
 })
 export class AiUsagePanelComponent implements OnInit {

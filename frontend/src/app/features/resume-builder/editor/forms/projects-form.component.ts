@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeProject } from '../../models/resume-builder.models';
@@ -9,6 +9,7 @@ import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 @Component({
   selector: 'app-projects-form',
   imports: [FormsModule, TranslateModule, RichTextEditorComponent, AiRefineMenuComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './projects-form.component.html',
 })
 export class ProjectsFormComponent {

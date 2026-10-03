@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateModule } from '@ngx-translate/core';
@@ -33,6 +33,7 @@ const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
 @Component({
   selector: 'app-layout-form',
   imports: [FormsModule, DragDropModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './layout-form.component.html',
 })
 export class LayoutFormComponent {

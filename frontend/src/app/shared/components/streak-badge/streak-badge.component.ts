@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivityStreakService } from '../../../core/activity-streak.service';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
@@ -6,6 +6,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 @Component({
   selector: 'jb-streak-badge',
   imports: [TranslateModule, JbIconComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (streak.days() > 0) {
       <div class="flex items-center gap-2.5 rounded-md py-1.5 px-2 text-base text-jb-text-mid">

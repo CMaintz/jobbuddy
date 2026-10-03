@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -16,6 +16,7 @@ const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 
 @Component({
   selector: 'app-custom-sections-form',
   imports: [FormsModule, TranslateModule, RichTextEditorComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './custom-sections-form.component.html',
 })
 export class CustomSectionsFormComponent {

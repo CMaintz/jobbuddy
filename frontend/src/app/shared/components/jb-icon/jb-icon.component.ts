@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Jobbuddy icon set — stroked 16×16 viewBox SVG icons.
@@ -8,6 +8,7 @@ import { Component, Input } from '@angular/core';
   selector: 'jb-icon',
   imports: [],
   templateUrl: './jb-icon.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./jb-icon.component.css'],
 })
 export class JbIconComponent {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -16,6 +16,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './classic-layout.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./classic-layout.component.css'],
 })
 export class ClassicLayoutComponent {

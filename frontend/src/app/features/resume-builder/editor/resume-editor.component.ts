@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { AiTailorFormComponent } from './forms/ai-tailor-form.component';
@@ -40,6 +40,7 @@ interface EditorSection {
     LayoutFormComponent,
     CustomSectionsFormComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './resume-editor.component.html',
 })
 export class ResumeEditorComponent {

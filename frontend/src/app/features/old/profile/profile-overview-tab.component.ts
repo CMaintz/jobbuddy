@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FileUploadButtonComponent } from '../../../shared/components/file-upload-button/file-upload-button.component';
 import { FormActionsComponent } from '../../../shared/components/ui/form-actions.component';
@@ -8,6 +8,7 @@ import type { ProfileComponent } from './profile.component';
 @Component({
   selector: 'app-profile-overview-tab',
   imports: [ReactiveFormsModule, FileUploadButtonComponent, FormActionsComponent, ModalShellComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile-overview-tab.component.html'
 })
 export class ProfileOverviewTabComponent {

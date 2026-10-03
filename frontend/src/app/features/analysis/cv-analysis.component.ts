@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,6 +25,7 @@ interface JobOption {
     CommonModule, JbTopbarComponent, FormsModule, RouterLink, TranslateModule, JbIconComponent,
     JbButtonComponent, JbToastComponent, GoalRingComponent, JbPillComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {

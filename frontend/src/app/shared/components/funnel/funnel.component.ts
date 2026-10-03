@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-funnel',
   imports: [],
   templateUrl: './funnel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./funnel.component.css']
 })
 export class FunnelComponent {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -9,6 +9,7 @@ import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-to
 @Component({
   selector: 'app-settings-form',
   imports: [FormsModule, TranslateModule, JbToggleComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './settings-form.component.html',
 })
 export class SettingsFormComponent {

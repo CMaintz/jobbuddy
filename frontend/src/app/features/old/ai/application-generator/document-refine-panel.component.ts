@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, Input, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StructuredDocument } from '../../../../core/models/structured-document.model';
 import { ChatMessage } from './application-generator.types';
@@ -6,6 +6,7 @@ import { ChatMessage } from './application-generator.types';
 @Component({
   selector: 'app-document-refine-panel',
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './document-refine-panel.component.html'
 })
 export class DocumentRefinePanelComponent implements AfterViewChecked {

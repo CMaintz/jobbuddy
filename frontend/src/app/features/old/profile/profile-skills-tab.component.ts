@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDeleteButtonComponent } from '../../../shared/components/ui/confirm-delete-button.component';
 import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
@@ -10,6 +10,7 @@ import type { ProfileComponent } from './profile.component';
 @Component({
   selector: 'app-profile-skills-tab',
   imports: [FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent, FormActionsComponent, InlineFormPanelComponent, SectionHeaderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile-skills-tab.component.html'
 })
 export class ProfileSkillsTabComponent {

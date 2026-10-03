@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeExperience } from '../../models/resume-builder.models';
@@ -13,6 +13,7 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
     FormsModule, TranslateModule, RichTextEditorComponent, MonthYearPickerComponent,
     AiRefineMenuComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './experience-form.component.html',
 })
 export class ExperienceFormComponent {

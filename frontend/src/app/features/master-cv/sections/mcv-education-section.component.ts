@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -9,6 +9,7 @@ import { Education } from '../../../core/models/profile-section.model';
 @Component({
   selector: 'app-mcv-education-section',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-3">
       @for (edu of list; track edu.id || $index) {

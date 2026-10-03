@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -7,6 +7,7 @@ import { ResumeCertification } from '../../models/resume-builder.models';
 @Component({
   selector: 'app-certifications-form',
   imports: [FormsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './certifications-form.component.html',
 })
 export class CertificationsFormComponent {

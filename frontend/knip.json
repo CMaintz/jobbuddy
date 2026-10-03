@@ -6,6 +6,7 @@
   "ignoreDependencies": [
     "@angular/platform-browser-dynamic",
     "ts-morph",
-    "jscpd"
+    "jscpd",
+    "istanbul-lib-instrument"
   ]
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -55,6 +55,7 @@ import { ProfileStrengthsTabComponent } from './profile-strengths-tab.component'
     ProfileStrengthsTabComponent,
     TabNavComponent
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {

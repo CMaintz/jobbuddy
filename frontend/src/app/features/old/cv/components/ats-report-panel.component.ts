@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AtsReport } from '../../../../core/models/structured-document.model';
 
 @Component({
   selector: 'app-ats-report-panel',
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ats-report-panel.component.html'
 })
 export class AtsReportPanelComponent {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DailyCount, WeeklyTrend } from '../../../core/api/dashboard.api';
@@ -28,6 +28,7 @@ interface SparklineBar {
 @Component({
   selector: 'app-analytics',
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './analytics.component.html'
 })
 export class AnalyticsComponent implements OnInit {

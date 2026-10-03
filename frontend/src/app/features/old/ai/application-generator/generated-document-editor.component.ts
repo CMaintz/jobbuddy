@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApplicationStatus } from '../../../../core/models/application.model';
 import { StructuredDocument } from '../../../../core/models/structured-document.model';
@@ -10,6 +10,7 @@ import { ActiveGeneratedDocument } from './application-generator.types';
   selector: 'app-generated-document-editor',
   imports: [FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
   styleUrls: ['./generated-document-editor.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './generated-document-editor.component.html'
 })
 export class GeneratedDocumentEditorComponent {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -14,6 +14,7 @@ import { SkillsApiService, TaxonomyCandidate } from '../../core/api/skills.api';
 @Component({
   selector: 'app-skill-taxonomy-panel',
   imports: [FormsModule, TranslateModule, JbButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './skill-taxonomy-panel.component.html'
 })
 export class SkillTaxonomyPanelComponent implements OnInit {

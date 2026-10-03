@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
@@ -40,6 +40,7 @@ interface DocRow {
 @Component({
   selector: 'app-documents',
   imports: [TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './documents.component.html'
 })
 export class DocumentsComponent implements OnInit {

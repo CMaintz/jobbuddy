@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -8,6 +8,7 @@ import { CvImportPanelComponent } from '../../shared/components/cv-import-panel/
 @Component({
   selector: 'app-master-cv-import',
   imports: [RouterLink, TranslateModule, JbIconComponent, JbToastComponent, CvImportPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './master-cv-import.component.html'
 })
 export class MasterCvImportComponent {

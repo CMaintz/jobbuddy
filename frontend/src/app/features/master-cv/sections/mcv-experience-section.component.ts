@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -10,6 +10,7 @@ import { WorkExperience } from '../../../core/models/profile-section.model';
 @Component({
   selector: 'app-mcv-experience-section',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-4">
       @for (exp of list; track exp.id || $index) {

@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-form-actions',
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './form-actions.component.html'
 })
 export class FormActionsComponent {

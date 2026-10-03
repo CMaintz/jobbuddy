@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -95,6 +95,7 @@ interface StyleSnapshot {
     DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent,
     CvSectionPromptsPanelComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -12,6 +12,7 @@ import { AiApiService, AiCredentialStatus } from '../../core/api/ai.api';
 @Component({
   selector: 'app-ai-key-panel',
   imports: [FormsModule, TranslateModule, JbButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ai-key-panel.component.html'
 })
 export class AiKeyPanelComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -14,6 +14,7 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
     LucideDynamicIcon, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './executive-layout.component.html',
 })
 export class ExecutiveLayoutComponent {

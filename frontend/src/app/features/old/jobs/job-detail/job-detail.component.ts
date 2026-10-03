@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -37,6 +37,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-job-detail',
   imports: [CommonModule, RouterLink, FormsModule, ConfirmDeleteButtonComponent, EmptyStateComponent, LucideDynamicIcon],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './job-detail.component.html'
 })
 export class JobDetailComponent implements OnInit {

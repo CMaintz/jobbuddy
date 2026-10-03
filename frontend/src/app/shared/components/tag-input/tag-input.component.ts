@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
@@ -7,6 +7,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
   selector: 'jb-tag-input',
   imports: [FormsModule, TranslateModule, JbIconComponent],
   templateUrl: './tag-input.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./tag-input.component.css']
 })
 export class TagInputComponent {

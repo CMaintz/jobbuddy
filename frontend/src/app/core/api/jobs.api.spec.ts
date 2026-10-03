@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { JobsApiService } from './jobs.api';
 import { Job, JobSearchResult, MatchResult } from '../models/job.model';
@@ -11,7 +11,7 @@ describe('JobsApiService', () => {
   const job = { id: 'j1', url: 'https://example.com/j1', title: 'Backend Engineer' } as Job;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(withXhr()), provideHttpClientTesting()] });
     api = TestBed.inject(JobsApiService);
     backend = TestBed.inject(HttpTestingController);
   });

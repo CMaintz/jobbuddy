@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { LANGUAGE_PROFICIENCIES } from '../../data/language-proficiencies';
 @Component({
   selector: 'app-languages-form',
   imports: [FormsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './languages-form.component.html',
 })
 export class LanguagesFormComponent {

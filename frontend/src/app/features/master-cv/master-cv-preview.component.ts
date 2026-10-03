@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { Profile, ProfilePrivateInfo } from '../../core/models/user.model';
@@ -11,6 +11,7 @@ import {
 @Component({
   selector: 'app-master-cv-preview',
   imports: [CommonModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './master-cv-preview.component.html',
 })
 export class MasterCvPreviewComponent {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -29,6 +29,7 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './prompts-library.component.html'
 })
 export class PromptsLibraryComponent implements OnInit {

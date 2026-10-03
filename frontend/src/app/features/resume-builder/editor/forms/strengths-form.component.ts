@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
     FormsModule, LucideDynamicIcon, TranslateModule, IconPickerComponent,
     DebouncedTextareaComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './strengths-form.component.html',
 })
 export class StrengthsFormComponent {

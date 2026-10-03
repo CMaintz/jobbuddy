@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -19,6 +19,7 @@ type Section = 'target' | 'skills' | 'stories' | 'retracted';
   imports: [FormsModule, TranslateModule, JbTopbarComponent, JbButtonComponent,
     JbToastComponent, JbIconComponent, TagInputComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './career-profile.component.html'
 })
 export class CareerProfileComponent implements OnInit {

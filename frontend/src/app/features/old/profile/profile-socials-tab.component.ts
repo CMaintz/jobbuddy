@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDeleteButtonComponent } from '../../../shared/components/ui/confirm-delete-button.component';
 import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
@@ -17,6 +17,7 @@ import type { ProfileComponent } from './profile.component';
     InlineFormPanelComponent,
     SectionHeaderComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile-socials-tab.component.html',
 })
 export class ProfileSocialsTabComponent {

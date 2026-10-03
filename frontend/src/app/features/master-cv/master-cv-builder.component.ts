@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -55,6 +55,7 @@ interface CvSection {
     McvLanguagesSectionComponent, McvSocialsSectionComponent, McvCustomSectionsSectionComponent,
     TranslateModule,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './master-cv-builder.component.html'
 })
 export class MasterCvBuilderComponent implements OnInit {

@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-sparkline',
   imports: [],
   templateUrl: './sparkline.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./sparkline.component.css']
 })
 export class SparklineComponent implements OnChanges {

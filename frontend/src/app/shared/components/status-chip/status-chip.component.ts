@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbPillComponent, PillTone } from '../jb-pill/jb-pill.component';
 import { ApplicationStatus } from '../../../core/models/application.model';
@@ -45,6 +45,7 @@ export function stageTone(status: ApplicationStatus | string): PillTone {
 @Component({
   selector: 'app-status-chip',
   imports: [TranslateModule, JbPillComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './status-chip.component.html'
 })
 export class StatusChipComponent {

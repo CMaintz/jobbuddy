@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -8,6 +8,7 @@ import { SOCIAL_PLATFORMS, SOCIAL_ICON_LIBRARY } from '../../data/social-platfor
 @Component({
   selector: 'app-socials-form',
   imports: [FormsModule, TranslateModule, IconPickerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './socials-form.component.html',
 })
 export class SocialsFormComponent {

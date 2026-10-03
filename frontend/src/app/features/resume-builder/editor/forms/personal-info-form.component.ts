@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { PersonalInfo } from '../../models/resume-builder.models';
@@ -13,6 +13,7 @@ import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.compone
     FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent,
     AiRefineMenuComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './personal-info-form.component.html',
 })
 export class PersonalInfoFormComponent {

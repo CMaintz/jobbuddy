@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-heatmap',
   imports: [],
   templateUrl: './heatmap.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./heatmap.component.css']
 })
 export class HeatmapComponent implements OnChanges {
