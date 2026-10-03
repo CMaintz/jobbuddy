@@ -2,7 +2,7 @@
 # (stack: ts, working_directory: frontend). Verbs delegate to the package.json
 # scripts so there's a single source of truth for HOW each check runs.
 [tools]
-node = "20"
+node = "22"
 
 [tasks.fix]
 description = "Auto-fix lint findings"
