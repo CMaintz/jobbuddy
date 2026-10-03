@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { AfterViewChecked, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StructuredDocument } from '../../../../core/models/structured-document.model';
@@ -6,7 +5,7 @@ import { ChatMessage } from './application-generator.types';
 
 @Component({
   selector: 'app-document-refine-panel',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './document-refine-panel.component.html'
 })
 export class DocumentRefinePanelComponent implements AfterViewChecked {

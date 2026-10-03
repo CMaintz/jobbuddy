@@ -1,9 +1,8 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-sparkline',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './sparkline.component.html',
   styleUrls: ['./sparkline.component.css']
 })

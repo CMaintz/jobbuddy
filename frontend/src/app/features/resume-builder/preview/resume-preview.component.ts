@@ -1,5 +1,4 @@
 import { Component, ElementRef, ViewChild, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { PdfExportService } from '../services/pdf-export.service';
@@ -15,7 +14,6 @@ import { JbButtonComponent } from '../../../shared/components/jb-button/jb-butto
 @Component({
   selector: 'app-resume-preview',
   imports: [
-    CommonModule,
     TranslateModule,
     JbButtonComponent,
     ClassicLayoutComponent,

@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { DocumentIdentity } from '../../../core/models/structured-document.model';
 
 @Component({
   selector: 'app-document-header',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './document-header.component.html'
 })
 export class DocumentHeaderComponent {

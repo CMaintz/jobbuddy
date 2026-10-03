@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -13,7 +12,7 @@ import { Certification } from '../../../core/models/profile-section.model';
  */
 @Component({
   selector: 'app-mcv-certifications-section',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">
       @for (cert of list; track cert.id || $index) {

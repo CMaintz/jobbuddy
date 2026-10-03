@@ -1,9 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-funnel',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './funnel.component.html',
   styleUrls: ['./funnel.component.css']
 })

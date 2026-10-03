@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -10,7 +9,7 @@ import { WorkExperience } from '../../../core/models/profile-section.model';
 /** Master CV editor — work experience list with per-entry AI polish. */
 @Component({
   selector: 'app-mcv-experience-section',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
   template: `
     <div class="flex flex-col gap-4">
       @for (exp of list; track exp.id || $index) {

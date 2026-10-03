@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AiApiService } from '../../../../core/api/ai.api';
@@ -21,7 +20,7 @@ interface ParsedProfile {
 
 @Component({
   selector: 'app-cv-analysis',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {

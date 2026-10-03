@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AiApiService } from '../../../core/api/ai.api';
@@ -22,7 +21,7 @@ const SUGGESTION_LABELS = ['resumeBuilder.refine.label.quantify', 'resumeBuilder
  */
 @Component({
   selector: 'app-ai-refine-menu',
-  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent],
+  imports: [FormsModule, TranslateModule, DiffViewerComponent],
   template: `
     <div class="relative inline-block">
       <button type="button" class="airm-trigger" (click)="open.set(!open())" [title]="'resumeBuilder.refine.improveTitle' | translate">

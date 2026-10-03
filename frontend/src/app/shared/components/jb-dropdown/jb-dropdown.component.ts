@@ -1,5 +1,4 @@
 import { Component, Input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 /**
  * Dropdown shell: projected trigger + floating panel with a click-away backdrop.
@@ -14,7 +13,7 @@ import { CommonModule } from '@angular/common';
  */
 @Component({
   selector: 'jb-dropdown',
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="relative">
       <div (click)="toggle()">

@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AiApiService } from '../../../../core/api/ai.api';
@@ -19,7 +18,7 @@ import * as generatorActions from './application-generator.actions';
 
 @Component({
   selector: 'app-application-generator',
-  imports: [CommonModule, GenerationConfigFormComponent, GeneratedDocumentEditorComponent, DocumentRefinePanelComponent],
+  imports: [GenerationConfigFormComponent, GeneratedDocumentEditorComponent, DocumentRefinePanelComponent],
   templateUrl: './application-generator.component.html'
 })
 export class ApplicationGeneratorComponent implements OnInit {

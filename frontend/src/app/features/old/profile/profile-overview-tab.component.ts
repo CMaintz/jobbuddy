@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FileUploadButtonComponent } from '../../../shared/components/file-upload-button/file-upload-button.component';
@@ -8,7 +7,7 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-overview-tab',
-  imports: [CommonModule, ReactiveFormsModule, FileUploadButtonComponent, FormActionsComponent, ModalShellComponent],
+  imports: [ReactiveFormsModule, FileUploadButtonComponent, FormActionsComponent, ModalShellComponent],
   templateUrl: './profile-overview-tab.component.html'
 })
 export class ProfileOverviewTabComponent {

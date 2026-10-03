@@ -1,5 +1,4 @@
 import { Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RichTextEditorComponent } from '../resume-builder/shared/rich-text-editor.component';
 import { RichTextPipe } from '../resume-builder/shared/rich-text.pipe';
@@ -13,7 +12,7 @@ import { LetterTemplate } from './letter-templates';
  */
 @Component({
   selector: 'app-letter-paper',
-  imports: [CommonModule, RichTextEditorComponent, RichTextPipe],
+  imports: [RichTextEditorComponent, RichTextPipe],
   templateUrl: './letter-paper.component.html',
 })
 export class LetterPaperComponent {

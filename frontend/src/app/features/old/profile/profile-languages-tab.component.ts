@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
@@ -10,7 +9,7 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-languages-tab',
-  imports: [CommonModule, FormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
+  imports: [FormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
   templateUrl: './profile-languages-tab.component.html'
 })
 export class SpokenLanguagesTabComponent {

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDeleteButtonComponent } from '../../../shared/components/ui/confirm-delete-button.component';
@@ -11,7 +10,6 @@ import type { ProfileComponent } from './profile.component';
 @Component({
   selector: 'app-profile-socials-tab',
   imports: [
-    CommonModule,
     FormsModule,
     ConfirmDeleteButtonComponent,
     EmptyStateComponent,

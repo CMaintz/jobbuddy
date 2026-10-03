@@ -1,9 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-skill-chip-list',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './skill-chip-list.component.html',
 })
 export class SkillChipListComponent {

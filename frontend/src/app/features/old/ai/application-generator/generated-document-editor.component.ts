@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApplicationStatus } from '../../../../core/models/application.model';
@@ -9,7 +8,7 @@ import { ActiveGeneratedDocument } from './application-generator.types';
 
 @Component({
   selector: 'app-generated-document-editor',
-  imports: [CommonModule, FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
+  imports: [FormsModule, StructuredDocumentRendererComponent, AtsReportPanelComponent],
   styleUrls: ['./generated-document-editor.component.css'],
   templateUrl: './generated-document-editor.component.html'
 })

@@ -1,13 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeSkill } from '../../models/resume-builder.models';
 
 @Component({
   selector: 'app-skills-form',
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, TranslateModule],
   templateUrl: './skills-form.component.html',
 })
 export class SkillsFormComponent {

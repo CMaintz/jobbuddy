@@ -1,5 +1,4 @@
 import { Component, Input, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 interface DiffSegment {
   text: string;
@@ -8,7 +7,7 @@ interface DiffSegment {
 
 @Component({
   selector: 'jb-diff-viewer',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './diff-viewer.component.html',
 })
 export class DiffViewerComponent {

@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { StructuredDocumentItem } from '../../../core/models/structured-document.model';
 
 @Component({
   selector: 'app-document-item',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './document-item.component.html'
 })
 export class DocumentItemComponent {

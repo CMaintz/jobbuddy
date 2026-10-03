@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 export interface TabNavItem<T extends string = string> {
@@ -8,7 +7,7 @@ export interface TabNavItem<T extends string = string> {
 
 @Component({
   selector: 'app-tab-nav',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './tab-nav.component.html'
 })
 export class TabNavComponent<T extends string = string> {

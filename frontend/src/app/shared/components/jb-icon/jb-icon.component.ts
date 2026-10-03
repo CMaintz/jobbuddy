@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 /**
  * Jobbuddy icon set — stroked 16×16 viewBox SVG icons.
@@ -7,7 +6,7 @@ import { CommonModule } from '@angular/common';
  */
 @Component({
   selector: 'jb-icon',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './jb-icon.component.html',
   styleUrls: ['./jb-icon.component.css'],
 })

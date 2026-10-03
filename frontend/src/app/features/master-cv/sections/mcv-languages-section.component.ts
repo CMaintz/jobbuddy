@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -11,7 +10,7 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
 /** Master CV editor — spoken languages list. */
 @Component({
   selector: 'app-mcv-languages-section',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   template: `
     <div class="flex flex-col gap-3">
       @for (lang of list; track lang.id || $index) {

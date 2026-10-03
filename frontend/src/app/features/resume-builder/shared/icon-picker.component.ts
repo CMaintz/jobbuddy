@@ -1,11 +1,10 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { STRENGTH_ICONS } from '../data/strength-icons';
 
 @Component({
   selector: 'app-icon-picker',
-  imports: [CommonModule, LucideAngularModule],
+  imports: [LucideAngularModule],
   templateUrl: './icon-picker.component.html',
   styleUrls: ['./icon-picker.component.css'],
 })

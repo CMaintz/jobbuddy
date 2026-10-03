@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -13,7 +12,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-modern-2col-layout',
   imports: [
-    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './modern-2col-layout.component.html',

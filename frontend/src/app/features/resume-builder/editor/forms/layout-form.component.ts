@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -33,7 +32,7 @@ const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
 
 @Component({
   selector: 'app-layout-form',
-  imports: [CommonModule, FormsModule, DragDropModule, TranslateModule],
+  imports: [FormsModule, DragDropModule, TranslateModule],
   templateUrl: './layout-form.component.html',
 })
 export class LayoutFormComponent {

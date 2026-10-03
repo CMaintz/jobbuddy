@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -29,7 +28,7 @@ interface TaskRow {
 @Component({
   selector: 'app-tasks',
   imports: [
-    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, CompanyMarkComponent,
   ],
   templateUrl: './tasks.component.html'

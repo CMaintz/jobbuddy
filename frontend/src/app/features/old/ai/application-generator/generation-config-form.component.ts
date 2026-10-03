@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { DocumentTemplateOption } from '../../../../core/models/structured-document.model';
@@ -7,7 +6,7 @@ import { AiApiService } from '../../../../core/api/ai.api';
 
 @Component({
   selector: 'app-generation-config-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './generation-config-form.component.html'
 })
 export class GenerationConfigFormComponent {

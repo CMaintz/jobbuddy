@@ -1,10 +1,9 @@
 import { Component, HostBinding, Input, Output, EventEmitter, booleanAttribute } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-button',
-  imports: [CommonModule, JbIconComponent],
+  imports: [JbIconComponent],
   templateUrl: './jb-button.component.html',
   styleUrls: ['./jb-button.component.css']
 })

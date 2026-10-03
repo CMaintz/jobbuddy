@@ -1,9 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-section-header',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './section-header.component.html'
 })
 export class SectionHeaderComponent {

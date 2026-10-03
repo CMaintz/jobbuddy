@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { AiTailorFormComponent } from './forms/ai-tailor-form.component';
@@ -26,7 +25,6 @@ interface EditorSection {
 @Component({
   selector: 'app-resume-editor',
   imports: [
-    CommonModule,
     TranslateModule,
     AiTailorFormComponent,
     PersonalInfoFormComponent,

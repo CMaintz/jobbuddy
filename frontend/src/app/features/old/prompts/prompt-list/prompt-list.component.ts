@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PromptApiService } from '../../../../core/api/prompt.api';
 import { PromptTemplate } from '../../../../core/models/prompt-template.model';
@@ -8,7 +7,7 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-prompt-list',
-  imports: [CommonModule, RouterLink, EmptyStateComponent],
+  imports: [RouterLink, EmptyStateComponent],
   templateUrl: './prompt-list.component.html'
 })
 export class PromptListComponent implements OnInit {

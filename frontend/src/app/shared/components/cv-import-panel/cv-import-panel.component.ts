@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -38,7 +37,7 @@ interface ParsedCvResponse {
  */
 @Component({
   selector: 'jb-cv-import-panel',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   templateUrl: './cv-import-panel.component.html',
 })
 export class CvImportPanelComponent {

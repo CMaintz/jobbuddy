@@ -1,9 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-form-actions',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './form-actions.component.html'
 })
 export class FormActionsComponent {

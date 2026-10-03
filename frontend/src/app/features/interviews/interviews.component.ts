@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -25,7 +24,7 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
 @Component({
   selector: 'app-interviews',
   imports: [
-    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, CompanyMarkComponent, JbModalComponent,
   ],
   templateUrl: './interviews.component.html'

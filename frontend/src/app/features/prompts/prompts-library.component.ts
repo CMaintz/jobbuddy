@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -27,7 +26,7 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
 @Component({
   selector: 'app-prompts-library',
   imports: [
-    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent,
   ],
   templateUrl: './prompts-library.component.html'

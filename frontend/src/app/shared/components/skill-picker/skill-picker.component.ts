@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,7 +7,7 @@ import { SkillTaxonomy } from '../../../core/models/skill-taxonomy.model';
 
 @Component({
   selector: 'app-skill-picker',
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, TranslateModule],
   templateUrl: './skill-picker.component.html'
 })
 export class SkillPickerComponent {

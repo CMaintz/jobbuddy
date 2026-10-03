@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -22,7 +21,7 @@ interface StageConfig {
 @Component({
   selector: 'app-pipeline',
   imports: [
-    CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent,
   ],
   templateUrl: './pipeline.component.html'

@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -42,7 +41,6 @@ import { ProfileStrengthsTabComponent } from './profile-strengths-tab.component'
 @Component({
   selector: 'app-profile',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     FormsModule,
     ProfileOverviewTabComponent,

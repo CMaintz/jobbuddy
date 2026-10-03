@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -17,7 +16,7 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
 @Component({
   selector: 'app-applications-list',
   imports: [
-    CommonModule, JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbDropdownComponent,
   ],
   templateUrl: './applications-list.component.html'

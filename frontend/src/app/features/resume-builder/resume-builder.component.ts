@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
@@ -12,7 +11,7 @@ import { JobsApiService } from '../../core/api/jobs.api';
 
 @Component({
   selector: 'app-resume-builder',
-  imports: [CommonModule, TranslateModule, ResumeEditorComponent, ResumePreviewComponent],
+  imports: [TranslateModule, ResumeEditorComponent, ResumePreviewComponent],
   templateUrl: './resume-builder.component.html',
 })
 export class ResumeBuilderComponent implements OnInit {

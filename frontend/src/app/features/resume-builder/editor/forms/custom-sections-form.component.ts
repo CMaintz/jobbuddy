@@ -1,5 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -16,7 +15,7 @@ const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 
 
 @Component({
   selector: 'app-custom-sections-form',
-  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent],
+  imports: [FormsModule, TranslateModule, RichTextEditorComponent],
   templateUrl: './custom-sections-form.component.html',
 })
 export class CustomSectionsFormComponent {

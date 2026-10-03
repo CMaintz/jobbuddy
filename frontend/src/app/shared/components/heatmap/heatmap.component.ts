@@ -1,9 +1,8 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-heatmap',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './heatmap.component.html',
   styleUrls: ['./heatmap.component.css']
 })

@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -12,7 +11,7 @@ import { AiApiService, AiCredentialStatus } from '../../core/api/ai.api';
  */
 @Component({
   selector: 'app-ai-key-panel',
-  imports: [CommonModule, FormsModule, TranslateModule, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbButtonComponent],
   templateUrl: './ai-key-panel.component.html'
 })
 export class AiKeyPanelComponent implements OnInit {

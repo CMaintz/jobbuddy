@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -10,7 +9,7 @@ import { Project } from '../../../core/models/profile-section.model';
 /** Master CV editor — projects list with per-entry AI polish. */
 @Component({
   selector: 'app-mcv-projects-section',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, AiRefineMenuComponent],
   template: `
     <div class="flex flex-col gap-3">
       @for (proj of list; track proj.id || $index) {

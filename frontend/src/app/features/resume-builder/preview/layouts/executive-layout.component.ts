@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -12,7 +11,7 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
 @Component({
   selector: 'app-executive-layout',
   imports: [
-    CommonModule, LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
+    LucideAngularModule, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './executive-layout.component.html',

@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { ResumeProject } from '../../models/resume-builder.models';
 import { TranslateModule } from '@ngx-translate/core';
@@ -9,7 +8,7 @@ import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 
 @Component({
   selector: 'app-projects-form',
-  imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, AiRefineMenuComponent],
+  imports: [FormsModule, TranslateModule, RichTextEditorComponent, AiRefineMenuComponent],
   templateUrl: './projects-form.component.html',
 })
 export class ProjectsFormComponent {

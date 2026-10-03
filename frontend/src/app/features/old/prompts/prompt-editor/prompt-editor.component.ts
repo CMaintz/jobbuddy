@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PromptApiService } from '../../../../core/api/prompt.api';
@@ -9,7 +8,7 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-prompt-editor',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, FormActionsComponent],
+  imports: [ReactiveFormsModule, RouterLink, FormActionsComponent],
   templateUrl: './prompt-editor.component.html'
 })
 export class PromptEditorComponent {

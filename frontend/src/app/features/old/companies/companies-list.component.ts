@@ -1,12 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
 import { CompaniesApiService, Company } from '../../../core/api/companies.api';
 
 @Component({
   selector: 'app-companies-list',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './companies-list.component.html'
 })
 export class CompaniesListComponent implements OnInit {

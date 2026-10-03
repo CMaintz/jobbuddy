@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -11,7 +10,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
 @Component({
   selector: 'app-strengths-form',
   imports: [
-    CommonModule, FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent,
+    FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent,
     DebouncedTextareaComponent,
   ],
   templateUrl: './strengths-form.component.html',

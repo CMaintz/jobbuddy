@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-file-upload-button',
-  imports: [CommonModule, TranslateModule],
+  imports: [TranslateModule],
   templateUrl: './file-upload-button.component.html'
 })
 export class FileUploadButtonComponent {

@@ -1,12 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-tag-input',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent],
   templateUrl: './tag-input.component.html',
   styleUrls: ['./tag-input.component.css']
 })

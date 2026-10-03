@@ -1,10 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-stat-card',
-  imports: [CommonModule, JbIconComponent],
+  imports: [JbIconComponent],
   templateUrl: './stat-card.component.html'
 })
 export class StatCardComponent {

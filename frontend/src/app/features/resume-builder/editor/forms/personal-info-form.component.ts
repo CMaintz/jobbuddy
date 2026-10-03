@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { PersonalInfo } from '../../models/resume-builder.models';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,7 +10,7 @@ import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.compone
 @Component({
   selector: 'app-personal-info-form',
   imports: [
-    CommonModule, FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent,
+    FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent,
     AiRefineMenuComponent,
   ],
   templateUrl: './personal-info-form.component.html',

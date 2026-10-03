@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
@@ -11,7 +10,7 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-projects-tab',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent, SkillPickerComponent],
+  imports: [FormsModule, ReactiveFormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent, SkillPickerComponent],
   templateUrl: './profile-projects-tab.component.html'
 })
 export class ProfileProjectsTabComponent {

@@ -1,9 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'jb-segmented',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './jb-segmented.component.html',
   styleUrls: ['./jb-segmented.component.css']
 })

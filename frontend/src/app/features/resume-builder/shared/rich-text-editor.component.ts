@@ -2,7 +2,6 @@ import {
   Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy,
   AfterViewInit, Output, SimpleChanges, ViewChild, signal
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -44,7 +43,7 @@ const FONT_SIZES = ['10px', '11px', '12px', '13px', '14px', '16px', '18px', '21p
  */
 @Component({
   selector: 'app-rich-text-editor',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="rte" [class.rte-focused]="focused()">
       <div class="rte-toolbar" (mousedown)="$event.preventDefault()">

@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -47,7 +46,7 @@ interface CvSection {
 @Component({
   selector: 'app-master-cv-builder',
   imports: [
-    CommonModule, FormsModule, RouterLink,
+    FormsModule, RouterLink,
     JbTopbarComponent, JbIconComponent, JbButtonComponent, JbToastComponent,
     TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent,
     JbDropdownComponent, MasterCvPreviewComponent,

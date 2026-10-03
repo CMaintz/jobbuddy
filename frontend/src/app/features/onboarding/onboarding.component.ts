@@ -1,5 +1,4 @@
 import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -19,7 +18,7 @@ interface Step {
 
 @Component({
   selector: 'app-onboarding',
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
   templateUrl: './onboarding.component.html'
 })
 export class OnboardingComponent {

@@ -1,6 +1,5 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
 import { ThemeService } from './core/theme.service';
@@ -25,7 +24,7 @@ interface NavItem {
 @Component({
   selector: 'app-root',
   imports: [
-    RouterOutlet, RouterLink, RouterLinkActive, CommonModule, TranslateModule, JbIconComponent, StreakBadgeComponent,
+    RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
   ],
   templateUrl: './app.component.html'
 })
