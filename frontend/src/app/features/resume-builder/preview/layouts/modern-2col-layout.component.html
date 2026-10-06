@@ -58,7 +58,7 @@
             @for (s of strengths; track s.id) {
               <div class="mb-1.5">
                 <p class="text-xs font-semibold flex items-center gap-1">
-                  <lucide-icon [img]="getStrengthIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" color="rgba(255,255,255,0.8)" class="flex-shrink-0"></lucide-icon>
+                  <svg [lucideIcon]="getStrengthIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" color="rgba(255,255,255,0.8)" class="flex-shrink-0"></svg>
                   {{ s.title }}
                 </p>
                 @if (s.description) { <p class="text-xs opacity-60 leading-snug">{{ s.description }}</p> }
@@ -71,7 +71,7 @@
             <p class="text-xs font-bold uppercase tracking-widest opacity-60 mb-2">{{ 'resumeBuilder.cv.links' | translate }}</p>
             @for (s of socials; track s.id) {
               <div class="flex items-center gap-1.5 mb-1">
-                <lucide-icon [img]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" color="rgba(255,255,255,0.8)" class="flex-shrink-0"></lucide-icon>
+                <svg [lucideIcon]="getSocialIcon(s.iconKey)" [size]="11" [strokeWidth]="1.5" color="rgba(255,255,255,0.8)" class="flex-shrink-0"></svg>
                 <span class="text-xs opacity-90 truncate">{{ s.username || s.url }}</span>
               </div>
             }

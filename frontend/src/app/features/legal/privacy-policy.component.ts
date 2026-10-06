@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -9,8 +8,8 @@ import { TranslateModule } from '@ngx-translate/core';
  */
 @Component({
   selector: 'app-privacy-policy',
-  standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './privacy-policy.component.html',
 })
 export class PrivacyPolicyComponent {

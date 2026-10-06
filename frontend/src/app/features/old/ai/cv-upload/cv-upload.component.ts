@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -10,8 +10,8 @@ import { runAction } from '../../../../shared/utils/async-ui';
 
 @Component({
   selector: 'app-cv-upload',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, FormActionsComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cv-upload.component.html'
 })
 export class CvUploadComponent implements OnInit {

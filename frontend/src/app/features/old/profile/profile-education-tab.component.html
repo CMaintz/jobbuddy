@@ -1,8 +1,9 @@
 <!-- Education Tab -->
-      <div *ngIf="vm.activeTab === 'education'">
-        <app-section-header title="Education" actionLabel="+ Add Education" (action)="vm.showEduForm = !vm.showEduForm"></app-section-header>
-
-        <app-inline-form-panel *ngIf="vm.showEduForm">
+@if (vm.activeTab === 'education') {
+  <div>
+    <app-section-header title="Education" actionLabel="+ Add Education" (action)="vm.showEduForm = !vm.showEduForm"></app-section-header>
+    @if (vm.showEduForm) {
+      <app-inline-form-panel>
         <form [formGroup]="vm.eduForm" (ngSubmit)="vm.saveEducation()" class="space-y-3">
           <div>
             <label class="block text-xs font-medium text-gray-700">Institution</label>
@@ -33,19 +34,28 @@
           </app-skill-picker>
           <app-form-actions (cancel)="vm.showEduForm = false"></app-form-actions>
         </form>
-        </app-inline-form-panel>
-
-        <div *ngFor="let e of vm.educations" class="list-item">
-          <div class="flex justify-between">
-            <div>
-              <p class="font-semibold">{{ e.degree }} in {{ e.fieldOfStudy }}</p>
-              <p class="text-sm text-gray-600">{{ e.institution }} · {{ e.startDate | slice:0:4 }} – {{ e.endDate | slice:0:4 }}</p>
-              <div *ngIf="e.skills?.length" class="mt-1 flex flex-wrap gap-1">
-                <span *ngFor="let s of e.skills" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+      </app-inline-form-panel>
+    }
+    @for (e of vm.educations; track e) {
+      <div class="list-item">
+        <div class="flex justify-between">
+          <div>
+            <p class="font-semibold">{{ e.degree }} in {{ e.fieldOfStudy }}</p>
+            <p class="text-sm text-gray-600">{{ e.institution }} · {{ e.startDate | slice:0:4 }} – {{ e.endDate | slice:0:4 }}</p>
+            @if (e.skills?.length) {
+              <div class="mt-1 flex flex-wrap gap-1">
+                @for (s of e.skills; track s) {
+                  <span class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+                }
               </div>
-            </div>
-            <app-confirm-delete-button (confirmed)="vm.deleteEducation(e.id!)"></app-confirm-delete-button>
+            }
           </div>
+          <app-confirm-delete-button (confirmed)="vm.deleteEducation(e.id!)"></app-confirm-delete-button>
         </div>
-        <app-empty-state *ngIf="!vm.educations.length" message="No education added yet."></app-empty-state>
       </div>
+    }
+    @if (!vm.educations.length) {
+      <app-empty-state message="No education added yet."></app-empty-state>
+    }
+  </div>
+}

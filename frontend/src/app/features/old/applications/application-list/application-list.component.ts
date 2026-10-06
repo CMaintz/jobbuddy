@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,8 +7,8 @@ import { Application } from '../../../../core/models/application.model';
 
 @Component({
   selector: 'app-application-list',
-  standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-list.component.html'
 })
 export class ApplicationListComponent implements OnInit {

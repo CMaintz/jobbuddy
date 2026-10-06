@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { LucideAngularModule } from 'lucide-angular';
+import { LucideDynamicIcon, LucideIconInput } from '@lucide/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { IconPickerComponent } from '../../shared/icon-picker.component';
@@ -10,11 +9,11 @@ import { getStrengthIcon } from '../../data/strength-icons';
 
 @Component({
   selector: 'app-strengths-form',
-  standalone: true,
   imports: [
-    CommonModule, FormsModule, LucideAngularModule, TranslateModule, IconPickerComponent,
+    FormsModule, LucideDynamicIcon, TranslateModule, IconPickerComponent,
     DebouncedTextareaComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './strengths-form.component.html',
 })
 export class StrengthsFormComponent {
@@ -22,8 +21,7 @@ export class StrengthsFormComponent {
 
   get strengths() { return this.state.strengths(); }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getIcon(key: string): any { return getStrengthIcon(key); }
+  getIcon(key: string): LucideIconInput { return getStrengthIcon(key); }
 
   add(): void { this.state.addStrength({ title: '', description: '', iconKey: 'star' }); }
   remove(id: string): void { this.state.removeStrength(id); }

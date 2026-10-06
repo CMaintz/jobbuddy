@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { CvSectionPromptsApiService } from '../../core/api/cv-section-prompts.api';
@@ -12,8 +11,8 @@ interface SectionField { key: string; label: string; }
  */
 @Component({
   selector: 'app-cv-section-prompts-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="py-3 border-b border-jb-border-faint">
       <div class="text-base font-medium">{{ 'settings.sectionPrompts.heading' | translate }}</div>

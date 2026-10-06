@@ -1,8 +1,9 @@
 <!-- Work Experience Tab -->
-      <div *ngIf="vm.activeTab === 'experience'">
-        <app-section-header title="Work Experience" actionLabel="+ Add Experience" (action)="vm.showExpForm = !vm.showExpForm"></app-section-header>
-
-        <app-inline-form-panel *ngIf="vm.showExpForm">
+@if (vm.activeTab === 'experience') {
+  <div>
+    <app-section-header title="Work Experience" actionLabel="+ Add Experience" (action)="vm.showExpForm = !vm.showExpForm"></app-section-header>
+    @if (vm.showExpForm) {
+      <app-inline-form-panel>
         <form [formGroup]="vm.expForm" (ngSubmit)="vm.saveExperience()" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -40,23 +41,38 @@
           </app-skill-picker>
           <app-form-actions (cancel)="vm.showExpForm = false"></app-form-actions>
         </form>
-        </app-inline-form-panel>
-
-        <div *ngFor="let exp of vm.experiences" class="list-item">
-          <div class="flex justify-between">
-            <div>
-              <p class="font-semibold">{{ exp.title }}</p>
-              <p class="text-sm text-gray-600">{{ exp.companyName }} · {{ exp.startDate | slice:0:7 }} – {{ exp.isCurrent ? 'Present' : (exp.endDate | slice:0:7) }}</p>
-              <p *ngIf="exp.description" class="text-sm text-gray-700 mt-1">{{ exp.description }}</p>
-              <div *ngIf="exp.technologies?.length" class="mt-2 flex flex-wrap gap-1">
-                <span *ngFor="let t of exp.technologies" class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ t }}</span>
+      </app-inline-form-panel>
+    }
+    @for (exp of vm.experiences; track exp) {
+      <div class="list-item">
+        <div class="flex justify-between">
+          <div>
+            <p class="font-semibold">{{ exp.title }}</p>
+            <p class="text-sm text-gray-600">{{ exp.companyName }} · {{ exp.startDate | slice:0:7 }} – {{ exp.isCurrent ? 'Present' : (exp.endDate | slice:0:7) }}</p>
+            @if (exp.description) {
+              <p class="text-sm text-gray-700 mt-1">{{ exp.description }}</p>
+            }
+            @if (exp.technologies?.length) {
+              <div class="mt-2 flex flex-wrap gap-1">
+                @for (t of exp.technologies; track t) {
+                  <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ t }}</span>
+                }
               </div>
-              <div *ngIf="exp.skills?.length" class="mt-1 flex flex-wrap gap-1">
-                <span *ngFor="let s of exp.skills" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+            }
+            @if (exp.skills?.length) {
+              <div class="mt-1 flex flex-wrap gap-1">
+                @for (s of exp.skills; track s) {
+                  <span class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full border border-indigo-200">{{ s.name }}</span>
+                }
               </div>
-            </div>
-            <app-confirm-delete-button (confirmed)="vm.deleteExperience(exp.id!)"></app-confirm-delete-button>
+            }
           </div>
+          <app-confirm-delete-button (confirmed)="vm.deleteExperience(exp.id!)"></app-confirm-delete-button>
         </div>
-        <app-empty-state *ngIf="!vm.experiences.length" message="No experience added yet."></app-empty-state>
       </div>
+    }
+    @if (!vm.experiences.length) {
+      <app-empty-state message="No experience added yet."></app-empty-state>
+    }
+  </div>
+}

@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -18,11 +17,11 @@ const HEATMAP_WEEKS = 14;
 
 @Component({
   selector: 'app-analytics',
-  standalone: true,
   imports: [
-    CommonModule, TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent,
+    TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent,
     FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './analytics.component.html'
 })
 export class AnalyticsComponent implements OnInit {

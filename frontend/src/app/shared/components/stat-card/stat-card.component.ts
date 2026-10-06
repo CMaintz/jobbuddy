@@ -1,11 +1,10 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 @Component({
   selector: 'jb-stat-card',
-  standalone: true,
-  imports: [CommonModule, JbIconComponent],
+  imports: [JbIconComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './stat-card.component.html'
 })
 export class StatCardComponent {

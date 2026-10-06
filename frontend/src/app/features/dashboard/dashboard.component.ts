@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -79,11 +78,11 @@ interface SavedPreview {
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [
-    CommonModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
+    RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
     StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {

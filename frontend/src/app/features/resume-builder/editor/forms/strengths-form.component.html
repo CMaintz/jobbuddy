@@ -3,7 +3,7 @@
       @for (s of strengths; track s.id) {
         <div class="card p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
-            <lucide-icon [img]="getIcon(s.iconKey)" [size]="18" [strokeWidth]="1.5" style="color:var(--jb-text-dim);"></lucide-icon>
+            <svg [lucideIcon]="getIcon(s.iconKey)" [size]="18" [strokeWidth]="1.5" style="color:var(--jb-text-dim);"></svg>
             <button class="rb-remove" (click)="remove(s.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
           <label class="label">{{ 'resumeBuilder.form.title' | translate }}</label>

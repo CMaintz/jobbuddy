@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -23,8 +23,8 @@ import {
 
 @Component({
   selector: 'app-jobs-list',
-  standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule, FormsModule, EmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './jobs-list.component.html'
 })
 export class JobsListComponent implements OnInit {

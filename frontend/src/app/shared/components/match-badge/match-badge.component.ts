@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
 export type MatchLabel = 'EXCELLENT' | 'STRONG' | 'MODERATE' | 'WEAK';
@@ -32,8 +32,8 @@ export function matchLabelKey(label: MatchLabel | undefined): string {
  */
 @Component({
   selector: 'app-match-badge',
-  standalone: true,
   imports: [TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './match-badge.component.html'
 })
 export class MatchBadgeComponent {

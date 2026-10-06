@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
 import { FormActionsComponent } from '../../../shared/components/ui/form-actions.component';
@@ -11,8 +11,8 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-education-tab',
-  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent, SkillPickerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile-education-tab.component.html'
 })
 export class ProfileEducationTabComponent {

@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
@@ -18,7 +18,7 @@ describe('authInterceptor', () => {
     token = null;
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { getIdToken: () => Promise.resolve(token) } },
       ],

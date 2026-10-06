@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, effect, signal, inject } from '@angular/core';
+import { Component, HostListener, OnInit, effect, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -67,9 +67,9 @@ interface ApplyDraft {
 
 @Component({
   selector: 'app-apply',
-  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent],
   templateUrl: './apply.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./apply.component.css']
 })
 export class ApplyComponent implements OnInit {

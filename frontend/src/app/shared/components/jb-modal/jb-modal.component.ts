@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 
 /**
@@ -17,8 +16,8 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
  */
 @Component({
   selector: 'jb-modal',
-  standalone: true,
-  imports: [CommonModule, JbIconComponent],
+  imports: [JbIconComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div (click)="closed.emit()" class="fixed inset-0 z-[200] flex items-center justify-center" style="background:rgba(0,0,0,0.55);">
       <div (click)="$event.stopPropagation()"

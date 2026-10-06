@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -28,11 +27,11 @@ interface TaskRow {
 
 @Component({
   selector: 'app-tasks',
-  standalone: true,
   imports: [
-    CommonModule, JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
+    JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, JbToastComponent, CompanyMarkComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit {

@@ -10,7 +10,7 @@
         @if (job?.url) {
           <jb-button small icon="external" (clicked)="openOriginal()">{{ 'jobDetails.openOriginal' | translate }}</jb-button>
         }
-        <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job?.id }">
+        <jb-button [primary]="true" icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: $safeNavigationMigration(job?.id) }">
           {{ (documents.length > 0 ? 'jobDetails.regenerate' : 'jobFeed.generateApplication') | translate }}
         </jb-button>
       </div>
@@ -230,7 +230,7 @@
                 <jb-icon name="sparkle" [size]="18" class="text-jb-accent" />
                 <div class="text-base text-jb-text-mid mt-1.5">{{ 'jobDetails.noDocuments' | translate }}</div>
                 <div class="text-xs text-jb-text-dim mt-0.5 mb-3">{{ 'jobDetails.noDocumentsDesc' | translate }}</div>
-                <jb-button [primary]="true" small icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: job?.id }">{{ 'common.generate' | translate }}</jb-button>
+                <jb-button [primary]="true" small icon="sparkle" routerLink="/apply" [queryParams]="{ jobId: $safeNavigationMigration(job?.id) }">{{ 'common.generate' | translate }}</jb-button>
               </div>
             }
           </div>
@@ -333,12 +333,12 @@
               }
               <div class="flex flex-col gap-1 mt-1.5">
                 @if (job.contact?.phone) {
-                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'tel:' + job.contact?.phone">
+                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'tel:' + $safeNavigationMigration(job.contact?.phone)">
                     <jb-icon name="phone" [size]="11" />{{ job.contact?.phone }}
                   </a>
                 }
                 @if (job.contact?.email) {
-                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'mailto:' + job.contact?.email">
+                  <a class="flex items-center gap-1.5 text-xs text-jb-accent no-underline" [href]="'mailto:' + $safeNavigationMigration(job.contact?.email)">
                     <jb-icon name="mail" [size]="11" />{{ job.contact?.email }}
                   </a>
                 }

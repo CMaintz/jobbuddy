@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
@@ -28,8 +27,8 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-ai-tailor-form',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent],
+  imports: [FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ai-tailor-form.component.html',
 })
 export class AiTailorFormComponent implements OnInit {

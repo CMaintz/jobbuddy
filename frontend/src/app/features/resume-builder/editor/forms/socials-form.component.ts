@@ -1,6 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { IconPickerComponent } from '../../shared/icon-picker.component';
@@ -8,8 +7,8 @@ import { SOCIAL_PLATFORMS, SOCIAL_ICON_LIBRARY } from '../../data/social-platfor
 
 @Component({
   selector: 'app-socials-form',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, IconPickerComponent],
+  imports: [FormsModule, TranslateModule, IconPickerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './socials-form.component.html',
 })
 export class SocialsFormComponent {

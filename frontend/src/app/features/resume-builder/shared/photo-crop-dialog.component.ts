@@ -1,5 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -12,8 +11,8 @@ const OUTPUT = 400;
  */
 @Component({
   selector: 'app-photo-crop-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 z-[300] flex items-center justify-center" style="background:rgba(0,0,0,0.6);" (click)="cancelled.emit()">
       <div class="bg-jb-surface border border-jb-border-strong rounded-[10px] p-4 flex flex-col gap-3"

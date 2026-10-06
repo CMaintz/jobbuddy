@@ -1,9 +1,12 @@
 import {
-  Github, Linkedin, Twitter, Facebook, Instagram, Youtube, Globe, Mail,
-  Phone, MapPin, Briefcase, Link, ExternalLink, Twitch, Gitlab, Dribbble,
-  Figma, Codepen, Slack, Code, Terminal, PenTool, MessageCircle, Gamepad2,
-  Hash, Layers,
-} from 'lucide-angular';
+  LucideIconInput, LucideGlobe, LucideMail, LucidePhone, LucideMapPin, LucideBriefcase, LucideLink,
+  LucideExternalLink, LucideCode, LucideTerminal, LucidePenTool, LucideMessageCircle, LucideGamepad2,
+  LucideHash, LucideLayers,
+} from '@lucide/angular';
+import {
+  GithubBrand, LinkedinBrand, TwitterBrand, FacebookBrand, InstagramBrand, YoutubeBrand, TwitchBrand,
+  GitlabBrand, DribbbleBrand, FigmaBrand, CodepenBrand, SlackBrand,
+} from './brand-icons';
 
 export interface SocialPlatform {
   platform: string;
@@ -14,8 +17,7 @@ export interface SocialPlatform {
 export interface SocialIcon {
   key: string;
   label: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: any;
+  icon: LucideIconInput;
 }
 
 export const SOCIAL_PLATFORMS: SocialPlatform[] = [
@@ -126,44 +128,42 @@ export function getSocialPlatformIcon(iconKey: string): string {
 
 /** 26-icon library shown in the icon override picker. */
 export const SOCIAL_ICON_LIBRARY: SocialIcon[] = [
-  { key: 'github',         label: 'GitHub',        icon: Github },
-  { key: 'linkedin',       label: 'LinkedIn',       icon: Linkedin },
-  { key: 'twitter',        label: 'Twitter/X',      icon: Twitter },
-  { key: 'facebook',       label: 'Facebook',       icon: Facebook },
-  { key: 'instagram',      label: 'Instagram',      icon: Instagram },
-  { key: 'youtube',        label: 'YouTube',        icon: Youtube },
-  { key: 'globe',          label: 'Globe',          icon: Globe },
-  { key: 'mail',           label: 'Email',          icon: Mail },
-  { key: 'phone',          label: 'Phone',          icon: Phone },
-  { key: 'map-pin',        label: 'Location',       icon: MapPin },
-  { key: 'briefcase',      label: 'Portfolio',      icon: Briefcase },
-  { key: 'link',           label: 'Link',           icon: Link },
-  { key: 'external-link',  label: 'External',       icon: ExternalLink },
-  { key: 'twitch',         label: 'Twitch',         icon: Twitch },
-  { key: 'gitlab',         label: 'GitLab',         icon: Gitlab },
-  { key: 'dribbble',       label: 'Dribbble',       icon: Dribbble },
-  { key: 'figma',          label: 'Figma',          icon: Figma },
-  { key: 'codepen',        label: 'CodePen',        icon: Codepen },
-  { key: 'slack',          label: 'Slack',          icon: Slack },
-  { key: 'code',           label: 'Code',           icon: Code },
-  { key: 'terminal',       label: 'Terminal',       icon: Terminal },
-  { key: 'pen-tool',       label: 'Design',         icon: PenTool },
-  { key: 'message-circle', label: 'Chat',           icon: MessageCircle },
-  { key: 'gamepad-2',      label: 'Gaming',         icon: Gamepad2 },
-  { key: 'hash',           label: 'Forum',          icon: Hash },
-  { key: 'layers',         label: 'Portfolio',      icon: Layers },
+  { key: 'github',         label: 'GitHub',        icon: GithubBrand },
+  { key: 'linkedin',       label: 'LinkedIn',       icon: LinkedinBrand },
+  { key: 'twitter',        label: 'Twitter/X',      icon: TwitterBrand },
+  { key: 'facebook',       label: 'Facebook',       icon: FacebookBrand },
+  { key: 'instagram',      label: 'Instagram',      icon: InstagramBrand },
+  { key: 'youtube',        label: 'YouTube',        icon: YoutubeBrand },
+  { key: 'globe',          label: 'Globe',          icon: LucideGlobe },
+  { key: 'mail',           label: 'Email',          icon: LucideMail },
+  { key: 'phone',          label: 'Phone',          icon: LucidePhone },
+  { key: 'map-pin',        label: 'Location',       icon: LucideMapPin },
+  { key: 'briefcase',      label: 'Portfolio',      icon: LucideBriefcase },
+  { key: 'link',           label: 'Link',           icon: LucideLink },
+  { key: 'external-link',  label: 'External',       icon: LucideExternalLink },
+  { key: 'twitch',         label: 'Twitch',         icon: TwitchBrand },
+  { key: 'gitlab',         label: 'GitLab',         icon: GitlabBrand },
+  { key: 'dribbble',       label: 'Dribbble',       icon: DribbbleBrand },
+  { key: 'figma',          label: 'Figma',          icon: FigmaBrand },
+  { key: 'codepen',        label: 'CodePen',        icon: CodepenBrand },
+  { key: 'slack',          label: 'Slack',          icon: SlackBrand },
+  { key: 'code',           label: 'Code',           icon: LucideCode },
+  { key: 'terminal',       label: 'Terminal',       icon: LucideTerminal },
+  { key: 'pen-tool',       label: 'Design',         icon: LucidePenTool },
+  { key: 'message-circle', label: 'Chat',           icon: LucideMessageCircle },
+  { key: 'gamepad-2',      label: 'Gaming',         icon: LucideGamepad2 },
+  { key: 'hash',           label: 'Forum',          icon: LucideHash },
+  { key: 'layers',         label: 'Portfolio',      icon: LucideLayers },
 ];
 
 /** Map of all iconKeys → LucideIcon for layout rendering. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ALL_ICON_MAP = new Map<string, any>(
+const ALL_ICON_MAP = new Map<string, LucideIconInput>(
   SOCIAL_ICON_LIBRARY.map(i => [i.key, i.icon])
 );
 
 /** Returns the LucideIcon for a social iconKey (used in layout templates). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getSocialIcon(iconKey: string): any {
-  return ALL_ICON_MAP.get(iconKey) ?? Link;
+export function getSocialIcon(iconKey: string): LucideIconInput {
+  return ALL_ICON_MAP.get(iconKey) ?? LucideLink;
 }
 
 /** Contact-info icons (email, phone, location) for resume layouts. */
