@@ -1,0 +1,12 @@
+# Accepted advisories for backend/gradle.lockfile. Each entry needs a reason and an
+# expiry, so it gets looked at again instead of rotting.
+
+[[IgnoredVulns]]
+id = "GHSA-pc63-qcmh-9cmg"
+ignoreUntil = 2027-01-06T00:00:00Z
+reason = """
+spring-webmvc XsltView SSRF/RCE. Only reachable through XsltView, which the backend
+never uses (no XSLT views or view resolvers; it is a JSON REST API). The only fix is
+Spring Framework 7.0.9 (Spring Boot 4); there is no open-source 6.2.x patch and Boot
+3.5.16 is the latest 3.x. Remove this once the backend is on Spring Boot 4.
+"""
