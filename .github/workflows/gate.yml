@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   changes:
-    uses: CMaintz/foundry/.github/workflows/changes.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    uses: CMaintz/foundry/.github/workflows/changes.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
     with:
       packages: "backend frontend extension"
       # Builds nothing for these; any other root-level file rebuilds everything (fail-safe).
@@ -37,7 +37,7 @@ jobs:
     name: Backend gate
     needs: changes
     if: contains(fromJSON(needs.changes.outputs.changes), 'backend')
-    uses: CMaintz/foundry/.github/workflows/gate.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    uses: CMaintz/foundry/.github/workflows/gate.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
     with:
       stack: java
       working_directory: backend
@@ -47,7 +47,7 @@ jobs:
     name: Frontend gate
     needs: changes
     if: contains(fromJSON(needs.changes.outputs.changes), 'frontend')
-    uses: CMaintz/foundry/.github/workflows/gate.yml@f5b41d3226140cfdfa7932a36d9c86513b0662cc # v2.6.0
+    uses: CMaintz/foundry/.github/workflows/gate.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
     with:
       stack: ts
       working_directory: frontend
@@ -59,10 +59,13 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - env:
-          RESULTS: ${{ needs.changes.result }} ${{ needs.backend.result }} ${{ needs.frontend.result }}
+      - name: Require every job to have passed or been skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
         run: |
-          for r in $RESULTS; do
-            case "$r" in failure|cancelled) echo "a required job did not pass: $r"; exit 1;; esac
-          done
+          set -euo pipefail
+          # Iterates over needs itself, so a job added to needs above is checked
+          # automatically. Skipped (path-filtered) is fine; failure/cancelled is not.
+          bad="$(printf '%s' "$RESULTS" | jq -r 'to_entries[] | select(.value.result=="failure" or .value.result=="cancelled") | .key')"
+          if [ -n "$bad" ]; then echo "::error::job(s) did not pass: $bad"; exit 1; fi
           echo "gate-ok"

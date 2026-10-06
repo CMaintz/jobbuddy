@@ -1,0 +1,17 @@
+# Non-blocking PR comment showing how the smell baselines moved (they should only shrink).
+name: ratchet
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ratchet:
+    uses: CMaintz/foundry/.github/workflows/ratchet-report.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    permissions: { contents: read, pull-requests: write }
+    with:
+      baselines: |
+        backend/.habit-hooks/snooze.json
+        frontend/.habit-hooks/snooze.json
