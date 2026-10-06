@@ -1,8 +1,9 @@
 <!-- Certifications Tab -->
-      <div *ngIf="vm.activeTab === 'certifications'">
-        <app-section-header title="Certifications" actionLabel="+ Add Certification" (action)="vm.showCertForm = !vm.showCertForm"></app-section-header>
-
-        <app-inline-form-panel *ngIf="vm.showCertForm">
+@if (vm.activeTab === 'certifications') {
+  <div>
+    <app-section-header title="Certifications" actionLabel="+ Add Certification" (action)="vm.showCertForm = !vm.showCertForm"></app-section-header>
+    @if (vm.showCertForm) {
+      <app-inline-form-panel>
         <form [formGroup]="vm.certForm" (ngSubmit)="vm.saveCertification()" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -24,15 +25,22 @@
           </div>
           <app-form-actions (cancel)="vm.showCertForm = false"></app-form-actions>
         </form>
-        </app-inline-form-panel>
-
-        <div *ngFor="let c of vm.certifications" class="list-item flex justify-between">
-          <div>
-            <p class="font-semibold">{{ c.name }}</p>
-            <p class="text-sm text-gray-600">{{ c.issuer }} · {{ c.issuedAt | slice:0:7 }}</p>
-            <a *ngIf="c.credentialUrl" [href]="c.credentialUrl" target="_blank" class="text-xs text-blue-600 hover:underline">View Credential</a>
-          </div>
-          <app-confirm-delete-button (confirmed)="vm.deleteCertification(c.id!)"></app-confirm-delete-button>
+      </app-inline-form-panel>
+    }
+    @for (c of vm.certifications; track c) {
+      <div class="list-item flex justify-between">
+        <div>
+          <p class="font-semibold">{{ c.name }}</p>
+          <p class="text-sm text-gray-600">{{ c.issuer }} · {{ c.issuedAt | slice:0:7 }}</p>
+          @if (c.credentialUrl) {
+            <a [href]="c.credentialUrl" target="_blank" class="text-xs text-blue-600 hover:underline">View Credential</a>
+          }
         </div>
-        <app-empty-state *ngIf="!vm.certifications.length" message="No certifications added yet."></app-empty-state>
+        <app-confirm-delete-button (confirmed)="vm.deleteCertification(c.id!)"></app-confirm-delete-button>
       </div>
+    }
+    @if (!vm.certifications.length) {
+      <app-empty-state message="No certifications added yet."></app-empty-state>
+    }
+  </div>
+}

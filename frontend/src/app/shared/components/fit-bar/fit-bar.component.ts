@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-fit-bar',
-  standalone: true,
   templateUrl: './fit-bar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./fit-bar.component.css']
 })
 export class FitBarComponent {

@@ -1,5 +1,4 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResumeStateService } from '../../services/resume-state.service';
 import { RichTextPipe } from '../../shared/rich-text.pipe';
@@ -9,8 +8,8 @@ import { CONTACT_ICONS } from '../../data/social-platforms';
 
 @Component({
   selector: 'app-minimal-layout',
-  standalone: true,
-  imports: [CommonModule, TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective],
+  imports: [TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './minimal-layout.component.html',
 })
 export class MinimalLayoutComponent {

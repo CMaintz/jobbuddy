@@ -22,7 +22,7 @@
               <label class="label">{{ 'auth.password' | translate }}</label>
               <input type="password" formControlName="password" class="input" [placeholder]="'auth.register.minChars' | translate" />
               @if (form.get('password')?.dirty && form.get('password')?.errors?.['weakPassword']) {
-                <p class="text-red-600 text-xs mt-1">{{ form.get('password')?.errors?.['weakPassword'] | translate }}</p>
+                <p class="text-red-600 text-xs mt-1">{{ $safeNavigationMigration(form.get('password')?.errors?.['weakPassword']) | translate }}</p>
               }
             </div>
             <div>

@@ -1,8 +1,8 @@
 import {
   Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy,
-  AfterViewInit, Output, SimpleChanges, ViewChild, signal
+  AfterViewInit, Output, SimpleChanges, ViewChild, signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -44,8 +44,7 @@ const FONT_SIZES = ['10px', '11px', '12px', '13px', '14px', '16px', '18px', '21p
  */
 @Component({
   selector: 'app-rich-text-editor',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="rte" [class.rte-focused]="focused()">
       <div class="rte-toolbar" (mousedown)="$event.preventDefault()">
@@ -80,6 +79,7 @@ const FONT_SIZES = ['10px', '11px', '12px', '13px', '14px', '16px', '18px', '21p
       <div #editorHost class="rte-content" [attr.data-placeholder]="placeholder"></div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .rte { border:1px solid var(--jb-border); border-radius:6px; background:var(--jb-surface-2); overflow:hidden; }
     .rte-focused { border-color:var(--jb-accent); box-shadow:0 0 0 2px var(--jb-accent-soft); }

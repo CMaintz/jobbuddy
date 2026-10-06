@@ -1,5 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { StructuredDocumentTemplatesApiService } from '../../../core/api/structured-document-templates.api';
 import {
   DocumentTemplateOption,
@@ -11,8 +10,8 @@ import { StructuredDocumentRendererComponent } from '../../../shared/components/
 
 @Component({
   selector: 'app-pdf-templates',
-  standalone: true,
-  imports: [CommonModule, StructuredDocumentRendererComponent],
+  imports: [StructuredDocumentRendererComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './pdf-templates.component.html'
 })
 export class PdfTemplatesComponent implements OnInit {

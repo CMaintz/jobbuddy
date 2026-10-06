@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -14,9 +13,9 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
  */
 @Component({
   selector: 'app-application-pack',
-  standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent, JbToastComponent],
+  imports: [RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent, JbToastComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-pack.component.html'
 })
 export class ApplicationPackComponent implements OnInit {

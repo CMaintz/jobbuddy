@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EmptyStateComponent } from '../../../shared/components/ui/empty-state.component';
 import { FormActionsComponent } from '../../../shared/components/ui/form-actions.component';
@@ -10,8 +9,8 @@ import type { ProfileComponent } from './profile.component';
 
 @Component({
   selector: 'app-profile-languages-tab',
-  standalone: true,
-  imports: [CommonModule, FormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
+  imports: [FormsModule, EmptyStateComponent, FormActionsComponent, ConfirmDeleteButtonComponent, InlineFormPanelComponent, SectionHeaderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile-languages-tab.component.html'
 })
 export class SpokenLanguagesTabComponent {

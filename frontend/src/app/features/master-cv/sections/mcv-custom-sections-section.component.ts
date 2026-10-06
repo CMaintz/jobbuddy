@@ -1,13 +1,12 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { CustomSection } from '../../../core/models/profile-section.model';
 
 @Component({
   selector: 'app-mcv-custom-sections-section',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-3">
       <div class="text-xs text-jb-text-dim">{{ 'masterCv.form.customHint' | translate }}</div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApplicationsApiService } from '../../../../core/api/applications.api';
@@ -16,8 +16,8 @@ const COLUMNS: { status: ApplicationStatus; label: string; color: string }[] = [
 
 @Component({
   selector: 'app-application-pipeline',
-  standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-pipeline.component.html'
 })
 export class ApplicationPipelineComponent implements OnInit {

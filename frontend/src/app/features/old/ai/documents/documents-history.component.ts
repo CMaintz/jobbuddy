@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AiApiService } from '../../../../core/api/ai.api';
 import { GeneratedDocument } from '../../../../core/models/generated-document.model';
@@ -8,8 +8,8 @@ import { copyText } from '../../../../shared/utils/file-download';
 
 @Component({
   selector: 'app-documents-history',
-  standalone: true,
   imports: [CommonModule, EmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './documents-history.component.html'
 })
 export class DocumentsHistoryComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, ViewChild, inject, signal, OnInit, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,11 +23,11 @@ import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_T
 
 @Component({
   selector: 'app-application-output',
-  standalone: true,
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbDropdownComponent, DiffViewerComponent, LetterPaperComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {

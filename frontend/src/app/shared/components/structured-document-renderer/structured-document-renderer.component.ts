@@ -1,15 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { StructuredDocument } from '../../../core/models/structured-document.model';
 import { DocumentHeaderComponent } from './document-header.component';
 import { DocumentSectionComponent } from './document-section.component';
 
 @Component({
   selector: 'app-structured-document-renderer',
-  standalone: true,
   imports: [CommonModule, DocumentHeaderComponent, DocumentSectionComponent],
   encapsulation: ViewEncapsulation.None,
   styleUrls: ['./structured-document-renderer.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './structured-document-renderer.component.html'
 })
 export class StructuredDocumentRendererComponent {

@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'jb-company-mark',
-  standalone: true,
   templateUrl: './company-mark.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./company-mark.component.css']
 })
 export class CompanyMarkComponent {

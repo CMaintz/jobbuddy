@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -33,8 +32,8 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbToastComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbToastComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tailored-cv.component.html',
 })
 export class TailoredCvComponent implements OnInit {
