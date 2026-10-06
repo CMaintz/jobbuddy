@@ -1,4 +1,4 @@
-# Foundry verb interface — AutoApplicant monorepo. See github.com/CMaintz/foundry.
+# Foundry verb interface - jobbuddy monorepo. See github.com/CMaintz/foundry.
 #
 # One root config pins both toolchains and exposes the six verbs per package
 # (backend:*, frontend:*) plus aggregates. CI path-filters call the per-package
@@ -69,8 +69,13 @@ description = "Auto-format changed Java (Spotless)"
 run = "./gradlew :backend:spotlessApply"
 
 [tasks."backend:lint"]
-description = "Format check (ratcheted to origin/main — only changed files)"
-run = "./gradlew :backend:spotlessCheck"
+description = "Format check (ratcheted to origin/main, only changed files) + structural smells"
+run = ["./gradlew :backend:spotlessCheck", "mise run backend:smells"]
+
+[tasks."backend:smells"]
+description = "Structural smells on changed backend files (backend/mise.toml `smells`)"
+dir = "backend"
+run = "mise run smells"
 
 [tasks."backend:typecheck"]
 description = "Compilation is Java's type check"
@@ -117,7 +122,7 @@ run = "npm run lint -- --fix"
 
 [tasks."frontend:lint"]
 dir = "frontend"
-run = "npm run lint"
+run = ["npm run lint", "mise run smells"]
 
 [tasks."frontend:typecheck"]
 description = "ng build — the full template + type compile (build folded into typecheck)"
