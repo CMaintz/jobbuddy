@@ -44,8 +44,11 @@ public class TailoredCvGenerator {
                                       String customInstructions, String targetLanguage,
                                       PromptTemplate styleTemplate, CvTailoringGuidance guidance,
                                       List<String> outcomeLessons, String lengthPreference) {
+        // Links identify the user, so the model works on a link-free copy; even the fallback below
+        // stays link-free because the reviewer pass sends it on to the AI too.
+        CareerProfileForAi payload = source.withoutLinks();
         try {
-            String sourceJson = objectMapper.writeValueAsString(source);
+            String sourceJson = objectMapper.writeValueAsString(payload);
             String json = AiResponseParser.extractJsonObject(
                     AiResponseParser.sanitize(aiProvider.generateJson(
                             promptBuilder.composeCvTailoringPrompt(
@@ -56,13 +59,13 @@ public class TailoredCvGenerator {
             return objectMapper.readValue(json, TailoredCvContent.class);
         } catch (Exception e) {
             return new TailoredCvContent(
-                    source.profile(),
-                    merge(source.skills(), source.technologies()),
-                    source.experience(),
-                    source.projects(),
-                    source.education(),
-                    source.certifications(),
-                    source.customSections(),
+                    payload.profile(),
+                    merge(payload.skills(), payload.technologies()),
+                    payload.experience(),
+                    payload.projects(),
+                    payload.education(),
+                    payload.certifications(),
+                    payload.customSections(),
                     List.of("AI tailoring failed — master profile used without rewriting."));
         }
     }

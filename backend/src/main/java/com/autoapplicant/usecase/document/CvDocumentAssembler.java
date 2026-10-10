@@ -229,7 +229,9 @@ public class CvDocumentAssembler {
                 firstPresent(item.description(), source.description()),
                 !Values.listOrEmpty(item.bullets()).isEmpty() ? item.bullets() : source.bullets(),
                 validateSubset(item.technologies(), source.technologies()),
-                !Values.listOrEmpty(item.links()).isEmpty() ? item.links() : source.links(),
+                // The AI never sees links (see CareerProfileForAi#withoutLinks), so any it
+                // returns are invented; the user's own links are re-attached from source.
+                Values.listOrEmpty(source.links()),
                 Values.listOrEmpty(source.skills()),
                 firstPresent(item.category(), source.category()));
     }
