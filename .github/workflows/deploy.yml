@@ -1,8 +1,7 @@
-# Image publishing — its own workflow, push-to-main only, so it never appears as
-# a (skipped) check on PRs. It does not `needs:` the gate jobs — it can't, they
-# live in gate.yml and `needs:` can't cross workflows — but it doesn't have to:
-# branch protection requires the full gate green before anything merges to main,
-# so a push to main is always building already-verified code.
+# Image publishing, in its own workflow and push-to-main only, so it never shows up as
+# a skipped check on PRs. It can't `needs:` the gate jobs (they live in gate.yml), and
+# doesn't have to: branch protection requires the gate green on an up-to-date branch
+# before anything merges, so a push to main builds code the gate already verified.
 name: deploy
 
 on:

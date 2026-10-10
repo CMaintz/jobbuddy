@@ -3,8 +3,9 @@
 # deploy.yml, bootstrap.yml.
 name: gate
 
-# PR-only: main is protected and merges are rebased, so the merged commit is the code
-# the PR already gated. workflow_dispatch is the manual full run after a risky merge.
+# PR-only: branch protection requires this gate green on a branch that is up to date
+# with main, so the merge commit is the code the PR already gated. workflow_dispatch is
+# the manual full run after a risky merge.
 on:
   pull_request:
   workflow_dispatch:

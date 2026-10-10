@@ -61,51 +61,49 @@ npm ci --no-audit --no-fund
 """
 
 # ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
-# Smells (oversized-file/function, etc.) come from habit-hooks' Java/PMD plugin,
-# not from Gradle — so `lint` here is just formatting (Spotless, ratcheted).
+# backend/mise.toml is the single source of truth (it's what CI's facade runs), so these
+# root tasks just delegate to it. Mirroring the bodies here let them drift (lint lost
+# no-var, gate lost audit), which made a local `mise run gate` weaker than CI.
 
 [tasks."backend:fix"]
 description = "Auto-format changed Java (Spotless)"
-run = "./gradlew :backend:spotlessApply"
+dir = "backend"
+run = "mise run fix"
 
 [tasks."backend:lint"]
-description = "Format check (ratcheted to origin/main, only changed files) + structural smells"
-run = ["./gradlew :backend:spotlessCheck", "mise run backend:smells"]
-
-[tasks."backend:smells"]
-description = "Structural smells on changed backend files (backend/mise.toml `smells`)"
+description = "Spotless + no-`var` + structural smells on changed files"
 dir = "backend"
-run = "mise run smells"
+run = "mise run lint"
 
 [tasks."backend:typecheck"]
 description = "Compilation is Java's type check"
-run = "./gradlew :backend:compileJava"
+dir = "backend"
+run = "mise run typecheck"
 
 [tasks."backend:test"]
 description = "Backend test suite (offline by design)"
-run = "./gradlew :backend:test"
+dir = "backend"
+run = "mise run test"
 
 [tasks."backend:audit"]
-description = "Dependency CVEs (generates lockfile, then osv-scanner; needs osv-scanner on PATH)"
-run = [
-    "./gradlew :backend:dependencies --write-locks",
-    "osv-scanner --lockfile=backend/gradle.lockfile",
-]
+description = "Dependency CVEs via osv-scanner (needs osv-scanner on PATH)"
+dir = "backend"
+run = "mise run audit"
 
 [tasks."backend:novar"]
-description = "Report all `var` uses in backend main. CI enforces this diff-scoped."
-depends = ["setup:pmd"]
-run = "pmd check -d backend/src/main/java -R backend/config/pmd/no-var.xml -f text --suppress-marker foundry-allow-var"
+description = "no-`var` on changed backend Java"
+dir = "backend"
+run = "mise run novar"
 
 [tasks."backend:spotbugs"]
-# The task prints findings; CI makes it BLOCKING — the foundry facade's spotbugs job
-# (backend/mise.toml `spotbugs`) fails on any finding not in config/spotbugs/exclude.xml
-# (the ratchet baseline). Not in backend:gate (kept off the oracle), but it IS enforced.
 description = "SpotBugs bug-pattern analysis (blocking in CI, ratcheted via exclude.xml)"
-run = "./gradlew :backend:spotbugsMain"
+dir = "backend"
+run = "mise run spotbugs"
 
 [tasks."backend:gate"]
-run = ["mise run backend:lint", "mise run backend:typecheck", "mise run backend:test"]
+description = "The backend oracle: lint, typecheck, test, audit"
+dir = "backend"
+run = "mise run gate"
 
 # ---- frontend (Angular, npm) -----------------------------------------------
 # frontend/mise.toml is the authoritative copy — it's what the foundry gate.yml@v2
