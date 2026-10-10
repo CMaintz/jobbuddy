@@ -1,17 +1,15 @@
 package com.autoapplicant.adapter.persistence.repository;
 
 import com.autoapplicant.adapter.persistence.entity.JobEntity;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 
 public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     Optional<JobEntity> findBySourceAndSourceJobId(String source, String sourceJobId);
@@ -47,8 +45,19 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j.enrichmentStatus, count(j) FROM JobEntity j GROUP BY j.enrichmentStatus")
     List<Object[]> countByEnrichmentStatus();
 
-    @Query("SELECT j FROM JobEntity j WHERE j.isActive = true AND j.id NOT IN :excludedIds ORDER BY j.postedAt DESC")
-    List<JobEntity> findAllExcluding(@Param("excludedIds") Set<UUID> excludedIds, Pageable pageable);
+    /**
+     * Active postings the user has not ignored. A correlated NOT EXISTS rather than binding the
+     * user's ignored ids into NOT IN, so the query does not grow with how much they have ignored.
+     * The page query and the count share it, so the total always matches what the pages hold.
+     */
+    String ACTIVE_NOT_IGNORED = " FROM JobEntity j WHERE j.isActive = true AND NOT EXISTS ("
+            + "SELECT 1 FROM IgnoredJobEntity i WHERE i.userId = :userId AND i.jobId = j.id)";
+
+    @Query("SELECT j" + ACTIVE_NOT_IGNORED + " ORDER BY j.postedAt DESC")
+    List<JobEntity> findActiveNotIgnoredBy(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query("SELECT count(j)" + ACTIVE_NOT_IGNORED)
+    long countActiveNotIgnoredBy(@Param("userId") UUID userId);
 
     long countByIsActiveTrue();
 

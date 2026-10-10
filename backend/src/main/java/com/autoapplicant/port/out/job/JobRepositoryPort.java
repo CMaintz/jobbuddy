@@ -2,10 +2,8 @@ package com.autoapplicant.port.out.job;
 
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
-
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 public interface JobRepositoryPort {
@@ -15,7 +13,8 @@ public interface JobRepositoryPort {
     List<Job> findAll(int page, int size);
     /** Active (not expired/taken-down) jobs only — the user-facing feed. */
     List<Job> findActive(int page, int size);
-    List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size);
+    /** The feed for one user: active jobs minus the ones they have ignored. */
+    List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size);
     Optional<Job> findBySourceAndSourceJobId(JobSource source, String sourceJobId);
     boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
@@ -58,6 +57,8 @@ public interface JobRepositoryPort {
     int deactivateStaleJobs(java.time.Instant cutoff);
     long count();
     long countActive();
+    /** How many jobs {@link #findActiveNotIgnoredBy} pages over in total. */
+    long countActiveNotIgnoredBy(UUID userId);
 
     /**
      * How often each skill label appears across every posting we hold, most-named first.
