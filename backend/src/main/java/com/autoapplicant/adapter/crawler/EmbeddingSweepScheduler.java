@@ -1,17 +1,15 @@
 package com.autoapplicant.adapter.crawler;
 
 import com.autoapplicant.port.in.job.EmbedJobsUseCase;
-import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
+import java.time.Duration;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.time.Duration;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Keeps the embedding queue draining, on the same single thread as the enrichment worker.
@@ -26,7 +24,7 @@ public class EmbeddingSweepScheduler {
     private static final Logger log = LoggerFactory.getLogger(EmbeddingSweepScheduler.class);
 
     private final EmbedJobsUseCase embedJobs;
-    private final CrawlerStateRepositoryPort crawlerStateRepo;
+    private final ActiveCrawls activeCrawls;
     private final Executor executor;
     private final boolean enabled;
     private final int batchSize;
@@ -34,13 +32,13 @@ public class EmbeddingSweepScheduler {
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public EmbeddingSweepScheduler(EmbedJobsUseCase embedJobs,
-                                   CrawlerStateRepositoryPort crawlerStateRepo,
+                                   ActiveCrawls activeCrawls,
                                    @Qualifier("enrichmentWorkerExecutor") Executor executor,
                                    @Value("${app.embedding.sweep.enabled:true}") boolean enabled,
                                    @Value("${app.embedding.sweep.batch-size:200}") int batchSize,
                                    @Value("${app.embedding.sweep.budget:PT10M}") Duration budget) {
         this.embedJobs = embedJobs;
-        this.crawlerStateRepo = crawlerStateRepo;
+        this.activeCrawls = activeCrawls;
         this.executor = executor;
         this.enabled = enabled;
         this.batchSize = batchSize;
@@ -51,7 +49,7 @@ public class EmbeddingSweepScheduler {
                initialDelayString = "${app.embedding.sweep.initial-delay-ms:120000}")
     public void scheduledSweep() {
         if (!enabled) return;
-        if (crawlerStateRepo.findAll().stream().anyMatch(s -> s.isRunning())) return;
+        if (activeCrawls.anyRunning()) return;
         if (!running.compareAndSet(false, true)) return;
         executor.execute(() -> {
             try {
