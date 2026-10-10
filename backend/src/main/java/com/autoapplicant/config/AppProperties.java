@@ -61,8 +61,12 @@ public class AppProperties {
      * Embeddings are never produced here — keep a real API provider for enrichment.
      */
     public static class Cli {
-        /** Command + fixed args; the prompt is piped to stdin. e.g. "claude -p" or "codex exec". */
-        private String command = "claude -p";
+        /**
+         * Command + fixed args; the prompt is piped to stdin. The default disables Claude Code's
+         * tools and MCP servers because prompts carry untrusted posting text. Another CLI (e.g.
+         * "codex exec") must be configured with its own no-tools flag by the operator.
+         */
+        private String command = "claude -p --tools= --strict-mcp-config";
         private int timeoutSeconds = 120;
         /** Label reported as the model name for provenance in saved documents. */
         private String modelLabel = "cli-agent";

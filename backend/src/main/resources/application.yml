@@ -45,7 +45,10 @@ app:
     enrichment-tier: ${ENRICHMENT_AI_TIER:economy}
     generation-tier: ${GENERATION_AI_TIER:standard}
     cli:
-      command: ${AI_CLI_COMMAND:claude -p}   # e.g. "claude -p" or "codex exec"; prompt piped to stdin
+      # Prompt is piped to stdin and carries crawled posting text, so the agent must run with no
+      # tools: "--tools=" disables Claude Code's built-in tools, "--strict-mcp-config" drops MCP
+      # servers. Any other CLI (codex, generic cli) MUST be given its own no-tools flag here.
+      command: ${AI_CLI_COMMAND:claude -p --tools= --strict-mcp-config}
       timeout-seconds: 120
       model-label: ${AI_CLI_MODEL_LABEL:cli-agent}
     auto-review:

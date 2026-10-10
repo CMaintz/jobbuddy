@@ -97,7 +97,7 @@ Optional: `DB_*`, `LINKEDIN_CLIENT_ID`/`SECRET`, `ALLOWED_ORIGINS` (all have loc
 AI provider and feature toggles (optional, with defaults):
 
 - `GENERATION_AI_PROVIDER`: `openai` (default), `gemini`, or `claude-cli` / `codex` / `cli` for a local agent. `ENRICHMENT_AI_PROVIDER` has to stay a real API because it produces embeddings.
-- `AI_CLI_COMMAND`: the CLI used for generation with a local agent (default `claude -p`, prompt piped to stdin).
+- `AI_CLI_COMMAND`: the CLI used for generation with a local agent (default `claude -p --tools= --strict-mcp-config`, prompt piped to stdin; the agent runs tool-less in an empty temp dir with backend secrets stripped from its env, so an override must add its own no-tools flag).
 - `AUTO_REVIEW_ENABLED`: the reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
 - `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE`: the fact gate on generated metrics (`warn` by default, or `block`).
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS`: the LinkedIn connector (see `app.linkedin.*` in `application.yml`).

@@ -6,9 +6,9 @@ import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
  * ({@code app.ai.enrichment-provider}) must stay a real API (OpenAI/Gemini). Because each
  * call spawns a process (seconds of latency), this is meant for on-demand generation, not
  * high-throughput bulk enrichment.
+ *
+ * <p>Prompts carry crawled job-posting text, so the agent is treated as untrusted: see
+ * {@link CliAgentProcessFactory} for the sandbox (no tools, empty cwd, scrubbed env).
  */
 public class CliAgentAdapter implements ChatProviderPort {
 
@@ -46,11 +49,11 @@ public class CliAgentAdapter implements ChatProviderPort {
 
     private String run(PromptComposition composition, boolean jsonObject) {
         AppProperties.Cli cfg = props.getAi().getCli();
-        List<String> command = Arrays.stream(cfg.getCommand().trim().split("\\s+")).toList();
         String prompt = buildPrompt(composition, jsonObject);
-
+        Path workDir = null;
         try {
-            ProcessBuilder pb = new ProcessBuilder(command);
+            workDir = CliAgentProcessFactory.createWorkDir();
+            ProcessBuilder pb = CliAgentProcessFactory.create(cfg.getCommand(), workDir);
             Process proc = pb.start();
 
             // Drain stdin/stderr on separate threads so a full pipe buffer can never deadlock
@@ -99,6 +102,19 @@ public class CliAgentAdapter implements ChatProviderPort {
         } catch (IOException e) {
             throw new IllegalStateException("Could not launch CLI agent '" + cfg.getCommand()
                     + "' — is it installed and on PATH?", e);
+        } finally {
+            removeWorkDir(workDir);
+        }
+    }
+
+    private static void removeWorkDir(Path workDir) {
+        if (workDir == null) {
+            return;
+        }
+        try {
+            CliAgentProcessFactory.deleteWorkDir(workDir);
+        } catch (UncheckedIOException e) {
+            log.warn("Could not delete CLI agent work dir {}: {}", workDir, e.getMessage());
         }
     }
 

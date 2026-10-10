@@ -306,7 +306,10 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `GENERATION_AI_PROVIDER` — `openai` (default) | `gemini` | `claude-cli` | `codex` | `cli`. The
   `*-cli`/`codex` values pipe prompts to a local agent CLI (flat-fee subscription) instead of an API.
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
-- `AI_CLI_COMMAND` — CLI invoked for local-agent generation (default `claude -p`; prompt on stdin).
+- `AI_CLI_COMMAND` - CLI invoked for local-agent generation (default
+  `claude -p --tools= --strict-mcp-config`; prompt on stdin). Prompts carry crawled posting text,
+  so the agent runs tool-less in an empty temp dir with backend secrets stripped from its env; an
+  override (e.g. `codex exec`) must add that CLI's own no-tools flag.
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
 - `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
   restructuring a free-text answer). Off = template questions and the user's raw text; the feature
