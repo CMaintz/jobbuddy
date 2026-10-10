@@ -2,20 +2,18 @@ package com.autoapplicant.adapter.crawler;
 
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
-import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.job.EnrichmentSweepService;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Keeps the enrichment queue draining.
@@ -41,7 +39,7 @@ public class EnrichmentSweepScheduler {
 
     private final EnrichmentSweepService sweep;
     private final JobRepositoryPort jobRepo;
-    private final CrawlerStateRepositoryPort crawlerStateRepo;
+    private final ActiveCrawls activeCrawls;
     private final Executor executor;
     private final boolean enabled;
     private final int batchSize;
@@ -52,14 +50,14 @@ public class EnrichmentSweepScheduler {
 
     public EnrichmentSweepScheduler(SweepUnenrichedJobsUseCase sweep,
                                     JobRepositoryPort jobRepo,
-                                    CrawlerStateRepositoryPort crawlerStateRepo,
+                                    ActiveCrawls activeCrawls,
                                     @Qualifier("enrichmentWorkerExecutor") Executor executor,
                                     @Value("${app.enrichment.sweep.enabled:true}") boolean enabled,
                                     @Value("${app.enrichment.sweep.batch-size:200}") int batchSize,
                                     @Value("${app.enrichment.sweep.budget:PT20M}") Duration budget) {
         this.sweep = (EnrichmentSweepService) sweep;
         this.jobRepo = jobRepo;
-        this.crawlerStateRepo = crawlerStateRepo;
+        this.activeCrawls = activeCrawls;
         this.executor = executor;
         this.enabled = enabled;
         this.batchSize = batchSize;
@@ -70,8 +68,8 @@ public class EnrichmentSweepScheduler {
                initialDelayString = "${app.enrichment.sweep.initial-delay-ms:60000}")
     public void scheduledSweep() {
         if (!enabled) return;
-        if (crawlIsRunning()) {
-            log.debug("Enrichment: a crawl is in progress — standing down until it finishes");
+        if (activeCrawls.anyRunning()) {
+            log.debug("Enrichment: a crawl is in progress - standing down until it finishes");
             return;
         }
         if (!running.compareAndSet(false, true)) {
@@ -97,10 +95,5 @@ public class EnrichmentSweepScheduler {
         log.info("Enrichment batch done: {} attempted, {} enriched, {} failed, {} given up on. "
                  + "Backlog now {}",
                 result.total(), result.succeeded(), result.failed(), result.gaveUp(), backlog);
-    }
-
-    /** True while any source is mid-crawl. */
-    private boolean crawlIsRunning() {
-        return crawlerStateRepo.findAll().stream().anyMatch(state -> state.isRunning());
     }
 }

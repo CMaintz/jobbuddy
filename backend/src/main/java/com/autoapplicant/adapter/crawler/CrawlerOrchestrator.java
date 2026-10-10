@@ -7,16 +7,17 @@ import com.autoapplicant.port.out.crawler.CrawlOrchestrationPort;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.crawler.JobSourceConnectorPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class CrawlerOrchestrator implements CrawlOrchestrationPort {
@@ -38,6 +39,14 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
     private final JobRepositoryPort jobRepository;
     private final CrawlerStateRepositoryPort crawlerStateRepo;
     private final Executor crawlerTaskExecutor;
+
+    /**
+     * Sources with a crawl in progress in this JVM. Two crawls of one source race each other's
+     * duplicate check against the insert, so the second is skipped. Held in memory rather than
+     * read from the persisted running flag: the CLI runner crawls before the startup clear of
+     * leftover flags runs, and this is a single-instance deployment, so memory is the whole truth.
+     */
+    private final Set<String> inFlight = ConcurrentHashMap.newKeySet();
 
     public CrawlerOrchestrator(List<JobSourceConnectorPort> connectors,
                                 IngestionPipeline ingestionPipeline,
@@ -63,10 +72,10 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
 
     @Scheduled(cron = "${app.crawler.cron:0 0 */4 * * *}")
     public void runAllCrawlers() {
-        var scheduled = scheduledConnectors();
+        List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting scheduled crawl for {} sources", scheduled.size());
         reportConnectorHealth();
-        var runs = scheduled.stream()
+        CompletableFuture<?>[] runs = scheduled.stream()
                 .map(connector -> CompletableFuture.runAsync(() -> runConnector(connector), crawlerTaskExecutor))
                 .toArray(CompletableFuture[]::new);
         // One line saying the whole run is over. Without it a finished crawl and a hung one
@@ -75,7 +84,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
             if (error != null) {
                 log.error("Crawl run finished with errors: {}", error.getMessage(), error);
             } else {
-                log.info("Crawl run complete — all {} sources finished", runs.length);
+                log.info("Crawl run complete - all {} sources finished", runs.length);
             }
             reportConnectorHealth();
         });
@@ -90,7 +99,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
      * printed as a table rather than left for someone to notice.
      */
     public void reportConnectorHealth() {
-        var states = crawlerStateRepo.findAll();
+        List<CrawlerState> states = crawlerStateRepo.findAll();
         if (states.isEmpty()) return;
         StringBuilder table = new StringBuilder("Connector health:\n");
         states.stream()
@@ -123,6 +132,19 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
 
     private void runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
         String sourceName = connector.getSource().name();
+        if (!inFlight.add(sourceName)) {
+            log.warn("Skipping crawl of {}: a crawl of that source is already running", sourceName);
+            return;
+        }
+        try {
+            crawl(connector, force);
+        } finally {
+            inFlight.remove(sourceName);
+        }
+    }
+
+    private void crawl(JobSourceConnectorPort connector, boolean force) {
+        String sourceName = connector.getSource().name();
         // Four numbers, because one was hiding three different things. A connector that
         // re-emits everything (Greenhouse) and one that skips what it recognises (Teamtailor)
         // used to report the same field, so their totals meant different things and could not
@@ -139,6 +161,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
         crawlerStateRepo.save(new CrawlerState(
                 sourceName, 0, startedAt, null, 0, 0, null, true, Instant.now()));
 
+        String error = null;
         try {
             log.info("Crawling source: {} (force={})", connector.getSource(), force);
             CrawlConfig config = new CrawlConfig(
@@ -149,7 +172,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     guid -> jobRepository.existsBySourceAndSourceJobId(connector.getSource(), guid),
                     raw -> {
                         emitted.incrementAndGet();
-                        var result = ingestionPipeline.ingest(raw);
+                        IngestionPipeline.IngestResult result = ingestionPipeline.ingest(raw);
                         switch (result.outcome()) {
                             case NEW -> ingestedNew.incrementAndGet();
                             case REFRESHED -> refreshed.incrementAndGet();
@@ -172,20 +195,21 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                      + "{} already known (skipped by connector), {} failed, {} cross-listings",
                     connector.getSource(), seen, ingestedNew.get(), refreshed.get(),
                     knownSkipped.get(), failed.get(), crossListed.get());
-
-            // Mark crawl as finished successfully. jobsFound is everything the source showed us;
-            // jobsIngested is what was actually new. They were the same number before, which made
-            // a re-crawl of unchanged postings look like a fresh haul.
-            crawlerStateRepo.save(new CrawlerState(
-                    sourceName, 0, startedAt, Instant.now(),
-                    seen, ingestedNew.get(), null, false, Instant.now()));
-
         } catch (Exception e) {
             log.error("Crawl failed for {}: {}", connector.getSource(), e.getMessage(), e);
+            error = e.getMessage();
+        } catch (Error e) {
+            error = e.toString();
+            throw e;
+        } finally {
+            // Mark the crawl finished, whatever happened, so the running flag never outlives it.
+            // jobsFound is everything the source showed us; jobsIngested is what was actually
+            // new. They were the same number before, which made a re-crawl of unchanged
+            // postings look like a fresh haul.
             crawlerStateRepo.save(new CrawlerState(
                     sourceName, 0, startedAt, Instant.now(),
                     emitted.get() + knownSkipped.get(), ingestedNew.get(),
-                    e.getMessage(), false, Instant.now()));
+                    error, false, Instant.now()));
         }
     }
 
@@ -206,7 +230,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
     }
 
     public void runAllForce() {
-        var scheduled = scheduledConnectors();
+        List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting force crawl for {} sources", scheduled.size());
         scheduled.forEach(connector ->
                 CompletableFuture.runAsync(() -> runConnectorForce(connector), crawlerTaskExecutor));
@@ -214,7 +238,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
 
     /** Synchronous variants used by the CLI runner — blocks until all connectors finish. */
     public void runAllSync() {
-        var scheduled = scheduledConnectors();
+        List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting synchronous crawl for {} sources", scheduled.size());
         scheduled.forEach(this::runConnector);
         log.info("All sources finished.");
@@ -230,7 +254,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
     }
 
     public void runAllSyncForce() {
-        var scheduled = scheduledConnectors();
+        List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting synchronous force crawl for {} sources", scheduled.size());
         scheduled.forEach(this::runConnectorForce);
         log.info("All sources finished (force mode).");
