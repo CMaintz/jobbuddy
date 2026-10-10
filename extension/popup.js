@@ -1,13 +1,33 @@
-const DEFAULT_APP_URL = 'http://localhost:4200';
-
+// DEFAULT_APP_URL, APP_URL_KEY and the origin helpers come from app-origin.js.
 const statusEl = document.getElementById('status');
 const appUrlInput = document.getElementById('app-url');
 
-chrome.storage.sync.get('appUrl', ({ appUrl }) => {
-  appUrlInput.value = appUrl || DEFAULT_APP_URL;
+chrome.storage.sync.get(APP_URL_KEY, (settings) => {
+  appUrlInput.value = settings[APP_URL_KEY] || DEFAULT_APP_URL;
 });
-appUrlInput.addEventListener('change', () => {
-  chrome.storage.sync.set({ appUrl: appUrlInput.value.trim().replace(/\/$/, '') || DEFAULT_APP_URL });
+
+document.getElementById('save-url').addEventListener('click', () => {
+  const appUrl = normalizeAppUrl(appUrlInput.value);
+  if (!appUrl) {
+    statusEl.textContent = 'Enter an http(s) URL, e.g. https://jobbuddy.example.com';
+    return;
+  }
+  appUrlInput.value = appUrl;
+  // Not awaited: the permission request must run inside this click's user gesture, and the
+  // popup may close while its dialog is open. The background worker registers the bridge.
+  chrome.storage.sync.set({ [APP_URL_KEY]: appUrl });
+  const origin = appOriginOf(appUrl);
+  if (isBuiltInOrigin(origin)) {
+    statusEl.textContent = 'Saved.';
+    return;
+  }
+  chrome.permissions.request({ origins: [originPattern(origin)] }).then((granted) => {
+    statusEl.textContent = granted
+      ? 'Saved. Captures will open in ' + origin + '.'
+      : 'Saved, but without access to ' + origin + ' captures cannot reach the app.';
+  }).catch(() => {
+    statusEl.textContent = 'Saved, but access to ' + origin + ' could not be requested.';
+  });
 });
 
 document.getElementById('capture').addEventListener('click', async () => {
@@ -26,7 +46,9 @@ document.getElementById('capture').addEventListener('click', async () => {
     await chrome.storage.local.set({
       pendingCapture: { ...data, url: tab.url, savedAt: Date.now() },
     });
-    const appUrl = appUrlInput.value.trim().replace(/\/$/, '') || DEFAULT_APP_URL;
+    // Open the saved app URL: the bridge only hands the capture to that origin.
+    const settings = await chrome.storage.sync.get(APP_URL_KEY);
+    const appUrl = normalizeAppUrl(settings[APP_URL_KEY]) || DEFAULT_APP_URL;
     await chrome.tabs.create({ url: appUrl + '/apply' });
     window.close();
   } catch (e) {
