@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "description": "Capture the job posting you're looking at and send it to Jobbuddy — ready to generate a tailored CV and application.",
   "permissions": ["activeTab", "scripting", "storage"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Capture this job in Jobbuddy"
@@ -11,7 +15,7 @@
   "content_scripts": [
     {
       "matches": ["http://localhost:4200/*", "http://localhost/*"],
-      "js": ["capture-bridge.js"],
+      "js": ["app-origin.js", "capture-bridge.js"],
       "run_at": "document_start"
     }
   ]

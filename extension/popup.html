@@ -7,6 +7,7 @@
     h1 { font-size: 14px; margin: 0 0 8px; }
     p { margin: 0 0 10px; color: #9aa0ae; }
     button { width: 100%; padding: 8px 10px; border: none; border-radius: 6px; background: #f5a623; color: #1a1c22; font-weight: 600; cursor: pointer; font-size: 13px; }
+    button.secondary { margin-top: 6px; background: #2c2f37; color: #e7e9ee; }
     button:disabled { opacity: 0.6; cursor: default; }
     #status { margin-top: 8px; font-size: 12px; color: #9aa0ae; min-height: 16px; }
     label { display: block; margin-top: 12px; font-size: 11px; color: #9aa0ae; }
@@ -21,6 +22,8 @@
   <label>Jobbuddy URL
     <input id="app-url" type="text" placeholder="http://localhost:4200" />
   </label>
+  <button id="save-url" class="secondary">Save URL</button>
+  <script src="app-origin.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
