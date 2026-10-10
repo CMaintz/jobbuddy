@@ -1,23 +1,23 @@
 package com.autoapplicant.adapter.pdf;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
+import com.openhtmltopdf.outputdevice.helper.ExternalResourceControlPriority;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 public class PdfRenderingService {
@@ -28,6 +28,8 @@ public class PdfRenderingService {
     @Value("${app.pdf.page-budget.strict:false}")
     private boolean pageBudgetStrict;
 
+    private final PdfResourcePolicy resourcePolicy = new PdfResourcePolicy();
+
     public byte[] render(String htmlTemplate, String cssStyles, Map<String, String> placeholders) {
         String html = htmlTemplate.replace("{{CSS}}", cssStyles != null ? cssStyles : "");
 
@@ -37,11 +39,7 @@ public class PdfRenderingService {
 
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withHtmlContent(html, null);
-            builder.toStream(baos);
-            builder.run();
+            newBuilder(html).toStream(baos).run();
             return baos.toByteArray();
         } catch (Exception ex) {
             throw new RuntimeException("PDF rendering failed", ex);
@@ -52,17 +50,23 @@ public class PdfRenderingService {
         String html = structuredHtml(document);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withHtmlContent(html, null);
-            builder.toStream(baos);
-            builder.run();
+            newBuilder(html).toStream(baos).run();
             byte[] pdf = baos.toByteArray();
             enforcePageBudget(pdf, document);
             return pdf;
         } catch (Exception ex) {
             throw new RuntimeException("Structured PDF rendering failed", ex);
         }
+    }
+
+    /** A renderer that can only load data: URIs and the app's own uploads (SSRF guard). */
+    private PdfRendererBuilder newBuilder(String html) {
+        return new PdfRendererBuilder()
+                .useFastMode()
+                .useUriResolver(resourcePolicy)
+                .useExternalResourceAccessControl(
+                        resourcePolicy, ExternalResourceControlPriority.RUN_AFTER_RESOLVING_URI)
+                .withHtmlContent(html, null);
     }
 
     /**
@@ -231,12 +235,13 @@ public class PdfRenderingService {
         return escape(initials.toString());
     }
 
-    private String escape(String value) {
+    String escape(String value) {
         if (value == null) return "";
         return normalizeAtsText(value)
                 .replaceAll("[\\u00A0\\u2009\\u202F]", " ")        // nbsp / thin / narrow -> space
                 .replaceAll("[\\u200B\\u200C\\u200D\\uFEFF]", "")  // zero-width chars -> removed
-                .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+                .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
     }
 
     /**
