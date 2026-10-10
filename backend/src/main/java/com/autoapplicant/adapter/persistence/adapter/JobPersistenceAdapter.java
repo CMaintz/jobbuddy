@@ -1,22 +1,21 @@
 package com.autoapplicant.adapter.persistence.adapter;
 
+import com.autoapplicant.adapter.persistence.entity.JobEntity;
 import com.autoapplicant.adapter.persistence.mapper.JobMapper;
 import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.EnumMap;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
 
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
@@ -36,12 +35,11 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public List<com.autoapplicant.domain.company.CompanyHiringSignal> findCompanyHiringSignals(
             java.time.Instant since) {
-        var postings = repo.findForCompanyAggregation(since,
+        List<JobEntity> postings = repo.findForCompanyAggregation(since,
                 org.springframework.data.domain.PageRequest.of(0, AGGREGATION_LIMIT));
 
-        java.util.Map<java.util.UUID, java.util.List<com.autoapplicant.adapter.persistence.entity.JobEntity>> byCompany =
-                new java.util.LinkedHashMap<>();
-        for (var job : postings) {
+        Map<UUID, List<JobEntity>> byCompany = new java.util.LinkedHashMap<>();
+        for (JobEntity job : postings) {
             byCompany.computeIfAbsent(job.getCompanyId(), k -> new java.util.ArrayList<>()).add(job);
         }
 
@@ -51,7 +49,7 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
             int active = 0;
             java.time.Instant lastPosted = null;
             String companyName = null;
-            for (var job : jobs) {
+            for (JobEntity job : jobs) {
                 if (job.getTechnologies() != null) {
                     for (String tech : job.getTechnologies()) {
                         if (tech != null && !tech.isBlank()) technologies.add(tech.strip());
@@ -85,7 +83,7 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
 
     @Override
     public Job save(Job job) {
-        var entity = JobMapper.toEntity(job);
+        JobEntity entity = JobMapper.toEntity(job);
         // URL-check state and the content fingerprint live only on the entity; carry them
         // over so crawl/enrichment re-saves don't reset them. The duplicate group is on the
         // domain but only the dedup pass sets it — preserve an existing group when the
@@ -133,11 +131,8 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findAllExcluding(Set<UUID> excludedIds, int page, int size) {
-        if (excludedIds == null || excludedIds.isEmpty()) {
-            return findActive(page, size);
-        }
-        return repo.findAllExcluding(excludedIds, PageRequest.of(page, size))
+    public List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size) {
+        return repo.findActiveNotIgnoredBy(userId, PageRequest.of(page, size))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -349,5 +344,10 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public long countActive() {
         return repo.countByIsActiveTrue();
+    }
+
+    @Override
+    public long countActiveNotIgnoredBy(UUID userId) {
+        return repo.countActiveNotIgnoredBy(userId);
     }
 }
