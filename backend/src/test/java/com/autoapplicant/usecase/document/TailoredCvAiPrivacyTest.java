@@ -32,7 +32,6 @@ import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
