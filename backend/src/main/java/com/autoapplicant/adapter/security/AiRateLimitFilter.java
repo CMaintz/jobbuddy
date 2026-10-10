@@ -4,24 +4,29 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Simple per-user token-bucket rate limiter for AI endpoints.
  * Resets every {@code windowSeconds} seconds (default 60).
  * Each user gets {@code maxRequests} AI calls per window (default 20).
+ * Which requests count is decided by {@link AiRateLimitedEndpoints}.
  */
 @Component
 public class AiRateLimitFilter extends OncePerRequestFilter {
+
+    private static final String RATE_LIMITED_BODY =
+            "{\"error\":\"RATE_LIMIT_EXCEEDED\",\"message\":\"Too many AI requests. Please wait before trying again.\"}";
 
     private final int maxRequests;
     private final long windowMillis;
@@ -37,7 +42,7 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith("/api/v1/ai/");
+        return !AiRateLimitedEndpoints.matches(request.getMethod(), request.getRequestURI());
     }
 
     @Override
@@ -45,12 +50,6 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-
-        // Only rate-limit mutating AI calls (POST), not GETs
-        if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof UUID userId)) {
@@ -68,10 +67,9 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
 
         int count = bucket.counter.incrementAndGet();
         if (count > maxRequests) {
-            response.setStatus(429);
-            response.setContentType("application/json");
-            response.getWriter().write(
-                    "{\"error\":\"RATE_LIMIT_EXCEEDED\",\"message\":\"Too many AI requests. Please wait before trying again.\"}");
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write(RATE_LIMITED_BODY);
             return;
         }
 
