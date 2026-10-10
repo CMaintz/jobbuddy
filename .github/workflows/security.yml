@@ -21,6 +21,6 @@ jobs:
       pull-requests: read # gitleaks lists the PR's commits
     with:
       # Gate-defining files: changing these alongside source needs the ruleset-change label.
-      ruleset_paths: '^(mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|backend/pmd/|frontend/eslint\.config\.[cm]?js|frontend/eslint-suppressions\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|\.gitleaks\.toml|\.github/workflows/)'
+      ruleset_paths: '^((backend/|frontend/)?mise\.toml|backend/build\.gradle\.kts|settings\.gradle\.kts|gradle/libs\.versions\.toml|backend/config/pmd/|backend/config/spotbugs/|backend/pmd/|backend/osv-scanner\.toml|frontend/eslint\.config\.[A-Za-z.]*[cm]?js|frontend/eslint-suppressions\.json|frontend/\.audit-allowlist\.json|frontend/tsconfig[A-Za-z.]*\.json|backend/\.habit-hooks/|frontend/\.habit-hooks/|scripts/|\.gitleaks\.toml|\.editorconfig|\.github/workflows/)'
       source_paths: '^(backend/src/|frontend/src/|extension/)'
       test_paths: '(^backend/src/test/|\.spec\.ts$|\.test\.[jt]sx?$)'
