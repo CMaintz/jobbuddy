@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   ratchet:
-    uses: CMaintz/foundry/.github/workflows/ratchet-report.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    uses: CMaintz/foundry/.github/workflows/ratchet-report.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
     permissions: { contents: read, pull-requests: write }
     with:
       baselines: |

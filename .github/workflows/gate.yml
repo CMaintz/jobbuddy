@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   changes:
-    uses: CMaintz/foundry/.github/workflows/changes.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    uses: CMaintz/foundry/.github/workflows/changes.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
     with:
       packages: "backend frontend extension"
       # Builds nothing for these; any other root-level file rebuilds everything (fail-safe).
@@ -37,7 +37,7 @@ jobs:
     name: Backend gate
     needs: changes
     if: contains(fromJSON(needs.changes.outputs.changes), 'backend')
-    uses: CMaintz/foundry/.github/workflows/gate.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    uses: CMaintz/foundry/.github/workflows/gate.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
     with:
       stack: java
       working_directory: backend
@@ -47,7 +47,7 @@ jobs:
     name: Frontend gate
     needs: changes
     if: contains(fromJSON(needs.changes.outputs.changes), 'frontend')
-    uses: CMaintz/foundry/.github/workflows/gate.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    uses: CMaintz/foundry/.github/workflows/gate.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
     with:
       stack: ts
       working_directory: frontend

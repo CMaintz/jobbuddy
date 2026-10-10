@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   backend:
-    uses: CMaintz/foundry/.github/workflows/bootstrap.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    uses: CMaintz/foundry/.github/workflows/bootstrap.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
     permissions: { contents: write, pull-requests: write }
     secrets:
       app_private_key: ${{ secrets.BOOTSTRAP_APP_PRIVATE_KEY }}
@@ -25,7 +25,7 @@ jobs:
       app_client_id: ${{ vars.BOOTSTRAP_APP_CLIENT_ID }}
 
   frontend:
-    uses: CMaintz/foundry/.github/workflows/bootstrap.yml@4ef6ee4e04eefc9abf76f9164aa95bb0b18d3058 # v2.7.0
+    uses: CMaintz/foundry/.github/workflows/bootstrap.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
     permissions: { contents: write, pull-requests: write }
     secrets:
       app_private_key: ${{ secrets.BOOTSTRAP_APP_PRIVATE_KEY }}
