@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
 import { ThemeService } from './core/theme.service';
 import { LanguageService } from './core/language.service';
@@ -44,6 +44,7 @@ export class AppComponent implements OnInit {
   private router = inject(Router);
   private streak = inject(ActivityStreakService);
   private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
   sidebarOpen = signal(false);
   oldFrontendOpen = signal(false);
@@ -95,7 +96,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.currentUserEmail = user?.email || '';
-      this.currentUserName = user?.email?.split('@')[0] || 'User';
+      this.currentUserName = user?.email?.split('@')[0] ?? '';
       this.signedIn = !!user;
       if (user) this.streak.refresh();
       else this.streak.clear();
@@ -121,7 +122,7 @@ export class AppComponent implements OnInit {
   }
 
   userName(): string {
-    return this.currentUserName || 'User';
+    return this.currentUserName || this.translate.instant('nav.userFallback');
   }
 
   userEmail(): string {

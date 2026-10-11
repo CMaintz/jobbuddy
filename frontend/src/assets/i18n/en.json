@@ -236,7 +236,13 @@
   "shared": {
     "upload": "Upload",
     "uploading": "Uploading...",
-    "addTag": "Add..."
+    "addTag": "Add...",
+    "diffViewer": {
+      "diff": "Diff",
+      "revised": "Revised",
+      "original": "Original",
+      "wordsChanged": "words changed"
+    }
   },
   "skillPicker": {
     "label": "Skills",
@@ -365,7 +371,16 @@
       "platform": "Platform",
       "url": "URL",
       "usernameOptional": "Username (optional)",
-      "addSocial": "+ Add Social Link"
+      "addSocial": "+ Add Social Link",
+      "placeholder": {
+        "degree": "Bachelor of Science",
+        "jobTitle": "Software Engineer",
+        "location": "Remote",
+        "language": "English",
+        "fullName": "Jane Doe",
+        "headline": "Senior Software Engineer",
+        "projectName": "My Awesome Project"
+      }
     },
     "aiTailor": {
       "atsScore": "ATS score",
@@ -488,7 +503,8 @@
       "pdfDesigned": "PDF — Designed",
       "pdfAts": "PDF — ATS",
       "print": "Print",
-      "atsTitle": "Text-based single-column PDF — selectable text, parseable by applicant tracking systems"
+      "atsTitle": "Text-based single-column PDF — selectable text, parseable by applicant tracking systems",
+      "dragToResize": "Drag to resize"
     },
     "cv": {
       "summary": "Summary",
@@ -505,7 +521,9 @@
       "contact": "Contact",
       "present": "Present",
       "photo": "Photo",
-      "profilePhoto": "Profile photo"
+      "profilePhoto": "Profile photo",
+      "profile": "Profile",
+      "untitledName": "Curriculum Vitae"
     },
     "refine": {
       "ai": "AI",
@@ -546,6 +564,52 @@
         "nov": "November",
         "dec": "December"
       }
+    },
+    "defaultDraftName": "My Resume",
+    "richText": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "bulletList": "Bullet list",
+      "numberedList": "Numbered list",
+      "alignLeft": "Align left",
+      "center": "Center",
+      "alignRight": "Align right",
+      "justify": "Justify",
+      "font": "Font",
+      "size": "Size",
+      "textColour": "Text colour",
+      "clearFormatting": "Clear formatting"
+    },
+    "icon": {
+      "zap": "Zap",
+      "star": "Star",
+      "award": "Award",
+      "target": "Target",
+      "growth": "Growth",
+      "ideas": "Ideas",
+      "check": "Check",
+      "shield": "Shield",
+      "people": "People",
+      "comms": "Comms",
+      "code": "Code",
+      "tech": "Tech",
+      "data": "Data",
+      "layout": "Layout",
+      "mobile": "Mobile",
+      "globe": "Globe",
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location",
+      "portfolio": "Portfolio",
+      "link": "Link",
+      "external": "External",
+      "terminal": "Terminal",
+      "design": "Design",
+      "chat": "Chat",
+      "gaming": "Gaming",
+      "forum": "Forum"
     }
   },
   "legal": {
@@ -783,7 +847,10 @@
       "customHeadingPlaceholder": "Section heading (e.g. Publications)",
       "customItemPlaceholder": "One line / entry",
       "addCustomItem": "Add line",
-      "addCustomSection": "Add custom section"
+      "addCustomSection": "Add custom section",
+      "placeholder": {
+        "language": "English"
+      }
     },
     "section": {
       "profile": "Profile",
@@ -1169,6 +1236,16 @@
       "active": "Active",
       "drafts": "Drafts",
       "closed": "Closed"
+    },
+    "csv": {
+      "company": "Company",
+      "role": "Role",
+      "stage": "Stage",
+      "fitScore": "Fit score",
+      "created": "Created",
+      "applied": "Applied",
+      "updated": "Updated",
+      "notes": "Notes"
     }
   },
   "onboarding": {
@@ -1870,7 +1947,8 @@
     "group": {
       "track": "Track",
       "library": "Library"
-    }
+    },
+    "userFallback": "User"
   },
   "match": {
     "grade": {

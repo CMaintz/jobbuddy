@@ -236,7 +236,13 @@
   "shared": {
     "upload": "Upload",
     "uploading": "Uploader...",
-    "addTag": "Tilføj..."
+    "addTag": "Tilføj...",
+    "diffViewer": {
+      "diff": "Forskelle",
+      "revised": "Revideret",
+      "original": "Original",
+      "wordsChanged": "ord ændret"
+    }
   },
   "skillPicker": {
     "label": "Færdigheder",
@@ -365,7 +371,16 @@
       "platform": "Platform",
       "url": "URL",
       "usernameOptional": "Brugernavn (valgfrit)",
-      "addSocial": "+ Tilføj socialt link"
+      "addSocial": "+ Tilføj socialt link",
+      "placeholder": {
+        "degree": "Bachelor i datalogi",
+        "jobTitle": "Softwareudvikler",
+        "location": "Fjernarbejde",
+        "language": "Engelsk",
+        "fullName": "Mette Hansen",
+        "headline": "Senior softwareudvikler",
+        "projectName": "Mit fantastiske projekt"
+      }
     },
     "aiTailor": {
       "atsScore": "ATS-score",
@@ -488,7 +503,8 @@
       "pdfDesigned": "PDF — Designet",
       "pdfAts": "PDF — ATS",
       "print": "Udskriv",
-      "atsTitle": "Tekstbaseret enkeltkolonne-PDF — markerbar tekst, læsbar af ansøgningssystemer"
+      "atsTitle": "Tekstbaseret enkeltkolonne-PDF — markerbar tekst, læsbar af ansøgningssystemer",
+      "dragToResize": "Træk for at ændre størrelse"
     },
     "cv": {
       "summary": "Resumé",
@@ -505,7 +521,9 @@
       "contact": "Kontakt",
       "present": "Nuværende",
       "photo": "Foto",
-      "profilePhoto": "Profilbillede"
+      "profilePhoto": "Profilbillede",
+      "profile": "Profil",
+      "untitledName": "Curriculum Vitae"
     },
     "refine": {
       "ai": "AI",
@@ -546,6 +564,52 @@
         "nov": "November",
         "dec": "December"
       }
+    },
+    "defaultDraftName": "Mit CV",
+    "richText": {
+      "bold": "Fed",
+      "italic": "Kursiv",
+      "underline": "Understreget",
+      "strikethrough": "Gennemstreget",
+      "bulletList": "Punktliste",
+      "numberedList": "Nummereret liste",
+      "alignLeft": "Venstrejustér",
+      "center": "Centrér",
+      "alignRight": "Højrejustér",
+      "justify": "Lige margener",
+      "font": "Skrifttype",
+      "size": "Størrelse",
+      "textColour": "Tekstfarve",
+      "clearFormatting": "Ryd formatering"
+    },
+    "icon": {
+      "zap": "Lyn",
+      "star": "Stjerne",
+      "award": "Pris",
+      "target": "Mål",
+      "growth": "Vækst",
+      "ideas": "Idéer",
+      "check": "Flueben",
+      "shield": "Skjold",
+      "people": "Mennesker",
+      "comms": "Kommunikation",
+      "code": "Kode",
+      "tech": "Teknologi",
+      "data": "Data",
+      "layout": "Layout",
+      "mobile": "Mobil",
+      "globe": "Globus",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "location": "Placering",
+      "portfolio": "Portefølje",
+      "link": "Link",
+      "external": "Eksternt link",
+      "terminal": "Terminal",
+      "design": "Design",
+      "chat": "Chat",
+      "gaming": "Gaming",
+      "forum": "Forum"
     }
   },
   "legal": {
@@ -783,7 +847,10 @@
       "customHeadingPlaceholder": "Sektionsoverskrift (f.eks. Publikationer)",
       "customItemPlaceholder": "Én linje / post",
       "addCustomItem": "Tilføj linje",
-      "addCustomSection": "Tilføj brugerdefineret sektion"
+      "addCustomSection": "Tilføj brugerdefineret sektion",
+      "placeholder": {
+        "language": "Engelsk"
+      }
     },
     "section": {
       "profile": "Profil",
@@ -1169,6 +1236,16 @@
       "active": "Aktive",
       "drafts": "Kladder",
       "closed": "Lukkede"
+    },
+    "csv": {
+      "company": "Virksomhed",
+      "role": "Stilling",
+      "stage": "Trin",
+      "fitScore": "Match-score",
+      "created": "Oprettet",
+      "applied": "Ansøgt",
+      "updated": "Opdateret",
+      "notes": "Noter"
     }
   },
   "onboarding": {
@@ -1870,7 +1947,8 @@
     "group": {
       "track": "Følg",
       "library": "Bibliotek"
-    }
+    },
+    "userFallback": "Bruger"
   },
   "match": {
     "grade": {

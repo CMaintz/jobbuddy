@@ -39,7 +39,7 @@
           <div class="flex flex-col gap-4">
             @for (exp of experience; track exp.id) {
               <div>
-                <div class="flex justify-between"><h3 class="font-semibold text-sm">{{ exp.title }}</h3><span class="text-xs text-gray-400">{{ exp.startDate }} – {{ exp.current ? 'Present' : exp.endDate }}</span></div>
+                <div class="flex justify-between"><h3 class="font-semibold text-sm">{{ exp.title }}</h3><span class="text-xs text-gray-400">{{ exp.startDate }} – {{ exp.current ? ('resumeBuilder.cv.present' | translate) : exp.endDate }}</span></div>
                 <p class="text-xs text-gray-500">{{ exp.company }}@if (exp.location) { · {{ exp.location }} }</p>
                 @if (exp.description) { <div class="text-xs text-gray-600 mt-1" [innerHTML]="exp.description | richText"></div> }
                 <app-skill-chip-list [skills]="exp.skills ?? []" />
@@ -56,7 +56,7 @@
           <div class="flex flex-col gap-3">
             @for (edu of education; track edu.id) {
               <div>
-                <div class="flex justify-between"><h3 class="font-semibold text-sm">{{ edu.degree }}</h3><span class="text-xs text-gray-400">{{ edu.startDate }} – {{ edu.current ? 'Present' : edu.endDate }}</span></div>
+                <div class="flex justify-between"><h3 class="font-semibold text-sm">{{ edu.degree }}</h3><span class="text-xs text-gray-400">{{ edu.startDate }} – {{ edu.current ? ('resumeBuilder.cv.present' | translate) : edu.endDate }}</span></div>
                 <p class="text-xs text-gray-500">{{ edu.school }}</p>
                 <app-skill-chip-list [skills]="edu.skills ?? []" />
               </div>
@@ -89,7 +89,7 @@
         <div class="grid grid-cols-2 gap-6">
           @if (languages.length > 0) {
             <section rbSection="languages">
-              <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-2">Languages</h2>
+              <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-2">{{ 'resumeBuilder.cv.languages' | translate }}</h2>
               @for (lang of languages; track lang.id) {
                 <div class="flex justify-between text-xs"><span>{{ lang.name }}</span><span class="text-gray-400">{{ lang.proficiency }}</span></div>
               }
@@ -97,7 +97,7 @@
           }
           @if (certifications.length > 0) {
             <section rbSection="certifications">
-              <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-2">Certifications</h2>
+              <h2 [style.color]="themeColor" class="text-xs font-bold uppercase tracking-widest mb-2">{{ 'resumeBuilder.cv.certifications' | translate }}</h2>
               @for (cert of certifications; track cert.id) {
                 <p class="text-xs font-medium">{{ cert.name }}</p>
               }

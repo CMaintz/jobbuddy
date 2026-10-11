@@ -47,6 +47,14 @@ export class LayoutFormComponent {
   get leftColumn() { return this.state.settings().leftColumn; }
   get rightColumn() { return this.state.settings().rightColumn; }
 
+  /**
+   * Built-in sections are stored with their English default name, so they are labelled by id;
+   * anything without a known id keeps its own name (the translate pipe passes it through).
+   */
+  sectionLabel(section: SectionConfig): string {
+    return TYPOGRAPHY_SECTIONS.find(s => s.id === section.id)?.label ?? section.name;
+  }
+
   selectTemplate(type: TemplateType): void {
     this.state.updateSettings({ template: type });
   }

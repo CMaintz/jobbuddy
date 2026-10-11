@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import type { jsPDF } from 'jspdf';
+import { AtsHeadings, ENGLISH_HEADINGS } from './ats-headings';
 import { ResumeData, ResumeSettings, ResumeSkill } from '../../features/resume-builder/models/resume-builder.models';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 import { htmlTextContent } from '../utils/sanitize-html';
@@ -27,12 +28,15 @@ export interface AtsSection {
 
 export interface AtsResumeModel {
   name: string;
+  summaryHeading: string;
   headline?: string;
   contactLine?: string;
   linksLine?: string;
   summary?: string;
   sections: AtsSection[];
 }
+
+type AtsHeader = Pick<AtsResumeModel, 'name' | 'headline' | 'contactLine' | 'linksLine'>;
 
 const PAGE_W = 210;
 const PAGE_H = 297;
@@ -49,7 +53,7 @@ export class AtsPdfService {
     y = this.header(doc, model, y);
 
     if (model.summary?.trim()) {
-      y = this.sectionHeading(doc, 'Profile', y);
+      y = this.sectionHeading(doc, model.summaryHeading, y);
       y = this.paragraph(doc, model.summary.trim(), y, 9.5);
       y += 3;
     }
@@ -93,7 +97,7 @@ export class AtsPdfService {
 
     if (opts.name) {
       y = this.header(
-        doc, { name: opts.name, headline: opts.headline, contactLine: opts.contactLine, sections: [] }, y,
+        doc, { name: opts.name, headline: opts.headline, contactLine: opts.contactLine }, y,
       );
     }
     for (const para of opts.paragraphs) {
@@ -110,9 +114,9 @@ export class AtsPdfService {
     return new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   }
 
-  private header(doc: jsPDF, model: AtsResumeModel, y: number): number {
+  private header(doc: jsPDF, model: AtsHeader, y: number): number {
     doc.setFont('helvetica', 'bold').setFontSize(17).setTextColor(15);
-    doc.text(model.name || 'Curriculum Vitae', MARGIN, y + 5);
+    doc.text(model.name, MARGIN, y + 5);
     y += 8;
     doc.setFont('helvetica', 'normal').setFontSize(10.5).setTextColor(70);
     if (model.headline) {
@@ -175,29 +179,6 @@ export class AtsPdfService {
 
 // ── Mappers ─────────────────────────────────────────────────────
 
-/**
- * Section headings for the builder's ATS export.
- *
- * <p>The builder's own model has no headings — unlike a StructuredDocument, which carries the
- * localised ones the backend chose. So they are passed in. They were hardcoded English, which
- * meant a Danish CV exported from the builder came out headed "Skills" and "Education" while the
- * same CV generated through the backend was headed "Kompetencer" and "Uddannelse".
- */
-export interface AtsHeadings {
-  strengths: string;
-  experience: string;
-  skills: string;
-  projects: string;
-  education: string;
-  certifications: string;
-  languages: string;
-}
-
-const ENGLISH_HEADINGS: AtsHeadings = {
-  strengths: 'Strengths', experience: 'Experience', skills: 'Skills', projects: 'Projects',
-  education: 'Education', certifications: 'Certifications', languages: 'Languages',
-};
-
 /** CV Builder draft → ATS model. Pass the display (possibly anonymised) personal info. */
 export function resumeDataToAts(
   data: ResumeData, pi = data.personalInfo, settings?: ResumeSettings,
@@ -218,7 +199,7 @@ export function resumeDataToAts(
       heading: headings.experience,
       items: data.experience.map(e => ({
         title: [e.title, e.company].filter(Boolean).join(' — '),
-        meta: [`${e.startDate || ''} – ${e.current ? 'Present' : e.endDate || ''}`.trim(), e.location]
+        meta: [`${e.startDate || ''} – ${e.current ? headings.present : e.endDate || ''}`.trim(), e.location]
           .filter(v => v && v !== '–').join('  ·  '),
         body: stripHtml(e.description),
         bullets: [],
@@ -242,7 +223,7 @@ export function resumeDataToAts(
       heading: headings.education,
       items: data.education.map(e => ({
         title: [e.degree, e.school].filter(Boolean).join(' — '),
-        meta: `${e.startDate || ''} – ${e.current ? 'Present' : e.endDate || ''}`.trim(),
+        meta: `${e.startDate || ''} – ${e.current ? headings.present : e.endDate || ''}`.trim(),
       })),
     } });
   }
@@ -269,7 +250,8 @@ export function resumeDataToAts(
   const sections = orderAtsSections(built, settings);
 
   return {
-    name: pi.fullName || 'Curriculum Vitae',
+    name: pi.fullName || headings.untitled,
+    summaryHeading: headings.profile,
     headline: pi.title || undefined,
     contactLine: contact || undefined,
     linksLine: links || undefined,
@@ -279,16 +261,20 @@ export function resumeDataToAts(
 }
 
 /** StructuredDocument (master/tailored CV render model) → ATS model. */
-export function structuredDocToAts(doc: StructuredDocument): AtsResumeModel {
+export function structuredDocToAts(
+  doc: StructuredDocument, headings: AtsHeadings = ENGLISH_HEADINGS,
+): AtsResumeModel {
   const id = doc.identity ?? {};
   const contact = [id.email, id.phone, id.location].filter(Boolean).join('  ·  ');
   const links = [id.linkedinUrl, id.githubUrl, id.websiteUrl].filter(Boolean).join('  ·  ');
   let summary: string | undefined;
+  let summaryHeading = headings.profile;
   const sections: AtsSection[] = [];
 
   for (const section of doc.sections ?? []) {
     if (section.type === 'profile' && section.body) {
       summary = section.body;
+      summaryHeading = section.heading || summaryHeading;
       continue;
     }
     if (section.type === 'skills' && section.items?.length) {
@@ -313,7 +299,8 @@ export function structuredDocToAts(doc: StructuredDocument): AtsResumeModel {
   }
 
   return {
-    name: id.name || 'Curriculum Vitae',
+    name: id.name || headings.untitled,
+    summaryHeading,
     headline: id.headline || undefined,
     contactLine: contact || undefined,
     linksLine: links || undefined,

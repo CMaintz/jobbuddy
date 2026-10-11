@@ -21,6 +21,7 @@ import { McvLanguagesSectionComponent } from './sections/mcv-languages-section.c
 import { McvSocialsSectionComponent } from './sections/mcv-socials-section.component';
 import { McvCustomSectionsSectionComponent } from './sections/mcv-custom-sections-section.component';
 import { AtsPdfService, structuredDocToAts } from '../../shared/services/ats-pdf.service';
+import { translatedAtsHeadings } from '../../shared/services/ats-headings';
 import { AiApiService } from '../../core/api/ai.api';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 import { ProfileSectionsApiService, FullProfileResponse } from '../../core/api/profile-sections.api';
@@ -210,7 +211,8 @@ export class MasterCvBuilderComponent implements OnInit {
     this.aiApi.getCvRenderModel().subscribe({
       next: async doc => {
         try {
-          const model = structuredDocToAts(anonymised ? this.anonymiseDoc(doc) : doc);
+          const model = structuredDocToAts(anonymised ? this.anonymiseDoc(doc) : doc,
+            translatedAtsHeadings(key => this.translate.instant(key)));
           const filename = anonymised
             ? 'master-cv-anonymised'
             : `${this.privateInfo.fullName || 'master-cv'} - CV`;

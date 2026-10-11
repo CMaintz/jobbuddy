@@ -225,7 +225,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       id: job.id,
       title: job.title,
       company: job.companyName ?? '—',
-      location: job.location ?? (job.remoteType === 'REMOTE' ? 'Remote' : '—'),
+      location: job.location ?? (job.remoteType === 'REMOTE' ? this.translate.instant('jobDetails.remote') : '—'),
       salary: job.salaryMin || job.salaryMax
         ? `${job.currency ?? ''} ${job.salaryMin ?? ''}–${job.salaryMax ?? ''}`.trim()
         : undefined,

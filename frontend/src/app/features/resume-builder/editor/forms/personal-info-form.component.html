@@ -23,11 +23,11 @@
       <div class="grid grid-cols-2 gap-2">
         <div style="grid-column:span 2;">
           <label class="label">{{ 'resumeBuilder.form.fullName' | translate }}</label>
-          <input class="input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" placeholder="Jane Doe" />
+          <input class="input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.fullName' | translate" />
         </div>
         <div style="grid-column:span 2;">
           <label class="label">{{ 'resumeBuilder.form.jobTitle' | translate }}</label>
-          <input class="input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" placeholder="Senior Software Engineer" />
+          <input class="input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.headline' | translate" />
         </div>
         <div>
           <label class="label">{{ 'resumeBuilder.form.email' | translate }}</label>

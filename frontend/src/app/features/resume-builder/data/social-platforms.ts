@@ -16,6 +16,7 @@ export interface SocialPlatform {
 
 export interface SocialIcon {
   key: string;
+  /** Translation key of the tooltip, or a brand name, which the translate pipe passes through. */
   label: string;
   icon: LucideIconInput;
 }
@@ -134,26 +135,26 @@ export const SOCIAL_ICON_LIBRARY: SocialIcon[] = [
   { key: 'facebook',       label: 'Facebook',       icon: FacebookBrand },
   { key: 'instagram',      label: 'Instagram',      icon: InstagramBrand },
   { key: 'youtube',        label: 'YouTube',        icon: YoutubeBrand },
-  { key: 'globe',          label: 'Globe',          icon: LucideGlobe },
-  { key: 'mail',           label: 'Email',          icon: LucideMail },
-  { key: 'phone',          label: 'Phone',          icon: LucidePhone },
-  { key: 'map-pin',        label: 'Location',       icon: LucideMapPin },
-  { key: 'briefcase',      label: 'Portfolio',      icon: LucideBriefcase },
-  { key: 'link',           label: 'Link',           icon: LucideLink },
-  { key: 'external-link',  label: 'External',       icon: LucideExternalLink },
+  { key: 'globe',          label: 'resumeBuilder.icon.globe', icon: LucideGlobe },
+  { key: 'mail',           label: 'resumeBuilder.icon.email', icon: LucideMail },
+  { key: 'phone',          label: 'resumeBuilder.icon.phone', icon: LucidePhone },
+  { key: 'map-pin',        label: 'resumeBuilder.icon.location', icon: LucideMapPin },
+  { key: 'briefcase',      label: 'resumeBuilder.icon.portfolio', icon: LucideBriefcase },
+  { key: 'link',           label: 'resumeBuilder.icon.link', icon: LucideLink },
+  { key: 'external-link',  label: 'resumeBuilder.icon.external', icon: LucideExternalLink },
   { key: 'twitch',         label: 'Twitch',         icon: TwitchBrand },
   { key: 'gitlab',         label: 'GitLab',         icon: GitlabBrand },
   { key: 'dribbble',       label: 'Dribbble',       icon: DribbbleBrand },
   { key: 'figma',          label: 'Figma',          icon: FigmaBrand },
   { key: 'codepen',        label: 'CodePen',        icon: CodepenBrand },
   { key: 'slack',          label: 'Slack',          icon: SlackBrand },
-  { key: 'code',           label: 'Code',           icon: LucideCode },
-  { key: 'terminal',       label: 'Terminal',       icon: LucideTerminal },
-  { key: 'pen-tool',       label: 'Design',         icon: LucidePenTool },
-  { key: 'message-circle', label: 'Chat',           icon: LucideMessageCircle },
-  { key: 'gamepad-2',      label: 'Gaming',         icon: LucideGamepad2 },
-  { key: 'hash',           label: 'Forum',          icon: LucideHash },
-  { key: 'layers',         label: 'Portfolio',      icon: LucideLayers },
+  { key: 'code',           label: 'resumeBuilder.icon.code', icon: LucideCode },
+  { key: 'terminal',       label: 'resumeBuilder.icon.terminal', icon: LucideTerminal },
+  { key: 'pen-tool',       label: 'resumeBuilder.icon.design', icon: LucidePenTool },
+  { key: 'message-circle', label: 'resumeBuilder.icon.chat', icon: LucideMessageCircle },
+  { key: 'gamepad-2',      label: 'resumeBuilder.icon.gaming', icon: LucideGamepad2 },
+  { key: 'hash',           label: 'resumeBuilder.icon.forum', icon: LucideHash },
+  { key: 'layers',         label: 'resumeBuilder.icon.portfolio', icon: LucideLayers },
 ];
 
 /** Map of all iconKeys → LucideIcon for layout rendering. */

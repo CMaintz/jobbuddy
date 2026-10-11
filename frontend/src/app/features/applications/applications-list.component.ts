@@ -85,7 +85,8 @@ export class ApplicationsListComponent implements OnInit {
   // ── Export all ────────────────────────────────────────────────
 
   exportCsv(): void {
-    const header = ['Company', 'Role', 'Stage', 'Fit score', 'Created', 'Applied', 'Updated', 'Notes'];
+    const header = ['company', 'role', 'stage', 'fitScore', 'created', 'applied', 'updated', 'notes']
+      .map(col => this.translate.instant(`applications.csv.${col}`));
     const rows = this.applications.map(a => [
       a.jobCompanyName ?? '', a.jobTitle ?? '', this.stageLabel(a.status),
       a.matchScore != null ? String(a.matchScore) : '',

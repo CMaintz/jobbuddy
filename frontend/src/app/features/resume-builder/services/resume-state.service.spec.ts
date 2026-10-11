@@ -1,5 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 import { NotifyService } from '../../../shared/services/notify.service';
 import { ResumeDraft } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
@@ -18,6 +19,7 @@ describe('ResumeStateService', () => {
     draftApi = jasmine.createSpyObj<ResumeDraftApiService>('ResumeDraftApiService', ['getDraft', 'saveDraft']);
     notify = jasmine.createSpyObj<NotifyService>('NotifyService', ['error']);
     TestBed.configureTestingModule({
+      imports: [TranslateModule.forRoot()],
       providers: [
         { provide: ResumeDraftApiService, useValue: draftApi },
         { provide: NotifyService, useValue: notify },

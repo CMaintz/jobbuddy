@@ -7,7 +7,7 @@
             <button class="rb-remove" (click)="remove(proj.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
           <label class="label">{{ 'resumeBuilder.form.projectName' | translate }}</label>
-          <input class="input" [value]="proj.name" (input)="update(proj.id, 'name', $any($event.target).value)" placeholder="My Awesome Project" />
+          <input class="input" [value]="proj.name" (input)="update(proj.id, 'name', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.projectName' | translate" />
           <label class="label">{{ 'resumeBuilder.form.linkUrl' | translate }}</label>
           <input class="input" [value]="proj.link" (input)="update(proj.id, 'link', $any($event.target).value)" placeholder="https://github.com/you/project" />
           <label class="label">{{ 'resumeBuilder.form.date' | translate }}</label>

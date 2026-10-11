@@ -7,7 +7,7 @@
             <button class="rb-remove" (click)="remove(edu.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
           <label class="label">{{ 'resumeBuilder.form.degree' | translate }}</label>
-          <input class="input" [value]="edu.degree" (input)="update(edu.id, 'degree', $any($event.target).value)" placeholder="Bachelor of Science" />
+          <input class="input" [value]="edu.degree" (input)="update(edu.id, 'degree', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.degree' | translate" />
           <label class="label">{{ 'resumeBuilder.form.school' | translate }}</label>
           <input class="input" [value]="edu.school" (input)="update(edu.id, 'school', $any($event.target).value)" placeholder="MIT" />
           <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>

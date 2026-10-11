@@ -1,4 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, Observable, Subject, catchError, debounceTime, map, switchMap, tap, throwError } from 'rxjs';
 import {
   INITIAL_RESUME_DATA,
@@ -43,6 +44,7 @@ export interface FullProfileData {
 export class ResumeStateService {
   private draftApi = inject(ResumeDraftApiService);
   private notify = inject(NotifyService);
+  private translate = inject(TranslateService);
 
   private _resumeData = signal<ResumeData>({ ...INITIAL_RESUME_DATA });
   private _settings = signal<ResumeSettings>({ ...INITIAL_SETTINGS });
@@ -69,7 +71,7 @@ export class ResumeStateService {
     if (!this._settings().anonymise) return pi;
     return {
       ...pi,
-      fullName: initialsOf(pi.fullName) || 'Candidate',
+      fullName: initialsOf(pi.fullName) || this.translate.instant('masterCv.candidate'),
       email: '',
       phone: '',
       website: '',
@@ -266,7 +268,7 @@ export class ResumeStateService {
 
     // Create a new draft on the server
     this.draftApi.createDraft({
-      name: 'My Resume',
+      name: this.translate.instant('resumeBuilder.defaultDraftName'),
       resumeData: this._resumeData(),
       settings: this._settings(),
     }).subscribe(draft => {
