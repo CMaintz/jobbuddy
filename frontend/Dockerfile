@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:22.23.3-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --quiet
@@ -24,7 +24,10 @@ RUN sed -i \
 
 RUN npm run build -- --configuration production
 
-FROM nginx:alpine
+# Unprivileged nginx: runs as uid 101 and listens on 8080, not root on 80.
+FROM nginxinc/nginx-unprivileged:1.31.6-alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:8080/healthz > /dev/null || exit 1
