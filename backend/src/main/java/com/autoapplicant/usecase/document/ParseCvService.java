@@ -1,23 +1,27 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ParseCvService implements ParseCvUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(ParseCvService.class);
+    static final String NO_TEXT_MESSAGE =
+            "No text could be read from this CV. If it is a scanned PDF, paste the text instead.";
+    static final String AI_UNAVAILABLE_MESSAGE =
+            "The CV could not be parsed right now. Please try again in a moment.";
+    static final String UNREADABLE_RESPONSE_MESSAGE =
+            "The CV could not be turned into a profile. Please try again, or paste the text instead.";
 
     private static final String DEFAULT_CURRENCY = "DKK";
 
@@ -79,33 +83,53 @@ public class ParseCvService implements ParseCvUseCase {
         this.writer = writer;
     }
 
-    /** Runs the AI parse outside any transaction, then files the result in one. */
+    /**
+     * Runs the AI parse outside any transaction, then files the result in one.
+     *
+     * @throws CvParseException when there is no text, the provider fails, or its answer is not
+     *     the expected JSON; nothing is written in any of those cases
+     */
     @Override
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
-            value = "REC_CATCH_EXCEPTION",
-            justification = "objectMapper.readTree throws the checked JsonProcessingException; the "
-                    + "catch also absorbs runtime failures (NPE etc.) so a bad AI response falls "
-                    + "back to an empty profile rather than propagating.")
     public Profile parseCvText(UUID userId, String rawCvText) {
-        try {
-            PromptComposition composition = new PromptComposition(
-                    SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
-            String json = aiProvider.generate(composition, AiOperations.CV_PARSE);
-            JsonNode node = objectMapper.readTree(AiResponseParser.stripCodeFence(json.trim()));
-            writer.write(userId, node);
-            return new Profile(
-                    null, userId,
-                    ParsedCvFields.textOrNull(node, "headline"),
-                    ParsedCvFields.textOrNull(node, "summary"),
-                    null,
-                    ParsedCvFields.arrayOrEmpty(node, "languages"),
-                    ParsedCvFields.arrayOrEmpty(node, "interests"),
-                    null, null, DEFAULT_CURRENCY, null, null, null, null
-            );
-        } catch (Exception e) {
-            log.error("CV parsing failed for user {}: {}", userId, e.getMessage());
-            return new Profile(null, userId, null, null, null, List.of(),
-                    List.of(), null, null, DEFAULT_CURRENCY, null, null, null, null);
+        if (rawCvText == null || rawCvText.isBlank()) {
+            throw new CvParseException(NO_TEXT_MESSAGE);
         }
+        JsonNode node = toJson(askAi(rawCvText));
+        writer.write(userId, node);
+        return new Profile(
+                null, userId,
+                ParsedCvFields.textOrNull(node, "headline"),
+                ParsedCvFields.textOrNull(node, "summary"),
+                null,
+                ParsedCvFields.arrayOrEmpty(node, "languages"),
+                ParsedCvFields.arrayOrEmpty(node, "interests"),
+                null, null, DEFAULT_CURRENCY, null, null, null, null
+        );
+    }
+
+    private String askAi(String rawCvText) {
+        PromptComposition composition = new PromptComposition(
+                SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
+        try {
+            return aiProvider.generate(composition, AiOperations.CV_PARSE);
+        } catch (RuntimeException e) {
+            throw new CvParseException(AI_UNAVAILABLE_MESSAGE, e);
+        }
+    }
+
+    private JsonNode toJson(String aiResponse) {
+        if (aiResponse == null) {
+            throw new CvParseException(UNREADABLE_RESPONSE_MESSAGE);
+        }
+        JsonNode node;
+        try {
+            node = objectMapper.readTree(AiResponseParser.stripCodeFence(aiResponse.trim()));
+        } catch (JsonProcessingException e) {
+            throw new CvParseException(UNREADABLE_RESPONSE_MESSAGE, e);
+        }
+        if (node == null || !node.isObject()) {
+            throw new CvParseException(UNREADABLE_RESPONSE_MESSAGE);
+        }
+        return node;
     }
 }

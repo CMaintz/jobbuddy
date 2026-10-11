@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.web;
 
+import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> handleConflict(IllegalStateException ex, WebRequest req) {
         return error(HttpStatus.CONFLICT, ex.getMessage(), req);
+    }
+
+    /** The user gets the exception's actionable message; the provider or parser cause stays in the log. */
+    @ExceptionHandler(CvParseException.class)
+    public ResponseEntity<ApiError> handleCvParse(CvParseException ex, WebRequest req) {
+        log.warn("CV parse failed on {}: {}", req.getDescription(false), ex.getMessage(), ex.getCause());
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), req);
     }
 
     @ExceptionHandler({SecurityException.class, AccessDeniedException.class})

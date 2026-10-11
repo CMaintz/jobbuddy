@@ -1,12 +1,15 @@
 package com.autoapplicant.usecase.document;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
@@ -54,14 +57,64 @@ class ParseCvServiceTest {
     }
 
     @Test
-    void returns_empty_profile_when_ai_response_is_not_valid_json() {
-        when(aiProvider.generate(any(), any())).thenReturn("sorry, I cannot help with that");
+    void strips_a_code_fence_around_the_json() {
+        when(aiProvider.generate(any(), any())).thenReturn("```json\n{\"headline\":\"Dev\"}\n```");
 
         Profile result = service.parseCvText(userId, "raw");
 
-        assertThat(result.userId()).isEqualTo(userId);
-        assertThat(result.headline()).isNull();
-        assertThat(result.languages()).isEmpty();
+        assertThat(result.headline()).isEqualTo("Dev");
+    }
+
+    @Test
+    void blank_cv_text_is_rejected_without_calling_the_ai() {
+        assertThatThrownBy(() -> service.parseCvText(userId, "  \n "))
+                .isInstanceOf(CvParseException.class)
+                .hasMessage(ParseCvService.NO_TEXT_MESSAGE);
+
+        verifyNoInteractions(aiProvider, writer);
+    }
+
+    @Test
+    void a_provider_failure_surfaces_as_a_parse_error_and_writes_nothing() {
+        IllegalStateException cause = new IllegalStateException("CLI agent exited 1");
+        when(aiProvider.generate(any(), any())).thenThrow(cause);
+
+        assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
+                .isInstanceOf(CvParseException.class)
+                .hasMessage(ParseCvService.AI_UNAVAILABLE_MESSAGE)
+                .hasCause(cause);
+
         verify(writer, never()).write(any(), any());
+    }
+
+    @Test
+    void a_response_that_is_not_json_surfaces_as_a_parse_error_and_writes_nothing() {
+        when(aiProvider.generate(any(), any())).thenReturn("sorry, I cannot help with that");
+
+        assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
+                .isInstanceOf(CvParseException.class)
+                .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
+
+        verify(writer, never()).write(any(), any());
+    }
+
+    @Test
+    void a_json_value_that_is_not_an_object_surfaces_as_a_parse_error() {
+        when(aiProvider.generate(any(), any())).thenReturn("[\"Java\"]");
+
+        assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
+                .isInstanceOf(CvParseException.class)
+                .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
+
+        verify(writer, never()).write(any(), any());
+    }
+
+    @Test
+    void a_null_response_surfaces_as_a_parse_error() {
+        when(aiProvider.generate(any(), any())).thenReturn(null);
+
+        assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
+                .isInstanceOf(CvParseException.class)
+                .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
     }
 }
