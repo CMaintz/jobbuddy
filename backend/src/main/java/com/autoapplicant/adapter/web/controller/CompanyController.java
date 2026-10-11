@@ -101,7 +101,7 @@ public class CompanyController {
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(companies.searchCompanies(q, page, size));
+        return ResponseEntity.ok(companies.searchCompanies(q, page, PageLimits.clampSize(size)));
     }
 
     @Operation(summary = "Get company by ID")

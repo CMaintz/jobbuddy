@@ -1,7 +1,6 @@
 package com.autoapplicant.adapter.web.dto.job;
 
 import com.autoapplicant.domain.job.*;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +29,11 @@ public record JobResponse(
         String jobCategory,
         String shortDescription,
         java.time.LocalDate applicationDeadline,
-        boolean active,
+        /** Named like the domain record so every job payload reads the same to the client. */
+        boolean isActive,
+        UUID duplicateGroupId,
+        /** Contact person the posting names, or null when it names nobody. */
+        JobContact contact,
         /** True when descriptionClean holds only the opening of the posting. */
         boolean descriptionTruncated,
         /**
@@ -95,6 +98,8 @@ public record JobResponse(
                 job.shortDescription(),
                 job.applicationDeadline(),
                 job.isActive(),
+                job.duplicateGroupId(),
+                job.contact(),
                 truncated,
                 requirements
         );

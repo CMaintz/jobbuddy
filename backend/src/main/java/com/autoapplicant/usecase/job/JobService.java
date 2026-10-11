@@ -4,21 +4,17 @@ import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.port.in.job.*;
-import com.autoapplicant.port.in.job.CreateManualJobUseCase;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUseCase,
@@ -38,9 +34,9 @@ public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUse
     @Override
     public Page<Job> getJobs(JobSearchQuery query) {
         if (query.userId() != null) {
-            Set<UUID> ignored = ignoredJobRepo.findJobIdsByUserId(query.userId());
-            List<Job> jobs = jobRepo.findAllExcluding(ignored, query.page(), query.size());
-            long total = Math.max(jobRepo.countActive() - ignored.size(), 0);
+            List<Job> jobs =
+                    jobRepo.findActiveNotIgnoredBy(query.userId(), query.page(), query.size());
+            long total = jobRepo.countActiveNotIgnoredBy(query.userId());
             return new PageImpl<>(jobs, PageRequest.of(query.page(), query.size()), total);
         }
         List<Job> jobs = jobRepo.findActive(query.page(), query.size());

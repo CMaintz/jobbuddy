@@ -17,7 +17,6 @@ import com.autoapplicant.domain.search.JobSearchQuery;
 import com.autoapplicant.domain.search.JobSearchResult;
 import com.autoapplicant.port.in.document.GetDocumentsForJobUseCase;
 import com.autoapplicant.port.in.job.*;
-import com.autoapplicant.port.in.job.ReportJobInactiveUseCase;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -88,7 +87,8 @@ public class JobController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         UUID userId = secCtx.getCurrentUserId();
-        JobSearchQuery query = new JobSearchQuery(null, null, page, size, "postedAt", userId);
+        JobSearchQuery query = new JobSearchQuery(null, null, page,
+                PageLimits.clampSize(size), "postedAt", userId);
         return ResponseEntity.ok(getJobs.getJobs(query).map(JobResponse::preview));
     }
 
@@ -100,7 +100,8 @@ public class JobController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         JobSearchQuery query = new JobSearchQuery(q, new JobSearchFilters(null, null, null,
-                null, null, null, null, null, null, null, categories), page, size, "postedAt");
+                null, null, null, null, null, null, null, categories), page,
+                PageLimits.clampSize(size), "postedAt");
         return ResponseEntity.ok(searchJobs.searchJobs(query));
     }
 
@@ -109,7 +110,7 @@ public class JobController {
     public ResponseEntity<List<MatchResultResponse>> recommendations(
             @RequestParam(defaultValue = "10") int limit) {
         UUID userId = secCtx.getCurrentUserId();
-        return ResponseEntity.ok(getRecommendations.getRecommendations(userId, limit).stream()
+        return ResponseEntity.ok(getRecommendations.getRecommendations(userId, PageLimits.clampSize(limit)).stream()
                 .map(MatchResultResponse::from).toList());
     }
 
@@ -206,7 +207,7 @@ public class JobController {
     @GetMapping("/search/semantic")
     public ResponseEntity<List<JobResponse>> searchSemantic(@RequestParam String q,
                                                             @RequestParam(defaultValue = "30") int limit) {
-        List<JobResponse> result = semanticSearch.semanticSearch(q, Math.min(Math.max(limit, 1), 100))
+        List<JobResponse> result = semanticSearch.semanticSearch(q, PageLimits.clampSize(limit))
                 .stream().map(JobResponse::preview).toList();
         return ResponseEntity.ok(result);
     }

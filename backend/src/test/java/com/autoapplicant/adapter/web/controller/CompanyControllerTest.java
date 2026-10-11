@@ -74,6 +74,16 @@ class CompanyControllerTest {
     }
 
     @Test
+    void search_clamps_an_oversized_page() throws Exception {
+        when(companies.searchCompanies("acme", 0, PageLimits.MAX_PAGE_SIZE)).thenReturn(List.of());
+
+        mvc.perform(get("/api/v1/companies").param("q", "acme").param("size", "5000"))
+                .andExpect(status().isOk());
+
+        verify(companies).searchCompanies("acme", 0, PageLimits.MAX_PAGE_SIZE);
+    }
+
+    @Test
     void get_by_id_returns_company() throws Exception {
         when(companies.getCompanyById(companyId)).thenReturn(Optional.of(company()));
 
