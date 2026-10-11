@@ -7,11 +7,13 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** User-authored templates must not make the renderer fetch remote or local-file resources. */
 class PdfRenderingServiceSsrfTest {
@@ -46,6 +48,22 @@ class PdfRenderingServiceSsrfTest {
     }
 
     @Test
+    void localFilesOutsideUploadsAreNotEmbedded(@TempDir Path uploads, @TempDir Path elsewhere)
+            throws Exception {
+        String secret = PdfTestImages.writePng(elsewhere.resolve("secret.png")).toUri().toString();
+        String template = "<html><head><style>{{CSS}}</style></head><body><img src=\"" + secret
+                + "\"/><div style=\"width:40px;height:40px\"></div></body></html>";
+        String css = "div { background: url('" + secret + "'); }";
+        PdfRenderingService guarded = new PdfRenderingService(new PdfResourcePolicy(uploads));
+
+        byte[] unguardedPdf = renderUnguarded(template.replace("{{CSS}}", css));
+        byte[] guardedPdf = guarded.render(template, css, Map.of());
+
+        assertThat(PdfTestImages.imagesOnFirstPage(unguardedPdf)).isPositive();
+        assertThat(PdfTestImages.imagesOnFirstPage(guardedPdf)).isZero();
+    }
+
+    @Test
     void sanityCheckTheDefaultRendererWouldHaveFetched() throws Exception {
         PdfRendererBuilder unguarded = new PdfRendererBuilder()
                 .useFastMode()
@@ -74,9 +92,14 @@ class PdfRenderingServiceSsrfTest {
         assertThat(escaped).isEqualTo("x&quot; onerror=&quot;y&#39; &lt;b&gt;&amp;");
     }
 
+    private static byte[] renderUnguarded(String html) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(out).run();
+        return out.toByteArray();
+    }
+
     private String hostileTemplate() {
-        return templateWith("<img src=\"http://169.254.169.254/latest/meta-data/\"/>"
-                + "<img src=\"file:///etc/passwd\"/>");
+        return templateWith("<img src=\"http://169.254.169.254/latest/meta-data/\"/>");
     }
 
     /** Only the loopback server is referenced here, so the unguarded sanity render cannot hang. */

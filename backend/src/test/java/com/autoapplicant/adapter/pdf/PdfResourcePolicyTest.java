@@ -81,6 +81,18 @@ class PdfResourcePolicyTest {
     }
 
     @Test
+    void rejectsUncSharesAndHostsWithoutTouchingThem() {
+        PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+
+        assertThat(policy.resolveURI(null, "/uploads/\\\\unc-probe.invalid\\share\\x.png")).isNull();
+        assertThat(policy.resolveURI(null, "/uploads///unc-probe.invalid/share/x.png")).isNull();
+        assertThat(policy.resolveURI(null, "/uploads/C:/Windows/win.ini")).isNull();
+        assertThat(policy.resolveURI(null, "file://unc-probe.invalid/share/x.png")).isNull();
+        assertThat(policy.resolveURI(null, "file:////unc-probe.invalid/share/x.png")).isNull();
+        assertThat(policy.getUrl("file://unc-probe.invalid/share/x.png").getStream()).isNull();
+    }
+
+    @Test
     void passesDataUrisThrough() {
         PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
         String dataUri = "data:image/png;base64,iVBORw0KGgo=";
