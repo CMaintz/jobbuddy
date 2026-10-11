@@ -99,6 +99,9 @@ app:
     cron: "${DUE_REMINDER_CRON:0 0 7 * * *}"
   crawler:
     cron: "0 0 */4 * * *"
+    # A running flag older than this is treated as left behind by a crawl that died, so it
+    # stops blocking enrichment and new crawls of that source.
+    stale-running-after: ${CRAWLER_STALE_RUNNING_AFTER:PT2H}
   job:
     # A posting not seen for this long is deactivated.
     stale-days: ${JOB_STALE_DAYS:30}

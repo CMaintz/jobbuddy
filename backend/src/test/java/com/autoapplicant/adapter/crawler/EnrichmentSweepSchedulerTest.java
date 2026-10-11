@@ -1,22 +1,21 @@
 package com.autoapplicant.adapter.crawler;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
+
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase.SweepResult;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.usecase.job.EnrichmentSweepService;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
 
 class EnrichmentSweepSchedulerTest {
 
@@ -28,9 +27,11 @@ class EnrichmentSweepSchedulerTest {
     private final Executor inline = Runnable::run;
 
     private static final Duration BUDGET = Duration.ofMinutes(20);
+    private static final Duration STALE_AFTER = Duration.ofHours(2);
 
     private EnrichmentSweepScheduler scheduler(boolean enabled) {
-        return new EnrichmentSweepScheduler(sweep, jobRepo, crawlerState, inline, enabled, 200, BUDGET);
+        return new EnrichmentSweepScheduler(
+                sweep, jobRepo, new ActiveCrawls(crawlerState, STALE_AFTER), inline, enabled, 200, BUDGET);
     }
 
     private static CrawlerState state(boolean running) {
@@ -57,6 +58,20 @@ class EnrichmentSweepSchedulerTest {
         scheduler(true).scheduledSweep();
 
         verify(sweep, never()).sweep(anyInt(), any());
+    }
+
+    @Test
+    void a_running_flag_left_by_a_dead_crawl_does_not_stall_the_worker() {
+        // A crash or redeploy mid-crawl never clears the flag. This is the only enrichment path,
+        // so trusting that flag forever would stop enrichment for good.
+        Instant longAgo = Instant.now().minus(STALE_AFTER).minusSeconds(60);
+        when(crawlerState.findAll()).thenReturn(List.of(
+                new CrawlerState("TEAMTAILOR", 0, longAgo, null, 0, 0, null, true, longAgo)));
+        when(sweep.sweep(200, BUDGET)).thenReturn(new SweepResult(0, 0, 0, 0));
+
+        scheduler(true).scheduledSweep();
+
+        verify(sweep).sweep(200, BUDGET);
     }
 
     @Test

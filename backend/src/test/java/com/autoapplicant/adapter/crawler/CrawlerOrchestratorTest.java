@@ -1,5 +1,15 @@
 package com.autoapplicant.adapter.crawler;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RawJobData;
@@ -7,21 +17,13 @@ import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.crawler.JobSourceConnectorPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.function.Consumer;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * A crawl's two jobs beyond finding new postings: telling the app which existing postings are
@@ -116,5 +118,54 @@ class CrawlerOrchestratorTest {
         assertThat(finished.jobsFound()).isEqualTo(50);
         assertThat(finished.jobsIngested()).isZero();
         verify(jobRepo, never()).markSeenBySourceJobId(any(), anyString(), any());
+    }
+
+    private CrawlerState lastSavedState() {
+        ArgumentCaptor<CrawlerState> saved = ArgumentCaptor.forClass(CrawlerState.class);
+        verify(stateRepo, Mockito.atLeastOnce()).save(saved.capture());
+        return saved.getAllValues().get(saved.getAllValues().size() - 1);
+    }
+
+    @Test
+    void aSecondRunOfASourceAlreadyCrawlingIsSkipped() {
+        // Two crawls of one source race the duplicate check against the insert. A manual run
+        // or the next cron tick landing mid-crawl must not start a second one.
+        AtomicReference<CrawlerOrchestrator> orchestrator = new AtomicReference<>();
+        AtomicReference<JobSourceConnectorPort> self = new AtomicReference<>();
+        JobSourceConnectorPort connector = connector(config ->
+                orchestrator.get().runConnector(self.get()));
+        self.set(connector);
+        orchestrator.set(orchestratorFor(connector));
+
+        orchestrator.get().runConnector(connector);
+
+        verify(connector, times(1)).fetchJobs(any());
+    }
+
+    @Test
+    void theSourceCanBeCrawledAgainOnceTheRunFinishes() {
+        JobSourceConnectorPort connector = connector(config -> { });
+        CrawlerOrchestrator orchestrator = orchestratorFor(connector);
+
+        orchestrator.runConnector(connector);
+        orchestrator.runConnector(connector);
+
+        verify(connector, times(2)).fetchJobs(any());
+    }
+
+    @Test
+    void anErrorStillClearsTheRunningFlag() {
+        // Only Exception used to clear it. An Error left the flag set, and enrichment stands
+        // down while any source is running.
+        JobSourceConnectorPort connector = connector(config -> {
+            throw new StackOverflowError("boom");
+        });
+
+        assertThatThrownBy(() -> orchestratorFor(connector).runConnector(connector))
+                .isInstanceOf(StackOverflowError.class);
+
+        CrawlerState finished = lastSavedState();
+        assertThat(finished.isRunning()).isFalse();
+        assertThat(finished.lastError()).contains("boom");
     }
 }
