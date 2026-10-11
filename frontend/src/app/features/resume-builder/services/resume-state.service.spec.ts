@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NotifyService } from '../../../shared/services/notify.service';
 import { ResumeDraft } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
@@ -53,6 +53,20 @@ describe('ResumeStateService', () => {
     expect(draftApi.saveDraft).toHaveBeenCalledTimes(2);
     expect(state.isDirty()).toBeFalse();
   }));
+
+  it('re-labels the anonymised name when the language changes', () => {
+    setup();
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', { masterCv: { candidate: 'Candidate' } });
+    translate.setTranslation('da', { masterCv: { candidate: 'Kandidat' } });
+    translate.use('en');
+    state.updateSettings({ anonymise: true });
+    expect(state.displayPersonalInfo().fullName).toBe('Candidate');
+
+    translate.use('da');
+
+    expect(state.displayPersonalInfo().fullName).toBe('Kandidat');
+  });
 
   it('empties and detaches the editor when loading another draft fails', () => {
     setup();

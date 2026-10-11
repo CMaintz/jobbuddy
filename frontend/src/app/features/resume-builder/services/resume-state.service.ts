@@ -1,4 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, Observable, Subject, catchError, debounceTime, map, switchMap, tap, throwError } from 'rxjs';
 import {
@@ -45,6 +46,10 @@ export class ResumeStateService {
   private draftApi = inject(ResumeDraftApiService);
   private notify = inject(NotifyService);
   private translate = inject(TranslateService);
+  /** Read by computeds that translate, so they recompute when the language changes. */
+  private readonly lang = toSignal(this.translate.onLangChange.pipe(map(e => e.lang)), {
+    initialValue: this.translate.currentLang,
+  });
 
   private _resumeData = signal<ResumeData>({ ...INITIAL_RESUME_DATA });
   private _settings = signal<ResumeSettings>({ ...INITIAL_SETTINGS });
@@ -69,6 +74,7 @@ export class ResumeStateService {
   readonly displayPersonalInfo = computed(() => {
     const pi = this._resumeData().personalInfo;
     if (!this._settings().anonymise) return pi;
+    this.lang();
     return {
       ...pi,
       fullName: initialsOf(pi.fullName) || this.translate.instant('masterCv.candidate'),
