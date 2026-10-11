@@ -52,6 +52,16 @@ class CliAgentExecutableTest {
     }
 
     @Test
+    void aBatchFileNamedWithATrailingDotIsStillGuarded() {
+        Map<String, String> env = Map.of("PATH", pathWith(binDir), "PATHEXT", ".cmd");
+
+        assertThatThrownBy(() -> CliAgentExecutable.resolve(
+                        List.of("claude.cmd.", "-p&calc"), env, true))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cmd.exe");
+    }
+
+    @Test
     void outsideWindowsArgvIsLeftToTheOs() throws IOException {
         Files.writeString(binDir.resolve("codex.cmd"), "@echo off");
         Map<String, String> env = Map.of("PATH", pathWith(binDir));

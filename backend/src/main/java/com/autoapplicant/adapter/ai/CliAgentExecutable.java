@@ -27,7 +27,9 @@ final class CliAgentExecutable {
     /** Java hands a batch file to cmd.exe, which parses these even inside an argument. */
     private static final Pattern CMD_METACHARACTERS = Pattern.compile("[&|<>^%!\"()\\r\\n]");
 
-    private static final Pattern BATCH_FILE = Pattern.compile("(?i).*\\.(cmd|bat)$");
+    // Windows ignores trailing dots and spaces in a file name, so "claude.cmd." still runs a
+    // batch file.
+    private static final Pattern BATCH_FILE = Pattern.compile("(?i).*\\.(cmd|bat)[. ]*$");
 
     private CliAgentExecutable() {}
 

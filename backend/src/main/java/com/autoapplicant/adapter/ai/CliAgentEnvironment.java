@@ -64,7 +64,10 @@ final class CliAgentEnvironment {
             "CLAUDE_CODE_CLIENT_CERT",
             "CLAUDE_CODE_CLIENT_KEY",
             "CLAUDE_CODE_CLIENT_KEY_PASSPHRASE",
-            "CLAUDE_CODE_MAX_OUTPUT_TOKENS");
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
+            // Native Windows Claude Code refuses to start without Git Bash when it is not in the
+            // default location.
+            "CLAUDE_CODE_GIT_BASH_PATH");
 
     private static final Set<String> CODEX_NAMES =
             Set.of("OPENAI_API_KEY", "CODEX_API_KEY", "CODEX_HOME");
