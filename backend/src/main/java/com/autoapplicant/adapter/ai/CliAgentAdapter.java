@@ -5,11 +5,10 @@ import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,63 +50,38 @@ public class CliAgentAdapter implements ChatProviderPort {
     }
 
     private String run(PromptComposition composition, boolean jsonObject) {
-        AppProperties.Cli cfg = props.getAi().getCli();
+        int timeoutSeconds = props.getAi().getCli().getTimeoutSeconds();
         String prompt = buildPrompt(composition, jsonObject);
         Path workDir = null;
         try {
             workDir = CliAgentProcessFactory.createWorkDir();
             ProcessBuilder pb = CliAgentProcessFactory.create(command, workDir);
-            Process proc = pb.start();
-
-            // Drain stdin/stderr on separate threads so a full pipe buffer can never deadlock
-            // the stdout read (prompts with a CV + JD can exceed the OS pipe buffer).
-            Thread stdinWriter = new Thread(() -> {
-                try (OutputStream os = proc.getOutputStream()) {
-                    os.write(prompt.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    log.debug("CLI agent stdin closed early: {}", e.getMessage());
-                }
-            });
-            StringBuilder stderr = new StringBuilder();
-            Thread stderrDrainer = new Thread(() -> {
-                try {
-                    stderr.append(new String(proc.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    log.debug("CLI agent stderr drain ended: {}", e.getMessage());
-                }
-            });
-            stdinWriter.start();
-            stderrDrainer.start();
-
-            String stdout = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-            boolean finished = proc.waitFor(cfg.getTimeoutSeconds(), TimeUnit.SECONDS);
-            if (!finished) {
-                proc.destroyForcibly();
-                throw new IllegalStateException(
-                        "CLI agent '" + command + "' timed out after " + cfg.getTimeoutSeconds() + "s");
-            }
-            stdinWriter.join(2000);
-            stderrDrainer.join(2000);
-
-            if (proc.exitValue() != 0) {
-                throw new IllegalStateException("CLI agent '" + command + "' exited "
-                        + proc.exitValue() + ": " + stderr.toString().strip());
-            }
-            String out = stdout.strip();
-            if (out.isEmpty()) {
-                throw new IllegalStateException("CLI agent '" + command + "' returned empty output");
-            }
-            return out;
+            return requireAnswer(
+                    CliAgentProcessRunner.run(pb, prompt, Duration.ofSeconds(timeoutSeconds)));
+        } catch (TimeoutException e) {
+            throw new IllegalStateException(
+                    "CLI agent '" + command + "' timed out after " + timeoutSeconds + "s", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted running CLI agent", e);
         } catch (IOException e) {
             throw new IllegalStateException("Could not launch CLI agent '" + command
-                    + "' — is it installed and on PATH?", e);
+                    + "' - is it installed and on PATH?", e);
         } finally {
             removeWorkDir(workDir);
         }
+    }
+
+    private String requireAnswer(CliAgentProcessRunner.Result result) {
+        if (result.exitCode() != 0) {
+            throw new IllegalStateException("CLI agent '" + command + "' exited "
+                    + result.exitCode() + ": " + result.stderr().strip());
+        }
+        String out = result.stdout().strip();
+        if (out.isEmpty()) {
+            throw new IllegalStateException("CLI agent '" + command + "' returned empty output");
+        }
+        return out;
     }
 
     private static void removeWorkDir(Path workDir) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -28,6 +29,10 @@ final class CliAgentProcessFactory {
 
     private static final String WORK_DIR_PREFIX = "cli-agent-";
 
+    private static final int DELETE_ATTEMPTS = 5;
+
+    private static final Duration DELETE_RETRY_DELAY = Duration.ofMillis(200);
+
     private CliAgentProcessFactory() {}
 
     /** Creates a fresh, empty working directory for one agent call. */
@@ -49,8 +54,31 @@ final class CliAgentProcessFactory {
         return Arrays.stream(command.trim().split("\\s+")).toList();
     }
 
-    /** Deletes the working directory and anything the agent left in it. */
+    /**
+     * Deletes the working directory and anything the agent left in it, retrying while a dying
+     * process still holds a file open (Windows refuses to delete those). If it still fails, the
+     * leftovers are queued for deletion at JVM exit and the failure is rethrown.
+     *
+     * @throws UncheckedIOException the directory could not be deleted now
+     */
     static void deleteWorkDir(Path workDir) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                deleteTree(workDir);
+                return;
+            } catch (UncheckedIOException e) {
+                if (attempt == DELETE_ATTEMPTS || !pauseBeforeRetry()) {
+                    deleteOnExit(workDir);
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private static void deleteTree(Path workDir) {
+        if (Files.notExists(workDir)) {
+            return;
+        }
         try (Stream<Path> paths = Files.walk(workDir)) {
             paths.sorted(Comparator.reverseOrder()).forEach(CliAgentProcessFactory::deletePath);
         } catch (IOException e) {
@@ -63,6 +91,26 @@ final class CliAgentProcessFactory {
             Files.deleteIfExists(path);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /** False when interrupted, so the caller stops retrying. */
+    private static boolean pauseBeforeRetry() {
+        try {
+            Thread.sleep(DELETE_RETRY_DELAY.toMillis());
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    /** Registers parents before children: deleteOnExit runs in reverse, so children go first. */
+    private static void deleteOnExit(Path workDir) {
+        try (Stream<Path> paths = Files.walk(workDir)) {
+            paths.forEach(path -> path.toFile().deleteOnExit());
+        } catch (IOException | UncheckedIOException e) {
+            workDir.toFile().deleteOnExit();
         }
     }
 }
