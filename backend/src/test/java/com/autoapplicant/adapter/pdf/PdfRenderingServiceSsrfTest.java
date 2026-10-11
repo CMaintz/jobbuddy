@@ -56,6 +56,18 @@ class PdfRenderingServiceSsrfTest {
     }
 
     @Test
+    void streamGateAloneBlocksFetchesTheDefaultResolverAllows() throws Exception {
+        PdfResourcePolicy policy = new PdfResourcePolicy();
+        PdfRendererBuilder resolverless = new PdfRendererBuilder()
+                .useFastMode()
+                .useProtocolsStreamImplementation(policy, PdfResourcePolicy.GUARDED_SCHEMES)
+                .withHtmlContent(templateWith("").replace("{{CSS}}", ""), null);
+        resolverless.toStream(new ByteArrayOutputStream()).run();
+
+        assertThat(requests.get()).isZero();
+    }
+
+    @Test
     void escapeCoversQuotesSoValuesCannotBreakOutOfAttributes() {
         String escaped = new PdfRenderingService().escape("x\" onerror=\"y' <b>&");
 

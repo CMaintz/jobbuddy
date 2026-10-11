@@ -5,7 +5,6 @@ import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
-import com.openhtmltopdf.outputdevice.helper.ExternalResourceControlPriority;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,7 +27,15 @@ public class PdfRenderingService {
     @Value("${app.pdf.page-budget.strict:false}")
     private boolean pageBudgetStrict;
 
-    private final PdfResourcePolicy resourcePolicy = new PdfResourcePolicy();
+    private final PdfResourcePolicy resourcePolicy;
+
+    public PdfRenderingService() {
+        this(new PdfResourcePolicy());
+    }
+
+    PdfRenderingService(PdfResourcePolicy resourcePolicy) {
+        this.resourcePolicy = resourcePolicy;
+    }
 
     public byte[] render(String htmlTemplate, String cssStyles, Map<String, String> placeholders) {
         String html = htmlTemplate.replace("{{CSS}}", cssStyles != null ? cssStyles : "");
@@ -64,8 +71,7 @@ public class PdfRenderingService {
         return new PdfRendererBuilder()
                 .useFastMode()
                 .useUriResolver(resourcePolicy)
-                .useExternalResourceAccessControl(
-                        resourcePolicy, ExternalResourceControlPriority.RUN_AFTER_RESOLVING_URI)
+                .useProtocolsStreamImplementation(resourcePolicy, PdfResourcePolicy.GUARDED_SCHEMES)
                 .withHtmlContent(html, null);
     }
 

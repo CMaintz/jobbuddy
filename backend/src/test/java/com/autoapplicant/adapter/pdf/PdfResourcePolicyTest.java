@@ -1,15 +1,23 @@
 package com.autoapplicant.adapter.pdf;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.openhtmltopdf.outputdevice.helper.ExternalResourceType;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class PdfResourcePolicyTest {
 
+    private static final String PHOTO = "/uploads/profile-photos/abc.jpg";
+    private static final byte[] PHOTO_BYTES = "jpeg".getBytes(StandardCharsets.UTF_8);
+
     @TempDir Path uploads;
+    @TempDir Path outside;
 
     @Test
     void rejectsRemoteAndLocalFileReferences() {
@@ -23,8 +31,9 @@ class PdfResourcePolicyTest {
     }
 
     @Test
-    void rejectsUploadsPathsThatEscapeTheUploadsDirectory() {
+    void rejectsUploadsPathsThatEscapeTheUploadsDirectory() throws IOException {
         PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+        Files.writeString(uploads.resolveSibling("secrets.txt"), "secret");
 
         assertThat(policy.resolveURI(null, "/uploads/../secrets.txt")).isNull();
         assertThat(policy.resolveURI(null, "/uploads/profile-photos/../../etc/passwd")).isNull();
@@ -32,13 +41,43 @@ class PdfResourcePolicyTest {
     }
 
     @Test
-    void resolvesOwnUploadsFromLocalStorage() {
+    void resolvesOwnUploadsFromLocalStorage() throws IOException {
         PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+        Path photo = writePhoto();
 
-        String resolved = policy.resolveURI(null, "/uploads/profile-photos/abc.jpg");
+        assertThat(policy.resolveURI(null, PHOTO)).isEqualTo(photo.toRealPath().toUri().toString());
+    }
 
-        assertThat(resolved).isEqualTo(uploads.resolve("profile-photos/abc.jpg").toUri().toString());
-        assertThat(policy.test(resolved, ExternalResourceType.IMAGE_RASTER)).isTrue();
+    @Test
+    void resolvingAnAlreadyResolvedUploadsUriIsStable() throws IOException {
+        PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+        writePhoto();
+
+        String resolved = policy.resolveURI(null, PHOTO);
+
+        assertThat(resolved).isNotNull();
+        assertThat(policy.resolveURI(null, resolved)).isEqualTo(resolved);
+    }
+
+    @Test
+    void rejectsFileUrisOutsideUploads() throws IOException {
+        PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+        Path secret = Files.writeString(outside.resolve("secret.txt"), "secret");
+
+        assertThat(policy.resolveURI(null, secret.toUri().toString())).isNull();
+        String traversal = uploads.relativize(secret).toString().replace('\\', '/');
+        assertThat(traversal).startsWith("..");
+        assertThat(policy.resolveURI(null, uploads.toUri() + traversal)).isNull();
+    }
+
+    @Test
+    void rejectsASymlinkInsideUploadsThatPointsOutside() throws IOException {
+        PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+        Path secret = Files.writeString(outside.resolve("secret.txt"), "secret");
+        assumeTrue(symlink(uploads.resolve("link.txt"), secret), "symlinks unavailable here");
+
+        assertThat(policy.resolveURI(null, "/uploads/link.txt")).isNull();
+        assertThat(policy.resolveURI(null, uploads.resolve("link.txt").toUri().toString())).isNull();
     }
 
     @Test
@@ -47,15 +86,34 @@ class PdfResourcePolicyTest {
         String dataUri = "data:image/png;base64,iVBORw0KGgo=";
 
         assertThat(policy.resolveURI(null, dataUri)).isEqualTo(dataUri);
-        assertThat(policy.test(dataUri, ExternalResourceType.IMAGE_RASTER)).isTrue();
     }
 
     @Test
-    void accessControlRejectsAnythingOutsideUploads() {
+    void streamFactoryOpensUploadsFilesOnly() throws IOException {
         PdfResourcePolicy policy = new PdfResourcePolicy(uploads);
+        Path photo = writePhoto();
+        Path secret = Files.writeString(outside.resolve("secret.txt"), "secret");
 
-        assertThat(policy.test("http://169.254.169.254/latest", ExternalResourceType.IMAGE_RASTER)).isFalse();
-        assertThat(policy.test("file:///etc/passwd", ExternalResourceType.CSS)).isFalse();
-        assertThat(policy.test(null, ExternalResourceType.CSS)).isFalse();
+        try (InputStream stream = policy.getUrl(photo.toUri().toString()).getStream()) {
+            assertThat(stream.readAllBytes()).isEqualTo(PHOTO_BYTES);
+        }
+        assertThat(policy.getUrl(secret.toUri().toString()).getStream()).isNull();
+        assertThat(policy.getUrl(secret.toUri().toString()).getReader()).isNull();
+        assertThat(policy.getUrl("http://169.254.169.254/latest").getStream()).isNull();
+    }
+
+    private Path writePhoto() throws IOException {
+        Path photo = uploads.resolve("profile-photos/abc.jpg");
+        Files.createDirectories(photo.getParent());
+        return Files.write(photo, PHOTO_BYTES);
+    }
+
+    private static boolean symlink(Path link, Path target) {
+        try {
+            Files.createSymbolicLink(link, target);
+            return true;
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            return false;
+        }
     }
 }
