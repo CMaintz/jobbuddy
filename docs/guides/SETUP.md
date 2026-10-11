@@ -174,13 +174,17 @@ curl -X POST http://localhost:8080/api/v1/admin/crawler/trigger \
 3. From the repo root, run `docker compose --env-file .env -f infra/docker-compose.prod.yml up -d`.
    This pulls the images `deploy.yml` publishes to GHCR (`ghcr.io/cmaintz/jobbuddy/backend` and
    `/frontend`). Set `IMAGE_TAG` in `.env` to `sha-<full commit sha>` to pin a build; it defaults
-   to `latest`. Add `--build` to build from source instead. To update, run
+   to `latest`. The packages are private unless made public, so run `docker login ghcr.io` (a
+   token with `read:packages`) first. Add `--build` to build from source instead. To update, run
    `docker compose --env-file .env -f infra/docker-compose.prod.yml pull` first; otherwise compose
    reuses whatever image (pulled or locally built) already carries that tag.
-4. The prod compose file terminates TLS in the frontend nginx (certs in `infra/ssl/`, readable by
-   uid 101). Alternatively put a reverse proxy (nginx, Caddy, Traefik) in front and terminate TLS there.
+4. The prod compose file terminates TLS in the frontend nginx. nginx runs as uid 101, so make the
+   certs readable by it: `sudo chown 101 infra/ssl/key.pem infra/ssl/cert.pem`. Certbot writes
+   `privkey.pem` as 0600 root, and copied as-is the container crash-loops.
 
-Caddy example (`Caddyfile`):
+   To terminate TLS in a reverse proxy (nginx, Caddy, Traefik) instead, use `docker-compose.yml`'s
+   frontend (plain HTTP on 127.0.0.1:80). The prod frontend already binds 80/443 and redirects
+   HTTP to HTTPS, which loops behind a proxy. Caddy example (`Caddyfile`):
 
 ```
 jobbuddy.yourdomain.com {
