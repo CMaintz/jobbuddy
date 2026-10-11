@@ -92,7 +92,7 @@ class SafeRedirectFetcherTest {
 
     @Test
     void redirectWithMalformedLocationIsAFailureNotTheFinalResponse() throws Exception {
-        SafeRedirectFetcher fetcher = fetcherAnswering(uri -> redirect("ht!tp://%%%"));
+        SafeRedirectFetcher fetcher = fetcherAnswering(uri -> redirect("http://[::1"));
 
         assertThat(fetcher.send(get(PUBLIC_URL))).isEmpty();
         assertThat(sent).hasSize(1);

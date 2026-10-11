@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +33,12 @@ class SafeJsoupFetcherTest {
     private static final String COOKIE = "Cookie";
     private static final String ACCEPT = "Accept";
     private static final String HTML = "text/html";
+    private static final String CONSENT = "consent=yes";
+    /** Raw space and pipe, as some job boards put them in feed links and Location headers. */
+    private static final String SPACED_PATH = "/job board|42";
 
     private final SafeJsoupFetcher fetcher =
-            new SafeJsoupFetcher(url -> !url.contains(INTERNAL_PATH));
+            new SafeJsoupFetcher(url -> !url.contains(INTERNAL_PATH), Jsoup::connect);
     private final List<String> hits = new ArrayList<>();
     private final List<Headers> landingHeaders = new ArrayList<>();
     private HttpServer origin;
@@ -109,6 +113,39 @@ class SafeJsoupFetcherTest {
         assertThat(fetcher.fetchDocument(url(origin, "/landing"), html())).isPresent();
     }
 
+    @Test
+    void cookiesSetByARedirectCarryToTheNextSameOriginHop() throws IOException {
+        Optional<Connection.Response> result = fetcher.fetch(url(origin, "/cookie-bounce"), html());
+
+        assertThat(result).isPresent();
+        assertThat(hits).containsExactly("/cookie-bounce", "/cookie-bounce", "/landing");
+    }
+
+    @Test
+    void cookiesSetByARedirectDoNotCarryToAnotherOrigin() throws IOException {
+        fetcher.fetch(url(origin, "/cookie-to-other"), html());
+
+        assertThat(landingHeaders).hasSize(1);
+        assertThat(landingHeaders.get(0).containsKey(COOKIE)).isFalse();
+    }
+
+    @Test
+    void rawSpacesAndPipesInLinksAreFetchedLikeJsoupWould() throws IOException {
+        assertThat(fetcher.fetch(url(origin, SPACED_PATH), html())).isPresent();
+        assertThat(fetcher.fetch(url(origin, "/to-spaced"), html())).isPresent();
+        assertThat(hits).containsExactly(SPACED_PATH, "/to-spaced", SPACED_PATH);
+    }
+
+    @Test
+    void productionGuardRefusesLoopbackAndMetadataHosts() throws IOException {
+        assertThat(SafeJsoupFetcher.PUBLIC_ONLY.fetch(url(origin, "/landing"), html())).isEmpty();
+        assertThat(SafeJsoupFetcher.PUBLIC_ONLY.fetch("http://169.254.169.254/latest/meta-data/", html()))
+                .isEmpty();
+        assertThat(SafeJsoupFetcher.PUBLIC_ONLY.fetch("http://100.100.100.200/latest/meta-data/", html()))
+                .isEmpty();
+        assertThat(hits).isEmpty();
+    }
+
     private void route(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         hits.add(path);
@@ -117,10 +154,28 @@ class SafeJsoupFetcherTest {
             case "/to-landing" -> redirect(exchange, "/landing");
             case "/loop" -> redirect(exchange, "/loop");
             case "/to-other" -> redirect(exchange, url(other, "/landing"));
-            case "/malformed" -> redirect(exchange, "ht!tp://%%%");
+            case "/malformed" -> redirect(exchange, "http://[::1");
+            case "/cookie-bounce" -> cookieBounce(exchange);
+            case "/cookie-to-other" -> {
+                exchange.getResponseHeaders().add("Set-Cookie", "leak=1; Path=/");
+                redirect(exchange, url(other, "/landing"));
+            }
+            case "/to-spaced" -> redirect(exchange, SPACED_PATH);
+            case SPACED_PATH -> land(exchange);
             case "/landing" -> land(exchange);
             default -> reply(exchange, NOT_FOUND, "");
         }
+    }
+
+    /** Sets a consent cookie and bounces to itself; passes through once the cookie comes back. */
+    private static void cookieBounce(HttpExchange exchange) throws IOException {
+        String cookie = exchange.getRequestHeaders().getFirst(COOKIE);
+        if (cookie != null && cookie.contains(CONSENT)) {
+            redirect(exchange, "/landing");
+            return;
+        }
+        exchange.getResponseHeaders().add("Set-Cookie", CONSENT + "; Path=/");
+        redirect(exchange, "/cookie-bounce");
     }
 
     private void land(HttpExchange exchange) throws IOException {

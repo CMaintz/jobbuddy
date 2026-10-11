@@ -56,22 +56,16 @@ final class RedirectHops {
             log.warn("Redirect from {} has no Location", from);
             return Optional.empty();
         }
-        try {
-            return Optional.of(from.resolve(location.get().trim()));
-        } catch (IllegalArgumentException e) {
-            log.warn("Redirect from {} has a malformed Location: {}", from, location.get());
-            return Optional.empty();
-        }
+        Optional<URI> target = LenientUrls.resolve(from, location.get());
+        if (target.isEmpty()) log.warn("Redirect from {} has a malformed Location: {}", from, location.get());
+        return target;
     }
 
     /** Parses a start URL, empty when it is not a URI at all. */
     static Optional<URI> parse(String url) {
-        try {
-            return Optional.of(URI.create(url.trim()));
-        } catch (IllegalArgumentException | NullPointerException e) {
-            log.warn("Fetch refused malformed URL: {}", url);
-            return Optional.empty();
-        }
+        Optional<URI> uri = LenientUrls.parse(url);
+        if (uri.isEmpty()) log.warn("Fetch refused malformed URL: {}", url);
+        return uri;
     }
 
     static boolean sameOrigin(URI a, URI b) {
