@@ -93,25 +93,6 @@
             }
           </nav>
 
-          <!-- Old Frontend (collapsible) -->
-          <nav class="flex flex-col gap-0.5">
-            <button (click)="oldFrontendOpen.set(!oldFrontendOpen())"
-                    class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none w-full text-left py-1.5 px-2 text-base text-jb-text-dim bg-transparent border-none">
-              <jb-icon name="layers" [size]="14" />
-              <span>{{ 'nav.oldFrontend' | translate }}</span>
-              <jb-icon [name]="oldFrontendOpen() ? 'chev-down' : 'chev-right'" [size]="11" class="ml-auto" />
-            </button>
-            @if (oldFrontendOpen()) {
-              @for (item of oldFrontendNav; track item.id) {
-                <a [routerLink]="item.route"
-                   class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none text-xs text-jb-text-dim"
-                   style="padding: 5px 8px 5px 26px;">
-                  <span>{{ item.label }}</span>
-                </a>
-              }
-            }
-          </nav>
-
           <!-- Footer -->
           <div class="mt-auto flex flex-col gap-0.5">
             <jb-streak-badge />

@@ -119,14 +119,6 @@ export const SOCIAL_PLATFORMS: SocialPlatform[] = [
   },
 ];
 
-export const SOCIAL_PLATFORM_MAP = new Map(
-  SOCIAL_PLATFORMS.map(p => [p.iconKey, p])
-);
-
-export function getSocialPlatformIcon(iconKey: string): string {
-  return SOCIAL_PLATFORM_MAP.get(iconKey)?.svgPath ?? '';
-}
-
 /** 26-icon library shown in the icon override picker. */
 export const SOCIAL_ICON_LIBRARY: SocialIcon[] = [
   { key: 'github',         label: 'GitHub',        icon: GithubBrand },

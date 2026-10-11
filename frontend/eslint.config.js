@@ -8,10 +8,6 @@ const foundry = require("./eslint.config.foundry.cjs");
 
 module.exports = defineConfig([
   {
-    // Legacy screens kept for reference until the rework merges — never linted.
-    ignores: ["src/app/features/old/**"],
-  },
-  {
     files: ["**/*.ts"],
     extends: [
       eslint.configs.recommended,

@@ -1,4 +1,4 @@
-export type StructuredDocumentType =
+type StructuredDocumentType =
   | 'CV'
   | 'COVER_LETTER'
   | 'APPLICATION_TEXT'
@@ -19,7 +19,7 @@ export interface DocumentIdentity {
   profileImageUrl?: string;
 }
 
-export interface StructuredDocumentItem {
+interface StructuredDocumentItem {
   sourceId?: string;
   title?: string;
   subtitle?: string;
@@ -34,7 +34,7 @@ export interface StructuredDocumentItem {
   category?: string;
 }
 
-export interface StructuredDocumentSection {
+interface StructuredDocumentSection {
   id: string;
   type: string;
   heading: string;
@@ -96,16 +96,3 @@ export interface DocumentTemplateOption {
   displayOrder?: number;
   defaultTheme?: DocumentTheme;
 }
-
-export const STRUCTURED_DOCUMENT_TEMPLATES: DocumentTemplateOption[] = [
-  { id: 'cv-ats-classic', familyId: 'classic-ats', familyName: 'Classic ATS', label: 'ATS Classic CV', documentTypes: ['CV'], layoutType: 'single-column', exportMode: 'ATS', supportsProfileImage: false, atsSafe: true, defaultTheme: { primaryColor: '#111111', accentColor: '#d1d5db', fontFamily: 'Arial', fontScale: 'normal' } },
-  { id: 'application-ats', familyId: 'classic-ats', familyName: 'Classic ATS', label: 'ATS Plain Application', documentTypes: ['COVER_LETTER', 'APPLICATION_TEXT'], layoutType: 'single-column', exportMode: 'ATS', supportsProfileImage: false, atsSafe: true, defaultTheme: { primaryColor: '#111111', accentColor: '#d1d5db', fontFamily: 'Arial', fontScale: 'normal' } },
-  { id: 'cv-modern-professional', familyId: 'modern-professional', familyName: 'Modern Professional', label: 'Modern Professional CV', documentTypes: ['CV'], layoutType: 'two-column', exportMode: 'DESIGNED', supportsProfileImage: true, atsSafe: false, defaultTheme: { primaryColor: '#18324a', accentColor: '#cbd8e3', fontFamily: 'Inter', fontScale: 'normal' } },
-  { id: 'application-modern', familyId: 'modern-professional', familyName: 'Modern Professional', label: 'Modern Professional Application', documentTypes: ['COVER_LETTER', 'APPLICATION_TEXT'], layoutType: 'single-column', exportMode: 'DESIGNED', supportsProfileImage: true, atsSafe: false, defaultTheme: { primaryColor: '#18324a', accentColor: '#cbd8e3', fontFamily: 'Inter', fontScale: 'normal' } },
-  { id: 'cv-compact-tech', familyId: 'compact-tech', familyName: 'Compact Tech', label: 'Compact Tech CV', documentTypes: ['CV'], layoutType: 'two-column', exportMode: 'DESIGNED', supportsProfileImage: true, atsSafe: false, defaultTheme: { primaryColor: '#0f3d3e', accentColor: '#b7d8d6', fontFamily: 'Inter', fontScale: 'small' } },
-  { id: 'application-compact-tech', familyId: 'compact-tech', familyName: 'Compact Tech', label: 'Compact Tech Application', documentTypes: ['COVER_LETTER', 'APPLICATION_TEXT'], layoutType: 'single-column', exportMode: 'DESIGNED', supportsProfileImage: true, atsSafe: false, defaultTheme: { primaryColor: '#0f3d3e', accentColor: '#b7d8d6', fontFamily: 'Inter', fontScale: 'small' } },
-  { id: 'cv-executive', familyId: 'executive', familyName: 'Executive', label: 'Executive CV', documentTypes: ['CV'], layoutType: 'two-column', exportMode: 'DESIGNED', supportsProfileImage: true, atsSafe: false, defaultTheme: { primaryColor: '#2b2338', accentColor: '#d8cedf', fontFamily: 'Georgia', fontScale: 'normal' } },
-  { id: 'application-executive', familyId: 'executive', familyName: 'Executive', label: 'Executive Application', documentTypes: ['COVER_LETTER', 'APPLICATION_TEXT'], layoutType: 'single-column', exportMode: 'DESIGNED', supportsProfileImage: true, atsSafe: false, defaultTheme: { primaryColor: '#2b2338', accentColor: '#d8cedf', fontFamily: 'Georgia', fontScale: 'normal' } },
-  { id: 'cv-minimal-scandinavian', familyId: 'minimal-scandinavian', familyName: 'Minimal Scandinavian', label: 'Minimal Scandinavian CV', documentTypes: ['CV'], layoutType: 'single-column', exportMode: 'DESIGNED', supportsProfileImage: false, atsSafe: false, defaultTheme: { primaryColor: '#2f3a36', accentColor: '#d9e4df', fontFamily: 'Calibri', fontScale: 'normal' } },
-  { id: 'application-minimal-scandinavian', familyId: 'minimal-scandinavian', familyName: 'Minimal Scandinavian', label: 'Minimal Scandinavian Application', documentTypes: ['COVER_LETTER', 'APPLICATION_TEXT'], layoutType: 'single-column', exportMode: 'DESIGNED', supportsProfileImage: false, atsSafe: false, defaultTheme: { primaryColor: '#2f3a36', accentColor: '#d9e4df', fontFamily: 'Calibri', fontScale: 'normal' } }
-];

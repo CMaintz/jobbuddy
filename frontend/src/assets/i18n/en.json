@@ -108,7 +108,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "confirmDelete": "Confirm delete",
     "edit": "Edit",
     "add": "Add",
     "remove": "Remove",
@@ -234,8 +233,6 @@
     }
   },
   "shared": {
-    "upload": "Upload",
-    "uploading": "Uploading...",
     "addTag": "Add...",
     "diffViewer": {
       "diff": "Diff",
@@ -243,11 +240,6 @@
       "original": "Original",
       "wordsChanged": "words changed"
     }
-  },
-  "skillPicker": {
-    "label": "Skills",
-    "placeholder": "Search skills to link...",
-    "create": "+ Create \"{{query}}\""
   },
   "cvImport": {
     "parsingCv": "Parsing your CV…",
@@ -1949,7 +1941,6 @@
     "companies": "Companies",
     "careerProfile": "Career Profile",
     "settings": "Settings",
-    "oldFrontend": "Old frontend",
     "streak": "{{count}}-day streak",
     "lightMode": "Light mode",
     "darkMode": "Dark mode",

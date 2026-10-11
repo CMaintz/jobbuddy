@@ -47,7 +47,6 @@ export class AppComponent implements OnInit {
   private translate = inject(TranslateService);
 
   sidebarOpen = signal(false);
-  oldFrontendOpen = signal(false);
   private currentUserEmail = '';
   private currentUserName = '';
   private signedIn = false;
@@ -77,21 +76,6 @@ export class AppComponent implements OnInit {
     { id: 'companies',    label: 'nav.companies',   icon: 'building',  route: '/companies' },
   ];
 
-  oldFrontendNav = [
-    { id: 'old-profile',    label: 'Profile editor',    route: '/old/profile' },
-    { id: 'old-writing',    label: 'Writing style',     route: '/old/profile/writing-style' },
-    { id: 'old-generate',   label: 'AI generate',       route: '/old/ai/generate' },
-    { id: 'old-docs',       label: 'AI documents',      route: '/old/ai/documents' },
-    { id: 'old-cv-upload',  label: 'CV upload/parse',   route: '/old/ai/cv' },
-    { id: 'old-cv-analyze', label: 'CV analysis',       route: '/old/ai/analyze' },
-    { id: 'old-analytics',  label: 'Analytics',         route: '/old/analytics' },
-    { id: 'old-companies',  label: 'Companies',         route: '/old/companies' },
-    { id: 'old-templates',  label: 'PDF templates',     route: '/old/templates' },
-    { id: 'old-jobs',       label: 'Jobs list',         route: '/old/jobs' },
-    { id: 'old-apps',       label: 'Applications',      route: '/old/applications' },
-    { id: 'old-pipeline',   label: 'Pipeline',          route: '/old/applications/pipeline' },
-    { id: 'old-prompts',    label: 'Prompts',           route: '/old/prompts' },
-  ];
 
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
