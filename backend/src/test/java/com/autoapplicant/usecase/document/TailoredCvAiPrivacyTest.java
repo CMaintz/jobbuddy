@@ -82,13 +82,15 @@ class TailoredCvAiPrivacyTest {
         PromptCompositionBuilder promptBuilder = new PromptCompositionBuilder();
         TailoredCvReviewer reviewer = new TailoredCvReviewer(ai, mapper, promptBuilder);
         ReflectionTestUtils.setField(reviewer, "autoReviewEnabled", true);
-        return new StructuredDocumentService(users(), profiles(), privateInfo(), socials(),
+        DocumentOwnerLoader owners =
+                new DocumentOwnerLoader(users(), profiles(), privateInfo(), socials());
+        CvDocumentAssembler cvAssembler = new CvDocumentAssembler(mock(AtsReportBuilder.class),
+                mock(KeywordCoverageCalculator.class));
+        return new StructuredDocumentService(owners,
                 mock(JobRepositoryPort.class), mock(PromptTemplateRepositoryPort.class),
                 mock(WritingProfileRepositoryPort.class), IdentityLadenProfile.contextService(),
-                new CvDocumentAssembler(mock(AtsReportBuilder.class),
-                        mock(KeywordCoverageCalculator.class)),
-                new TailoredCvGenerator(ai, mapper, promptBuilder), reviewer,
-                mock(AtsReportBuilder.class), mock(KeywordCoverageCalculator.class),
+                cvAssembler, new TailoredCvGenerator(ai, mapper, promptBuilder), reviewer,
+                mock(ApplicationDocumentAssembler.class),
                 mock(ApplicationRepositoryPort.class), mock(GeneratedContentGuards.class),
                 mock(CvSectionPromptsRepositoryPort.class));
     }
