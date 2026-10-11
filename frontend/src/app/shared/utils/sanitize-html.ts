@@ -2,7 +2,8 @@ import DOMPurify from 'dompurify';
 
 /** Tags the TipTap editor emits (StarterKit minus headings/code blocks/quotes/rules), plus keyword marks. */
 const RICH_TEXT_TAGS = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'code', 'ul', 'ol', 'li', 'span', 'mark'];
-const RICH_TEXT_ATTRS = ['style', 'class'];
+// `start` keeps an ordered list that the user began at "3." numbered from 3.
+const RICH_TEXT_ATTRS = ['style', 'class', 'start'];
 
 /** Inline styles the editor's colour, font-family, font-size and text-align controls write. */
 const ALLOWED_STYLE_PROPS = new Set(['color', 'font-family', 'font-size', 'text-align']);

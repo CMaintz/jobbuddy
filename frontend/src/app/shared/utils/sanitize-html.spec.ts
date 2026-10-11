@@ -30,7 +30,7 @@ describe('sanitizeRichText', () => {
   it('keeps the formatting the editor produces', () => {
     const html = '<p style="text-align: center"><strong>B</strong> <em>I</em> <u>U</u> <s>S</s><br>'
       + '<span style="color: #ff0000; font-family: Georgia; font-size: 14px">styled</span></p>'
-      + '<ul><li>one</li></ul><ol><li>two</li></ol>';
+      + '<ul><li>one</li></ul><ol><li>two</li></ol><ol start="3"><li>three</li></ol>';
     expect(sanitizeRichText(html)).toBe(html);
   });
 
