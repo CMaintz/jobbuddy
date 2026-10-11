@@ -6,6 +6,7 @@ import { CvImportPanelComponent } from './cv-import-panel.component';
 
 describe('CvImportPanelComponent parse errors', () => {
   const CV_TEXT = 'Jane Doe, senior engineer. '.repeat(5);
+  const SERVER_SENTENCE = 'An English sentence from the server';
   let panel: CvImportPanelComponent;
   let backend: HttpTestingController;
   let emitted: string[];
@@ -23,19 +24,32 @@ describe('CvImportPanelComponent parse errors', () => {
     panel.parsePastedText();
   });
 
-  function failWith(status: number, message: string): void {
-    backend.expectOne('/api/v1/ai/parse-cv').flush({ status, message }, { status, statusText: 'Error' });
+  function failWith(status: number, code?: string): void {
+    backend.expectOne('/api/v1/ai/parse-cv')
+      .flush({ status, code, message: SERVER_SENTENCE }, { status, statusText: 'Error' });
   }
 
-  it('shows the server message when the CV could not be parsed', () => {
-    failWith(422, 'The CV could not be parsed right now.');
+  it('translates the reason code of a 422', () => {
+    failWith(422, 'NO_TEXT');
 
-    expect(emitted).toEqual(['The CV could not be parsed right now.']);
+    expect(emitted).toEqual(['cvImport.error.reason.NO_TEXT']);
     expect(panel.parsing()).toBeFalse();
   });
 
-  it('falls back to the translated message for any other failure', () => {
-    failWith(500, 'Internal server error');
+  it('translates the reason code of a 503', () => {
+    failWith(503, 'AI_UNAVAILABLE');
+
+    expect(emitted).toEqual(['cvImport.error.reason.AI_UNAVAILABLE']);
+  });
+
+  it('falls back to the generic message for an unknown code', () => {
+    failWith(422, 'SOMETHING_NEW');
+
+    expect(emitted).toEqual(['cvImport.error.parseFailed']);
+  });
+
+  it('falls back to the generic message when there is no code', () => {
+    failWith(500);
 
     expect(emitted).toEqual(['cvImport.error.parseFailed']);
   });

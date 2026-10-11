@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
@@ -21,6 +21,9 @@ export interface ImportPreview {
   skills: string[];
   yearsExperience?: number;
 }
+
+/** Reason codes the backend sends with a failed CV parse; each has a cvImport.error.reason.* key. */
+const PARSE_FAILURE_CODES: readonly string[] = ['NO_TEXT', 'UNREADABLE', 'AI_UNAVAILABLE'];
 
 /** Raw parser payload — Profile-shaped fields plus the extracted full name. */
 interface ParsedCvResponse {
@@ -126,13 +129,15 @@ export class CvImportPanelComponent {
   }
 
   /**
-   * A 422 is the backend saying why this CV could not be parsed, in words meant for the user.
-   * Any other failure's message is not (a 500 just says "Internal server error"), so it gets the
-   * generic translated one.
+   * The backend's 422/503 carries a reason code saying why the CV could not be parsed; known codes
+   * get their own translated message. Anything else (no code, or one this build does not know)
+   * gets the generic one rather than a raw key.
    */
   private parseFailureMessage(err: HttpErrorResponse): string {
-    const serverMessage = err?.status === HttpStatusCode.UnprocessableEntity ? err.error?.message : undefined;
-    return serverMessage || this.translate.instant('cvImport.error.parseFailed');
+    const code = err?.error?.code;
+    return PARSE_FAILURE_CODES.includes(code)
+      ? this.translate.instant(`cvImport.error.reason.${code}`)
+      : this.translate.instant('cvImport.error.parseFailed');
   }
 
   /** Apply the parsed preview to the master profile. The backend merges: null fields keep their current value. */
