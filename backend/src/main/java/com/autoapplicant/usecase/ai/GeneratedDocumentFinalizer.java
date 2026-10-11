@@ -6,8 +6,8 @@ import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.JobKeywords;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
-import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
+import com.autoapplicant.usecase.document.GeneratedDocumentWriter;
 import java.util.Arrays;
 import org.springframework.stereotype.Service;
 
@@ -22,14 +22,14 @@ public class GeneratedDocumentFinalizer {
 
     private final GeneratedContentGuards contentGuards;
     private final BuildApplicationDocumentPort buildApplicationDocument;
-    private final PersistGeneratedDocumentPort persistGeneratedDocument;
+    private final GeneratedDocumentWriter documentWriter;
 
     public GeneratedDocumentFinalizer(GeneratedContentGuards contentGuards,
                                       BuildApplicationDocumentPort buildApplicationDocument,
-                                      PersistGeneratedDocumentPort persistGeneratedDocument) {
+                                      GeneratedDocumentWriter documentWriter) {
         this.contentGuards = contentGuards;
         this.buildApplicationDocument = buildApplicationDocument;
-        this.persistGeneratedDocument = persistGeneratedDocument;
+        this.documentWriter = documentWriter;
     }
 
     public StructuredDocument finalizeDocument(GenerateDocumentCommand cmd, GenerationInputs in,
@@ -43,7 +43,7 @@ public class GeneratedDocumentFinalizer {
         StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
                 cmd.userId(), parseDocumentType(cmd.documentType()), body, cmd.templateId(),
                 JobKeywords.of(in.job()), cmd.showProfileImage(), cmd.theme(), guardFindings);
-        return persistGeneratedDocument.save(cmd.userId(), cmd.jobId(), doc, modelName);
+        return documentWriter.save(cmd.userId(), cmd.jobId(), doc, modelName);
     }
 
     private static DocumentType parseDocumentType(String type) {
