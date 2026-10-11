@@ -5,6 +5,7 @@ import { tap } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 import { auth } from '../firebase/firebase.config';
+import { OAuthState } from './oauth-state';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -27,6 +28,7 @@ export interface MeResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private readonly USER_KEY = 'aa_user';
+  private readonly linkedInState = new OAuthState('linkedin_state');
 
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUser());
   currentUser$ = this.currentUserSubject.asObservable();
@@ -71,8 +73,7 @@ export class AuthService {
   buildLinkedInAuthUrl(redirectUri: string): string {
     const clientId = environment.linkedInClientId;
     const scope = 'openid profile email';
-    const state = Math.random().toString(36).substring(2);
-    sessionStorage.setItem('linkedin_state', state);
+    const state = this.linkedInState.issue();
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: clientId,
@@ -81,6 +82,11 @@ export class AuthService {
       state
     });
     return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
+  }
+
+  /** Checks the `state` LinkedIn echoed back against the one this tab issued (CSRF). One use only. */
+  consumeLinkedInState(returned: string | null): boolean {
+    return this.linkedInState.consume(returned);
   }
 
   logout(): Promise<void> {

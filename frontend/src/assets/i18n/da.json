@@ -1820,7 +1820,8 @@
       "weakPassword": "Adgangskoden er for svag.",
       "registerFailed": "Oprettelse mislykkedes. Prøv igen.",
       "linkedInNoCode": "Godkendelse mislykkedes. Ingen kode modtaget fra LinkedIn.",
-      "linkedInFailed": "Login med LinkedIn mislykkedes. Prøv igen."
+      "linkedInFailed": "Login med LinkedIn mislykkedes. Prøv igen.",
+      "linkedInState": "Dette login-link er ugyldigt eller udløbet. Start login med LinkedIn igen."
     }
   },
   "nav": {

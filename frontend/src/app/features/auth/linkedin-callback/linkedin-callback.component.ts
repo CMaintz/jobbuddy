@@ -17,7 +17,12 @@ export class LinkedInCallbackComponent implements OnInit {
   error = '';
 
   ngOnInit(): void {
-    const code = this.route.snapshot.queryParamMap.get('code');
+    const params = this.route.snapshot.queryParamMap;
+    if (!this.authService.consumeLinkedInState(params.get('state'))) {
+      this.error = 'auth.error.linkedInState';
+      return;
+    }
+    const code = params.get('code');
     if (!code) {
       this.error = 'auth.error.linkedInNoCode';
       return;

@@ -1820,7 +1820,8 @@
       "weakPassword": "Password is too weak.",
       "registerFailed": "Registration failed. Please try again.",
       "linkedInNoCode": "Authorization failed. No code received from LinkedIn.",
-      "linkedInFailed": "Sign in with LinkedIn failed. Please try again."
+      "linkedInFailed": "Sign in with LinkedIn failed. Please try again.",
+      "linkedInState": "This sign-in link is invalid or has expired. Please start the LinkedIn sign-in again."
     }
   },
   "nav": {
