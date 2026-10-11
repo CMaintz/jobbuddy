@@ -1,5 +1,9 @@
 package com.autoapplicant.adapter.ai;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The command line run for each CLI-agent provider. Prompts carry crawled posting text, so each
  * default turns the agent's tools off (or confines them) and keeps it from writing a session
@@ -26,13 +30,27 @@ final class CliAgentCommands {
     static final String CODEX_DEFAULT = "codex exec --sandbox read-only --skip-git-repo-check"
             + " --ignore-user-config --ephemeral -";
 
+    private static final Logger log = LoggerFactory.getLogger(CliAgentCommands.class);
+
+    /** Up to two adapters resolve at startup (generation, enrichment chat); one warning is enough. */
+    private static final AtomicBoolean OVERRIDE_WARNED = new AtomicBoolean();
+
     private CliAgentCommands() {}
 
     /** The operator's {@code override} when set, else the sandboxed default for {@code provider}. */
     static String resolve(String provider, String override) {
         if (override != null && !override.isBlank()) {
+            warnOnceAboutOverride(override);
             return override;
         }
         return CODEX_PROVIDER.equalsIgnoreCase(provider) ? CODEX_DEFAULT : CLAUDE_DEFAULT;
+    }
+
+    private static void warnOnceAboutOverride(String override) {
+        if (OVERRIDE_WARNED.compareAndSet(false, true)) {
+            log.warn("AI_CLI_COMMAND '{}' replaces the sandboxed default command; prompts carry "
+                    + "untrusted posting text, so it must supply its own no-tools/sandbox flags",
+                    override);
+        }
     }
 }
