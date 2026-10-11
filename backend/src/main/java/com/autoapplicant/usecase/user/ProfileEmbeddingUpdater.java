@@ -81,9 +81,9 @@ public class ProfileEmbeddingUpdater {
         if (!waiting.add(event.userId())) return;
         ReentrantLock lock = lockFor(event.userId());
         lock.lock();
-        // Leave the waiting set once running, so a save made during this refresh queues another.
-        waiting.remove(event.userId());
         try {
+            // Leave the waiting set once running, so a save made during this refresh queues another.
+            waiting.remove(event.userId());
             recompute(event.userId());
         } catch (Exception e) {
             log.warn("Failed to compute profile embedding for user {}: {}",
