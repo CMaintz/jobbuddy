@@ -14,7 +14,6 @@
         </div>
       </header>
 
-      <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
       @if (loading()) {
         <div class="flex-1 flex items-center justify-center text-jb-text-dim">{{ 'common.loading' | translate }}</div>

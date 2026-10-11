@@ -7,7 +7,6 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { PhotoCropDialogComponent } from '../resume-builder/shared/photo-crop-dialog.component';
 import { AiRefineMenuComponent } from '../resume-builder/shared/ai-refine-menu.component';
@@ -36,6 +35,7 @@ import {
   SpokenLanguage, ProfileSocial, ProfileStrength, CustomSection
 } from '../../core/models/profile-section.model';
 
+import { NotifyService } from '../../shared/services/notify.service';
 interface CvSection {
   key: string;
   label: string;
@@ -47,7 +47,7 @@ interface CvSection {
   selector: 'app-master-cv-builder',
   imports: [
     FormsModule, RouterLink,
-    JbTopbarComponent, JbIconComponent, JbButtonComponent, JbToastComponent,
+    JbTopbarComponent, JbIconComponent, JbButtonComponent,
     TagInputComponent, PhotoCropDialogComponent, AiRefineMenuComponent,
     JbDropdownComponent, MasterCvPreviewComponent,
     McvStrengthsSectionComponent, McvExperienceSectionComponent, McvEducationSectionComponent,
@@ -60,6 +60,7 @@ interface CvSection {
 })
 export class MasterCvBuilderComponent implements OnInit {
   private http = inject(HttpClient);
+  protected notify = inject(NotifyService);
   private skillsApi = inject(SkillsApiService);
   private translate = inject(TranslateService);
   private profileApi = inject(ProfileSectionsApiService);
@@ -72,7 +73,6 @@ export class MasterCvBuilderComponent implements OnInit {
   loading = true;
   saving = signal(false);
   dirty = signal(false);
-  toast = signal('');
   activeSec = signal('Header');
 
   profile: Profile = {};
@@ -176,7 +176,7 @@ export class MasterCvBuilderComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        this.toast.set(this.translate.instant('masterCv.toast.loadFailed'));
+        this.notify.error('masterCv.toast.loadFailed');
       }
     });
   }
@@ -216,14 +216,14 @@ export class MasterCvBuilderComponent implements OnInit {
             : `${this.privateInfo.fullName || 'master-cv'} - CV`;
           await this.atsPdf.downloadResume(model, filename);
         } catch {
-          this.toast.set(this.translate.instant('masterCv.toast.pdfFailed'));
+          this.notify.error('masterCv.toast.pdfFailed');
         } finally {
           this.exportingPdf.set(false);
         }
       },
       error: () => {
         this.exportingPdf.set(false);
-        this.toast.set(this.translate.instant('masterCv.toast.renderFailed'));
+        this.notify.error('masterCv.toast.renderFailed');
       }
     });
   }
@@ -268,11 +268,11 @@ export class MasterCvBuilderComponent implements OnInit {
       next: res => {
         this.privateInfo.photoUrl = res.url;
         this.uploadingPhoto.set(false);
-        this.toast.set(this.translate.instant('masterCv.toast.photoUpdated'));
+        this.notify.success('masterCv.toast.photoUpdated');
       },
       error: () => {
         this.uploadingPhoto.set(false);
-        this.toast.set(this.translate.instant('masterCv.toast.photoFailed'));
+        this.notify.error('masterCv.toast.photoFailed');
       }
     });
   }
@@ -280,7 +280,7 @@ export class MasterCvBuilderComponent implements OnInit {
   removePhoto(): void {
     this.privateInfo.photoUrl = '';
     this.privateApi.updatePrivateInfo({ photoUrl: '' }).subscribe({
-      error: () => this.toast.set(this.translate.instant('masterCv.toast.photoRemoveFailed'))
+      error: () => this.notify.error('masterCv.toast.photoRemoveFailed')
     });
   }
 
@@ -313,7 +313,7 @@ export class MasterCvBuilderComponent implements OnInit {
 
     forkJoin(ops).subscribe({
       next: () => this.reloadSkills(),
-      error: () => this.toast.set(this.translate.instant('masterCv.toast.saveFailed'))
+      error: () => this.notify.error('masterCv.toast.saveFailed')
     });
   }
 
@@ -394,7 +394,7 @@ export class MasterCvBuilderComponent implements OnInit {
       deleteFn(entry.id).subscribe({
         error: () => {
           list.splice(index, 0, entry);
-          this.toast.set(this.translate.instant('masterCv.toast.deleteFailed'));
+          this.notify.error('masterCv.toast.deleteFailed');
         }
       });
     }
@@ -407,7 +407,7 @@ export class MasterCvBuilderComponent implements OnInit {
         this.certificationsList.push(saved);
         this.certSection?.reset();
       },
-      error: () => this.toast.set(this.translate.instant('masterCv.toast.certFailed'))
+      error: () => this.notify.error('masterCv.toast.certFailed')
     });
   }
 
@@ -449,13 +449,13 @@ export class MasterCvBuilderComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.dirty.set(false);
-        this.toast.set(this.translate.instant('masterCv.toast.saved'));
+        this.notify.success('masterCv.toast.saved');
         // Refresh lists so newly created entries get their server ids
         this.profileApi.getFullProfile().subscribe(full => this.applyFullProfile(full));
       },
       error: () => {
         this.saving.set(false);
-        this.toast.set(this.translate.instant('masterCv.toast.saveFailed'));
+        this.notify.error('masterCv.toast.saveFailed');
       }
     });
   }

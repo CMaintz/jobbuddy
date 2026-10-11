@@ -7,7 +7,6 @@
       <span class="text-base text-jb-text-mid">{{ 'masterCv.import' | translate }}</span>
     </div>
 
-    <jb-toast [message]="toast()" (dismissed)="toast.set('')" />
 
     <div class="flex-1 overflow-auto p-10 flex flex-col items-center gap-7 jb-scroll">
       <div class="max-w-[640px] w-full text-center">
@@ -16,6 +15,6 @@
       </div>
 
       <div class="max-w-[720px] w-full">
-        <jb-cv-import-panel (applied)="onApplied()" (failed)="toast.set($event)" />
+        <jb-cv-import-panel (applied)="onApplied()" (failed)="notify.errorText($event)" />
       </div>
     </div>

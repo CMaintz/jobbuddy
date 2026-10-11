@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -33,7 +32,7 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, JbToastComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tailored-cv.component.html',
 })
@@ -52,7 +51,6 @@ export class TailoredCvComponent implements OnInit {
   loadError = signal('');
   generating = signal(false);
   opening = signal(false);
-  toast = signal('');
 
   application = signal<Application | null>(null);
   /** CV Builder drafts already created for this job. */
@@ -144,7 +142,7 @@ export class TailoredCvComponent implements OnInit {
       next: doc => this.createDraftAndOpen(doc, app),
       error: err => {
         this.generating.set(false);
-        this.toast.set(err?.error?.message ?? this.translate.instant('tailoredCv.toast.genFailed'));
+        this.notify.errorText(err?.error?.message ?? this.translate.instant('tailoredCv.toast.genFailed'));
       }
     });
   }
@@ -175,7 +173,7 @@ export class TailoredCvComponent implements OnInit {
       error: () => {
         this.generating.set(false);
         this.opening.set(false);
-        this.toast.set(this.translate.instant('tailoredCv.toast.draftFailed'));
+        this.notify.error('tailoredCv.toast.draftFailed');
       }
     });
   }

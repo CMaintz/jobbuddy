@@ -10,7 +10,6 @@ import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.c
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToggleComponent } from '../../shared/components/jb-toggle/jb-toggle.component';
 import { JbSegmentedComponent } from '../../shared/components/jb-segmented/jb-segmented.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
@@ -93,7 +92,7 @@ interface StyleSnapshot {
   selector: 'app-settings',
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent,
-    JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent,
+    JbToggleComponent, JbSegmentedComponent, TagInputComponent, JbModalComponent,
     DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent,
     CvSectionPromptsPanelComponent,
   ],
@@ -120,7 +119,6 @@ export class SettingsComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   dirty = signal(false);
-  toast = signal('');
   userEmail = '';
   emailVerified = false;
   provider = 'password';
@@ -205,7 +203,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set(this.translate.instant('settings.toast.loadFailed'));
+        this.notify.error('settings.toast.loadFailed');
       }
     });
 
@@ -270,11 +268,11 @@ export class SettingsComponent implements OnInit {
         this.prefs = prefs;
         this.saving.set(false);
         this.dirty.set(false);
-        this.toast.set(this.translate.instant('settings.toast.saved'));
+        this.notify.success('settings.toast.saved');
       },
       error: () => {
         this.saving.set(false);
-        this.toast.set(this.translate.instant('settings.toast.saveFailed'));
+        this.notify.error('settings.toast.saveFailed');
       }
     });
 
@@ -298,7 +296,7 @@ export class SettingsComponent implements OnInit {
         this.analyzedAt.set(saved.lastAnalyzedAt);
         this.analysisBaseline = null;
       },
-      error: () => this.toast.set(this.translate.instant('settings.toast.styleSaveFailed'))
+      error: () => this.notify.error('settings.toast.styleSaveFailed')
     });
   }
 
@@ -349,7 +347,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.analyzing.set(false);
-        this.toast.set(this.translate.instant('settings.toast.analysisFailed'));
+        this.notify.error('settings.toast.analysisFailed');
       }
     });
   }
@@ -424,8 +422,8 @@ export class SettingsComponent implements OnInit {
     if (this.sendingVerification()) return;
     this.sendingVerification.set(true);
     this.auth.resendVerification()
-      .then(() => this.toast.set(this.translate.instant('settings.toast.verificationSent')))
-      .catch(() => this.toast.set(this.translate.instant('settings.toast.verificationFailed')))
+      .then(() => this.notify.success('settings.toast.verificationSent'))
+      .catch(() => this.notify.error('settings.toast.verificationFailed'))
       .finally(() => this.sendingVerification.set(false));
   }
 
@@ -433,8 +431,8 @@ export class SettingsComponent implements OnInit {
     if (this.sendingReset()) return;
     this.sendingReset.set(true);
     this.auth.sendPasswordReset()
-      .then(() => this.toast.set(this.translate.instant('settings.toast.resetSent', { email: this.userEmail })))
-      .catch(() => this.toast.set(this.translate.instant('settings.toast.resetFailed')))
+      .then(() => this.notify.success('settings.toast.resetSent', { email: this.userEmail }))
+      .catch(() => this.notify.error('settings.toast.resetFailed'))
       .finally(() => this.sendingReset.set(false));
   }
 
@@ -452,7 +450,7 @@ export class SettingsComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(a.href);
       },
-      error: () => this.toast.set(this.translate.instant('settings.toast.exportFailed'))
+      error: () => this.notify.error('settings.toast.exportFailed')
     });
   }
 
@@ -461,7 +459,7 @@ export class SettingsComponent implements OnInit {
     if (!confirmed) return;
     this.http.delete('/api/v1/users/me').subscribe({
       next: () => this.auth.logout(),
-      error: () => this.toast.set(this.translate.instant('settings.toast.deleteFailed'))
+      error: () => this.notify.error('settings.toast.deleteFailed')
     });
   }
 }

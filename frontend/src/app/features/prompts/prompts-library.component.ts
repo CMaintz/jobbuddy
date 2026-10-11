@@ -6,13 +6,13 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
 
+import { NotifyService } from '../../shared/services/notify.service';
 const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: string }[] = [
   { key: 'APPLICATION', label: 'prompts.kind.application', icon: 'layers', color: 'var(--jb-accent)' },
   { key: 'COVER_LETTER', label: 'prompts.kind.coverLetter', icon: 'doc', color: 'var(--jb-info)' },
@@ -28,19 +28,19 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
   selector: 'app-prompts-library',
   imports: [
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, JbToastComponent, TagInputComponent, JbModalComponent,
+    JbPillComponent, TagInputComponent, JbModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './prompts-library.component.html'
 })
 export class PromptsLibraryComponent implements OnInit {
   private promptApi = inject(PromptApiService);
+  protected notify = inject(NotifyService);
   private auth = inject(AuthService);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
 
   loading = signal(true);
-  toast = signal('');
   activeKind = signal<'all' | PromptCategory>('all');
   openPrompt = signal<PromptTemplate | null>(null);
   showCreate = signal(false);
@@ -99,10 +99,10 @@ export class PromptsLibraryComponent implements OnInit {
     if (p.isSelectedDefault) return;
     this.promptApi.selectDefault(p.id).subscribe({
       next: () => {
-        this.toast.set(this.translate.instant('prompts.toast.defaultSet', { name: p.name }));
+        this.notify.success('prompts.toast.defaultSet', { name: p.name });
         this.load();
       },
-      error: () => this.toast.set(this.translate.instant('prompts.toast.defaultFailed'))
+      error: () => this.notify.error('prompts.toast.defaultFailed')
     });
   }
 
@@ -112,10 +112,10 @@ export class PromptsLibraryComponent implements OnInit {
     if (!p.category) return;
     this.promptApi.resetDefault(p.category).subscribe({
       next: () => {
-        this.toast.set(this.translate.instant('prompts.toast.defaultReset'));
+        this.notify.success('prompts.toast.defaultReset');
         this.load();
       },
-      error: () => this.toast.set(this.translate.instant('prompts.toast.defaultFailed'))
+      error: () => this.notify.error('prompts.toast.defaultFailed')
     });
   }
 
@@ -145,12 +145,12 @@ export class PromptsLibraryComponent implements OnInit {
         this.savingEdit.set(false);
         this.editing.set(false);
         this.openPrompt.set(null);
-        this.toast.set(this.translate.instant('prompts.toast.updated'));
+        this.notify.success('prompts.toast.updated');
         this.load();
       },
       error: err => {
         this.savingEdit.set(false);
-        this.toast.set(this.translate.instant(err?.status === 403 ? 'prompts.toast.adminOnlyEdit' : 'prompts.toast.updateFailed'));
+        this.notify.error(err?.status === 403 ? 'prompts.toast.adminOnlyEdit' : 'prompts.toast.updateFailed');
       }
     });
   }
@@ -160,11 +160,11 @@ export class PromptsLibraryComponent implements OnInit {
     this.promptApi.delete(p.id).subscribe({
       next: () => {
         this.openPrompt.set(null);
-        this.toast.set(this.translate.instant('prompts.toast.deleted'));
+        this.notify.success('prompts.toast.deleted');
         this.load();
       },
       error: err => {
-        this.toast.set(this.translate.instant(err?.status === 403 ? 'prompts.toast.adminOnlyDelete' : 'prompts.toast.deleteFailed'));
+        this.notify.error(err?.status === 403 ? 'prompts.toast.adminOnlyDelete' : 'prompts.toast.deleteFailed');
       }
     });
   }
@@ -182,7 +182,7 @@ export class PromptsLibraryComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set(this.translate.instant('prompts.toast.loadFailed'));
+        this.notify.error('prompts.toast.loadFailed');
       }
     });
   }
@@ -195,7 +195,7 @@ export class PromptsLibraryComponent implements OnInit {
       next: shared => { this.sharedPrompts = shared; this.loadingShared.set(false); },
       error: () => {
         this.loadingShared.set(false);
-        this.toast.set(this.translate.instant('prompts.toast.sharedLoadFailed'));
+        this.notify.error('prompts.toast.sharedLoadFailed');
       }
     });
   }
@@ -216,9 +216,9 @@ export class PromptsLibraryComponent implements OnInit {
     }).subscribe({
       next: () => {
         p.isPublic = next;
-        this.toast.set(this.translate.instant(next ? 'prompts.toast.shared' : 'prompts.toast.unshared'));
+        this.notify.success(next ? 'prompts.toast.shared' : 'prompts.toast.unshared');
       },
-      error: () => this.toast.set(this.translate.instant('prompts.toast.shareFailed'))
+      error: () => this.notify.error('prompts.toast.shareFailed')
     });
   }
 
@@ -239,7 +239,7 @@ export class PromptsLibraryComponent implements OnInit {
     (next ? this.promptApi.favourite(p.id) : this.promptApi.unfavourite(p.id)).subscribe({
       error: () => {
         p.favourite = !next;
-        this.toast.set(this.translate.instant('prompts.toast.favouriteFailed'));
+        this.notify.error('prompts.toast.favouriteFailed');
       }
     });
   }
@@ -262,10 +262,10 @@ export class PromptsLibraryComponent implements OnInit {
     this.promptApi.duplicate(p.id).subscribe({
       next: () => {
         this.openPrompt.set(null);
-        this.toast.set(this.translate.instant('prompts.toast.duplicated'));
+        this.notify.success('prompts.toast.duplicated');
         this.load();
       },
-      error: () => this.toast.set(this.translate.instant('prompts.toast.duplicateFailed'))
+      error: () => this.notify.error('prompts.toast.duplicateFailed')
     });
   }
 
@@ -287,12 +287,12 @@ export class PromptsLibraryComponent implements OnInit {
         this.newDescription = '';
         this.newBody = '';
         this.newTags = [];
-        this.toast.set(this.translate.instant('prompts.toast.created'));
+        this.notify.success('prompts.toast.created');
         this.load();
       },
       error: () => {
         this.creating.set(false);
-        this.toast.set(this.translate.instant('prompts.toast.createFailed'));
+        this.notify.error('prompts.toast.createFailed');
       }
     });
   }

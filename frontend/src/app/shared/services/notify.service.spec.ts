@@ -31,6 +31,12 @@ describe('NotifyService', () => {
     expect(notify.notice()?.tone).toBe('error');
   });
 
+  it('shows a server-provided message as-is', () => {
+    notify.errorText('Quota exceeded');
+
+    expect(notify.notice()).toEqual({ message: 'Quota exceeded', tone: 'error' });
+  });
+
   it('clears on dismiss', () => {
     notify.error('notify.loadFailed');
     notify.dismiss();

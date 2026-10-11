@@ -26,6 +26,11 @@ export class NotifyService {
     this.show(key, 'success', params);
   }
 
+  /** Shows a message that is already translated or comes from the server as-is. */
+  errorText(message: string): void {
+    this._notice.set({ message, tone: 'error' });
+  }
+
   /** An error callback for `subscribe({ error })` that reports `key` and swallows the error. */
   onError(key: string): () => void {
     return () => this.error(key);
