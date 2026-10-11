@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.auth;
 
+import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.User;
@@ -36,6 +37,11 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
     this.identityProvider = identityProvider;
   }
 
+  /**
+   * Resolves only through an existing LinkedIn link. LinkedIn is not authoritative for an email (a
+   * former employer's mailbox, a recycled address), so an account that already holds the address
+   * is never linked or signed into from here; that takes a signed-in linking flow.
+   */
   @Override
   public User resolve(LinkedInIdentity identity) {
     Optional<User> byLinkedinId = userRepo.findByLinkedinId(identity.sub());
@@ -45,65 +51,46 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
     if (!identity.emailVerified()) {
       throw new SecurityException("LinkedIn has not verified this email address");
     }
-    return withVerifiedFirebaseAccount(findOrCreateByEmail(identity), identity);
+    if (userRepo.findByEmail(identity.email()).isPresent()
+        || identityProvider.emailInUse(identity.email())) {
+      throw new AccountExistsException();
+    }
+    return createNewMember(identity);
   }
 
   /**
-   * The LinkedIn id already identifies the member. Their Firebase account is only touched when
-   * LinkedIn vouches for the very address the account is registered under.
+   * The LinkedIn id already identifies the member. Their Firebase account is only given the email
+   * when LinkedIn vouches for the very address the account is registered under, since the backend
+   * accepts only tokens with a verified email.
    */
   private User returningMember(User user, LinkedInIdentity identity) {
     boolean sameVerifiedEmail =
         identity.emailVerified() && user.email().equalsIgnoreCase(identity.email());
-    return sameVerifiedEmail ? withVerifiedFirebaseAccount(user, identity) : user;
-  }
-
-  private User findOrCreateByEmail(LinkedInIdentity identity) {
-    Optional<User> byEmail = userRepo.findByEmail(identity.email());
-    if (byEmail.isPresent()) {
-      return linkLinkedInToExisting(byEmail.get(), identity.sub());
+    if (!sameVerifiedEmail) {
+      return user;
     }
-    try {
-      return createLinkedInUser(identity);
-    } catch (DataIntegrityViolationException concurrentFirstSignIn) {
-      // Two first sign-ins raced and the other one inserted the row: use it.
-      return userRepo
-          .findByLinkedinId(identity.sub())
-          .or(() -> userRepo.findByEmail(identity.email()))
-          .orElseThrow(() -> new IllegalStateException("Sign-in collided; please try again"));
-    }
-  }
-
-  /**
-   * The backend only accepts Firebase tokens with a verified email, so the Firebase account the
-   * custom token is minted for must carry the LinkedIn-verified address.
-   */
-  private User withVerifiedFirebaseAccount(User user, LinkedInIdentity identity) {
-    String preferredUid =
-        user.firebaseUid() != null ? user.firebaseUid() : identity.fallbackFirebaseUid();
-    String uid =
-        identityProvider.ensureVerifiedAccount(
-            preferredUid, identity.email(), identity.fullName());
+    String uid = user.firebaseUid() != null ? user.firebaseUid() : identity.fallbackFirebaseUid();
+    identityProvider.provisionVerifiedAccount(uid, user.email(), identity.fullName());
     if (uid.equals(user.firebaseUid()) && user.emailVerified()) {
       return user;
     }
     return userRepo.save(withFirebaseAccount(user, uid));
   }
 
-  /** Attach the LinkedIn identity to an account already registered under this email. */
-  private User linkLinkedInToExisting(User existing, String linkedinSub) {
-    return userRepo.save(
-        new User(
-            existing.id(),
-            existing.email(),
-            existing.googleId(),
-            linkedinSub,
-            existing.firebaseUid(),
-            existing.role(),
-            existing.emailVerified(),
-            existing.onboardingComplete(),
-            existing.createdAt(),
-            existing.updatedAt()));
+  /**
+   * The Firebase account comes first: if another account claimed the email meanwhile, Firebase
+   * refuses it before any app row exists.
+   */
+  private User createNewMember(LinkedInIdentity identity) {
+    String uid = identity.fallbackFirebaseUid();
+    identityProvider.provisionVerifiedAccount(uid, identity.email(), identity.fullName());
+    try {
+      return createLinkedInUser(identity, uid);
+    } catch (DataIntegrityViolationException concurrentInsert) {
+      // The same member signing in twice at once: use the row the other request wrote. Anything
+      // else holding the email is another account.
+      return userRepo.findByLinkedinId(identity.sub()).orElseThrow(AccountExistsException::new);
+    }
   }
 
   private static User withFirebaseAccount(User user, String firebaseUid) {
@@ -121,19 +108,19 @@ public class LinkedInAuthService implements ResolveLinkedInUserUseCase {
   }
 
   /**
-   * First LinkedIn sign-in: create the user with their linkedinId, a blank default profile, and,
-   * when provided, their name. The Firebase uid is attached once the Firebase account exists.
+   * First LinkedIn sign-in: create the user with their linkedinId and Firebase uid, a blank
+   * default profile, and, when provided, their name.
    */
-  private User createLinkedInUser(LinkedInIdentity identity) {
+  private User createLinkedInUser(LinkedInIdentity identity, String firebaseUid) {
     User newUser =
         new User(
             null,
             identity.email(),
             null,
             identity.sub(),
-            null,
+            firebaseUid,
             UserRole.USER,
-            identity.emailVerified(),
+            true,
             false,
             null,
             null);

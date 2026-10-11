@@ -10,12 +10,12 @@ describe('LinkedInCallbackComponent', () => {
   let authService: jasmine.SpyObj<AuthService>;
 
   function run(
-    query: Record<string, string>, stateMatches: boolean, failStatus?: number,
+    query: Record<string, string>, stateMatches: boolean, failStatus?: number, failCode?: string,
   ): LinkedInCallbackComponent {
     authService = jasmine.createSpyObj<AuthService>('AuthService', ['linkedinCallback', 'consumeLinkedInState']);
     authService.consumeLinkedInState.and.returnValue(stateMatches);
     authService.linkedinCallback.and.returnValue(failStatus
-      ? throwError(() => new HttpErrorResponse({ status: failStatus }))
+      ? throwError(() => new HttpErrorResponse({ status: failStatus, error: { code: failCode } }))
       : of({ onboardingComplete: true } as MeResponse));
     TestBed.configureTestingModule({
       imports: [LinkedInCallbackComponent, TranslateModule.forRoot()],
@@ -52,10 +52,22 @@ describe('LinkedInCallbackComponent', () => {
     expect(component.error).toBe('auth.error.linkedInEmailUnverified');
   });
 
-  it('explains an existing unverified account holding the email', () => {
+  it('points a member whose email already has an account to their existing sign-in method', () => {
+    const component = run({ code: 'abc', state: 'issued' }, true, 409, 'ACCOUNT_EXISTS');
+
+    expect(component.error).toBe('auth.error.linkedInAccountExists');
+  });
+
+  it('offers a plain retry for a sign-in collision', () => {
     const component = run({ code: 'abc', state: 'issued' }, true, 409);
 
-    expect(component.error).toBe('auth.error.linkedInAccountUnverified');
+    expect(component.error).toBe('auth.error.linkedInFailed');
+  });
+
+  it('offers a plain retry when provisioning fails', () => {
+    const component = run({ code: 'abc', state: 'issued' }, true, 500);
+
+    expect(component.error).toBe('auth.error.linkedInFailed');
   });
 
   it('rejects a callback with no state', () => {

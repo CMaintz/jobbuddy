@@ -92,7 +92,7 @@ public class AuthController {
       description = "LinkedIn has not verified the email and no account is linked yet")
   @ApiResponse(
       responseCode = "409",
-      description = "An account with this email exists but has not verified it")
+      description = "ACCOUNT_EXISTS: another account already holds this email")
   @PostMapping("/linkedin")
   public ResponseEntity<Map<String, String>> linkedInCallback(
       @RequestBody LinkedInCallbackRequest request) {

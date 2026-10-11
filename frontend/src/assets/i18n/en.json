@@ -1823,7 +1823,7 @@
       "linkedInFailed": "Sign in with LinkedIn failed. Please try again.",
       "linkedInState": "This sign-in link is invalid or has expired. Please start the LinkedIn sign-in again.",
       "linkedInEmailUnverified": "LinkedIn has not verified the email on your LinkedIn account. Confirm your primary email in LinkedIn's settings, then sign in again.",
-      "linkedInAccountUnverified": "An account with this email already exists but its email is not verified. Sign in with your password and verify it first, then connect LinkedIn."
+      "linkedInAccountExists": "An account with this email already exists. Sign in with your existing method."
     },
     "verifyEmail": {
       "title": "Verify your email",

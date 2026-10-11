@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.controller.PdfTemplateController;
+import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
@@ -88,6 +89,24 @@ class GlobalExceptionHandlerTest {
         mvc.perform(put(BASE + "/" + id).contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"x\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Template not found"));
+    }
+
+    @Test
+    void an_email_held_by_another_account_is_409_with_a_code_the_client_can_match() throws Exception {
+        when(service.getTemplates(eq(userId))).thenThrow(new AccountExistsException());
+
+        mvc.perform(get(BASE))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ACCOUNT_EXISTS"));
+    }
+
+    @Test
+    void other_conflicts_carry_no_code() throws Exception {
+        when(service.getTemplates(eq(userId))).thenThrow(new IllegalStateException("collided"));
+
+        mvc.perform(get(BASE))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").doesNotExist());
     }
 
     @Test

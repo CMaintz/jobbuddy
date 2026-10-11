@@ -3,15 +3,16 @@ package com.autoapplicant.port.out.security;
 /** The sign-in provider's account store (Firebase), as far as server-side sign-ins need it. */
 public interface IdentityProviderPort {
 
+  /** True when any provider account already holds this email, whatever the case. */
+  boolean emailInUse(String email);
+
   /**
-   * Makes sure a provider account carries {@code email} as a verified address and returns its uid.
-   * An existing account that already holds the email wins, so a LinkedIn sign-in lands in the same
-   * account as an earlier Google or password sign-up; otherwise {@code preferredUid} is created or
-   * updated.
+   * Creates the account {@code uid}, or updates it, so that it carries {@code email} as a verified
+   * address. Never touches any other account.
    *
    * @param email an address the caller has already verified out of band
-   * @throws com.autoapplicant.domain.common.AccountConflictException when an account with this
-   *     email exists but its owner never verified it
+   * @throws com.autoapplicant.domain.common.AccountExistsException when a different account
+   *     holds the email
    */
-  String ensureVerifiedAccount(String preferredUid, String email, String displayName);
+  void provisionVerifiedAccount(String uid, String email, String displayName);
 }

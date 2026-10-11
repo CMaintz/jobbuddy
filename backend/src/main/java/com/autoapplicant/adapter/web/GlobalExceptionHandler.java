@@ -1,6 +1,8 @@
 package com.autoapplicant.adapter.web;
 
+import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.NotFoundException;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -19,11 +21,18 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    public record ApiError(int status, String message, Instant timestamp, String path) {}
+    /** {@code code} is set only where a client must tell one error apart from others of its status. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record ApiError(int status, String message, Instant timestamp, String path, String code) {}
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(NotFoundException ex, WebRequest req) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(AccountExistsException.class)
+    public ResponseEntity<ApiError> handleAccountExists(AccountExistsException ex, WebRequest req) {
+        return error(HttpStatus.CONFLICT, ex.getMessage(), req, AccountExistsException.CODE);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -75,8 +84,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiError> error(HttpStatus status, String message, WebRequest req) {
+        return error(status, message, req, null);
+    }
+
+    private ResponseEntity<ApiError> error(
+            HttpStatus status, String message, WebRequest req, String code) {
         return ResponseEntity.status(status).body(
                 new ApiError(status.value(), message, Instant.now(),
-                        req.getDescription(false).replace("uri=", "")));
+                        req.getDescription(false).replace("uri=", ""), code));
     }
 }

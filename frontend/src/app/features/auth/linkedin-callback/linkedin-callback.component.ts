@@ -4,11 +4,20 @@ import { TranslateModule } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
 
-/** Backend refusals the user can act on, by HTTP status. */
-const CALLBACK_ERRORS: Partial<Record<number, string>> = {
-  [HttpStatusCode.Forbidden]: 'auth.error.linkedInEmailUnverified',
-  [HttpStatusCode.Conflict]: 'auth.error.linkedInAccountUnverified',
-};
+/** Error code the backend sends when another account already holds the LinkedIn email. */
+const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS';
+
+/**
+ * Only refusals the user can act on get their own message. Any other failure, including a 409
+ * from a sign-in collision, is worth simply retrying.
+ */
+function callbackErrorKey(e: HttpErrorResponse): string {
+  if (e?.status === HttpStatusCode.Forbidden) return 'auth.error.linkedInEmailUnverified';
+  if (e?.status === HttpStatusCode.Conflict && e.error?.code === ACCOUNT_EXISTS) {
+    return 'auth.error.linkedInAccountExists';
+  }
+  return 'auth.error.linkedInFailed';
+}
 
 @Component({
   selector: 'app-linkedin-callback',
@@ -38,7 +47,7 @@ export class LinkedInCallbackComponent implements OnInit {
     this.authService.linkedinCallback(code, redirectUri).subscribe({
       next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
       error: (e: HttpErrorResponse) => {
-        this.error = CALLBACK_ERRORS[e?.status] ?? 'auth.error.linkedInFailed';
+        this.error = callbackErrorKey(e);
       }
     });
   }
