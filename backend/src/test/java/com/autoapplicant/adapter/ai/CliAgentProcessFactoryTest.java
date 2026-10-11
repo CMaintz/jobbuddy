@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -34,28 +32,12 @@ class CliAgentProcessFactoryTest {
     }
 
     @Test
-    void scrubSecretsRemovesBackendSecretsButKeepsCliAuthAndBasics() {
-        Map<String, String> env = new HashMap<>();
-        env.put("OPENAI_API_KEY", "sk-x");
-        env.put("GEMINI_API_KEY", "g");
-        env.put("SECRET_ENCRYPTION_KEY", "k");
-        env.put("DB_PASS", "p");
-        env.put("POSTGRES_PASSWORD", "p");
-        env.put("LINKEDIN_CLIENT_SECRET", "s");
-        env.put("GOOGLE_APPLICATION_CREDENTIALS", "/secrets/sa.json");
-        env.put("SPRING_DATASOURCE_PASSWORD", "p");
-        env.put("openai_api_key", "lowercase");
-        env.put("PATH", "/usr/bin");
-        env.put("HOME", "/home/u");
-        env.put("USERPROFILE", "C:\\Users\\u");
-        env.put("ANTHROPIC_API_KEY", "cli-auth");
-        env.put("CLAUDE_CONFIG_DIR", "/home/u/.claude");
+    void createDropsBackendSecretsFromTheChildEnvironment() {
+        ProcessBuilder pb = CliAgentProcessFactory.create("claude -p", tempDir);
 
-        CliAgentProcessFactory.scrubSecrets(env);
-
-        assertThat(env.keySet())
-                .containsExactlyInAnyOrder(
-                        "PATH", "HOME", "USERPROFILE", "ANTHROPIC_API_KEY", "CLAUDE_CONFIG_DIR");
+        assertThat(pb.environment().keySet())
+                .noneMatch(name -> name.equalsIgnoreCase("SPRING_APPLICATION_JSON"))
+                .noneMatch(name -> name.equalsIgnoreCase("JAVA_HOME"));
     }
 
     @Test

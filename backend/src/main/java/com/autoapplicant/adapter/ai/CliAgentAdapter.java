@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * high-throughput bulk enrichment.
  *
  * <p>Prompts carry crawled job-posting text, so the agent is treated as untrusted: see
- * {@link CliAgentProcessFactory} for the sandbox (no tools, empty cwd, scrubbed env).
+ * {@link CliAgentProcessFactory} for the sandbox (tools off, allowlisted env, empty cwd).
  */
 public class CliAgentAdapter implements ChatProviderPort {
 
