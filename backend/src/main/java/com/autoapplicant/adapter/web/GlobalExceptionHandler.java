@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.web;
 
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -20,7 +21,9 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    public record ApiError(int status, String message, Instant timestamp, String path) {}
+    /** {@code code} is a stable machine-readable reason, present only where a client can act on it. */
+    public record ApiError(int status, @JsonInclude(JsonInclude.Include.NON_NULL) String code,
+                           String message, Instant timestamp, String path) {}
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(NotFoundException ex, WebRequest req) {
@@ -37,11 +40,20 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, ex.getMessage(), req);
     }
 
-    /** The user gets the exception's actionable message; the provider or parser cause stays in the log. */
+    /**
+     * A provider outage is 503 because the CV itself was fine; the other reasons are 422. The
+     * cause's message is kept out of the warn line: it can carry CLI stderr or fragments of the CV.
+     */
     @ExceptionHandler(CvParseException.class)
     public ResponseEntity<ApiError> handleCvParse(CvParseException ex, WebRequest req) {
-        log.warn("CV parse failed on {}: {}", req.getDescription(false), ex.getMessage(), ex.getCause());
-        return error(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), req);
+        String causeType = ex.getCause() != null ? ex.getCause().getClass().getName() : "none";
+        log.warn("CV parse failed on {}: reason={} cause={}",
+                req.getDescription(false), ex.reason(), causeType);
+        log.debug("CV parse failure cause", ex);
+        HttpStatus status = ex.reason() == CvParseException.Reason.AI_UNAVAILABLE
+                ? HttpStatus.SERVICE_UNAVAILABLE
+                : HttpStatus.UNPROCESSABLE_ENTITY;
+        return error(status, ex.reason().name(), ex.getMessage(), req);
     }
 
     @ExceptionHandler({SecurityException.class, AccessDeniedException.class})
@@ -83,8 +95,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiError> error(HttpStatus status, String message, WebRequest req) {
+        return error(status, null, message, req);
+    }
+
+    private ResponseEntity<ApiError> error(HttpStatus status, String code, String message,
+                                           WebRequest req) {
         return ResponseEntity.status(status).body(
-                new ApiError(status.value(), message, Instant.now(),
+                new ApiError(status.value(), code, message, Instant.now(),
                         req.getDescription(false).replace("uri=", "")));
     }
 }

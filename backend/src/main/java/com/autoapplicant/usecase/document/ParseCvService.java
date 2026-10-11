@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.common.CvParseException;
+import com.autoapplicant.domain.common.CvParseException.Reason;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
@@ -103,7 +104,7 @@ public class ParseCvService implements ParseCvUseCase {
     @Override
     public Profile parseCvText(UUID userId, String rawCvText) {
         if (rawCvText == null || rawCvText.isBlank()) {
-            throw new CvParseException(NO_TEXT_MESSAGE);
+            throw new CvParseException(Reason.NO_TEXT, NO_TEXT_MESSAGE);
         }
         JsonNode node = toJson(askAi(rawCvText));
         contactWriter.write(userId, node);
@@ -143,22 +144,22 @@ public class ParseCvService implements ParseCvUseCase {
         try {
             return aiProvider.generate(composition, AiOperations.CV_PARSE);
         } catch (RuntimeException e) {
-            throw new CvParseException(AI_UNAVAILABLE_MESSAGE, e);
+            throw new CvParseException(Reason.AI_UNAVAILABLE, AI_UNAVAILABLE_MESSAGE, e);
         }
     }
 
     private JsonNode toJson(String aiResponse) {
         if (aiResponse == null) {
-            throw new CvParseException(UNREADABLE_RESPONSE_MESSAGE);
+            throw new CvParseException(Reason.UNREADABLE, UNREADABLE_RESPONSE_MESSAGE);
         }
         JsonNode node;
         try {
             node = objectMapper.readTree(AiResponseParser.stripCodeFence(aiResponse.trim()));
         } catch (JsonProcessingException e) {
-            throw new CvParseException(UNREADABLE_RESPONSE_MESSAGE, e);
+            throw new CvParseException(Reason.UNREADABLE, UNREADABLE_RESPONSE_MESSAGE, e);
         }
         if (node == null || !node.isObject()) {
-            throw new CvParseException(UNREADABLE_RESPONSE_MESSAGE);
+            throw new CvParseException(Reason.UNREADABLE, UNREADABLE_RESPONSE_MESSAGE);
         }
         return node;
     }

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.common.CvParseException;
+import com.autoapplicant.domain.common.CvParseException.Reason;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
@@ -88,6 +89,7 @@ class ParseCvServiceTest {
     void blank_cv_text_is_rejected_without_calling_the_ai() {
         assertThatThrownBy(() -> service.parseCvText(userId, "  \n "))
                 .isInstanceOf(CvParseException.class)
+                .hasFieldOrPropertyWithValue("reason", Reason.NO_TEXT)
                 .hasMessage(ParseCvService.NO_TEXT_MESSAGE);
 
         verifyNoInteractions(aiProvider, writer);
@@ -100,6 +102,7 @@ class ParseCvServiceTest {
 
         assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
                 .isInstanceOf(CvParseException.class)
+                .hasFieldOrPropertyWithValue("reason", Reason.AI_UNAVAILABLE)
                 .hasMessage(ParseCvService.AI_UNAVAILABLE_MESSAGE)
                 .hasCause(cause);
 
@@ -112,6 +115,7 @@ class ParseCvServiceTest {
 
         assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
                 .isInstanceOf(CvParseException.class)
+                .hasFieldOrPropertyWithValue("reason", Reason.UNREADABLE)
                 .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
 
         verify(writer, never()).write(any(), any());
@@ -123,6 +127,7 @@ class ParseCvServiceTest {
 
         assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
                 .isInstanceOf(CvParseException.class)
+                .hasFieldOrPropertyWithValue("reason", Reason.UNREADABLE)
                 .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
 
         verify(writer, never()).write(any(), any());
@@ -134,6 +139,7 @@ class ParseCvServiceTest {
 
         assertThatThrownBy(() -> service.parseCvText(userId, "raw"))
                 .isInstanceOf(CvParseException.class)
+                .hasFieldOrPropertyWithValue("reason", Reason.UNREADABLE)
                 .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
     }
 }
