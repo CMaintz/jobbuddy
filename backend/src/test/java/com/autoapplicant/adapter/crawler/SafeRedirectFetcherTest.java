@@ -24,8 +24,16 @@ class SafeRedirectFetcherTest {
     private static final String PUBLIC_URL = "http://93.184.216.34/jobs/1";
     private static final int FOUND = 302;
     private static final int OK = 200;
+    private static final String OTHER_HOST_URL = "http://8.8.8.8/elsewhere";
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String COOKIE = "Cookie";
+    private static final String ACCEPT = "Accept";
+    private static final String TOKEN = "Bearer secret";
+    private static final String SESSION = "sid=1";
+    private static final String HTML = "text/html";
 
     private final List<URI> sent = new ArrayList<>();
+    private final List<HttpRequest> sentRequests = new ArrayList<>();
 
     @Test
     void refusesRedirectToLoopback() throws Exception {
@@ -72,7 +80,57 @@ class SafeRedirectFetcherTest {
         SafeRedirectFetcher fetcher = fetcherAnswering(uri -> redirect(PUBLIC_URL));
 
         assertThat(fetcher.send(get(PUBLIC_URL))).isEmpty();
-        assertThat(sent).hasSize(SafeRedirectFetcher.MAX_REDIRECT_HOPS + 1);
+        assertThat(sent).hasSize(RedirectHops.MAX_REDIRECT_HOPS + 1);
+    }
+
+    @Test
+    void redirectWithoutLocationIsAFailureNotTheFinalResponse() throws Exception {
+        SafeRedirectFetcher fetcher = fetcherAnswering(uri -> response(FOUND, Map.of()));
+
+        assertThat(fetcher.send(get(PUBLIC_URL))).isEmpty();
+    }
+
+    @Test
+    void redirectWithMalformedLocationIsAFailureNotTheFinalResponse() throws Exception {
+        SafeRedirectFetcher fetcher = fetcherAnswering(uri -> redirect("ht!tp://%%%"));
+
+        assertThat(fetcher.send(get(PUBLIC_URL))).isEmpty();
+        assertThat(sent).hasSize(1);
+    }
+
+    @Test
+    void crossOriginHopDropsCredentialHeadersButKeepsTheRest() throws Exception {
+        SafeRedirectFetcher fetcher = fetcherAnswering(
+                uri -> uri.toString().equals(PUBLIC_URL) ? redirect(OTHER_HOST_URL) : ok());
+
+        fetcher.send(withCredentials(PUBLIC_URL));
+
+        HttpRequest hop = sentRequests.get(1);
+        assertThat(hop.uri()).isEqualTo(URI.create(OTHER_HOST_URL));
+        assertThat(hop.headers().firstValue(AUTHORIZATION)).isEmpty();
+        assertThat(hop.headers().firstValue(COOKIE)).isEmpty();
+        assertThat(hop.headers().firstValue(ACCEPT)).contains(HTML);
+    }
+
+    @Test
+    void sameOriginHopKeepsCredentialHeaders() throws Exception {
+        SafeRedirectFetcher fetcher = fetcherAnswering(
+                uri -> uri.getPath().equals("/jobs/1") ? redirect("/jobs/1/view") : ok());
+
+        fetcher.send(withCredentials(PUBLIC_URL));
+
+        HttpRequest hop = sentRequests.get(1);
+        assertThat(hop.headers().firstValue(AUTHORIZATION)).contains(TOKEN);
+        assertThat(hop.headers().firstValue(COOKIE)).contains(SESSION);
+    }
+
+    private static HttpRequest withCredentials(String url) {
+        return HttpRequest.newBuilder(URI.create(url))
+                .header(AUTHORIZATION, TOKEN)
+                .header(COOKIE, SESSION)
+                .header(ACCEPT, HTML)
+                .GET()
+                .build();
     }
 
     private SafeRedirectFetcher fetcherAnswering(Function<URI, HttpResponse<String>> responder)
@@ -81,6 +139,7 @@ class SafeRedirectFetcherTest {
         doAnswer(invocation -> {
             URI uri = invocation.<HttpRequest>getArgument(0).uri();
             sent.add(uri);
+            sentRequests.add(invocation.getArgument(0));
             return responder.apply(uri);
         }).when(client).send(any(HttpRequest.class), any());
         return new SafeRedirectFetcher(client);

@@ -7,25 +7,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Sends a GET and follows redirects by hand, running {@link UrlSafetyValidator} on every hop.
  * The JDK client's own redirect following only lets us validate the first URL, so a public page
  * answering 302 to an internal host (127.0.0.1, 169.254.169.254, ...) would slip past the SSRF
  * guard. Here the client never follows redirects itself and each Location is checked first.
+ *
+ * <p>Residual risk, DNS rebinding: the validator resolves the host, then the client resolves it
+ * again to connect, so a host whose DNS answer flips between the two lookups could still reach
+ * an internal address. Pinning the validated address is not clean with java.net.http (Host is a
+ * restricted header, and connecting to a bare IP breaks SNI and certificate checks for https).
+ * What closes the window in practice is the JVM's positive DNS cache
+ * ({@code networkaddress.cache.ttl}, 30s by default): the client's lookup is served the answer
+ * the validator just cached. Setting that TTL to 0 reopens the window.
  */
 public final class SafeRedirectFetcher {
-
-    private static final Logger log = LoggerFactory.getLogger(SafeRedirectFetcher.class);
-
-    /** Redirects followed before giving up; real job boards need two or three at most. */
-    static final int MAX_REDIRECT_HOPS = 5;
-
-    private static final Set<Integer> REDIRECT_STATUSES = Set.of(301, 302, 303, 307, 308);
-    private static final String LOCATION_HEADER = "Location";
 
     private final HttpClient client;
 
@@ -42,36 +39,35 @@ public final class SafeRedirectFetcher {
     }
 
     /**
-     * Sends {@code request}, following safe redirects. Empty when any hop is an unsafe URL or the
-     * hop cap is exceeded; otherwise the final non-redirect response.
+     * Sends {@code request}, following safe redirects. Empty when any hop is an unsafe URL, a
+     * redirect has no usable Location, or the hop cap is exceeded; otherwise the final
+     * non-redirect response.
      */
     public Optional<HttpResponse<String>> send(HttpRequest request)
             throws IOException, InterruptedException {
-        HttpRequest current = request;
-        for (int hop = 0; hop <= MAX_REDIRECT_HOPS; hop++) {
-            if (!UrlSafetyValidator.isSafeHttpUrl(current.uri().toString())) {
-                log.warn("Fetch refused unsafe/non-public URL at hop {}: {}", hop, current.uri());
-                return Optional.empty();
-            }
-            HttpResponse<String> response = client.send(current, HttpResponse.BodyHandlers.ofString());
-            Optional<URI> next = redirectTarget(response, current.uri());
-            if (next.isEmpty()) return Optional.of(response);
-            current = HttpRequest.newBuilder(current, (name, value) -> true).uri(next.get()).GET().build();
-        }
-        log.warn("Fetch gave up after {} redirects: {}", MAX_REDIRECT_HOPS, request.uri());
-        return Optional.empty();
+        return sendHop(request, 0);
     }
 
-    /** The resolved Location of a redirect response, or empty when it is not a usable redirect. */
-    private static Optional<URI> redirectTarget(HttpResponse<String> response, URI from) {
-        if (!REDIRECT_STATUSES.contains(response.statusCode())) return Optional.empty();
-        Optional<String> location = response.headers().firstValue(LOCATION_HEADER);
-        if (location.isEmpty()) return Optional.empty();
-        try {
-            return Optional.of(from.resolve(location.get().trim()));
-        } catch (IllegalArgumentException e) {
-            log.debug("Ignoring malformed redirect Location: {}", location.get());
+    private Optional<HttpResponse<String>> sendHop(HttpRequest current, int hop)
+            throws IOException, InterruptedException {
+        if (!RedirectHops.mayFetch(UrlSafetyValidator::isSafeHttpUrl, current.uri(), hop)) {
             return Optional.empty();
         }
+        HttpResponse<String> response = client.send(current, HttpResponse.BodyHandlers.ofString());
+        if (!RedirectHops.isRedirect(response.statusCode())) return Optional.of(response);
+        Optional<URI> next = RedirectHops.target(
+                current.uri(), response.headers().firstValue(RedirectHops.LOCATION_HEADER));
+        if (next.isEmpty()) return Optional.empty();
+        return sendHop(redirected(current, next.get()), hop + 1);
+    }
+
+    /** The follow-up GET to {@code to}; credentials are dropped once the hop leaves the origin. */
+    private static HttpRequest redirected(HttpRequest from, URI to) {
+        boolean sameOrigin = RedirectHops.sameOrigin(from.uri(), to);
+        return HttpRequest.newBuilder(
+                        from, (name, value) -> sameOrigin || !RedirectHops.isCredentialHeader(name))
+                .uri(to)
+                .GET()
+                .build();
     }
 }
