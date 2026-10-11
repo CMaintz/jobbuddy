@@ -1822,6 +1822,17 @@
       "linkedInNoCode": "Authorization failed. No code received from LinkedIn.",
       "linkedInFailed": "Sign in with LinkedIn failed. Please try again.",
       "linkedInState": "This sign-in link is invalid or has expired. Please start the LinkedIn sign-in again."
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "body": "We sent a verification link to {{email}}. Click it, then come back here to continue.",
+      "continue": "I've verified, continue",
+      "resend": "Resend verification email",
+      "signOut": "Sign out",
+      "sent": "Verification email sent. Check your inbox.",
+      "sendFailed": "Could not send the email. Please try again in a moment.",
+      "stillUnverified": "Your email is not verified yet. Click the link in the email first.",
+      "checkFailed": "Could not check your verification status. Please try again."
     }
   },
   "nav": {

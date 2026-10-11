@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, from, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, from, switchMap, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
@@ -14,8 +14,15 @@ import {
   signInWithPopup,
   signInWithCustomToken,
   signOut,
+  reload,
   GoogleAuthProvider
 } from 'firebase/auth';
+
+/** Error code `login()` fails with when the account still has an unverified email. */
+export const EMAIL_NOT_VERIFIED = 'auth/email-not-verified';
+
+/** Firebase's sign-in provider id for sessions minted from our backend's custom token (LinkedIn). */
+const CUSTOM_TOKEN_PROVIDER = 'custom';
 
 export interface MeResponse {
   userId: string;
@@ -33,10 +40,16 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUser());
   currentUser$ = this.currentUserSubject.asObservable();
 
-  /** Email/password sign-in. Returns internal user record from /me. */
+  /**
+   * Email/password sign-in. Returns internal user record from /me, or fails with
+   * `{ code: EMAIL_NOT_VERIFIED }` while the address is unverified (the backend would reject /me).
+   * The Firebase session is kept in that case so the verify-email screen can resend the link.
+   */
   login(email: string, password: string): Observable<MeResponse> {
     return from(signInWithEmailAndPassword(auth, email, password)).pipe(
-      switchMap(() => this.fetchMe())
+      switchMap(cred => cred.user.emailVerified
+        ? this.fetchMe()
+        : throwError(() => ({ code: EMAIL_NOT_VERIFIED })))
     );
   }
 
@@ -103,6 +116,42 @@ export class AuthService {
   /** Sign-in provider id of the current session: 'password', 'google.com', or custom (LinkedIn). */
   signInProvider(): string {
     return auth.currentUser?.providerData[0]?.providerId ?? 'password';
+  }
+
+  /** Email of the signed-in Firebase user, if any. */
+  currentEmail(): string | null {
+    return auth.currentUser?.email ?? null;
+  }
+
+  /**
+   * True when a signed-in user still has to verify their email before using the app.
+   * Custom-token (LinkedIn) sessions are exempt: they carry no Firebase email, and the backend
+   * only issues one after LinkedIn has verified the address.
+   */
+  async needsEmailVerification(): Promise<boolean> {
+    const user = auth.currentUser;
+    if (!user || user.emailVerified) return false;
+    const token = await user.getIdTokenResult();
+    return token.signInProvider !== CUSTOM_TOKEN_PROVIDER;
+  }
+
+  /**
+   * Re-reads the user from Firebase after they clicked the verification link. When verified it
+   * also force-refreshes the ID token: the cached one still says unverified and the backend
+   * would keep rejecting it until it expires.
+   */
+  async confirmEmailVerified(): Promise<boolean> {
+    const user = auth.currentUser;
+    if (!user) return false;
+    await reload(user);
+    if (!user.emailVerified) return false;
+    await user.getIdToken(true);
+    return true;
+  }
+
+  /** Loads the internal user record once the session is fully usable. */
+  loadCurrentUser(): Observable<MeResponse> {
+    return this.fetchMe();
   }
 
   resendVerification(): Promise<void> {

@@ -1822,6 +1822,17 @@
       "linkedInNoCode": "Godkendelse mislykkedes. Ingen kode modtaget fra LinkedIn.",
       "linkedInFailed": "Login med LinkedIn mislykkedes. Prøv igen.",
       "linkedInState": "Dette login-link er ugyldigt eller udløbet. Start login med LinkedIn igen."
+    },
+    "verifyEmail": {
+      "title": "Bekræft din e-mail",
+      "body": "Vi har sendt et bekræftelseslink til {{email}}. Klik på det, og vend så tilbage hertil for at fortsætte.",
+      "continue": "Jeg har bekræftet, fortsæt",
+      "resend": "Send bekræftelsesmail igen",
+      "signOut": "Log ud",
+      "sent": "Bekræftelsesmail sendt. Tjek din indbakke.",
+      "sendFailed": "Mailen kunne ikke sendes. Prøv igen om lidt.",
+      "stillUnverified": "Din e-mail er ikke bekræftet endnu. Klik først på linket i mailen.",
+      "checkFailed": "Vi kunne ikke tjekke din bekræftelse. Prøv igen."
     }
   },
   "nav": {

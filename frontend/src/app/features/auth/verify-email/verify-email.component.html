@@ -1,0 +1,24 @@
+    <div class="min-h-screen flex items-center justify-center">
+      <div class="card w-full max-w-md">
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ 'auth.verifyEmail.title' | translate }}</h1>
+        <p class="text-sm text-gray-600 mb-6">
+          {{ 'auth.verifyEmail.body' | translate:{ email: email() ?? '' } }}
+        </p>
+        @if (status()) {
+          <div class="rounded-md p-3 mb-4 text-sm"
+               [class]="status() === 'sent' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+            {{ 'auth.verifyEmail.' + status() | translate }}
+          </div>
+        }
+        <button type="button" class="btn-primary w-full" [disabled]="busy()" (click)="continue()">
+          {{ 'auth.verifyEmail.continue' | translate }}
+        </button>
+        <button type="button" [disabled]="busy()" (click)="resend()"
+            class="mt-3 w-full border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          {{ 'auth.verifyEmail.resend' | translate }}
+        </button>
+        <button type="button" (click)="signOut()" class="mt-4 text-sm text-blue-600 hover:underline">
+          {{ 'auth.verifyEmail.signOut' | translate }}
+        </button>
+      </div>
+    </div>

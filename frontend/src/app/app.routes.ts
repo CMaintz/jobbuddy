@@ -18,6 +18,11 @@ export const routes: Routes = [
     path: 'auth/linkedin/callback',
     loadComponent: () => import('./features/auth/linkedin-callback/linkedin-callback.component').then(m => m.LinkedInCallbackComponent)
   },
+  // Needs a Firebase session but not a verified one, so it sits outside the authGuard'd shell.
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
   {
     path: 'privacy',
     loadComponent: () => import('./features/legal/privacy-policy.component').then(m => m.PrivacyPolicyComponent)

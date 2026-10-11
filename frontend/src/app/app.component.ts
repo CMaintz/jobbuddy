@@ -9,6 +9,9 @@ import { StreakBadgeComponent } from './shared/components/streak-badge/streak-ba
 import { ActivityStreakService } from './core/activity-streak.service';
 import { Subscription, filter } from 'rxjs';
 
+/** Routes rendered without the app shell. An unverified user on /verify-email cannot use the app yet. */
+const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
+
 interface NavItem {
   id: string;
   label: string;
@@ -110,7 +113,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   isFullscreenRoute(): boolean {
-    return this.router.url.startsWith('/onboarding');
+    return FULLSCREEN_ROUTES.some(route => this.router.url.startsWith(route));
   }
 
   userName(): string {
