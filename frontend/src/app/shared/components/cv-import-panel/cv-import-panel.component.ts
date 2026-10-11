@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
@@ -118,11 +118,21 @@ export class CvImportPanelComponent {
           if (current) this.preview.set({ ...current, skills: skills.map(s => s.skillName) });
         });
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.parsing.set(false);
-        this.failed.emit(this.translate.instant('cvImport.error.parseFailed'));
+        this.failed.emit(this.parseFailureMessage(err));
       }
     });
+  }
+
+  /**
+   * A 422 is the backend saying why this CV could not be parsed, in words meant for the user.
+   * Any other failure's message is not (a 500 just says "Internal server error"), so it gets the
+   * generic translated one.
+   */
+  private parseFailureMessage(err: HttpErrorResponse): string {
+    const serverMessage = err?.status === HttpStatusCode.UnprocessableEntity ? err.error?.message : undefined;
+    return serverMessage || this.translate.instant('cvImport.error.parseFailed');
   }
 
   /** Apply the parsed preview to the master profile. The backend merges: null fields keep their current value. */
