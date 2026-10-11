@@ -11,12 +11,14 @@ import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
+import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.ProjectRepositoryPort;
 import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,11 +32,20 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * <p>A bean of its own so the {@code @Async} proxy actually applies: the old self-invoked async
  * method on the saving service ran inline and blocked the request on the embedding call. Runs
  * after commit when the save happens inside a transaction, and right away when it does not.
+ *
+ * <p>Refreshes for one user are serialised and each reads the profile as it is now, so rapid
+ * saves cannot finish out of order and leave an older embedding stored over a newer one.
  */
 @Component
 public class ProfileEmbeddingUpdater {
 
     private static final Logger log = LoggerFactory.getLogger(ProfileEmbeddingUpdater.class);
+    // Striped rather than one lock per user so the set stays bounded; a collision only makes
+    // two users' refreshes wait on each other.
+    private static final int LOCK_STRIPES = 64;
+
+    private final ReentrantLock[] userLocks = newLocks();
+    private final ProfileRepositoryPort profileRepo;
 
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
     private final WorkExperienceRepositoryPort workExpRepo;
@@ -43,12 +54,14 @@ public class ProfileEmbeddingUpdater {
     private final AiProviderPort aiProvider;
     private final ProfileSkillRepositoryPort profileSkillRepo;
 
-    public ProfileEmbeddingUpdater(ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
+    public ProfileEmbeddingUpdater(ProfileRepositoryPort profileRepo,
+                                   ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
                                    WorkExperienceRepositoryPort workExpRepo,
                                    ProjectRepositoryPort projectRepo,
                                    CertificationRepositoryPort certRepo,
                                    @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                                    ProfileSkillRepositoryPort profileSkillRepo) {
+        this.profileRepo = profileRepo;
         this.profileEmbeddingRepo = profileEmbeddingRepo;
         this.workExpRepo = workExpRepo;
         this.projectRepo = projectRepo;
@@ -60,16 +73,21 @@ public class ProfileEmbeddingUpdater {
     @Async("userAiTaskExecutor")
     @TransactionalEventListener(fallbackExecution = true)
     public void onProfileSaved(ProfileSavedEvent event) {
+        ReentrantLock lock = lockFor(event.userId());
+        lock.lock();
         try {
-            recompute(event.userId(), event.profile());
+            recompute(event.userId());
         } catch (Exception e) {
             log.warn("Failed to compute profile embedding for user {}: {}",
                     event.userId(), e.getMessage());
+        } finally {
+            lock.unlock();
         }
     }
 
-    private void recompute(UUID userId, Profile profile) {
-        String profileText = buildProfileText(profile, skillNames(userId),
+    private void recompute(UUID userId) {
+        Profile profile = profileRepo.findByUserId(userId).orElse(null);
+        String profileText = profile == null ? "" : buildProfileText(profile, skillNames(userId),
                 workExpRepo.findByUserId(userId),
                 projectRepo.findByUserId(userId),
                 certRepo.findByUserId(userId));
@@ -81,6 +99,18 @@ public class ProfileEmbeddingUpdater {
         profileEmbeddingRepo.save(new ProfileEmbedding(
                 null, userId, vector, aiProvider.embeddingModelName(), Instant.now()));
         log.debug("Updated profile embedding for user {}", userId);
+    }
+
+    private ReentrantLock lockFor(UUID userId) {
+        return userLocks[Math.floorMod(userId.hashCode(), LOCK_STRIPES)];
+    }
+
+    private static ReentrantLock[] newLocks() {
+        ReentrantLock[] locks = new ReentrantLock[LOCK_STRIPES];
+        for (int i = 0; i < LOCK_STRIPES; i++) {
+            locks[i] = new ReentrantLock();
+        }
+        return locks;
     }
 
     // Skill names come from the profile's skill rows now. The embedding is what makes a

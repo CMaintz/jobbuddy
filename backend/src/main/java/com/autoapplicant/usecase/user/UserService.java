@@ -55,7 +55,7 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                 merged(profile.employmentTypePreference(), existing, Profile::employmentTypePreference),
                 null, null));
         // The embedding refresh is an AI call; ProfileEmbeddingUpdater does it off this thread.
-        events.publishEvent(new ProfileSavedEvent(userId, saved));
+        events.publishEvent(new ProfileSavedEvent(userId));
         return saved;
     }
 

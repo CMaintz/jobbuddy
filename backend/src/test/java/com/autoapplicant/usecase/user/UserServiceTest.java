@@ -98,7 +98,7 @@ class UserServiceTest {
 
         ArgumentCaptor<ProfileSavedEvent> cap = ArgumentCaptor.forClass(ProfileSavedEvent.class);
         verify(events).publishEvent(cap.capture());
-        assertThat(cap.getValue()).isEqualTo(new ProfileSavedEvent(userId, savedProfile));
+        assertThat(cap.getValue()).isEqualTo(new ProfileSavedEvent(userId));
         assertThat(result).isSameAs(savedProfile);
     }
 
