@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
@@ -9,7 +10,7 @@ import { StreakBadgeComponent } from './shared/components/streak-badge/streak-ba
 import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
 import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
-import { Subscription, filter } from 'rxjs';
+import { filter } from 'rxjs';
 
 /** Routes rendered without the app shell. An unverified user on /verify-email cannot use the app yet. */
 const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
@@ -35,14 +36,14 @@ interface NavItem {
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app.component.html'
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
   auth = inject(AuthService);
   theme = inject(ThemeService);
   language = inject(LanguageService);
   notify = inject(NotifyService);
   private router = inject(Router);
   private streak = inject(ActivityStreakService);
-  private userSub?: Subscription;
+  private destroyRef = inject(DestroyRef);
 
   sidebarOpen = signal(false);
   oldFrontendOpen = signal(false);
@@ -92,7 +93,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.userSub = this.auth.currentUser$.subscribe(user => {
+    this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.currentUserEmail = user?.email || '';
       this.currentUserName = user?.email?.split('@')[0] || 'User';
       this.signedIn = !!user;
@@ -102,14 +103,13 @@ export class AppComponent implements OnInit, OnDestroy {
         this.router.navigate(['/onboarding']);
       }
     });
-    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => {
       this.sidebarOpen.set(false);
       if (this.signedIn) this.streak.refresh();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.userSub?.unsubscribe();
   }
 
   isActive(route: string): boolean {

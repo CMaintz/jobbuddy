@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -35,6 +36,7 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
 export class PromptsLibraryComponent implements OnInit {
   private promptApi = inject(PromptApiService);
   private auth = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
 
   loading = signal(true);
@@ -71,7 +73,7 @@ export class PromptsLibraryComponent implements OnInit {
   editTags: string[] = [];
 
   ngOnInit(): void {
-    this.auth.currentUser$.subscribe(u => {
+    this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
       this.myUserId = u?.id ?? '';
       this.isAdmin = u?.role === 'ADMIN';
     });

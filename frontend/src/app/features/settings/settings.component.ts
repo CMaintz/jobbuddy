@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -104,6 +105,7 @@ export class SettingsComponent implements OnInit {
   private notify = inject(NotifyService);
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);
   private aiApi = inject(AiApiService);
@@ -174,7 +176,7 @@ export class SettingsComponent implements OnInit {
     const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
     if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
 
-    this.auth.currentUser$.subscribe(u => {
+    this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
       this.userEmail = u?.email ?? '';
       // The taxonomy is shared reference data, so its review queue is an admin section —
       // added to the nav rather than rendered and refused, which would just be a dead tab.
