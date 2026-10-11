@@ -3,19 +3,17 @@ package com.autoapplicant.usecase.notification;
 import com.autoapplicant.domain.notification.Nudge;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserPreferences;
-import com.autoapplicant.port.in.notification.GetNudgesUseCase;
 import com.autoapplicant.port.in.notification.SendDueRemindersUseCase;
 import com.autoapplicant.port.out.notification.NotificationPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 /**
  * The daily "this is due today" email.
@@ -40,16 +38,16 @@ public class DueReminderDigestService implements SendDueRemindersUseCase {
 
     private final PreferencesRepositoryPort preferencesRepo;
     private final UserRepositoryPort userRepo;
-    private final GetNudgesUseCase nudges;
+    private final DueNudgeFinder dueNudges;
     private final NotificationPort notification;
 
     public DueReminderDigestService(PreferencesRepositoryPort preferencesRepo,
                                     UserRepositoryPort userRepo,
-                                    GetNudgesUseCase nudges,
+                                    DueNudgeFinder dueNudges,
                                     NotificationPort notification) {
         this.preferencesRepo = preferencesRepo;
         this.userRepo = userRepo;
-        this.nudges = nudges;
+        this.dueNudges = dueNudges;
         this.notification = notification;
     }
 
@@ -75,7 +73,7 @@ public class DueReminderDigestService implements SendDueRemindersUseCase {
         Optional<User> user = userRepo.findById(prefs.userId());
         if (user.isEmpty() || user.get().email() == null || user.get().email().isBlank()) return false;
 
-        List<Nudge> due = nudges.getNudges(prefs.userId()).stream()
+        List<Nudge> due = dueNudges.findDueToday(prefs.userId()).stream()
                 .filter(nudge -> MAILED_TYPES.contains(nudge.type()))
                 .toList();
         if (due.isEmpty()) return false;
