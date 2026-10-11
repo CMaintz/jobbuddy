@@ -155,16 +155,16 @@ export class ResumeStateService {
   }
 
   /**
-   * Loads a draft into the editor. On failure the previous draft is detached first, so edits made
-   * afterwards cannot autosave into a draft the user did not open; the error is rethrown.
+   * Loads a draft into the editor. On failure the editor is emptied and detached from any draft,
+   * so it never shows (or autosaves into) a draft the user did not open; the error is rethrown.
    */
   loadDraft(draftId: string): Observable<void> {
     return this.draftApi.getDraft(draftId).pipe(
       map(draft => this.applyDraft(draft)),
       catchError(err => {
+        this.resetToEmpty();
         this._draftId.set(null);
         this._draftJobId.set(null);
-        this._isDirty.set(false);
         return throwError(() => err);
       }),
     );

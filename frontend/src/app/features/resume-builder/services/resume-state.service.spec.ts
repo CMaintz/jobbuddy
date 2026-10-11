@@ -25,6 +25,7 @@ describe('ResumeStateService', () => {
     });
     state = TestBed.inject(ResumeStateService);
     draftApi.getDraft.and.returnValue(of({ id: 'd1', jobId: null } as unknown as ResumeDraft));
+    draftApi.saveDraft.and.returnValue(of({ id: 'd1' } as ResumeDraft));
     state.loadDraft('d1').subscribe();
     TestBed.tick();
   }
@@ -51,8 +52,9 @@ describe('ResumeStateService', () => {
     expect(state.isDirty()).toBeFalse();
   }));
 
-  it('detaches the previous draft when loading another one fails', () => {
+  it('empties and detaches the editor when loading another draft fails', () => {
     setup();
+    state.updatePersonalInfo({ fullName: 'Ada' });
     draftApi.getDraft.and.returnValue(throwError(() => new Error('404')));
     let failed = false;
 
@@ -60,5 +62,6 @@ describe('ResumeStateService', () => {
 
     expect(failed).toBeTrue();
     expect(state.draftId()).toBeNull();
+    expect(state.personalInfo().fullName).not.toBe('Ada');
   });
 });
