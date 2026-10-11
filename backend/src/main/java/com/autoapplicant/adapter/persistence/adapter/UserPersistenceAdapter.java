@@ -4,10 +4,9 @@ import com.autoapplicant.adapter.persistence.mapper.UserMapper;
 import com.autoapplicant.adapter.persistence.repository.UserJpaRepository;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class UserPersistenceAdapter implements UserRepositoryPort {

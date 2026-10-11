@@ -1,7 +1,6 @@
 package com.autoapplicant.port.out.user;
 
 import com.autoapplicant.domain.user.User;
-
 import java.util.Optional;
 import java.util.UUID;
 
