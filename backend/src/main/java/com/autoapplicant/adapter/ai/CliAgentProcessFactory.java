@@ -40,12 +40,11 @@ final class CliAgentProcessFactory {
         return Files.createTempDirectory(WORK_DIR_PREFIX);
     }
 
-    /** A process builder for {@code command} run in {@code workDir} with an allowlisted env. */
-    static ProcessBuilder create(String command, Path workDir) {
-        List<String> argv = parseCommand(command);
-        ProcessBuilder pb = new ProcessBuilder(argv);
+    /** A process builder for {@code command} run in {@code workDir}, env allowlisted for {@code provider}. */
+    static ProcessBuilder create(String command, Path workDir, String provider) {
+        ProcessBuilder pb = new ProcessBuilder(parseCommand(command));
         pb.directory(workDir.toFile());
-        CliAgentEnvironment.restrict(pb.environment(), argv.get(0));
+        CliAgentEnvironment.restrict(pb.environment(), provider);
         return pb;
     }
 

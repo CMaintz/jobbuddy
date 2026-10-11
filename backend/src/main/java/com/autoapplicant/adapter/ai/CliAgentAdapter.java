@@ -32,11 +32,16 @@ public class CliAgentAdapter implements ChatProviderPort {
     private static final Logger log = LoggerFactory.getLogger(CliAgentAdapter.class);
 
     private final AppProperties props;
+    private final String provider;
     private final String command;
 
-    /** {@code provider} picks the default command line when {@code app.ai.cli.command} is blank. */
+    /**
+     * {@code provider} picks the default command line when {@code app.ai.cli.command} is blank,
+     * and which CLI's auth variables the agent inherits.
+     */
     public CliAgentAdapter(AppProperties props, String provider) {
         this.props = props;
+        this.provider = provider;
         this.command = CliAgentCommands.resolve(provider, props.getAi().getCli().getCommand());
     }
 
@@ -55,7 +60,7 @@ public class CliAgentAdapter implements ChatProviderPort {
         Path workDir = null;
         try {
             workDir = CliAgentProcessFactory.createWorkDir();
-            ProcessBuilder pb = CliAgentProcessFactory.create(command, workDir);
+            ProcessBuilder pb = CliAgentProcessFactory.create(command, workDir, provider);
             return requireAnswer(
                     CliAgentProcessRunner.run(pb, prompt, Duration.ofSeconds(timeoutSeconds)));
         } catch (TimeoutException e) {

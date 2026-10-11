@@ -12,7 +12,7 @@ class CliAgentEnvironmentTest {
     void claudeKeepsBasicsAndItsOwnAuthButNoBackendSecrets() {
         Map<String, String> env = backendEnv();
 
-        CliAgentEnvironment.restrict(env, "claude");
+        CliAgentEnvironment.restrict(env, "claude-cli");
 
         assertThat(env.keySet())
                 .containsExactlyInAnyOrder(
@@ -34,17 +34,17 @@ class CliAgentEnvironmentTest {
         env.put("JDK_JAVA_OPTIONS", "-Dspring.datasource.password=p");
         env.put("_JAVA_OPTIONS", "-Dx=p");
 
-        CliAgentEnvironment.restrict(env, "claude");
+        CliAgentEnvironment.restrict(env, "claude-cli");
 
         assertThat(env).isEmpty();
     }
 
     @Test
-    void codexGetsTheOpenAiKeyButNotClaudeAuth() {
+    void codexProviderGetsTheOpenAiKeyButNotClaudeAuthWhateverTheExecutable() {
         Map<String, String> env = backendEnv();
         env.put("CODEX_HOME", "/home/u/.codex");
 
-        CliAgentEnvironment.restrict(env, "C:\\tools\\codex.cmd");
+        CliAgentEnvironment.restrict(env, "codex");
 
         assertThat(env)
                 .containsKeys("OPENAI_API_KEY", "CODEX_HOME", "Path")
@@ -52,12 +52,40 @@ class CliAgentEnvironmentTest {
     }
 
     @Test
+    void networkAndDesktopSessionBasicsPassInAnyCase() {
+        Map<String, String> env = new HashMap<>();
+        env.put("https_proxy", "http://proxy:3128");
+        env.put("ALL_PROXY", "socks5://proxy:1080");
+        env.put("SSL_CERT_FILE", "/etc/ssl/cert.pem");
+        env.put("SSL_CERT_DIR", "/etc/ssl/certs");
+        env.put("XDG_RUNTIME_DIR", "/run/user/1000");
+        env.put("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/1000/bus");
+
+        CliAgentEnvironment.restrict(env, "codex");
+
+        assertThat(env).hasSize(6);
+    }
+
+    @Test
+    void aParentClaudeCodeSessionsIdentityIsNotPassedOn() {
+        Map<String, String> env = new HashMap<>();
+        env.put("CLAUDE_CODE_SESSION_ID", "parent-session");
+        env.put("CLAUDE_CODE_MESSAGING_SOCKET", "/tmp/parent.sock");
+        env.put("CLAUDECODE", "1");
+        env.put("CLAUDE_CODE_OAUTH_TOKEN", "token");
+
+        CliAgentEnvironment.restrict(env, "claude-cli");
+
+        assertThat(env.keySet()).containsExactly("CLAUDE_CODE_OAUTH_TOKEN");
+    }
+
+    @Test
     void cloudCredentialsAreDroppedUnlessBedrockOrVertexIsSwitchedOn() {
         Map<String, String> off = cloudEnv("0");
         Map<String, String> on = cloudEnv("1");
 
-        CliAgentEnvironment.restrict(off, "claude");
-        CliAgentEnvironment.restrict(on, "claude");
+        CliAgentEnvironment.restrict(off, "claude-cli");
+        CliAgentEnvironment.restrict(on, "claude-cli");
 
         assertThat(off).doesNotContainKeys("AWS_REGION", "GOOGLE_APPLICATION_CREDENTIALS");
         assertThat(on)

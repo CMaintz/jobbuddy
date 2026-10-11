@@ -17,15 +17,15 @@ class CliAgentProcessFactoryTest {
 
     @Test
     void createRunsTheCommandInTheGivenWorkDir() {
-        ProcessBuilder pb = CliAgentProcessFactory.create("  codex   exec  ", tempDir);
+        ProcessBuilder pb = CliAgentProcessFactory.create("  no-such-agent-cli   exec  ", tempDir, "cli");
 
-        assertThat(pb.command()).isEqualTo(List.of("codex", "exec"));
+        assertThat(pb.command()).isEqualTo(List.of("no-such-agent-cli", "exec"));
         assertThat(pb.directory()).isEqualTo(tempDir.toFile());
     }
 
     @Test
     void createKeepsPathInTheChildEnvironment() {
-        ProcessBuilder pb = CliAgentProcessFactory.create("claude -p", tempDir);
+        ProcessBuilder pb = CliAgentProcessFactory.create("no-such-agent-cli -p", tempDir, "claude-cli");
 
         assertThat(pb.environment().keySet())
                 .anyMatch(name -> name.equalsIgnoreCase("PATH"));
@@ -33,7 +33,7 @@ class CliAgentProcessFactoryTest {
 
     @Test
     void createDropsBackendSecretsFromTheChildEnvironment() {
-        ProcessBuilder pb = CliAgentProcessFactory.create("claude -p", tempDir);
+        ProcessBuilder pb = CliAgentProcessFactory.create("no-such-agent-cli -p", tempDir, "claude-cli");
 
         assertThat(pb.environment().keySet())
                 .noneMatch(name -> name.equalsIgnoreCase("SPRING_APPLICATION_JSON"))
