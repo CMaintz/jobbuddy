@@ -2,19 +2,15 @@ package com.autoapplicant.usecase.document;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
-import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
-import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -29,28 +25,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ParsedCvWriterTest {
+class ParsedCvContactWriterTest {
 
     @Mock ProfilePrivateInfoRepositoryPort  privateInfoRepo;
     @Mock ProfileSocialRepositoryPort       socialRepo;
-    @Mock ImpliedSkillQueue                 impliedSkills;
-    @Mock ProfileSkillIngestion             skillIngestion;
 
-    ParsedCvWriter writer;
+    ParsedCvContactWriter writer;
     UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        writer = new ParsedCvWriter(privateInfoRepo, socialRepo, impliedSkills, skillIngestion);
+        writer = new ParsedCvContactWriter(privateInfoRepo, socialRepo);
     }
 
     @Test
-    void writes_pii_socials_and_skills_from_a_full_cv() throws Exception {
+    void writes_pii_and_socials_from_a_full_cv() throws Exception {
         JsonNode node = json("""
                 {"fullName":"Jane Doe","location":"Copenhagen",
                  "linkedinUrl":"https://linkedin.com/in/jane",
-                 "githubUrl":"https://github.com/jane","websiteUrl":"https://jane.dev",
-                 "skills":["Java","Spring"],"technologies":["Docker"]}""");
+                 "githubUrl":"https://github.com/jane","websiteUrl":"https://jane.dev"}""");
         when(privateInfoRepo.findByUserId(userId)).thenReturn(Optional.empty());
         when(socialRepo.findByUserId(userId)).thenReturn(List.of());
 
@@ -62,12 +55,6 @@ class ParsedCvWriterTest {
         assertThat(pii.getValue().location()).isEqualTo("Copenhagen");
 
         verify(socialRepo, times(3)).save(any());
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<String>> skills = ArgumentCaptor.forClass(List.class);
-        verify(skillIngestion).ingest(eq(userId), skills.capture());
-        assertThat(skills.getValue()).containsExactly("Java", "Spring", "Docker");
-        verify(impliedSkills).queue(eq(userId), any(), any(), eq(ParsedSkillSuggestion.Source.CV_PARSE));
     }
 
     @Test
@@ -78,7 +65,7 @@ class ParsedCvWriterTest {
         when(privateInfoRepo.findByUserId(userId)).thenReturn(Optional.of(existing));
         when(socialRepo.findByUserId(userId)).thenReturn(List.of());
 
-        writer.write(userId, json("{\"fullName\":\"New Name\",\"skills\":[]}"));
+        writer.write(userId, json("{\"fullName\":\"New Name\"}"));
 
         ArgumentCaptor<ProfilePrivateInfo> pii = ArgumentCaptor.forClass(ProfilePrivateInfo.class);
         verify(privateInfoRepo).save(pii.capture());
@@ -98,7 +85,6 @@ class ParsedCvWriterTest {
 
         verify(privateInfoRepo, never()).save(any());
         verify(privateInfoRepo, never()).findByUserId(any());
-        verify(skillIngestion).ingest(eq(userId), any());
     }
 
     @Test

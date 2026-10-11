@@ -10,11 +10,15 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.common.CvParseException;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
+import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
+import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,15 +30,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ParseCvServiceTest {
 
-    @Mock ChatProviderPort aiProvider;
-    @Mock ParsedCvWriter   writer;
+    @Mock ChatProviderPort      aiProvider;
+    @Mock ParsedCvContactWriter writer;
+    @Mock ImpliedSkillQueue     impliedSkills;
+    @Mock ProfileSkillIngestion skillIngestion;
 
     ParseCvService service;
     UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        service = new ParseCvService(aiProvider, new ObjectMapper(), writer);
+        service = new ParseCvService(aiProvider, new ObjectMapper(), writer,
+                impliedSkills, skillIngestion);
     }
 
     @Test
@@ -54,6 +61,18 @@ class ParseCvServiceTest {
         assertThat(result.summary()).isEqualTo("Ten years.");
         assertThat(result.languages()).containsExactly("Danish", "English");
         assertThat(result.interests()).containsExactly("Chess");
+    }
+
+    @Test
+    void ingests_stated_skills_and_queues_implied_ones() {
+        when(aiProvider.generate(any(), any()))
+                .thenReturn("{\"skills\":[\"Java\",\"Spring\"],\"technologies\":[\"Docker\"]}");
+
+        service.parseCvText(userId, "raw");
+
+        verify(skillIngestion).ingest(userId, List.of("Java", "Spring", "Docker"));
+        verify(impliedSkills).queue(eq(userId), any(), eq(List.of("Java", "Spring", "Docker")),
+                eq(ParsedSkillSuggestion.Source.CV_PARSE));
     }
 
     @Test

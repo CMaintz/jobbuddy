@@ -2,13 +2,18 @@ package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
+import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
+import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -74,17 +79,23 @@ public class ParseCvService implements ParseCvUseCase {
 
     private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
-    private final ParsedCvWriter writer;
+    private final ParsedCvContactWriter contactWriter;
+    private final ImpliedSkillQueue impliedSkills;
+    private final ProfileSkillIngestion skillIngestion;
 
     public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
-                          ObjectMapper objectMapper, ParsedCvWriter writer) {
+                          ObjectMapper objectMapper, ParsedCvContactWriter contactWriter,
+                          ImpliedSkillQueue impliedSkills, ProfileSkillIngestion skillIngestion) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
-        this.writer = writer;
+        this.contactWriter = contactWriter;
+        this.impliedSkills = impliedSkills;
+        this.skillIngestion = skillIngestion;
     }
 
     /**
-     * Runs the AI parse outside any transaction, then files the result in one.
+     * Runs the AI parse outside any transaction, files the contact details in one, then adds the
+     * skills after it has committed.
      *
      * @throws CvParseException when there is no text, the provider fails, or its answer is not
      *     the expected JSON; nothing is written in any of those cases
@@ -95,7 +106,8 @@ public class ParseCvService implements ParseCvUseCase {
             throw new CvParseException(NO_TEXT_MESSAGE);
         }
         JsonNode node = toJson(askAi(rawCvText));
-        writer.write(userId, node);
+        contactWriter.write(userId, node);
+        captureCvSkills(userId, node);
         return new Profile(
                 null, userId,
                 ParsedCvFields.textOrNull(node, "headline"),
@@ -105,6 +117,24 @@ public class ParseCvService implements ParseCvUseCase {
                 ParsedCvFields.arrayOrEmpty(node, "interests"),
                 null, null, DEFAULT_CURRENCY, null, null, null, null
         );
+    }
+
+    /**
+     * Capture the CV's skills, in the two ways the profile keeps them: ingest the stated ones
+     * straight into the profile's skill rows (same taxonomy link and category as a hand-typed skill,
+     * so grouped sections and proficiency-weighted matching work for an imported CV too), and queue
+     * the inferred ones as questions - inferences never join the extracted list, so a wrong guess
+     * costs one dismissed suggestion rather than a fabricated skill.
+     *
+     * <p>Deliberately outside the contact-details transaction: both helpers skip a row that fails
+     * to save and carry on, which only works while each row commits on its own. Inside a shared
+     * transaction one bad row would fail the whole import at commit instead.
+     */
+    private void captureCvSkills(UUID userId, JsonNode node) {
+        List<String> stated = new ArrayList<>(ParsedCvFields.arrayOrEmpty(node, "skills"));
+        stated.addAll(ParsedCvFields.arrayOrEmpty(node, "technologies"));
+        impliedSkills.queue(userId, node, stated, ParsedSkillSuggestion.Source.CV_PARSE);
+        skillIngestion.ingest(userId, stated);
     }
 
     private String askAi(String rawCvText) {
