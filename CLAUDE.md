@@ -317,10 +317,12 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS` — LinkedIn job connector (personal-use, low-volume).
 - `DUE_REMINDER_CRON` — daily "due today" email (default `0 0 7 * * *`). Sends only to users with
   notifications enabled who actually have something due; nothing due means no mail.
-- `ENRICHMENT_SWEEP_ENABLED` / `ENRICHMENT_SWEEP_CRON` / `ENRICHMENT_SWEEP_BATCH` — hourly sweep
-  (default `0 30 * * * *`, 40 jobs) that enriches postings the crawler's async enrichment never
-  reached or failed on. The enrichment pool discards work when its queue fills, so without this
-  those jobs stay unenriched forever.
+- `ENRICHMENT_SWEEP_ENABLED` / `ENRICHMENT_SWEEP_INTERVAL_MS` (default 60000) /
+  `ENRICHMENT_SWEEP_BATCH` (default 500) / `ENRICHMENT_SWEEP_CONCURRENCY` (default 2) /
+  `ENRICHMENT_SWEEP_BUDGET` (default `PT1H`) - the enrichment worker, and the only enrichment
+  path: the crawler saves postings as PENDING and this sweep enriches them, a bounded batch per
+  tick. A tick that arrives while the last one is still working is skipped. It also stands down
+  while a crawl is running.
 - `ENRICHMENT_MAX_ATTEMPTS` (default 4) / `ENRICHMENT_RETRY_DELAY` (default `PT6H`) — a posting is
   given up on after this many failures, and left alone this long between tries. Enrichment state
   lives on `jobs.enrichment_status/_attempts/_last_attempt_at/_last_error`; it is never inferred
