@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.pdf;
 
+import com.autoapplicant.config.UploadsLocation;
 import com.openhtmltopdf.extend.FSStream;
 import com.openhtmltopdf.extend.FSStreamFactory;
 import com.openhtmltopdf.extend.FSUriResolver;
@@ -37,10 +38,7 @@ public final class PdfResourcePolicy implements FSUriResolver, FSStreamFactory {
 
     private static final String DATA_SCHEME = "data:";
     private static final String FILE_SCHEME = "file";
-    /** Path prefix the app serves uploads under (see {@code WebMvcConfig}). */
-    private static final String UPLOADS_URL_PREFIX = "/uploads/";
-    /** Local directory uploads are stored in, relative to the working directory. */
-    private static final String UPLOADS_DIR = "uploads";
+    private static final String UPLOADS_URL_PREFIX = UploadsLocation.URL_PREFIX;
     /** Windows reads a path starting with two separators as a UNC share on another host. */
     private static final String UNC_PATH_START = "//";
     private static final char WINDOWS_SEPARATOR = '\\';
@@ -48,7 +46,7 @@ public final class PdfResourcePolicy implements FSUriResolver, FSStreamFactory {
     private final Path uploadsRoot;
 
     public PdfResourcePolicy() {
-        this(Path.of(UPLOADS_DIR));
+        this(Path.of(UploadsLocation.DIRECTORY));
     }
 
     PdfResourcePolicy(Path uploadsRoot) {
