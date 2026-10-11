@@ -1880,5 +1880,14 @@
       "weak": "Svag"
     },
     "scoreTooltip": "{{score}} % match"
+  },
+  "notify": {
+    "loadFailed": "Nogle data kunne ikke indlæses. Prøv at genindlæse siden.",
+    "saveFailed": "Dine ændringer kunne ikke gemmes. Prøv igen.",
+    "deleteFailed": "Det kunne ikke slettes. Prøv igen.",
+    "actionFailed": "Noget gik galt. Prøv igen.",
+    "searchFailed": "Søgningen mislykkedes. Prøv igen om lidt.",
+    "autosaveFailed": "Automatisk gemning mislykkedes. Den prøver igen ved din næste ændring.",
+    "draftLoadFailed": "Kladden kunne ikke åbnes."
   }
 }

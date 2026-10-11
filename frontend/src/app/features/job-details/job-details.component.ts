@@ -15,6 +15,7 @@ import { Note } from '../../core/models/note.model';
 import { Job, JobRequirement } from '../../core/models/job.model';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
+import { NotifyService } from '../../shared/services/notify.service';
 
 const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'OFFER'];
 
@@ -30,6 +31,7 @@ const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT'
 })
 export class JobDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private notify = inject(NotifyService);
   private router = inject(Router);
   private jobsApi = inject(JobsApiService);
   private appsApi = inject(ApplicationsApiService);
@@ -131,12 +133,12 @@ export class JobDetailsComponent implements OnInit {
               this.buildActivity();
             }
           },
-          error: () => {}
+          error: this.notify.onError('notify.loadFailed')
         });
         // Try to load documents for this job
         this.jobsApi.getDocumentsForJob(id).subscribe({
           next: (docs) => { this.documents = docs; this.tabs[1].count = this.activityEvents.length; },
-          error: () => {}
+          error: this.notify.onError('notify.loadFailed')
         });
       },
       error: () => {
@@ -155,7 +157,7 @@ export class JobDetailsComponent implements OnInit {
                   this.loadJobExtras(job.id);
                   this.jobsApi.getDocumentsForJob(app.jobId).subscribe({
                     next: (docs) => this.documents = docs,
-                    error: () => {}
+                    error: this.notify.onError('notify.loadFailed')
                   });
                 },
                 error: () => this.loading = false
@@ -176,11 +178,11 @@ export class JobDetailsComponent implements OnInit {
   private loadJobExtras(jobId: string): void {
     this.jobsApi.getSaved().subscribe({
       next: saved => this.saved.set(saved.some(j => j.id === jobId)),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
     this.jobsApi.getSimilar(jobId, 5).subscribe({
       next: jobs => this.similarJobs.set(jobs),
-      error: () => {} // panel simply stays hidden
+      error: this.notify.onError('notify.loadFailed')
     });
     this.notesApi.getForJob(jobId).subscribe({
       next: notes => {
@@ -189,7 +191,7 @@ export class JobDetailsComponent implements OnInit {
           this.notesText = notes[0].content;
         }
       },
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -203,7 +205,7 @@ export class JobDetailsComponent implements OnInit {
     if (!this.application) return;
     this.appsApi.updateStatus(this.application.id, stage).subscribe({
       next: (updated) => { this.application = updated; },
-      error: () => {}
+      error: this.notify.onError('notify.actionFailed')
     });
   }
 
@@ -288,7 +290,7 @@ export class JobDetailsComponent implements OnInit {
         this.reportedInactive.set(true);
         this.saved.set(false);
       },
-      error: () => {}
+      error: this.notify.onError('notify.actionFailed')
     });
   }
 

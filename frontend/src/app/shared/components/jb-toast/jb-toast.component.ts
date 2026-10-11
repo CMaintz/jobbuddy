@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
+import { NoticeTone } from '../../services/notify.service';
 
 @Component({
   selector: 'jb-toast',
@@ -9,6 +10,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 })
 export class JbToastComponent implements OnChanges {
   @Input() message = '';
+  @Input() tone: NoticeTone = 'success';
   @Output() dismissed = new EventEmitter<void>();
   private timer: ReturnType<typeof setTimeout> | undefined;
 

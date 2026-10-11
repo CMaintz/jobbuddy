@@ -183,3 +183,4 @@
         </div>
       </div>
     }
+    <jb-toast [message]="notify.notice()?.message ?? ''" [tone]="notify.notice()?.tone ?? 'success'" (dismissed)="notify.dismiss()" />

@@ -13,6 +13,7 @@ import { CompanyMarkComponent } from '../../shared/components/company-mark/compa
 import { JobsApiService } from '../../core/api/jobs.api';
 import { Job, JobRequirement, MatchResult } from '../../core/models/job.model';
 import { MatchBadgeComponent, MatchLabel, matchColor } from '../../shared/components/match-badge/match-badge.component';
+import { NotifyService } from '../../shared/services/notify.service';
 
 interface FeedRow {
   id: string;
@@ -85,6 +86,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   matchColor = matchColor;
 
   private jobsApi = inject(JobsApiService);
+
+  private notify = inject(NotifyService);
   private translate = inject(TranslateService);
 
   loading = signal(true);
@@ -143,7 +146,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
 
     this.jobsApi.getSaved().subscribe({
       next: saved => this.savedIds.set(new Set(saved.map(j => j.id))),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 

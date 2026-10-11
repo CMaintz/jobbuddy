@@ -1880,5 +1880,14 @@
       "weak": "Weak"
     },
     "scoreTooltip": "{{score}}% match"
+  },
+  "notify": {
+    "loadFailed": "Some data could not be loaded. Try refreshing the page.",
+    "saveFailed": "Your changes could not be saved. Please try again.",
+    "deleteFailed": "That could not be deleted. Please try again.",
+    "actionFailed": "Something went wrong. Please try again.",
+    "searchFailed": "Search failed. Try again in a moment.",
+    "autosaveFailed": "Autosave failed. It will retry on your next edit.",
+    "draftLoadFailed": "This draft could not be opened."
   }
 }

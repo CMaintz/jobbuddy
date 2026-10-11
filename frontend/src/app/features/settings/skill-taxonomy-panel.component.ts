@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { SkillsApiService, TaxonomyCandidate } from '../../core/api/skills.api';
+import { NotifyService } from '../../shared/services/notify.service';
 
 /**
  * Growing the skill vocabulary from what postings actually name.
@@ -19,6 +20,7 @@ import { SkillsApiService, TaxonomyCandidate } from '../../core/api/skills.api';
 })
 export class SkillTaxonomyPanelComponent implements OnInit {
   private api = inject(SkillsApiService);
+  private notify = inject(NotifyService);
   private translate = inject(TranslateService);
 
   candidates = signal<TaxonomyCandidate[]>([]);
@@ -35,7 +37,7 @@ export class SkillTaxonomyPanelComponent implements OnInit {
   ngOnInit(): void {
     this.api.getCategories().subscribe({
       next: c => this.categories.set(c),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
     this.load();
   }

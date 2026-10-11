@@ -14,6 +14,7 @@ import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { PromptTemplate } from '../../core/models/prompt-template.model';
 import { loadGenDefaults } from '../settings/settings.component';
+import { NotifyService } from '../../shared/services/notify.service';
 
 const FORMAT_TO_DOC_TYPE: Record<string, string> = {
   'application': 'APPLICATION_TEXT',
@@ -74,6 +75,7 @@ interface ApplyDraft {
 })
 export class ApplyComponent implements OnInit {
   private aiApi = inject(AiApiService);
+  private notify = inject(NotifyService);
   private jobsApi = inject(JobsApiService);
   private appsApi = inject(ApplicationsApiService);
   private promptApi = inject(PromptApiService);
@@ -214,7 +216,7 @@ export class ApplyComponent implements OnInit {
 
     this.promptApi.getAll().subscribe({
       next: templates => this.promptTemplates = templates,
-      error: () => {} // prompt templates are optional
+      error: this.notify.onError('notify.loadFailed')
     });
 
     const jobId = this.route.snapshot.queryParamMap.get('jobId');
@@ -288,7 +290,7 @@ export class ApplyComponent implements OnInit {
         const existing = apps.find(a => a.jobId === jobId && a.status === 'PREPARING');
         if (existing) this.resumableApp.set(existing);
       },
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 

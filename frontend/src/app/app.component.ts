@@ -6,6 +6,8 @@ import { ThemeService } from './core/theme.service';
 import { LanguageService } from './core/language.service';
 import { JbIconComponent } from './shared/components/jb-icon/jb-icon.component';
 import { StreakBadgeComponent } from './shared/components/streak-badge/streak-badge.component';
+import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
+import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
 import { Subscription, filter } from 'rxjs';
 
@@ -28,6 +30,7 @@ interface NavItem {
   selector: 'app-root',
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
+    JbToastComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app.component.html'
@@ -36,6 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   theme = inject(ThemeService);
   language = inject(LanguageService);
+  notify = inject(NotifyService);
   private router = inject(Router);
   private streak = inject(ActivityStreakService);
   private userSub?: Subscription;

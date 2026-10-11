@@ -13,6 +13,7 @@ import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.compone
 import { AiApiService, AnalysisDimensions, AnalysisResponse, SkillGapReport } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
+import { NotifyService } from '../../shared/services/notify.service';
 
 interface JobOption {
   id: string;
@@ -30,6 +31,7 @@ interface JobOption {
 })
 export class CvAnalysisComponent implements OnInit {
   private aiApi = inject(AiApiService);
+  private notify = inject(NotifyService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
   private translate = inject(TranslateService);
@@ -71,7 +73,7 @@ export class CvAnalysisComponent implements OnInit {
         this.jobOptions = options;
         if (options.length > 0) this.selectedJobId = options[0].id;
       },
-      error: () => {} // picker just stays empty
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 

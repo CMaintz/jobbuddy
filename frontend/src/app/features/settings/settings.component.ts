@@ -25,6 +25,7 @@ import { AiApiService } from '../../core/api/ai.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
+import { NotifyService } from '../../shared/services/notify.service';
 
 type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy' | 'taxonomy';
 
@@ -100,6 +101,7 @@ interface StyleSnapshot {
 })
 export class SettingsComponent implements OnInit {
   theme = inject(ThemeService);
+  private notify = inject(NotifyService);
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
@@ -216,13 +218,13 @@ export class SettingsComponent implements OnInit {
         this.styleStructure = wp.structureNotes ?? '';
         this.analyzedAt.set(wp.lastAnalyzedAt);
       },
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
 
     this.templatesApi.getActive().subscribe({
       next: templates => this.cvTemplates.set(templates.filter(t =>
         !t.documentTypes || t.documentTypes.length === 0 || t.documentTypes.some(d => String(d) === 'CV'))),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -306,7 +308,7 @@ export class SettingsComponent implements OnInit {
         docs.filter(d => ANALYZABLE_DOC_TYPES[d.documentType] && d.content?.trim())
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
             .slice(0, 20)),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 

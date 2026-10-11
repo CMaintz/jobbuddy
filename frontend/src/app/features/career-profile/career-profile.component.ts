@@ -11,6 +11,7 @@ import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retrac
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
 import { SkillsApiService, EvidenceDraft, EvidenceGap, SkillCandidate, SkillConfirmation }
   from '../../core/api/skills.api';
+import { NotifyService } from '../../shared/services/notify.service';
 
 type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
@@ -24,6 +25,7 @@ type Section = 'target' | 'skills' | 'stories' | 'retracted';
 })
 export class CareerProfileComponent implements OnInit {
   private targetApi = inject(CareerTargetApiService);
+  private notify = inject(NotifyService);
   private claimsApi = inject(RetractedClaimsApiService);
   private storyApi = inject(StoryBankApiService);
   private skillsApi = inject(SkillsApiService);
@@ -73,7 +75,7 @@ export class CareerProfileComponent implements OnInit {
   addingClaim = signal(false);
 
   ngOnInit(): void {
-    this.targetApi.get().subscribe({ next: t => this.applyTarget(t), error: () => {} });
+    this.targetApi.get().subscribe({ next: t => this.applyTarget(t), error: this.notify.onError('notify.loadFailed') });
     this.reloadStories();
     this.reloadClaims();
     this.loadCandidates();
@@ -274,12 +276,12 @@ export class CareerProfileComponent implements OnInit {
     if (!id) return;
     this.storyApi.remove(id).subscribe({
       next: () => { if (this.editingStoryId() === id) this.newStory(); this.reloadStories(); },
-      error: () => {}
+      error: this.notify.onError('notify.deleteFailed')
     });
   }
 
   private reloadStories(): void {
-    this.storyApi.list().subscribe({ next: s => this.stories.set(s), error: () => {} });
+    this.storyApi.list().subscribe({ next: s => this.stories.set(s), error: this.notify.onError('notify.loadFailed') });
   }
 
   // ── Retracted claims ──
@@ -293,10 +295,10 @@ export class CareerProfileComponent implements OnInit {
   }
 
   removeClaim(id: string): void {
-    this.claimsApi.remove(id).subscribe({ next: () => this.reloadClaims(), error: () => {} });
+    this.claimsApi.remove(id).subscribe({ next: () => this.reloadClaims(), error: this.notify.onError('notify.deleteFailed') });
   }
 
   private reloadClaims(): void {
-    this.claimsApi.list().subscribe({ next: c => this.claims.set(c), error: () => {} });
+    this.claimsApi.list().subscribe({ next: c => this.claims.set(c), error: this.notify.onError('notify.loadFailed') });
   }
 }

@@ -1,8 +1,14 @@
     @if (message) {
-      <div class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-jb-surface-2 text-jb-text border border-jb-border-strong rounded-lg p-[10px_14px_10px_12px] flex items-center gap-2.5 text-base z-[9999] shadow-[0_14px_40px_rgba(0,0,0,0.4)] max-w-[min(420px,92vw)]">
-        <div class="w-[18px] h-[18px] rounded-full bg-jb-success-soft border border-[rgba(74,222,128,0.4)] text-jb-success flex items-center justify-center">
-          <jb-icon name="check" [size]="11" [strokeWidth]="2.5" />
-        </div>
+      <div role="status" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-jb-surface-2 text-jb-text border border-jb-border-strong rounded-lg p-[10px_14px_10px_12px] flex items-center gap-2.5 text-base z-[9999] shadow-[0_14px_40px_rgba(0,0,0,0.4)] max-w-[min(420px,92vw)]">
+        @if (tone === 'error') {
+          <div class="w-[18px] h-[18px] rounded-full bg-jb-danger-soft border border-jb-danger text-jb-danger flex items-center justify-center">
+            <jb-icon name="x" [size]="11" [strokeWidth]="2.5" />
+          </div>
+        } @else {
+          <div class="w-[18px] h-[18px] rounded-full bg-jb-success-soft border border-[rgba(74,222,128,0.4)] text-jb-success flex items-center justify-center">
+            <jb-icon name="check" [size]="11" [strokeWidth]="2.5" />
+          </div>
+        }
         <span>{{ message }}</span>
       </div>
     }

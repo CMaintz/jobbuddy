@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { Observable, Subject, debounceTime, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, debounceTime, map, switchMap, tap, throwError } from 'rxjs';
 import {
   INITIAL_RESUME_DATA,
   INITIAL_SETTINGS,
@@ -19,6 +19,7 @@ import {
 } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
 import { ResumeDraft } from '../models/resume-builder.models';
+import { NotifyService } from '../../../shared/services/notify.service';
 import { Profile, ProfilePrivateInfo } from '../../../core/models/user.model';
 import { ProfileSocial, ProfileStrength, WorkExperience, Education, Project, Certification, SpokenLanguage } from '../../../core/models/profile-section.model';
 
@@ -41,6 +42,7 @@ export interface FullProfileData {
 @Injectable({ providedIn: 'root' })
 export class ResumeStateService {
   private draftApi = inject(ResumeDraftApiService);
+  private notify = inject(NotifyService);
 
   private _resumeData = signal<ResumeData>({ ...INITIAL_RESUME_DATA });
   private _settings = signal<ResumeSettings>({ ...INITIAL_SETTINGS });
@@ -130,6 +132,13 @@ export class ResumeStateService {
           tap(() => {
             this._isDirty.set(false);
             this._isSaving.set(false);
+          }),
+          // Caught per save: an error reaching the outer stream would end autosave for the whole
+          // session. The draft stays dirty, so the next edit retries.
+          catchError(() => {
+            this._isSaving.set(false);
+            this.notify.error('notify.autosaveFailed');
+            return EMPTY;
           })
         );
       })
@@ -145,25 +154,32 @@ export class ResumeStateService {
     });
   }
 
+  /**
+   * Loads a draft into the editor. On failure the previous draft is detached first, so edits made
+   * afterwards cannot autosave into a draft the user did not open; the error is rethrown.
+   */
   loadDraft(draftId: string): Observable<void> {
-    return new Observable(observer => {
-      this.draftApi.getDraft(draftId).subscribe({
-        next: draft => {
-          if (draft.resumeData && Object.keys(draft.resumeData).length > 0) {
-            this._resumeData.set(draft.resumeData as ResumeData);
-          }
-          if (draft.settings && Object.keys(draft.settings).length > 0) {
-            this._settings.set(draft.settings as ResumeSettings);
-          }
-          this._draftId.set(draft.id ?? null);
-          this._draftJobId.set(draft.jobId ?? null);
-          this._isDirty.set(false);
-          observer.next();
-          observer.complete();
-        },
-        error: err => observer.error(err),
-      });
-    });
+    return this.draftApi.getDraft(draftId).pipe(
+      map(draft => this.applyDraft(draft)),
+      catchError(err => {
+        this._draftId.set(null);
+        this._draftJobId.set(null);
+        this._isDirty.set(false);
+        return throwError(() => err);
+      }),
+    );
+  }
+
+  private applyDraft(draft: ResumeDraft): void {
+    if (draft.resumeData && Object.keys(draft.resumeData).length > 0) {
+      this._resumeData.set(draft.resumeData as ResumeData);
+    }
+    if (draft.settings && Object.keys(draft.settings).length > 0) {
+      this._settings.set(draft.settings as ResumeSettings);
+    }
+    this._draftId.set(draft.id ?? null);
+    this._draftJobId.set(draft.jobId ?? null);
+    this._isDirty.set(false);
   }
 
   prefillFromProfile(data: FullProfileData): void {
