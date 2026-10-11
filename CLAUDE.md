@@ -298,7 +298,8 @@ Optional (all have local defaults):
   rest. Unset means the app refuses to store them rather than keeping them in the clear, so
   bring-your-own-key is simply unavailable. Only needed for a hosted deployment.
   Generate one with: `[Convert]::ToBase64String((1..32 | % { Get-Random -Max 256 }))`
-- `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD`
+- `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD` (the Docker compose files require
+  `POSTGRES_PASSWORD`; `.env.example` supplies one)
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)
 - `ALLOWED_ORIGINS` (CORS)
 

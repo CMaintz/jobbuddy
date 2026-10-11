@@ -1,12 +1,12 @@
 services:
   postgres:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:0.8.7-pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
     environment:
       POSTGRES_DB: autoapplicant
       POSTGRES_USER: autoapplicant
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdevpassword}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,23 +26,24 @@ services:
       context: ..
       dockerfile: backend/Dockerfile
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ../.secrets/firebase-service-account.json:/app/secrets/firebase-service-account.json:ro
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/autoapplicant
       SPRING_DATASOURCE_USERNAME: autoapplicant
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-localdevpassword}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -61,10 +62,15 @@ services:
         FIREBASE_MESSAGING_SENDER_ID: ${FIREBASE_MESSAGING_SENDER_ID}
         FIREBASE_APP_ID: ${FIREBASE_APP_ID}
     ports:
-      - "80:80"
+      - "127.0.0.1:80:8080"
     depends_on:
       backend:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ > /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
     deploy:
       resources:
         limits:
