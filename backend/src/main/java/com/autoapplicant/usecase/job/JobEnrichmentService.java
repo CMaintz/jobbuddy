@@ -20,8 +20,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
- * Enriches one posting with an AI summary and structured fields. A step of the enrichment sweep,
- * not an entry point of its own, so it has no inbound port.
+ * Enriches one posting with an AI summary and structured fields. A collaborator shared by use
+ * cases, not a use case: it must not implement a port.in interface, because the enrichment sweep
+ * depends on it and use cases may not depend on each other. A future entry point (re-enriching
+ * one posting on request, say) is its own use case that calls this.
  */
 @Service
 public class JobEnrichmentService {
