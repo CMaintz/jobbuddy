@@ -1821,7 +1821,9 @@
       "registerFailed": "Registration failed. Please try again.",
       "linkedInNoCode": "Authorization failed. No code received from LinkedIn.",
       "linkedInFailed": "Sign in with LinkedIn failed. Please try again.",
-      "linkedInState": "This sign-in link is invalid or has expired. Please start the LinkedIn sign-in again."
+      "linkedInState": "This sign-in link is invalid or has expired. Please start the LinkedIn sign-in again.",
+      "linkedInEmailUnverified": "LinkedIn has not verified the email on your LinkedIn account. Confirm your primary email in LinkedIn's settings, then sign in again.",
+      "linkedInAccountUnverified": "An account with this email already exists but its email is not verified. Sign in with your password and verify it first, then connect LinkedIn."
     },
     "verifyEmail": {
       "title": "Verify your email",
@@ -1832,7 +1834,9 @@
       "sent": "Verification email sent. Check your inbox.",
       "sendFailed": "Could not send the email. Please try again in a moment.",
       "stillUnverified": "Your email is not verified yet. Click the link in the email first.",
-      "checkFailed": "Could not check your verification status. Please try again."
+      "checkFailed": "Could not check your verification status. Please try again.",
+      "resendIn": "Resend available in {{seconds}}s",
+      "tooManyRequests": "Too many emails requested. Wait a minute before asking for another one."
     }
   },
   "nav": {

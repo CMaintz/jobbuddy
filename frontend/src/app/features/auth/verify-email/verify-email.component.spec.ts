@@ -9,13 +9,14 @@ describe('VerifyEmailComponent', () => {
   let authService: jasmine.SpyObj<AuthService>;
   let navigate: jasmine.Spy;
 
-  async function create(signedIn = true): Promise<VerifyEmailComponent> {
+  async function create(signedIn = true, unverified = true): Promise<VerifyEmailComponent> {
     authService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'whenAuthReady', 'isAuthenticated', 'currentEmail', 'resendVerification',
-      'confirmEmailVerified', 'loadCurrentUser', 'logout',
+      'whenAuthReady', 'isAuthenticated', 'needsEmailVerification', 'currentEmail',
+      'resendVerification', 'confirmEmailVerified', 'loadCurrentUser', 'logout',
     ]);
     authService.whenAuthReady.and.resolveTo();
     authService.isAuthenticated.and.returnValue(signedIn);
+    authService.needsEmailVerification.and.returnValue(unverified);
     authService.currentEmail.and.returnValue('me@example.com');
     TestBed.configureTestingModule({
       imports: [VerifyEmailComponent, TranslateModule.forRoot()],
@@ -37,6 +38,33 @@ describe('VerifyEmailComponent', () => {
     await create(false);
 
     expect(navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('sends an already verified user on into the app', async () => {
+    await create(true, false);
+
+    expect(navigate).toHaveBeenCalledWith(['/dashboard']);
+  });
+
+  it('resends the verification email and then cools down', async () => {
+    const component = await create();
+    authService.resendVerification.and.resolveTo();
+
+    await component.resend();
+    await component.resend();
+
+    expect(authService.resendVerification).toHaveBeenCalledTimes(1);
+    expect(component.cooldown()).toBeGreaterThan(0);
+  });
+
+  it('explains a rate-limited resend instead of a generic failure', async () => {
+    const component = await create();
+    authService.resendVerification.and.rejectWith({ code: 'auth/too-many-requests' });
+
+    await component.resend();
+
+    expect(component.status()).toBe('tooManyRequests');
+    expect(component.cooldown()).toBeGreaterThan(0);
   });
 
   it('resends the verification email', async () => {

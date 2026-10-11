@@ -1821,7 +1821,9 @@
       "registerFailed": "Oprettelse mislykkedes. Prøv igen.",
       "linkedInNoCode": "Godkendelse mislykkedes. Ingen kode modtaget fra LinkedIn.",
       "linkedInFailed": "Login med LinkedIn mislykkedes. Prøv igen.",
-      "linkedInState": "Dette login-link er ugyldigt eller udløbet. Start login med LinkedIn igen."
+      "linkedInState": "Dette login-link er ugyldigt eller udløbet. Start login med LinkedIn igen.",
+      "linkedInEmailUnverified": "LinkedIn har ikke bekræftet e-mailen på din LinkedIn-konto. Bekræft din primære e-mail i LinkedIns indstillinger, og log så ind igen.",
+      "linkedInAccountUnverified": "Der findes allerede en konto med denne e-mail, men e-mailen er ikke bekræftet. Log ind med din adgangskode og bekræft den først, og forbind så LinkedIn."
     },
     "verifyEmail": {
       "title": "Bekræft din e-mail",
@@ -1832,7 +1834,9 @@
       "sent": "Bekræftelsesmail sendt. Tjek din indbakke.",
       "sendFailed": "Mailen kunne ikke sendes. Prøv igen om lidt.",
       "stillUnverified": "Din e-mail er ikke bekræftet endnu. Klik først på linket i mailen.",
-      "checkFailed": "Vi kunne ikke tjekke din bekræftelse. Prøv igen."
+      "checkFailed": "Vi kunne ikke tjekke din bekræftelse. Prøv igen.",
+      "resendIn": "Kan sendes igen om {{seconds}} s",
+      "tooManyRequests": "Der er bedt om for mange mails. Vent et minut, før du beder om en ny."
     }
   },
   "nav": {

@@ -1,7 +1,14 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
+
+/** Backend refusals the user can act on, by HTTP status. */
+const CALLBACK_ERRORS: Partial<Record<number, string>> = {
+  [HttpStatusCode.Forbidden]: 'auth.error.linkedInEmailUnverified',
+  [HttpStatusCode.Conflict]: 'auth.error.linkedInAccountUnverified',
+};
 
 @Component({
   selector: 'app-linkedin-callback',
@@ -30,8 +37,8 @@ export class LinkedInCallbackComponent implements OnInit {
     const redirectUri = window.location.origin + '/auth/linkedin/callback';
     this.authService.linkedinCallback(code, redirectUri).subscribe({
       next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
-      error: () => {
-        this.error = 'auth.error.linkedInFailed';
+      error: (e: HttpErrorResponse) => {
+        this.error = CALLBACK_ERRORS[e?.status] ?? 'auth.error.linkedInFailed';
       }
     });
   }
