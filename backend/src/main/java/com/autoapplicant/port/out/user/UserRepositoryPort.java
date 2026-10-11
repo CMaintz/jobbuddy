@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface UserRepositoryPort {
     User save(User user);
     Optional<User> findById(UUID id);
+    /** Case-insensitive, since providers report the same address in different cases. */
     Optional<User> findByEmail(String email);
     Optional<User> findByLinkedinId(String linkedinId);
     Optional<User> findByFirebaseUid(String firebaseUid);

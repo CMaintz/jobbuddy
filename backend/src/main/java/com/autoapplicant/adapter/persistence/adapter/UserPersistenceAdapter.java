@@ -30,7 +30,7 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return repo.findByEmail(email).map(UserMapper::toDomain);
+        return repo.findFirstByEmailIgnoreCaseOrderByCreatedAtAsc(email).map(UserMapper::toDomain);
     }
 
     @Override
