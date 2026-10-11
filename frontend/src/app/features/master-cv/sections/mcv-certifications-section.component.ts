@@ -32,11 +32,11 @@ import { Certification } from '../../../core/models/profile-section.model';
         <div class="card p-3.5 grid gap-2 grid-cols-[1.4fr_1fr_0.8fr]">
           <label class="flex flex-col gap-[5px]">
             <span class="label">{{ 'masterCv.form.certName' | translate }}</span>
-            <input [(ngModel)]="draft.name" class="input" placeholder="AWS Certified Developer" />
+            <input [(ngModel)]="draft.name" class="input" [placeholder]="'masterCv.form.placeholder.certName' | translate" />
           </label>
           <label class="flex flex-col gap-[5px]">
             <span class="label">{{ 'masterCv.form.issuer' | translate }}</span>
-            <input [(ngModel)]="draft.issuer" class="input" placeholder="Amazon Web Services" />
+            <input [(ngModel)]="draft.issuer" class="input" [placeholder]="'masterCv.form.placeholder.certIssuer' | translate" />
           </label>
           <label class="flex flex-col gap-[5px]">
             <span class="label">{{ 'masterCv.form.issued' | translate }}</span>

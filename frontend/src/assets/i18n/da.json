@@ -379,7 +379,15 @@
         "language": "Engelsk",
         "fullName": "Mette Hansen",
         "headline": "Senior softwareudvikler",
-        "projectName": "Mit fantastiske projekt"
+        "projectName": "Mit fantastiske projekt",
+        "certName": "Certificeret projektleder (IPMA)",
+        "certIssuer": "Dansk Projektledelse",
+        "school": "Aarhus Universitet",
+        "schoolLocation": "Aarhus",
+        "company": "Nordisk Data A/S",
+        "email": "mette@eksempel.dk",
+        "phone": "+45 12 34 56 78",
+        "city": "København"
       }
     },
     "aiTailor": {
@@ -849,7 +857,9 @@
       "addCustomItem": "Tilføj linje",
       "addCustomSection": "Tilføj brugerdefineret sektion",
       "placeholder": {
-        "language": "Engelsk"
+        "language": "Engelsk",
+        "certName": "Certificeret projektleder (IPMA)",
+        "certIssuer": "Dansk Projektledelse"
       }
     },
     "section": {

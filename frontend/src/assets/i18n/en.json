@@ -379,7 +379,15 @@
         "language": "English",
         "fullName": "Jane Doe",
         "headline": "Senior Software Engineer",
-        "projectName": "My Awesome Project"
+        "projectName": "My Awesome Project",
+        "certName": "AWS Certified Developer",
+        "certIssuer": "Amazon Web Services",
+        "school": "MIT",
+        "schoolLocation": "Cambridge, MA",
+        "company": "Acme Corp",
+        "email": "jane@example.com",
+        "phone": "+1 234 567 8900",
+        "city": "New York, NY"
       }
     },
     "aiTailor": {
@@ -849,7 +857,9 @@
       "addCustomItem": "Add line",
       "addCustomSection": "Add custom section",
       "placeholder": {
-        "language": "English"
+        "language": "English",
+        "certName": "AWS Certified Developer",
+        "certIssuer": "Amazon Web Services"
       }
     },
     "section": {

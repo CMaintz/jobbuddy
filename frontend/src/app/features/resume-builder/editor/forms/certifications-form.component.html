@@ -7,9 +7,9 @@
             <button class="rb-remove" (click)="remove(cert.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
           <label class="label">{{ 'resumeBuilder.form.name' | translate }}</label>
-          <input class="input" [value]="cert.name" (input)="update(cert.id, 'name', $any($event.target).value)" placeholder="AWS Certified Developer" />
+          <input class="input" [value]="cert.name" (input)="update(cert.id, 'name', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.certName' | translate" />
           <label class="label">{{ 'resumeBuilder.form.issuer' | translate }}</label>
-          <input class="input" [value]="cert.issuer" (input)="update(cert.id, 'issuer', $any($event.target).value)" placeholder="Amazon Web Services" />
+          <input class="input" [value]="cert.issuer" (input)="update(cert.id, 'issuer', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.certIssuer' | translate" />
           <label class="label">{{ 'resumeBuilder.form.date' | translate }}</label>
           <input class="input" [value]="cert.date" (input)="update(cert.id, 'date', $any($event.target).value)" placeholder="2024-06" />
           <label class="label">{{ 'resumeBuilder.form.certUrl' | translate }}</label>

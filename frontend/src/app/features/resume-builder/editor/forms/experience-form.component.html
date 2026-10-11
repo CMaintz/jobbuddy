@@ -13,7 +13,7 @@
             </div>
             <div>
               <label class="label">{{ 'resumeBuilder.form.company' | translate }}</label>
-              <input class="input" [value]="exp.company" (input)="update(exp.id, 'company', $any($event.target).value)" placeholder="Acme Corp" />
+              <input class="input" [value]="exp.company" (input)="update(exp.id, 'company', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.company' | translate" />
             </div>
             <div>
               <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>
