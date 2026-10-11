@@ -46,6 +46,13 @@ class UrlSafetyValidatorTest {
     }
 
     @Test
+    void nat64LocalUsePrefixIsBlockedWholesale() {
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b:1::808:808]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b:1:ffff::1]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b:2::808:808]/x")).isTrue();
+    }
+
+    @Test
     void nonHttpSchemesAndGarbageAreBlocked() {
         assertThat(UrlSafetyValidator.isSafeHttpUrl("ftp://8.8.8.8/x")).isFalse();
         assertThat(UrlSafetyValidator.isSafeHttpUrl("file:///etc/passwd")).isFalse();

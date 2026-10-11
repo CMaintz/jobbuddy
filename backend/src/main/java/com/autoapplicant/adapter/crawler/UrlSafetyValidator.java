@@ -28,6 +28,12 @@ public final class UrlSafetyValidator {
     private static final byte[] NAT64_PREFIX = {
         0, 0x64, (byte) 0xff, (byte) 0x9b, 0, 0, 0, 0, 0, 0, 0, 0
     };
+    /**
+     * 64:ff9b:1::/48, the NAT64 local-use prefix (RFC 8215). Where the IPv4 address sits depends
+     * on the operator's chosen sub-prefix, and the range is never globally routed, so all of it
+     * counts as internal.
+     */
+    private static final byte[] NAT64_LOCAL_USE_PREFIX = {0, 0x64, (byte) 0xff, (byte) 0x9b, 0, 1};
 
     private UrlSafetyValidator() {}
 
@@ -64,7 +70,8 @@ public final class UrlSafetyValidator {
                 || addr.isMulticastAddress()
                 || isUniqueLocalIpv6(addr)
                 || isReservedIpv4(addr)
-                || isNat64OfInternal(addr);
+                || isNat64OfInternal(addr)
+                || hasIpv6Prefix(addr.getAddress(), NAT64_LOCAL_USE_PREFIX);
     }
 
     /** IPv6 unique-local addresses (fc00::/7) — private, not covered by isSiteLocalAddress. */
@@ -86,14 +93,16 @@ public final class UrlSafetyValidator {
     /** A NAT64 address reaches the IPv4 address it embeds, so it is internal when that is. */
     private static boolean isNat64OfInternal(InetAddress addr) {
         byte[] b = addr.getAddress();
-        int prefixLength = NAT64_PREFIX.length;
-        if (b.length != IPV6_BYTES || !Arrays.equals(b, 0, prefixLength, NAT64_PREFIX, 0, prefixLength)) {
-            return false;
-        }
+        if (!hasIpv6Prefix(b, NAT64_PREFIX)) return false;
         try {
-            return isInternal(InetAddress.getByAddress(Arrays.copyOfRange(b, prefixLength, IPV6_BYTES)));
+            return isInternal(InetAddress.getByAddress(Arrays.copyOfRange(b, NAT64_PREFIX.length, IPV6_BYTES)));
         } catch (UnknownHostException e) {
             return true;
         }
+    }
+
+    private static boolean hasIpv6Prefix(byte[] address, byte[] prefix) {
+        return address.length == IPV6_BYTES
+                && Arrays.equals(address, 0, prefix.length, prefix, 0, prefix.length);
     }
 }
