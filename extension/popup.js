@@ -1,8 +1,12 @@
 // DEFAULT_APP_URL, APP_URL_KEY and the origin helpers come from app-origin.js.
 const statusEl = document.getElementById('status');
 const appUrlInput = document.getElementById('app-url');
+// Kept in memory so the capture click can request the host permission synchronously,
+// before any await ends its user gesture.
+let savedAppUrl = DEFAULT_APP_URL;
 
 chrome.storage.sync.get(APP_URL_KEY, (settings) => {
+  savedAppUrl = normalizeAppUrl(settings[APP_URL_KEY]) || DEFAULT_APP_URL;
   appUrlInput.value = settings[APP_URL_KEY] || DEFAULT_APP_URL;
 });
 
@@ -13,6 +17,7 @@ document.getElementById('save-url').addEventListener('click', () => {
     return;
   }
   appUrlInput.value = appUrl;
+  savedAppUrl = appUrl;
   // Not awaited: the permission request must run inside this click's user gesture, and the
   // popup may close while its dialog is open. The background worker registers the bridge.
   chrome.storage.sync.set({ [APP_URL_KEY]: appUrl });
@@ -30,9 +35,30 @@ document.getElementById('save-url').addEventListener('click', () => {
   });
 });
 
+/**
+ * Asks for the app origin's host permission inside the click's gesture. Users upgrading from a
+ * hand-edited manifest have a custom app URL but no runtime grant; without one the bridge never
+ * registers and the capture would sit unclaimed.
+ */
+function ensureAppAccess(appUrl) {
+  const origin = appOriginOf(appUrl);
+  if (isBuiltInOrigin(origin)) return Promise.resolve(true);
+  return chrome.permissions.request({ origins: [originPattern(origin)] }).catch(() => false);
+}
+
 document.getElementById('capture').addEventListener('click', async () => {
+  if (normalizeAppUrl(appUrlInput.value) !== savedAppUrl) {
+    statusEl.textContent = 'Save the app URL first, then capture.';
+    return;
+  }
+  const access = ensureAppAccess(savedAppUrl);
   statusEl.textContent = 'Reading the page…';
   try {
+    if (!(await access)) {
+      statusEl.textContent = 'Without access to ' + appOriginOf(savedAppUrl)
+        + ' the capture cannot reach the app.';
+      return;
+    }
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -47,12 +73,10 @@ document.getElementById('capture').addEventListener('click', async () => {
       pendingCapture: { ...data, url: tab.url, savedAt: Date.now() },
     });
     // Open the saved app URL: the bridge only hands the capture to that origin.
-    const settings = await chrome.storage.sync.get(APP_URL_KEY);
-    const appUrl = normalizeAppUrl(settings[APP_URL_KEY]) || DEFAULT_APP_URL;
-    await chrome.tabs.create({ url: appUrl + '/apply' });
+    await chrome.tabs.create({ url: savedAppUrl + '/apply' });
     window.close();
   } catch (e) {
-    statusEl.textContent = 'Capture failed — this page may block extensions.';
+    statusEl.textContent = 'Capture failed: this page may block extensions.';
   }
 });
 
