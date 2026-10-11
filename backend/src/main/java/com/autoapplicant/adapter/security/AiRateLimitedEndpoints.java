@@ -12,9 +12,10 @@ import org.springframework.util.AntPathMatcher;
  * (tailored evidence questions, semantic search) and some POSTs next to them are plain CRUD.
  * When a new endpoint reaches a {@code ChatProviderPort} or embeds per request, add it here.
  *
- * <p>Deliberately not listed: endpoints that only read cached embeddings (recommendations,
- * dashboard, analytics, similar jobs), the profile update whose embedding refresh is an async
- * side effect, and outreach / company research, which are tracking CRUD with no model call.
+ * <p>Deliberately not listed: endpoints that read cached embeddings (recommendations,
+ * dashboard, analytics, similar jobs; a missing profile embedding is computed once and cached),
+ * the profile update, whose embedding refresh runs off the request and is coalesced per user,
+ * and outreach / company research, which are tracking CRUD with no model call.
  */
 final class AiRateLimitedEndpoints {
 
@@ -80,7 +81,13 @@ final class AiRateLimitedEndpoints {
     private record Route(HttpMethod method, String pattern) {
 
         boolean matches(String requestMethod, String path) {
-            return method.matches(requestMethod) && MATCHER.match(pattern, path);
+            return answers(requestMethod) && MATCHER.match(pattern, path);
+        }
+
+        /** MVC serves HEAD from GET handlers, so a HEAD runs the same paid call. */
+        private boolean answers(String requestMethod) {
+            return method.matches(requestMethod)
+                    || (method == HttpMethod.GET && HttpMethod.HEAD.matches(requestMethod));
         }
     }
 }

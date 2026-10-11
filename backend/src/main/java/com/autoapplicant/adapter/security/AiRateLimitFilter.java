@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * Simple per-user token-bucket rate limiter for AI endpoints.
@@ -40,9 +41,12 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
         this.windowMillis = windowSeconds * 1000L;
     }
 
+    // Matches the decoded path MVC dispatches on, not the raw URI: the firewall lets encoded
+    // letters through, so "/api/v1/%61i/refine" would otherwise reach the handler uncounted.
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !AiRateLimitedEndpoints.matches(request.getMethod(), request.getRequestURI());
+        String path = UrlPathHelper.defaultInstance.getPathWithinApplication(request);
+        return !AiRateLimitedEndpoints.matches(request.getMethod(), path);
     }
 
     @Override

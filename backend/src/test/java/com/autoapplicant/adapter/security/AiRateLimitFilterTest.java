@@ -51,7 +51,12 @@ class AiRateLimitFilterTest {
             "POST, /api/v1/skills/evidence/draft",
             "GET, /api/v1/jobs/search/semantic",
             "POST, /api/v1/admin/linkedin/plan/refresh",
-            "POST, /api/v1/admin/linkedin/run"
+            "POST, /api/v1/admin/linkedin/run",
+            "HEAD, /api/v1/jobs/search/semantic",
+            "HEAD, /api/v1/skills/evidence-gaps/tailored",
+            "POST, /api/v1/%61i/refine",
+            "GET, /api/v1/jobs/search/sem%61ntic",
+            "POST, /api/v1/ai;x=1/refine"
     })
     void an_ai_endpoint_is_limited_once_the_budget_is_spent(String method, String path)
             throws Exception {
