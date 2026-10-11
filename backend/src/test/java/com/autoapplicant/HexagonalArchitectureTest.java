@@ -3,8 +3,11 @@ package com.autoapplicant;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-import com.tngtech.archunit.core.domain.Dependency;
+import com.tngtech.archunit.core.domain.JavaAccess;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
+import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -48,16 +51,27 @@ class HexagonalArchitectureTest {
             .because("use cases reach infrastructure only through port.out interfaces");
 
     /**
-     * A use case may implement its own inbound ports and use port.in records (commands, results),
-     * but it may not call another use case, through its port or its class. Shared logic belongs in
-     * a helper that is not itself a use case; composing use cases belongs in the adapter.
+     * A use case may implement its inbound ports and use port.in records (commands, results), but
+     * it may not hold or call another use case, through a port or a class. That includes another
+     * implementation of a port it implements itself. Shared logic belongs in a helper that is not
+     * a use case; composing use cases belongs in the adapter.
      */
     @ArchTest
     static final ArchRule use_cases_never_call_other_use_cases = classes()
             .that().resideInAPackage(USECASE)
-            .should(notDependOnAnotherUseCase())
+            .should(notReferenceAnotherUseCase())
             .because("a use case composes outbound ports and plain helpers; orchestrating several "
                     + "use cases belongs in the adapter that drives them");
+
+    /**
+     * An outbound port implemented in usecase lets one use case reach another through port.out,
+     * past the rule above. Outbound ports are implemented by adapters.
+     */
+    @ArchTest
+    static final ArchRule use_cases_never_implement_outbound_ports = noClasses()
+            .that().resideInAPackage(USECASE)
+            .should().implement(JavaClass.Predicates.resideInAPackage(PORT_OUT))
+            .because("port.out is what the application needs from infrastructure; adapters provide it");
 
     @ArchTest
     static final ArchRule adapters_call_use_cases_through_inbound_ports = noClasses()
@@ -83,27 +97,43 @@ class HexagonalArchitectureTest {
             .should().dependOnClassesThat().resideInAnyPackage("org.springframework.web..", "jakarta.servlet..")
             .because("HTTP is an adapter concern");
 
-    private static ArchCondition<JavaClass> notDependOnAnotherUseCase() {
-        return new ArchCondition<>("not depend on an inbound port or another use case") {
+    /**
+     * Looks at what a use case holds, receives and calls, not at what it implements: implementing
+     * a port is the point, while holding one (even the same one) means calling someone else.
+     */
+    private static ArchCondition<JavaClass> notReferenceAnotherUseCase() {
+        return new ArchCondition<>("not hold, receive or call an inbound port or another use case") {
             @Override
             public void check(JavaClass useCase, ConditionEvents events) {
-                for (Dependency dependency : useCase.getDirectDependenciesFromSelf()) {
-                    if (isCallToAnotherUseCase(useCase, dependency.getTargetClass())) {
-                        events.add(SimpleConditionEvent.violated(dependency, dependency.getDescription()));
+                for (JavaField field : useCase.getFields()) {
+                    reportUseCasesIn(useCase, field.getType(), field.getFullName(), events);
+                }
+                for (JavaCodeUnit codeUnit : useCase.getCodeUnits()) {
+                    for (JavaType parameter : codeUnit.getParameterTypes()) {
+                        reportUseCasesIn(useCase, parameter, codeUnit.getFullName(), events);
+                    }
+                }
+                for (JavaAccess<?> access : useCase.getAccessesFromSelf()) {
+                    if (isOtherUseCase(useCase, access.getTargetOwner())) {
+                        events.add(SimpleConditionEvent.violated(access, access.getDescription()));
                     }
                 }
             }
         };
     }
 
-    /**
-     * Implementing a port is not calling it, and a nested class reaching its enclosing class is
-     * the same use case talking to itself.
-     */
-    private static boolean isCallToAnotherUseCase(JavaClass useCase, JavaClass target) {
-        return isUseCaseEntryPoint(target)
-                && !useCase.isAssignableTo(target.getName())
-                && !topLevelName(useCase).equals(topLevelName(target));
+    private static void reportUseCasesIn(JavaClass useCase, JavaType type, String where,
+                                         ConditionEvents events) {
+        for (JavaClass involved : type.getAllInvolvedRawTypes()) {
+            if (isOtherUseCase(useCase, involved)) {
+                events.add(SimpleConditionEvent.violated(useCase, where + " uses " + involved.getName()));
+            }
+        }
+    }
+
+    /** A nested class reaching its enclosing class is the same use case talking to itself. */
+    private static boolean isOtherUseCase(JavaClass useCase, JavaClass target) {
+        return isUseCaseEntryPoint(target) && !topLevelName(useCase).equals(topLevelName(target));
     }
 
     /** An inbound port interface, or a class in usecase that implements one. */
