@@ -17,7 +17,9 @@ import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * after commit when the save happens inside a transaction, and right away when it does not.
  *
  * <p>Refreshes for one user are serialised and each reads the profile as it is now, so rapid
- * saves cannot finish out of order and leave an older embedding stored over a newer one.
+ * saves cannot finish out of order and leave an older embedding stored over a newer one. A save
+ * that arrives while a refresh is already waiting is dropped: the waiting one will read it, so a
+ * burst of saves costs at most one embed call in flight and one queued.
  */
 @Component
 public class ProfileEmbeddingUpdater {
@@ -45,6 +49,7 @@ public class ProfileEmbeddingUpdater {
     private static final int LOCK_STRIPES = 64;
 
     private final ReentrantLock[] userLocks = newLocks();
+    private final Set<UUID> waiting = ConcurrentHashMap.newKeySet();
     private final ProfileRepositoryPort profileRepo;
 
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
@@ -73,8 +78,11 @@ public class ProfileEmbeddingUpdater {
     @Async("userAiTaskExecutor")
     @TransactionalEventListener(fallbackExecution = true)
     public void onProfileSaved(ProfileSavedEvent event) {
+        if (!waiting.add(event.userId())) return;
         ReentrantLock lock = lockFor(event.userId());
         lock.lock();
+        // Leave the waiting set once running, so a save made during this refresh queues another.
+        waiting.remove(event.userId());
         try {
             recompute(event.userId());
         } catch (Exception e) {
@@ -133,22 +141,28 @@ public class ProfileEmbeddingUpdater {
         appendText(sb, p.headline());
         appendText(sb, p.summary());
         appendWords(sb, skillNames);
-        for (WorkExperience w : nullToEmpty(experience)) {
-            appendText(sb, w.title());
-            appendText(sb, w.companyName());
-            appendText(sb, w.description());
-            appendWords(sb, w.technologies());
-        }
-        for (Project proj : nullToEmpty(projects)) {
-            appendText(sb, proj.name());
-            appendText(sb, proj.description());
-            appendWords(sb, proj.technologies());
-        }
-        for (Certification c : nullToEmpty(certs)) {
-            appendText(sb, c.name());
-            appendText(sb, c.issuer());
-        }
+        nullToEmpty(experience).forEach(w -> appendExperience(sb, w));
+        nullToEmpty(projects).forEach(proj -> appendProject(sb, proj));
+        nullToEmpty(certs).forEach(c -> appendCertification(sb, c));
         return sb.toString().trim();
+    }
+
+    private static void appendExperience(StringBuilder sb, WorkExperience w) {
+        appendText(sb, w.title());
+        appendText(sb, w.companyName());
+        appendText(sb, w.description());
+        appendWords(sb, w.technologies());
+    }
+
+    private static void appendProject(StringBuilder sb, Project proj) {
+        appendText(sb, proj.name());
+        appendText(sb, proj.description());
+        appendWords(sb, proj.technologies());
+    }
+
+    private static void appendCertification(StringBuilder sb, Certification c) {
+        appendText(sb, c.name());
+        appendText(sb, c.issuer());
     }
 
     private static void appendText(StringBuilder sb, String text) {

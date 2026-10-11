@@ -22,6 +22,7 @@ import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +43,7 @@ class ProfileEmbeddingUpdaterTest {
 
     private static final long ASYNC_WAIT_MS = 5_000;
     private static final long OVERLAP_WINDOW_MS = 200;
+    private static final int BURST = 5;
     private static final float[] VECTOR = {0.1f, 0.2f};
     private static final String MODEL = "text-embedding-3-small";
 
@@ -134,6 +136,41 @@ class ProfileEmbeddingUpdaterTest {
         }
 
         assertThat(maxInFlight.get()).isEqualTo(1);
+    }
+
+    /** A burst of saves must not turn into one embed call each. */
+    @Test
+    void saves_arriving_while_a_refresh_waits_are_coalesced() throws Exception {
+        storedProfile("Backend engineer");
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        AtomicInteger calls = new AtomicInteger();
+        when(aiProvider.embed(anyString())).thenAnswer(inv -> {
+            if (calls.incrementAndGet() == 1) {
+                firstStarted.countDown();
+                releaseFirst.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
+            }
+            return VECTOR;
+        });
+        when(aiProvider.embeddingModelName()).thenReturn(MODEL);
+        ProfileEmbeddingUpdater updater = updater();
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> running = pool.submit(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
+            firstStarted.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
+            Future<?> queued = pool.submit(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
+            Thread.sleep(OVERLAP_WINDOW_MS);
+            for (int i = 0; i < BURST; i++) {
+                updater.onProfileSaved(new ProfileSavedEvent(userId));
+            }
+            releaseFirst.countDown();
+            running.get(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
+            queued.get(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(calls.get()).isEqualTo(2);
     }
 
     /** The regression: publishing the event must run the embedding on the async executor. */
