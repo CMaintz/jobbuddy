@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import type { jsPDF } from 'jspdf';
 import { ResumeData, ResumeSettings, ResumeSkill } from '../../features/resume-builder/models/resume-builder.models';
 import { StructuredDocument } from '../../core/models/structured-document.model';
+import { htmlTextContent } from '../utils/sanitize-html';
 
 /**
  * Text-based PDF generation (jsPDF text API — no canvas rasterization).
@@ -362,7 +363,5 @@ function groupedSkillLines(skills: ResumeSkill[]): string[] {
 function stripHtml(value?: string): string | undefined {
   if (!value) return undefined;
   if (!value.includes('<')) return value;
-  const div = document.createElement('div');
-  div.innerHTML = value.replace(/<\/(p|li|ul|ol)>/g, '</$1>\n');
-  return (div.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim() || undefined;
+  return htmlTextContent(value.replace(/<\/(p|li|ul|ol)>/g, '</$1>\n')).replace(/\n{3,}/g, '\n\n').trim() || undefined;
 }
