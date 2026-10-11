@@ -2,14 +2,14 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.InterviewStoryEntity;
 import com.autoapplicant.adapter.persistence.repository.InterviewStoryJpaRepository;
+import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.user.InterviewStory;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class InterviewStoryPersistenceAdapter implements InterviewStoryRepositoryPort {
@@ -28,7 +28,7 @@ public class InterviewStoryPersistenceAdapter implements InterviewStoryRepositor
     @Override
     public InterviewStory save(InterviewStory story) {
         InterviewStoryEntity e = story.id() != null
-                ? repo.findById(story.id()).orElseGet(InterviewStoryEntity::new)
+                ? ownedEntity(story.id(), story.userId())
                 : new InterviewStoryEntity();
         e.setUserId(story.userId());
         e.setTitle(story.title());
@@ -45,6 +45,11 @@ public class InterviewStoryPersistenceAdapter implements InterviewStoryRepositor
     @Transactional
     public void delete(UUID id, UUID userId) {
         repo.deleteByIdAndUserId(id, userId);
+    }
+
+    private InterviewStoryEntity ownedEntity(UUID id, UUID userId) {
+        return repo.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new NotFoundException("Interview story not found"));
     }
 
     private InterviewStory toDomain(InterviewStoryEntity e) {
