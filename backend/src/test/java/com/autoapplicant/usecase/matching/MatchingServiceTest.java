@@ -1,40 +1,40 @@
 package com.autoapplicant.usecase.matching;
 
-import com.autoapplicant.domain.job.JobEmbedding;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.matching.FeedbackType;
-import com.autoapplicant.domain.matching.RecommendationFeedback;
-import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
-import com.autoapplicant.domain.user.Profile;
-import com.autoapplicant.domain.user.UserPreferences;
+import com.autoapplicant.domain.matching.RecommendationFeedback;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfileEmbedding;
+import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.out.ai.AiProviderPort;
-import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
+import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
+import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
-import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MatchingServiceTest {
@@ -101,6 +101,37 @@ class MatchingServiceTest {
 
         verify(aiProvider).embed(anyString());
         verify(embeddingRepo).findNearestNeighborJobIds(embedding, 50);
+    }
+
+    @Test
+    void a_computed_fallback_embedding_is_cached_for_the_next_load() {
+        Profile p = profile(userId, "Senior Java Engineer", "Spring Boot expert",
+                List.of("Java"), List.of("Spring"));
+        when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
+        float[] embedding = new float[]{0.1f, 0.2f, 0.3f};
+        when(aiProvider.embed(anyString())).thenReturn(embedding);
+        when(jobRepo.findByIds(any())).thenReturn(List.of());
+
+        service.getRecommendations(userId, 10);
+
+        verify(profileEmbeddingRepo).save(argThat(e -> e.userId().equals(userId)
+                && e.embedding() == embedding));
+    }
+
+    @Test
+    void a_cached_embedding_is_used_without_a_provider_call() {
+        Profile p = profile(userId, "Senior Java Engineer", "Spring Boot expert",
+                List.of("Java"), List.of("Spring"));
+        when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(p));
+        float[] embedding = new float[]{0.1f, 0.2f, 0.3f};
+        when(profileEmbeddingRepo.findByUserId(userId)).thenReturn(Optional.of(
+                new ProfileEmbedding(UUID.randomUUID(), userId, embedding, "m", Instant.now())));
+        when(jobRepo.findByIds(any())).thenReturn(List.of());
+
+        service.getRecommendations(userId, 10);
+
+        verify(aiProvider, never()).embed(anyString());
+        verify(profileEmbeddingRepo, never()).save(any());
     }
 
     @Test
