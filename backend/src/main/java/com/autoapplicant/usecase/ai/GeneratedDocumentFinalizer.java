@@ -3,9 +3,10 @@ package com.autoapplicant.usecase.ai;
 import com.autoapplicant.domain.ai.GenerateDocumentCommand;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
+import com.autoapplicant.domain.document.structured.DocumentRenderOptions;
 import com.autoapplicant.domain.document.structured.JobKeywords;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
-import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
+import com.autoapplicant.usecase.document.ApplicationDocumentAssembler;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.GeneratedDocumentWriter;
 import java.util.Arrays;
@@ -21,14 +22,14 @@ import org.springframework.stereotype.Service;
 public class GeneratedDocumentFinalizer {
 
     private final GeneratedContentGuards contentGuards;
-    private final BuildApplicationDocumentPort buildApplicationDocument;
+    private final ApplicationDocumentAssembler applicationDocuments;
     private final GeneratedDocumentWriter documentWriter;
 
     public GeneratedDocumentFinalizer(GeneratedContentGuards contentGuards,
-                                      BuildApplicationDocumentPort buildApplicationDocument,
+                                      ApplicationDocumentAssembler applicationDocuments,
                                       GeneratedDocumentWriter documentWriter) {
         this.contentGuards = contentGuards;
-        this.buildApplicationDocument = buildApplicationDocument;
+        this.applicationDocuments = applicationDocuments;
         this.documentWriter = documentWriter;
     }
 
@@ -40,9 +41,10 @@ public class GeneratedDocumentFinalizer {
                 contentGuards.verify(cmd.userId(), body, in.contactFreeJson(), cmd.documentType());
         // Keyword coverage is measured downstream against the delivered text and the posting's own
         // tiered asks — the model is no longer asked to grade itself.
-        StructuredDocument doc = buildApplicationDocument.buildApplicationDocument(
+        StructuredDocument doc = applicationDocuments.assemble(
                 cmd.userId(), parseDocumentType(cmd.documentType()), body, cmd.templateId(),
-                JobKeywords.of(in.job()), cmd.showProfileImage(), cmd.theme(), guardFindings);
+                JobKeywords.of(in.job()), new DocumentRenderOptions(cmd.showProfileImage(), cmd.theme()),
+                guardFindings);
         return documentWriter.save(cmd.userId(), cmd.jobId(), doc, modelName);
     }
 
