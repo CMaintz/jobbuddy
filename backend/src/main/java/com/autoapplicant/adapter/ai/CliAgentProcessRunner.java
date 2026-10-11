@@ -1,17 +1,15 @@
 package com.autoapplicant.adapter.ai;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +22,9 @@ final class CliAgentProcessRunner {
 
     private static final Logger log = LoggerFactory.getLogger(CliAgentProcessRunner.class);
 
+    /** How often the wait re-lists descendants, so ones the agent spawns are known before it exits. */
+    private static final Duration DESCENDANT_POLL = Duration.ofMillis(200);
+
     /** How long a killed process tree gets to exit, so its files in the work dir are released. */
     private static final Duration KILL_WAIT = Duration.ofSeconds(5);
 
@@ -32,46 +33,88 @@ final class CliAgentProcessRunner {
 
     record Result(int exitCode, String stdout, String stderr) {}
 
+    /** The agent could not be started at all, as opposed to failing once running. */
+    static final class LaunchException extends IOException {
+        LaunchException(IOException cause) {
+            super(cause.getMessage(), cause);
+        }
+    }
+
     private CliAgentProcessRunner() {}
 
     /**
      * Starts {@code pb}, feeds it {@code stdin} and waits up to {@code timeout}. Whichever way it
-     * ends, the process and every descendant are gone when this returns or throws.
+     * ends, the process and every descendant seen while it ran are killed before this returns.
      *
+     * @throws LaunchException the process could not be started
      * @throws TimeoutException the process outlived {@code timeout} and was killed
-     * @throws IOException the process could not be started or its output could not be read
+     * @throws IOException its output could not be read
      */
     static Result run(ProcessBuilder pb, String stdin, Duration timeout)
             throws IOException, InterruptedException, TimeoutException {
-        Process proc = pb.start();
-        Pipes pipes;
+        Process proc = start(pb);
+        Set<ProcessHandle> tree = new LinkedHashSet<>();
+        Pipes pipes = Pipes.attach(proc, stdin);
         try {
-            pipes = attachPipes(proc, stdin);
-            awaitExit(proc, timeout);
+            awaitExit(proc, timeout, tree);
         } finally {
-            // Also after a normal exit: children it left behind would hold stdout open.
-            killTree(proc);
+            // Also after a normal exit: children it left behind would hold the pipes open.
+            killAll(proc, tree);
+            pipes.awaitStdinWriter();
         }
         return pipes.result(proc.exitValue());
     }
 
-    /** stdout and stderr being collected in the background. */
-    private record Pipes(FutureTask<String> stdout, FutureTask<String> stderr) {
+    /** The prompt being written and the output being drained, each on its own thread. */
+    private record Pipes(Thread stdinWriter, CliAgentPipe stdout, CliAgentPipe stderr) {
+
+        static Pipes attach(Process proc, String stdin) {
+            return new Pipes(
+                    startDaemon(() -> writeStdin(proc, stdin)),
+                    CliAgentPipe.drain(proc.getInputStream()),
+                    CliAgentPipe.drain(proc.getErrorStream()));
+        }
+
+        /** Bounded, so a writer stuck on a pipe nobody reads costs a parked daemon, not a hang. */
+        void awaitStdinWriter() throws InterruptedException {
+            stdinWriter.join(DRAIN_WAIT.toMillis());
+            if (stdinWriter.isAlive()) {
+                log.warn("CLI agent stdin writer still blocked after the process tree was killed");
+            }
+        }
 
         Result result(int exitCode) throws IOException, InterruptedException {
-            return new Result(exitCode, await(stdout), await(stderr));
+            return new Result(exitCode, stdout.text(DRAIN_WAIT), stderr.text(DRAIN_WAIT));
         }
     }
 
-    private static Pipes attachPipes(Process proc, String stdin) {
-        startDaemon(() -> writeStdin(proc, stdin));
-        return new Pipes(collect(proc.getInputStream()), collect(proc.getErrorStream()));
+    static Thread startDaemon(Runnable work) {
+        Thread thread = new Thread(work, "cli-agent-pipe");
+        thread.setDaemon(true);
+        thread.start();
+        return thread;
     }
 
-    private static void awaitExit(Process proc, Duration timeout)
+    private static Process start(ProcessBuilder pb) throws LaunchException {
+        try {
+            return pb.start();
+        } catch (IOException e) {
+            throw new LaunchException(e);
+        }
+    }
+
+    /**
+     * Waits for exit while recording descendants. They have to be listed while the agent lives:
+     * once it exits, Linux reparents its orphans and {@code descendants()} no longer finds them.
+     */
+    private static void awaitExit(Process proc, Duration timeout, Set<ProcessHandle> tree)
             throws InterruptedException, TimeoutException {
-        if (!proc.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-            throw new TimeoutException("no exit after " + timeout.toSeconds() + "s");
+        long deadline = System.nanoTime() + timeout.toNanos();
+        while (!proc.waitFor(DESCENDANT_POLL.toMillis(), TimeUnit.MILLISECONDS)) {
+            proc.descendants().forEach(tree::add);
+            if (System.nanoTime() - deadline >= 0) {
+                throw new TimeoutException("no exit after " + timeout.toSeconds() + "s");
+            }
         }
     }
 
@@ -83,38 +126,14 @@ final class CliAgentProcessRunner {
         }
     }
 
-    private static FutureTask<String> collect(InputStream in) {
-        FutureTask<String> task =
-                new FutureTask<>(() -> new String(in.readAllBytes(), StandardCharsets.UTF_8));
-        startDaemon(task);
-        return task;
-    }
-
-    private static void startDaemon(Runnable work) {
-        Thread thread = new Thread(work, "cli-agent-pipe");
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    private static String await(FutureTask<String> output)
-            throws IOException, InterruptedException {
-        try {
-            return output.get(DRAIN_WAIT.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-            throw new IOException("Could not read CLI agent output", e.getCause());
-        } catch (TimeoutException e) {
-            throw new IOException("CLI agent output did not close after the process exited", e);
-        }
-    }
-
     /**
-     * Force-kills the process and its descendants, then waits for them to exit.
-     * {@code destroyForcibly} alone neither reaches grandchildren nor waits, and on Windows a
-     * live child keeps the work dir locked so it cannot be deleted.
+     * Force-kills the process, the descendants recorded earlier and any still attached, then waits
+     * for them to exit. {@code destroyForcibly} alone neither reaches grandchildren nor waits, and
+     * on Windows a live child keeps the work dir locked so it cannot be deleted.
      */
-    private static void killTree(Process proc) throws InterruptedException {
-        List<ProcessHandle> tree =
-                Stream.concat(proc.descendants(), Stream.of(proc.toHandle())).toList();
+    private static void killAll(Process proc, Set<ProcessHandle> tree) throws InterruptedException {
+        proc.descendants().forEach(tree::add);
+        tree.add(proc.toHandle());
         tree.forEach(ProcessHandle::destroyForcibly);
         CompletableFuture<?>[] exits =
                 tree.stream().map(ProcessHandle::onExit).toArray(CompletableFuture[]::new);

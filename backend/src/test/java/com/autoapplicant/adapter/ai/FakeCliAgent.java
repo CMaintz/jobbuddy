@@ -15,10 +15,15 @@ public final class FakeCliAgent {
     static final String FAIL = "fail";
     static final String HANG = "hang";
     static final String SPAWN_AND_HANG = "spawn-and-hang";
+    static final String ANSWER_AND_ORPHAN = "answer-and-orphan";
+    static final String ANSWER = "answer";
 
     static final int FAIL_EXIT_CODE = 3;
 
     private static final long HANG_MILLIS = 120_000;
+
+    /** Long enough for the runner to see the orphan while this process is still its parent. */
+    private static final long LINGER_MILLIS = 1_500;
 
     private FakeCliAgent() {}
 
@@ -35,6 +40,13 @@ public final class FakeCliAgent {
                 Process child = new ProcessBuilder(command(HANG)).inheritIO().start();
                 Files.writeString(Path.of(args[1]), Long.toString(child.pid()));
                 Thread.sleep(HANG_MILLIS);
+            }
+            case ANSWER_AND_ORPHAN -> {
+                Process child = new ProcessBuilder(command(HANG)).inheritIO().start();
+                Files.writeString(Path.of(args[1]), Long.toString(child.pid()));
+                System.out.print(ANSWER);
+                System.out.flush();
+                Thread.sleep(LINGER_MILLIS);
             }
             default -> throw new IllegalArgumentException(args[0]);
         }

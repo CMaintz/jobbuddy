@@ -62,6 +62,29 @@ class CliAgentProcessRunnerTest {
         assertThat(workDir).doesNotExist();
     }
 
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    void aChildLeftHoldingStdoutIsKilledAndTheAnswerStillReturned() throws Exception {
+        Path pidFile = Files.createTempFile("cli-agent-child", ".pid");
+        ProcessBuilder pb = agent(FakeCliAgent.ANSWER_AND_ORPHAN, pidFile.toString());
+
+        CliAgentProcessRunner.Result result = CliAgentProcessRunner.run(pb, "", GENEROUS_TIMEOUT);
+
+        assertThat(result.exitCode()).isZero();
+        assertThat(result.stdout()).isEqualTo(FakeCliAgent.ANSWER);
+        long childPid = Long.parseLong(Files.readString(pidFile));
+        assertThat(ProcessHandle.of(childPid).filter(ProcessHandle::isAlive)).isEmpty();
+        Files.delete(pidFile);
+    }
+
+    @Test
+    void aProgramThatCannotStartIsALaunchFailure() {
+        ProcessBuilder pb = new ProcessBuilder("no-such-agent-cli-for-tests");
+
+        assertThatThrownBy(() -> CliAgentProcessRunner.run(pb, "", GENEROUS_TIMEOUT))
+                .isInstanceOf(CliAgentProcessRunner.LaunchException.class);
+    }
+
     private static ProcessBuilder agent(String... args) {
         return new ProcessBuilder(FakeCliAgent.command(args));
     }
