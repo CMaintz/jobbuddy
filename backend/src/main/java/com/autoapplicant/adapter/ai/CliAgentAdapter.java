@@ -57,9 +57,8 @@ public class CliAgentAdapter implements ChatProviderPort {
     private String run(PromptComposition composition, boolean jsonObject) {
         int timeoutSeconds = props.getAi().getCli().getTimeoutSeconds();
         String prompt = buildPrompt(composition, jsonObject);
-        Path workDir = null;
+        Path workDir = newWorkDir();
         try {
-            workDir = CliAgentProcessFactory.createWorkDir();
             ProcessBuilder pb = CliAgentProcessFactory.create(command, workDir, provider);
             return requireAnswer(
                     CliAgentProcessRunner.run(pb, prompt, Duration.ofSeconds(timeoutSeconds)));
@@ -69,11 +68,22 @@ public class CliAgentAdapter implements ChatProviderPort {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted running CLI agent", e);
-        } catch (IOException e) {
+        } catch (CliAgentProcessRunner.LaunchException e) {
             throw new IllegalStateException("Could not launch CLI agent '" + command
                     + "' - is it installed and on PATH?", e);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Could not read the output of CLI agent '" + command + "'", e);
         } finally {
             removeWorkDir(workDir);
+        }
+    }
+
+    private static Path newWorkDir() {
+        try {
+            return CliAgentProcessFactory.createWorkDir();
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not create a work dir for the CLI agent", e);
         }
     }
 
@@ -90,9 +100,6 @@ public class CliAgentAdapter implements ChatProviderPort {
     }
 
     private static void removeWorkDir(Path workDir) {
-        if (workDir == null) {
-            return;
-        }
         try {
             CliAgentProcessFactory.deleteWorkDir(workDir);
         } catch (UncheckedIOException e) {
