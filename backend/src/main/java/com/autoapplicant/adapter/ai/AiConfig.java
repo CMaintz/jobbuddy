@@ -76,7 +76,7 @@ public class AiConfig {
         if (isCliProvider(provider)) {
             log.info("Enrichment extraction runs on the local CLI agent ({}); embeddings still "
                      + "use {}.", provider, props.getAi().getEnrichmentProvider());
-            return new CliAgentAdapter(props);
+            return new CliAgentAdapter(props, provider);
         }
         String tier = props.getAi().getEnrichmentTier();
         return "gemini".equalsIgnoreCase(provider)
@@ -109,7 +109,7 @@ public class AiConfig {
                                                             AppProperties props) {
         String provider = props.getAi().getGenerationProvider();
         if (isCliProvider(provider)) {
-            return new CliAgentAdapter(props);
+            return new CliAgentAdapter(props, provider);
         }
         String tier = props.getAi().getGenerationTier();
         return "gemini".equalsIgnoreCase(provider)

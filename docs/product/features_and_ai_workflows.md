@@ -328,7 +328,8 @@ Generation is provider-pluggable via `app.ai.generation-provider`:
 
 - `openai` (default) / `gemini` — API providers.
 - `claude-cli` / `codex` / `cli` — a **local CLI agent** (Claude Code / Codex): prompts are piped to
-  the agent's stdin (`app.ai.cli.command`, default `claude -p --tools= --strict-mcp-config`, tools disabled), so generation runs on a flat-fee
+  the agent's stdin (default per provider: Claude Code with tools disabled, or Codex under a read-only
+  sandbox; `app.ai.cli.command` overrides it), so generation runs on a flat-fee
   subscription instead of per-token API cost.
 
 Embeddings (`app.ai.enrichment-provider`) must remain a real API — CLI agents produce text, not

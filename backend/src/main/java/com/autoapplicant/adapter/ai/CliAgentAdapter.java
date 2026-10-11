@@ -33,9 +33,12 @@ public class CliAgentAdapter implements ChatProviderPort {
     private static final Logger log = LoggerFactory.getLogger(CliAgentAdapter.class);
 
     private final AppProperties props;
+    private final String command;
 
-    public CliAgentAdapter(AppProperties props) {
+    /** {@code provider} picks the default command line when {@code app.ai.cli.command} is blank. */
+    public CliAgentAdapter(AppProperties props, String provider) {
         this.props = props;
+        this.command = CliAgentCommands.resolve(provider, props.getAi().getCli().getCommand());
     }
 
     /**
@@ -53,7 +56,7 @@ public class CliAgentAdapter implements ChatProviderPort {
         Path workDir = null;
         try {
             workDir = CliAgentProcessFactory.createWorkDir();
-            ProcessBuilder pb = CliAgentProcessFactory.create(cfg.getCommand(), workDir);
+            ProcessBuilder pb = CliAgentProcessFactory.create(command, workDir);
             Process proc = pb.start();
 
             // Drain stdin/stderr on separate threads so a full pipe buffer can never deadlock
@@ -82,25 +85,25 @@ public class CliAgentAdapter implements ChatProviderPort {
             if (!finished) {
                 proc.destroyForcibly();
                 throw new IllegalStateException(
-                        "CLI agent '" + cfg.getCommand() + "' timed out after " + cfg.getTimeoutSeconds() + "s");
+                        "CLI agent '" + command + "' timed out after " + cfg.getTimeoutSeconds() + "s");
             }
             stdinWriter.join(2000);
             stderrDrainer.join(2000);
 
             if (proc.exitValue() != 0) {
-                throw new IllegalStateException("CLI agent '" + cfg.getCommand() + "' exited "
+                throw new IllegalStateException("CLI agent '" + command + "' exited "
                         + proc.exitValue() + ": " + stderr.toString().strip());
             }
             String out = stdout.strip();
             if (out.isEmpty()) {
-                throw new IllegalStateException("CLI agent '" + cfg.getCommand() + "' returned empty output");
+                throw new IllegalStateException("CLI agent '" + command + "' returned empty output");
             }
             return out;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted running CLI agent", e);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not launch CLI agent '" + cfg.getCommand()
+            throw new IllegalStateException("Could not launch CLI agent '" + command
                     + "' — is it installed and on PATH?", e);
         } finally {
             removeWorkDir(workDir);

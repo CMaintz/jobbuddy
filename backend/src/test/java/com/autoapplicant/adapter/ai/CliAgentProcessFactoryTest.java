@@ -2,7 +2,6 @@ package com.autoapplicant.adapter.ai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.autoapplicant.config.AppProperties;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,14 +16,6 @@ class CliAgentProcessFactoryTest {
 
     @TempDir
     Path tempDir;
-
-    @Test
-    void defaultCommandDisablesAgentToolsAndMcpServers() {
-        String defaultCommand = new AppProperties.Cli().getCommand();
-
-        assertThat(CliAgentProcessFactory.parseCommand(defaultCommand))
-                .containsExactly("claude", "-p", "--tools=", "--strict-mcp-config");
-    }
 
     @Test
     void createRunsTheCommandInTheGivenWorkDir() {

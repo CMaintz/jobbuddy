@@ -62,11 +62,11 @@ public class AppProperties {
      */
     public static class Cli {
         /**
-         * Command + fixed args; the prompt is piped to stdin. The default disables Claude Code's
-         * tools and MCP servers because prompts carry untrusted posting text. Another CLI (e.g.
-         * "codex exec") must be configured with its own no-tools flag by the operator.
+         * Optional override of the whole command line; the prompt is piped to stdin. Blank means
+         * the sandboxed default for the provider (claude-cli/cli run Claude Code, codex runs
+         * Codex). An override replaces those sandbox flags too, so it must carry its own.
          */
-        private String command = "claude -p --tools= --strict-mcp-config";
+        private String command = "";
         private int timeoutSeconds = 120;
         /** Label reported as the model name for provenance in saved documents. */
         private String modelLabel = "cli-agent";
