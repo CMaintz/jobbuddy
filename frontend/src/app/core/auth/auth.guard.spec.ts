@@ -20,7 +20,7 @@ describe('authGuard', () => {
       'AuthService', ['whenAuthReady', 'isAuthenticated', 'needsEmailVerification']);
     authService.whenAuthReady.and.returnValue(new Promise<void>(resolve => (resolveAuthReady = resolve)));
     authService.isAuthenticated.and.callFake(() => authenticated);
-    authService.needsEmailVerification.and.callFake(() => Promise.resolve(unverified));
+    authService.needsEmailVerification.and.callFake(() => unverified);
 
     TestBed.configureTestingModule({
       providers: [provideRouter([]), { provide: AuthService, useValue: authService }],

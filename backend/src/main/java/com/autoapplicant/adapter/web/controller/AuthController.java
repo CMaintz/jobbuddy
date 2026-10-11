@@ -90,6 +90,9 @@ public class AuthController {
   @ApiResponse(
       responseCode = "403",
       description = "LinkedIn has not verified the email and no account is linked yet")
+  @ApiResponse(
+      responseCode = "409",
+      description = "An account with this email exists but has not verified it")
   @PostMapping("/linkedin")
   public ResponseEntity<Map<String, String>> linkedInCallback(
       @RequestBody LinkedInCallbackRequest request) {
@@ -102,7 +105,7 @@ public class AuthController {
     try {
       String customToken =
           firebaseAuth.createCustomToken(
-              user.firebaseUid() != null ? user.firebaseUid() : "linkedin:" + identity.sub(),
+              user.firebaseUid() != null ? user.firebaseUid() : identity.fallbackFirebaseUid(),
               Map.of("role", user.role().name()));
       return ResponseEntity.ok(Map.of("customToken", customToken));
     } catch (FirebaseAuthException e) {

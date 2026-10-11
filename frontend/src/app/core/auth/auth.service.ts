@@ -6,6 +6,7 @@ import { User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 import { auth } from '../firebase/firebase.config';
 import { OAuthState } from './oauth-state';
+import { requiresEmailVerification } from './email-verification';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -20,9 +21,6 @@ import {
 
 /** Error code `login()` fails with when the account still has an unverified email. */
 export const EMAIL_NOT_VERIFIED = 'auth/email-not-verified';
-
-/** Firebase's sign-in provider id for sessions minted from our backend's custom token (LinkedIn). */
-const CUSTOM_TOKEN_PROVIDER = 'custom';
 
 export interface MeResponse {
   userId: string;
@@ -123,16 +121,9 @@ export class AuthService {
     return auth.currentUser?.email ?? null;
   }
 
-  /**
-   * True when a signed-in user still has to verify their email before using the app.
-   * Custom-token (LinkedIn) sessions are exempt: they carry no Firebase email, and the backend
-   * only issues one after LinkedIn has verified the address.
-   */
-  async needsEmailVerification(): Promise<boolean> {
-    const user = auth.currentUser;
-    if (!user || user.emailVerified) return false;
-    const token = await user.getIdTokenResult();
-    return token.signInProvider !== CUSTOM_TOKEN_PROVIDER;
+  /** True when a signed-in user still has to verify their email before using the app. */
+  needsEmailVerification(): boolean {
+    return requiresEmailVerification(auth.currentUser);
   }
 
   /**
