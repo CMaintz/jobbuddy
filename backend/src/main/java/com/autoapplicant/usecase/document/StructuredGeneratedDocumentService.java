@@ -9,12 +9,11 @@ import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.document.PersistGeneratedDocumentPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class StructuredGeneratedDocumentService implements PersistGeneratedDocumentUseCase, PersistGeneratedDocumentPort {
@@ -59,26 +58,6 @@ public class StructuredGeneratedDocumentService implements PersistGeneratedDocum
     @Override
     public List<GeneratedDocument> listByUserId(UUID userId) {
         return documents.findByUserId(userId);
-    }
-
-    public GeneratedDocument attachToApplication(UUID userId, UUID generatedDocumentId, UUID applicationId) {
-        GeneratedDocument existing = documents.findByIdAndUserId(generatedDocumentId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Generated document not found"));
-        return documents.save(new GeneratedDocument(
-                existing.id(),
-                existing.userId(),
-                applicationId,
-                existing.jobId(),
-                existing.documentType(),
-                existing.content(),
-                existing.structuredContent(),
-                existing.templateId(),
-                existing.exportMode(),
-                existing.promptTemplateId(),
-                existing.cvVersionId(),
-                existing.modelUsed(),
-                existing.tokensUsed(),
-                existing.createdAt()));
     }
 
     public String plainText(StructuredDocument document) {

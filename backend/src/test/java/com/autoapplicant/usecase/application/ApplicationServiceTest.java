@@ -1,9 +1,19 @@
 package com.autoapplicant.usecase.application;
 
+import static com.autoapplicant.domain.application.ApplicationStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
+import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,23 +21,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.autoapplicant.domain.application.ApplicationStatus.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceTest {
 
     @Mock ApplicationRepositoryPort repo;
     @Mock com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort statusEventRepo;
-    @Mock StructuredGeneratedDocumentService structuredGeneratedDocuments;
+    @Mock GeneratedDocumentRepositoryPort generatedDocuments;
 
     ApplicationService service;
 
@@ -37,7 +36,7 @@ class ApplicationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ApplicationService(repo, statusEventRepo, structuredGeneratedDocuments);
+        service = new ApplicationService(repo, statusEventRepo, generatedDocuments);
     }
 
     // ── createApplication ─────────────────────────────────────────────────────

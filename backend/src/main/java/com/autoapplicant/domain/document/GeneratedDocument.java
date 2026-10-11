@@ -18,4 +18,10 @@ public record GeneratedDocument(
         String modelUsed,
         Integer tokensUsed,
         Instant createdAt
-) {}
+) {
+    public GeneratedDocument withApplicationId(UUID applicationId) {
+        return new GeneratedDocument(id, userId, applicationId, jobId, documentType, content,
+                structuredContent, templateId, exportMode, promptTemplateId, cvVersionId, modelUsed,
+                tokensUsed, createdAt);
+    }
+}
