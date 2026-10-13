@@ -32,6 +32,17 @@ java TypstRenderSpike.java probes/escape.typ sample-resume.json pdf # sandbox pr
   It **does download `@preview` packages from the network**, even through a computed import string,
   so static checks are not enough: run the renderer without network access (verified that a dead
   proxy makes the import fail). Wall-clock timeout + memory limit still needed for pathological input.
+- **Payload:** PDF 77 KB. SVG preview 504 KB for page 1 (93 KB gzipped), 119 KB for page 2:
+  fine over a gzipped response, but worth a PNG option for slow links.
+- **Fonts:** determinism needs `--ignore-system-fonts`, so only bundled fonts exist. Arial and
+  Calibri (current whitelist) cannot be bundled; use OFL stand-ins (Liberation Sans, Carlito) and a
+  Noto fallback, else CJK names and emoji render as tofu. Only æøå was tested.
+- **Packages vs "templates found online":** most published Typst CV templates import `@preview`
+  packages, which the no-network sandbox breaks. Either vendor an allowlisted set into
+  `--package-path`, or have the AI inline them.
+- **Pre-1.0:** stored user templates are Typst source tied to a compiler version; a Typst upgrade
+  means recompiling every stored template and surfacing breakages.
+- **Not tested:** photos (must be copied into the temp root; Typst cannot fetch), cover letters.
 - **Diagnostics:** compiler errors are precise (line, column, hint) - good input for an AI fix-up turn.
 
 ## Verdict
