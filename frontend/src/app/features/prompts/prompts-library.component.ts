@@ -11,7 +11,7 @@ import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.comp
 import { PromptExplainerComponent } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { AuthService } from '../../core/auth/auth.service';
-import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
+import { PromptTemplate, PromptCategory, byPreference } from '../../core/models/prompt-template.model';
 import { isSectionCategory } from '../../core/models/cv-section-category';
 import { PROMPT_KINDS, saveErrorKey } from './prompt-kinds';
 import { PromptCreateModalComponent } from './prompt-create-modal.component';
@@ -213,14 +213,11 @@ export class PromptsLibraryComponent implements OnInit {
     });
   }
 
-  /** Favourites first, then most-used. */
   filteredPrompts(): PromptTemplate[] {
     const kind = this.activeKind();
     const source = this.view() === 'shared' ? this.sharedPrompts : this.prompts;
     const list = kind === 'all' ? source : source.filter(p => p.category === kind);
-    return [...list].sort((a, b) =>
-      Number(b.favourite ?? false) - Number(a.favourite ?? false)
-      || (b.usageCount ?? 0) - (a.usageCount ?? 0));
+    return [...list].sort(byPreference);
   }
 
   toggleFavourite(p: PromptTemplate, event?: Event): void {
@@ -228,6 +225,8 @@ export class PromptsLibraryComponent implements OnInit {
     const next = !p.favourite;
     p.favourite = next; // optimistic
     (next ? this.promptApi.favourite(p.id) : this.promptApi.unfavourite(p.id)).subscribe({
+      // Starring a shared prompt is what adds it to your own library, so that list must refresh.
+      next: () => { if (this.view() === 'shared') this.load(); },
       error: () => {
         p.favourite = !next;
         this.notify.error('prompts.toast.favouriteFailed');

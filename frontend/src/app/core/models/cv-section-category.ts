@@ -1,4 +1,4 @@
-import { PromptCategory, PromptTemplate } from './prompt-template.model';
+import { PromptCategory, PromptTemplate, byPreference } from './prompt-template.model';
 
 /** The CV sections that carry their own template category, in the order a CV lists them. */
 export const CV_SECTION_KEYS = ['profile', 'skills', 'experience', 'projects', 'education', 'certifications'] as const;
@@ -32,5 +32,5 @@ export function templatesForSection(all: PromptTemplate[], sectionKey: string | 
   if (!category) return [];
   return all
     .filter(t => t.category === category)
-    .sort((a, b) => Number(b.isSelectedDefault) - Number(a.isSelectedDefault));
+    .sort(byPreference);
 }

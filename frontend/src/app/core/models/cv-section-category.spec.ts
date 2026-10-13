@@ -39,4 +39,13 @@ describe('cv-section-category', () => {
     expect(templatesForSection(all, 'experience').map(t => t.id)).toEqual(['xyz', 'star']);
     expect(templatesForSection(all, undefined)).toEqual([]);
   });
+
+  it('puts a starred template above the one in use and the most used', () => {
+    const all = [
+      template({ id: 'used', category: 'CV_EXPERIENCE', usageCount: 9 }),
+      template({ id: 'inUse', category: 'CV_EXPERIENCE', isSelectedDefault: true }),
+      template({ id: 'starred', category: 'CV_EXPERIENCE', favourite: true }),
+    ];
+    expect(templatesForSection(all, 'experience').map(t => t.id)).toEqual(['starred', 'inUse', 'used']);
+  });
 });
