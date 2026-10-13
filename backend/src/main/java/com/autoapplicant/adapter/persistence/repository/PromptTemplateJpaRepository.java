@@ -1,14 +1,13 @@
 package com.autoapplicant.adapter.persistence.repository;
 
 import com.autoapplicant.adapter.persistence.entity.PromptTemplateEntity;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 public interface PromptTemplateJpaRepository extends JpaRepository<PromptTemplateEntity, UUID> {
     /**

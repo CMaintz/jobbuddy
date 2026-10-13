@@ -1,7 +1,6 @@
 package com.autoapplicant.port.out.document;
 
 import com.autoapplicant.domain.document.PromptTemplate;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
