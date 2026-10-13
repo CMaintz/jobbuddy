@@ -11,9 +11,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PromptTemplateJpaRepository extends JpaRepository<PromptTemplateEntity, UUID> {
-    /** Returns the user's own templates, followed by system templates. */
-    @Query("SELECT t FROM PromptTemplateEntity t WHERE t.userId = :userId OR t.isSystem = TRUE ORDER BY t.isSystem ASC, t.createdAt DESC")
+    /**
+     * The user's library: their own templates and the shared ones they favourited, followed by
+     * the app's. A shared template drops out the moment its author makes it private again.
+     */
+    @Query("SELECT t FROM PromptTemplateEntity t WHERE t.userId = :userId OR t.isSystem = TRUE"
+            + " OR (t.isPublic = TRUE AND t.id IN (SELECT f.templateId FROM PromptTemplateFavoriteEntity f"
+            + " WHERE f.userId = :userId)) ORDER BY t.isSystem ASC, t.createdAt DESC")
     List<PromptTemplateEntity> findByUserIdOrSystem(@Param("userId") UUID userId);
+
+    long countByUserIdAndCategory(UUID userId, String category);
 
     List<PromptTemplateEntity> findByIsPublicTrueAndIsProtectedFalseOrderByCreatedAtDesc();
 

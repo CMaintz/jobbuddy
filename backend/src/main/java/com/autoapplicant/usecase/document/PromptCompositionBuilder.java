@@ -66,13 +66,11 @@ public class PromptCompositionBuilder {
         };
 
         // System prompt: template persona if available, otherwise the built-in default
-        String baseSystem = styleTemplate != null && styleTemplate.systemPrompt() != null
+        String baseSystem = hasPersona(styleTemplate)
                 ? styleTemplate.systemPrompt()
                 : defaultApplicationSystemPrompt();
         String systemPrompt = baseSystem
-                + "\nThe career profile context intentionally excludes the user's name, contact "
-                + "information, profile image, LinkedIn URL, GitHub URL, and website URL. "
-                + "Do not ask for, infer, invent, or output those private identity fields."
+                + "\n" + PRIVATE_IDENTITY_RULE
                 + "\nReturn ONLY valid JSON — no markdown fences, no commentary.\n"
                 + languageInstruction
                 + "\n\n" + guardrails.untrustedInputBlock();
@@ -168,11 +166,11 @@ public class PromptCompositionBuilder {
                 : "Write rewritten text in the same language as the job description when clear.";
         String marketRules = guardrails.marketRules();
 
-        String baseSystem = styleTemplate != null && styleTemplate.systemPrompt() != null
+        String baseSystem = hasPersona(styleTemplate)
                 ? styleTemplate.systemPrompt()
                 : defaultCvTailoringSystemPrompt();
-        String systemPrompt = baseSystem + "\n" + languageInstruction + "\n\n"
-                + guardrails.untrustedInputBlock();
+        String systemPrompt = baseSystem + "\n" + PRIVATE_IDENTITY_RULE + "\n" + languageInstruction
+                + "\n\n" + guardrails.untrustedInputBlock();
 
         String styleGuidance = styleTemplate != null && styleTemplate.userPrompt() != null
                 && !styleTemplate.userPrompt().isBlank()
@@ -268,6 +266,21 @@ public class PromptCompositionBuilder {
 
     /** At most this many asks are listed; a posting demanding more is listing wishes, not requirements. */
     private static final int MAX_REQUIREMENTS = 25;
+
+    /**
+     * Appended after every persona, never left to it: a template's system prompt can be written by
+     * its user, and the privacy invariant must hold whatever they wrote.
+     */
+    private static final String PRIVATE_IDENTITY_RULE = "The career profile context intentionally "
+            + "excludes the user's name, contact information, profile image, LinkedIn URL, GitHub "
+            + "URL, and website URL. Do not ask for, infer, invent, or output those private "
+            + "identity fields.";
+
+    /** A user template may leave its system prompt empty to keep the built-in persona. */
+    private static boolean hasPersona(PromptTemplate template) {
+        return template != null && template.systemPrompt() != null
+                && !template.systemPrompt().isBlank();
+    }
 
     /**
      * The posting's asks, extracted during enrichment and restated as a checklist.
@@ -464,8 +477,7 @@ public class PromptCompositionBuilder {
         return """
                 You are a careful CV tailoring specialist. Your task is to select and rewrite CV content
                 from a structured master career profile so it best matches a specific job description.
-                Return JSON only. The profile intentionally excludes the user's name and contact information
-                — do not ask for it, infer it, or invent it.
+                Return JSON only.
                 """;
     }
 }

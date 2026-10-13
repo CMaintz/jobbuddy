@@ -17,6 +17,9 @@ public interface PromptTemplateRepositoryPort {
      * would bury the handful a person actually wrote behind the two dozen that ship.
      */
     List<PromptTemplate> findPublic();
+
+    /** How many templates the user has written in a category (shared-with-them ones excluded). */
+    long countOwned(UUID userId, String category);
     /** The app's seeded starting point for a category, e.g. CV_TAILORING. */
     Optional<PromptTemplate> findSystemDefault(String category);
 

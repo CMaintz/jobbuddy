@@ -77,6 +77,39 @@ class PromptTemplateServiceTest {
     }
 
     @Test
+    void create_refuses_an_eleventh_template_of_one_kind() {
+        when(repo.countOwned(userId, "COVER_LETTER"))
+                .thenReturn((long) PromptTemplateService.MAX_OWN_TEMPLATES_PER_CATEGORY);
+
+        assertThatThrownBy(() -> service.createTemplate(userId,
+                categorised(userId, PromptCategory.COVER_LETTER, false)))
+                .isInstanceOf(IllegalStateException.class);
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void duplicating_into_a_full_kind_is_refused() {
+        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
+        when(repo.countOwned(userId, "COVER_LETTER"))
+                .thenReturn((long) PromptTemplateService.MAX_OWN_TEMPLATES_PER_CATEGORY);
+
+        assertThatThrownBy(() -> service.duplicate(templateId, userId, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void moving_a_template_into_a_full_kind_is_refused() {
+        when(repo.findById(templateId))
+                .thenReturn(Optional.of(categorised(userId, PromptCategory.GENERAL, false)));
+        when(repo.countOwned(userId, "COVER_LETTER"))
+                .thenReturn((long) PromptTemplateService.MAX_OWN_TEMPLATES_PER_CATEGORY);
+
+        assertThatThrownBy(() -> service.updateTemplate(templateId, userId, false,
+                categorised(userId, PromptCategory.COVER_LETTER, false)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void create_returns_saved_template() {
         PromptTemplate saved = template(templateId, userId, "T", 1);
         when(repo.save(any())).thenReturn(saved);

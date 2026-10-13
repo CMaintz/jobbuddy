@@ -1132,7 +1132,8 @@
       "shared": "Prompt shared",
       "unshared": "Prompt is private again",
       "shareFailed": "Could not change sharing — try again",
-      "sharedLoadFailed": "Could not load shared prompts"
+      "sharedLoadFailed": "Could not load shared prompts",
+      "limitReached": "You already have 10 prompts of this type. Delete one to make room."
     },
     "protected": "Ships with the app",
     "protectedHint": "This prompt ships with the app. Duplicate it to make a version you can edit.",
@@ -1176,7 +1177,11 @@
       "recruiterLinkedIn": "A brief personal LinkedIn message (max 120 words) to a recruiter or hiring manager: a specific opener, one sentence on why you fit and a clear ask. A general-purpose choice when you do not need a Danish-market tone.",
       "unsolicitedDanishMarket": "The default for unsolicited applications in Danish. Written as a proposal, not a request: open with a task or problem you could take off the reader's hands, prove it with one thing you have done, and close by suggesting a short conversation.",
       "unsolicitedDanishMarketEnglish": "The unsolicited application written in English, with the same approach: a concrete proposal, one piece of evidence and a suggested next step. Use it for Danish companies that work in English."
-    }
+    },
+    "systemPromptOptional": "System prompt (optional)",
+    "systemPromptPlaceholder": "Who the AI should be, e.g. \"You are a Danish recruiter who has read a thousand applications...\"",
+    "systemPromptHint": "Leave empty to keep the app's own persona. The app's privacy, honesty and output rules are always added after it.",
+    "shareOnCreate": "Share with other users"
   },
   "interviews": {
     "inStages": "{{count}} in interview stages",
