@@ -1,7 +1,7 @@
 package com.autoapplicant.adapter.web.dto.ai;
 
-import java.util.UUID;
 import jakarta.validation.constraints.NotBlank;
+import java.util.UUID;
 
 public record RefineRequest(
         @NotBlank String currentContent,
