@@ -1,0 +1,126 @@
+Mette SøndergaardÆblerød
+Senior Full-Stack Udvikler
+K O N TA K T mette.sondergaard@example.dk +45 12 34 56 78 Aarhus, Danmark
+
+KOMPETENCER
+SPROG
+Java TypeScript C# Python
+FRAMEWORKS
+Spring Boot Angular
+PLATFORM
+Kafka Kubernetes PostgreSQL
+
+SPROG
+Dansk Engelsk Tysk
+
+Native Fluent Intermediate
+
+STYRKER
+Teknisk lederskab Skaber retning og fælles standarder uden at miste hastighed. Kommunikation Oversætter mellem forretning og teknik.
+
+LINKS linkedin.com/in/mette-example github.com/mette-example
+
+Erfaren udvikler med 10+ års erfaring i at bygge skalerbare webapplikationer til den finansielle sektor og offentlige myndigheder. Brænder for ren kode, testdreven udvikling og at løfte teamets tekniske niveau gennem pair programming og mentorordninger. Søger en rolle hvor arkitektur, produktforståelse og brugeroplevelse mødes.
+
+E R FA R I N G
+
+Lead Software Engineer
+
+2021-03 – nu
+
+Nordisk Betalingsservice A/S
+
+• Ledede migreringen af en monolitisk betalingsplatform til event-drevne
+
+mikroservices (Kafka, Spring Boot), hvilket reducerede deploy-tiden fra 2
+
+timer til 9 minutter.
+
+• Indførte kontrakttest og trunk-based development på tværs af fem teams.
+
+• Mentor for seks udviklere; to er siden blevet forfremmet til senior.
+
+• Ansvarlig for PSD2-compliance i API-laget, herunder stærk
+
+kundeautentifikation og revisionsspor.
+
+Java Spring Boot Kafka PostgreSQL Kubernetes
+
+Senior Udvikler
+
+2017-08 – 2021-02
+
+Digitaliseringsstyrelsen
+
+Udviklede borgerrettede selvbetjeningsløsninger med fokus på tilgængelighed
+
+(WCAG 2.1 AA) og høj oppetid.
+
+• Byggede en ny formularmotor i Angular brugt af 40+ myndigheder.
+
+• Halverede sidetiden på de mest besøgte flows gennem lazy loading og
+
+server-side caching.
+
+Angular TypeScript C# .NET
+
+Udvikler
+
+2014-09 – 2017-07
+
+Konsulenthuset Ærø & Partnere ApS
+
+Konsulentopgaver for detailhandel og logistik.
+
+Byggede lagerstyringssystemer og integrationer mod SAP og e-conomic.
+
+Arbejdede tæt sammen med kunder om kravspecifikation og prioritering.
+
+PHP Symfony MySQL
+
+Studentermedhjælper
+
+2012-02 – 2014-06
+
+Syddansk Universitet
+
+Vedligeholdt institutets forskningsdatabase og byggede interne værktøjer i
+
+Python til dataudtræk og rapportering.
+
+Python Django
+
+UDDANNELSE
+Cand.scient. i Datalogi
+Syddansk Universitet
+Algoritmer Distribuerede systemer
+B.Sc. i Software Engineering
+Syddansk Universitet
+
+2012 2009
+
+PROJEKTER
+
+Åben kildekode: dansk-cpr-validator
+
+2022
+
+Bibliotek til validering af CPR- og CVR-numre med 2.000+ ugentlige downloads
+
+på npm.
+
+TypeScript
+
+Frivillig: Kodeklubben Aarhus
+
+2019 - nu
+
+Underviser børn i programmering hver anden lørdag.
+CERTIFICERINGER
+AWS Certified Solutions Architect – Associate
+Amazon Web Services · 2023
+Certified Kubernetes Application Developer
+CNCF · 2022
+FOREDRAG • JavaZone 2023: Event sourcing i praksis • Aarhus .NET User Group 2021: Tilgængelighed fra dag ét
+
+

@@ -1,0 +1,76 @@
+{
+  "resumeData": {
+    "personalInfo": {
+      "fullName": "Mette Søndergaard-Æblerød",
+      "title": "Senior Full-Stack Udvikler",
+      "email": "mette.sondergaard@example.dk",
+      "phone": "+45 12 34 56 78",
+      "location": "Aarhus, Danmark",
+      "website": "", "linkedin": "", "github": "", "twitter": "",
+      "summary": "<p>Erfaren udvikler med <strong>10+ års erfaring</strong> i at bygge skalerbare webapplikationer til den finansielle sektor og offentlige myndigheder. Brænder for <em>ren kode</em>, testdreven udvikling og at løfte teamets tekniske niveau gennem pair programming og mentorordninger.</p><p>Søger en rolle hvor arkitektur, produktforståelse og brugeroplevelse mødes.</p>"
+    },
+    "experience": [
+      { "id": "e1", "title": "Lead Software Engineer", "company": "Nordisk Betalingsservice A/S", "location": "København", "startDate": "2021-03", "endDate": "", "current": true,
+        "description": "<ul><li><p>Ledede migreringen af en monolitisk betalingsplatform til <strong>event-drevne mikroservices</strong> (Kafka, Spring Boot), hvilket reducerede deploy-tiden fra 2 timer til 9 minutter.</p></li><li><p>Indførte kontrakttest og trunk-based development på tværs af fem teams.</p></li><li><p>Mentor for seks udviklere; to er siden blevet forfremmet til senior.</p></li><li><p>Ansvarlig for PSD2-compliance i API-laget, herunder stærk kundeautentifikation og revisionsspor.</p></li></ul>",
+        "skills": ["Java", "Spring Boot", "Kafka", "PostgreSQL", "Kubernetes"] },
+      { "id": "e2", "title": "Senior Udvikler", "company": "Digitaliseringsstyrelsen", "location": "København", "startDate": "2017-08", "endDate": "2021-02", "current": false,
+        "description": "<p>Udviklede borgerrettede selvbetjeningsløsninger med fokus på <span style=\"color: #b91c1c\">tilgængelighed (WCAG 2.1 AA)</span> og høj oppetid.</p><ul><li><p>Byggede en ny formularmotor i Angular brugt af 40+ myndigheder.</p></li><li><p>Halverede sidetiden på de mest besøgte flows gennem lazy loading og server-side caching.</p></li></ul>",
+        "skills": ["Angular", "TypeScript", "C#", ".NET"] },
+      { "id": "e3", "title": "Udvikler", "company": "Konsulenthuset Ærø & Partnere ApS", "location": "Odense", "startDate": "2014-09", "endDate": "2017-07", "current": false,
+        "description": "Konsulentopgaver for detailhandel og logistik.\nByggede lagerstyringssystemer og integrationer mod SAP og e-conomic.\nArbejdede tæt sammen med kunder om kravspecifikation og prioritering.",
+        "skills": ["PHP", "Symfony", "MySQL"] },
+      { "id": "e4", "title": "Studentermedhjælper", "company": "Syddansk Universitet", "location": "Odense", "startDate": "2012-02", "endDate": "2014-06", "current": false,
+        "description": "<p>Vedligeholdt institutets forskningsdatabase og byggede interne værktøjer i Python til dataudtræk og rapportering.</p>",
+        "skills": ["Python", "Django"] }
+    ],
+    "education": [
+      { "id": "ed1", "degree": "Cand.scient. i Datalogi", "school": "Syddansk Universitet", "location": "Odense", "startDate": "2012", "endDate": "2014", "current": false, "skills": ["Algoritmer", "Distribuerede systemer"] },
+      { "id": "ed2", "degree": "B.Sc. i Software Engineering", "school": "Syddansk Universitet", "location": "Odense", "startDate": "2009", "endDate": "2012", "current": false }
+    ],
+    "projects": [
+      { "id": "p1", "name": "Åben kildekode: dansk-cpr-validator", "link": "", "date": "2022", "description": "<p>Bibliotek til validering af CPR- og CVR-numre med 2.000+ ugentlige downloads på npm.</p>", "skills": ["TypeScript"] },
+      { "id": "p2", "name": "Frivillig: Kodeklubben Aarhus", "link": "", "date": "2019 - nu", "description": "<p>Underviser børn i programmering hver anden lørdag.</p>" }
+    ],
+    "skills": [
+      { "id": "s1", "name": "Java", "level": 5, "category": "Sprog" },
+      { "id": "s2", "name": "TypeScript", "level": 5, "category": "Sprog" },
+      { "id": "s3", "name": "C#", "level": 4, "category": "Sprog" },
+      { "id": "s4", "name": "Python", "level": 3, "category": "Sprog" },
+      { "id": "s5", "name": "Spring Boot", "level": 5, "category": "Frameworks" },
+      { "id": "s6", "name": "Angular", "level": 4, "category": "Frameworks" },
+      { "id": "s7", "name": "Kafka", "level": 4, "category": "Platform" },
+      { "id": "s8", "name": "Kubernetes", "level": 3, "category": "Platform" },
+      { "id": "s9", "name": "PostgreSQL", "level": 4, "category": "Platform" }
+    ],
+    "languages": [
+      { "id": "l1", "name": "Dansk", "proficiency": "Native" },
+      { "id": "l2", "name": "Engelsk", "proficiency": "Fluent" },
+      { "id": "l3", "name": "Tysk", "proficiency": "Intermediate" }
+    ],
+    "certifications": [
+      { "id": "c1", "name": "AWS Certified Solutions Architect – Associate", "issuer": "Amazon Web Services", "date": "2023" },
+      { "id": "c2", "name": "Certified Kubernetes Application Developer", "issuer": "CNCF", "date": "2022" }
+    ],
+    "strengths": [
+      { "id": "st1", "title": "Teknisk lederskab", "description": "Skaber retning og fælles standarder uden at miste hastighed.", "iconKey": "star" },
+      { "id": "st2", "title": "Kommunikation", "description": "Oversætter mellem forretning og teknik.", "iconKey": "chat" }
+    ],
+    "socials": [
+      { "id": "so1", "platform": "LinkedIn", "url": "https://linkedin.com/in/mette-example", "username": "linkedin.com/in/mette-example", "iconKey": "linkedin" },
+      { "id": "so2", "platform": "GitHub", "url": "https://github.com/mette-example", "username": "github.com/mette-example", "iconKey": "github" }
+    ],
+    "customSections": [
+      { "id": "cs1", "heading": "Foredrag", "items": [ { "id": "i1", "text": "JavaZone 2023: Event sourcing i praksis" }, { "id": "i2", "text": "Aarhus .NET User Group 2021: Tilgængelighed fra dag ét" } ] }
+    ]
+  },
+  "settings": {
+    "themeColor": "#18324a",
+    "fontFamily": "Inter",
+    "documentSize": "A4",
+    "showSkillLevel": true,
+    "textColor": "#1f2937",
+    "lineSpacing": 1.5,
+    "sectionSpacing": 20,
+    "labels": { "contact": "Kontakt", "skills": "Kompetencer", "languages": "Sprog", "strengths": "Styrker", "links": "Links", "experience": "Erfaring", "education": "Uddannelse", "projects": "Projekter", "certifications": "Certificeringer", "present": "nu" }
+  }
+}
