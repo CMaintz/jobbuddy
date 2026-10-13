@@ -2,10 +2,9 @@ package com.autoapplicant.adapter.persistence.entity;
 
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
-
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "prompt_templates")

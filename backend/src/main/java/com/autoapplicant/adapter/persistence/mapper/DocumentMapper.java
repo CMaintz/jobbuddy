@@ -5,7 +5,6 @@ import com.autoapplicant.adapter.persistence.entity.GeneratedDocumentEntity;
 import com.autoapplicant.adapter.persistence.entity.PromptTemplateEntity;
 import com.autoapplicant.adapter.persistence.entity.WritingProfileEntity;
 import com.autoapplicant.domain.document.*;
-
 import java.util.Arrays;
 import java.util.List;
 

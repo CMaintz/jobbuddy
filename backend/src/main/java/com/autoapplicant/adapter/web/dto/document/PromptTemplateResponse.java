@@ -1,7 +1,6 @@
 package com.autoapplicant.adapter.web.dto.document;
 
 import com.autoapplicant.domain.document.PromptTemplate;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
