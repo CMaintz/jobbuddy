@@ -13,6 +13,7 @@ import { JbIconComponent } from '../../../../shared/components/jb-icon/jb-icon.c
 import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/diff-viewer.component';
 import { JbButtonComponent } from '../../../../shared/components/jb-button/jb-button.component';
 import { NotifyService } from '../../../../shared/services/notify.service';
+import { PromptExplainerComponent, chosenPrompt } from '../../../../shared/components/prompt-explainer/prompt-explainer.component';
 
 const TAILOR_PROMPTS = [
   'tailoredCv.tailor.depth',
@@ -28,7 +29,8 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-ai-tailor-form',
-  imports: [FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent],
+  imports: [FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent,
+    PromptExplainerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ai-tailor-form.component.html',
 })
@@ -45,6 +47,10 @@ export class AiTailorFormComponent implements OnInit {
   error = signal('');
   promptTemplates: PromptTemplate[] = [];
   selectedPromptId: string | null = null;
+
+  get explainedPrompt(): PromptTemplate | undefined {
+    return chosenPrompt(this.promptTemplates, this.selectedPromptId, 'CV_TAILORING');
+  }
   instructions = '';
   tailorPrompts = TAILOR_PROMPTS;
 

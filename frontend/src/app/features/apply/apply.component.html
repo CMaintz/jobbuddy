@@ -182,6 +182,7 @@
                     <option [ngValue]="tpl.id">{{ tpl.name }}</option>
                   }
                 </select>
+                <app-prompt-explainer class="block mb-2" [template]="explainedPrompt" />
               }
               <textarea [(ngModel)]="customInstructions" rows="3" class="input resize-y text-xs leading-normal"
                 [placeholder]="'apply.instructionsPlaceholder' | translate"></textarea>

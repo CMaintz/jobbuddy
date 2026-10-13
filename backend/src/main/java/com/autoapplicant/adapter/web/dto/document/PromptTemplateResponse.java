@@ -36,7 +36,9 @@ public record PromptTemplateResponse(
         /** The app's seeded starting point for this category. */
         boolean isDefault,
         /** The template this caller actually gets for the category right now. */
-        boolean isSelectedDefault
+        boolean isSelectedDefault,
+        /** i18n key of the explanation for an app-shipped template; null for user-made ones. */
+        String explainerKey
 ) {
     public static PromptTemplateResponse from(PromptTemplate t, boolean favourite) {
         return from(t, favourite, false);
@@ -49,6 +51,6 @@ public record PromptTemplateResponse(
                 t.description(), t.systemPrompt(), t.userPrompt(), t.outputConstraints(),
                 t.isPublic(), t.parentTemplateId(), t.versionNumber(),
                 t.createdAt(), t.updatedAt(), t.isSystem(), t.tags(), t.usageCount(), favourite,
-                t.isProtected(), t.isDefault(), isSelectedDefault);
+                t.isProtected(), t.isDefault(), isSelectedDefault, t.explainerKey());
     }
 }

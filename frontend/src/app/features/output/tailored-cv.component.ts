@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { PromptExplainerComponent, chosenPrompt } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -32,7 +33,7 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tailored-cv.component.html',
 })
@@ -61,6 +62,10 @@ export class TailoredCvComponent implements OnInit {
 
   promptTemplates: PromptTemplate[] = [];
   selectedPromptId = signal<string | null>(null);
+
+  get explainedPrompt(): PromptTemplate | undefined {
+    return chosenPrompt(this.promptTemplates, this.selectedPromptId(), 'CV_TAILORING');
+  }
   selectedLanguage = signal(loadGenDefaults().lang);
   languages = ['English', 'Dansk'];
   customInstructions = '';

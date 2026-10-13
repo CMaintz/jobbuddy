@@ -8,6 +8,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
+import { PromptExplainerComponent } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
@@ -28,7 +29,7 @@ const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: s
   selector: 'app-prompts-library',
   imports: [
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, TagInputComponent, JbModalComponent,
+    JbPillComponent, TagInputComponent, JbModalComponent, PromptExplainerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './prompts-library.component.html'

@@ -40,7 +40,7 @@ public final class DocumentMapper {
                 e.getOutputConstraints(), e.isPublic(), e.getParentTemplateId(),
                 e.getVersionNumber(), e.getCreatedAt(), e.getUpdatedAt(), e.isSystem(),
                 e.getTags() != null ? Arrays.asList(e.getTags()) : List.of(),
-                e.getUsageCount(), e.isProtected(), e.isDefault());
+                e.getUsageCount(), e.isProtected(), e.isDefault(), e.getExplainerKey());
     }
 
     public static PromptTemplateEntity toEntity(PromptTemplate d) {
@@ -61,6 +61,7 @@ public final class DocumentMapper {
         e.setUsageCount(d.usageCount());
         e.setProtected(d.isProtected());
         e.setDefault(d.isDefault());
+        e.setExplainerKey(d.explainerKey());
         return e;
     }
 

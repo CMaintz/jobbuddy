@@ -134,7 +134,7 @@ public class PromptController {
         PromptTemplate template = new PromptTemplate(null, userId, req.name(), req.category(),
                 req.description(), req.systemPrompt(), req.userPrompt(), req.outputConstraints(),
                 req.isPublic(), null, 1, null, null, false,
-                req.tags() != null ? req.tags() : List.of(), 0, false, false);
+                req.tags() != null ? req.tags() : List.of(), 0, false, false, null);
         PromptTemplate saved = create.createTemplate(userId, template);
         return ResponseEntity.created(URI.create("/api/v1/prompts/" + saved.id())).body(saved);
     }
@@ -150,7 +150,7 @@ public class PromptController {
         PromptTemplate changes = new PromptTemplate(null, null, req.name(), req.category(),
                 req.description(), req.systemPrompt(), req.userPrompt(), req.outputConstraints(),
                 req.isPublic(), null, 0, null, null, false,
-                req.tags(), 0, false, false);
+                req.tags(), 0, false, false, null);
         return ResponseEntity.ok(update.updateTemplate(
                 id, secCtx.getCurrentUserId(), secCtx.isAdmin(), changes));
     }
