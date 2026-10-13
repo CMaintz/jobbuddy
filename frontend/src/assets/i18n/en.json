@@ -540,7 +540,9 @@
         "tighten": "Tighten",
         "impact": "More impact",
         "grammar": "Fix grammar"
-      }
+      },
+      "writingStyle": "Writing style",
+      "explainStyle": "What does this style do?"
     },
     "crop": {
       "title": "Crop photo — drag to move, slide to zoom",
@@ -1111,7 +1113,13 @@
       "cvAnalysis": "CV analysis",
       "general": "General",
       "unsolicited": "Unsolicited",
-      "followUp": "Follow-up"
+      "followUp": "Follow-up",
+      "cvProfile": "CV profile",
+      "cvSkills": "CV skills",
+      "cvExperience": "CV experience",
+      "cvProjects": "CV projects",
+      "cvEducation": "CV education",
+      "cvCertifications": "CV certifications"
     },
     "toast": {
       "updated": "Prompt updated",
@@ -1176,12 +1184,22 @@
       "recruiterConcrete": "A punchy outreach message: a concrete opener, three quantified results mapped to the posting and an offer of a 15-minute chat. Works best when your profile has strong numbers and the recipient is used to direct LinkedIn outreach.",
       "recruiterLinkedIn": "A brief personal LinkedIn message (max 120 words) to a recruiter or hiring manager: a specific opener, one sentence on why you fit and a clear ask. A general-purpose choice when you do not need a Danish-market tone.",
       "unsolicitedDanishMarket": "The default for unsolicited applications in Danish. Written as a proposal, not a request: open with a task or problem you could take off the reader's hands, prove it with one thing you have done, and close by suggesting a short conversation.",
-      "unsolicitedDanishMarketEnglish": "The unsolicited application written in English, with the same approach: a concrete proposal, one piece of evidence and a suggested next step. Use it for Danish companies that work in English."
+      "unsolicitedDanishMarketEnglish": "The unsolicited application written in English, with the same approach: a concrete proposal, one piece of evidence and a suggested next step. Use it for Danish companies that work in English.",
+      "sectionProfile": "The short text at the top of your CV, rewritten for each posting: what you are, what you are strongest at and where you are heading, in 3-5 lines. Danish employers read it first and expect it to be about this job, not a general bio.",
+      "sectionSkills": "Picks the skills this posting asks for that your profile can back, most relevant first and in the posting's own spelling, so applicant tracking systems find them. Soft skills are left out here; your experience should show them instead.",
+      "sectionExperience": "The default for your experience: 3-5 short bullets per recent role, each saying what you did and what changed, never just what you were responsible for. Numbers are used only when your profile has them; otherwise scope or a before-and-after change carries the bullet.",
+      "sectionExperienceStar": "STAR stands for Situation, Task, Action, Result. It is best known from job interviews ('tell me about a time when...'), where you tell the whole story. On a CV it is squeezed into one line: a short bit of context, what you did and what came of it.\n\nExample: \"Relaunched the club's Instagram with a weekly event series, gaining about 200 followers in one semester.\"\n\nPick STAR if you are a student, a new graduate or changing careers, when a few words of context help the reader see why your action mattered.",
+      "sectionExperienceXyz": "Google's X-Y-Z formula, from Google's former head of people Laszlo Bock: \"Accomplished [X] as measured by [Y], by doing [Z]\". The result comes first, then the number that proves it, then how you did it.\n\nExample: \"Cut average case handling time from 3 to 1 month by introducing a shared triage board.\"\n\nPick X-Y-Z when your profile has real numbers (money, time, volume, growth). It is the densest of the three and reads well to recruiters scanning quickly. Without numbers it falls back to concrete scope; it never makes figures up.",
+      "sectionExperienceCar": "CAR stands for Challenge, Action, Result. It names the obstacle you were up against, so the reader can see why the result counts.\n\nExample: \"Grew sales 30% in a declining market by introducing lean process improvement.\" The declining market is the challenge.\n\nPick CAR for turnarounds and problem-solving work, public sector and healthcare roles where results are rarely in money, or when changing careers, where the challenge explains what you can bring with you.",
+      "sectionProjects": "Each project gets a line on what it is and your part in it, then a few bullets on what you built or did and what came of it. Only claims you built something when your profile says so. Academic and personal projects count, which matters most early in a career.",
+      "sectionEducation": "Keeps education factual: degree, institution and dates, plus a thesis topic, specialisation or grade only when it helps this posting. Brief for experienced candidates, more room for students and new graduates.",
+      "sectionCertifications": "Lists certifications by name, issuer and year, with the ones the posting asks for first. Unrelated, expired ones are dropped."
     },
     "systemPromptOptional": "System prompt (optional)",
     "systemPromptPlaceholder": "Who the AI should be, e.g. \"You are a Danish recruiter who has read a thousand applications...\"",
     "systemPromptHint": "Leave empty to keep the app's own persona. The app's privacy, honesty and output rules are always added after it.",
-    "shareOnCreate": "Share with other users"
+    "shareOnCreate": "Share with other users",
+    "sectionPromptHint": "CV section prompts have no system prompt. Write the guidance for the section in the prompt below."
   },
   "interviews": {
     "inStages": "{{count}} in interview stages",
@@ -1655,13 +1673,11 @@
       "cvTemplateDefault": "System default"
     },
     "sectionPrompts": {
-      "heading": "Section instructions",
-      "intro": "Standing guidance for how each CV section should be written. Applied every time a CV is tailored and when you refine a field — never a licence to invent, always subordinate to the honesty rules.",
-      "placeholder": "e.g. Lead with measurable impact; keep it to three lines.",
-      "save": "Save instructions",
+      "heading": "CV section prompts",
+      "intro": "Choose how each CV section is written. The chosen prompt is used every time a CV is tailored and when you refine a field, and it never overrides the honesty rules.",
       "saving": "Saving…",
       "saved": "Saved",
-      "loadFailed": "Couldn't load your instructions — reopen Settings to try again.",
+      "loadFailed": "Couldn't load your section prompts. Reopen Settings to try again.",
       "field": {
         "profile": "Profile",
         "competencies": "Competencies",
@@ -1669,7 +1685,10 @@
         "projects": "Projects",
         "education": "Education",
         "certifications": "Certifications"
-      }
+      },
+      "saveFailed": "Couldn't save. Try again.",
+      "browseLibrary": "Browse or create more in the prompt library",
+      "appDefaultOption": "{{name}} (app default)"
     },
     "style": {
       "analyze": "Analyze my writing",

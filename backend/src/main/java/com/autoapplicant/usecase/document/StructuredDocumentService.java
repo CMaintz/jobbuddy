@@ -12,7 +12,6 @@ import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -37,7 +36,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final ApplicationDocumentAssembler applicationDocuments;
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
-    private final CvSectionPromptsRepositoryPort cvSectionPromptsRepo;
+    private final CvSectionTemplates sectionTemplates;
 
     public StructuredDocumentService(DocumentOwnerLoader owners,
                                      JobRepositoryPort jobRepo,
@@ -50,7 +49,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      ApplicationDocumentAssembler applicationDocuments,
                                      ApplicationRepositoryPort applicationRepo,
                                      GeneratedContentGuards contentGuards,
-                                     CvSectionPromptsRepositoryPort cvSectionPromptsRepo) {
+                                     CvSectionTemplates sectionTemplates) {
         this.owners = owners;
         this.jobRepo = jobRepo;
         this.promptTemplateRepo = promptTemplateRepo;
@@ -62,7 +61,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.applicationDocuments = applicationDocuments;
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
-        this.cvSectionPromptsRepo = cvSectionPromptsRepo;
+        this.sectionTemplates = sectionTemplates;
     }
 
     public StructuredDocument buildCv(UUID userId, String templateId) {
@@ -125,10 +124,9 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                 job != null ? job.requirements() : java.util.List.of());
         PromptTemplate promptTemplate = resolvePromptTemplate(userId, promptTemplateId, CV_TAILORING_CATEGORY);
         WritingProfile writingProfile = writingProfileRepo.findByUserId(userId).orElse(null);
-        // The user's analysed style + their standing per-section instructions, travelling together
+        // The user's analysed style + their chosen section templates, travelling together
         // so drafting and the review pass apply the same guidance.
-        CvSectionPrompts sectionPrompts = cvSectionPromptsRepo.findByUserId(userId)
-                .orElseGet(() -> CvSectionPrompts.empty(userId));
+        CvSectionPrompts sectionPrompts = sectionTemplates.defaultsFor(userId);
         CvTailoringGuidance guidance = new CvTailoringGuidance(writingProfile, sectionPrompts);
         TailoredCvContent tailored = tailoredCvGenerator.generate(
                 source, posting, customInstructions, targetLanguage, promptTemplate,

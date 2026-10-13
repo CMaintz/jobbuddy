@@ -11,6 +11,12 @@ export const PROMPT_KINDS: PromptKind[] = [
   { key: 'CV_TAILORING', label: 'prompts.kind.tailoredCv', icon: 'doc', color: 'var(--jb-violet)' },
   { key: 'CV_ANALYSIS', label: 'prompts.kind.cvAnalysis', icon: 'doc', color: 'var(--jb-text-dim)' },
   { key: 'GENERAL', label: 'prompts.kind.general', icon: 'lightbulb', color: 'var(--jb-text-dim)' },
+  { key: 'CV_PROFILE', label: 'prompts.kind.cvProfile', icon: 'user', color: 'var(--jb-violet)' },
+  { key: 'CV_SKILLS', label: 'prompts.kind.cvSkills', icon: 'bolt', color: 'var(--jb-violet)' },
+  { key: 'CV_EXPERIENCE', label: 'prompts.kind.cvExperience', icon: 'briefcase', color: 'var(--jb-violet)' },
+  { key: 'CV_PROJECTS', label: 'prompts.kind.cvProjects', icon: 'git-branch', color: 'var(--jb-violet)' },
+  { key: 'CV_EDUCATION', label: 'prompts.kind.cvEducation', icon: 'bookmark', color: 'var(--jb-violet)' },
+  { key: 'CV_CERTIFICATIONS', label: 'prompts.kind.cvCertifications', icon: 'check-circle', color: 'var(--jb-violet)' },
 ];
 
 /**

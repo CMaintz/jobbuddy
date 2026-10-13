@@ -3,12 +3,13 @@ package com.autoapplicant.usecase.ai;
 import com.autoapplicant.domain.ai.RefineDocumentRequest;
 import com.autoapplicant.domain.ai.RefineDocumentResult;
 import com.autoapplicant.domain.document.CvSection;
+import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.in.ai.RefineDocumentUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.CvSectionTemplates;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.GenerationGuardrails;
 import java.util.List;
@@ -43,16 +44,16 @@ public class DocumentRefinementService implements RefineDocumentUseCase {
     private final ChatProviderPort aiProvider;
     private final CareerProfileContextService careerProfileContext;
     private final GeneratedContentGuards contentGuards;
-    private final CvSectionPromptsRepositoryPort cvSectionPromptsRepo;
+    private final CvSectionTemplates sectionTemplates;
 
     public DocumentRefinementService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                                      CareerProfileContextService careerProfileContext,
                                      GeneratedContentGuards contentGuards,
-                                     CvSectionPromptsRepositoryPort cvSectionPromptsRepo) {
+                                     CvSectionTemplates sectionTemplates) {
         this.aiProvider = aiProvider;
         this.careerProfileContext = careerProfileContext;
         this.contentGuards = contentGuards;
-        this.cvSectionPromptsRepo = cvSectionPromptsRepo;
+        this.sectionTemplates = sectionTemplates;
     }
 
     @Override
@@ -64,7 +65,7 @@ public class DocumentRefinementService implements RefineDocumentUseCase {
                     GenerationGuardrails.Medium.LETTER, request.targetLanguage(),
                     request.jobDescription(), null);
 
-            String user = refineUserPrompt(request, guardrails, savedSectionPrompt(request));
+            String user = refineUserPrompt(request, guardrails, sectionPrompt(request));
             PromptComposition composition = new PromptComposition(
                     refineSystemPrompt(guardrails), user, "", "", "", "", user);
             String refined = AiResponseParser.sanitize(aiProvider.generate(composition, AiOperations.DOCUMENT_REFINE));
@@ -91,37 +92,39 @@ public class DocumentRefinementService implements RefineDocumentUseCase {
     }
 
     /**
-     * The draft, the optional posting context, the request, the user's standing section guidance (when
-     * they saved one for the section being refined), and the writing guardrails — joined by blank lines.
+     * The draft, the optional posting context, the request, the section template's instructions (when
+     * a CV section is being refined), and the writing guardrails, joined by blank lines.
      */
     static String refineUserPrompt(RefineDocumentRequest request, GenerationGuardrails guardrails,
-                                   String savedSectionPrompt) {
+                                   String sectionPrompt) {
         List<String> sections = List.of(
                 "## Current Document\n" + request.currentContent(),
                 jobDescriptionContext(request),
                 "## Refinement Request\n" + request.userMessage(),
-                sectionGuidanceBlock(savedSectionPrompt),
+                sectionGuidanceBlock(sectionPrompt),
                 guardrails.honestyRules(),
                 guardrails.marketRules(),
                 guardrails.clicheBlock());
         return sections.stream().filter(section -> !section.isBlank()).collect(Collectors.joining("\n\n"));
     }
 
-    private static String sectionGuidanceBlock(String savedSectionPrompt) {
-        return savedSectionPrompt == null || savedSectionPrompt.isBlank() ? ""
-                : "## Your Standing Guidance For This Section\n" + savedSectionPrompt
-                  + "\nApply it within the honesty rules; it never licenses adding facts the draft lacks.";
+    private static String sectionGuidanceBlock(String sectionPrompt) {
+        return sectionPrompt == null || sectionPrompt.isBlank() ? ""
+                : "## Section Guidance\n" + sectionPrompt.strip()
+                  + "\nApply it within the honesty rules; it never licenses adding facts the draft lacks. "
+                  + "Keep the draft's layout: if it is a list, return one item per line.";
     }
 
-    /** The user's saved prompt for the refined section, or null. Never fails the refine. */
-    private String savedSectionPrompt(RefineDocumentRequest request) {
+    /** The instructions of the template for the refined section, or null. Never fails the refine. */
+    private String sectionPrompt(RefineDocumentRequest request) {
         if (request.sectionKey() == null || request.userId() == null) {
             return null;
         }
         try {
             return CvSection.fromKey(request.sectionKey())
-                    .flatMap(section -> cvSectionPromptsRepo.findByUserId(request.userId())
-                            .map(prompts -> prompts.forSection(section)))
+                    .flatMap(section -> sectionTemplates.forSection(
+                            request.userId(), section, request.promptTemplateId()))
+                    .map(PromptTemplate::userPrompt)
                     .filter(prompt -> prompt != null && !prompt.isBlank())
                     .orElse(null);
         } catch (Exception e) {

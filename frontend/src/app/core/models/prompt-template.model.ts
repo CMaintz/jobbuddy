@@ -8,7 +8,14 @@ export type PromptCategory =
   | 'FOLLOW_UP_MESSAGE'
   | 'CV_TAILORING'
   | 'CV_ANALYSIS'
-  | 'GENERAL';
+  | 'GENERAL'
+  /** Per-CV-section writing guidance; only the user prompt is used, never a system prompt. */
+  | 'CV_PROFILE'
+  | 'CV_SKILLS'
+  | 'CV_EXPERIENCE'
+  | 'CV_PROJECTS'
+  | 'CV_EDUCATION'
+  | 'CV_CERTIFICATIONS';
 
 export interface PromptTemplate {
   id: string;

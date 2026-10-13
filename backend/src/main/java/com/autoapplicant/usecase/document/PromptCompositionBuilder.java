@@ -236,18 +236,19 @@ public class PromptCompositionBuilder {
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
 
-    /** The candidate's standing per-section instructions, subordinate to the honesty rules. */
+    /** How each section should be written, subordinate to the honesty rules. */
     static String sectionGuidanceBlock(CvSectionPrompts sectionPrompts) {
         if (sectionPrompts == null || sectionPrompts.isEmpty()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder("\n\n## Section Guidance\nThe candidate's standing "
-                + "instructions for specific sections. Follow them while still obeying the honesty and "
-                + "source-fact rules; they never license inventing content or overstating.");
+        StringBuilder sb = new StringBuilder("\n\n## Section Guidance\nHow to write specific "
+                + "sections. Follow it while still obeying the honesty and source-fact rules; it never "
+                + "licenses inventing content or overstating.");
         for (CvSection section : CvSection.values()) {
             String instruction = sectionPrompts.forSection(section);
             if (instruction != null && !instruction.isBlank()) {
-                sb.append("\n- ").append(sectionLabel(section)).append(": ").append(instruction);
+                sb.append("\n\n### ").append(sectionLabel(section)).append('\n')
+                        .append(instruction.strip());
             }
         }
         return sb.toString();

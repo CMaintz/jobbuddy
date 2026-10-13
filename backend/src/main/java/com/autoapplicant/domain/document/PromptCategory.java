@@ -18,5 +18,19 @@ public enum PromptCategory {
     FOLLOW_UP_MESSAGE,
     CV_TAILORING,
     CV_ANALYSIS,
-    GENERAL
+    GENERAL,
+    /*
+     * One per CV section. A section template carries only writing instructions for that section,
+     * applied under the CV persona, so it never has a system prompt of its own.
+     */
+    CV_PROFILE,
+    CV_SKILLS,
+    CV_EXPERIENCE,
+    CV_PROJECTS,
+    CV_EDUCATION,
+    CV_CERTIFICATIONS;
+
+    public boolean isCvSection() {
+        return CvSection.forPromptCategory(this).isPresent();
+    }
 }

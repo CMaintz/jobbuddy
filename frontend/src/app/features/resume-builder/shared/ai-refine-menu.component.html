@@ -1,0 +1,59 @@
+<div class="relative inline-block">
+  <button type="button" class="airm-trigger" (click)="toggleOpen()" [title]="'resumeBuilder.refine.improveTitle' | translate">
+    ✦ {{ 'resumeBuilder.refine.ai' | translate }}
+  </button>
+  @if (open()) {
+    <div class="fixed inset-0 z-[90]" (click)="open.set(false)"></div>
+    <div class="airm-panel">
+      @if (!preview()) {
+        @if (sectionTemplates().length) {
+          <div class="airm-label">{{ 'resumeBuilder.refine.writingStyle' | translate }}</div>
+          <div class="airm-chips">
+            @for (t of sectionTemplates(); track t.id) {
+              <span class="airm-chip" [class.airm-chip-explained]="explainedId() === t.id">
+                <button type="button" class="airm-chip-run" [disabled]="busy()" (click)="runWithTemplate(t)">
+                  {{ t.name }}
+                  @if (t.isSelectedDefault) {
+                    <span class="airm-chip-default">{{ 'prompts.inUse' | translate }}</span>
+                  }
+                </button>
+                @if (t.explainerKey || t.description) {
+                  <button type="button" class="airm-chip-info" (click)="toggleExplainer(t)"
+                    [attr.aria-expanded]="explainedId() === t.id"
+                    [title]="'resumeBuilder.refine.explainStyle' | translate"
+                    [attr.aria-label]="'resumeBuilder.refine.explainStyle' | translate">i</button>
+                }
+              </span>
+            }
+          </div>
+          @if (explainedTemplate(); as t) {
+            <div class="airm-explainer"><app-prompt-explainer [template]="t" /></div>
+          }
+        }
+        <div class="airm-label">{{ 'resumeBuilder.refine.improveText' | translate }}</div>
+        @for (label of labels; track label; let i = $index) {
+          <button type="button" class="airm-item" [disabled]="busy()" (click)="run(suggestions[i])">{{ label | translate }}</button>
+        }
+        <div class="airm-custom">
+          <input [(ngModel)]="customAsk" [disabled]="busy()" [placeholder]="'resumeBuilder.refine.askPlaceholder' | translate"
+            (keydown.enter)="run(customAsk)" />
+        </div>
+        @if (busy()) {
+          <div class="airm-busy">{{ 'resumeBuilder.refine.refining' | translate }}</div>
+        }
+        @if (error()) {
+          <div class="airm-error">{{ error() }}</div>
+        }
+      } @else {
+        <div class="airm-label">{{ 'resumeBuilder.refine.suggestedChange' | translate }}</div>
+        <div class="airm-preview">
+          <jb-diff-viewer [before]="plainContent()" [after]="preview()!" />
+        </div>
+        <div class="airm-actions">
+          <button type="button" class="airm-item" (click)="preview.set(null)">{{ 'resumeBuilder.refine.discard' | translate }}</button>
+          <button type="button" class="airm-item airm-apply" (click)="apply()">{{ 'resumeBuilder.refine.apply' | translate }}</button>
+        </div>
+      }
+    </div>
+  }
+</div>

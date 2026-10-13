@@ -67,21 +67,21 @@ class PromptCompositionBuilderTest {
     }
 
     @Test
-    void savedSectionPromptsBecomeALabelledGuidanceBlock() {
-        CvSectionPrompts prompts = new CvSectionPrompts(null, java.util.UUID.randomUUID(),
+    void sectionTemplatesBecomeLabelledGuidanceSubsections() {
+        CvSectionPrompts prompts = new CvSectionPrompts(
                 java.util.Map.of(CvSection.PROFILE, "Lead with leadership impact.",
-                        CvSection.SKILLS, "Foreground cloud skills."), null);
+                        CvSection.SKILLS, "Foreground cloud skills."));
         PromptComposition c = builder.composeCvTailoringPrompt("{}",
                 new PostingContext("posting", "Denmark", null), null, "English", null,
                 new CvTailoringGuidance(null, prompts), List.of(), "STANDARD");
 
         assertThat(c.userPromptTemplate())
                 .contains("## Section Guidance")
-                .contains("Profile: Lead with leadership impact.")
+                .contains("### Profile\nLead with leadership impact.")
                 // SKILLS is surfaced under the user-facing "Competencies" label.
-                .contains("Competencies: Foreground cloud skills.")
+                .contains("### Competencies\nForeground cloud skills.")
                 // Subordinate to the honesty rules, never a licence to invent.
-                .contains("never license inventing content");
+                .contains("never licenses inventing content");
     }
 
     @Test

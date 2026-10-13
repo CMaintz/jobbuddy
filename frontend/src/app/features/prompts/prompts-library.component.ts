@@ -12,6 +12,7 @@ import { PromptExplainerComponent } from '../../shared/components/prompt-explain
 import { PromptApiService } from '../../core/api/prompt.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
+import { isSectionCategory } from '../../core/models/cv-section-category';
 import { PROMPT_KINDS, saveErrorKey } from './prompt-kinds';
 import { PromptCreateModalComponent } from './prompt-create-modal.component';
 
@@ -41,6 +42,7 @@ export class PromptsLibraryComponent implements OnInit {
   editing = signal(false);
   savingEdit = signal(false);
   promptKinds = PROMPT_KINDS;
+  readonly isSectionCategory = isSectionCategory;
 
   prompts: PromptTemplate[] = [];
 
@@ -123,7 +125,7 @@ export class PromptsLibraryComponent implements OnInit {
       name: this.editName.trim(),
       category: this.editCategory,
       description: this.editDescription.trim() || undefined,
-      systemPrompt: this.editSystem.trim() || undefined,
+      systemPrompt: isSectionCategory(this.editCategory) ? undefined : this.editSystem.trim() || undefined,
       userPrompt: this.editBody.trim(),
       outputConstraints: p.outputConstraints,
       isPublic: p.isPublic,
