@@ -30,7 +30,7 @@ class CvSectionTemplatesTest {
         PromptTemplate star = template(userId, PromptCategory.CV_EXPERIENCE, "STAR", false);
         when(repo.findById(star.id())).thenReturn(Optional.of(star));
 
-        assertThat(templates().forSection(userId, CvSection.EXPERIENCE, star.id())).contains(star);
+        assertThat(templates().useForSection(userId, CvSection.EXPERIENCE, star.id())).contains(star);
     }
 
     @Test
@@ -40,7 +40,7 @@ class CvSectionTemplatesTest {
         when(repo.findById(theirs.id())).thenReturn(Optional.of(theirs));
         when(repo.findDefaultFor(userId, "CV_EXPERIENCE")).thenReturn(Optional.of(fallback));
 
-        assertThat(templates().forSection(userId, CvSection.EXPERIENCE, theirs.id())).contains(fallback);
+        assertThat(templates().useForSection(userId, CvSection.EXPERIENCE, theirs.id())).contains(fallback);
     }
 
     @Test
@@ -50,7 +50,7 @@ class CvSectionTemplatesTest {
         when(repo.findById(letter.id())).thenReturn(Optional.of(letter));
         when(repo.findDefaultFor(userId, "CV_PROFILE")).thenReturn(Optional.of(fallback));
 
-        assertThat(templates().forSection(userId, CvSection.PROFILE, letter.id())).contains(fallback);
+        assertThat(templates().useForSection(userId, CvSection.PROFILE, letter.id())).contains(fallback);
     }
 
     @Test

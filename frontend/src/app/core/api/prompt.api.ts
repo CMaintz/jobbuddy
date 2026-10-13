@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, MonoTypeOperatorFunction, shareReplay, tap } from 'rxjs';
+import { Observable, MonoTypeOperatorFunction, distinctUntilChanged, map, shareReplay, tap } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
 import { PromptTemplate, PromptCategory } from '../models/prompt-template.model';
 
 export interface CreateTemplateRequest {
@@ -19,6 +20,14 @@ export class PromptApiService {
   private http = inject(HttpClient);
   private base = '/api/v1/prompts';
   private cachedAll?: Observable<PromptTemplate[]>;
+
+  constructor() {
+    // Sign-out navigates without a page load, so a cache from the previous account would
+    // otherwise show its private templates to whoever signs in next in the same tab.
+    inject(AuthService).currentUser$
+      .pipe(map(user => user?.id), distinctUntilChanged())
+      .subscribe(() => (this.cachedAll = undefined));
+  }
 
   getAll(): Observable<PromptTemplate[]> {
     return this.http.get<PromptTemplate[]>(this.base);

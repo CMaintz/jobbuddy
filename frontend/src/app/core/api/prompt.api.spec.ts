@@ -1,14 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { BehaviorSubject } from 'rxjs';
 import { PromptApiService } from './prompt.api';
+import { AuthService } from '../auth/auth.service';
 
 describe('PromptApiService', () => {
   let api: PromptApiService;
   let backend: HttpTestingController;
+  let currentUser: BehaviorSubject<{ id: string } | null>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(withXhr()), provideHttpClientTesting()] });
+    currentUser = new BehaviorSubject<{ id: string } | null>({ id: 'a' });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withXhr()), provideHttpClientTesting(),
+        { provide: AuthService, useValue: { currentUser$: currentUser.asObservable() } },
+      ],
+    });
     api = TestBed.inject(PromptApiService);
     backend = TestBed.inject(HttpTestingController);
   });
@@ -22,6 +31,16 @@ describe('PromptApiService', () => {
 
     api.getAllCached().subscribe();
     backend.expectNone('/api/v1/prompts');
+  });
+
+  it("drops the cache when the account changes, so one user never sees another's templates", () => {
+    api.getAllCached().subscribe();
+    backend.expectOne('/api/v1/prompts').flush([]);
+
+    currentUser.next(null);
+    currentUser.next({ id: 'b' });
+    api.getAllCached().subscribe();
+    backend.expectOne('/api/v1/prompts').flush([]);
   });
 
   it('refetches after a change so the default in use is never stale', () => {

@@ -122,7 +122,7 @@ public class DocumentRefinementService implements RefineDocumentUseCase {
         }
         try {
             return CvSection.fromKey(request.sectionKey())
-                    .flatMap(section -> sectionTemplates.forSection(
+                    .flatMap(section -> sectionTemplates.useForSection(
                             request.userId(), section, request.promptTemplateId()))
                     .map(PromptTemplate::userPrompt)
                     .filter(prompt -> prompt != null && !prompt.isBlank())

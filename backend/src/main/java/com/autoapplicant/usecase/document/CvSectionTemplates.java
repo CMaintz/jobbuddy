@@ -35,11 +35,12 @@ public class CvSectionTemplates {
     }
 
     /**
-     * The template for one section. An explicit id must be one the user may see and must belong to
+     * The template to write one section with, counted as a use. An explicit id must be one the user
+     * may see and must belong to
      * that section, or a request could apply another user's private prompt or a cover-letter
      * persona to a CV field; either falls back to the section's default.
      */
-    public Optional<PromptTemplate> forSection(UUID userId, CvSection section, UUID templateId) {
+    public Optional<PromptTemplate> useForSection(UUID userId, CvSection section, UUID templateId) {
         Optional<PromptTemplate> chosen = Optional.ofNullable(templateId)
                 .flatMap(repo::findById)
                 .filter(t -> t.isVisibleTo(userId) && t.category() == section.promptCategory());

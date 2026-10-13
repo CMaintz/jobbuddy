@@ -36,7 +36,8 @@ INSERT INTO prompt_templates (user_id, name, category, description, system_promp
  NULL, FALSE, TRUE, TRUE, TRUE, 1, '{}', 'prompts.explainers.sectionSkills'),
 
 (NULL, 'Experience: accomplishment bullets', 'CV_EXPERIENCE', 'Short bullets on what you did and what changed.', NULL,
- $usr$Write each role as accomplishment bullets: 3-5 for recent or relevant roles, 1-2 for older ones.
+ $usr$Write each role as accomplishment bullets: 3-5 for recent or relevant roles, 1-2 for older ones,
+unless the length guidance asks for fewer.
 - Open each bullet with a strong verb in the past tense (present tense for a current role) and put
   what changed early.
 - One achievement per bullet, one to two lines, about 25 words at most.
@@ -56,8 +57,11 @@ to fit a CV bullet.
   short clause, or drop them when the role already gives the context, and spend the words on
   Action and Result.
 - Shape: action verb and what the candidate did, then the short context, then the result.
-  Example: "Relaunched the club's Instagram with a weekly event series, gaining about 200
-  followers in one semester."
+  Example: "Took over an undocumented onboarding process (situation) and, asked to shorten it
+  (task), wrote a step-by-step guide and trained four team leads (action), cutting new-hire
+  setup from two weeks to three days (result)." On the CV this becomes: "Wrote an onboarding
+  guide and trained four team leads after taking over an undocumented process, cutting new-hire
+  setup from two weeks to three days."
 - One to two lines per bullet. Never write the four parts out as labelled steps or as a narrative
   ("In a situation where... I was tasked with...").
 - The result must come from the source. When the source has no outcome, end on the concrete
