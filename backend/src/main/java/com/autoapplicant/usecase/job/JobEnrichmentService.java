@@ -7,7 +7,6 @@ import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.domain.job.JobText;
 import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.RequirementTier;
-import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,8 +19,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * Enriches one posting with an AI summary and structured fields. A collaborator shared by use
+ * cases, not a use case: it must not implement a port.in interface, because the enrichment sweep
+ * depends on it and use cases may not depend on each other. A future entry point (re-enriching
+ * one posting on request, say) is its own use case that calls this.
+ */
 @Service
-public class JobEnrichmentService implements EnrichJobUseCase {
+public class JobEnrichmentService {
 
     private static final Logger log = LoggerFactory.getLogger(JobEnrichmentService.class);
     private final ChatProviderPort aiProvider;

@@ -6,10 +6,10 @@ import static org.mockito.Mockito.*;
 
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.EnrichmentStatus;
+import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase.SweepResult;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import com.autoapplicant.usecase.job.EnrichmentSweepService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 class EnrichmentSweepSchedulerTest {
 
-    private final EnrichmentSweepService sweep = mock(EnrichmentSweepService.class);
+    private final SweepUnenrichedJobsUseCase sweep = mock(SweepUnenrichedJobsUseCase.class);
     private final JobRepositoryPort jobRepo = mock(JobRepositoryPort.class);
     private final CrawlerStateRepositoryPort crawlerState = mock(CrawlerStateRepositoryPort.class);
 

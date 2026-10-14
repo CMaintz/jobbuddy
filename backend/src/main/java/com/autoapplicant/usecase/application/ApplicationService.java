@@ -6,17 +6,16 @@ import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.in.application.*;
-import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
+import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ApplicationService implements
@@ -26,14 +25,14 @@ public class ApplicationService implements
 
     private final ApplicationRepositoryPort repo;
     private final ApplicationStatusEventRepositoryPort statusEventRepo;
-    private final PersistGeneratedDocumentUseCase structuredGeneratedDocuments;
+    private final GeneratedDocumentRepositoryPort generatedDocuments;
 
     public ApplicationService(ApplicationRepositoryPort repo,
                               ApplicationStatusEventRepositoryPort statusEventRepo,
-                              PersistGeneratedDocumentUseCase structuredGeneratedDocuments) {
+                              GeneratedDocumentRepositoryPort generatedDocuments) {
         this.repo = repo;
         this.statusEventRepo = statusEventRepo;
-        this.structuredGeneratedDocuments = structuredGeneratedDocuments;
+        this.generatedDocuments = generatedDocuments;
     }
 
     @Override
@@ -61,7 +60,7 @@ public class ApplicationService implements
         statusEventRepo.save(new ApplicationStatusEvent(
                 null, saved.id(), saved.userId(), null, status, now, command.notes()));
         if (command.generatedDocumentId() != null) {
-            structuredGeneratedDocuments.attachToApplication(command.userId(), command.generatedDocumentId(), saved.id());
+            linkGeneratedDocument(command.userId(), command.generatedDocumentId(), saved.id());
         }
         return saved;
     }
@@ -71,7 +70,7 @@ public class ApplicationService implements
                                                String generatedContent, ApplicationStatus status, String notes) {
         Application existing = repo.findByIdAndUserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Application not found"));
-        GeneratedDocument document = structuredGeneratedDocuments.attachToApplication(userId, generatedDocumentId, applicationId);
+        GeneratedDocument document = linkGeneratedDocument(userId, generatedDocumentId, applicationId);
         Application withContent = applyGeneratedContent(existing, document, generatedContent);
         ApplicationStatus targetStatus = status != null ? status : withContent.status();
         Instant now = Instant.now();
@@ -90,6 +89,12 @@ public class ApplicationService implements
                     null, saved.id(), saved.userId(), existing.status(), targetStatus, now, notes));
         }
         return saved;
+    }
+
+    private GeneratedDocument linkGeneratedDocument(UUID userId, UUID generatedDocumentId, UUID applicationId) {
+        GeneratedDocument existing = generatedDocuments.findByIdAndUserId(generatedDocumentId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Generated document not found"));
+        return generatedDocuments.save(existing.withApplicationId(applicationId));
     }
 
     private Application applyGeneratedContent(Application application, GeneratedDocument document, String generatedContent) {

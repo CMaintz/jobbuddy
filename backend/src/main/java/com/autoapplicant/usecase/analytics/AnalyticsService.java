@@ -6,20 +6,19 @@ import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.port.in.analytics.*;
-import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.springframework.stereotype.Service;
 
 @Service
 public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetricsUseCase,
@@ -27,19 +26,15 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
 
     private final ApplicationRepositoryPort applicationRepo;
     private final JobRepositoryPort jobRepo;
-    private final GetRecommendationsUseCase recommendationsUseCase;
 
-    public AnalyticsService(ApplicationRepositoryPort applicationRepo, JobRepositoryPort jobRepo,
-                             GetRecommendationsUseCase recommendationsUseCase) {
+    public AnalyticsService(ApplicationRepositoryPort applicationRepo, JobRepositoryPort jobRepo) {
         this.applicationRepo = applicationRepo;
         this.jobRepo = jobRepo;
-        this.recommendationsUseCase = recommendationsUseCase;
     }
 
     @Override
-    public DashboardData getDashboard(UUID userId) {
+    public DashboardData getDashboard(UUID userId, List<MatchResult> recommendations) {
         List<Application> applications = applicationRepo.findByUserId(userId);
-        List<MatchResult> recommendations = recommendationsUseCase.getRecommendations(userId, 5);
 
         List<Job> savedJobs = applications.stream()
                 .filter(a -> a.status() == ApplicationStatus.SAVED)
@@ -185,7 +180,7 @@ public class AnalyticsService implements GetDashboardUseCase, GetApplicationMetr
     }
 
     private static int countByStatuses(List<Application> applications, ApplicationStatus... statuses) {
-        var set = java.util.Set.of(statuses);
+        Set<ApplicationStatus> set = Set.of(statuses);
         return (int) applications.stream().filter(a -> set.contains(a.status())).count();
     }
 

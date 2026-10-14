@@ -3,7 +3,6 @@ package com.autoapplicant.adapter.crawler;
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import com.autoapplicant.usecase.job.EnrichmentSweepService;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -37,7 +36,7 @@ public class EnrichmentSweepScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(EnrichmentSweepScheduler.class);
 
-    private final EnrichmentSweepService sweep;
+    private final SweepUnenrichedJobsUseCase sweep;
     private final JobRepositoryPort jobRepo;
     private final ActiveCrawls activeCrawls;
     private final Executor executor;
@@ -55,7 +54,7 @@ public class EnrichmentSweepScheduler {
                                     @Value("${app.enrichment.sweep.enabled:true}") boolean enabled,
                                     @Value("${app.enrichment.sweep.batch-size:200}") int batchSize,
                                     @Value("${app.enrichment.sweep.budget:PT20M}") Duration budget) {
-        this.sweep = (EnrichmentSweepService) sweep;
+        this.sweep = sweep;
         this.jobRepo = jobRepo;
         this.activeCrawls = activeCrawls;
         this.executor = executor;

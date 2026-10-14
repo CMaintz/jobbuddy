@@ -11,4 +11,10 @@ public record StructuredDocumentSection(
 ) {
     /** The {@code type} for user-authored custom sections (shared across build, assemble, render). */
     public static final String TYPE_CUSTOM = "custom";
+
+    /** This section with every item's links removed (see {@link StructuredDocumentItem#withoutLinks()}). */
+    public StructuredDocumentSection withoutLinks() {
+        return new StructuredDocumentSection(
+                id, type, heading, body, StructuredDocumentItem.withoutLinks(items));
+    }
 }

@@ -227,7 +227,7 @@ public class CareerProfileContextService {
 
     public String buildJson(UUID userId) {
         try {
-            return objectMapper.writeValueAsString(build(userId));
+            return objectMapper.writeValueAsString(build(userId).withoutLinks());
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not serialize contact-free career profile", e);
         }
