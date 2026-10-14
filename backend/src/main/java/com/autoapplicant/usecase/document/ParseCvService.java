@@ -1,31 +1,35 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.common.CvParseException;
+import com.autoapplicant.domain.common.CvParseException.Reason;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
-import com.autoapplicant.domain.user.ProfilePrivateInfo;
-import com.autoapplicant.domain.user.ProfileSocial;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
-import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
 import com.autoapplicant.usecase.ai.AiOperations;
 import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
 import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ParseCvService implements ParseCvUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(ParseCvService.class);
+    static final String NO_TEXT_MESSAGE =
+            "No text could be read from this CV. If it is a scanned PDF, paste the text instead.";
+    static final String AI_UNAVAILABLE_MESSAGE =
+            "The CV could not be parsed right now. Please try again in a moment.";
+    static final String UNREADABLE_RESPONSE_MESSAGE =
+            "The CV could not be turned into a profile. Please try again, or paste the text instead.";
+
+    private static final String DEFAULT_CURRENCY = "DKK";
 
     private static final String SYSTEM_PROMPT = """
             You are a CV parser. Extract structured career information from the provided CV text.
@@ -76,121 +80,87 @@ public class ParseCvService implements ParseCvUseCase {
 
     private final ChatProviderPort aiProvider;
     private final ObjectMapper objectMapper;
-    private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
-    private final ProfileSocialRepositoryPort socialRepo;
+    private final ParsedCvContactWriter contactWriter;
     private final ImpliedSkillQueue impliedSkills;
     private final ProfileSkillIngestion skillIngestion;
 
-    public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider, ObjectMapper objectMapper,
-                          ProfilePrivateInfoRepositoryPort privateInfoRepo,
-                          ProfileSocialRepositoryPort socialRepo,
-                          ImpliedSkillQueue impliedSkills,
-                          ProfileSkillIngestion skillIngestion) {
+    public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
+                          ObjectMapper objectMapper, ParsedCvContactWriter contactWriter,
+                          ImpliedSkillQueue impliedSkills, ProfileSkillIngestion skillIngestion) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
-        this.privateInfoRepo = privateInfoRepo;
-        this.socialRepo = socialRepo;
+        this.contactWriter = contactWriter;
         this.impliedSkills = impliedSkills;
         this.skillIngestion = skillIngestion;
     }
 
+    /**
+     * Runs the AI parse outside any transaction, files the contact details in one, then adds the
+     * skills after it has committed.
+     *
+     * @throws CvParseException when there is no text, the provider fails, or its answer is not
+     *     the expected JSON; nothing is written in any of those cases
+     */
     @Override
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
-            value = "REC_CATCH_EXCEPTION",
-            justification = "objectMapper.readTree throws the checked JsonProcessingException; the "
-                    + "catch also absorbs runtime failures (NPE etc.) so a bad AI response falls "
-                    + "back to an empty profile rather than propagating.")
     public Profile parseCvText(UUID userId, String rawCvText) {
-        try {
-            PromptComposition composition = new PromptComposition(
-                    SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
-            String json = aiProvider.generate(composition, AiOperations.CV_PARSE);
-            JsonNode node = objectMapper.readTree(AiResponseParser.stripCodeFence(json.trim()));
-
-            savePrivateInfo(userId, node);
-            saveSocialLinks(userId, node);
-            captureCvSkills(userId, node);
-
-            return new Profile(
-                    null, userId,
-                    textOrNull(node, "headline"),
-                    textOrNull(node, "summary"),
-                    null,
-                    arrayOrEmpty(node, "languages"),
-                    arrayOrEmpty(node, "interests"),
-                    null, null, "DKK", null, null, null, null
-            );
-        } catch (Exception e) {
-            log.error("CV parsing failed for user {}: {}", userId, e.getMessage());
-            return new Profile(null, userId, null, null, null, List.of(),
-                    List.of(), null, null, "DKK", null, null, null, null);
+        if (rawCvText == null || rawCvText.isBlank()) {
+            throw new CvParseException(Reason.NO_TEXT, NO_TEXT_MESSAGE);
         }
-    }
-
-    /** Persist the CV's name and location as private info, merging into any existing record. */
-    private void savePrivateInfo(UUID userId, JsonNode node) {
-        String fullName = textOrNull(node, "fullName");
-        String location = textOrNull(node, "location");
-        if (fullName == null && location == null) return;
-        ProfilePrivateInfo existing = privateInfoRepo.findByUserId(userId).orElse(null);
-        if (existing == null) {
-            privateInfoRepo.save(new ProfilePrivateInfo(null, userId,
-                    fullName, null, null, location, null, null, null, null));
-        } else {
-            privateInfoRepo.save(new ProfilePrivateInfo(existing.id(), userId,
-                    fullName != null ? fullName : existing.fullName(),
-                    existing.phone(), existing.photoUrl(),
-                    location != null ? location : existing.location(),
-                    existing.municipality(), existing.contactEmail(),
-                    existing.createdAt(), null));
-        }
-    }
-
-    /** Persist any LinkedIn / GitHub / website URLs the CV listed, after the user's existing links. */
-    private void saveSocialLinks(UUID userId, JsonNode node) {
-        int order = socialRepo.findByUserId(userId).size();
-        saveSocialIfPresent(userId, node, "linkedinUrl", "LinkedIn", "linkedin", order);
-        saveSocialIfPresent(userId, node, "githubUrl",   "GitHub",   "github",   order + 1);
-        saveSocialIfPresent(userId, node, "websiteUrl",  "Website",  "globe",    order + 2);
+        JsonNode node = toJson(askAi(rawCvText));
+        contactWriter.write(userId, node);
+        captureCvSkills(userId, node);
+        return new Profile(
+                null, userId,
+                ParsedCvFields.textOrNull(node, "headline"),
+                ParsedCvFields.textOrNull(node, "summary"),
+                null,
+                ParsedCvFields.arrayOrEmpty(node, "languages"),
+                ParsedCvFields.arrayOrEmpty(node, "interests"),
+                null, null, DEFAULT_CURRENCY, null, null, null, null
+        );
     }
 
     /**
      * Capture the CV's skills, in the two ways the profile keeps them: ingest the stated ones
      * straight into the profile's skill rows (same taxonomy link and category as a hand-typed skill,
      * so grouped sections and proficiency-weighted matching work for an imported CV too), and queue
-     * the inferred ones as questions — inferences never join the extracted list, so a wrong guess
+     * the inferred ones as questions - inferences never join the extracted list, so a wrong guess
      * costs one dismissed suggestion rather than a fabricated skill.
+     *
+     * <p>Deliberately outside the contact-details transaction: both helpers skip a row that fails
+     * to save and carry on, which only works while each row commits on its own. Inside a shared
+     * transaction one bad row would fail the whole import at commit instead.
      */
     private void captureCvSkills(UUID userId, JsonNode node) {
-        List<String> stated = new java.util.ArrayList<>(arrayOrEmpty(node, "skills"));
-        stated.addAll(arrayOrEmpty(node, "technologies"));
+        List<String> stated = new ArrayList<>(ParsedCvFields.arrayOrEmpty(node, "skills"));
+        stated.addAll(ParsedCvFields.arrayOrEmpty(node, "technologies"));
         impliedSkills.queue(userId, node, stated, ParsedSkillSuggestion.Source.CV_PARSE);
         skillIngestion.ingest(userId, stated);
     }
 
-    private void saveSocialIfPresent(UUID userId, JsonNode node, String field,
-                                      String platform, String iconKey, int displayOrder) {
-        String url = textOrNull(node, field);
-        if (url == null || url.isBlank()) return;
-        List<ProfileSocial> existing = socialRepo.findByUserId(userId);
-        boolean alreadyExists = existing.stream()
-                .anyMatch(s -> iconKey.equalsIgnoreCase(s.iconKey()));
-        if (!alreadyExists) {
-            socialRepo.save(new ProfileSocial(null, userId, platform, url, null,
-                    iconKey, displayOrder, null, null));
+    private String askAi(String rawCvText) {
+        PromptComposition composition = new PromptComposition(
+                SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
+        try {
+            return aiProvider.generate(composition, AiOperations.CV_PARSE);
+        } catch (RuntimeException e) {
+            throw new CvParseException(Reason.AI_UNAVAILABLE, AI_UNAVAILABLE_MESSAGE, e);
         }
     }
 
-    private static String textOrNull(JsonNode node, String field) {
-        JsonNode child = node.get(field);
-        return (child != null && !child.isNull()) ? child.asText() : null;
-    }
-
-    private static List<String> arrayOrEmpty(JsonNode node, String field) {
-        JsonNode child = node.get(field);
-        if (child == null || !child.isArray()) return List.of();
-        String[] values = new String[child.size()];
-        for (int i = 0; i < child.size(); i++) values[i] = child.get(i).asText();
-        return Arrays.asList(values);
+    private JsonNode toJson(String aiResponse) {
+        if (aiResponse == null) {
+            throw new CvParseException(Reason.UNREADABLE, UNREADABLE_RESPONSE_MESSAGE);
+        }
+        JsonNode node;
+        try {
+            node = objectMapper.readTree(AiResponseParser.stripCodeFence(aiResponse.trim()));
+        } catch (JsonProcessingException e) {
+            throw new CvParseException(Reason.UNREADABLE, UNREADABLE_RESPONSE_MESSAGE, e);
+        }
+        if (node == null || !node.isObject()) {
+            throw new CvParseException(Reason.UNREADABLE, UNREADABLE_RESPONSE_MESSAGE);
+        }
+        return node;
     }
 }

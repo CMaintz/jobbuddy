@@ -279,7 +279,12 @@
     "error": {
       "pasteFirst": "Indsæt hele din CV-tekst først (mindst et par linjer)",
       "parseFailed": "Analyse mislykkedes — tjek filen/teksten og prøv igen",
-      "applyFailed": "Kunne ikke anvende importen — prøv igen"
+      "applyFailed": "Kunne ikke anvende importen — prøv igen",
+      "reason": {
+        "NO_TEXT": "Der kunne ikke læses tekst fra dette CV. Hvis det er en scannet PDF, så indsæt teksten i stedet.",
+        "UNREADABLE": "CV'et kunne ikke omdannes til en profil. Prøv igen, eller indsæt teksten i stedet.",
+        "AI_UNAVAILABLE": "CV-analysen er ikke tilgængelig lige nu. Prøv igen om lidt."
+      }
     }
   },
   "resumeBuilder": {
