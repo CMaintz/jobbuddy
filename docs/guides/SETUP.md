@@ -45,8 +45,8 @@ FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
 FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
 FIREBASE_APP_ID=your-firebase-app-id
 
-# Optional — override only if running services outside Docker
-POSTGRES_PASSWORD=localdevpassword
+# Required - the compose files refuse to start without it
+POSTGRES_PASSWORD=changeme
 ```
 
 > **Security note:** Never commit `.env` to version control. It is already listed in `.gitignore`.
@@ -59,8 +59,8 @@ POSTGRES_PASSWORD=localdevpassword
 This starts PostgreSQL (with pgvector), the Spring Boot backend, and the Angular frontend behind nginx.
 
 ```bash
-# Run from the repo root so Docker Compose picks up .env automatically
-docker compose -f infra/docker-compose.yml up --build
+# Run from the repo root; --env-file points compose at the root .env
+docker compose --env-file .env -f infra/docker-compose.yml up --build
 ```
 
 First startup takes 3–5 minutes (Gradle build + npm install inside Docker). Subsequent starts are fast.
@@ -74,19 +74,19 @@ Once all three services are healthy:
 To run in the background:
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d --build
+docker compose --env-file .env -f infra/docker-compose.yml up -d --build
 ```
 
 To stop and remove containers (data volumes are preserved):
 
 ```bash
-docker compose -f infra/docker-compose.yml down
+docker compose --env-file .env -f infra/docker-compose.yml down
 ```
 
 To wipe all data and start fresh:
 
 ```bash
-docker compose -f infra/docker-compose.yml down -v
+docker compose --env-file .env -f infra/docker-compose.yml down -v
 ```
 
 ---
@@ -98,8 +98,7 @@ Use this when you are actively developing and want hot-reload.
 ### Start infrastructure only
 
 ```bash
-cd infra
-docker compose up postgres -d
+docker compose --env-file .env -f infra/docker-compose.yml up postgres -d
 ```
 
 ### Run the backend
@@ -172,10 +171,20 @@ curl -X POST http://localhost:8080/api/v1/admin/crawler/trigger \
 
 1. Provision a server with at least **2 GB RAM** and Docker installed.
 2. Copy the repo and your `.env` file to the server.
-3. Run `docker compose up -d --build` from `infra/`.
-4. Put a reverse proxy (nginx, Caddy, Traefik) in front of port 80 and terminate TLS there.
+3. From the repo root, run `docker compose --env-file .env -f infra/docker-compose.prod.yml up -d`.
+   This pulls the images `deploy.yml` publishes to GHCR (`ghcr.io/cmaintz/jobbuddy/backend` and
+   `/frontend`). Set `IMAGE_TAG` in `.env` to `sha-<full commit sha>` to pin a build; it defaults
+   to `latest`. The packages are private unless made public, so run `docker login ghcr.io` (a
+   token with `read:packages`) first. Add `--build` to build from source instead. To update, run
+   `docker compose --env-file .env -f infra/docker-compose.prod.yml pull` first; otherwise compose
+   reuses whatever image (pulled or locally built) already carries that tag.
+4. The prod compose file terminates TLS in the frontend nginx. nginx runs as uid 101, so make the
+   certs readable by it: `sudo chown 101 infra/ssl/key.pem infra/ssl/cert.pem`. Certbot writes
+   `privkey.pem` as 0600 root, and copied as-is the container crash-loops.
 
-Caddy example (`Caddyfile`):
+   To terminate TLS in a reverse proxy (nginx, Caddy, Traefik) instead, use `docker-compose.yml`'s
+   frontend (plain HTTP on 127.0.0.1:80). The prod frontend already binds 80/443 and redirects
+   HTTP to HTTPS, which loops behind a proxy. Caddy example (`Caddyfile`):
 
 ```
 jobbuddy.yourdomain.com {
@@ -218,10 +227,11 @@ Use the `docker-compose.yml` as a reference for pod specs, environment variables
 | `FIREBASE_STORAGE_BUCKET` | **Yes** | — | Firebase storage bucket (frontend build) |
 | `FIREBASE_MESSAGING_SENDER_ID` | **Yes** | — | Firebase messaging sender ID (frontend build) |
 | `FIREBASE_APP_ID` | **Yes** | — | Firebase app ID (frontend build) |
-| `POSTGRES_PASSWORD` | No | `localdevpassword` | Database password |
+| `POSTGRES_PASSWORD` | **Yes** (Docker) | none | Database password; the compose files refuse to start without it |
 | `DB_URL` | No | `jdbc:postgresql://localhost:5432/autoapplicant` | JDBC URL (local dev only) |
 | `DB_USER` | No | `autoapplicant` | DB username (local dev only) |
 | `DB_PASS` | No | `POSTGRES_PASSWORD` or `localdevpassword` | DB password (local dev only) |
+| `IMAGE_TAG` | No | `latest` | GHCR image tag `docker-compose.prod.yml` pulls (`latest` or `sha-<commit>`) |
 
 ---
 

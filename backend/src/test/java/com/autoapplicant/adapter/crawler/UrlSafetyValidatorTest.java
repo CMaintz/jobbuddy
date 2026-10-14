@@ -1,8 +1,8 @@
 package com.autoapplicant.adapter.crawler;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 class UrlSafetyValidatorTest {
 
@@ -20,6 +20,36 @@ class UrlSafetyValidatorTest {
         assertThat(UrlSafetyValidator.isSafeHttpUrl("http://192.168.1.1/x")).isFalse();
         assertThat(UrlSafetyValidator.isSafeHttpUrl("http://169.254.1.1/x")).isFalse();  // link-local
         assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[::1]/x")).isFalse();          // IPv6 loopback
+    }
+
+    @Test
+    void carrierGradeNatRangeIsBlockedIncludingCloudMetadata() {
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://100.100.100.200/latest/meta-data")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://100.64.0.1/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://100.127.255.255/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://100.63.255.255/x")).isTrue();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://100.128.0.0/x")).isTrue();
+    }
+
+    @Test
+    void thisNetworkRangeIsBlocked() {
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://0.0.0.1/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://0.255.255.255/x")).isFalse();
+    }
+
+    @Test
+    void nat64AddressesAreJudgedByTheirEmbeddedIpv4() {
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b::a9fe:a9fe]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b::7f00:1]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b::a00:1]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b::808:808]/x")).isTrue();
+    }
+
+    @Test
+    void nat64LocalUsePrefixIsBlockedWholesale() {
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b:1::808:808]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b:1:ffff::1]/x")).isFalse();
+        assertThat(UrlSafetyValidator.isSafeHttpUrl("http://[64:ff9b:2::808:808]/x")).isTrue();
     }
 
     @Test

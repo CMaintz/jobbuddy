@@ -1,5 +1,4 @@
 import { Component, ElementRef, EventEmitter, Input, Output, inject, ChangeDetectionStrategy } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RichTextEditorComponent } from '../resume-builder/shared/rich-text-editor.component';
 import { RichTextPipe } from '../resume-builder/shared/rich-text.pipe';
 import { DocumentIdentity } from '../../core/models/structured-document.model';
@@ -18,7 +17,6 @@ import { LetterTemplate } from './letter-templates';
 })
 export class LetterPaperComponent {
   readonly el = inject(ElementRef<HTMLElement>);
-  private sanitizer = inject(DomSanitizer);
 
   @Input({ required: true }) tpl!: LetterTemplate;
   @Input() identity: DocumentIdentity = {};
@@ -37,11 +35,14 @@ export class LetterPaperComponent {
     return this.content.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
   }
 
-  /** Plain paragraph → safe HTML with optional keyword marks. */
-  paraHtml(para: string): SafeHtml {
+  /**
+   * Plain paragraph → escaped HTML with optional keyword marks. Left to Angular's built-in
+   * sanitizer, which keeps `<mark class>` and needs no inline styles here.
+   */
+  paraHtml(para: string): string {
     const escaped = para
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return this.sanitizer.bypassSecurityTrustHtml(this.markKeywords(escaped));
+    return this.markKeywords(escaped);
   }
 
   /** Rich (TipTap) content with optional keyword marks. */

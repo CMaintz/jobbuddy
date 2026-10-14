@@ -5,11 +5,10 @@ import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,15 +23,26 @@ import org.slf4j.LoggerFactory;
  * ({@code app.ai.enrichment-provider}) must stay a real API (OpenAI/Gemini). Because each
  * call spawns a process (seconds of latency), this is meant for on-demand generation, not
  * high-throughput bulk enrichment.
+ *
+ * <p>Prompts carry crawled job-posting text, so the agent is treated as untrusted: see
+ * {@link CliAgentProcessFactory} for the sandbox (tools off, allowlisted env, empty cwd).
  */
 public class CliAgentAdapter implements ChatProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(CliAgentAdapter.class);
 
     private final AppProperties props;
+    private final String provider;
+    private final String command;
 
-    public CliAgentAdapter(AppProperties props) {
+    /**
+     * {@code provider} picks the default command line when {@code app.ai.cli.command} is blank,
+     * and which CLI's auth variables the agent inherits.
+     */
+    public CliAgentAdapter(AppProperties props, String provider) {
         this.props = props;
+        this.provider = provider;
+        this.command = CliAgentCommands.resolve(provider, props.getAi().getCli().getCommand());
     }
 
     /**
@@ -45,60 +55,55 @@ public class CliAgentAdapter implements ChatProviderPort {
     }
 
     private String run(PromptComposition composition, boolean jsonObject) {
-        AppProperties.Cli cfg = props.getAi().getCli();
-        List<String> command = Arrays.stream(cfg.getCommand().trim().split("\\s+")).toList();
+        int timeoutSeconds = props.getAi().getCli().getTimeoutSeconds();
         String prompt = buildPrompt(composition, jsonObject);
-
+        Path workDir = newWorkDir();
         try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            Process proc = pb.start();
-
-            // Drain stdin/stderr on separate threads so a full pipe buffer can never deadlock
-            // the stdout read (prompts with a CV + JD can exceed the OS pipe buffer).
-            Thread stdinWriter = new Thread(() -> {
-                try (OutputStream os = proc.getOutputStream()) {
-                    os.write(prompt.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    log.debug("CLI agent stdin closed early: {}", e.getMessage());
-                }
-            });
-            StringBuilder stderr = new StringBuilder();
-            Thread stderrDrainer = new Thread(() -> {
-                try {
-                    stderr.append(new String(proc.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    log.debug("CLI agent stderr drain ended: {}", e.getMessage());
-                }
-            });
-            stdinWriter.start();
-            stderrDrainer.start();
-
-            String stdout = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-            boolean finished = proc.waitFor(cfg.getTimeoutSeconds(), TimeUnit.SECONDS);
-            if (!finished) {
-                proc.destroyForcibly();
-                throw new IllegalStateException(
-                        "CLI agent '" + cfg.getCommand() + "' timed out after " + cfg.getTimeoutSeconds() + "s");
-            }
-            stdinWriter.join(2000);
-            stderrDrainer.join(2000);
-
-            if (proc.exitValue() != 0) {
-                throw new IllegalStateException("CLI agent '" + cfg.getCommand() + "' exited "
-                        + proc.exitValue() + ": " + stderr.toString().strip());
-            }
-            String out = stdout.strip();
-            if (out.isEmpty()) {
-                throw new IllegalStateException("CLI agent '" + cfg.getCommand() + "' returned empty output");
-            }
-            return out;
+            ProcessBuilder pb = CliAgentProcessFactory.create(command, workDir, provider);
+            return requireAnswer(
+                    CliAgentProcessRunner.run(pb, prompt, Duration.ofSeconds(timeoutSeconds)));
+        } catch (TimeoutException e) {
+            throw new IllegalStateException(
+                    "CLI agent '" + command + "' timed out after " + timeoutSeconds + "s", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted running CLI agent", e);
+        } catch (CliAgentProcessRunner.LaunchException e) {
+            throw new IllegalStateException("Could not launch CLI agent '" + command
+                    + "' - is it installed and on PATH?", e);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not launch CLI agent '" + cfg.getCommand()
-                    + "' — is it installed and on PATH?", e);
+            throw new IllegalStateException(
+                    "Could not read the output of CLI agent '" + command + "'", e);
+        } finally {
+            removeWorkDir(workDir);
+        }
+    }
+
+    private static Path newWorkDir() {
+        try {
+            return CliAgentProcessFactory.createWorkDir();
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not create a work dir for the CLI agent", e);
+        }
+    }
+
+    private String requireAnswer(CliAgentProcessRunner.Result result) {
+        if (result.exitCode() != 0) {
+            throw new IllegalStateException("CLI agent '" + command + "' exited "
+                    + result.exitCode() + ": " + result.stderr().strip());
+        }
+        String out = result.stdout().strip();
+        if (out.isEmpty()) {
+            throw new IllegalStateException("CLI agent '" + command + "' returned empty output");
+        }
+        return out;
+    }
+
+    private static void removeWorkDir(Path workDir) {
+        try {
+            CliAgentProcessFactory.deleteWorkDir(workDir);
+        } catch (UncheckedIOException e) {
+            log.warn("Could not delete CLI agent work dir {}: {}", workDir, e.getMessage());
         }
     }
 

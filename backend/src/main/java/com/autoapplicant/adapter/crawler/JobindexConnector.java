@@ -5,13 +5,6 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Parser;
-import org.jsoup.select.Elements;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -21,6 +14,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Elements;
+import org.springframework.stereotype.Component;
 
 @Component
 public class JobindexConnector extends AbstractJobSourceConnector {
@@ -244,12 +243,10 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                 String detailHtml = item.select("description").text();
                 try {
                     Thread.sleep(config.delayMs());
-                    detailHtml = Jsoup.connect(link)
-                            .userAgent(USER_AGENT)
-                            .timeout(15000)
-                            .followRedirects(true)
-                            .get()
-                            .outerHtml();
+                    detailHtml = SafeJsoupFetcher.PUBLIC_ONLY
+                            .fetchDocument(link, c -> c.userAgent(USER_AGENT).timeout(15000))
+                            .map(Document::outerHtml)
+                            .orElse(detailHtml);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     log.warn("Interrupted fetching Jobindex detail page, stopping crawl");

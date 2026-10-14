@@ -61,8 +61,12 @@ public class AppProperties {
      * Embeddings are never produced here — keep a real API provider for enrichment.
      */
     public static class Cli {
-        /** Command + fixed args; the prompt is piped to stdin. e.g. "claude -p" or "codex exec". */
-        private String command = "claude -p";
+        /**
+         * Optional override of the whole command line; the prompt is piped to stdin. Blank means
+         * the sandboxed default for the provider (claude-cli/cli run Claude Code, codex runs
+         * Codex). An override replaces those sandbox flags too, so it must carry its own.
+         */
+        private String command = "";
         private int timeoutSeconds = 120;
         /** Label reported as the model name for provenance in saved documents. */
         private String modelLabel = "cli-agent";

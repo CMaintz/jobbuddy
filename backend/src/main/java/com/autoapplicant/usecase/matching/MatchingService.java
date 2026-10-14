@@ -26,6 +26,7 @@ import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.common.KeywordMatcher;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -144,10 +145,7 @@ public class MatchingService implements GetRecommendationsUseCase {
             // so every posting you acted on kept coming back at the top of it.
             Set<UUID> appliedIds = applicationRepo.findAppliedJobIds(userId);
 
-            // Use cached profile embedding when available; fall back to on-the-fly computation
-            float[] userEmbedding = profileEmbeddingRepo.findByUserId(userId)
-                    .map(ProfileEmbedding::embedding)
-                    .orElseGet(() -> aiProvider.embed(profileText));
+            float[] userEmbedding = profileEmbedding(userId, profileText);
             // Fetch extra candidates so we have room to discard hard-constraint failures.
             // A commute radius is the filter that discards most: nationwide postings are mostly
             // outside it, so at the normal multiplier the radius quietly starves the feed rather
@@ -653,6 +651,24 @@ public class MatchingService implements GetRecommendationsUseCase {
                 log.debug("Could not expand steer signal for job {}: {}", signal.jobId(), e.getMessage());
             }
         }
+    }
+
+    /**
+     * The cached profile embedding, or one computed now and cached. Caching the fallback keeps a
+     * user without one from paying for an embed call on every feed or dashboard load.
+     */
+    private float[] profileEmbedding(UUID userId, String profileText) {
+        Optional<ProfileEmbedding> cached = profileEmbeddingRepo.findByUserId(userId);
+        if (cached.isPresent()) return cached.get().embedding();
+        float[] computed = aiProvider.embed(profileText);
+        try {
+            profileEmbeddingRepo.save(new ProfileEmbedding(
+                    null, userId, computed, aiProvider.embeddingModelName(), Instant.now()));
+        } catch (RuntimeException e) {
+            // Best effort: a concurrent profile refresh may have just stored one.
+            log.debug("Could not cache profile embedding for user {}: {}", userId, e.getMessage());
+        }
+        return computed;
     }
 
     private static String buildProfileText(Profile p, List<ProfileSkill> skills) {

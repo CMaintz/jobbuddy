@@ -1,22 +1,22 @@
 package com.autoapplicant.adapter.web;
 
+import com.autoapplicant.adapter.crawler.SafeRedirectFetcher;
 import com.autoapplicant.adapter.crawler.UrlSafetyValidator;
 import com.autoapplicant.port.out.web.WebPageFetchPort;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.Optional;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.util.Optional;
-
 /**
  * Fetches a public web page and returns its visible text, stripped of markup. SSRF-guarded via
- * {@link UrlSafetyValidator} — a URL resolving to internal infrastructure is never fetched.
+ * {@link UrlSafetyValidator} on every redirect hop, so a URL resolving to internal
+ * infrastructure is never fetched.
  * Output is capped so a huge page can't blow up a downstream prompt.
  */
 @Component
@@ -25,10 +25,8 @@ public class HttpWebPageFetchAdapter implements WebPageFetchPort {
     private static final Logger log = LoggerFactory.getLogger(HttpWebPageFetchAdapter.class);
     private static final int MAX_CHARS = 6000;
 
-    private final HttpClient client = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(8))
-            .build();
+    private final SafeRedirectFetcher fetcher =
+            new SafeRedirectFetcher(SafeRedirectFetcher.newNonRedirectingClient(Duration.ofSeconds(8)));
 
     @Override
     public Optional<String> fetchText(String url) {
@@ -43,7 +41,9 @@ public class HttpWebPageFetchAdapter implements WebPageFetchPort {
                     .header("Accept", "text/html,application/xhtml+xml")
                     .GET()
                     .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            Optional<HttpResponse<String>> fetched = fetcher.send(request);
+            if (fetched.isEmpty()) return Optional.empty();
+            HttpResponse<String> response = fetched.get();
             if (response.statusCode() >= 400) return Optional.empty();
             String text = Jsoup.parse(response.body()).text();
             if (text.isBlank()) return Optional.empty();

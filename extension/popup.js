@@ -1,18 +1,64 @@
-const DEFAULT_APP_URL = 'http://localhost:4200';
-
+// DEFAULT_APP_URL, APP_URL_KEY and the origin helpers come from app-origin.js.
 const statusEl = document.getElementById('status');
 const appUrlInput = document.getElementById('app-url');
+// Kept in memory so the capture click can request the host permission synchronously,
+// before any await ends its user gesture.
+let savedAppUrl = DEFAULT_APP_URL;
 
-chrome.storage.sync.get('appUrl', ({ appUrl }) => {
-  appUrlInput.value = appUrl || DEFAULT_APP_URL;
+chrome.storage.sync.get(APP_URL_KEY, (settings) => {
+  savedAppUrl = normalizeAppUrl(settings[APP_URL_KEY]) || DEFAULT_APP_URL;
+  appUrlInput.value = settings[APP_URL_KEY] || DEFAULT_APP_URL;
 });
-appUrlInput.addEventListener('change', () => {
-  chrome.storage.sync.set({ appUrl: appUrlInput.value.trim().replace(/\/$/, '') || DEFAULT_APP_URL });
+
+document.getElementById('save-url').addEventListener('click', () => {
+  const appUrl = normalizeAppUrl(appUrlInput.value);
+  if (!appUrl) {
+    statusEl.textContent = 'Enter an http(s) URL, e.g. https://jobbuddy.example.com';
+    return;
+  }
+  appUrlInput.value = appUrl;
+  savedAppUrl = appUrl;
+  // Not awaited: the permission request must run inside this click's user gesture, and the
+  // popup may close while its dialog is open. The background worker registers the bridge.
+  chrome.storage.sync.set({ [APP_URL_KEY]: appUrl });
+  const origin = appOriginOf(appUrl);
+  if (isBuiltInOrigin(origin)) {
+    statusEl.textContent = 'Saved.';
+    return;
+  }
+  chrome.permissions.request({ origins: [originPattern(origin)] }).then((granted) => {
+    statusEl.textContent = granted
+      ? 'Saved. Captures will open in ' + origin + '.'
+      : 'Saved, but without access to ' + origin + ' captures cannot reach the app.';
+  }).catch(() => {
+    statusEl.textContent = 'Saved, but access to ' + origin + ' could not be requested.';
+  });
 });
+
+/**
+ * Asks for the app origin's host permission inside the click's gesture. Users upgrading from a
+ * hand-edited manifest have a custom app URL but no runtime grant; without one the bridge never
+ * registers and the capture would sit unclaimed.
+ */
+function ensureAppAccess(appUrl) {
+  const origin = appOriginOf(appUrl);
+  if (isBuiltInOrigin(origin)) return Promise.resolve(true);
+  return chrome.permissions.request({ origins: [originPattern(origin)] }).catch(() => false);
+}
 
 document.getElementById('capture').addEventListener('click', async () => {
+  if (normalizeAppUrl(appUrlInput.value) !== savedAppUrl) {
+    statusEl.textContent = 'Save the app URL first, then capture.';
+    return;
+  }
+  const access = ensureAppAccess(savedAppUrl);
   statusEl.textContent = 'Reading the page…';
   try {
+    if (!(await access)) {
+      statusEl.textContent = 'Without access to ' + appOriginOf(savedAppUrl)
+        + ' the capture cannot reach the app.';
+      return;
+    }
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -26,11 +72,11 @@ document.getElementById('capture').addEventListener('click', async () => {
     await chrome.storage.local.set({
       pendingCapture: { ...data, url: tab.url, savedAt: Date.now() },
     });
-    const appUrl = appUrlInput.value.trim().replace(/\/$/, '') || DEFAULT_APP_URL;
-    await chrome.tabs.create({ url: appUrl + '/apply' });
+    // Open the saved app URL: the bridge only hands the capture to that origin.
+    await chrome.tabs.create({ url: savedAppUrl + '/apply' });
     window.close();
   } catch (e) {
-    statusEl.textContent = 'Capture failed — this page may block extensions.';
+    statusEl.textContent = 'Capture failed: this page may block extensions.';
   }
 });
 

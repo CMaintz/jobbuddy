@@ -298,7 +298,8 @@ Optional (all have local defaults):
   rest. Unset means the app refuses to store them rather than keeping them in the clear, so
   bring-your-own-key is simply unavailable. Only needed for a hosted deployment.
   Generate one with: `[Convert]::ToBase64String((1..32 | % { Get-Random -Max 256 }))`
-- `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD`
+- `DB_URL`, `DB_USER`, `DB_PASS` / `POSTGRES_PASSWORD` (the Docker compose files require
+  `POSTGRES_PASSWORD`; `.env.example` supplies one)
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)
 - `ALLOWED_ORIGINS` (CORS)
 
@@ -306,7 +307,12 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `GENERATION_AI_PROVIDER` — `openai` (default) | `gemini` | `claude-cli` | `codex` | `cli`. The
   `*-cli`/`codex` values pipe prompts to a local agent CLI (flat-fee subscription) instead of an API.
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
-- `AI_CLI_COMMAND` — CLI invoked for local-agent generation (default `claude -p`; prompt on stdin).
+- `AI_CLI_COMMAND` - optional override of the local-agent command line (prompt on stdin). Blank
+  picks a sandboxed default per provider: `claude -p --tools= --strict-mcp-config
+  --no-session-persistence` (no tools, no MCP, no transcript), or for `codex` `codex exec --sandbox
+  read-only --skip-git-repo-check --ignore-user-config --ephemeral -` (Codex cannot drop its tools,
+  so its shell is read-only instead). Prompts carry crawled posting text, so an override replaces
+  those flags and must carry its own. See `CliAgentCommands`.
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
 - `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
   restructuring a free-text answer). Off = template questions and the user's raw text; the feature

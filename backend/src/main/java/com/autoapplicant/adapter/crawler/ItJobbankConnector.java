@@ -3,17 +3,16 @@ package com.autoapplicant.adapter.crawler;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Component
 public class ItJobbankConnector extends AbstractJobSourceConnector {
@@ -85,12 +84,10 @@ public class ItJobbankConnector extends AbstractJobSourceConnector {
                 String detailHtml = item.select("description").text();
                 try {
                     Thread.sleep(config.delayMs());
-                    detailHtml = Jsoup.connect(link)
-                            .userAgent(USER_AGENT)
-                            .timeout(15000)
-                            .followRedirects(true)
-                            .get()
-                            .outerHtml();
+                    detailHtml = SafeJsoupFetcher.PUBLIC_ONLY
+                            .fetchDocument(link, c -> c.userAgent(USER_AGENT).timeout(15000))
+                            .map(Document::outerHtml)
+                            .orElse(detailHtml);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     log.warn("Interrupted fetching IT-Jobbank detail page, stopping crawl");

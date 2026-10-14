@@ -1,18 +1,17 @@
 package com.autoapplicant.adapter.ai;
 
 import com.autoapplicant.config.AppProperties;
-import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.in.ai.ManageAiCredentialUseCase;
+import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.ai.AiUsageRepositoryPort;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.ai.CurrentUserPort;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.Duration;
 
 @Configuration
 public class AiConfig {
@@ -76,7 +75,7 @@ public class AiConfig {
         if (isCliProvider(provider)) {
             log.info("Enrichment extraction runs on the local CLI agent ({}); embeddings still "
                      + "use {}.", provider, props.getAi().getEnrichmentProvider());
-            return new CliAgentAdapter(props);
+            return new CliAgentAdapter(props, provider);
         }
         String tier = props.getAi().getEnrichmentTier();
         return "gemini".equalsIgnoreCase(provider)
@@ -109,7 +108,7 @@ public class AiConfig {
                                                             AppProperties props) {
         String provider = props.getAi().getGenerationProvider();
         if (isCliProvider(provider)) {
-            return new CliAgentAdapter(props);
+            return new CliAgentAdapter(props, provider);
         }
         String tier = props.getAi().getGenerationTier();
         return "gemini".equalsIgnoreCase(provider)
@@ -131,7 +130,7 @@ public class AiConfig {
     private static String tierModel(String provider, String tier, AppProperties props) {
         String t = tier == null ? "standard" : tier.trim().toLowerCase();
         if ("openai".equalsIgnoreCase(provider)) {
-            var o = props.getOpenai();
+            AppProperties.Openai o = props.getOpenai();
             String tierModel = switch (t) {
                 case "economy" -> o.getEconomyModel();
                 case "premium" -> o.getPremiumModel();
@@ -139,7 +138,7 @@ public class AiConfig {
             };
             return firstNonBlank(tierModel, o.getModel());
         }
-        var g = props.getGemini();
+        AppProperties.Gemini g = props.getGemini();
         String tierModel = switch (t) {
             case "economy" -> g.getEconomyModel();
             case "premium" -> g.getPremiumModel();

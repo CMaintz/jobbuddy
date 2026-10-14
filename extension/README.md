@@ -12,7 +12,9 @@ the document you picked.
    Jobindex, …). If none is found it falls back to your text selection or the page's main content.
 2. The capture is parked in `chrome.storage` and a Jobbuddy tab opens.
 3. A content script on the Jobbuddy origin moves the capture into the app's `localStorage`
-   (`jb-captured-job`); the apply screen consumes it and shows a "Captured from …" banner.
+   (`jb-captured-job`); the apply screen consumes it and shows a "Captured from ..." banner.
+   The bridge only hands the capture over when the page's origin matches the configured
+   Jobbuddy URL; on any other page the capture stays parked.
 
 No credentials live in the extension — job creation happens through your logged-in app session.
 
@@ -24,9 +26,15 @@ No credentials live in the extension — job creation happens through your logge
 
 ## Configuration
 
-The popup has a **Jobbuddy URL** field (default `http://localhost:4200`). If you host the app
-elsewhere, set the URL there **and** add the origin to `content_scripts[0].matches` in
-`manifest.json` (then reload the extension) so the handoff bridge runs on that origin.
+The popup has a **Jobbuddy URL** field (default `http://localhost:4200`). Change it and click
+**Save URL**; captures are only delivered to that origin.
+
+- `http://localhost:4200` (dev) and `http://localhost` (Docker) work out of the box. With the
+  Docker stack, save `http://localhost` so the bridge accepts that origin.
+- For any other origin the browser asks for access to that site when you save. The background
+  worker then registers the bridge there (and drops the old origin's access when you switch).
+  No manifest edit or reload needed. If you decline, captures can't reach the app; save again
+  to be asked again.
 
 ## Tips
 

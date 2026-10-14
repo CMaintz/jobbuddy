@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
@@ -21,6 +21,9 @@ export interface ImportPreview {
   skills: string[];
   yearsExperience?: number;
 }
+
+/** Reason codes the backend sends with a failed CV parse; each has a cvImport.error.reason.* key. */
+const PARSE_FAILURE_CODES: readonly string[] = ['NO_TEXT', 'UNREADABLE', 'AI_UNAVAILABLE'];
 
 /** Raw parser payload — Profile-shaped fields plus the extracted full name. */
 interface ParsedCvResponse {
@@ -118,11 +121,23 @@ export class CvImportPanelComponent {
           if (current) this.preview.set({ ...current, skills: skills.map(s => s.skillName) });
         });
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.parsing.set(false);
-        this.failed.emit(this.translate.instant('cvImport.error.parseFailed'));
+        this.failed.emit(this.parseFailureMessage(err));
       }
     });
+  }
+
+  /**
+   * The backend's 422/503 carries a reason code saying why the CV could not be parsed; known codes
+   * get their own translated message. Anything else (no code, or one this build does not know)
+   * gets the generic one rather than a raw key.
+   */
+  private parseFailureMessage(err: HttpErrorResponse): string {
+    const code = err?.error?.code;
+    return PARSE_FAILURE_CODES.includes(code)
+      ? this.translate.instant(`cvImport.error.reason.${code}`)
+      : this.translate.instant('cvImport.error.parseFailed');
   }
 
   /** Apply the parsed preview to the master profile. The backend merges: null fields keep their current value. */

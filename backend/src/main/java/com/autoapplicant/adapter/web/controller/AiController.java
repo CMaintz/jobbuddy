@@ -211,6 +211,10 @@ public class AiController {
     }
 
     @Operation(summary = "Parse CV text into profile")
+    @ApiResponses({
+            @ApiResponse(responseCode = "422", description = "CV could not be parsed (code NO_TEXT or UNREADABLE)"),
+            @ApiResponse(responseCode = "503", description = "AI provider unavailable (code AI_UNAVAILABLE)")
+    })
     @PostMapping("/parse-cv")
     public ResponseEntity<Profile> parseCv(@Valid @RequestBody ParseCvRequest req) {
         return ResponseEntity.ok(parseCv.parseCvText(secCtx.getCurrentUserId(), req.rawCvText()));

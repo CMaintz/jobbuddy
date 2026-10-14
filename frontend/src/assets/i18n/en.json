@@ -279,7 +279,12 @@
     "error": {
       "pasteFirst": "Paste your full CV text first (at least a few lines)",
       "parseFailed": "Parsing failed — check the file/text and try again",
-      "applyFailed": "Could not apply the import — try again"
+      "applyFailed": "Could not apply the import — try again",
+      "reason": {
+        "NO_TEXT": "No text could be read from this CV. If it is a scanned PDF, paste the text instead.",
+        "UNREADABLE": "The CV could not be turned into a profile. Try again, or paste the text instead.",
+        "AI_UNAVAILABLE": "The CV parser is unavailable right now. Please try again in a moment."
+      }
     }
   },
   "resumeBuilder": {
