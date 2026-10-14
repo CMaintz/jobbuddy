@@ -45,7 +45,10 @@ app:
     enrichment-tier: ${ENRICHMENT_AI_TIER:economy}
     generation-tier: ${GENERATION_AI_TIER:standard}
     cli:
-      command: ${AI_CLI_COMMAND:claude -p}   # e.g. "claude -p" or "codex exec"; prompt piped to stdin
+      # Blank = the sandboxed default for the provider: Claude Code with no tools and no MCP
+      # servers, or Codex under a read-only sandbox (see CliAgentCommands). Prompts carry crawled
+      # posting text, so an override replaces those sandbox flags and must carry its own.
+      command: ${AI_CLI_COMMAND:}
       timeout-seconds: 120
       model-label: ${AI_CLI_MODEL_LABEL:cli-agent}
     auto-review:
