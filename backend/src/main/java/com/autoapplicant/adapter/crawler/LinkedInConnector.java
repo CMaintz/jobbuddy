@@ -5,13 +5,6 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.domain.linkedin.LinkedInQueryPlan;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.autoapplicant.port.out.linkedin.LinkedInQueryPlanRepositoryPort;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -19,7 +12,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * LinkedIn job connector — reads the public {@code jobs-guest} endpoints (no auth,
@@ -208,16 +208,10 @@ public class LinkedInConnector extends AbstractJobSourceConnector {
                     Thread.sleep(delay + (long) (Math.random() * 700));
                     delay = Math.min(delay * 2, 8_000);
                 }
-                Connection.Response res = Jsoup.connect(url)
-                        .userAgent(BROWSER_UA)
-                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                        .header("Accept-Language", "en-US,en;q=0.9")
-                        .header("X-Requested-With", "XMLHttpRequest")
-                        .timeout(15_000)
-                        .ignoreContentType(true)
-                        .ignoreHttpErrors(true)
-                        .followRedirects(true)
-                        .execute();
+                Optional<Connection.Response> fetched =
+                        SafeJsoupFetcher.PUBLIC_ONLY.fetch(url, LinkedInConnector::browserRequest);
+                if (fetched.isEmpty()) return null;
+                Connection.Response res = fetched.get();
                 int status = res.statusCode();
                 if (status == 404) return null;
                 if (status == 429 || status >= 500) {
@@ -239,6 +233,17 @@ public class LinkedInConnector extends AbstractJobSourceConnector {
         }
         log.warn("LinkedIn: retries exhausted for {}", url);
         return null;
+    }
+
+    /** The browser-like request LinkedIn's guest endpoints expect, applied on every hop. */
+    private static Connection browserRequest(Connection connection) {
+        return connection
+                .userAgent(BROWSER_UA)
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("X-Requested-With", "XMLHttpRequest")
+                .timeout(15_000)
+                .ignoreContentType(true);
     }
 
     private void sleepJitter() {

@@ -2,17 +2,17 @@ package com.autoapplicant.adapter.crawler;
 
 import com.autoapplicant.domain.job.UrlProbeOutcome;
 import com.autoapplicant.port.out.job.JobUrlProbePort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
+import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches a posting URL and classifies whether the posting is still live.
@@ -41,10 +41,8 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
             "ansøgningsfristen er udløbet"
     );
 
-    private final HttpClient client = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(8))
-            .build();
+    private final SafeRedirectFetcher fetcher =
+            new SafeRedirectFetcher(SafeRedirectFetcher.newNonRedirectingClient(Duration.ofSeconds(8)));
 
     @Override
     public UrlProbeOutcome probe(String url) {
@@ -54,13 +52,17 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
             return UrlProbeOutcome.INCONCLUSIVE;
         }
         try {
-            HttpResponse<String> response = send(url);
+            Optional<HttpResponse<String>> fetched = send(url);
+            if (fetched.isEmpty()) return UrlProbeOutcome.INCONCLUSIVE;
+            HttpResponse<String> response = fetched.get();
 
             int status = response.statusCode();
             // One jittered retry on transient statuses so a blip doesn't burn a probe cycle.
             if (status == 429 || status >= 500) {
                 Thread.sleep(1_000 + (long) (Math.random() * 1_000));
-                response = send(url);
+                fetched = send(url);
+                if (fetched.isEmpty()) return UrlProbeOutcome.INCONCLUSIVE;
+                response = fetched.get();
                 status = response.statusCode();
             }
 
@@ -81,7 +83,7 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
         }
     }
 
-    private HttpResponse<String> send(String url) throws java.io.IOException, InterruptedException {
+    private Optional<HttpResponse<String>> send(String url) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -89,6 +91,6 @@ public class HttpJobUrlProbeAdapter implements JobUrlProbePort {
                 .header("Accept-Language", "da,en;q=0.8")
                 .GET()
                 .build();
-        return client.send(request, HttpResponse.BodyHandlers.ofString());
+        return fetcher.send(request);
     }
 }
