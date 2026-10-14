@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.web;
 
+import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +29,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(NotFoundException ex, WebRequest req) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(AccountExistsException.class)
+    public ResponseEntity<ApiError> handleAccountExists(AccountExistsException ex, WebRequest req) {
+        return error(HttpStatus.CONFLICT, AccountExistsException.CODE, ex.getMessage(), req);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

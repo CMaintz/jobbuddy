@@ -6,26 +6,27 @@ import {
 
 export interface StrengthIcon {
   key: string;
+  /** Translation key of the tooltip. */
   label: string;
   icon: LucideIconInput;
 }
 
 export const STRENGTH_ICONS: StrengthIcon[] = [
-  { key: 'zap',            label: 'Zap',     icon: LucideZap },
-  { key: 'star',           label: 'Star',    icon: LucideStar },
-  { key: 'award',          label: 'Award',   icon: LucideAward },
-  { key: 'target',         label: 'Target',  icon: LucideTarget },
-  { key: 'trending-up',    label: 'Growth',  icon: LucideTrendingUp },
-  { key: 'lightbulb',      label: 'Ideas',   icon: LucideLightbulb },
-  { key: 'check-circle',   label: 'Check',   icon: LucideCircleCheck },
-  { key: 'shield',         label: 'Shield',  icon: LucideShield },
-  { key: 'users',          label: 'People',  icon: LucideUsers },
-  { key: 'message-circle', label: 'Comms',   icon: LucideMessageCircle },
-  { key: 'code',           label: 'Code',    icon: LucideCode },
-  { key: 'cpu',            label: 'Tech',    icon: LucideCpu },
-  { key: 'database',       label: 'Data',    icon: LucideDatabase },
-  { key: 'layout',         label: 'Layout',  icon: LucideLayoutDashboard },
-  { key: 'smartphone',     label: 'Mobile',  icon: LucideSmartphone },
+  { key: 'zap',            label: 'resumeBuilder.icon.zap', icon: LucideZap },
+  { key: 'star',           label: 'resumeBuilder.icon.star', icon: LucideStar },
+  { key: 'award',          label: 'resumeBuilder.icon.award', icon: LucideAward },
+  { key: 'target',         label: 'resumeBuilder.icon.target', icon: LucideTarget },
+  { key: 'trending-up',    label: 'resumeBuilder.icon.growth', icon: LucideTrendingUp },
+  { key: 'lightbulb',      label: 'resumeBuilder.icon.ideas', icon: LucideLightbulb },
+  { key: 'check-circle',   label: 'resumeBuilder.icon.check', icon: LucideCircleCheck },
+  { key: 'shield',         label: 'resumeBuilder.icon.shield', icon: LucideShield },
+  { key: 'users',          label: 'resumeBuilder.icon.people', icon: LucideUsers },
+  { key: 'message-circle', label: 'resumeBuilder.icon.comms', icon: LucideMessageCircle },
+  { key: 'code',           label: 'resumeBuilder.icon.code', icon: LucideCode },
+  { key: 'cpu',            label: 'resumeBuilder.icon.tech', icon: LucideCpu },
+  { key: 'database',       label: 'resumeBuilder.icon.data', icon: LucideDatabase },
+  { key: 'layout',         label: 'resumeBuilder.icon.layout', icon: LucideLayoutDashboard },
+  { key: 'smartphone',     label: 'resumeBuilder.icon.mobile', icon: LucideSmartphone },
 ];
 
 export const STRENGTH_ICON_MAP = new Map(STRENGTH_ICONS.map(i => [i.key, i]));

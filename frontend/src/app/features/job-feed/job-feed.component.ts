@@ -8,11 +8,11 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { Job, JobRequirement, MatchResult } from '../../core/models/job.model';
 import { MatchBadgeComponent, MatchLabel, matchColor } from '../../shared/components/match-badge/match-badge.component';
+import { NotifyService } from '../../shared/services/notify.service';
 
 interface FeedRow {
   id: string;
@@ -75,7 +75,7 @@ export function yearsDemanded(text: string | undefined): number | null {
   selector: 'app-job-feed',
   imports: [
     CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent,
-    JbButtonComponent, JbPillComponent, JbToastComponent, CompanyMarkComponent, MatchBadgeComponent,
+    JbButtonComponent, JbPillComponent, CompanyMarkComponent, MatchBadgeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './job-feed.component.html'
@@ -85,10 +85,11 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   matchColor = matchColor;
 
   private jobsApi = inject(JobsApiService);
+
+  private notify = inject(NotifyService);
   private translate = inject(TranslateService);
 
   loading = signal(true);
-  toast = signal('');
   /** true while showing search results instead of recommendations */
   searchMode = signal(false);
   /** The filter set is collapsed by default so the list gets the width. */
@@ -143,7 +144,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
 
     this.jobsApi.getSaved().subscribe({
       next: saved => this.savedIds.set(new Set(saved.map(j => j.id))),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -166,7 +167,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set(this.translate.instant('jobFeed.toast.loadFailed'));
+        this.notify.error('jobFeed.toast.loadFailed');
       }
     });
   }
@@ -187,7 +188,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading.set(false);
-          this.toast.set(this.translate.instant('jobFeed.toast.semanticFailed'));
+          this.notify.error('jobFeed.toast.semanticFailed');
         }
       });
       return;
@@ -201,7 +202,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set(this.translate.instant('jobFeed.toast.searchFailed'));
+        this.notify.error('jobFeed.toast.searchFailed');
       }
     });
   }
@@ -224,7 +225,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       id: job.id,
       title: job.title,
       company: job.companyName ?? '—',
-      location: job.location ?? (job.remoteType === 'REMOTE' ? 'Remote' : '—'),
+      location: job.location ?? (job.remoteType === 'REMOTE' ? this.translate.instant('jobDetails.remote') : '—'),
       salary: job.salaryMin || job.salaryMax
         ? `${job.currency ?? ''} ${job.salaryMin ?? ''}–${job.salaryMax ?? ''}`.trim()
         : undefined,
@@ -380,7 +381,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.descriptionLoading.set(false);
-        this.toast.set(this.translate.instant('jobFeed.descriptionLoadFailed'));
+        this.notify.error('jobFeed.descriptionLoadFailed');
       }
     });
   }
@@ -416,9 +417,9 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     this.jobsApi.save(row.id).subscribe({
       next: () => {
         this.savedIds.update(ids => new Set(ids).add(row.id));
-        this.toast.set(this.translate.instant('jobFeed.toast.saved'));
+        this.notify.success('jobFeed.toast.saved');
       },
-      error: () => this.toast.set(this.translate.instant('jobFeed.toast.saveFailed'))
+      error: () => this.notify.error('jobFeed.toast.saveFailed')
     });
   }
 
@@ -431,11 +432,10 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   steerFeed(row: FeedRow, type: 'MORE_LIKE_THIS' | 'FEWER_LIKE_THIS'): void {
     this.steered.update(m => new Map(m).set(row.id, type));
     this.jobsApi.submitFeedback(row.id, type).subscribe({
-      next: () => this.toast.set(this.translate.instant(
-        type === 'MORE_LIKE_THIS' ? 'jobFeed.toast.moreLikeThis' : 'jobFeed.toast.fewerLikeThis')),
+      next: () => this.notify.success(type === 'MORE_LIKE_THIS' ? 'jobFeed.toast.moreLikeThis' : 'jobFeed.toast.fewerLikeThis'),
       error: () => {
         this.steered.update(m => { const next = new Map(m); next.delete(row.id); return next; });
-        this.toast.set(this.translate.instant('jobFeed.toast.steerFailed'));
+        this.notify.error('jobFeed.toast.steerFailed');
       }
     });
   }
@@ -448,8 +448,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
       this.mobilePanel.set('list');
     }
     this.jobsApi.ignore(row.id, 'not interested').subscribe({
-      next: () => this.toast.set(this.translate.instant('jobFeed.toast.hidden')),
-      error: () => this.toast.set(this.translate.instant('jobFeed.toast.hideFailed'))
+      next: () => this.notify.success('jobFeed.toast.hidden'),
+      error: () => this.notify.error('jobFeed.toast.hideFailed')
     });
   }
 }

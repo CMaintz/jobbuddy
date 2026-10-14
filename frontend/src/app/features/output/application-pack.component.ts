@@ -1,32 +1,31 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 
+import { NotifyService } from '../../shared/services/notify.service';
 /**
  * Combined "application pack" review shown after Quick apply: the tailored CV and the cover
  * letter side by side, each with a preview and a link into its full editor.
  */
 @Component({
   selector: 'app-application-pack',
-  imports: [RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent, JbToastComponent],
+  imports: [RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-pack.component.html'
 })
 export class ApplicationPackComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  protected notify = inject(NotifyService);
   private jobsApi = inject(JobsApiService);
-  private translate = inject(TranslateService);
 
   appId = '';
   jobId = '';
   loading = signal(true);
-  toast = signal('');
   cv = signal<GeneratedDocument | null>(null);
   cover = signal<GeneratedDocument | null>(null);
 
@@ -56,7 +55,7 @@ export class ApplicationPackComponent implements OnInit {
   copy(doc: GeneratedDocument | null): void {
     if (!doc?.content || !navigator.clipboard) return;
     navigator.clipboard.writeText(doc.content).then(
-      () => this.toast.set(this.translate.instant('pack.copied')),
+      () => this.notify.success('pack.copied'),
       () => {});
   }
 }

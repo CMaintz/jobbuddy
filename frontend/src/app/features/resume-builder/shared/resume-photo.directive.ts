@@ -1,4 +1,6 @@
 import { Directive, ElementRef, OnDestroy, effect, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 
 /**
@@ -10,6 +12,7 @@ import { ResumeStateService } from '../services/resume-state.service';
 export class ResumePhotoDirective implements OnDestroy {
   private el = inject(ElementRef<HTMLImageElement>).nativeElement;
   private state = inject(ResumeStateService);
+  private translate = inject(TranslateService);
 
   private dragStart: { x: number; y: number; size: number } | null = null;
 
@@ -33,7 +36,8 @@ export class ResumePhotoDirective implements OnDestroy {
 
   constructor() {
     this.el.style.cursor = 'nwse-resize';
-    this.el.title = 'Drag to resize';
+    this.translate.stream('resumeBuilder.preview.dragToResize').pipe(takeUntilDestroyed())
+      .subscribe((title: string) => (this.el.title = title));
     this.el.addEventListener('pointerdown', this.onPointerDown);
     this.el.addEventListener('pointermove', this.onPointerMove);
     this.el.addEventListener('pointerup', this.onPointerUp);

@@ -9,15 +9,15 @@
           <div class="grid grid-cols-2 gap-2">
             <div style="grid-column:span 2;">
               <label class="label">{{ 'resumeBuilder.form.jobTitle' | translate }}</label>
-              <input class="input" [value]="exp.title" (input)="update(exp.id, 'title', $any($event.target).value)" placeholder="Software Engineer" />
+              <input class="input" [value]="exp.title" (input)="update(exp.id, 'title', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.jobTitle' | translate" />
             </div>
             <div>
               <label class="label">{{ 'resumeBuilder.form.company' | translate }}</label>
-              <input class="input" [value]="exp.company" (input)="update(exp.id, 'company', $any($event.target).value)" placeholder="Acme Corp" />
+              <input class="input" [value]="exp.company" (input)="update(exp.id, 'company', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.company' | translate" />
             </div>
             <div>
               <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>
-              <input class="input" [value]="exp.location" (input)="update(exp.id, 'location', $any($event.target).value)" placeholder="Remote" />
+              <input class="input" [value]="exp.location" (input)="update(exp.id, 'location', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.location' | translate" />
             </div>
             <div>
               <label class="label">{{ 'resumeBuilder.form.startDate' | translate }}</label>

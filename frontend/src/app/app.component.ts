@@ -1,13 +1,19 @@
-import { Component, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
 import { ThemeService } from './core/theme.service';
 import { LanguageService } from './core/language.service';
 import { JbIconComponent } from './shared/components/jb-icon/jb-icon.component';
 import { StreakBadgeComponent } from './shared/components/streak-badge/streak-badge.component';
+import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
+import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
-import { Subscription, filter } from 'rxjs';
+import { filter } from 'rxjs';
+
+/** Routes rendered without the app shell. An unverified user on /verify-email cannot use the app yet. */
+const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
 
 interface NavItem {
   id: string;
@@ -25,20 +31,22 @@ interface NavItem {
   selector: 'app-root',
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
+    JbToastComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app.component.html'
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
   auth = inject(AuthService);
   theme = inject(ThemeService);
   language = inject(LanguageService);
+  notify = inject(NotifyService);
   private router = inject(Router);
   private streak = inject(ActivityStreakService);
-  private userSub?: Subscription;
+  private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
   sidebarOpen = signal(false);
-  oldFrontendOpen = signal(false);
   private currentUserEmail = '';
   private currentUserName = '';
   private signedIn = false;
@@ -68,26 +76,11 @@ export class AppComponent implements OnInit, OnDestroy {
     { id: 'companies',    label: 'nav.companies',   icon: 'building',  route: '/companies' },
   ];
 
-  oldFrontendNav = [
-    { id: 'old-profile',    label: 'Profile editor',    route: '/old/profile' },
-    { id: 'old-writing',    label: 'Writing style',     route: '/old/profile/writing-style' },
-    { id: 'old-generate',   label: 'AI generate',       route: '/old/ai/generate' },
-    { id: 'old-docs',       label: 'AI documents',      route: '/old/ai/documents' },
-    { id: 'old-cv-upload',  label: 'CV upload/parse',   route: '/old/ai/cv' },
-    { id: 'old-cv-analyze', label: 'CV analysis',       route: '/old/ai/analyze' },
-    { id: 'old-analytics',  label: 'Analytics',         route: '/old/analytics' },
-    { id: 'old-companies',  label: 'Companies',         route: '/old/companies' },
-    { id: 'old-templates',  label: 'PDF templates',     route: '/old/templates' },
-    { id: 'old-jobs',       label: 'Jobs list',         route: '/old/jobs' },
-    { id: 'old-apps',       label: 'Applications',      route: '/old/applications' },
-    { id: 'old-pipeline',   label: 'Pipeline',          route: '/old/applications/pipeline' },
-    { id: 'old-prompts',    label: 'Prompts',           route: '/old/prompts' },
-  ];
 
   ngOnInit(): void {
-    this.userSub = this.auth.currentUser$.subscribe(user => {
+    this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.currentUserEmail = user?.email || '';
-      this.currentUserName = user?.email?.split('@')[0] || 'User';
+      this.currentUserName = user?.email?.split('@')[0] ?? '';
       this.signedIn = !!user;
       if (user) this.streak.refresh();
       else this.streak.clear();
@@ -95,14 +88,13 @@ export class AppComponent implements OnInit, OnDestroy {
         this.router.navigate(['/onboarding']);
       }
     });
-    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => {
       this.sidebarOpen.set(false);
       if (this.signedIn) this.streak.refresh();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.userSub?.unsubscribe();
   }
 
   isActive(route: string): boolean {
@@ -110,11 +102,11 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   isFullscreenRoute(): boolean {
-    return this.router.url.startsWith('/onboarding');
+    return FULLSCREEN_ROUTES.some(route => this.router.url.startsWith(route));
   }
 
   userName(): string {
-    return this.currentUserName || 'User';
+    return this.currentUserName || this.translate.instant('nav.userFallback');
   }
 
   userEmail(): string {

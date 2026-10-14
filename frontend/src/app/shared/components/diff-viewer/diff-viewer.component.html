@@ -11,7 +11,7 @@
             [style.background]="mode() !== 'diff' ? 'transparent' : ''"
             [style.box-shadow]="mode() === 'diff' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
             (click)="mode.set('diff')">
-            Diff
+            {{ 'shared.diffViewer.diff' | translate }}
           </button>
           <button
             class="px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer border-none"
@@ -21,7 +21,7 @@
             [style.background]="mode() !== 'revised' ? 'transparent' : ''"
             [style.box-shadow]="mode() === 'revised' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
             (click)="mode.set('revised')">
-            Revised
+            {{ 'shared.diffViewer.revised' | translate }}
           </button>
           <button
             class="px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer border-none"
@@ -31,7 +31,7 @@
             [style.background]="mode() !== 'original' ? 'transparent' : ''"
             [style.box-shadow]="mode() === 'original' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none'"
             (click)="mode.set('original')">
-            Original
+            {{ 'shared.diffViewer.original' | translate }}
           </button>
         </div>
         @if (mode() === 'diff') {
@@ -39,7 +39,7 @@
             <span class="text-jb-success font-medium">+{{ addCount() }}</span>
             <span class="mx-1">/</span>
             <span class="text-jb-danger font-medium">-{{ delCount() }}</span>
-            words changed
+            {{ 'shared.diffViewer.wordsChanged' | translate }}
           </span>
         }
       </div>

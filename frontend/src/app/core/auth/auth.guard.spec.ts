@@ -9,14 +9,18 @@ import { AuthService } from './auth.service';
  */
 describe('authGuard', () => {
   let authenticated: boolean;
+  let unverified: boolean;
   let resolveAuthReady: () => void;
   let authService: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
     authenticated = false;
-    authService = jasmine.createSpyObj<AuthService>('AuthService', ['whenAuthReady', 'isAuthenticated']);
+    unverified = false;
+    authService = jasmine.createSpyObj<AuthService>(
+      'AuthService', ['whenAuthReady', 'isAuthenticated', 'needsEmailVerification']);
     authService.whenAuthReady.and.returnValue(new Promise<void>(resolve => (resolveAuthReady = resolve)));
     authService.isAuthenticated.and.callFake(() => authenticated);
+    authService.needsEmailVerification.and.callFake(() => unverified);
 
     TestBed.configureTestingModule({
       providers: [provideRouter([]), { provide: AuthService, useValue: authService }],
@@ -44,6 +48,17 @@ describe('authGuard', () => {
     const tree = await result;
     expect(tree instanceof UrlTree).toBeTrue();
     expect(TestBed.inject(Router).serializeUrl(tree as UrlTree)).toBe('/login');
+  });
+
+  it('sends a signed-in user with an unverified email to /verify-email', async () => {
+    authenticated = true;
+    unverified = true;
+    const result = runGuard();
+    resolveAuthReady();
+
+    const tree = await result;
+    expect(tree instanceof UrlTree).toBeTrue();
+    expect(TestBed.inject(Router).serializeUrl(tree as UrlTree)).toBe('/verify-email');
   });
 
   it('does not read the session before Firebase has restored it', async () => {

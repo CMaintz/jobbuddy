@@ -12,6 +12,7 @@ import { ResumeData } from '../../models/resume-builder.models';
 import { JbIconComponent } from '../../../../shared/components/jb-icon/jb-icon.component';
 import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/diff-viewer.component';
 import { JbButtonComponent } from '../../../../shared/components/jb-button/jb-button.component';
+import { NotifyService } from '../../../../shared/services/notify.service';
 
 const TAILOR_PROMPTS = [
   'tailoredCv.tailor.depth',
@@ -33,6 +34,7 @@ const TAILOR_PROMPTS = [
 })
 export class AiTailorFormComponent implements OnInit {
   protected state = inject(ResumeStateService);
+  private notify = inject(NotifyService);
   private translate = inject(TranslateService);
   private aiApi = inject(AiApiService);
   private jobsApi = inject(JobsApiService);
@@ -56,7 +58,7 @@ export class AiTailorFormComponent implements OnInit {
     this.promptApi.getAll().subscribe({
       next: templates => this.promptTemplates = templates.filter(t =>
         !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING'),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -75,7 +77,7 @@ export class AiTailorFormComponent implements OnInit {
           this.atsReport.set(doc.atsReport ?? null);
         } catch { /* stale/unparseable content — panel just hides the report */ }
       },
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 

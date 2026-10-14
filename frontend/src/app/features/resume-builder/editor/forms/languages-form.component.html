@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-2.5">
       @for (lang of languages; track lang.id) {
         <div class="flex items-center gap-2">
-          <input class="input" style="flex:1;" [value]="lang.name" (input)="update(lang.id, 'name', $any($event.target).value)" placeholder="English" />
+          <input class="input" style="flex:1;" [value]="lang.name" (input)="update(lang.id, 'name', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.language' | translate" />
           <select class="input w-auto"
             [value]="lang.proficiency" (change)="update(lang.id, 'proficiency', $any($event.target).value)">
             @for (p of proficiencies; track p) {

@@ -1,4 +1,5 @@
 import { Component, Input, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface DiffSegment {
   text: string;
@@ -7,7 +8,7 @@ interface DiffSegment {
 
 @Component({
   selector: 'jb-diff-viewer',
-  imports: [],
+  imports: [TranslateModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './diff-viewer.component.html',
 })

@@ -1,5 +1,7 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { Observable, Subject, debounceTime, switchMap, tap } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
+import { EMPTY, Observable, Subject, catchError, debounceTime, map, switchMap, tap, throwError } from 'rxjs';
 import {
   INITIAL_RESUME_DATA,
   INITIAL_SETTINGS,
@@ -19,6 +21,7 @@ import {
 } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
 import { ResumeDraft } from '../models/resume-builder.models';
+import { NotifyService } from '../../../shared/services/notify.service';
 import { Profile, ProfilePrivateInfo } from '../../../core/models/user.model';
 import { ProfileSocial, ProfileStrength, WorkExperience, Education, Project, Certification, SpokenLanguage } from '../../../core/models/profile-section.model';
 
@@ -41,6 +44,12 @@ export interface FullProfileData {
 @Injectable({ providedIn: 'root' })
 export class ResumeStateService {
   private draftApi = inject(ResumeDraftApiService);
+  private notify = inject(NotifyService);
+  private translate = inject(TranslateService);
+  /** Read by computeds that translate, so they recompute when the language changes. */
+  private readonly lang = toSignal(this.translate.onLangChange.pipe(map(e => e.lang)), {
+    initialValue: this.translate.currentLang,
+  });
 
   private _resumeData = signal<ResumeData>({ ...INITIAL_RESUME_DATA });
   private _settings = signal<ResumeSettings>({ ...INITIAL_SETTINGS });
@@ -65,9 +74,10 @@ export class ResumeStateService {
   readonly displayPersonalInfo = computed(() => {
     const pi = this._resumeData().personalInfo;
     if (!this._settings().anonymise) return pi;
+    this.lang();
     return {
       ...pi,
-      fullName: initialsOf(pi.fullName) || 'Candidate',
+      fullName: initialsOf(pi.fullName) || this.translate.instant('masterCv.candidate'),
       email: '',
       phone: '',
       website: '',
@@ -130,6 +140,13 @@ export class ResumeStateService {
           tap(() => {
             this._isDirty.set(false);
             this._isSaving.set(false);
+          }),
+          // Caught per save: an error reaching the outer stream would end autosave for the whole
+          // session. The draft stays dirty, so the next edit retries.
+          catchError(() => {
+            this._isSaving.set(false);
+            this.notify.error('notify.autosaveFailed');
+            return EMPTY;
           })
         );
       })
@@ -145,25 +162,32 @@ export class ResumeStateService {
     });
   }
 
+  /**
+   * Loads a draft into the editor. On failure the editor is emptied and detached from any draft,
+   * so it never shows (or autosaves into) a draft the user did not open; the error is rethrown.
+   */
   loadDraft(draftId: string): Observable<void> {
-    return new Observable(observer => {
-      this.draftApi.getDraft(draftId).subscribe({
-        next: draft => {
-          if (draft.resumeData && Object.keys(draft.resumeData).length > 0) {
-            this._resumeData.set(draft.resumeData as ResumeData);
-          }
-          if (draft.settings && Object.keys(draft.settings).length > 0) {
-            this._settings.set(draft.settings as ResumeSettings);
-          }
-          this._draftId.set(draft.id ?? null);
-          this._draftJobId.set(draft.jobId ?? null);
-          this._isDirty.set(false);
-          observer.next();
-          observer.complete();
-        },
-        error: err => observer.error(err),
-      });
-    });
+    return this.draftApi.getDraft(draftId).pipe(
+      map(draft => this.applyDraft(draft)),
+      catchError(err => {
+        this.resetToEmpty();
+        this._draftId.set(null);
+        this._draftJobId.set(null);
+        return throwError(() => err);
+      }),
+    );
+  }
+
+  private applyDraft(draft: ResumeDraft): void {
+    if (draft.resumeData && Object.keys(draft.resumeData).length > 0) {
+      this._resumeData.set(draft.resumeData as ResumeData);
+    }
+    if (draft.settings && Object.keys(draft.settings).length > 0) {
+      this._settings.set(draft.settings as ResumeSettings);
+    }
+    this._draftId.set(draft.id ?? null);
+    this._draftJobId.set(draft.jobId ?? null);
+    this._isDirty.set(false);
   }
 
   prefillFromProfile(data: FullProfileData): void {
@@ -250,7 +274,7 @@ export class ResumeStateService {
 
     // Create a new draft on the server
     this.draftApi.createDraft({
-      name: 'My Resume',
+      name: this.translate.instant('resumeBuilder.defaultDraftName'),
       resumeData: this._resumeData(),
       settings: this._settings(),
     }).subscribe(draft => {

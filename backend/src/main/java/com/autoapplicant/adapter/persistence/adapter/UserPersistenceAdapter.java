@@ -4,10 +4,9 @@ import com.autoapplicant.adapter.persistence.mapper.UserMapper;
 import com.autoapplicant.adapter.persistence.repository.UserJpaRepository;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class UserPersistenceAdapter implements UserRepositoryPort {
@@ -30,7 +29,7 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return repo.findByEmail(email).map(UserMapper::toDomain);
+        return repo.findFirstByEmailIgnoreCaseOrderByCreatedAtAsc(email).map(UserMapper::toDomain);
     }
 
     @Override

@@ -18,6 +18,11 @@ export const routes: Routes = [
     path: 'auth/linkedin/callback',
     loadComponent: () => import('./features/auth/linkedin-callback/linkedin-callback.component').then(m => m.LinkedInCallbackComponent)
   },
+  // Needs a Firebase session but not a verified one, so it sits outside the authGuard'd shell.
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
   {
     path: 'privacy',
     loadComponent: () => import('./features/legal/privacy-policy.component').then(m => m.PrivacyPolicyComponent)
@@ -160,92 +165,6 @@ export const routes: Routes = [
       {
         path: 'resume-builder/:draftId',
         loadComponent: () => import('./features/resume-builder/resume-builder.component').then(m => m.ResumeBuilderComponent)
-      },
-
-      // ── Old frontend (kept for reference) ───────────
-      {
-        path: 'old/jobs',
-        loadComponent: () => import('./features/old/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent)
-      },
-      {
-        path: 'old/jobs/add',
-        loadComponent: () => import('./features/old/jobs/job-add/job-add.component').then(m => m.JobAddComponent)
-      },
-      {
-        path: 'old/jobs/ignored',
-        loadComponent: () => import('./features/old/jobs/ignored-jobs/ignored-jobs.component').then(m => m.IgnoredJobsComponent)
-      },
-      {
-        path: 'old/jobs/:id',
-        loadComponent: () => import('./features/old/jobs/job-detail/job-detail.component').then(m => m.JobDetailComponent)
-      },
-      {
-        path: 'old/applications',
-        loadComponent: () => import('./features/old/applications/application-list/application-list.component').then(m => m.ApplicationListComponent)
-      },
-      {
-        path: 'old/applications/pipeline',
-        loadComponent: () => import('./features/old/applications/application-pipeline/application-pipeline.component').then(m => m.ApplicationPipelineComponent)
-      },
-      {
-        path: 'old/applications/:id',
-        loadComponent: () => import('./features/old/applications/application-detail/application-detail.component').then(m => m.ApplicationDetailComponent)
-      },
-      {
-        path: 'old/profile',
-        loadComponent: () => import('./features/old/profile/profile.component').then(m => m.ProfileComponent)
-      },
-      {
-        path: 'old/profile/writing-style',
-        loadComponent: () => import('./features/old/profile/writing-style/writing-style.component').then(m => m.WritingStyleComponent)
-      },
-      {
-        path: 'old/ai/cv',
-        loadComponent: () => import('./features/old/ai/cv-upload/cv-upload.component').then(m => m.CvUploadComponent)
-      },
-      {
-        path: 'old/ai/analyze',
-        loadComponent: () => import('./features/old/ai/cv-analysis/cv-analysis.component').then(m => m.CvAnalysisComponent)
-      },
-      {
-        path: 'old/ai/generate',
-        loadComponent: () => import('./features/old/ai/application-generator/application-generator.component').then(m => m.ApplicationGeneratorComponent)
-      },
-      {
-        path: 'old/ai/documents',
-        loadComponent: () => import('./features/old/ai/documents/documents-history.component').then(m => m.DocumentsHistoryComponent)
-      },
-      {
-        path: 'old/analytics',
-        loadComponent: () => import('./features/old/analytics/analytics.component').then(m => m.AnalyticsComponent)
-      },
-      {
-        path: 'old/companies',
-        loadComponent: () => import('./features/old/companies/companies-list.component').then(m => m.CompaniesListComponent)
-      },
-      {
-        path: 'old/templates',
-        loadComponent: () => import('./features/old/pdf-templates/pdf-templates.component').then(m => m.PdfTemplatesComponent)
-      },
-      {
-        path: 'old/prompts',
-        loadComponent: () => import('./features/old/prompts/prompt-list/prompt-list.component').then(m => m.PromptListComponent)
-      },
-      {
-        path: 'old/prompts/new',
-        loadComponent: () => import('./features/old/prompts/prompt-editor/prompt-editor.component').then(m => m.PromptEditorComponent)
-      },
-      {
-        path: 'old/prompts/:id/edit',
-        loadComponent: () => import('./features/old/prompts/prompt-editor/prompt-editor.component').then(m => m.PromptEditorComponent)
-      },
-      {
-        path: 'old/apply/:jobId',
-        loadComponent: () => import('./features/old/apply/apply-wizard.component').then(m => m.ApplyWizardComponent)
-      },
-      {
-        path: 'old/cv',
-        loadComponent: () => import('./features/old/cv/cv-page.component').then(m => m.CvPageComponent)
       },
     ]
   },

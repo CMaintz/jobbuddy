@@ -21,6 +21,7 @@ import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.compon
 import { FunnelComponent } from '../../shared/components/funnel/funnel.component';
 import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
 import { buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
+import { NotifyService } from '../../shared/services/notify.service';
 
 const HEATMAP_WEEKS = 14;
 
@@ -87,6 +88,7 @@ interface SavedPreview {
 })
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  private notify = inject(NotifyService);
   private api = inject(DashboardApiService);
   private remindersApi = inject(RemindersApiService);
   private nudgesApi = inject(NudgesApiService);
@@ -161,7 +163,7 @@ export class DashboardComponent implements OnInit {
         }));
         this.buildQueue(reminders, apps, nudges);
       },
-      error: () => {} // cards keep their zero states
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 

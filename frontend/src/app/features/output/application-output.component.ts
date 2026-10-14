@@ -21,6 +21,7 @@ import { AtsCheck, DocumentIdentity, StructuredDocument } from '../../core/model
 import { DocumentApiService } from '../../core/api/document.api';
 
 import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_TARGETS } from './letter-templates';
+import { NotifyService } from '../../shared/services/notify.service';
 
 @Component({
   selector: 'app-application-output',
@@ -35,6 +36,8 @@ export class ApplicationOutputComponent implements OnInit {
   @ViewChild(LetterPaperComponent) paper?: LetterPaperComponent;
 
   private translate = inject(TranslateService);
+
+  private notify = inject(NotifyService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private documentApi = inject(DocumentApiService);
@@ -257,7 +260,7 @@ export class ApplicationOutputComponent implements OnInit {
         this.loadDocuments(app.jobId);
         this.jobsApi.getById(app.jobId).subscribe({
           next: job => this.job.set(job),
-          error: () => {}
+          error: this.notify.onError('notify.loadFailed')
         });
       },
       error: () => {
@@ -358,6 +361,7 @@ export class ApplicationOutputComponent implements OnInit {
       },
       error: () => {
         this.refining.set(false);
+        this.notify.error('notify.actionFailed');
       }
     });
   }
@@ -382,6 +386,7 @@ export class ApplicationOutputComponent implements OnInit {
       },
       error: () => {
         this.refining.set(false);
+        this.notify.error('notify.actionFailed');
       }
     });
   }
@@ -403,7 +408,7 @@ export class ApplicationOutputComponent implements OnInit {
     const structured = this.buildStructuredDoc(doc, refined);
     this.aiApi.saveStructuredDocument(structured, app?.jobId).subscribe({
       next: () => app && this.loadDocuments(app.jobId),
-      error: () => { /* local state already updated; next generation will still work */ }
+      error: this.notify.onError('notify.saveFailed')
     });
   }
 

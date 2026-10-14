@@ -2,12 +2,13 @@ import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { EMPTY, Subject, Subscription, catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { Router, RouterLink } from '@angular/router';
+import { NotifyService } from '../../shared/services/notify.service';
 import { Job } from '../../core/models/job.model';
 import { CompaniesApiService, Company, OutreachContact, OutreachStatus, OutreachTarget }
   from '../../core/api/companies.api';
@@ -24,6 +25,7 @@ import { CompaniesApiService, Company, OutreachContact, OutreachStatus, Outreach
 export class CompaniesComponent implements OnInit, OnDestroy {
   private companiesApi = inject(CompaniesApiService);
   private router = inject(Router);
+  private notify = inject(NotifyService);
 
   loading = signal(true);
   companies = signal<Company[]>([]);
@@ -74,7 +76,9 @@ export class CompaniesComponent implements OnInit, OnDestroy {
         this.companyJobsLoading.set(false);
       },
       error: () => {
-        if (this.selected()?.id === company.id) this.companyJobsLoading.set(false);
+        if (this.selected()?.id !== company.id) return;
+        this.companyJobsLoading.set(false);
+        this.notify.error('notify.loadFailed');
       }
     });
     this.companiesApi.getResearch(company.id).subscribe({
@@ -115,7 +119,10 @@ export class CompaniesComponent implements OnInit, OnDestroy {
         }
         this.researchSaving.set(false);
       },
-      error: () => this.researchSaving.set(false),
+      error: () => {
+        this.researchSaving.set(false);
+        this.notify.error('notify.saveFailed');
+      },
     });
   }
 
@@ -130,14 +137,16 @@ export class CompaniesComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(q => {
         this.loading.set(true);
-        return this.companiesApi.search(q, 0, 50);
+        // Caught per request: an error reaching the outer stream would end the search for good.
+        return this.companiesApi.search(q, 0, 50).pipe(catchError(() => {
+          this.loading.set(false);
+          this.notify.error('notify.searchFailed');
+          return EMPTY;
+        }));
       }),
-    ).subscribe({
-      next: companies => {
-        this.companies.set(companies);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
+    ).subscribe(companies => {
+      this.companies.set(companies);
+      this.loading.set(false);
     });
     this.search$.next('');
   }

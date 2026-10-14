@@ -1,9 +1,8 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { CareerTargetApiService, CareerTarget, CareerStage } from '../../core/api/career-target.api';
@@ -11,26 +10,25 @@ import { RetractedClaimsApiService, RetractedClaim } from '../../core/api/retrac
 import { StoryBankApiService, InterviewStory } from '../../core/api/story-bank.api';
 import { SkillsApiService, EvidenceDraft, EvidenceGap, SkillCandidate, SkillConfirmation }
   from '../../core/api/skills.api';
+import { NotifyService } from '../../shared/services/notify.service';
 
 type Section = 'target' | 'skills' | 'stories' | 'retracted';
 
 @Component({
   selector: 'app-career-profile',
-  imports: [FormsModule, TranslateModule, JbTopbarComponent, JbButtonComponent,
-    JbToastComponent, JbIconComponent, TagInputComponent],
+  imports: [FormsModule, TranslateModule, JbTopbarComponent, JbButtonComponent, JbIconComponent, TagInputComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './career-profile.component.html'
 })
 export class CareerProfileComponent implements OnInit {
   private targetApi = inject(CareerTargetApiService);
+  private notify = inject(NotifyService);
   private claimsApi = inject(RetractedClaimsApiService);
   private storyApi = inject(StoryBankApiService);
   private skillsApi = inject(SkillsApiService);
-  private translate = inject(TranslateService);
 
   activeSection = signal<Section>('target');
-  toast = signal('');
 
   sections: { key: Section; label: string; icon: string }[] = [
     { key: 'target', label: 'careerProfile.section.target', icon: 'target' },
@@ -73,7 +71,7 @@ export class CareerProfileComponent implements OnInit {
   addingClaim = signal(false);
 
   ngOnInit(): void {
-    this.targetApi.get().subscribe({ next: t => this.applyTarget(t), error: () => {} });
+    this.targetApi.get().subscribe({ next: t => this.applyTarget(t), error: this.notify.onError('notify.loadFailed') });
     this.reloadStories();
     this.reloadClaims();
     this.loadCandidates();
@@ -120,14 +118,14 @@ export class CareerProfileComponent implements OnInit {
     this.skillsApi.confirmSkillCandidates([confirmation]).subscribe({
       next: added => {
         if (added.length) {
-          this.toast.set(this.translate.instant('careerProfile.skills.added', { name: candidate.name }));
+          this.notify.success('careerProfile.skills.added', { name: candidate.name });
         }
       },
       // Put the row back rather than silently losing the answer.
       error: () => {
         this.answered.delete(candidate.name);
         this.candidates.set([candidate, ...this.candidates()]);
-        this.toast.set(this.translate.instant('careerProfile.skills.failed'));
+        this.notify.error('careerProfile.skills.failed');
       },
     });
   }
@@ -205,11 +203,11 @@ export class CareerProfileComponent implements OnInit {
         this.openGap.set(null);
         this.gaps.set(this.gaps().filter(g => g.skillName !== gap.skillName));
         this.reloadStories();   // it lands in the story bank too
-        this.toast.set(this.translate.instant('careerProfile.evidence.saved', { name: gap.skillName }));
+        this.notify.success('careerProfile.evidence.saved', { name: gap.skillName });
       },
       error: () => {
         this.savingEvidence.set(false);
-        this.toast.set(this.translate.instant('careerProfile.skills.failed'));
+        this.notify.error('careerProfile.skills.failed');
       },
     });
   }
@@ -232,11 +230,11 @@ export class CareerProfileComponent implements OnInit {
         this.applyTarget(t);
         this.savingTarget.set(false);
         this.targetDirty.set(false);
-        this.toast.set(this.translate.instant('careerProfile.toast.saved'));
+        this.notify.success('careerProfile.toast.saved');
       },
       error: () => {
         this.savingTarget.set(false);
-        this.toast.set(this.translate.instant('careerProfile.toast.saveFailed'));
+        this.notify.error('careerProfile.toast.saveFailed');
       }
     });
   }
@@ -261,11 +259,11 @@ export class CareerProfileComponent implements OnInit {
         this.savingStory.set(false);
         this.newStory();
         this.reloadStories();
-        this.toast.set(this.translate.instant('careerProfile.toast.storySaved'));
+        this.notify.success('careerProfile.toast.storySaved');
       },
       error: () => {
         this.savingStory.set(false);
-        this.toast.set(this.translate.instant('careerProfile.toast.saveFailed'));
+        this.notify.error('careerProfile.toast.saveFailed');
       }
     });
   }
@@ -274,12 +272,12 @@ export class CareerProfileComponent implements OnInit {
     if (!id) return;
     this.storyApi.remove(id).subscribe({
       next: () => { if (this.editingStoryId() === id) this.newStory(); this.reloadStories(); },
-      error: () => {}
+      error: this.notify.onError('notify.deleteFailed')
     });
   }
 
   private reloadStories(): void {
-    this.storyApi.list().subscribe({ next: s => this.stories.set(s), error: () => {} });
+    this.storyApi.list().subscribe({ next: s => this.stories.set(s), error: this.notify.onError('notify.loadFailed') });
   }
 
   // ── Retracted claims ──
@@ -288,15 +286,15 @@ export class CareerProfileComponent implements OnInit {
     this.addingClaim.set(true);
     this.claimsApi.add(this.newClaim.trim(), this.newReason.trim() || undefined).subscribe({
       next: () => { this.addingClaim.set(false); this.newClaim = ''; this.newReason = ''; this.reloadClaims(); },
-      error: () => { this.addingClaim.set(false); this.toast.set(this.translate.instant('careerProfile.toast.saveFailed')); }
+      error: () => { this.addingClaim.set(false); this.notify.error('careerProfile.toast.saveFailed'); }
     });
   }
 
   removeClaim(id: string): void {
-    this.claimsApi.remove(id).subscribe({ next: () => this.reloadClaims(), error: () => {} });
+    this.claimsApi.remove(id).subscribe({ next: () => this.reloadClaims(), error: this.notify.onError('notify.deleteFailed') });
   }
 
   private reloadClaims(): void {
-    this.claimsApi.list().subscribe({ next: c => this.claims.set(c), error: () => {} });
+    this.claimsApi.list().subscribe({ next: c => this.claims.set(c), error: this.notify.onError('notify.loadFailed') });
   }
 }

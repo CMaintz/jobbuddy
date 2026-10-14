@@ -12,7 +12,7 @@ export interface DashboardData {
   activeApplications?: number;
 }
 
-export interface DailyCount {
+interface DailyCount {
   date: string;
   count: number;
 }

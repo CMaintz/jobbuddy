@@ -1,17 +1,21 @@
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
 export interface FunnelStage {
-  label: string;
+  /** Translation key of the stage name. */
+  labelKey: string;
   value: number;
   color: string;
 }
 
-const FUNNEL_ORDER: { statuses: ApplicationStatus[]; label: string; color: string }[] = [
-  { statuses: ['SAVED', 'PREPARING'], label: 'Saved', color: 'var(--jb-text-dim)' },
-  { statuses: ['APPLIED'], label: 'Applied', color: 'var(--jb-info)' },
-  { statuses: ['RECRUITER_CONTACT'], label: 'Screen', color: 'var(--jb-violet)' },
-  { statuses: ['INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'], label: 'Interview', color: 'var(--jb-accent)' },
-  { statuses: ['OFFER'], label: 'Offer', color: 'var(--jb-success)' },
+const FUNNEL_ORDER: { statuses: ApplicationStatus[]; labelKey: string; color: string }[] = [
+  { statuses: ['SAVED', 'PREPARING'], labelKey: 'pipeline.stage.saved', color: 'var(--jb-text-dim)' },
+  { statuses: ['APPLIED'], labelKey: 'pipeline.stage.applied', color: 'var(--jb-info)' },
+  { statuses: ['RECRUITER_CONTACT'], labelKey: 'pipeline.stage.screen', color: 'var(--jb-violet)' },
+  {
+    statuses: ['INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'], labelKey: 'pipeline.stage.interview',
+    color: 'var(--jb-accent)',
+  },
+  { statuses: ['OFFER'], labelKey: 'pipeline.stage.offer', color: 'var(--jb-success)' },
 ];
 
 /**
@@ -22,7 +26,7 @@ export function buildFunnelStages(apps: Application[]): FunnelStage[] {
   const stageIndex = (status: ApplicationStatus): number =>
     FUNNEL_ORDER.findIndex(s => s.statuses.includes(status));
   return FUNNEL_ORDER.map((stage, i) => ({
-    label: stage.label,
+    labelKey: stage.labelKey,
     value: apps.filter(a => {
       const idx = stageIndex(a.status);
       return idx >= i || (a.status === 'REJECTED' && i <= 1); // rejected apps still passed saved/applied

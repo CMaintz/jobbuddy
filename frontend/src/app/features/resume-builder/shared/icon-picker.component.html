@@ -9,7 +9,7 @@
             type="button"
             class="rb-icon-btn"
             [class.active]="selected === icon.key"
-            [title]="icon.label"
+            [title]="icon.label | translate"
             (click)="iconSelected.emit(icon.key)"
           >
             <svg [lucideIcon]="icon.icon" [size]="16" [strokeWidth]="1.5"></svg>

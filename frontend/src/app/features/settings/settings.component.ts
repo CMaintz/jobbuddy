@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -9,7 +10,6 @@ import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.c
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbToggleComponent } from '../../shared/components/jb-toggle/jb-toggle.component';
 import { JbSegmentedComponent } from '../../shared/components/jb-segmented/jb-segmented.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
@@ -25,6 +25,7 @@ import { AiApiService } from '../../core/api/ai.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
+import { NotifyService } from '../../shared/services/notify.service';
 
 type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy' | 'taxonomy';
 
@@ -91,7 +92,7 @@ interface StyleSnapshot {
   selector: 'app-settings',
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbButtonComponent,
-    JbToggleComponent, JbSegmentedComponent, JbToastComponent, TagInputComponent, JbModalComponent,
+    JbToggleComponent, JbSegmentedComponent, TagInputComponent, JbModalComponent,
     DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent,
     CvSectionPromptsPanelComponent,
   ],
@@ -100,8 +101,10 @@ interface StyleSnapshot {
 })
 export class SettingsComponent implements OnInit {
   theme = inject(ThemeService);
+  private notify = inject(NotifyService);
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);
   private aiApi = inject(AiApiService);
@@ -116,7 +119,6 @@ export class SettingsComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   dirty = signal(false);
-  toast = signal('');
   userEmail = '';
   emailVerified = false;
   provider = 'password';
@@ -172,7 +174,7 @@ export class SettingsComponent implements OnInit {
     const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
     if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
 
-    this.auth.currentUser$.subscribe(u => {
+    this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
       this.userEmail = u?.email ?? '';
       // The taxonomy is shared reference data, so its review queue is an admin section —
       // added to the nav rather than rendered and refused, which would just be a dead tab.
@@ -201,7 +203,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set(this.translate.instant('settings.toast.loadFailed'));
+        this.notify.error('settings.toast.loadFailed');
       }
     });
 
@@ -216,13 +218,13 @@ export class SettingsComponent implements OnInit {
         this.styleStructure = wp.structureNotes ?? '';
         this.analyzedAt.set(wp.lastAnalyzedAt);
       },
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
 
     this.templatesApi.getActive().subscribe({
       next: templates => this.cvTemplates.set(templates.filter(t =>
         !t.documentTypes || t.documentTypes.length === 0 || t.documentTypes.some(d => String(d) === 'CV'))),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -266,11 +268,11 @@ export class SettingsComponent implements OnInit {
         this.prefs = prefs;
         this.saving.set(false);
         this.dirty.set(false);
-        this.toast.set(this.translate.instant('settings.toast.saved'));
+        this.notify.success('settings.toast.saved');
       },
       error: () => {
         this.saving.set(false);
-        this.toast.set(this.translate.instant('settings.toast.saveFailed'));
+        this.notify.error('settings.toast.saveFailed');
       }
     });
 
@@ -294,7 +296,7 @@ export class SettingsComponent implements OnInit {
         this.analyzedAt.set(saved.lastAnalyzedAt);
         this.analysisBaseline = null;
       },
-      error: () => this.toast.set(this.translate.instant('settings.toast.styleSaveFailed'))
+      error: () => this.notify.error('settings.toast.styleSaveFailed')
     });
   }
 
@@ -306,7 +308,7 @@ export class SettingsComponent implements OnInit {
         docs.filter(d => ANALYZABLE_DOC_TYPES[d.documentType] && d.content?.trim())
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
             .slice(0, 20)),
-      error: () => {}
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -345,7 +347,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.analyzing.set(false);
-        this.toast.set(this.translate.instant('settings.toast.analysisFailed'));
+        this.notify.error('settings.toast.analysisFailed');
       }
     });
   }
@@ -420,8 +422,8 @@ export class SettingsComponent implements OnInit {
     if (this.sendingVerification()) return;
     this.sendingVerification.set(true);
     this.auth.resendVerification()
-      .then(() => this.toast.set(this.translate.instant('settings.toast.verificationSent')))
-      .catch(() => this.toast.set(this.translate.instant('settings.toast.verificationFailed')))
+      .then(() => this.notify.success('settings.toast.verificationSent'))
+      .catch(() => this.notify.error('settings.toast.verificationFailed'))
       .finally(() => this.sendingVerification.set(false));
   }
 
@@ -429,8 +431,8 @@ export class SettingsComponent implements OnInit {
     if (this.sendingReset()) return;
     this.sendingReset.set(true);
     this.auth.sendPasswordReset()
-      .then(() => this.toast.set(this.translate.instant('settings.toast.resetSent', { email: this.userEmail })))
-      .catch(() => this.toast.set(this.translate.instant('settings.toast.resetFailed')))
+      .then(() => this.notify.success('settings.toast.resetSent', { email: this.userEmail }))
+      .catch(() => this.notify.error('settings.toast.resetFailed'))
       .finally(() => this.sendingReset.set(false));
   }
 
@@ -448,7 +450,7 @@ export class SettingsComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(a.href);
       },
-      error: () => this.toast.set(this.translate.instant('settings.toast.exportFailed'))
+      error: () => this.notify.error('settings.toast.exportFailed')
     });
   }
 
@@ -457,7 +459,7 @@ export class SettingsComponent implements OnInit {
     if (!confirmed) return;
     this.http.delete('/api/v1/users/me').subscribe({
       next: () => this.auth.logout(),
-      error: () => this.toast.set(this.translate.instant('settings.toast.deleteFailed'))
+      error: () => this.notify.error('settings.toast.deleteFailed')
     });
   }
 }

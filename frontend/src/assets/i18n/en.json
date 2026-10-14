@@ -108,7 +108,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "confirmDelete": "Confirm delete",
     "edit": "Edit",
     "add": "Add",
     "remove": "Remove",
@@ -234,14 +233,13 @@
     }
   },
   "shared": {
-    "upload": "Upload",
-    "uploading": "Uploading...",
-    "addTag": "Add..."
-  },
-  "skillPicker": {
-    "label": "Skills",
-    "placeholder": "Search skills to link...",
-    "create": "+ Create \"{{query}}\""
+    "addTag": "Add...",
+    "diffViewer": {
+      "diff": "Diff",
+      "revised": "Revised",
+      "original": "Original",
+      "wordsChanged": "words changed"
+    }
   },
   "cvImport": {
     "parsingCv": "Parsing your CV…",
@@ -365,7 +363,24 @@
       "platform": "Platform",
       "url": "URL",
       "usernameOptional": "Username (optional)",
-      "addSocial": "+ Add Social Link"
+      "addSocial": "+ Add Social Link",
+      "placeholder": {
+        "degree": "Bachelor of Science",
+        "jobTitle": "Software Engineer",
+        "location": "Remote",
+        "language": "English",
+        "fullName": "Jane Doe",
+        "headline": "Senior Software Engineer",
+        "projectName": "My Awesome Project",
+        "certName": "AWS Certified Developer",
+        "certIssuer": "Amazon Web Services",
+        "school": "MIT",
+        "schoolLocation": "Cambridge, MA",
+        "company": "Acme Corp",
+        "email": "jane@example.com",
+        "phone": "+1 234 567 8900",
+        "city": "New York, NY"
+      }
     },
     "aiTailor": {
       "atsScore": "ATS score",
@@ -488,7 +503,8 @@
       "pdfDesigned": "PDF — Designed",
       "pdfAts": "PDF — ATS",
       "print": "Print",
-      "atsTitle": "Text-based single-column PDF — selectable text, parseable by applicant tracking systems"
+      "atsTitle": "Text-based single-column PDF — selectable text, parseable by applicant tracking systems",
+      "dragToResize": "Drag to resize"
     },
     "cv": {
       "summary": "Summary",
@@ -505,7 +521,9 @@
       "contact": "Contact",
       "present": "Present",
       "photo": "Photo",
-      "profilePhoto": "Profile photo"
+      "profilePhoto": "Profile photo",
+      "profile": "Profile",
+      "untitledName": "Curriculum Vitae"
     },
     "refine": {
       "ai": "AI",
@@ -546,6 +564,52 @@
         "nov": "November",
         "dec": "December"
       }
+    },
+    "defaultDraftName": "My Resume",
+    "richText": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "bulletList": "Bullet list",
+      "numberedList": "Numbered list",
+      "alignLeft": "Align left",
+      "center": "Center",
+      "alignRight": "Align right",
+      "justify": "Justify",
+      "font": "Font",
+      "size": "Size",
+      "textColour": "Text colour",
+      "clearFormatting": "Clear formatting"
+    },
+    "icon": {
+      "zap": "Zap",
+      "star": "Star",
+      "award": "Award",
+      "target": "Target",
+      "growth": "Growth",
+      "ideas": "Ideas",
+      "check": "Check",
+      "shield": "Shield",
+      "people": "People",
+      "comms": "Comms",
+      "code": "Code",
+      "tech": "Tech",
+      "data": "Data",
+      "layout": "Layout",
+      "mobile": "Mobile",
+      "globe": "Globe",
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location",
+      "portfolio": "Portfolio",
+      "link": "Link",
+      "external": "External",
+      "terminal": "Terminal",
+      "design": "Design",
+      "chat": "Chat",
+      "gaming": "Gaming",
+      "forum": "Forum"
     }
   },
   "legal": {
@@ -783,7 +847,12 @@
       "customHeadingPlaceholder": "Section heading (e.g. Publications)",
       "customItemPlaceholder": "One line / entry",
       "addCustomItem": "Add line",
-      "addCustomSection": "Add custom section"
+      "addCustomSection": "Add custom section",
+      "placeholder": {
+        "language": "English",
+        "certName": "AWS Certified Developer",
+        "certIssuer": "Amazon Web Services"
+      }
     },
     "section": {
       "profile": "Profile",
@@ -1169,6 +1238,16 @@
       "active": "Active",
       "drafts": "Drafts",
       "closed": "Closed"
+    },
+    "csv": {
+      "company": "Company",
+      "role": "Role",
+      "stage": "Stage",
+      "fitScore": "Fit score",
+      "created": "Created",
+      "applied": "Applied",
+      "updated": "Updated",
+      "notes": "Notes"
     }
   },
   "onboarding": {
@@ -1825,7 +1904,23 @@
       "weakPassword": "Password is too weak.",
       "registerFailed": "Registration failed. Please try again.",
       "linkedInNoCode": "Authorization failed. No code received from LinkedIn.",
-      "linkedInFailed": "Sign in with LinkedIn failed. Please try again."
+      "linkedInFailed": "Sign in with LinkedIn failed. Please try again.",
+      "linkedInState": "This sign-in link is invalid or has expired. Please start the LinkedIn sign-in again.",
+      "linkedInEmailUnverified": "LinkedIn has not verified the email on your LinkedIn account. Confirm your primary email in LinkedIn's settings, then sign in again.",
+      "linkedInAccountExists": "An account with this email already exists. Sign in with your existing method."
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "body": "We sent a verification link to {{email}}. Click it, then come back here to continue.",
+      "continue": "I've verified, continue",
+      "resend": "Resend verification email",
+      "signOut": "Sign out",
+      "sent": "Verification email sent. Check your inbox.",
+      "sendFailed": "Could not send the email. Please try again in a moment.",
+      "stillUnverified": "Your email is not verified yet. Click the link in the email first.",
+      "checkFailed": "Could not check your verification status. Please try again.",
+      "resendIn": "Resend available in {{seconds}}s",
+      "tooManyRequests": "Too many emails requested. Wait a minute before asking for another one."
     }
   },
   "nav": {
@@ -1846,7 +1941,6 @@
     "companies": "Companies",
     "careerProfile": "Career Profile",
     "settings": "Settings",
-    "oldFrontend": "Old frontend",
     "streak": "{{count}}-day streak",
     "lightMode": "Light mode",
     "darkMode": "Dark mode",
@@ -1854,7 +1948,8 @@
     "group": {
       "track": "Track",
       "library": "Library"
-    }
+    },
+    "userFallback": "User"
   },
   "match": {
     "grade": {
@@ -1864,5 +1959,14 @@
       "weak": "Weak"
     },
     "scoreTooltip": "{{score}}% match"
+  },
+  "notify": {
+    "loadFailed": "Some data could not be loaded. Try refreshing the page.",
+    "saveFailed": "Your changes could not be saved. Please try again.",
+    "deleteFailed": "That could not be deleted. Please try again.",
+    "actionFailed": "Something went wrong. Please try again.",
+    "searchFailed": "Search failed. Try again in a moment.",
+    "autosaveFailed": "Autosave failed. It will retry on your next edit.",
+    "draftLoadFailed": "This draft could not be opened."
   }
 }

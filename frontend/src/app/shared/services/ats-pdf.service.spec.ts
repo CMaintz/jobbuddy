@@ -75,6 +75,7 @@ describe('structuredDocToAts', () => {
   it('lifts the profile into the summary and keeps the untyped sections', () => {
     const model = structuredDocToAts(doc);
     expect(model.summary).toBe('Kort profiltekst.');
+    expect(model.summaryHeading).toBe('Profil');
     expect(model.sections.map(s => s.heading)).toEqual(['Fritidsinteresser', 'Referencer']);
     expect(model.sections[1].lines).toEqual(['Referencer oplyses gerne efter aftale.']);
   });

@@ -20,7 +20,8 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
             <div class="flex-1 grid gap-2 grid-cols-[1fr_1.4fr]">
               <label class="flex flex-col gap-[5px]">
                 <span class="label">{{ 'masterCv.form.language' | translate }}</span>
-                <input [(ngModel)]="lang.language" class="input" placeholder="English" />
+                <input [(ngModel)]="lang.language" class="input"
+                  [placeholder]="'masterCv.form.placeholder.language' | translate" />
               </label>
               <label class="flex flex-col gap-[5px]">
                 <span class="label">{{ 'masterCv.form.level' | translate }}</span>

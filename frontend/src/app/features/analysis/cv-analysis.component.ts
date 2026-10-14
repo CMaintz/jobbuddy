@@ -2,17 +2,17 @@ import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { AiApiService, AnalysisDimensions, AnalysisResponse, SkillGapReport } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
+import { NotifyService } from '../../shared/services/notify.service';
 
 interface JobOption {
   id: string;
@@ -23,18 +23,17 @@ interface JobOption {
   selector: 'app-cv-analysis',
   imports: [
     CommonModule, JbTopbarComponent, FormsModule, RouterLink, TranslateModule, JbIconComponent,
-    JbButtonComponent, JbToastComponent, GoalRingComponent, JbPillComponent,
+    JbButtonComponent, GoalRingComponent, JbPillComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {
   private aiApi = inject(AiApiService);
+  private notify = inject(NotifyService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
-  private translate = inject(TranslateService);
 
-  toast = signal('');
   analyzing = signal(false);
   result = signal<AnalysisResponse | null>(null);
   gapReport = signal<SkillGapReport | null>(null);
@@ -71,7 +70,7 @@ export class CvAnalysisComponent implements OnInit {
         this.jobOptions = options;
         if (options.length > 0) this.selectedJobId = options[0].id;
       },
-      error: () => {} // picker just stays empty
+      error: this.notify.onError('notify.loadFailed')
     });
   }
 
@@ -96,7 +95,7 @@ export class CvAnalysisComponent implements OnInit {
         },
         error: () => {
           this.analyzing.set(false);
-          this.toast.set(this.translate.instant('analysis.toast.gapFailed'));
+          this.notify.error('analysis.toast.gapFailed');
         }
       });
       return;
@@ -112,7 +111,7 @@ export class CvAnalysisComponent implements OnInit {
       },
       error: () => {
         this.analyzing.set(false);
-        this.toast.set(this.translate.instant('analysis.toast.analyzeFailed'));
+        this.notify.error('analysis.toast.analyzeFailed');
       }
     });
   }

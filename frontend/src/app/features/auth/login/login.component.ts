@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
+import { AuthService, EMAIL_NOT_VERIFIED } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -31,6 +31,10 @@ export class LoginComponent {
     this.authService.login(email!, password!).subscribe({
       next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
       error: (e) => {
+        if (e?.code === EMAIL_NOT_VERIFIED) {
+          this.router.navigate(['/verify-email']);
+          return;
+        }
         this.error = this.friendlyError(e?.code);
         this.loading = false;
       }

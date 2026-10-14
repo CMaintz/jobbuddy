@@ -7,11 +7,11 @@
             <button class="rb-remove" (click)="remove(edu.id)">{{ 'resumeBuilder.form.remove' | translate }}</button>
           </div>
           <label class="label">{{ 'resumeBuilder.form.degree' | translate }}</label>
-          <input class="input" [value]="edu.degree" (input)="update(edu.id, 'degree', $any($event.target).value)" placeholder="Bachelor of Science" />
+          <input class="input" [value]="edu.degree" (input)="update(edu.id, 'degree', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.degree' | translate" />
           <label class="label">{{ 'resumeBuilder.form.school' | translate }}</label>
-          <input class="input" [value]="edu.school" (input)="update(edu.id, 'school', $any($event.target).value)" placeholder="MIT" />
+          <input class="input" [value]="edu.school" (input)="update(edu.id, 'school', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.school' | translate" />
           <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>
-          <input class="input" [value]="edu.location" (input)="update(edu.id, 'location', $any($event.target).value)" placeholder="Cambridge, MA" />
+          <input class="input" [value]="edu.location" (input)="update(edu.id, 'location', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.schoolLocation' | translate" />
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="label">{{ 'resumeBuilder.form.startDate' | translate }}</label>

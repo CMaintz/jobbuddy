@@ -7,12 +7,12 @@ import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.compone
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
-import { JbToastComponent } from '../../shared/components/jb-toast/jb-toast.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { RemindersApiService, FollowUpReminder } from '../../core/api/reminders.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application } from '../../core/models/application.model';
 
+import { NotifyService } from '../../shared/services/notify.service';
 type Group = 'overdue' | 'today' | 'tomorrow' | 'week' | 'later';
 type Kind = 'followup' | 'interview';
 
@@ -29,19 +29,19 @@ interface TaskRow {
   selector: 'app-tasks',
   imports: [
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, JbToastComponent, CompanyMarkComponent,
+    JbPillComponent, CompanyMarkComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit {
   private remindersApi = inject(RemindersApiService);
+  protected notify = inject(NotifyService);
   private appsApi = inject(ApplicationsApiService);
   private router = inject(Router);
   private translate = inject(TranslateService);
 
   loading = signal(true);
-  toast = signal('');
   rows = signal<TaskRow[]>([]);
   doneToday = signal(0);
   applications: Application[] = [];
@@ -92,7 +92,7 @@ export class TasksComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.set(this.translate.instant('tasks.toast.loadFailed'));
+        this.notify.error('tasks.toast.loadFailed');
       }
     });
   }
@@ -146,14 +146,14 @@ export class TasksComponent implements OnInit {
         this.rows.update(rows => rows.filter(r => r.reminder.id !== row.reminder.id));
         this.doneToday.update(n => n + 1);
       },
-      error: () => this.toast.set(this.translate.instant('tasks.toast.completeFailed'))
+      error: () => this.notify.error('tasks.toast.completeFailed')
     });
   }
 
   remove(row: TaskRow): void {
     this.remindersApi.delete(row.reminder.id).subscribe({
       next: () => this.rows.update(rows => rows.filter(r => r.reminder.id !== row.reminder.id)),
-      error: () => this.toast.set(this.translate.instant('tasks.toast.deleteFailed'))
+      error: () => this.notify.error('tasks.toast.deleteFailed')
     });
   }
 
@@ -171,7 +171,7 @@ export class TasksComponent implements OnInit {
         this.newDue = '';
         this.load();
       },
-      error: () => this.toast.set(this.translate.instant('tasks.toast.createFailed'))
+      error: () => this.notify.error('tasks.toast.createFailed')
     });
   }
 }

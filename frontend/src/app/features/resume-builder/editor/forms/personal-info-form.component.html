@@ -23,23 +23,23 @@
       <div class="grid grid-cols-2 gap-2">
         <div style="grid-column:span 2;">
           <label class="label">{{ 'resumeBuilder.form.fullName' | translate }}</label>
-          <input class="input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" placeholder="Jane Doe" />
+          <input class="input" type="text" [value]="pi.fullName" (input)="update('fullName', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.fullName' | translate" />
         </div>
         <div style="grid-column:span 2;">
           <label class="label">{{ 'resumeBuilder.form.jobTitle' | translate }}</label>
-          <input class="input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" placeholder="Senior Software Engineer" />
+          <input class="input" type="text" [value]="pi.title" (input)="update('title', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.headline' | translate" />
         </div>
         <div>
           <label class="label">{{ 'resumeBuilder.form.email' | translate }}</label>
-          <input class="input" type="email" [value]="pi.email" (input)="update('email', $any($event.target).value)" placeholder="jane@example.com" />
+          <input class="input" type="email" [value]="pi.email" (input)="update('email', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.email' | translate" />
         </div>
         <div>
           <label class="label">{{ 'resumeBuilder.form.phone' | translate }}</label>
-          <input class="input" type="tel" [value]="pi.phone" (input)="update('phone', $any($event.target).value)" placeholder="+1 234 567 8900" />
+          <input class="input" type="tel" [value]="pi.phone" (input)="update('phone', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.phone' | translate" />
         </div>
         <div style="grid-column:span 2;">
           <label class="label">{{ 'resumeBuilder.form.location' | translate }}</label>
-          <input class="input" type="text" [value]="pi.location" (input)="update('location', $any($event.target).value)" placeholder="New York, NY" />
+          <input class="input" type="text" [value]="pi.location" (input)="update('location', $any($event.target).value)" [placeholder]="'resumeBuilder.form.placeholder.city' | translate" />
         </div>
         <div style="grid-column:span 2;">
           <label class="label">{{ 'resumeBuilder.form.website' | translate }}</label>

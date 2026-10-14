@@ -3,6 +3,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { PdfExportService } from '../services/pdf-export.service';
 import { AtsPdfService, resumeDataToAts } from '../../../shared/services/ats-pdf.service';
+import { translatedAtsHeadings } from '../../../shared/services/ats-headings';
 import { ClassicLayoutComponent } from './layouts/classic-layout.component';
 import { Modern1ColLayoutComponent } from './layouts/modern-1col-layout.component';
 import { Modern2ColLayoutComponent } from './layouts/modern-2col-layout.component';
@@ -65,20 +66,9 @@ export class ResumePreviewComponent {
   /** Text-based single-column PDF — selectable text, safe for ATS parsers. */
   async downloadAtsPdf(): Promise<void> {
     const pi = this.state.displayPersonalInfo();
-    // Headings follow the interface language. These keys are the frontend half of the CV heading
-    // vocabulary — the backend half is CvSectionLabels, and the two have to agree or the same CV
-    // reads differently depending on which path exported it.
     const model = resumeDataToAts(
       { ...this.state.resumeData(), socials: this.state.displaySocials() }, pi, this.state.settings(),
-      {
-        strengths: this.translate.instant('resumeBuilder.section.strengths'),
-        experience: this.translate.instant('resumeBuilder.section.experience'),
-        skills: this.translate.instant('resumeBuilder.section.skills'),
-        projects: this.translate.instant('resumeBuilder.section.projects'),
-        education: this.translate.instant('resumeBuilder.section.education'),
-        certifications: this.translate.instant('resumeBuilder.section.certifications'),
-        languages: this.translate.instant('resumeBuilder.section.languages'),
-      });
+      translatedAtsHeadings(key => this.translate.instant(key)));
     await this.atsPdf.downloadResume(model, `${pi.fullName || 'resume'} - ATS`);
   }
 

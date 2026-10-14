@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -44,37 +45,51 @@ const FONT_SIZES = ['10px', '11px', '12px', '13px', '14px', '16px', '18px', '21p
  */
 @Component({
   selector: 'app-rich-text-editor',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslateModule],
   template: `
     <div class="rte" [class.rte-focused]="focused()">
       <div class="rte-toolbar" (mousedown)="$event.preventDefault()">
-        <button type="button" class="rte-btn" [class.on]="isActive('bold')" title="Bold" (click)="toggle('bold')"><b>B</b></button>
-        <button type="button" class="rte-btn" [class.on]="isActive('italic')" title="Italic" (click)="toggle('italic')"><i>I</i></button>
-        <button type="button" class="rte-btn" [class.on]="isActive('underline')" title="Underline" (click)="toggle('underline')"><u>U</u></button>
-        <button type="button" class="rte-btn" [class.on]="isActive('strike')" title="Strikethrough" (click)="toggle('strike')"><s>S</s></button>
+        <button type="button" class="rte-btn" [class.on]="isActive('bold')"
+          [title]="'resumeBuilder.richText.bold' | translate" (click)="toggle('bold')"><b>B</b></button>
+        <button type="button" class="rte-btn" [class.on]="isActive('italic')"
+          [title]="'resumeBuilder.richText.italic' | translate" (click)="toggle('italic')"><i>I</i></button>
+        <button type="button" class="rte-btn" [class.on]="isActive('underline')"
+          [title]="'resumeBuilder.richText.underline' | translate" (click)="toggle('underline')"><u>U</u></button>
+        <button type="button" class="rte-btn" [class.on]="isActive('strike')"
+          [title]="'resumeBuilder.richText.strikethrough' | translate" (click)="toggle('strike')"><s>S</s></button>
         <span class="rte-sep"></span>
-        <button type="button" class="rte-btn" [class.on]="isActive('bulletList')" title="Bullet list" (click)="toggle('bulletList')">•≡</button>
-        <button type="button" class="rte-btn" [class.on]="isActive('orderedList')" title="Numbered list" (click)="toggle('orderedList')">1≡</button>
+        <button type="button" class="rte-btn" [class.on]="isActive('bulletList')"
+          [title]="'resumeBuilder.richText.bulletList' | translate" (click)="toggle('bulletList')">•≡</button>
+        <button type="button" class="rte-btn" [class.on]="isActive('orderedList')"
+          [title]="'resumeBuilder.richText.numberedList' | translate" (click)="toggle('orderedList')">1≡</button>
         <span class="rte-sep"></span>
-        <button type="button" class="rte-btn" [class.on]="isAlign('left')" title="Align left" (click)="setAlign('left')">⇤</button>
-        <button type="button" class="rte-btn" [class.on]="isAlign('center')" title="Center" (click)="setAlign('center')">↔</button>
-        <button type="button" class="rte-btn" [class.on]="isAlign('right')" title="Align right" (click)="setAlign('right')">⇥</button>
-        <button type="button" class="rte-btn" [class.on]="isAlign('justify')" title="Justify" (click)="setAlign('justify')">☰</button>
+        <button type="button" class="rte-btn" [class.on]="isAlign('left')"
+          [title]="'resumeBuilder.richText.alignLeft' | translate" (click)="setAlign('left')">⇤</button>
+        <button type="button" class="rte-btn" [class.on]="isAlign('center')"
+          [title]="'resumeBuilder.richText.center' | translate" (click)="setAlign('center')">↔</button>
+        <button type="button" class="rte-btn" [class.on]="isAlign('right')"
+          [title]="'resumeBuilder.richText.alignRight' | translate" (click)="setAlign('right')">⇥</button>
+        <button type="button" class="rte-btn" [class.on]="isAlign('justify')"
+          [title]="'resumeBuilder.richText.justify' | translate" (click)="setAlign('justify')">☰</button>
         <span class="rte-sep"></span>
-        <select class="rte-select" title="Font" [ngModel]="currentFont()" (ngModelChange)="setFont($event)">
-          <option value="">Font</option>
+        <select class="rte-select"
+          [title]="'resumeBuilder.richText.font' | translate" [ngModel]="currentFont()" (ngModelChange)="setFont($event)">
+          <option value="">{{ 'resumeBuilder.richText.font' | translate }}</option>
           @for (f of fonts; track f.value) {
             <option [value]="f.value">{{ f.label }}</option>
           }
         </select>
-        <select class="rte-select rte-select-sm" title="Size" [ngModel]="currentSize()" (ngModelChange)="setSize($event)">
-          <option value="">Size</option>
+        <select class="rte-select rte-select-sm"
+          [title]="'resumeBuilder.richText.size' | translate" [ngModel]="currentSize()" (ngModelChange)="setSize($event)">
+          <option value="">{{ 'resumeBuilder.richText.size' | translate }}</option>
           @for (s of sizes; track s) {
             <option [value]="s">{{ s }}</option>
           }
         </select>
-        <input type="color" class="rte-color" title="Text colour" [value]="currentColor()" (input)="setColor($any($event.target).value)" />
-        <button type="button" class="rte-btn" title="Clear formatting" (click)="clearFormatting()">⌫</button>
+        <input type="color" class="rte-color"
+          [title]="'resumeBuilder.richText.textColour' | translate" [value]="currentColor()" (input)="setColor($any($event.target).value)" />
+        <button type="button" class="rte-btn"
+          [title]="'resumeBuilder.richText.clearFormatting' | translate" (click)="clearFormatting()">⌫</button>
       </div>
       <div #editorHost class="rte-content" [attr.data-placeholder]="placeholder"></div>
     </div>

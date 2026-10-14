@@ -108,7 +108,6 @@
     "save": "Gem",
     "cancel": "Annuller",
     "delete": "Slet",
-    "confirmDelete": "Bekræft sletning",
     "edit": "Rediger",
     "add": "Tilføj",
     "remove": "Fjern",
@@ -234,14 +233,13 @@
     }
   },
   "shared": {
-    "upload": "Upload",
-    "uploading": "Uploader...",
-    "addTag": "Tilføj..."
-  },
-  "skillPicker": {
-    "label": "Færdigheder",
-    "placeholder": "Søg færdigheder at knytte...",
-    "create": "+ Opret \"{{query}}\""
+    "addTag": "Tilføj...",
+    "diffViewer": {
+      "diff": "Forskelle",
+      "revised": "Revideret",
+      "original": "Original",
+      "wordsChanged": "ord ændret"
+    }
   },
   "cvImport": {
     "parsingCv": "Analyserer dit CV…",
@@ -365,7 +363,24 @@
       "platform": "Platform",
       "url": "URL",
       "usernameOptional": "Brugernavn (valgfrit)",
-      "addSocial": "+ Tilføj socialt link"
+      "addSocial": "+ Tilføj socialt link",
+      "placeholder": {
+        "degree": "Bachelor i datalogi",
+        "jobTitle": "Softwareudvikler",
+        "location": "Fjernarbejde",
+        "language": "Engelsk",
+        "fullName": "Mette Hansen",
+        "headline": "Senior softwareudvikler",
+        "projectName": "Mit fantastiske projekt",
+        "certName": "Certificeret projektleder (IPMA)",
+        "certIssuer": "Dansk Projektledelse",
+        "school": "Aarhus Universitet",
+        "schoolLocation": "Aarhus",
+        "company": "Nordisk Data A/S",
+        "email": "mette@eksempel.dk",
+        "phone": "+45 12 34 56 78",
+        "city": "København"
+      }
     },
     "aiTailor": {
       "atsScore": "ATS-score",
@@ -488,7 +503,8 @@
       "pdfDesigned": "PDF — Designet",
       "pdfAts": "PDF — ATS",
       "print": "Udskriv",
-      "atsTitle": "Tekstbaseret enkeltkolonne-PDF — markerbar tekst, læsbar af ansøgningssystemer"
+      "atsTitle": "Tekstbaseret enkeltkolonne-PDF — markerbar tekst, læsbar af ansøgningssystemer",
+      "dragToResize": "Træk for at ændre størrelse"
     },
     "cv": {
       "summary": "Resumé",
@@ -505,7 +521,9 @@
       "contact": "Kontakt",
       "present": "Nuværende",
       "photo": "Foto",
-      "profilePhoto": "Profilbillede"
+      "profilePhoto": "Profilbillede",
+      "profile": "Profil",
+      "untitledName": "Curriculum Vitae"
     },
     "refine": {
       "ai": "AI",
@@ -546,6 +564,52 @@
         "nov": "November",
         "dec": "December"
       }
+    },
+    "defaultDraftName": "Mit CV",
+    "richText": {
+      "bold": "Fed",
+      "italic": "Kursiv",
+      "underline": "Understreget",
+      "strikethrough": "Gennemstreget",
+      "bulletList": "Punktliste",
+      "numberedList": "Nummereret liste",
+      "alignLeft": "Venstrejustér",
+      "center": "Centrér",
+      "alignRight": "Højrejustér",
+      "justify": "Lige margener",
+      "font": "Skrifttype",
+      "size": "Størrelse",
+      "textColour": "Tekstfarve",
+      "clearFormatting": "Ryd formatering"
+    },
+    "icon": {
+      "zap": "Lyn",
+      "star": "Stjerne",
+      "award": "Pris",
+      "target": "Mål",
+      "growth": "Vækst",
+      "ideas": "Idéer",
+      "check": "Flueben",
+      "shield": "Skjold",
+      "people": "Mennesker",
+      "comms": "Kommunikation",
+      "code": "Kode",
+      "tech": "Teknologi",
+      "data": "Data",
+      "layout": "Layout",
+      "mobile": "Mobil",
+      "globe": "Globus",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "location": "Placering",
+      "portfolio": "Portefølje",
+      "link": "Link",
+      "external": "Eksternt link",
+      "terminal": "Terminal",
+      "design": "Design",
+      "chat": "Chat",
+      "gaming": "Gaming",
+      "forum": "Forum"
     }
   },
   "legal": {
@@ -783,7 +847,12 @@
       "customHeadingPlaceholder": "Sektionsoverskrift (f.eks. Publikationer)",
       "customItemPlaceholder": "Én linje / post",
       "addCustomItem": "Tilføj linje",
-      "addCustomSection": "Tilføj brugerdefineret sektion"
+      "addCustomSection": "Tilføj brugerdefineret sektion",
+      "placeholder": {
+        "language": "Engelsk",
+        "certName": "Certificeret projektleder (IPMA)",
+        "certIssuer": "Dansk Projektledelse"
+      }
     },
     "section": {
       "profile": "Profil",
@@ -1169,6 +1238,16 @@
       "active": "Aktive",
       "drafts": "Kladder",
       "closed": "Lukkede"
+    },
+    "csv": {
+      "company": "Virksomhed",
+      "role": "Stilling",
+      "stage": "Trin",
+      "fitScore": "Match-score",
+      "created": "Oprettet",
+      "applied": "Ansøgt",
+      "updated": "Opdateret",
+      "notes": "Noter"
     }
   },
   "onboarding": {
@@ -1825,7 +1904,23 @@
       "weakPassword": "Adgangskoden er for svag.",
       "registerFailed": "Oprettelse mislykkedes. Prøv igen.",
       "linkedInNoCode": "Godkendelse mislykkedes. Ingen kode modtaget fra LinkedIn.",
-      "linkedInFailed": "Login med LinkedIn mislykkedes. Prøv igen."
+      "linkedInFailed": "Login med LinkedIn mislykkedes. Prøv igen.",
+      "linkedInState": "Dette login-link er ugyldigt eller udløbet. Start login med LinkedIn igen.",
+      "linkedInEmailUnverified": "LinkedIn har ikke bekræftet e-mailen på din LinkedIn-konto. Bekræft din primære e-mail i LinkedIns indstillinger, og log så ind igen.",
+      "linkedInAccountExists": "Der findes allerede en konto med denne e-mail. Log ind på den måde, du plejer."
+    },
+    "verifyEmail": {
+      "title": "Bekræft din e-mail",
+      "body": "Vi har sendt et bekræftelseslink til {{email}}. Klik på det, og vend så tilbage hertil for at fortsætte.",
+      "continue": "Jeg har bekræftet, fortsæt",
+      "resend": "Send bekræftelsesmail igen",
+      "signOut": "Log ud",
+      "sent": "Bekræftelsesmail sendt. Tjek din indbakke.",
+      "sendFailed": "Mailen kunne ikke sendes. Prøv igen om lidt.",
+      "stillUnverified": "Din e-mail er ikke bekræftet endnu. Klik først på linket i mailen.",
+      "checkFailed": "Vi kunne ikke tjekke din bekræftelse. Prøv igen.",
+      "resendIn": "Kan sendes igen om {{seconds}} s",
+      "tooManyRequests": "Der er bedt om for mange mails. Vent et minut, før du beder om en ny."
     }
   },
   "nav": {
@@ -1846,7 +1941,6 @@
     "companies": "Virksomheder",
     "careerProfile": "Karriereprofil",
     "settings": "Indstillinger",
-    "oldFrontend": "Gammel frontend",
     "streak": "{{count}} dage i træk",
     "lightMode": "Lyst tema",
     "darkMode": "Mørkt tema",
@@ -1854,7 +1948,8 @@
     "group": {
       "track": "Følg",
       "library": "Bibliotek"
-    }
+    },
+    "userFallback": "Bruger"
   },
   "match": {
     "grade": {
@@ -1864,5 +1959,14 @@
       "weak": "Svag"
     },
     "scoreTooltip": "{{score}} % match"
+  },
+  "notify": {
+    "loadFailed": "Nogle data kunne ikke indlæses. Prøv at genindlæse siden.",
+    "saveFailed": "Dine ændringer kunne ikke gemmes. Prøv igen.",
+    "deleteFailed": "Det kunne ikke slettes. Prøv igen.",
+    "actionFailed": "Noget gik galt. Prøv igen.",
+    "searchFailed": "Søgningen mislykkedes. Prøv igen om lidt.",
+    "autosaveFailed": "Automatisk gemning mislykkedes. Den prøver igen ved din næste ændring.",
+    "draftLoadFailed": "Kladden kunne ikke åbnes."
   }
 }
