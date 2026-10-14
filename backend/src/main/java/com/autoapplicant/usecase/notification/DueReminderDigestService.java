@@ -3,19 +3,15 @@ package com.autoapplicant.usecase.notification;
 import com.autoapplicant.domain.notification.Nudge;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserPreferences;
-import com.autoapplicant.port.in.notification.GetNudgesUseCase;
 import com.autoapplicant.port.in.notification.SendDueRemindersUseCase;
 import com.autoapplicant.port.out.notification.NotificationPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
+import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * The daily "this is due today" email.
@@ -25,31 +21,28 @@ import java.util.Set;
  * advice on unsolicited applications is consistent that the follow-up is what makes them work, so
  * a follow-up nobody is told about is the feature failing quietly.
  *
- * <p>Only the time-critical nudge types are sent. Deadlines and the 14-day follow-up heuristic
- * already surface in the app and do not change hour to hour; mailing them daily would turn this
- * into noise and get the whole thing filtered.
+ * <p>Only what {@link DueNudgeFinder} finds is sent: things with a date the user chose, that have
+ * arrived. Deadlines and the 14-day follow-up heuristic already surface in the app and do not
+ * change hour to hour; mailing them daily would turn this into noise and get the whole thing
+ * filtered.
  */
 @Service
 public class DueReminderDigestService implements SendDueRemindersUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(DueReminderDigestService.class);
 
-    /** What is worth an email: things with a date the user chose, that have arrived. */
-    private static final Set<Nudge.NudgeType> MAILED_TYPES =
-            EnumSet.of(Nudge.NudgeType.REMINDER_DUE, Nudge.NudgeType.OUTREACH_FOLLOW_UP);
-
     private final PreferencesRepositoryPort preferencesRepo;
     private final UserRepositoryPort userRepo;
-    private final GetNudgesUseCase nudges;
+    private final DueNudgeFinder dueNudges;
     private final NotificationPort notification;
 
     public DueReminderDigestService(PreferencesRepositoryPort preferencesRepo,
                                     UserRepositoryPort userRepo,
-                                    GetNudgesUseCase nudges,
+                                    DueNudgeFinder dueNudges,
                                     NotificationPort notification) {
         this.preferencesRepo = preferencesRepo;
         this.userRepo = userRepo;
-        this.nudges = nudges;
+        this.dueNudges = dueNudges;
         this.notification = notification;
     }
 
@@ -75,9 +68,7 @@ public class DueReminderDigestService implements SendDueRemindersUseCase {
         Optional<User> user = userRepo.findById(prefs.userId());
         if (user.isEmpty() || user.get().email() == null || user.get().email().isBlank()) return false;
 
-        List<Nudge> due = nudges.getNudges(prefs.userId()).stream()
-                .filter(nudge -> MAILED_TYPES.contains(nudge.type()))
-                .toList();
+        List<Nudge> due = dueNudges.findDueToday(prefs.userId());
         if (due.isEmpty()) return false;
 
         notification.send(user.get().email(), subject(due), body(due));

@@ -1,23 +1,21 @@
 package com.autoapplicant.usecase.job;
 
-import com.autoapplicant.domain.job.Job;
-import com.autoapplicant.port.in.job.EnrichJobUseCase;
-import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase.SweepResult;
-import com.autoapplicant.port.out.job.JobRepositoryPort;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+
+import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase.SweepResult;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class EnrichmentSweepServiceTest {
 
@@ -25,13 +23,13 @@ class EnrichmentSweepServiceTest {
     private static final UUID JOB_ID = UUID.randomUUID();
 
     private JobRepositoryPort jobRepo;
-    private EnrichJobUseCase enrichJob;
+    private JobEnrichmentService enrichJob;
     private EnrichmentSweepService service;
 
     @BeforeEach
     void setUp() {
         jobRepo = mock(JobRepositoryPort.class);
-        enrichJob = mock(EnrichJobUseCase.class);
+        enrichJob = mock(JobEnrichmentService.class);
         // No delay and no concurrency in tests: the behaviour under test is the bookkeeping,
         // not the pacing.
         service = new EnrichmentSweepService(jobRepo, enrichJob, MAX_ATTEMPTS, Duration.ofHours(6),

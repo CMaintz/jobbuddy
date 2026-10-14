@@ -2,20 +2,18 @@ package com.autoapplicant.usecase.job;
 
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
-import com.autoapplicant.port.in.job.EnrichJobUseCase;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
  * Drains the enrichment queue. The queue is the {@code enrichment_status} column, not an
@@ -47,13 +45,13 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
     private static final Duration PROGRESS_EVERY = Duration.ofSeconds(30);
 
     private final JobRepositoryPort jobRepo;
-    private final EnrichJobUseCase enrichJob;
+    private final JobEnrichmentService enrichJob;
     private final int maxAttempts;
     private final Duration retryDelay;
     private final Duration callTimeout;
 
     public EnrichmentSweepService(JobRepositoryPort jobRepo,
-                                  EnrichJobUseCase enrichJob,
+                                  JobEnrichmentService enrichJob,
                                   @Value("${app.enrichment.max-attempts:4}") int maxAttempts,
                                   @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay,
                                   @Value("${app.enrichment.call-timeout:PT5M}") Duration callTimeout,
@@ -81,6 +79,7 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
      * runs long should hand the thread back rather than hold it until the next tick piles up
      * behind it.
      */
+    @Override
     public SweepResult sweep(int limit, Duration budget) {
         Instant deadline = Instant.now().plus(budget);
         Instant retryBefore = Instant.now().minus(retryDelay);

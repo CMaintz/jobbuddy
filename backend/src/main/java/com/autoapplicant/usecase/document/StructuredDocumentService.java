@@ -8,37 +8,25 @@ import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.document.WritingProfile;
 import com.autoapplicant.domain.document.structured.*;
 import com.autoapplicant.domain.job.Job;
-import com.autoapplicant.domain.user.Profile;
-import com.autoapplicant.domain.user.ProfilePrivateInfo;
-import com.autoapplicant.domain.user.ProfileSocial;
-import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.GetCvRenderModelUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.port.out.document.BuildApplicationDocumentPort;
 import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import com.autoapplicant.port.out.user.ProfilePrivateInfoRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileRepositoryPort;
-import com.autoapplicant.port.out.user.ProfileSocialRepositoryPort;
-import com.autoapplicant.port.out.user.UserRepositoryPort;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
 public class StructuredDocumentService implements GetCvRenderModelUseCase, GenerateTailoredCvUseCase,
-        BuildApplicationDocumentUseCase, BuildApplicationDocumentPort {
+        BuildApplicationDocumentUseCase {
 
     private static final String CV_TAILORING_CATEGORY = "CV_TAILORING";
 
-    private final UserRepositoryPort userRepo;
-    private final ProfileRepositoryPort profileRepo;
-    private final ProfilePrivateInfoRepositoryPort privateInfoRepo;
-    private final ProfileSocialRepositoryPort socialRepo;
+    private final DocumentOwnerLoader owners;
     private final JobRepositoryPort jobRepo;
     private final PromptTemplateRepositoryPort promptTemplateRepo;
     private final WritingProfileRepositoryPort writingProfileRepo;
@@ -46,16 +34,12 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
     private final CvDocumentAssembler cvAssembler;
     private final TailoredCvGenerator tailoredCvGenerator;
     private final TailoredCvReviewer tailoredCvReviewer;
-    private final AtsReportBuilder atsReportBuilder;
-    private final KeywordCoverageCalculator coverageCalculator;
+    private final ApplicationDocumentAssembler applicationDocuments;
     private final ApplicationRepositoryPort applicationRepo;
     private final GeneratedContentGuards contentGuards;
     private final CvSectionPromptsRepositoryPort cvSectionPromptsRepo;
 
-    public StructuredDocumentService(UserRepositoryPort userRepo,
-                                     ProfileRepositoryPort profileRepo,
-                                     ProfilePrivateInfoRepositoryPort privateInfoRepo,
-                                     ProfileSocialRepositoryPort socialRepo,
+    public StructuredDocumentService(DocumentOwnerLoader owners,
                                      JobRepositoryPort jobRepo,
                                      PromptTemplateRepositoryPort promptTemplateRepo,
                                      WritingProfileRepositoryPort writingProfileRepo,
@@ -63,15 +47,11 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                      CvDocumentAssembler cvAssembler,
                                      TailoredCvGenerator tailoredCvGenerator,
                                      TailoredCvReviewer tailoredCvReviewer,
-                                     AtsReportBuilder atsReportBuilder,
-                                     KeywordCoverageCalculator coverageCalculator,
+                                     ApplicationDocumentAssembler applicationDocuments,
                                      ApplicationRepositoryPort applicationRepo,
                                      GeneratedContentGuards contentGuards,
                                      CvSectionPromptsRepositoryPort cvSectionPromptsRepo) {
-        this.userRepo = userRepo;
-        this.profileRepo = profileRepo;
-        this.privateInfoRepo = privateInfoRepo;
-        this.socialRepo = socialRepo;
+        this.owners = owners;
         this.jobRepo = jobRepo;
         this.promptTemplateRepo = promptTemplateRepo;
         this.writingProfileRepo = writingProfileRepo;
@@ -79,8 +59,7 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         this.cvAssembler = cvAssembler;
         this.tailoredCvGenerator = tailoredCvGenerator;
         this.tailoredCvReviewer = tailoredCvReviewer;
-        this.atsReportBuilder = atsReportBuilder;
-        this.coverageCalculator = coverageCalculator;
+        this.applicationDocuments = applicationDocuments;
         this.applicationRepo = applicationRepo;
         this.contentGuards = contentGuards;
         this.cvSectionPromptsRepo = cvSectionPromptsRepo;
@@ -96,78 +75,22 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
 
     @Override
     public StructuredDocument buildCv(UUID userId, String templateId, boolean showProfileImage, DocumentTheme theme) {
-        Profile profile = profileRepo.findByUserId(userId).orElse(null);
-        ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
-        List<ProfileSocial> socials = socialRepo.findByUserId(userId);
-        User user = userRepo.findById(userId).orElse(null);
+        DocumentOwnerLoader.DocumentOwner owner = owners.load(userId);
         CareerProfileForAi source = careerProfileContext.build(userId);
-        String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
-        return cvAssembler.assemble(user, profile, privateInfo, socials, source, null,
-                exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme), ContentGuardFindings.NONE, null,
+        String resolvedTemplate = DocumentTemplates.resolveTemplate(templateId, "cv-ats-classic");
+        return cvAssembler.assemble(owner.user(), owner.profile(), owner.privateInfo(),
+                owner.socials(), source, null,
+                DocumentTemplates.exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
+                showProfileImage, DocumentTemplates.resolveTheme(theme), ContentGuardFindings.NONE, null,
                 JobKeywords.NONE, null);
-    }
-
-    public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
-                                                       String templateId) {
-        return buildApplicationDocument(userId, type, content, templateId, JobKeywords.NONE, false);
-    }
-
-    public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
-                                                       String templateId, boolean showProfileImage) {
-        return buildApplicationDocument(userId, type, content, templateId, JobKeywords.NONE, showProfileImage);
     }
 
     @Override
     public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
                                                        String templateId, boolean showProfileImage,
                                                        DocumentTheme theme) {
-        return buildApplicationDocument(userId, type, content, templateId, JobKeywords.NONE,
-                showProfileImage, theme, ContentGuardFindings.NONE);
-    }
-
-    public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
-                                                       String templateId,
-                                                       JobKeywords jobKeywords,
-                                                       boolean showProfileImage) {
-        return buildApplicationDocument(userId, type, content, templateId, jobKeywords,
-                showProfileImage, DocumentTheme.defaults(), ContentGuardFindings.NONE);
-    }
-
-    @Override
-    public StructuredDocument buildApplicationDocument(UUID userId, DocumentType type, String content,
-                                                       String templateId,
-                                                       JobKeywords jobKeywords,
-                                                       boolean showProfileImage,
-                                                       DocumentTheme theme,
-                                                       ContentGuardFindings guardFindings) {
-        String resolvedTemplate = resolveTemplate(templateId, "application-modern");
-        String exportMode = exportModeFromTemplate(resolvedTemplate);
-        ContentGuardFindings findings = guardFindings != null ? guardFindings : ContentGuardFindings.NONE;
-        // The letter knows its own language: detect it from the delivered body rather than
-        // threading yet another parameter through four overloads and the port.
-        String documentLanguage = JobLanguageDetector.detect(content);
-        // Measured here against the letter's own text; the model is not asked how well it did.
-        KeywordCoverage coverage = coverageCalculator.measure(content, jobKeywords);
-        java.util.List<com.autoapplicant.domain.job.JobRequirement> unmeasurable =
-                jobKeywords != null ? jobKeywords.unmeasurableRequirements() : java.util.List.of();
-        AtsReport atsReport = coverage.measured()
-                ? atsReportBuilder.forCoverage(coverage, exportMode, findings, documentLanguage, unmeasurable)
-                : atsReportBuilder.basic(content, exportMode, findings, documentLanguage, unmeasurable);
-        Profile profile = profileRepo.findByUserId(userId).orElse(null);
-        ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
-        List<ProfileSocial> socials = socialRepo.findByUserId(userId);
-        User user = userRepo.findById(userId).orElse(null);
-        return new StructuredDocument(
-                null,
-                type,
-                exportMode,
-                resolvedTemplate,
-                cvAssembler.buildIdentity(user, profile, privateInfo, socials),
-                new DocumentRenderOptions(showProfileImage, resolveTheme(theme)),
-                List.of(),
-                content != null ? content : "",
-                atsReport);
+        return applicationDocuments.assemble(userId, type, content, templateId, JobKeywords.NONE,
+                new DocumentRenderOptions(showProfileImage, theme), ContentGuardFindings.NONE);
     }
 
     public StructuredDocument generateTailoredCv(UUID userId, UUID jobId, String rawJobDescription,
@@ -190,12 +113,9 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                                                  String templateId, UUID promptTemplateId,
                                                  boolean showProfileImage, DocumentTheme theme,
                                                  String lengthPreference) {
-        Profile profile = profileRepo.findByUserId(userId).orElse(null);
-        ProfilePrivateInfo privateInfo = privateInfoRepo.findByUserId(userId).orElse(null);
-        List<ProfileSocial> socials = socialRepo.findByUserId(userId);
-        User user = userRepo.findById(userId).orElse(null);
+        DocumentOwnerLoader.DocumentOwner owner = owners.load(userId);
         CareerProfileForAi source = careerProfileContext.build(userId);
-        String resolvedTemplate = resolveTemplate(templateId, "cv-ats-classic");
+        String resolvedTemplate = DocumentTemplates.resolveTemplate(templateId, "cv-ats-classic");
         // One lookup: the posting supplies both the description and the country whose hiring
         // conventions the prompts should follow.
         Job job = jobId != null ? jobRepo.findById(jobId).orElse(null) : null;
@@ -219,9 +139,10 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
         ContentGuardFindings findings = contentGuards.verify(
                 userId, cvText(tailored), careerProfileContext.buildJson(userId), "CV");
         String cvText = cvText(tailored);
-        return cvAssembler.assemble(user, profile, privateInfo, socials, source, tailored,
-                exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
-                showProfileImage, resolveTheme(theme), findings,
+        return cvAssembler.assemble(owner.user(), owner.profile(), owner.privateInfo(),
+                owner.socials(), source, tailored,
+                DocumentTemplates.exportModeFromTemplate(resolvedTemplate), resolvedTemplate,
+                showProfileImage, DocumentTemplates.resolveTheme(theme), findings,
                 JobLanguageDetector.resolve(targetLanguage, jobDescription),
                 JobKeywords.of(job), cvText);
     }
@@ -267,25 +188,5 @@ public class StructuredDocumentService implements GetCvRenderModelUseCase, Gener
                 : promptTemplateRepo.findDefaultFor(userId, fallbackCategory).orElse(null);
         if (resolved != null) promptTemplateRepo.incrementUsage(resolved.id());
         return resolved;
-    }
-
-    private static String resolveTemplate(String templateId, String defaultTemplate) {
-        return templateId != null && !templateId.isBlank() ? templateId : defaultTemplate;
-    }
-
-    private static String exportModeFromTemplate(String templateId) {
-        if (templateId == null) return "ATS";
-        String lower = templateId.toLowerCase();
-        return lower.contains("ats") ? "ATS" : "DESIGNED";
-    }
-
-    private static DocumentTheme resolveTheme(DocumentTheme theme) {
-        DocumentTheme defaults = DocumentTheme.defaults();
-        if (theme == null) return defaults;
-        return new DocumentTheme(
-                CvDocumentAssembler.firstPresent(theme.primaryColor(), defaults.primaryColor()),
-                CvDocumentAssembler.firstPresent(theme.accentColor(), defaults.accentColor()),
-                CvDocumentAssembler.firstPresent(theme.fontFamily(), defaults.fontFamily()),
-                CvDocumentAssembler.firstPresent(theme.fontScale(), defaults.fontScale()));
     }
 }

@@ -40,4 +40,22 @@ public record CareerProfileForAi(
         String availability,
         /** User-authored custom sections (e.g. Publications); each item is id-anchored for tailoring. */
         List<StructuredDocumentSection> customSections
-) {}
+) {
+    /**
+     * The payload actually sent to the AI provider: this profile with every item link removed.
+     * The full record is still used server-side to assemble the document, which is where the
+     * links come back.
+     */
+    public CareerProfileForAi withoutLinks() {
+        return new CareerProfileForAi(headline, profile, skills, technologies, languages,
+                spokenLanguages, interests,
+                StructuredDocumentItem.withoutLinks(experience),
+                StructuredDocumentItem.withoutLinks(projects),
+                StructuredDocumentItem.withoutLinks(education),
+                StructuredDocumentItem.withoutLinks(certifications),
+                strengths, proofPoints, targetArchetypes, northStar, narrative, careerStage,
+                skillCategories, availability,
+                customSections == null ? null
+                        : customSections.stream().map(StructuredDocumentSection::withoutLinks).toList());
+    }
+}

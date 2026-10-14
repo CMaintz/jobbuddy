@@ -1,9 +1,22 @@
 package com.autoapplicant.usecase.application;
 
+import static com.autoapplicant.domain.application.ApplicationStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.CreateApplicationCommand;
+import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.usecase.document.StructuredGeneratedDocumentService;
+import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,23 +24,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.autoapplicant.domain.application.ApplicationStatus.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceTest {
 
     @Mock ApplicationRepositoryPort repo;
     @Mock com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort statusEventRepo;
-    @Mock StructuredGeneratedDocumentService structuredGeneratedDocuments;
+    @Mock GeneratedDocumentRepositoryPort generatedDocuments;
 
     ApplicationService service;
 
@@ -37,7 +39,7 @@ class ApplicationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ApplicationService(repo, statusEventRepo, structuredGeneratedDocuments);
+        service = new ApplicationService(repo, statusEventRepo, generatedDocuments);
     }
 
     // ── createApplication ─────────────────────────────────────────────────────
@@ -195,6 +197,62 @@ class ApplicationServiceTest {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    // ── generated document linking ────────────────────────────────────────────
+
+    @Test
+    void attach_links_the_document_to_the_application_and_keeps_its_other_fields() {
+        GeneratedDocument document = generatedDocument();
+        when(repo.findByIdAndUserId(appId, userId))
+                .thenReturn(Optional.of(application(appId, userId, jobId, SAVED, null)));
+        when(generatedDocuments.findByIdAndUserId(document.id(), userId)).thenReturn(Optional.of(document));
+        when(generatedDocuments.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.attachGeneratedDocument(appId, userId, document.id(), null, null, null);
+
+        assertLinkedToApplication(document);
+    }
+
+    @Test
+    void create_links_the_generated_document_to_the_new_application() {
+        GeneratedDocument document = generatedDocument();
+        when(repo.save(any())).thenReturn(application(appId, userId, jobId, SAVED, null));
+        when(generatedDocuments.findByIdAndUserId(document.id(), userId)).thenReturn(Optional.of(document));
+        when(generatedDocuments.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.createApplication(new CreateApplicationCommand(
+                userId, jobId, null, null, document.id(), SAVED, null, null, null, null, null));
+
+        assertLinkedToApplication(document);
+    }
+
+    @Test
+    void attaching_someone_elses_document_fails() {
+        UUID documentId = UUID.randomUUID();
+        when(repo.findByIdAndUserId(appId, userId))
+                .thenReturn(Optional.of(application(appId, userId, jobId, SAVED, null)));
+        when(generatedDocuments.findByIdAndUserId(documentId, userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.attachGeneratedDocument(appId, userId, documentId, null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Generated document not found");
+        verify(generatedDocuments, never()).save(any());
+    }
+
+    private void assertLinkedToApplication(GeneratedDocument original) {
+        ArgumentCaptor<GeneratedDocument> cap = ArgumentCaptor.forClass(GeneratedDocument.class);
+        verify(generatedDocuments).save(cap.capture());
+        assertThat(cap.getValue().applicationId()).isEqualTo(appId);
+        assertThat(cap.getValue()).usingRecursiveComparison().ignoringFields("applicationId").isEqualTo(original);
+    }
+
+    /** Every field set, so a link that drops one shows up in the comparison. */
+    private GeneratedDocument generatedDocument() {
+        return new GeneratedDocument(UUID.randomUUID(), userId, null, jobId, DocumentType.COVER_LETTER,
+                "Dear Acme", "{\"bodyContent\":\"Dear Acme\"}", "application-modern", "DESIGNED",
+                UUID.randomUUID(), UUID.randomUUID(), "gpt-4o", 1234, Instant.parse("2026-01-02T03:04:05Z"));
+    }
 
     private Application application(UUID id, UUID userId, UUID jobId,
                                     ApplicationStatus status, Instant appliedAt) {

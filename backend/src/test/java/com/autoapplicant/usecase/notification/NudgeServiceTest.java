@@ -1,5 +1,9 @@
 package com.autoapplicant.usecase.notification;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.company.OutreachContact;
 import com.autoapplicant.domain.company.OutreachStatus;
 import com.autoapplicant.domain.notification.Nudge;
@@ -8,20 +12,15 @@ import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.company.OutreachContactRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.reminder.FollowUpReminderRepositoryPort;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class NudgeServiceTest {
 
@@ -34,8 +33,9 @@ class NudgeServiceTest {
     private final FollowUpReminderRepositoryPort reminderRepo = Mockito.mock(FollowUpReminderRepositoryPort.class);
     private final OutreachContactRepositoryPort outreachRepo = Mockito.mock(OutreachContactRepositoryPort.class);
 
-    private final NudgeService service = new NudgeService(applicationRepo, jobRepo, reminderRepo,
-            outreachRepo, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
+    private final NudgeService service = new NudgeService(applicationRepo, jobRepo,
+            new DueNudgeFinder(applicationRepo, jobRepo, reminderRepo, outreachRepo, clock), clock);
 
     @BeforeEach
     void setUp() {
