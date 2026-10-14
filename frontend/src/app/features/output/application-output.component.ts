@@ -13,6 +13,7 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
+import { htmlTextContent } from '../../shared/utils/sanitize-html';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -196,9 +197,7 @@ export class ApplicationOutputComponent implements OnInit {
   plainText(): string {
     const content = this.activeDoc()?.content ?? '';
     if (!content.includes('<')) return content;
-    const div = document.createElement('div');
-    div.innerHTML = content.replace(/<\/(p|li|ul|ol)>/g, '</$1>\n');
-    return (div.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim();
+    return htmlTextContent(content.replace(/<\/(p|li|ul|ol)>/g, '</$1>\n')).replace(/\n{3,}/g, '\n\n').trim();
   }
 
   docCountForFormat(key: FormatKey): number {

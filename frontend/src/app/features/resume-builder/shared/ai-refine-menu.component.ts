@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AiApiService } from '../../../core/api/ai.api';
 import { DiffViewerComponent } from '../../../shared/components/diff-viewer/diff-viewer.component';
+import { htmlTextContent } from '../../../shared/utils/sanitize-html';
 import { toHtml } from './rich-text-editor.component';
 
 const SUGGESTIONS = [
@@ -138,8 +139,6 @@ export class AiRefineMenuComponent {
   /** Plain-text view of the field content (also feeds the diff preview). */
   plainContent(): string {
     if (!this.content.includes('<')) return this.content;
-    const div = document.createElement('div');
-    div.innerHTML = this.content.replace(/<\/(p|li)>/g, '</$1>\n');
-    return (div.textContent ?? '').trim();
+    return htmlTextContent(this.content.replace(/<\/(p|li)>/g, '</$1>\n')).trim();
   }
 }
