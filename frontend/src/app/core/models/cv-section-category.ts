@@ -6,7 +6,7 @@ export const CV_SECTION_KEYS = ['profile', 'skills', 'experience', 'projects', '
 export type CvSectionKey = typeof CV_SECTION_KEYS[number];
 
 /** Mirrors the backend's section-key to category mapping; the refine endpoint relies on it. */
-export const CV_SECTION_CATEGORIES: Record<CvSectionKey, PromptCategory> = {
+const CV_SECTION_CATEGORIES: Record<CvSectionKey, PromptCategory> = {
   profile: 'CV_PROFILE',
   skills: 'CV_SKILLS',
   experience: 'CV_EXPERIENCE',
