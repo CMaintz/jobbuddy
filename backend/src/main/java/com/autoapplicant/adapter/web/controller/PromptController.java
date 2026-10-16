@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class PromptController {
     @GetMapping
     public ResponseEntity<List<PromptTemplateResponse>> list() {
         UUID userId = secCtx.getCurrentUserId();
-        var favIds = favourites.getFavouriteIds(userId);
+        Set<UUID> favIds = favourites.getFavouriteIds(userId);
         List<PromptTemplate> templates = getAll.getTemplates(userId);
 
         // Which row is actually in use per category — one lookup per category present, so the UI
@@ -104,7 +105,7 @@ public class PromptController {
     @GetMapping("/public")
     public ResponseEntity<List<PromptTemplateResponse>> browsePublic() {
         UUID userId = secCtx.getCurrentUserId();
-        var favIds = favourites.getFavouriteIds(userId);
+        Set<UUID> favIds = favourites.getFavouriteIds(userId);
         return ResponseEntity.ok(publicPrompts.browsePublic(userId).stream()
                 .map(t -> PromptTemplateResponse.from(t, favIds.contains(t.id())))
                 .toList());
