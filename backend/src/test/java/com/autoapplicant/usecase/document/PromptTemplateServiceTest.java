@@ -64,7 +64,7 @@ class PromptTemplateServiceTest {
     void create_preserves_name_and_user_prompt() {
         PromptTemplate incoming = new PromptTemplate(null, userId, "Cover Letter",
                 PromptCategory.COVER_LETTER, "desc", "system", "Write a cover letter for {job}",
-                "max 300 words", true, null, 1, null, null, false, List.of(), 0, false, false);
+                "max 300 words", true, null, 1, null, null, false, List.of(), 0, false, false, null);
         when(repo.save(any())).thenReturn(incoming);
 
         service.createTemplate(userId, incoming);
@@ -138,12 +138,21 @@ class PromptTemplateServiceTest {
     void duplicate_sets_is_public_to_false() {
         PromptTemplate original = new PromptTemplate(templateId, userId, "Public T",
                 null, null, null, "prompt", null, true, null, 1, null, null, false, List.of(), 0,
-                false, false);
+                false, false, null);
         when(repo.findById(templateId)).thenReturn(Optional.of(original));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         PromptTemplate copy = service.duplicate(templateId, userId, null);
         assertThat(copy.isPublic()).isFalse();
+    }
+
+    @Test
+    void duplicate_does_not_carry_the_app_explainer() {
+        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PromptTemplate copy = service.duplicate(templateId, userId, null);
+        assertThat(copy.explainerKey()).isNull();
     }
 
     @Test
@@ -160,7 +169,7 @@ class PromptTemplateServiceTest {
         UUID anotherUser = UUID.randomUUID();
         PromptTemplate original = new PromptTemplate(templateId, userId, "T",
                 null, null, null, "prompt", null, true, null, 1, null, null, false, List.of(), 0,
-                false, false);
+                false, false, null);
         when(repo.findById(templateId)).thenReturn(Optional.of(original));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -276,12 +285,12 @@ class PromptTemplateServiceTest {
     private PromptTemplate protectedTemplate() {
         return new PromptTemplate(templateId, null, "House prompt", PromptCategory.COVER_LETTER,
                 null, "sys", "usr", null, true, null, 1, null, null, true, List.of(), 0,
-                true, true);
+                true, true, "prompts.explainers.house");
     }
 
     private PromptTemplate categorised(UUID owner, PromptCategory category, boolean isSystem) {
         return new PromptTemplate(templateId, owner, "T", category, null, "sys", "usr", null,
-                false, null, 1, null, null, isSystem, List.of(), 0, isSystem, false);
+                false, null, 1, null, null, isSystem, List.of(), 0, isSystem, false, null);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -289,6 +298,6 @@ class PromptTemplateServiceTest {
     private PromptTemplate template(UUID id, UUID userId, String name, int version) {
         return new PromptTemplate(id, userId, name, null, null, null,
                 "user prompt text", null, false, null, version, null, null, false, List.of(), 0,
-                false, false);
+                false, false, null);
     }
 }

@@ -40,4 +40,6 @@ export interface PromptTemplate {
   usageCount?: number;
   /** Per-user star. */
   favourite?: boolean;
+  /** i18n key of the explanation for an app-shipped template; user templates use description. */
+  explainerKey?: string;
 }

@@ -93,7 +93,7 @@
               <!-- Title -->
               <div class="text-lg font-medium leading-[1.3] tracking-[-0.01em]">{{ p.name }}</div>
               <!-- Body preview -->
-              <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden line-clamp-3">{{ p.description || p.userPrompt }}</div>
+              <div class="text-xs text-jb-text-dim leading-[1.55] overflow-hidden line-clamp-3">{{ p.explainerKey ? (p.explainerKey | translate) : (p.description || p.userPrompt) }}</div>
               <!-- Tags -->
               @if (p.tags?.length) {
                 <div class="flex flex-wrap gap-1">
@@ -160,8 +160,11 @@
                 <jb-tag-input [value]="editTags" (valueChange)="editTags = $event" [placeholder]="'prompts.addTag' | translate" />
               </div>
             } @else {
-              @if (p.description) {
-                <div class="text-sm text-jb-text-mid">{{ p.description }}</div>
+              @if (p.explainerKey || p.description) {
+                <div>
+                  <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.explainerTitle' | translate }}</div>
+                  <app-prompt-explainer [template]="p" />
+                </div>
               }
               <div>
                 <div class="text-2xs text-jb-text-dim tracking-widest uppercase mb-1.5">{{ 'prompts.prompt' | translate }}</div>
