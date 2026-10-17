@@ -1,0 +1,58 @@
+<jb-modal (closed)="closed.emit()">
+  <ng-container jb-modal-header>
+    <div class="text-xl font-medium flex-1">{{ 'prompts.newPrompt' | translate }}</div>
+  </ng-container>
+
+  <div class="grid gap-2.5 grid-cols-[1.6fr_1fr]">
+    <label class="flex flex-col gap-[5px]">
+      <span class="label">{{ 'prompts.name' | translate }}</span>
+      <input [(ngModel)]="name" class="input" [placeholder]="'prompts.namePlaceholder' | translate" />
+    </label>
+    <label class="flex flex-col gap-[5px]">
+      <span class="label">{{ 'prompts.type' | translate }}</span>
+      <select [(ngModel)]="category" class="input">
+        @for (kind of kinds; track kind.key) {
+          <option [ngValue]="kind.key">{{ kind.label | translate }}</option>
+        }
+      </select>
+    </label>
+  </div>
+  <label class="flex flex-col gap-[5px]">
+    <span class="label">{{ 'prompts.descriptionOptional' | translate }}</span>
+    <input [(ngModel)]="description" class="input" [placeholder]="'prompts.descPlaceholder' | translate" />
+  </label>
+  <label class="flex flex-col gap-[5px]">
+    <span class="label">{{ 'prompts.systemPromptOptional' | translate }}</span>
+    <textarea [(ngModel)]="systemPrompt" rows="3" class="input resize-y text-xs leading-relaxed mono"
+      [placeholder]="'prompts.systemPromptPlaceholder' | translate"></textarea>
+    <span class="text-2xs text-jb-text-dim">{{ 'prompts.systemPromptHint' | translate }}</span>
+  </label>
+  <label class="flex flex-col gap-[5px]">
+    <span class="label">{{ 'prompts.prompt' | translate }}</span>
+    <textarea [(ngModel)]="body" rows="7" class="input resize-y text-sm leading-relaxed mono"
+      [placeholder]="'prompts.bodyPlaceholder' | translate"></textarea>
+  </label>
+  <div class="flex flex-col gap-[5px]">
+    <span class="label">{{ 'prompts.tagsOptional' | translate }}</span>
+    <jb-tag-input [value]="tags" (valueChange)="tags = $event" [placeholder]="'prompts.tagsPlaceholder' | translate" />
+  </div>
+  <label class="flex items-start gap-2 text-sm cursor-pointer">
+    <input type="checkbox" [(ngModel)]="isPublic" class="mt-0.5" />
+    <span>
+      {{ 'prompts.shareOnCreate' | translate }}
+      <span class="block text-2xs text-jb-text-dim">{{ 'prompts.shareHint' | translate }}</span>
+    </span>
+  </label>
+  @if (errorKey()) {
+    <div class="text-xs text-jb-danger">{{ errorKey() | translate }}</div>
+  }
+
+  <ng-container jb-modal-footer>
+    <div class="ml-auto flex items-center gap-2">
+      <jb-button small (clicked)="closed.emit()">{{ 'common.cancel' | translate }}</jb-button>
+      <jb-button [primary]="true" icon="check" [disabled]="creating()" (clicked)="create()">
+        {{ (creating() ? 'prompts.creating' : 'prompts.createPrompt') | translate }}
+      </jb-button>
+    </div>
+  </ng-container>
+</jb-modal>

@@ -14,6 +14,9 @@ public class PromptTemplateService implements
         UpdatePromptTemplateUseCase, DeletePromptTemplateUseCase, FavouritePromptTemplateUseCase,
         SelectDefaultPromptUseCase, BrowsePublicPromptsUseCase {
 
+    /** Enough for real variety per kind of prompt, few enough that a picker stays scannable. */
+    static final int MAX_OWN_TEMPLATES_PER_CATEGORY = 10;
+
     private final PromptTemplateRepositoryPort repo;
 
     public PromptTemplateService(PromptTemplateRepositoryPort repo) {
@@ -40,6 +43,7 @@ public class PromptTemplateService implements
 
     @Override
     public PromptTemplate createTemplate(UUID userId, PromptTemplate template) {
+        requireRoomFor(userId, template.category());
         PromptTemplate toSave = new PromptTemplate(null, userId, template.name(),
                 template.category(), template.description(), template.systemPrompt(),
                 template.userPrompt(), template.outputConstraints(), template.isPublic(),
@@ -65,6 +69,9 @@ public class PromptTemplateService implements
     @Override
     public PromptTemplate updateTemplate(UUID templateId, UUID userId, boolean isAdmin, PromptTemplate changes) {
         PromptTemplate existing = requireModifiable(templateId, userId, isAdmin);
+        if (existing.userId() != null && changes.category() != existing.category()) {
+            requireRoomFor(existing.userId(), changes.category());
+        }
         PromptTemplate toSave = new PromptTemplate(existing.id(), existing.userId(),
                 changes.name(), changes.category(), changes.description(),
                 changes.systemPrompt(), changes.userPrompt(), changes.outputConstraints(),
@@ -79,6 +86,14 @@ public class PromptTemplateService implements
     public void deleteTemplate(UUID templateId, UUID userId, boolean isAdmin) {
         requireModifiable(templateId, userId, isAdmin);
         repo.deleteById(templateId);
+    }
+
+    private void requireRoomFor(UUID userId, PromptCategory category) {
+        String key = category != null ? category.name() : null;
+        if (repo.countOwned(userId, key) >= MAX_OWN_TEMPLATES_PER_CATEGORY) {
+            throw new IllegalStateException("You already have " + MAX_OWN_TEMPLATES_PER_CATEGORY
+                    + " prompts of this type. Delete one to make room.");
+        }
     }
 
     /**
@@ -136,6 +151,7 @@ public class PromptTemplateService implements
         PromptTemplate original = repo.findById(templateId)
                 .filter(t -> t.isVisibleTo(userId))
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
+        requireRoomFor(userId, original.category());
         // The copy drops the app's explainer: it explains the original's wording, and the copy
         // exists to be edited away from it. The owner's description explains it from here on.
         PromptTemplate copy = new PromptTemplate(null, userId,

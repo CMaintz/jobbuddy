@@ -12,24 +12,17 @@ import { PromptExplainerComponent } from '../../shared/components/prompt-explain
 import { PromptApiService } from '../../core/api/prompt.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { PromptTemplate, PromptCategory } from '../../core/models/prompt-template.model';
+import { PROMPT_KINDS, saveErrorKey } from './prompt-kinds';
+import { PromptCreateModalComponent } from './prompt-create-modal.component';
 
 import { NotifyService } from '../../shared/services/notify.service';
-const PROMPT_KINDS: { key: PromptCategory; label: string; icon: string; color: string }[] = [
-  { key: 'APPLICATION', label: 'prompts.kind.application', icon: 'layers', color: 'var(--jb-accent)' },
-  { key: 'COVER_LETTER', label: 'prompts.kind.coverLetter', icon: 'doc', color: 'var(--jb-info)' },
-  { key: 'UNSOLICITED_APPLICATION', label: 'prompts.kind.unsolicited', icon: 'compass', color: '#f2c97d' },
-  { key: 'RECRUITER_MESSAGE', label: 'prompts.kind.recruiterEmail', icon: 'mail', color: '#7df2a8' },
-  { key: 'FOLLOW_UP_MESSAGE', label: 'prompts.kind.followUp', icon: 'clock', color: '#7dd3f2' },
-  { key: 'CV_TAILORING', label: 'prompts.kind.tailoredCv', icon: 'doc', color: 'var(--jb-violet)' },
-  { key: 'CV_ANALYSIS', label: 'prompts.kind.cvAnalysis', icon: 'doc', color: 'var(--jb-text-dim)' },
-  { key: 'GENERAL', label: 'prompts.kind.general', icon: 'lightbulb', color: 'var(--jb-text-dim)' },
-];
 
 @Component({
   selector: 'app-prompts-library',
   imports: [
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, TagInputComponent, JbModalComponent, PromptExplainerComponent,
+    PromptCreateModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './prompts-library.component.html'
@@ -45,7 +38,6 @@ export class PromptsLibraryComponent implements OnInit {
   activeKind = signal<'all' | PromptCategory>('all');
   openPrompt = signal<PromptTemplate | null>(null);
   showCreate = signal(false);
-  creating = signal(false);
   editing = signal(false);
   savingEdit = signal(false);
   promptKinds = PROMPT_KINDS;
@@ -59,18 +51,12 @@ export class PromptsLibraryComponent implements OnInit {
   private myUserId = '';
   private isAdmin = false;
 
-  // Create form
-  newName = '';
-  newCategory: PromptCategory = 'APPLICATION';
-  newDescription = '';
-  newBody = '';
-  newTags: string[] = [];
-
   // Edit form (populated when editing an existing template)
   editName = '';
   editCategory: PromptCategory = 'APPLICATION';
   editDescription = '';
   editBody = '';
+  editSystem = '';
   editTags: string[] = [];
 
   ngOnInit(): void {
@@ -125,6 +111,7 @@ export class PromptsLibraryComponent implements OnInit {
     this.editCategory = p.category ?? 'GENERAL';
     this.editDescription = p.description ?? '';
     this.editBody = p.userPrompt;
+    this.editSystem = p.systemPrompt ?? '';
     this.editTags = [...(p.tags ?? [])];
     this.editing.set(true);
   }
@@ -136,7 +123,7 @@ export class PromptsLibraryComponent implements OnInit {
       name: this.editName.trim(),
       category: this.editCategory,
       description: this.editDescription.trim() || undefined,
-      systemPrompt: p.systemPrompt,
+      systemPrompt: this.editSystem.trim() || undefined,
       userPrompt: this.editBody.trim(),
       outputConstraints: p.outputConstraints,
       isPublic: p.isPublic,
@@ -151,7 +138,8 @@ export class PromptsLibraryComponent implements OnInit {
       },
       error: err => {
         this.savingEdit.set(false);
-        this.notify.error(err?.status === 403 ? 'prompts.toast.adminOnlyEdit' : 'prompts.toast.updateFailed');
+        this.notify.error(err?.status === 403
+          ? 'prompts.toast.adminOnlyEdit' : saveErrorKey(err, 'prompts.toast.updateFailed'));
       }
     });
   }
@@ -266,35 +254,13 @@ export class PromptsLibraryComponent implements OnInit {
         this.notify.success('prompts.toast.duplicated');
         this.load();
       },
-      error: () => this.notify.error('prompts.toast.duplicateFailed')
+      error: err => this.notify.error(saveErrorKey(err, 'prompts.toast.duplicateFailed'))
     });
   }
 
-  create(): void {
-    if (!this.newName.trim() || !this.newBody.trim() || this.creating()) return;
-    this.creating.set(true);
-    this.promptApi.create({
-      name: this.newName.trim(),
-      category: this.newCategory,
-      description: this.newDescription.trim() || undefined,
-      userPrompt: this.newBody.trim(),
-      isPublic: false,
-      tags: this.newTags,
-    }).subscribe({
-      next: () => {
-        this.creating.set(false);
-        this.showCreate.set(false);
-        this.newName = '';
-        this.newDescription = '';
-        this.newBody = '';
-        this.newTags = [];
-        this.notify.success('prompts.toast.created');
-        this.load();
-      },
-      error: () => {
-        this.creating.set(false);
-        this.notify.error('prompts.toast.createFailed');
-      }
-    });
+  onCreated(): void {
+    this.showCreate.set(false);
+    this.notify.success('prompts.toast.created');
+    this.load();
   }
 }

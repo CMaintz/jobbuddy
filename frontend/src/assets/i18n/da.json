@@ -1132,7 +1132,8 @@
       "shared": "Prompt delt",
       "unshared": "Prompten er privat igen",
       "shareFailed": "Kunne ikke ændre deling — prøv igen",
-      "sharedLoadFailed": "Kunne ikke hente delte prompts"
+      "sharedLoadFailed": "Kunne ikke hente delte prompts",
+      "limitReached": "Du har allerede 10 prompts af denne type. Slet en for at gøre plads."
     },
     "protected": "Følger med appen",
     "protectedHint": "Denne prompt følger med appen. Lav en kopi, hvis du vil rette i den.",
@@ -1176,7 +1177,11 @@
       "recruiterLinkedIn": "En kort, personlig LinkedIn-besked (maks. 120 ord) til en rekrutterer eller ansættende leder: en specifik indledning, én sætning om hvorfor du passer, og en klar forespørgsel. Et alsidigt valg, når du ikke har brug for en dansk tone.",
       "unsolicitedDanishMarket": "Standarden for uopfordrede ansøgninger på dansk. Skrevet som et forslag, ikke en bøn: åbn med en opgave eller et problem, du kan tage fra læserens bord, bevis det med én ting du har gjort, og foreslå en kort samtale.",
       "unsolicitedDanishMarketEnglish": "Den uopfordrede ansøgning skrevet på engelsk, med samme tilgang: et konkret forslag, ét bevis og et foreslået næste skridt. Brug den til danske virksomheder, der arbejder på engelsk."
-    }
+    },
+    "systemPromptOptional": "Systemprompt (valgfri)",
+    "systemPromptPlaceholder": "Hvem AI'en skal være, fx \"Du er en dansk rekrutterer, der har læst tusind ansøgninger...\"",
+    "systemPromptHint": "Lad feltet stå tomt for at bruge appens egen persona. Appens regler for privatliv, ærlighed og output tilføjes altid efter den.",
+    "shareOnCreate": "Del med andre brugere"
   },
   "interviews": {
     "inStages": "{{count}} i samtalefaser",
