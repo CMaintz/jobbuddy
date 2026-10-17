@@ -45,7 +45,8 @@ public class PromptTemplateService implements
     public PromptTemplate createTemplate(UUID userId, PromptTemplate template) {
         requireRoomFor(userId, template.category());
         PromptTemplate toSave = new PromptTemplate(null, userId, template.name(),
-                template.category(), template.description(), template.systemPrompt(),
+                template.category(), template.description(),
+                personaFor(template.category(), template.systemPrompt()),
                 template.userPrompt(), template.outputConstraints(), template.isPublic(),
                 template.parentTemplateId(), 1, null, null, false,
                 template.tags() != null ? template.tags() : List.of(), 0, false, false, null);
@@ -74,7 +75,8 @@ public class PromptTemplateService implements
         }
         PromptTemplate toSave = new PromptTemplate(existing.id(), existing.userId(),
                 changes.name(), changes.category(), changes.description(),
-                changes.systemPrompt(), changes.userPrompt(), changes.outputConstraints(),
+                personaFor(changes.category(), changes.systemPrompt()), changes.userPrompt(),
+                changes.outputConstraints(),
                 changes.isPublic(), existing.parentTemplateId(),
                 existing.versionNumber() + 1, existing.createdAt(), null, existing.isSystem(),
                 changes.tags() != null ? changes.tags() : existing.tags(), existing.usageCount(),
@@ -86,6 +88,14 @@ public class PromptTemplateService implements
     public void deleteTemplate(UUID templateId, UUID userId, boolean isAdmin) {
         requireModifiable(templateId, userId, isAdmin);
         repo.deleteById(templateId);
+    }
+
+    /**
+     * A section template is applied under the CV persona, never as one, so a system prompt sent
+     * with it would be stored but silently ignored. Drop it instead of keeping dead text.
+     */
+    private static String personaFor(PromptCategory category, String systemPrompt) {
+        return category != null && category.isCvSection() ? null : systemPrompt;
     }
 
     private void requireRoomFor(UUID userId, PromptCategory category) {

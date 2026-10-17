@@ -540,7 +540,9 @@
         "tighten": "Stram op",
         "impact": "Mere effekt",
         "grammar": "Ret grammatik"
-      }
+      },
+      "writingStyle": "Skrivestil",
+      "explainStyle": "Hvad gør denne stil?"
     },
     "crop": {
       "title": "Beskær foto — træk for at flytte, skub for at zoome",
@@ -1111,7 +1113,13 @@
       "cvAnalysis": "CV-analyse",
       "general": "Generel",
       "unsolicited": "Uopfordret",
-      "followUp": "Opfølgning"
+      "followUp": "Opfølgning",
+      "cvProfile": "CV-profil",
+      "cvSkills": "CV-kompetencer",
+      "cvExperience": "CV-erfaring",
+      "cvProjects": "CV-projekter",
+      "cvEducation": "CV-uddannelse",
+      "cvCertifications": "CV-certificeringer"
     },
     "toast": {
       "updated": "Prompt opdateret",
@@ -1176,12 +1184,22 @@
       "recruiterConcrete": "En skarp opsøgende besked: en konkret indledning, tre resultater med tal koblet til opslaget og et tilbud om en snak på 15 minutter. Virker bedst, når din profil har stærke tal, og modtageren er vant til direkte henvendelser på LinkedIn.",
       "recruiterLinkedIn": "En kort, personlig LinkedIn-besked (maks. 120 ord) til en rekrutterer eller ansættende leder: en specifik indledning, én sætning om hvorfor du passer, og en klar forespørgsel. Et alsidigt valg, når du ikke har brug for en dansk tone.",
       "unsolicitedDanishMarket": "Standarden for uopfordrede ansøgninger på dansk. Skrevet som et forslag, ikke en bøn: åbn med en opgave eller et problem, du kan tage fra læserens bord, bevis det med én ting du har gjort, og foreslå en kort samtale.",
-      "unsolicitedDanishMarketEnglish": "Den uopfordrede ansøgning skrevet på engelsk, med samme tilgang: et konkret forslag, ét bevis og et foreslået næste skridt. Brug den til danske virksomheder, der arbejder på engelsk."
+      "unsolicitedDanishMarketEnglish": "Den uopfordrede ansøgning skrevet på engelsk, med samme tilgang: et konkret forslag, ét bevis og et foreslået næste skridt. Brug den til danske virksomheder, der arbejder på engelsk.",
+      "sectionProfile": "Den korte tekst øverst i dit CV, skrevet om til hvert opslag: hvad du er, hvad du er stærkest til, og hvor du er på vej hen, på 3-5 linjer. Danske arbejdsgivere læser den først og forventer, at den handler om netop dette job, ikke om dig generelt.",
+      "sectionSkills": "Udvælger de kompetencer, opslaget efterspørger, og som din profil kan dokumentere, de mest relevante først og stavet som i opslaget, så rekrutteringssystemer (ATS) finder dem. Bløde kompetencer udelades her; din erfaring skal vise dem i stedet.",
+      "sectionExperience": "Standarden for din erfaring: 3-5 korte punkter pr. nylig stilling, der hver siger, hvad du gjorde, og hvad der ændrede sig, aldrig bare hvad du havde ansvar for. Der bruges kun tal, når de står i din profil; ellers bærer omfang eller en før-og-efter-forandring punktet.",
+      "sectionExperienceStar": "STAR står for Situation, Task (opgave), Action (handling) og Result (resultat). Den er bedst kendt fra jobsamtaler ('fortæl om en gang, hvor...'), hvor man fortæller hele historien. I et CV presses den ned på én linje: lidt kontekst, hvad du gjorde, og hvad der kom ud af det.\n\nEksempel: Du overtog en udokumenteret onboardingproces (situation) og skulle gøre den kortere (opgave), så du skrev en guide og oplærte fire teamledere (handling), og opstarten for nye medarbejdere gik fra to uger til tre dage (resultat). I CV'et: \"Skrev en onboardingguide og oplærte fire teamledere efter at have overtaget en udokumenteret proces, så opstarten for nye medarbejdere faldt fra to uger til tre dage.\"\n\nVælg STAR, hvis du er studerende, nyuddannet eller skifter karriere, når et par ords kontekst hjælper læseren med at se, hvorfor din indsats betød noget.",
+      "sectionExperienceXyz": "X-Y-Z-formlen fra Googles tidligere HR-chef Laszlo Bock: \"Opnåede [X], målt ved [Y], ved at gøre [Z]\". Resultatet kommer først, så tallet der beviser det, og til sidst hvordan du gjorde det.\n\nEksempel: \"Fik nedsat den gennemsnitlige sagsbehandlingstid fra 3 til 1 måned ved at indføre en fælles visitationstavle.\"\n\nVælg X-Y-Z, når din profil har rigtige tal (penge, tid, mængde, vækst). Det er den mest kompakte af de tre og fungerer godt for rekrutterere, der skimmer hurtigt. Uden tal bruger den konkret omfang i stedet; den finder aldrig på tal.",
+      "sectionExperienceCar": "CAR står for Challenge (udfordring), Action (handling) og Result (resultat). Den nævner den forhindring, du stod over for, så læseren kan se, hvorfor resultatet tæller.\n\nEksempel: \"Øgede salget med 30 % på et faldende marked ved at indføre lean-procesforbedringer.\" Det faldende marked er udfordringen.\n\nVælg CAR til turnarounds og problemløsning, til stillinger i det offentlige og i sundhedssektoren, hvor resultater sjældent måles i kroner, eller når du skifter karriere, hvor udfordringen forklarer, hvad du kan tage med dig.",
+      "sectionProjects": "Hvert projekt får en linje om, hvad det er, og hvad din rolle var, og derefter et par punkter om, hvad du byggede eller gjorde, og hvad der kom ud af det. Der står kun, at du byggede noget, når din profil siger det. Studie- og fritidsprojekter tæller, hvilket betyder mest tidligt i karrieren.",
+      "sectionEducation": "Holder uddannelse saglig: grad, institution og datoer, plus speciale, fordybelse eller karakter kun når det er relevant for dette opslag. Kort for erfarne kandidater, mere plads til studerende og nyuddannede.",
+      "sectionCertifications": "Viser certificeringer med navn, udsteder og år, med dem opslaget efterspørger først. Urelaterede, udløbne certificeringer udelades."
     },
     "systemPromptOptional": "Systemprompt (valgfri)",
     "systemPromptPlaceholder": "Hvem AI'en skal være, fx \"Du er en dansk rekrutterer, der har læst tusind ansøgninger...\"",
     "systemPromptHint": "Lad feltet stå tomt for at bruge appens egen persona. Appens regler for privatliv, ærlighed og output tilføjes altid efter den.",
-    "shareOnCreate": "Del med andre brugere"
+    "shareOnCreate": "Del med andre brugere",
+    "sectionPromptHint": "Prompts til CV-sektioner har ingen systemprompt. Skriv retningslinjerne for sektionen i prompten nedenfor."
   },
   "interviews": {
     "inStages": "{{count}} i samtalefaser",
@@ -1655,13 +1673,11 @@
       "cvTemplateDefault": "Systemstandard"
     },
     "sectionPrompts": {
-      "heading": "Sektionsinstruktioner",
-      "intro": "Stående retningslinjer for, hvordan hver CV-sektion skal skrives. Anvendes hver gang et CV tilpasses, og når du forfiner et felt — aldrig en tilladelse til at opfinde, altid underordnet ærlighedsreglerne.",
-      "placeholder": "f.eks. Start med målbar effekt; hold det til tre linjer.",
-      "save": "Gem instruktioner",
+      "heading": "Prompts til CV-sektioner",
+      "intro": "Vælg, hvordan hver CV-sektion skal skrives. Den valgte prompt bruges hver gang et CV tilpasses, og når du finpudser et felt, og den går aldrig forud for ærlighedsreglerne.",
       "saving": "Gemmer…",
       "saved": "Gemt",
-      "loadFailed": "Kunne ikke indlæse dine instruktioner — åbn Indstillinger igen for at prøve igen.",
+      "loadFailed": "Kunne ikke indlæse dine sektionsprompts. Åbn Indstillinger igen for at prøve igen.",
       "field": {
         "profile": "Profil",
         "competencies": "Kompetencer",
@@ -1669,7 +1685,10 @@
         "projects": "Projekter",
         "education": "Uddannelse",
         "certifications": "Certificeringer"
-      }
+      },
+      "saveFailed": "Kunne ikke gemme. Prøv igen.",
+      "browseLibrary": "Se eller opret flere i promptbiblioteket",
+      "appDefaultOption": "{{name}} (appens standard)"
     },
     "style": {
       "analyze": "Analysér min skrivning",

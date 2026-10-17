@@ -21,12 +21,16 @@
     <span class="label">{{ 'prompts.descriptionOptional' | translate }}</span>
     <input [(ngModel)]="description" class="input" [placeholder]="'prompts.descPlaceholder' | translate" />
   </label>
-  <label class="flex flex-col gap-[5px]">
-    <span class="label">{{ 'prompts.systemPromptOptional' | translate }}</span>
-    <textarea [(ngModel)]="systemPrompt" rows="3" class="input resize-y text-xs leading-relaxed mono"
-      [placeholder]="'prompts.systemPromptPlaceholder' | translate"></textarea>
-    <span class="text-2xs text-jb-text-dim">{{ 'prompts.systemPromptHint' | translate }}</span>
-  </label>
+  @if (isSectionCategory(category)) {
+    <span class="text-2xs text-jb-text-dim">{{ 'prompts.sectionPromptHint' | translate }}</span>
+  } @else {
+    <label class="flex flex-col gap-[5px]">
+      <span class="label">{{ 'prompts.systemPromptOptional' | translate }}</span>
+      <textarea [(ngModel)]="systemPrompt" rows="3" class="input resize-y text-xs leading-relaxed mono"
+        [placeholder]="'prompts.systemPromptPlaceholder' | translate"></textarea>
+      <span class="text-2xs text-jb-text-dim">{{ 'prompts.systemPromptHint' | translate }}</span>
+    </label>
+  }
   <label class="flex flex-col gap-[5px]">
     <span class="label">{{ 'prompts.prompt' | translate }}</span>
     <textarea [(ngModel)]="body" rows="7" class="input resize-y text-sm leading-relaxed mono"

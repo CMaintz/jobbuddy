@@ -1,26 +1,21 @@
 package com.autoapplicant.domain.document;
 
-import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 
 /**
- * A user's standing per-section instructions for CV tailoring — "how I want my profile /
- * competencies / experience written". One per user; injected into the tailoring prompt beside each
- * section, and reused by the per-field refine. Distinct from {@link WritingProfile}, which is an
- * analysed style fingerprint the app recomputes; these are authored by the user and never overwritten.
+ * The per-section writing instructions for one CV generation: the body of whichever section
+ * template the user has chosen for each section. Distinct from {@link WritingProfile}, which is an
+ * analysed style fingerprint; these are prompts the user picked or wrote.
  */
-public record CvSectionPrompts(UUID id, UUID userId, Map<CvSection, String> prompts, Instant updatedAt) {
+public record CvSectionPrompts(Map<CvSection, String> prompts) {
+
+    public static final CvSectionPrompts EMPTY = new CvSectionPrompts(Map.of());
 
     public CvSectionPrompts {
         prompts = prompts == null ? Map.of() : Map.copyOf(prompts);
     }
 
-    public static CvSectionPrompts empty(UUID userId) {
-        return new CvSectionPrompts(null, userId, Map.of(), null);
-    }
-
-    /** The user's instruction for one section, or null when they set none. */
+    /** The instruction for one section, or null when none applies. */
     public String forSection(CvSection section) {
         return prompts.get(section);
     }

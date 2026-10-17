@@ -10,7 +10,7 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { Application } from '../../core/models/application.model';
-import { PromptTemplate } from '../../core/models/prompt-template.model';
+import { PromptTemplate, byPreference } from '../../core/models/prompt-template.model';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 import { ResumeDraftApiService } from '../resume-builder/services/resume-draft-api.service';
 import { structuredDocToResumeData, structuredDocToLayout } from '../resume-builder/services/structured-doc-mapper';
@@ -80,7 +80,7 @@ export class TailoredCvComponent implements OnInit {
 
     this.promptApi.getAll().subscribe({
       next: templates => this.promptTemplates = templates.filter(t =>
-        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING'),
+        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference),
       error: this.notify.onError('notify.loadFailed')
     });
 

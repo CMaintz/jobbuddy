@@ -6,6 +6,7 @@ import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.comp
 import { TagInputComponent } from '../../shared/components/tag-input/tag-input.component';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { PromptCategory } from '../../core/models/prompt-template.model';
+import { isSectionCategory } from '../../core/models/cv-section-category';
 import { PromptKind, saveErrorKey } from './prompt-kinds';
 
 /** The "new prompt" form. Owns its draft so the library only hears about a finished prompt. */
@@ -34,6 +35,8 @@ export class PromptCreateModalComponent {
   isPublic = false;
   tags: string[] = [];
 
+  readonly isSectionCategory = isSectionCategory;
+
   create(): void {
     if (!this.name.trim() || !this.body.trim() || this.creating()) return;
     this.creating.set(true);
@@ -42,7 +45,7 @@ export class PromptCreateModalComponent {
       name: this.name.trim(),
       category: this.category,
       description: this.description.trim() || undefined,
-      systemPrompt: this.systemPrompt.trim() || undefined,
+      systemPrompt: isSectionCategory(this.category) ? undefined : this.systemPrompt.trim() || undefined,
       userPrompt: this.body.trim(),
       isPublic: this.isPublic,
       tags: this.tags,

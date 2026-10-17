@@ -39,8 +39,10 @@ export interface RefineRequest {
   userMessage: string;
   jobDescription?: string;
   targetLanguage?: string;
-  /** The CV section being refined (e.g. 'profile', 'experience'); applies its saved prompt. */
+  /** The CV section being refined (e.g. 'profile', 'experience'); applies its section template. */
   sectionKey?: string;
+  /** A template of that section's category to follow instead of the user's default for it. */
+  promptTemplateId?: string;
 }
 
 export interface RefineResponse {

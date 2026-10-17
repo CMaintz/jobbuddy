@@ -7,7 +7,7 @@ import { AiApiService } from '../../../../core/api/ai.api';
 import { JobsApiService } from '../../../../core/api/jobs.api';
 import { PromptApiService } from '../../../../core/api/prompt.api';
 import { AtsReport, StructuredDocument } from '../../../../core/models/structured-document.model';
-import { PromptTemplate } from '../../../../core/models/prompt-template.model';
+import { PromptTemplate, byPreference } from '../../../../core/models/prompt-template.model';
 import { ResumeData } from '../../models/resume-builder.models';
 import { JbIconComponent } from '../../../../shared/components/jb-icon/jb-icon.component';
 import { DiffViewerComponent } from '../../../../shared/components/diff-viewer/diff-viewer.component';
@@ -63,7 +63,7 @@ export class AiTailorFormComponent implements OnInit {
     this.loadAtsReport();
     this.promptApi.getAll().subscribe({
       next: templates => this.promptTemplates = templates.filter(t =>
-        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING'),
+        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference),
       error: this.notify.onError('notify.loadFailed')
     });
   }
