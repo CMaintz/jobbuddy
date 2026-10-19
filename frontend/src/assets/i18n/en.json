@@ -540,7 +540,9 @@
         "tighten": "Tighten",
         "impact": "More impact",
         "grammar": "Fix grammar"
-      }
+      },
+      "writingStyle": "Writing style",
+      "explainStyle": "What does this style do?"
     },
     "crop": {
       "title": "Crop photo — drag to move, slide to zoom",
@@ -1111,7 +1113,13 @@
       "cvAnalysis": "CV analysis",
       "general": "General",
       "unsolicited": "Unsolicited",
-      "followUp": "Follow-up"
+      "followUp": "Follow-up",
+      "cvProfile": "CV profile",
+      "cvSkills": "CV skills",
+      "cvExperience": "CV experience",
+      "cvProjects": "CV projects",
+      "cvEducation": "CV education",
+      "cvCertifications": "CV certifications"
     },
     "toast": {
       "updated": "Prompt updated",
@@ -1132,7 +1140,8 @@
       "shared": "Prompt shared",
       "unshared": "Prompt is private again",
       "shareFailed": "Could not change sharing — try again",
-      "sharedLoadFailed": "Could not load shared prompts"
+      "sharedLoadFailed": "Could not load shared prompts",
+      "limitReached": "You already have 10 prompts of this type. Delete one to make room."
     },
     "protected": "Ships with the app",
     "protectedHint": "This prompt ships with the app. Duplicate it to make a version you can edit.",
@@ -1148,7 +1157,49 @@
     "unshare": "Stop sharing",
     "shareHint": "Sharing makes this prompt's full text readable by other users. Only share prompts that contain nothing personal.",
     "sharedEmptyTitle": "Nothing shared yet",
-    "sharedEmptyDesc": "Prompts other people choose to share will show up here. Duplicate one to get your own editable copy."
+    "sharedEmptyDesc": "Prompts other people choose to share will show up here. Duplicate one to get your own editable copy.",
+    "explainerTitle": "About this prompt",
+    "explainers": {
+      "applicationTextStandard": "The app's built-in voice for application texts: personal but professional, focused on concrete results, with soft skills shown through what you did rather than listed. A safe starting point when you have no strong preference.",
+      "applicationTextFormField": "For the free-text box in an online application form. Max 200 words, no headings: who you are, one concrete example that proves it, why this workplace, and a calm close. Pick it when space is tight and you want to prove one thing well.",
+      "applicationTextCompact": "A compact form-field text (max 200 words) with a fixed four-step structure ending in an invitation to talk. Slightly more conventional than the form-field prompt; good when the form asks for motivation as well as experience.",
+      "cvPlaintextTailoredEn": "An older plain-text CV prompt in English: groups technical skills by subcategory, gives spoken languages their own section and weaves soft skills into the experience text. Mainly useful as a reference when writing your own CV prompt.",
+      "cvPlaintextTailoredDa": "The Danish version of the plain-text CV prompt: technical skills grouped by subcategory, spoken languages as their own section, soft skills shown in the descriptions. Mainly useful as a reference when writing your own CV prompt.",
+      "cvPlaintextAngled": "A short, general plain-text CV prompt: reorder for relevance, use the posting's keywords, quantify where the facts allow. Mainly useful as a minimal starting point for your own CV prompt.",
+      "coverLetterDanishMarket": "The default for Danish cover letters. Written as a Danish employer reads: short, plain Danish, informal 'du', one example thought through instead of three mentioned, and numbers only when your profile has them. Pick this unless you have a reason not to.",
+      "coverLetterDanishClassic": "A more traditional Danish cover letter: a catchy opening, 2-3 experiences mapped to the main requirements and a clear call to action, under 350 words. Pick it for more formal employers or when you want a conventional structure.",
+      "coverLetterDanishMarketEnglish": "The Danish-market cover letter written in English. Use it when a Danish employer posts in English: the language changes, but the expectations of a short, plain, documented letter do not.",
+      "coverLetterEnglishClassic": "A classic English cover letter for international employers: a hook, 2-3 experiences mapped to the key requirements, measurable results and a clear close, under 350 words. Less suited to Danish employers, who read enthusiasm and superlatives as noise.",
+      "cvAnalysis": "Compares your CV with a posting and returns a match score, missing keywords, strengths, gaps and your top three improvements. Use it before tailoring to see where the CV falls short.",
+      "cvTailoringDanishMarket": "The default for tailored CVs. Follows Danish conventions: short and factual, a profile text written for this posting, each role led by what you owned and what changed. Selects and rewrites from your master profile only; nothing is invented.",
+      "cvTailoringAts": "Tailoring with extra weight on applicant tracking systems: strong action verbs, keyword coverage and quantified outcomes where your data supports them. Pick it for large companies or international postings that are likely screened by software first.",
+      "cvTailoringMinimal": "The most neutral tailoring prompt: select and rewrite to fit the posting, keep every fact, nothing else. Pick it when you want your own section prompts and wording to do most of the steering.",
+      "followUpDanishMarket": "The default follow-up in Danish: 3-5 sentences that say what you sent and when, add one thing of value if there is one, and ask plainly for news. No apologies for writing; following up is normal in Denmark.",
+      "followUpDanishMarketEnglish": "The Danish-market follow-up written in English: brief, direct, no apology and no fresh sales pitch. Use it when the original application was in English.",
+      "coldContactQuestions": "A short email sent before you apply, built around three specific questions about the role. It shows you read the posting and helps you decide whether a full application is worth it. Fits the Danish habit of calling or writing before applying.",
+      "followUpAfterApplication": "A polite, warm follow-up of at most 80 words, 1-2 weeks after applying: names the position, gives one reason you are still interested and asks about the status.",
+      "followUpResurface": "A follow-up that adds something instead of only asking for status: one relevant project, write-up or certification from your profile, plus your availability. Pick it when you have something new to show since you applied.",
+      "interviewPrepStar": "An interview prep sheet: three likely questions from the posting, each answered in STAR form (Situation, Task, Action, Result) from your real profile, short enough to say in about a minute. STAR is the standard way to answer 'tell me about a time when...' questions.",
+      "recruiterDanishMarket": "The default recruiter message in Danish: under 130 words, why you are writing, two lines on your most relevant result and a low-key next step. No pleasantries or superlatives; Danish readers respond to the concrete.",
+      "recruiterConcrete": "A punchy outreach message: a concrete opener, three quantified results mapped to the posting and an offer of a 15-minute chat. Works best when your profile has strong numbers and the recipient is used to direct LinkedIn outreach.",
+      "recruiterLinkedIn": "A brief personal LinkedIn message (max 120 words) to a recruiter or hiring manager: a specific opener, one sentence on why you fit and a clear ask. A general-purpose choice when you do not need a Danish-market tone.",
+      "unsolicitedDanishMarket": "The default for unsolicited applications in Danish. Written as a proposal, not a request: open with a task or problem you could take off the reader's hands, prove it with one thing you have done, and close by suggesting a short conversation.",
+      "unsolicitedDanishMarketEnglish": "The unsolicited application written in English, with the same approach: a concrete proposal, one piece of evidence and a suggested next step. Use it for Danish companies that work in English.",
+      "sectionProfile": "The short text at the top of your CV, rewritten for each posting: what you are, what you are strongest at and where you are heading, in 3-5 lines. Danish employers read it first and expect it to be about this job, not a general bio.",
+      "sectionSkills": "Picks the skills this posting asks for that your profile can back, most relevant first and in the posting's own spelling, so applicant tracking systems find them. Soft skills are left out here; your experience should show them instead.",
+      "sectionExperience": "The default for your experience: 3-5 short bullets per recent role, each saying what you did and what changed, never just what you were responsible for. Numbers are used only when your profile has them; otherwise scope or a before-and-after change carries the bullet.",
+      "sectionExperienceStar": "STAR stands for Situation, Task, Action, Result. It is best known from job interviews ('tell me about a time when...'), where you tell the whole story. On a CV it is squeezed into one line: a short bit of context, what you did and what came of it.\n\nExample: you took over an undocumented onboarding process (situation) and were asked to shorten it (task), so you wrote a guide and trained four team leads (action), and new-hire setup went from two weeks to three days (result). On the CV: \"Wrote an onboarding guide and trained four team leads after taking over an undocumented process, cutting new-hire setup from two weeks to three days.\"\n\nPick STAR if you are a student, a new graduate or changing careers, when a few words of context help the reader see why your action mattered.",
+      "sectionExperienceXyz": "Google's X-Y-Z formula, from Google's former head of people Laszlo Bock: \"Accomplished [X] as measured by [Y], by doing [Z]\". The result comes first, then the number that proves it, then how you did it.\n\nExample: \"Cut average case handling time from 3 to 1 month by introducing a shared triage board.\"\n\nPick X-Y-Z when your profile has real numbers (money, time, volume, growth). It is the densest of the three and reads well to recruiters scanning quickly. Without numbers it falls back to concrete scope; it never makes figures up.",
+      "sectionExperienceCar": "CAR stands for Challenge, Action, Result. It names the obstacle you were up against, so the reader can see why the result counts.\n\nExample: \"Grew sales 30% in a declining market by introducing lean process improvement.\" The declining market is the challenge.\n\nPick CAR for turnarounds and problem-solving work, public sector and healthcare roles where results are rarely in money, or when changing careers, where the challenge explains what you can bring with you.",
+      "sectionProjects": "Each project gets a line on what it is and your part in it, then a few bullets on what you built or did and what came of it. Only claims you built something when your profile says so. Academic and personal projects count, which matters most early in a career.",
+      "sectionEducation": "Keeps education factual: degree, institution and dates, plus a thesis topic, specialisation or grade only when it helps this posting. Brief for experienced candidates, more room for students and new graduates.",
+      "sectionCertifications": "Lists certifications by name, issuer and year, with the ones the posting asks for first. Unrelated, expired ones are dropped."
+    },
+    "systemPromptOptional": "System prompt (optional)",
+    "systemPromptPlaceholder": "Who the AI should be, e.g. \"You are a Danish recruiter who has read a thousand applications...\"",
+    "systemPromptHint": "Leave empty to keep the app's own persona. The app's privacy, honesty and output rules are always added after it.",
+    "shareOnCreate": "Share with other users",
+    "sectionPromptHint": "CV section prompts have no system prompt. Write the guidance for the section in the prompt below."
   },
   "interviews": {
     "inStages": "{{count}} in interview stages",
@@ -1622,13 +1673,11 @@
       "cvTemplateDefault": "System default"
     },
     "sectionPrompts": {
-      "heading": "Section instructions",
-      "intro": "Standing guidance for how each CV section should be written. Applied every time a CV is tailored and when you refine a field — never a licence to invent, always subordinate to the honesty rules.",
-      "placeholder": "e.g. Lead with measurable impact; keep it to three lines.",
-      "save": "Save instructions",
+      "heading": "CV section prompts",
+      "intro": "Choose how each CV section is written. The chosen prompt is used every time a CV is tailored and when you refine a field, and it never overrides the honesty rules.",
       "saving": "Saving…",
       "saved": "Saved",
-      "loadFailed": "Couldn't load your instructions — reopen Settings to try again.",
+      "loadFailed": "Couldn't load your section prompts. Reopen Settings to try again.",
       "field": {
         "profile": "Profile",
         "competencies": "Competencies",
@@ -1636,7 +1685,10 @@
         "projects": "Projects",
         "education": "Education",
         "certifications": "Certifications"
-      }
+      },
+      "saveFailed": "Couldn't save. Try again.",
+      "browseLibrary": "Browse or create more in the prompt library",
+      "appDefaultOption": "{{name}} (app default)"
     },
     "style": {
       "analyze": "Analyze my writing",

@@ -8,7 +8,14 @@ export type PromptCategory =
   | 'FOLLOW_UP_MESSAGE'
   | 'CV_TAILORING'
   | 'CV_ANALYSIS'
-  | 'GENERAL';
+  | 'GENERAL'
+  /** Per-CV-section writing guidance; only the user prompt is used, never a system prompt. */
+  | 'CV_PROFILE'
+  | 'CV_SKILLS'
+  | 'CV_EXPERIENCE'
+  | 'CV_PROJECTS'
+  | 'CV_EDUCATION'
+  | 'CV_CERTIFICATIONS';
 
 export interface PromptTemplate {
   id: string;
@@ -40,4 +47,16 @@ export interface PromptTemplate {
   usageCount?: number;
   /** Per-user star. */
   favourite?: boolean;
+  /** i18n key of the explanation for an app-shipped template; user templates use description. */
+  explainerKey?: string;
+}
+
+/**
+ * The order every template list uses, so a starred prompt is at the top wherever it can be picked:
+ * favourites, then the one in use for its kind, then the most used.
+ */
+export function byPreference(a: PromptTemplate, b: PromptTemplate): number {
+  return Number(b.favourite ?? false) - Number(a.favourite ?? false)
+    || Number(b.isSelectedDefault) - Number(a.isSelectedDefault)
+    || (b.usageCount ?? 0) - (a.usageCount ?? 0);
 }

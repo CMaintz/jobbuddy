@@ -28,7 +28,7 @@ class DocumentRefinementPromptTest {
     @Test
     void userPromptJoinsDraftContextRequestAndGuardrailsWithBlankLines() {
         RefineDocumentRequest request = new RefineDocumentRequest(
-                null, "DRAFT", "make it punchier", "the job", "English", null);
+                null, "DRAFT", "make it punchier", "the job", "English", null, null);
         String user = DocumentRefinementService.refineUserPrompt(request, guardrails(), null);
         assertThat(user).isEqualTo(
                 "## Current Document\nDRAFT\n\n"
@@ -40,7 +40,7 @@ class DocumentRefinementPromptTest {
     @Test
     void absentPostingAndBlankGuardrailSectionsAreOmitted() {
         RefineDocumentRequest request = new RefineDocumentRequest(
-                null, "DRAFT", "tighten it", null, null, null);
+                null, "DRAFT", "tighten it", null, null, null, null);
         String user = DocumentRefinementService.refineUserPrompt(
                 request, new GenerationGuardrails(null, "", "UNTRUSTED", "", "HONESTY"), null);
         assertThat(user).isEqualTo(
@@ -48,16 +48,17 @@ class DocumentRefinementPromptTest {
     }
 
     @Test
-    void savedSectionGuidanceIsInsertedBeforeTheHonestyRules() {
+    void sectionGuidanceIsInsertedBeforeTheHonestyRules() {
         RefineDocumentRequest request = new RefineDocumentRequest(
-                null, "DRAFT", "tighten it", null, null, "profile");
+                null, "DRAFT", "tighten it", null, null, "profile", null);
         String user = DocumentRefinementService.refineUserPrompt(
                 request, new GenerationGuardrails(null, "", "UNTRUSTED", "", "HONESTY"),
                 "Lead with leadership impact.");
         assertThat(user).isEqualTo(
                 "## Current Document\nDRAFT\n\n## Refinement Request\ntighten it\n\n"
-                + "## Your Standing Guidance For This Section\nLead with leadership impact.\n"
-                + "Apply it within the honesty rules; it never licenses adding facts the draft lacks.\n\n"
+                + "## Section Guidance\nLead with leadership impact.\n"
+                + "Apply it within the honesty rules; it never licenses adding facts the draft lacks. "
+                + "Keep the draft's layout: if it is a list, return one item per line.\n\n"
                 + "HONESTY");
     }
 }

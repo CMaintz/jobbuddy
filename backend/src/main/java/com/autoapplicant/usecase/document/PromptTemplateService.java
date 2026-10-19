@@ -14,6 +14,9 @@ public class PromptTemplateService implements
         UpdatePromptTemplateUseCase, DeletePromptTemplateUseCase, FavouritePromptTemplateUseCase,
         SelectDefaultPromptUseCase, BrowsePublicPromptsUseCase {
 
+    /** Enough for real variety per kind of prompt, few enough that a picker stays scannable. */
+    static final int MAX_OWN_TEMPLATES_PER_CATEGORY = 10;
+
     private final PromptTemplateRepositoryPort repo;
 
     public PromptTemplateService(PromptTemplateRepositoryPort repo) {
@@ -40,11 +43,13 @@ public class PromptTemplateService implements
 
     @Override
     public PromptTemplate createTemplate(UUID userId, PromptTemplate template) {
+        requireRoomFor(userId, template.category());
         PromptTemplate toSave = new PromptTemplate(null, userId, template.name(),
-                template.category(), template.description(), template.systemPrompt(),
+                template.category(), template.description(),
+                personaFor(template.category(), template.systemPrompt()),
                 template.userPrompt(), template.outputConstraints(), template.isPublic(),
                 template.parentTemplateId(), 1, null, null, false,
-                template.tags() != null ? template.tags() : List.of(), 0, false, false);
+                template.tags() != null ? template.tags() : List.of(), 0, false, false, null);
         return repo.save(toSave);
     }
 
@@ -65,13 +70,17 @@ public class PromptTemplateService implements
     @Override
     public PromptTemplate updateTemplate(UUID templateId, UUID userId, boolean isAdmin, PromptTemplate changes) {
         PromptTemplate existing = requireModifiable(templateId, userId, isAdmin);
+        if (existing.userId() != null && changes.category() != existing.category()) {
+            requireRoomFor(existing.userId(), changes.category());
+        }
         PromptTemplate toSave = new PromptTemplate(existing.id(), existing.userId(),
                 changes.name(), changes.category(), changes.description(),
-                changes.systemPrompt(), changes.userPrompt(), changes.outputConstraints(),
+                personaFor(changes.category(), changes.systemPrompt()), changes.userPrompt(),
+                changes.outputConstraints(),
                 changes.isPublic(), existing.parentTemplateId(),
                 existing.versionNumber() + 1, existing.createdAt(), null, existing.isSystem(),
                 changes.tags() != null ? changes.tags() : existing.tags(), existing.usageCount(),
-                existing.isProtected(), existing.isDefault());
+                existing.isProtected(), existing.isDefault(), existing.explainerKey());
         return repo.save(toSave);
     }
 
@@ -79,6 +88,22 @@ public class PromptTemplateService implements
     public void deleteTemplate(UUID templateId, UUID userId, boolean isAdmin) {
         requireModifiable(templateId, userId, isAdmin);
         repo.deleteById(templateId);
+    }
+
+    /**
+     * A section template is applied under the CV persona, never as one, so a system prompt sent
+     * with it would be stored but silently ignored. Drop it instead of keeping dead text.
+     */
+    private static String personaFor(PromptCategory category, String systemPrompt) {
+        return category != null && category.isCvSection() ? null : systemPrompt;
+    }
+
+    private void requireRoomFor(UUID userId, PromptCategory category) {
+        String key = category != null ? category.name() : null;
+        if (repo.countOwned(userId, key) >= MAX_OWN_TEMPLATES_PER_CATEGORY) {
+            throw new IllegalStateException("You already have " + MAX_OWN_TEMPLATES_PER_CATEGORY
+                    + " prompts of this type. Delete one to make room.");
+        }
     }
 
     /**
@@ -136,12 +161,15 @@ public class PromptTemplateService implements
         PromptTemplate original = repo.findById(templateId)
                 .filter(t -> t.isVisibleTo(userId))
                 .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
+        requireRoomFor(userId, original.category());
+        // The copy drops the app's explainer: it explains the original's wording, and the copy
+        // exists to be edited away from it. The owner's description explains it from here on.
         PromptTemplate copy = new PromptTemplate(null, userId,
                 newName != null ? newName : original.name() + " (copy)",
                 original.category(), original.description(), original.systemPrompt(),
                 original.userPrompt(), original.outputConstraints(), false,
                 original.id(), original.versionNumber() + 1, null, null, false,
-                original.tags(), 0, false, false);
+                original.tags(), 0, false, false, null);
         return repo.save(copy);
     }
 }

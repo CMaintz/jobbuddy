@@ -1,22 +1,21 @@
 package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.PromptTemplateFavoriteEntity;
+import com.autoapplicant.adapter.persistence.entity.UserDefaultPromptEntity;
 import com.autoapplicant.adapter.persistence.mapper.DocumentMapper;
 import com.autoapplicant.adapter.persistence.repository.PromptTemplateFavoriteJpaRepository;
-import com.autoapplicant.adapter.persistence.entity.UserDefaultPromptEntity;
 import com.autoapplicant.adapter.persistence.repository.PromptTemplateJpaRepository;
 import com.autoapplicant.adapter.persistence.repository.UserDefaultPromptJpaRepository;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositoryPort {
@@ -61,6 +60,11 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
     }
 
     @Override
+    public long countOwned(UUID userId, String category) {
+        return repo.countByUserIdAndCategory(userId, category);
+    }
+
+    @Override
     public Optional<PromptTemplate> findSystemDefault(String category) {
         return repo.findFirstByCategoryAndIsSystemTrueOrderByIsDefaultDescCreatedAtAsc(category)
                 .map(DocumentMapper::toDomain);
@@ -74,9 +78,10 @@ public class PromptTemplatePersistenceAdapter implements PromptTemplateRepositor
                     .map(UserDefaultPromptEntity::getTemplateId)
                     .flatMap(repo::findById)
                     .map(DocumentMapper::toDomain)
-                    // A template the user no longer owns (deleted, or never theirs) must not
-                    // silently become nobody's prompt — fall through to the app's default.
-                    .filter(t -> t.isSystem() || userId.equals(t.userId()));
+                    // A template the user can no longer see (deleted, or its author made it
+                    // private again) must not keep driving their generations: fall through to
+                    // the app's default.
+                    .filter(t -> t.isVisibleTo(userId));
             if (chosen.isPresent()) return chosen;
         }
         return findSystemDefault(category);

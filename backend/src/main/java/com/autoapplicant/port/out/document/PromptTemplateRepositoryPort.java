@@ -1,7 +1,6 @@
 package com.autoapplicant.port.out.document;
 
 import com.autoapplicant.domain.document.PromptTemplate;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +16,9 @@ public interface PromptTemplateRepositoryPort {
      * would bury the handful a person actually wrote behind the two dozen that ship.
      */
     List<PromptTemplate> findPublic();
+
+    /** How many templates the user has written in a category (shared-with-them ones excluded). */
+    long countOwned(UUID userId, String category);
     /** The app's seeded starting point for a category, e.g. CV_TAILORING. */
     Optional<PromptTemplate> findSystemDefault(String category);
 

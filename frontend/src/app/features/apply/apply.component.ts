@@ -6,13 +6,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of, switchMap, catchError, map, tap, forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { PromptExplainerComponent, chosenPrompt } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { AiApiService, GenerateDocumentRequest } from '../../core/api/ai.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
-import { PromptTemplate } from '../../core/models/prompt-template.model';
+import { PromptCategory, PromptTemplate, byPreference } from '../../core/models/prompt-template.model';
 import { loadGenDefaults } from '../settings/settings.component';
 import { NotifyService } from '../../shared/services/notify.service';
 
@@ -28,7 +29,7 @@ const FORMAT_TO_OUTPUT_KEY: Record<string, string> = {
   'short-pitch': 'dm',
 };
 
-const FORMAT_TO_PROMPT_CATEGORY: Record<string, string> = {
+const FORMAT_TO_PROMPT_CATEGORY: Record<string, PromptCategory> = {
   'application': 'APPLICATION',
   'cover-letter': 'COVER_LETTER',
   'short-pitch': 'RECRUITER_MESSAGE',
@@ -68,7 +69,8 @@ interface ApplyDraft {
 
 @Component({
   selector: 'app-apply',
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    PromptExplainerComponent],
   templateUrl: './apply.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./apply.component.css']
@@ -105,7 +107,12 @@ export class ApplyComponent implements OnInit {
   get relevantPromptTemplates(): PromptTemplate[] {
     const category = FORMAT_TO_PROMPT_CATEGORY[this.selectedFormat()];
     return this.promptTemplates.filter(t =>
-      !t.category || t.category === 'GENERAL' || t.category === category);
+      !t.category || t.category === 'GENERAL' || t.category === category).sort(byPreference);
+  }
+
+  get explainedPrompt(): PromptTemplate | undefined {
+    return chosenPrompt(this.promptTemplates, this.selectedPromptId(),
+      FORMAT_TO_PROMPT_CATEGORY[this.selectedFormat()]);
   }
 
   company = '';

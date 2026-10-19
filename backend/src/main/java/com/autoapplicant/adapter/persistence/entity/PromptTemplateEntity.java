@@ -2,10 +2,9 @@ package com.autoapplicant.adapter.persistence.entity;
 
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
-
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "prompt_templates")
@@ -48,6 +47,9 @@ public class PromptTemplateEntity {
     /** App-origin: duplicable, never editable or deletable through the API. */
     @Column(name = "is_protected", nullable = false)
     private boolean isProtected;
+
+    @Column(name = "explainer_key", length = 100)
+    private String explainerKey;
 
     @Column(name = "parent_template_id")
     private UUID parentTemplateId;
@@ -94,6 +96,8 @@ public class PromptTemplateEntity {
     public void setDefault(boolean isDefault) { this.isDefault = isDefault; }
     public boolean isProtected() { return isProtected; }
     public void setProtected(boolean isProtected) { this.isProtected = isProtected; }
+    public String getExplainerKey() { return explainerKey; }
+    public void setExplainerKey(String explainerKey) { this.explainerKey = explainerKey; }
     public void setSystem(boolean system) { isSystem = system; }
     public UUID getParentTemplateId() { return parentTemplateId; }
     public void setParentTemplateId(UUID parentTemplateId) { this.parentTemplateId = parentTemplateId; }

@@ -36,7 +36,12 @@ public record PromptTemplate(
         List<String> tags,
         int usageCount,
         boolean isProtected,
-        boolean isDefault
+        boolean isDefault,
+        /**
+         * i18n key of the user-facing explanation for an app-shipped template, or null. User-made
+         * templates have none; their {@code description} is what explains them.
+         */
+        String explainerKey
 ) {
 
     /** App templates and shared ones are visible to everyone; private ones only to their owner. */

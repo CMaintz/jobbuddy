@@ -4,12 +4,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { PromptExplainerComponent, chosenPrompt } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { Application } from '../../core/models/application.model';
-import { PromptTemplate } from '../../core/models/prompt-template.model';
+import { PromptTemplate, byPreference } from '../../core/models/prompt-template.model';
 import { StructuredDocument } from '../../core/models/structured-document.model';
 import { ResumeDraftApiService } from '../resume-builder/services/resume-draft-api.service';
 import { structuredDocToResumeData, structuredDocToLayout } from '../resume-builder/services/structured-doc-mapper';
@@ -32,7 +33,7 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tailored-cv.component.html',
 })
@@ -61,6 +62,10 @@ export class TailoredCvComponent implements OnInit {
 
   promptTemplates: PromptTemplate[] = [];
   selectedPromptId = signal<string | null>(null);
+
+  get explainedPrompt(): PromptTemplate | undefined {
+    return chosenPrompt(this.promptTemplates, this.selectedPromptId(), 'CV_TAILORING');
+  }
   selectedLanguage = signal(loadGenDefaults().lang);
   languages = ['English', 'Dansk'];
   customInstructions = '';
@@ -75,7 +80,7 @@ export class TailoredCvComponent implements OnInit {
 
     this.promptApi.getAll().subscribe({
       next: templates => this.promptTemplates = templates.filter(t =>
-        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING'),
+        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference),
       error: this.notify.onError('notify.loadFailed')
     });
 

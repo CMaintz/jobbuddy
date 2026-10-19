@@ -62,6 +62,7 @@
                     <option [ngValue]="tpl.id">{{ tpl.name }}</option>
                   }
                 </select>
+                <app-prompt-explainer class="block -mt-1.5 mb-3" [template]="explainedPrompt" />
               }
 
               <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">{{ 'apply.language' | translate }}</div>

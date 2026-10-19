@@ -16,6 +16,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -23,7 +24,6 @@ import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
-import com.autoapplicant.port.out.document.CvSectionPromptsRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -92,7 +92,13 @@ class TailoredCvAiPrivacyTest {
                 cvAssembler, new TailoredCvGenerator(ai, mapper, promptBuilder), reviewer,
                 mock(ApplicationDocumentAssembler.class),
                 mock(ApplicationRepositoryPort.class), mock(GeneratedContentGuards.class),
-                mock(CvSectionPromptsRepositoryPort.class));
+                sectionTemplates());
+    }
+
+    private static CvSectionTemplates sectionTemplates() {
+        CvSectionTemplates templates = mock(CvSectionTemplates.class);
+        when(templates.defaultsFor(USER_ID)).thenReturn(CvSectionPrompts.EMPTY);
+        return templates;
     }
 
     private static UserRepositoryPort users() {

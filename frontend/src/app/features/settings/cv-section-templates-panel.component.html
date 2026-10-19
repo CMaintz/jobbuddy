@@ -1,0 +1,37 @@
+<div class="py-3 border-b border-jb-border-faint">
+  <div class="text-base font-medium">{{ 'settings.sectionPrompts.heading' | translate }}</div>
+  <div class="text-xs text-jb-text-dim mt-0.5 mb-3 leading-[1.55]">
+    {{ 'settings.sectionPrompts.intro' | translate }}
+    <a routerLink="/prompts" class="text-jb-accent-2 underline">{{ 'settings.sectionPrompts.browseLibrary' | translate }}</a>
+  </div>
+  @if (loadError()) {
+    <div class="text-xs text-jb-danger">{{ 'settings.sectionPrompts.loadFailed' | translate }}</div>
+  } @else if (!loading()) {
+    <div class="flex flex-col gap-4">
+      @for (row of rows(); track row.key) {
+        @if (row.templates.length) {
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-3 flex-wrap">
+              <label class="flex-1 text-sm font-medium" [for]="'cv-section-template-' + row.key">{{ row.label | translate }}</label>
+              @switch (status()[row.key]) {
+                @case ('saving') { <span class="text-2xs text-jb-text-dim">{{ 'settings.sectionPrompts.saving' | translate }}</span> }
+                @case ('saved') { <span class="text-2xs text-jb-text-dim">{{ 'settings.sectionPrompts.saved' | translate }}</span> }
+                @case ('failed') { <span class="text-2xs text-jb-danger">{{ 'settings.sectionPrompts.saveFailed' | translate }}</span> }
+              }
+              <select [id]="'cv-section-template-' + row.key" [ngModel]="selected[row.key]" (ngModelChange)="choose(row, $event)"
+                [disabled]="status()[row.key] === 'saving'"
+                class="border border-jb-border rounded-md px-3 py-2 text-base min-w-[200px]" style="background: var(--jb-surface-2)">
+                @for (t of row.templates; track t.id) {
+                  <option [ngValue]="t.id">
+                    {{ t.isDefault ? ('settings.sectionPrompts.appDefaultOption' | translate:{ name: t.name }) : t.name }}
+                  </option>
+                }
+              </select>
+            </div>
+            <app-prompt-explainer [template]="selectedTemplate(row)" />
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

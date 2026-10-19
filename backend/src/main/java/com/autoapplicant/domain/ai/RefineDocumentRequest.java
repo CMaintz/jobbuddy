@@ -9,5 +9,7 @@ public record RefineDocumentRequest(
         String jobDescription,
         String targetLanguage,
         /** The CV section being refined (wire-key), or null for non-section refines. */
-        String sectionKey
+        String sectionKey,
+        /** The section template to write it with; null means the user's default for the section. */
+        UUID promptTemplateId
 ) {}
