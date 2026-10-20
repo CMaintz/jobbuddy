@@ -22,6 +22,12 @@ node = "22"
 # postinstall hook — so PMD is provisioned identically locally and in CI, and the
 # habit-hooks Java sensor + the no-var check find it with no manual PATH surgery.
 PMD_VERSION = "7.27.0"
+# The npm-audit-ratchet script the frontend audit verb runs is provisioned by
+# setup:foundry-scripts into a cache dir at this ref, not vendored into the repo. Kept equal
+# to frontend/mise.toml's pin (the two audit verbs are a KEEP IN SYNC mirror). Renovate tracks
+# it via the comment above.
+# renovate: datasource=github-tags depName=CMaintz/foundry
+FOUNDRY_SCRIPTS_REF = "v2.12.0"
 _.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env.PMD_VERSION}}/bin"]
 
 # Tasks run through bash on Windows (not cmd) so `./gradlew` and vendor bins resolve.
@@ -36,7 +42,7 @@ _.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env
 # eslint, knip and comment sensors read from. Without it a fresh clone or worktree
 # reports all three as "not installed".
 [hooks]
-postinstall = "mise run setup:pmd && mise run setup:frontend"
+postinstall = "mise run setup:pmd && mise run setup:frontend && mise run setup:foundry-scripts"
 
 [tasks."setup:pmd"]
 description = "Install the pinned PMD if absent (habit-hooks Java sensor + no-var need it)"
@@ -59,6 +65,14 @@ run = """
 [ node_modules/.package-lock.json -nt package-lock.json ] && exit 0
 npm ci --no-audit --no-fund
 """
+
+# The frontend audit verb runs the de-vendored npm-audit-ratchet script from a cache dir.
+# Delegate to frontend/mise.toml's task (which owns the fetch), mirroring how backend:*/
+# frontend:* delegate - one source of truth for HOW the script is provisioned.
+[tasks."setup:foundry-scripts"]
+description = "Provision the cached npm-audit-ratchet script (delegates to frontend)"
+dir = "frontend"
+run = "mise run setup:foundry-scripts"
 
 # ---- backend (Java 21, Spring Boot, Gradle) --------------------------------
 # backend/mise.toml is the single source of truth (it's what CI's facade runs), so these
@@ -134,7 +148,11 @@ run = "npm run test:ci"
 [tasks."frontend:audit"]
 description = "Ratcheted npm audit — fails on un-accepted criticals (.audit-allowlist.json)"
 dir = "frontend"
-run = "npm audit --json | node ../scripts/npm-audit-ratchet.mjs --level=critical --allowlist=.audit-allowlist.json"
+# Mirrors frontend/mise.toml's audit verb (KEEP IN SYNC): the ratchet script is cached by
+# setup:foundry-scripts, addressed through $HOME in plain shell (NOT a mise `{{...}}` template -
+# on Windows that carries backslashes bash would strip).
+depends = ["setup:foundry-scripts"]
+run = 'npm audit --json | node "$HOME/.local/opt/foundry-scripts-$FOUNDRY_SCRIPTS_REF/npm-audit-ratchet.mjs" --level=critical --allowlist=.audit-allowlist.json'
 
 [tasks."frontend:gate"]
 run = [
