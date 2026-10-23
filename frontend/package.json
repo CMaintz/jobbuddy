@@ -29,7 +29,7 @@
     "@tiptap/extension-underline": "^2.27.2",
     "@tiptap/pm": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "firebase": "^10.14.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
