@@ -27,7 +27,7 @@ PMD_VERSION = "7.27.0"
 # to frontend/mise.toml's pin (the two audit verbs are a KEEP IN SYNC mirror). Renovate tracks
 # it via the comment above.
 # renovate: datasource=github-tags depName=CMaintz/foundry
-FOUNDRY_SCRIPTS_REF = "v2.12.0"
+FOUNDRY_SCRIPTS_REF = "v2.13.0"
 _.path = ["./frontend/node_modules/.bin", "{{env.HOME}}/.local/opt/pmd-bin-{{env.PMD_VERSION}}/bin"]
 
 # Tasks run through bash on Windows (not cmd) so `./gradlew` and vendor bins resolve.

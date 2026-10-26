@@ -11,7 +11,7 @@ HABIT_HOOKS_PLUGIN = "habit-hooks-typescript"
 # this ref, not vendored into the repo (see that task for why). Renovate tracks the pin via
 # the comment above it.
 # renovate: datasource=github-tags depName=CMaintz/foundry
-FOUNDRY_SCRIPTS_REF = "v2.12.0"
+FOUNDRY_SCRIPTS_REF = "v2.13.0"
 # The habit-hooks venv bin (Linux `bin/`, Windows `Scripts/`; a missing one is harmless).
 _.path = [
     "{{env.HOME}}/.local/opt/{{env.HABIT_HOOKS_PLUGIN}}-{{env.HABIT_HOOKS_VERSION}}/bin",
