@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.skills;
 
+import com.autoapplicant.usecase.common.KeywordMatcher;
 import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.SkillNames;
@@ -97,7 +98,7 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
     private record Evidence(Set<String> taggedSkills, List<String> storyBodies) {
         boolean proves(String normalizedSkill) {
             return taggedSkills.contains(normalizedSkill)
-                    || storyBodies.stream().anyMatch(body -> body.contains(normalizedSkill));
+                    || storyBodies.stream().anyMatch(body -> KeywordMatcher.contains(body, normalizedSkill));
         }
     }
 
