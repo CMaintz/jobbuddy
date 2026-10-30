@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -12,11 +12,12 @@ import { AiApiService, AiCredentialStatus } from '../../core/api/ai.api';
 @Component({
   selector: 'app-ai-key-panel',
   imports: [FormsModule, TranslateModule, JbButtonComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ai-key-panel.component.html'
 })
 export class AiKeyPanelComponent implements OnInit {
   private api = inject(AiApiService);
+  private cdr = inject(ChangeDetectorRef);
 
   status = signal<AiCredentialStatus | null>(null);
   loading = signal(true);
@@ -69,5 +70,7 @@ export class AiKeyPanelComponent implements OnInit {
     this.status.set(s);
     if (s.provider) this.provider = s.provider;
     this.model = s.model ?? '';
+    // provider, model and apiKey are ngModel fields, so they are plain properties.
+    this.cdr.markForCheck();
   }
 }

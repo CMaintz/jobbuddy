@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
@@ -18,12 +18,14 @@ type Section = 'target' | 'skills' | 'stories' | 'retracted';
   selector: 'app-career-profile',
   imports: [FormsModule, TranslateModule, JbTopbarComponent, JbButtonComponent, JbIconComponent, TagInputComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './career-profile.component.html'
 })
 export class CareerProfileComponent implements OnInit {
   private targetApi = inject(CareerTargetApiService);
   private notify = inject(NotifyService);
+  // The target and story forms bind plain fields through ngModel, refilled from callbacks.
+  private cdr = inject(ChangeDetectorRef);
   private claimsApi = inject(RetractedClaimsApiService);
   private storyApi = inject(StoryBankApiService);
   private skillsApi = inject(SkillsApiService);
@@ -87,6 +89,7 @@ export class CareerProfileComponent implements OnInit {
     this.careerStage = t.careerStage ?? '';
     this.noticePeriod = t.noticePeriod ?? '';
     this.earliestStartDate = t.earliestStartDate ?? '';
+    this.cdr.markForCheck();
   }
 
   // ── Skill candidates ───────────────────────────────────────
@@ -244,7 +247,7 @@ export class CareerProfileComponent implements OnInit {
     return { title: '', situation: '', task: '', action: '', result: '', reflection: '', tags: [] };
   }
 
-  newStory(): void { this.storyForm = this.emptyStory(); this.editingStoryId.set(null); }
+  newStory(): void { this.storyForm = this.emptyStory(); this.editingStoryId.set(null); this.cdr.markForCheck(); }
 
   editStory(s: InterviewStory): void {
     this.storyForm = { ...s, tags: [...(s.tags ?? [])] };
