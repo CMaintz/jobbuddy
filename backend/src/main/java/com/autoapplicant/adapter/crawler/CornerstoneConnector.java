@@ -6,18 +6,17 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Fetches job listings from Cornerstone OnDemand (CSOD) ATS career sites.
@@ -37,9 +36,9 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
     private static final String JOBS_API_TEMPLATE =
             "%srec-job-search/external/jobs";
 
-    private static final Pattern JWT_PATTERN = Pattern.compile(
+    static final Pattern JWT_PATTERN = Pattern.compile(
             "(?:\"token\"|\"bearerToken\"|\"access_token\")\\s*:\\s*\"(eyJ[^\"]+)\"");
-    private static final Pattern API_HOST_PATTERN = Pattern.compile(
+    static final Pattern API_HOST_PATTERN = Pattern.compile(
             "\"cloud\"\\s*:\\s*\"(https://[^\"]+api\\.csod\\.com/)\"");
 
     private final AppProperties appProperties;
@@ -155,11 +154,10 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
 
             int newOnPage = 0;
             for (JsonNode req : requisitions) {
-                String reqId = req.path("req_id").asText(null);
-                if (reqId == null) reqId = req.path("id").asText(null);
+                String reqId = requisitionId(req);
                 if (reqId == null) continue;
 
-                String guid = "csod-" + tenantName + "-" + reqId;
+                String guid = guidFor(tenantName, reqId);
                 if (config.isKnownGuid().test(guid)) {
                     // Seen alive — say so, or the expiry sweep will retire an open role.
                     config.onKnownJobSeen().accept(guid);
@@ -167,29 +165,7 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
                     continue;
                 }
 
-                String title = req.path("title").asText("");
-                String jobReqId = req.path("job_req_id").asText(reqId);
-                String city = req.path("city").asText("");
-                String country = req.path("country").asText("");
-                String location = city.isBlank() ? country : (country.isBlank() ? city : city + ", " + country);
-                String description = req.path("description").asText("");
-                String datePosted = req.path("date_posted").asText(req.path("created_date").asText(""));
-
-                String jobUrl = "https://" + tenantName + ".csod.com/ux/ats/careersite/" + siteId
-                        + "/app?type=job&id=" + reqId + "&c=" + tenantName;
-
-                String content = buildContent(title, tenantName, jobReqId, location, description, datePosted, jobUrl);
-
-                results.add(new RawJobData(
-                        JobSource.CORNERSTONE_ONDEMAND,
-                        guid,
-                        jobUrl,
-                        content,
-                        req.toString(),
-                        Instant.now(),
-                        List.of(),
-                        null
-                ));
+                results.add(toRawJobData(req, tenantName, siteId));
                 newOnPage++;
             }
 
@@ -208,6 +184,45 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
         return results;
     }
 
+    /** Maps one requisition; null when it has neither {@code req_id} nor {@code id}. */
+    RawJobData toRawJobData(JsonNode req, String tenantName, int siteId) {
+        String reqId = requisitionId(req);
+        if (reqId == null) return null;
+
+        String title = req.path("title").asText("");
+        String jobReqId = req.path("job_req_id").asText(reqId);
+        String city = req.path("city").asText("");
+        String country = req.path("country").asText("");
+        String location = city.isBlank() ? country : (country.isBlank() ? city : city + ", " + country);
+        String description = req.path("description").asText("");
+        String datePosted = req.path("date_posted").asText(req.path("created_date").asText(""));
+
+        String jobUrl = "https://" + tenantName + ".csod.com/ux/ats/careersite/" + siteId
+                + "/app?type=job&id=" + reqId + "&c=" + tenantName;
+
+        String content = buildContent(title, tenantName, jobReqId, location, description, datePosted, jobUrl);
+
+        return new RawJobData(
+                JobSource.CORNERSTONE_ONDEMAND,
+                guidFor(tenantName, reqId),
+                jobUrl,
+                content,
+                req.toString(),
+                Instant.now(),
+                List.of(),
+                null
+        );
+    }
+
+    private static String requisitionId(JsonNode req) {
+        String reqId = req.path("req_id").asText(null);
+        return reqId != null ? reqId : req.path("id").asText(null);
+    }
+
+    private static String guidFor(String tenantName, String reqId) {
+        return "csod-" + tenantName + "-" + reqId;
+    }
+
     private String buildContent(String title, String tenant, String jobReqId,
                                  String location, String description,
                                  String datePosted, String url) {
@@ -224,7 +239,7 @@ public class CornerstoneConnector extends AbstractJobSourceConnector {
         return sb.toString();
     }
 
-    private String extractGroup(Pattern pattern, String input) {
+    String extractGroup(Pattern pattern, String input) {
         Matcher m = pattern.matcher(input);
         return m.find() ? m.group(1) : null;
     }

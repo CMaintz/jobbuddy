@@ -3,15 +3,15 @@ package com.autoapplicant.adapter.crawler;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches job ads from Jobnet.dk — the Danish public employment portal.
@@ -107,6 +107,16 @@ public class JobnetConnector extends AbstractJobSourceConnector {
 
     private void ingestDetail(String id, JsonNode searchAd, CrawlConfig config) throws Exception {
         String detailJson = fetchWithRetry(String.format(DETAIL_URL, id), 3);
+        config.onJobFound().accept(toRawJobData(id, searchAd, detailJson));
+    }
+
+    /**
+     * Maps a search card plus its detail response; detail fields win and the card fills gaps.
+     *
+     * @throws JsonProcessingException when the detail body is not JSON
+     */
+    RawJobData toRawJobData(String id, JsonNode searchAd, String detailJson)
+            throws JsonProcessingException {
         JsonNode detail = objectMapper.readTree(detailJson);
 
         String title = detail.path("title").asText(searchAd.path("title").asText(""));
@@ -138,12 +148,12 @@ public class JobnetConnector extends AbstractJobSourceConnector {
         Instant postedAt = parsePostedAt(detail.path("publicationDateTime")
                 .asText(searchAd.path("publicationDate").asText(null)));
 
-        config.onJobFound().accept(new RawJobData(
+        return new RawJobData(
                 JobSource.JOBNET, id, String.format(PUBLIC_URL, id),
                 html.toString(), detailJson, Instant.now(),
                 categories, shortDescription(body), deadline,
                 employer.isBlank() ? null : employer, null,
-                city.isBlank() ? null : city, postedAt));
+                city.isBlank() ? null : city, postedAt);
     }
 
     /** ISO datetime with or without offset → Instant; date-only strings land at start of day UTC. */

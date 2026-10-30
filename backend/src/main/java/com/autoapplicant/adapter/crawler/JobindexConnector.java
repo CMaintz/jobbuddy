@@ -237,9 +237,6 @@ public class JobindexConnector extends AbstractJobSourceConnector {
 
                 seenInRun.add(guid);
 
-                // Extract short description from RSS <description> <p> tags
-                String shortDescription = extractShortDescription(item);
-
                 String detailHtml = item.select("description").text();
                 try {
                     Thread.sleep(config.delayMs());
@@ -256,15 +253,8 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                             link, e.getMessage());
                 }
 
-                List<String> rssCategories = item.select("category").eachText();
                 StashMeta meta = stashMeta.get(extractTid(link));
-                config.onJobFound().accept(new RawJobData(JobSource.JOBINDEX, guid, link, detailHtml,
-                        null, Instant.now(), rssCategories, shortDescription,
-                        meta != null ? meta.deadline() : null,
-                        meta != null ? meta.companyName() : null,
-                        meta != null ? meta.companyHomeUrl() : null,
-                        meta != null ? meta.area() : null,
-                        meta != null ? meta.firstDate() : null));
+                config.onJobFound().accept(toRawJobData(item, guid, link, detailHtml, meta));
                 totalCount++;
                 newOnPage++;
             }
@@ -290,6 +280,24 @@ public class JobindexConnector extends AbstractJobSourceConnector {
         }
 
         return totalCount;
+    }
+
+    /**
+     * Maps one RSS item; {@code meta} is the item's Stash metadata, or null when the search
+     * pages did not cover it.
+     */
+    RawJobData toRawJobData(Element item, String guid, String link, String detailHtml,
+                            StashMeta meta) {
+        // Extract short description from RSS <description> <p> tags
+        String shortDescription = extractShortDescription(item);
+        List<String> rssCategories = item.select("category").eachText();
+        return new RawJobData(JobSource.JOBINDEX, guid, link, detailHtml,
+                null, Instant.now(), rssCategories, shortDescription,
+                meta != null ? meta.deadline() : null,
+                meta != null ? meta.companyName() : null,
+                meta != null ? meta.companyHomeUrl() : null,
+                meta != null ? meta.area() : null,
+                meta != null ? meta.firstDate() : null);
     }
 
     /**
@@ -346,20 +354,12 @@ public class JobindexConnector extends AbstractJobSourceConnector {
             try {
                 String html = Jsoup.connect(SEARCH_PAGE + page)
                         .userAgent(USER_AGENT).timeout(15000).execute().body();
-                JsonNode results = findSearchResults(extractStash(html));
+                JsonNode results = parseStashResults(html);
                 if (results == null || !results.isArray() || results.isEmpty()) break;
                 for (JsonNode r : results) {
                     String tid = r.path("tid").asText(null);
                     if (tid == null || tid.isBlank()) continue;
-                    meta.put(tid, new StashMeta(
-                            parseStashDeadline(r),
-                            firstNonBlank(r.path("company").path("name").asText(null),
-                                    r.path("companytext").asText(null)),
-                            r.path("company").path("homeurl").asText(null),
-                            firstNonBlank(r.path("area").asText(null),
-                                    r.path("geojson").path("features").path(0)
-                                            .path("properties").path("title").asText(null)),
-                            parseStashDate(r.path("firstdate").asText(null))));
+                    meta.put(tid, toStashMeta(r));
                 }
             } catch (Exception e) {
                 log.warn("Jobindex: stash metadata page {} failed: {} — continuing without", page, e.getMessage());
@@ -368,6 +368,23 @@ public class JobindexConnector extends AbstractJobSourceConnector {
         }
         log.info("Jobindex: stash metadata collected for {} jobs", meta.size());
         return meta;
+    }
+
+    /** The search page's {@code searchResponse.results[]}, or null when the Stash holds none. */
+    JsonNode parseStashResults(String html) throws Exception {
+        return findSearchResults(extractStash(html));
+    }
+
+    static StashMeta toStashMeta(JsonNode r) {
+        return new StashMeta(
+                parseStashDeadline(r),
+                firstNonBlank(r.path("company").path("name").asText(null),
+                        r.path("companytext").asText(null)),
+                r.path("company").path("homeurl").asText(null),
+                firstNonBlank(r.path("area").asText(null),
+                        r.path("geojson").path("features").path(0)
+                                .path("properties").path("title").asText(null)),
+                parseStashDate(r.path("firstdate").asText(null)));
     }
 
     /** ASAP deadlines stay null — only a concrete date is stored. */

@@ -67,19 +67,7 @@ public class TheHubConnector extends AbstractJobSourceConnector {
                         .timeout(CONNECT_TIMEOUT_MS)
                         .get();
 
-                String jobId = extractId(jobUrl);
-                String content = extractJobContent(doc, jobUrl);
-
-                config.onJobFound().accept(new RawJobData(
-                        JobSource.THE_HUB,
-                        jobId,
-                        jobUrl,
-                        content,
-                        extractJsonLd(doc),  // raw JSON-LD as structured payload
-                        Instant.now(),
-                        List.of(),
-                        null
-                ));
+                config.onJobFound().accept(toRawJobData(doc, jobUrl));
                 count++;
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
@@ -132,7 +120,7 @@ public class TheHubConnector extends AbstractJobSourceConnector {
      * Looks for <a href="/jobs/..."> patterns — these are stable anchor tags
      * in any server-rendered or client-hydrated page.
      */
-    private Set<String> extractJobLinks(Document doc) {
+    Set<String> extractJobLinks(Document doc) {
         Set<String> urls = new LinkedHashSet<>();
         Elements links = doc.select("a[href]");
         for (Element link : links) {
@@ -149,6 +137,20 @@ public class TheHubConnector extends AbstractJobSourceConnector {
     }
 
     // ── Step 2: extract content from detail page ──────────────────────────────
+
+    /** Maps a fetched detail page; content falls back to the page HTML when it has no JSON-LD. */
+    RawJobData toRawJobData(Document doc, String jobUrl) {
+        return new RawJobData(
+                JobSource.THE_HUB,
+                extractId(jobUrl),
+                jobUrl,
+                extractJobContent(doc, jobUrl),
+                extractJsonLd(doc),  // raw JSON-LD as structured payload
+                Instant.now(),
+                List.of(),
+                null
+        );
+    }
 
     /**
      * Primary: parse schema.org/JobPosting JSON-LD.
