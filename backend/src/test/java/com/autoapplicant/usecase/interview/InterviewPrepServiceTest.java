@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.interview.InterviewQuestion;
 import com.autoapplicant.domain.interview.MockInterviewTurn;
@@ -115,23 +117,44 @@ class InterviewPrepServiceTest {
     }
 
     @Test
-    void the_mock_interviewer_works_before_any_questions_have_been_prepared() {
+    void with_nothing_prepared_the_mock_interviewer_gets_no_empty_plan_to_work_through() {
         when(jobRepo.findById(jobId)).thenReturn(Optional.of(job()));
         when(careerProfileContext.buildJson(userId)).thenReturn("{}");
         when(repo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());
         when(aiProvider.generate(any(), any())).thenReturn("Tell me about yourself.");
 
-        String reply = service.respond(userId, jobId,
-                List.of(new MockInterviewTurn("candidate", "Hi")), false);
+        service.respond(userId, jobId, List.of(new MockInterviewTurn("candidate", "Hi")), false);
 
-        assertThat(reply).isEqualTo("Tell me about yourself.");
+        ArgumentCaptor<PromptComposition> captor = ArgumentCaptor.forClass(PromptComposition.class);
+        verify(aiProvider).generate(captor.capture(), any());
+        assertThat(captor.getValue().resolvedFinalPrompt())
+                .contains("Candidate: Hi")
+                .doesNotContain("question plan");
+    }
+
+    @Test
+    void the_consistency_brief_is_built_from_the_callers_own_documents_for_this_job() {
+        // Stubbed only for this user and job: a lookup scoped to anyone else, or to the user's
+        // documents for every job, finds nothing and the claim below never reaches the prompt.
+        stubPrepPackJob(List.of(document("I cut p99 latency by 40% at Acme.")));
+        when(aiProvider.generateJson(any(), any())).thenReturn("{\"questions\":[]}");
+
+        service.generatePrepPack(userId, jobId);
+
+        assertThat(captureComposition().resolvedFinalPrompt())
+                .contains("Documents the candidate submitted")
+                .contains("I cut p99 latency by 40% at Acme.");
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private void stubPrepPackJob() {
+        stubPrepPackJob(List.of());
+    }
+
+    private void stubPrepPackJob(List<GeneratedDocument> submitted) {
         when(jobRepo.findById(jobId)).thenReturn(Optional.of(job()));
-        when(documentRepo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());
+        when(documentRepo.findByJobIdAndUserId(jobId, userId)).thenReturn(submitted);
         when(careerProfileContext.buildJson(userId)).thenReturn("{\"skills\":[\"Java\"]}");
         when(storyRepo.findByUserId(userId)).thenReturn(List.of());
         when(repo.findByJobIdAndUserId(jobId, userId)).thenReturn(List.of());
@@ -148,6 +171,11 @@ class InterviewPrepServiceTest {
     private Job job() {
         return Job.builder().id(jobId).title("Backend Engineer").companyName("Acme")
                 .descriptionClean("We need Java and Kafka.").country("DK").build();
+    }
+
+    private GeneratedDocument document(String content) {
+        return new GeneratedDocument(UUID.randomUUID(), userId, null, jobId, DocumentType.COVER_LETTER,
+                content, null, null, null, null, null, null, null, null);
     }
 
     private InterviewQuestion question(String text) {
