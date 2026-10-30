@@ -35,8 +35,8 @@
           <button type="button" class="airm-item" [disabled]="busy()" (click)="run(suggestions[i])">{{ label | translate }}</button>
         }
         <div class="airm-custom">
-          <input [(ngModel)]="customAsk" [disabled]="busy()" [placeholder]="'resumeBuilder.refine.askPlaceholder' | translate"
-            (keydown.enter)="run(customAsk)" />
+          <input [ngModel]="customAsk()" (ngModelChange)="customAsk.set($event)" [disabled]="busy()" [placeholder]="'resumeBuilder.refine.askPlaceholder' | translate"
+            (keydown.enter)="run(customAsk())" />
         </div>
         @if (busy()) {
           <div class="airm-busy">{{ 'resumeBuilder.refine.refining' | translate }}</div>

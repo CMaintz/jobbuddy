@@ -8,7 +8,7 @@ import { LANGUAGE_PROFICIENCIES } from '../../data/language-proficiencies';
 @Component({
   selector: 'app-languages-form',
   imports: [FormsModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './languages-form.component.html',
 })
 export class LanguagesFormComponent {

@@ -7,7 +7,7 @@ import { STRENGTH_ICONS } from '../data/strength-icons';
   selector: 'app-icon-picker',
   imports: [LucideDynamicIcon, TranslateModule],
   templateUrl: './icon-picker.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./icon-picker.component.css'],
 })
 export class IconPickerComponent {

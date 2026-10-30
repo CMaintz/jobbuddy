@@ -31,7 +31,7 @@ const TAILOR_PROMPTS = [
   selector: 'app-ai-tailor-form',
   imports: [FormsModule, TranslateModule, DiffViewerComponent, JbButtonComponent, JbIconComponent,
     PromptExplainerComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ai-tailor-form.component.html',
 })
 export class AiTailorFormComponent implements OnInit {
@@ -45,11 +45,11 @@ export class AiTailorFormComponent implements OnInit {
   atsReport = signal<AtsReport | null>(null);
   generating = signal(false);
   error = signal('');
-  promptTemplates: PromptTemplate[] = [];
+  promptTemplates = signal<PromptTemplate[]>([]);
   selectedPromptId: string | null = null;
 
   get explainedPrompt(): PromptTemplate | undefined {
-    return chosenPrompt(this.promptTemplates, this.selectedPromptId, 'CV_TAILORING');
+    return chosenPrompt(this.promptTemplates(), this.selectedPromptId, 'CV_TAILORING');
   }
   instructions = '';
   tailorPrompts = TAILOR_PROMPTS;
@@ -62,8 +62,8 @@ export class AiTailorFormComponent implements OnInit {
   ngOnInit(): void {
     this.loadAtsReport();
     this.promptApi.getAll().subscribe({
-      next: templates => this.promptTemplates = templates.filter(t =>
-        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference),
+      next: templates => this.promptTemplates.set(templates.filter(t =>
+        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference)),
       error: this.notify.onError('notify.loadFailed')
     });
   }
