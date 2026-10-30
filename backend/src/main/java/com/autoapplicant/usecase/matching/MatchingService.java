@@ -349,14 +349,15 @@ public class MatchingService implements GetRecommendationsUseCase {
                 }
             }
 
-            // Salary in range (only if job has salary data)
-            if (job.salaryMin() != null || job.salaryMax() != null) {
-                boolean inRange = isSalaryInRange(job, prefs);
-                if (inRange) {
+            // Scored only when both sides state a salary. Without a range of the user's there is
+            // nothing to be "within", and a bonus would just lift every posting that lists pay.
+            boolean jobStatesSalary = job.salaryMin() != null || job.salaryMax() != null;
+            boolean userSetRange = prefs.salaryMin() != null || prefs.salaryMax() != null;
+            if (jobStatesSalary && userSetRange) {
+                if (isSalaryInRange(job, prefs)) {
                     prefScore += SALARY_IN_RANGE_BONUS;
                     reasons.add("Salary within your range");
-                } else if (prefs.salaryMin() != null || prefs.salaryMax() != null) {
-                    // Job has salary data but it's outside range — soft penalty
+                } else {
                     prefScore -= SALARY_IN_RANGE_BONUS;
                     reasons.add("Salary may be outside your range");
                 }
@@ -590,8 +591,6 @@ public class MatchingService implements GetRecommendationsUseCase {
         Integer jobMax = job.salaryMax();
         Integer prefMin = prefs.salaryMin();
         Integer prefMax = prefs.salaryMax();
-
-        if (prefMin == null && prefMax == null) return true;
 
         // Use the midpoint of the job's range if both ends available, else whichever end exists
         int jobPoint = jobMin != null && jobMax != null ? (jobMin + jobMax) / 2

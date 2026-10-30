@@ -38,6 +38,16 @@ class MatchingPreferenceScoringTest extends MatchingServiceFixture {
     }
 
     @Test
+    void a_stated_salary_earns_nothing_when_the_user_set_no_range() {
+        UUID jobId = UUID.randomUUID();
+        List<MatchResult> results = feedFor(prefs().municipalities("Copenhagen").build(),
+                salaried(jobId, 45_000, 55_000));
+
+        assertThat(scoreOf(results, jobId)).isEqualTo(25);
+        assertThat(reasonsFor(results, jobId)).doesNotContain("Salary within your range");
+    }
+
+    @Test
     void location_bonus_tapers_with_distance_from_the_preferred_municipality() {
         UUID home = UUID.randomUUID();
         UUID roskilde = UUID.randomUUID();
