@@ -29,4 +29,13 @@ public final class JobRows {
                 Timestamp.from(postedAt), active, category);
         return id;
     }
+
+    /**
+     * Overwrites one column of an inserted row. Instants are bound as timestamps because pgjdbc
+     * cannot infer a SQL type for a bare Instant.
+     */
+    public void set(UUID id, String column, Object value) {
+        Object bound = value instanceof Instant instant ? Timestamp.from(instant) : value;
+        jdbc.update("UPDATE jobs SET " + column + " = ? WHERE id = ?", bound, id);
+    }
 }
