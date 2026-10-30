@@ -4,17 +4,16 @@ import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Fetches job listings from Teamtailor career pages via RSS.
@@ -115,19 +114,7 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
 
                 seenInRun.add(guid);
 
-                // Teamtailor uses tt:department rather than the standard <category> element
-                List<String> categories = item.getElementsByTag("tt:department").eachText();
-
-                config.onJobFound().accept(new RawJobData(
-                        JobSource.TEAMTAILOR,
-                        guid,
-                        link,
-                        buildContent(item, link),
-                        null,
-                        Instant.now(),
-                        categories,
-                        null
-                ));
+                config.onJobFound().accept(toRawJobData(item, guid, link));
                 count++;
                 newOnPage++;
 
@@ -146,6 +133,23 @@ public class TeamtailorConnector extends AbstractJobSourceConnector {
         }
 
         return count;
+    }
+
+    /** Maps one RSS item; the feed carries the full description, so no detail fetch is needed. */
+    RawJobData toRawJobData(Element item, String guid, String link) {
+        // Teamtailor uses tt:department rather than the standard <category> element
+        List<String> categories = item.getElementsByTag("tt:department").eachText();
+
+        return new RawJobData(
+                JobSource.TEAMTAILOR,
+                guid,
+                link,
+                buildContent(item, link),
+                null,
+                Instant.now(),
+                categories,
+                null
+        );
     }
 
     private String buildContent(Element item, String link) {

@@ -1,0 +1,18 @@
+{
+  "jobAdId": "b3f1c2d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+  "title": "Systemudvikler til digitale borgerløsninger",
+  "body": "<p>Vi søger en systemudvikler, der vil bygge digitale løsninger til borgerne.</p><p>Du arbejder med Java og Angular.</p>",
+  "publicationDateTime": "2026-10-27T09:30:00+01:00",
+  "employer": {
+    "name": "Region Midtjylland, Digitalisering"
+  },
+  "job": {
+    "address": {
+      "city": "Viborg"
+    },
+    "preferredLabelDa": "Softwareudvikler"
+  },
+  "application": {
+    "deadlineDate": "2026-11-23T23:59:00"
+  }
+}

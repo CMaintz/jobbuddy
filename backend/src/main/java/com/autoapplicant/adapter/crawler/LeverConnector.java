@@ -6,11 +6,10 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.List;
+import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches job listings from Lever ATS job boards.
@@ -66,46 +65,9 @@ public class LeverConnector extends AbstractJobSourceConnector {
                 int companyCount = 0;
                 for (JsonNode posting : root) {
                     if (count >= targetJobs) break;
-
-                    String id         = posting.path("id").asText(null);
-                    String title      = posting.path("text").asText("");
-                    String hostedUrl  = posting.path("hostedUrl").asText(null);
-                    String team       = posting.path("categories").path("team").asText("");
-                    String location   = posting.path("categories").path("location").asText("");
-                    String commitment = posting.path("categories").path("commitment").asText(""); // full-time, part-time etc.
-                    String descPlain  = posting.path("descriptionPlain").asText("");
-                    String descHtml   = posting.path("description").asText("");
-
-                    if (id == null || hostedUrl == null) continue;
-
-                    // Additional lists (requirements, responsibilities, etc.)
-                    StringBuilder listsText = new StringBuilder();
-                    JsonNode lists = posting.path("lists");
-                    if (lists.isArray()) {
-                        for (JsonNode list : lists) {
-                            String listTitle = list.path("text").asText("");
-                            String listHtml  = list.path("content").asText("");
-                            if (!listTitle.isBlank()) {
-                                listsText.append(listTitle).append(":\n");
-                                listsText.append(Jsoup.parse(listHtml).text()).append("\n\n");
-                            }
-                        }
-                    }
-
-                    String content = buildContent(title, company, location, team, commitment,
-                            descPlain.isBlank() ? Jsoup.parse(descHtml).text() : descPlain,
-                            listsText.toString(), hostedUrl);
-
-                    config.onJobFound().accept(new RawJobData(
-                            JobSource.LEVER,
-                            "lever-" + company + "-" + id,
-                            hostedUrl,
-                            content,
-                            posting.toString(),
-                            Instant.now(),
-                            List.of(),
-                            null
-                    ));
+                    RawJobData raw = toRawJobData(company, posting);
+                    if (raw == null) continue;
+                    config.onJobFound().accept(raw);
                     count++;
                     companyCount++;
                 }
@@ -121,6 +83,49 @@ public class LeverConnector extends AbstractJobSourceConnector {
         }
 
         log.info("Lever crawl complete: {} jobs from {} companies", count, companies.size());
+    }
+
+    /** Maps one posting; null when it lacks the id or URL the source id and link rest on. */
+    RawJobData toRawJobData(String company, JsonNode posting) {
+        String id         = posting.path("id").asText(null);
+        String title      = posting.path("text").asText("");
+        String hostedUrl  = posting.path("hostedUrl").asText(null);
+        String team       = posting.path("categories").path("team").asText("");
+        String location   = posting.path("categories").path("location").asText("");
+        String commitment = posting.path("categories").path("commitment").asText(""); // full-time, part-time etc.
+        String descPlain  = posting.path("descriptionPlain").asText("");
+        String descHtml   = posting.path("description").asText("");
+
+        if (id == null || hostedUrl == null) return null;
+
+        // Additional lists (requirements, responsibilities, etc.)
+        StringBuilder listsText = new StringBuilder();
+        JsonNode lists = posting.path("lists");
+        if (lists.isArray()) {
+            for (JsonNode list : lists) {
+                String listTitle = list.path("text").asText("");
+                String listHtml  = list.path("content").asText("");
+                if (!listTitle.isBlank()) {
+                    listsText.append(listTitle).append(":\n");
+                    listsText.append(Jsoup.parse(listHtml).text()).append("\n\n");
+                }
+            }
+        }
+
+        String content = buildContent(title, company, location, team, commitment,
+                descPlain.isBlank() ? Jsoup.parse(descHtml).text() : descPlain,
+                listsText.toString(), hostedUrl);
+
+        return new RawJobData(
+                JobSource.LEVER,
+                "lever-" + company + "-" + id,
+                hostedUrl,
+                content,
+                posting.toString(),
+                Instant.now(),
+                List.of(),
+                null
+        );
     }
 
     private String buildContent(String title, String company, String location, String team,

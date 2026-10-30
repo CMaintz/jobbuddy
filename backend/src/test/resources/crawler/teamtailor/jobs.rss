@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:tt="https://teamtailor.com/locations">
+  <channel>
+    <title>Bankdata</title>
+    <description>Vil du være en del af Bankdata?</description>
+    <link>https://bankdata.teamtailor.com/jobs</link>
+    <item>
+      <title>Senior Business Consultant (Transaction &amp; Customer Screening)</title>
+      <description>&lt;p&gt;&lt;span&gt;Som Senior Business Consultant får du en central rolle i Bankdatas løsninger til screening af transaktioner og kunder. Løsningerne understøtter bankernes arbejde med at forebygge terrorfinansiering og brud på sanktioner, og derfor er kvalitet, overblik og rettidig handling afgørende.&lt;/span&gt;&lt;/p&gt;&lt;div&gt;&lt;p&gt;&lt;span&gt;Du bliver en del af Transaction &amp;amp; Customer Screening, hvor du både kommer tæt på den daglige drift og får mulighed for at være med til at forme, hvordan vores screeningsløsninger skal udvikle sig fremover.&lt;/span&gt;&lt;/p&gt;</description>
+      <pubDate>Tue, 27 Oct 2026 11:07:41 +0100</pubDate>
+      <link>https://bankdata.teamtailor.com/jobs/8622966-senior-business-consultant-transaction-customer-screening</link>
+      <remoteStatus>none</remoteStatus>
+      <guid>699fbc06-a1e5-4370-b858-124a80e62235</guid>
+      <tt:locations>
+        <tt:location>
+          <tt:name/>
+          <tt:address>Erritsø Bygade 102</tt:address>
+          <tt:zip>7000</tt:zip>
+          <tt:city>Fredericia</tt:city>
+          <tt:country>Denmark</tt:country>
+        </tt:location>
+      </tt:locations>
+      <tt:department>Customer Platforms</tt:department>
+      <tt:role>Business Consulting</tt:role>
+    </item>
+    <item>
+      <title>Backend Developer</title>
+      <description>&lt;p&gt;&lt;span&gt;I Document Services udvikler vi en ny dokumentplatform baseret på Quadient Inspire Flex. Platformen er en del af en udvikling mod mere automatisering, standardisering og selvbetjening på dokumentområdet. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span&gt;Som Backend Developer bliver du en del af den udvikling og kommer til at arbejde med løsninger hele vejen fra udvikling og test til produktion og drift.&lt;/span&gt;&lt;/p&gt;</description>
+      <pubDate>Fri, 23 Oct 2026 12:11:31 +0200</pubDate>
+      <link>https://bankdata.teamtailor.com/jobs/8608036-backend-developer</link>
+      <remoteStatus>none</remoteStatus>
+      <guid>1eaf8535-88b2-427b-8d67-12e096f4c59a</guid>
+      <tt:locations>
+        <tt:location>
+          <tt:name/>
+          <tt:address>Erritsø Bygade 102</tt:address>
+          <tt:zip>7000</tt:zip>
+          <tt:city>Fredericia</tt:city>
+          <tt:country>Denmark</tt:country>
+        </tt:location>
+      </tt:locations>
+      <tt:department>Infrastructure, Operations &amp; Security</tt:department>
+      <tt:role>Software Development</tt:role>
+    </item>
+  </channel>
+</rss>

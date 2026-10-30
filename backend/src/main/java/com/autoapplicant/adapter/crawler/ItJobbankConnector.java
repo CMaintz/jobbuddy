@@ -78,9 +78,6 @@ public class ItJobbankConnector extends AbstractJobSourceConnector {
 
                 seenInRun.add(guid);
 
-                // Extract short description from RSS <description> <p> tags
-                String shortDescription = extractShortDescription(item);
-
                 String detailHtml = item.select("description").text();
                 try {
                     Thread.sleep(config.delayMs());
@@ -97,8 +94,7 @@ public class ItJobbankConnector extends AbstractJobSourceConnector {
                             link, e.getMessage());
                 }
 
-                List<String> rssCategories = item.select("category").eachText();
-                config.onJobFound().accept(new RawJobData(JobSource.IT_JOBBANK, guid, link, detailHtml, null, Instant.now(), rssCategories, shortDescription));
+                config.onJobFound().accept(toRawJobData(item, guid, link, detailHtml));
                 totalCount++;
                 newOnPage++;
             }
@@ -119,6 +115,15 @@ public class ItJobbankConnector extends AbstractJobSourceConnector {
         }
 
         log.info("IT-Jobbank crawl complete: {} jobs collected", totalCount);
+    }
+
+    /** Maps one RSS item; the detail page HTML falls back to the item's own description. */
+    RawJobData toRawJobData(Element item, String guid, String link, String detailHtml) {
+        // Extract short description from RSS <description> <p> tags
+        String shortDescription = extractShortDescription(item);
+        List<String> rssCategories = item.select("category").eachText();
+        return new RawJobData(JobSource.IT_JOBBANK, guid, link, detailHtml, null, Instant.now(),
+                rssCategories, shortDescription);
     }
 
     /**
