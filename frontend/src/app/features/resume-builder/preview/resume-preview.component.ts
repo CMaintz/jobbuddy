@@ -24,7 +24,7 @@ import { JbButtonComponent } from '../../../shared/components/jb-button/jb-butto
     ExecutiveLayoutComponent,
     CreativeLayoutComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './resume-preview.component.html',
 })
 export class ResumePreviewComponent {

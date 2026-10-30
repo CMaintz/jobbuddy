@@ -8,7 +8,7 @@ import { SOCIAL_PLATFORMS, SOCIAL_ICON_LIBRARY } from '../../data/social-platfor
 @Component({
   selector: 'app-socials-form',
   imports: [FormsModule, TranslateModule, IconPickerComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './socials-form.component.html',
 })
 export class SocialsFormComponent {

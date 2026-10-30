@@ -9,7 +9,7 @@ import { AiRefineMenuComponent } from '../../shared/ai-refine-menu.component';
 @Component({
   selector: 'app-projects-form',
   imports: [FormsModule, TranslateModule, RichTextEditorComponent, AiRefineMenuComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './projects-form.component.html',
 })
 export class ProjectsFormComponent {

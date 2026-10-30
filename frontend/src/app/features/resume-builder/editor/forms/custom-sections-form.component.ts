@@ -16,7 +16,7 @@ const STARTER_TEMPLATES: { label: string; heading: string; style: 'paragraph' | 
 @Component({
   selector: 'app-custom-sections-form',
   imports: [FormsModule, TranslateModule, RichTextEditorComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './custom-sections-form.component.html',
 })
 export class CustomSectionsFormComponent {

@@ -7,7 +7,7 @@ import { ResumeCertification } from '../../models/resume-builder.models';
 @Component({
   selector: 'app-certifications-form',
   imports: [FormsModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './certifications-form.component.html',
 })
 export class CertificationsFormComponent {
