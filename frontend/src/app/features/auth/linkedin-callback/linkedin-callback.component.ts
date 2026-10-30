@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
@@ -22,13 +22,14 @@ function callbackErrorKey(e: HttpErrorResponse): string {
 @Component({
   selector: 'app-linkedin-callback',
   imports: [RouterLink, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './linkedin-callback.component.html'
 })
 export class LinkedInCallbackComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
 
   error = '';
 
@@ -48,6 +49,7 @@ export class LinkedInCallbackComponent implements OnInit {
       next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
       error: (e: HttpErrorResponse) => {
         this.error = callbackErrorKey(e);
+        this.cdr.markForCheck();
       }
     });
   }

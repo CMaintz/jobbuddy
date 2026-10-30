@@ -25,9 +25,9 @@
 
           @if (target() === 'job') {
             <div class="mt-3">
-              @if (jobOptions.length > 0) {
-                <select class="input" [(ngModel)]="selectedJobId">
-                  @for (opt of jobOptions; track opt.id) {
+              @if (jobOptions().length > 0) {
+                <select class="input" [ngModel]="selectedJobId()" (ngModelChange)="selectedJobId.set($event)">
+                  @for (opt of jobOptions(); track opt.id) {
                     <option [value]="opt.id">{{ opt.label }}</option>
                   }
                 </select>

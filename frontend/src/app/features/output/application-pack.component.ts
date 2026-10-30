@@ -15,7 +15,7 @@ import { NotifyService } from '../../shared/services/notify.service';
   selector: 'app-application-pack',
   imports: [RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './application-pack.component.html'
 })
 export class ApplicationPackComponent implements OnInit {

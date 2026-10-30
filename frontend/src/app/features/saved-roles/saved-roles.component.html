@@ -1,11 +1,11 @@
     <jb-topbar [title]="'nav.savedRoles' | translate">
-      <jb-pill tone="accent">{{ savedJobs.length }}</jb-pill>
+      <jb-pill tone="accent">{{ savedJobs().length }}</jb-pill>
       <ng-container jb-topbar-actions>
         <jb-button [primary]="true" icon="sparkle" routerLink="/apply">{{ 'nav.newApplication' | translate }}</jb-button>
       </ng-container>
     </jb-topbar>
 
-    @if (loading) {
+    @if (loading()) {
       <div class="p-12 text-center text-jb-text-dim">{{ 'savedRoles.loading' | translate }}</div>
     } @else {
       <div class="flex-1 overflow-auto jb-scroll overflow-x-auto">
@@ -18,7 +18,7 @@
           <span></span>
         </div>
 
-        @for (job of savedJobs; track job.id) {
+        @for (job of savedJobs(); track job.id) {
           <a [routerLink]="['/jobs', job.id]" class="jb-row grid gap-3 p-[12px_18px] items-center border-b border-jb-border-faint cursor-pointer no-underline text-inherit grid-cols-[1fr_120px_100px_80px]">
             <div class="flex items-center gap-2.5 min-w-0">
               <jb-company-mark [name]="job.companyName || '?'" [size]="28" />
@@ -46,7 +46,7 @@
           </a>
         }
 
-        @if (savedJobs.length === 0) {
+        @if (savedJobs().length === 0) {
           <div class="p-[48px_24px] text-center text-jb-text-dim">
             <jb-icon name="bookmark" [size]="24" class="mb-2" />
             <div class="text-md font-medium mb-[4px]">{{ 'savedRoles.emptyTitle' | translate }}</div>

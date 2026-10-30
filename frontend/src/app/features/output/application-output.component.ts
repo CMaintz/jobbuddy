@@ -29,7 +29,7 @@ import { NotifyService } from '../../shared/services/notify.service';
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbDropdownComponent, DiffViewerComponent, LetterPaperComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {

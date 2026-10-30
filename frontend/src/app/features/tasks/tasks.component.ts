@@ -31,7 +31,7 @@ interface TaskRow {
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, CompanyMarkComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit {
@@ -44,7 +44,7 @@ export class TasksComponent implements OnInit {
   loading = signal(true);
   rows = signal<TaskRow[]>([]);
   doneToday = signal(0);
-  applications: Application[] = [];
+  applications = signal<Application[]>([]);
 
   // Add-reminder form
   showForm = signal(false);
@@ -85,7 +85,7 @@ export class TasksComponent implements OnInit {
       apps: this.appsApi.getAll(),
     }).subscribe({
       next: ({ reminders, apps }) => {
-        this.applications = apps;
+        this.applications.set(apps);
         const appMap = new Map(apps.map(a => [a.id, a]));
         this.rows.set(reminders.map(r => this.toRow(r, appMap.get(r.applicationId))));
         this.loading.set(false);

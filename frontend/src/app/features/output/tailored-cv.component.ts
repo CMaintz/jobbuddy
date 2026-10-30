@@ -34,7 +34,7 @@ const TAILOR_PROMPTS = [
 @Component({
   selector: 'app-tailored-cv',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tailored-cv.component.html',
 })
 export class TailoredCvComponent implements OnInit {
@@ -60,11 +60,11 @@ export class TailoredCvComponent implements OnInit {
   latestDoc = signal<StructuredDocument | null>(null);
   versionCount = signal(0);
 
-  promptTemplates: PromptTemplate[] = [];
+  promptTemplates = signal<PromptTemplate[]>([]);
   selectedPromptId = signal<string | null>(null);
 
   get explainedPrompt(): PromptTemplate | undefined {
-    return chosenPrompt(this.promptTemplates, this.selectedPromptId(), 'CV_TAILORING');
+    return chosenPrompt(this.promptTemplates(), this.selectedPromptId(), 'CV_TAILORING');
   }
   selectedLanguage = signal(loadGenDefaults().lang);
   languages = ['English', 'Dansk'];
@@ -79,8 +79,8 @@ export class TailoredCvComponent implements OnInit {
     if (qp.get('instructions')) this.customInstructions = qp.get('instructions')!;
 
     this.promptApi.getAll().subscribe({
-      next: templates => this.promptTemplates = templates.filter(t =>
-        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference),
+      next: templates => this.promptTemplates.set(templates.filter(t =>
+        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference)),
       error: this.notify.onError('notify.loadFailed')
     });
 

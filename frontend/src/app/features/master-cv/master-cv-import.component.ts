@@ -8,7 +8,7 @@ import { NotifyService } from '../../shared/services/notify.service';
 @Component({
   selector: 'app-master-cv-import',
   imports: [RouterLink, TranslateModule, JbIconComponent, CvImportPanelComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './master-cv-import.component.html'
 })
 export class MasterCvImportComponent {
