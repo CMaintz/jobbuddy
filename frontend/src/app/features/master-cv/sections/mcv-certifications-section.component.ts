@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
@@ -13,7 +13,7 @@ import { Certification } from '../../../core/models/profile-section.model';
 @Component({
   selector: 'app-mcv-certifications-section',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-3">
       @for (cert of list; track cert.id || $index) {
@@ -25,30 +25,30 @@ import { Certification } from '../../../core/models/profile-section.model';
           <button class="icon-btn" [title]="'common.remove' | translate" (click)="removeAt.emit($index)"><jb-icon name="x" [size]="12" /></button>
         </div>
       }
-      @if (list.length === 0 && !showForm) {
+      @if (list.length === 0 && !showForm()) {
         <div class="p-8 text-center text-jb-text-dim text-base">{{ 'masterCv.form.noCerts' | translate }}</div>
       }
-      @if (showForm) {
+      @if (showForm()) {
         <div class="card p-3.5 grid gap-2 grid-cols-[1.4fr_1fr_0.8fr]">
           <label class="flex flex-col gap-[5px]">
             <span class="label">{{ 'masterCv.form.certName' | translate }}</span>
-            <input [(ngModel)]="draft.name" class="input" [placeholder]="'masterCv.form.placeholder.certName' | translate" />
+            <input [ngModel]="draft().name" (ngModelChange)="patchDraft({ name: $event })" class="input" [placeholder]="'masterCv.form.placeholder.certName' | translate" />
           </label>
           <label class="flex flex-col gap-[5px]">
             <span class="label">{{ 'masterCv.form.issuer' | translate }}</span>
-            <input [(ngModel)]="draft.issuer" class="input" [placeholder]="'masterCv.form.placeholder.certIssuer' | translate" />
+            <input [ngModel]="draft().issuer" (ngModelChange)="patchDraft({ issuer: $event })" class="input" [placeholder]="'masterCv.form.placeholder.certIssuer' | translate" />
           </label>
           <label class="flex flex-col gap-[5px]">
             <span class="label">{{ 'masterCv.form.issued' | translate }}</span>
-            <input [(ngModel)]="draft.issuedAt" class="input mono" placeholder="2024-06-01" />
+            <input [ngModel]="draft().issuedAt" (ngModelChange)="patchDraft({ issuedAt: $event })" class="input mono" placeholder="2024-06-01" />
           </label>
           <div class="col-span-3 flex gap-2">
             <jb-button small [primary]="true" (clicked)="submit()">{{ 'common.add' | translate }}</jb-button>
-            <jb-button small (clicked)="showForm = false">{{ 'common.cancel' | translate }}</jb-button>
+            <jb-button small (clicked)="showForm.set(false)">{{ 'common.cancel' | translate }}</jb-button>
           </div>
         </div>
       } @else {
-        <jb-button small icon="plus" (clicked)="showForm = true">{{ 'masterCv.form.addCert' | translate }}</jb-button>
+        <jb-button small icon="plus" (clicked)="showForm.set(true)">{{ 'masterCv.form.addCert' | translate }}</jb-button>
       }
     </div>
   `,
@@ -59,16 +59,21 @@ export class McvCertificationsSectionComponent {
   /** The parent persists the entry and calls reset() when the API call succeeds. */
   @Output() save = new EventEmitter<Certification>();
 
-  showForm = false;
-  draft: Certification = { name: '' };
+  showForm = signal(false);
+  draft = signal<Certification>({ name: '' });
+
+  patchDraft(patch: Partial<Certification>): void {
+    this.draft.update(d => ({ ...d, ...patch }));
+  }
 
   submit(): void {
-    if (!this.draft.name.trim()) return;
-    this.save.emit({ ...this.draft });
+    const draft = this.draft();
+    if (!draft.name.trim()) return;
+    this.save.emit({ ...draft });
   }
 
   reset(): void {
-    this.draft = { name: '' };
-    this.showForm = false;
+    this.draft.set({ name: '' });
+    this.showForm.set(false);
   }
 }
