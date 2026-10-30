@@ -7,7 +7,9 @@ import com.autoapplicant.domain.document.CvSection;
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.domain.document.CvTailoringGuidance;
 import com.autoapplicant.domain.document.PostingContext;
+import com.autoapplicant.domain.document.PromptCategory;
 import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.RequirementTier;
@@ -183,6 +185,28 @@ class PromptCompositionBuilderTest {
             assertThat(c.userPromptTemplate()).contains("## Honesty & ATS Rules", "## Targeting & Proof Rules");
             assertThat(c.systemPrompt()).contains("## Untrusted Input");
         }
+    }
+
+    @Test
+    void aUserPersonaReplacesTheDefaultButNotTheGuardrails() {
+        // A user-written system prompt is the one place user text replaces ours wholesale, so the
+        // privacy rule, the injection guard and the language line must be appended after it.
+        PromptTemplate persona = new PromptTemplate(null, null, "Pirate", PromptCategory.COVER_LETTER,
+                null, "You are a pirate.", "Arr.", null, false, null, 1, null, null, false, List.of(),
+                0, false, false, null);
+        PromptComposition c = builder.composeStructuredApplicationPrompt(
+                "COVER_LETTER", "{}", new PostingContext(DANISH_POSTING, null, null),
+                null, null, "English", persona, null, List.of(), null, "STANDARD");
+
+        assertThat(c.systemPrompt())
+                .startsWith("You are a pirate.")
+                .doesNotContain("expert career coach")
+                .contains("Do not ask for, infer, invent, or output those private identity fields.")
+                .contains("## Untrusted Input")
+                .contains("Write the document body in English.");
+        assertThat(c.userPromptTemplate())
+                .contains("## Style Guidance\nArr.")
+                .contains("## Honesty & ATS Rules", "## Banned Phrases");
     }
 
     // ── The posting's own asks ────────────────────────────────────────────────────────────
