@@ -1,28 +1,28 @@
 package com.autoapplicant.usecase.skills;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.skill.SkillMention;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.skill.TaxonomyCandidate;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.skills.TaxonomyRejectionRepositoryPort;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class SkillTaxonomyCurationServiceTest {
 
@@ -124,7 +124,8 @@ class SkillTaxonomyCurationServiceTest {
 
         assertThat(service.candidates(1)).extracting(TaxonomyCandidate::name).containsExactly("Rust");
         assertThat(service.candidates(0)).isEmpty();
-        verify(jobRepo, never()).findSkillMentions(0);
+        // Only the limit-1 call may scan the market; a zero limit must not pay for the query.
+        verify(jobRepo, times(1)).findSkillMentions(anyInt());
     }
 
     // ── Approval ──────────────────────────────────────────────────────────────────────────
