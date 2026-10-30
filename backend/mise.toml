@@ -9,6 +9,12 @@
 # unprefixed `mise run <verb>` from backend/, resolves them here (nearest config wins)
 # instead of falling through to the root's cross-package aggregates.
 
+[tools]
+# The document renderer shells out to this CLI (app.render.typst-path, default `typst` on
+# PATH). Keep it equal to the version the backend Dockerfile installs: stored templates are
+# Typst source, so local, CI and production must compile with the same compiler.
+typst = "0.15.1"
+
 [env]
 HABIT_HOOKS_VERSION = "1.5.0"
 HABIT_HOOKS_PLUGIN = "habit-hooks-java"

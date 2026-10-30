@@ -20,3 +20,5 @@ gradlew.bat text eol=crlf
 *.pdf binary
 *.zip binary
 *.gz binary
+*.ttf binary
+*.otf binary
