@@ -108,7 +108,7 @@ description = "ng build — full template + type compile"
 run = "npm run build"
 
 [tasks.test]
-description = "ng test headless (Chrome ships on the GitHub ubuntu runner)"
+description = "ng test (Vitest on jsdom) with coverage"
 run = "npm run test:ci"
 
 [tasks.audit]

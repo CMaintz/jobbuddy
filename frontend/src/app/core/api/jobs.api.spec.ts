@@ -38,7 +38,7 @@ describe('JobsApiService', () => {
     expect(req.request.params.get('q')).toBe('java');
     expect(req.request.params.get('page')).toBe('2');
     expect(req.request.params.get('size')).toBe('10');
-    expect(req.request.params.has('categories')).toBeFalse();
+    expect(req.request.params.has('categories')).toBe(false);
     req.flush({ jobs: [], total: 0, page: 2, size: 10 } satisfies JobSearchResult);
   });
 
