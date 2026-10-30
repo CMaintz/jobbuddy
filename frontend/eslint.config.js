@@ -48,9 +48,7 @@ module.exports = defineConfig([
         "error",
         { allow: ["arrowFunctions"] },
       ],
-      // The v22 migration pinned every component to Eager to keep pre-v22 behaviour.
-      // Moving each one to OnPush needs a manual check, so this stays a warning until then.
-      "@angular-eslint/prefer-on-push-component-change-detection": "warn",
+      "@angular-eslint/prefer-on-push-component-change-detection": "error",
     },
   },
   {

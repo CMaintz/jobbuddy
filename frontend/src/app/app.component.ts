@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
@@ -10,7 +10,7 @@ import { StreakBadgeComponent } from './shared/components/streak-badge/streak-ba
 import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
 import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
-import { filter } from 'rxjs';
+import { filter, map } from 'rxjs';
 
 /** Routes rendered without the app shell. An unverified user on /verify-email cannot use the app yet. */
 const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
@@ -33,7 +33,7 @@ interface NavItem {
     RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
     JbToastComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {
@@ -47,9 +47,16 @@ export class AppComponent implements OnInit {
   private translate = inject(TranslateService);
 
   sidebarOpen = signal(false);
-  private currentUserEmail = '';
-  private currentUserName = '';
+  private currentUserEmail = signal('');
+  private currentUserName = signal('');
   private signedIn = false;
+  private url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
 
   // ── Navigation definitions ──────────────────────────
   mainNav: NavItem[] = [
@@ -79,8 +86,8 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
-      this.currentUserEmail = user?.email || '';
-      this.currentUserName = user?.email?.split('@')[0] ?? '';
+      this.currentUserEmail.set(user?.email || '');
+      this.currentUserName.set(user?.email?.split('@')[0] ?? '');
       this.signedIn = !!user;
       if (user) this.streak.refresh();
       else this.streak.clear();
@@ -98,19 +105,21 @@ export class AppComponent implements OnInit {
   }
 
   isActive(route: string): boolean {
-    return this.router.url === route || this.router.url.startsWith(route + '/');
+    const url = this.url();
+    return url === route || url.startsWith(route + '/');
   }
 
   isFullscreenRoute(): boolean {
-    return FULLSCREEN_ROUTES.some(route => this.router.url.startsWith(route));
+    const url = this.url();
+    return FULLSCREEN_ROUTES.some(route => url.startsWith(route));
   }
 
   userName(): string {
-    return this.currentUserName || this.translate.instant('nav.userFallback');
+    return this.currentUserName() || this.translate.instant('nav.userFallback');
   }
 
   userEmail(): string {
-    return this.currentUserEmail;
+    return this.currentUserEmail();
   }
 
   userInitials(): string {
