@@ -257,7 +257,7 @@ public class MatchingService implements GetRecommendationsUseCase {
 
     /**
      * Returns true if the job is within maxCommuteKm of any of the user's preferred
-     * municipalities or preferred locations.
+     * municipalities or preferred locations, or if none of them has known coordinates.
      */
     private boolean isWithinCommuteDistance(UserPreferences prefs, double[] jobCoords, int maxKm) {
         // Try preferred municipalities first (more specific), then fallback to locations
@@ -265,17 +265,19 @@ public class MatchingService implements GetRecommendationsUseCase {
                 ? prefs.preferredMunicipalities()
                 : (notEmpty(prefs.preferredLocations()) ? prefs.preferredLocations() : List.of());
 
-        if (homePoints.isEmpty()) return true; // no reference point configured — skip filter
-
+        boolean anyHomePlaced = false;
         for (String home : homePoints) {
             double[] homeCoords = DanishMunicipalityCoordinates.get(home);
             if (homeCoords != null) {
+                anyHomePlaced = true;
                 double km = DanishMunicipalityCoordinates.haversineKm(
                         homeCoords[0], homeCoords[1], jobCoords[0], jobCoords[1]);
                 if (km <= maxKm) return true;
             }
         }
-        return false;
+        // No home point we can place, configured or not, means no distance to judge by: skip the
+        // filter rather than reject every posting that has coordinates.
+        return !anyHomePlaced;
     }
 
     // ── Score building ────────────────────────────────────────────────────────

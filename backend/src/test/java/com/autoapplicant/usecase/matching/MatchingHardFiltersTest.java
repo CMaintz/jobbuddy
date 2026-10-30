@@ -110,6 +110,26 @@ class MatchingHardFiltersTest extends MatchingServiceFixture {
     }
 
     @Test
+    void a_home_point_with_no_known_coordinates_filters_nothing() {
+        // A misspelt or unlisted home municipality gives no distance to judge by. Treating that
+        // as "too far" would empty the feed of every posting that can be placed.
+        Job near = minimalJob(kept).toBuilder().municipality("Frederiksberg").build();
+        UserPreferences prefs = prefs().municipalities("Atlantis").maxCommuteKm(30).build();
+
+        assertThat(feedFor(prefs, near)).containsExactly(kept);
+    }
+
+    @Test
+    void an_unplaceable_home_point_does_not_disable_the_radius_of_a_placeable_one() {
+        Job near = minimalJob(kept).toBuilder().municipality("Frederiksberg").build();
+        Job far = minimalJob(dropped).toBuilder().municipality("Aarhus").build();
+        UserPreferences prefs =
+                prefs().municipalities("Copenhagen", "Atlantis").maxCommuteKm(30).build();
+
+        assertThat(feedFor(prefs, near, far)).containsExactly(kept);
+    }
+
+    @Test
     void the_commute_radius_falls_back_to_preferred_locations_as_the_home_point() {
         Job near = minimalJob(kept).toBuilder().municipality("Frederiksberg").build();
         Job far = minimalJob(dropped).toBuilder().municipality("Aarhus").build();
