@@ -11,6 +11,7 @@ import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfilePrivateInfo;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
+import com.autoapplicant.port.in.document.ExportStructuredDocumentUseCase;
 import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.autoapplicant.port.in.user.ManageProfilePrivateInfoUseCase;
@@ -40,6 +41,7 @@ public class PdfExportController {
     private final ManageProfilePrivateInfoUseCase privateInfoUseCase;
     private final PdfRenderingService pdfRenderer;
     private final BuildApplicationDocumentUseCase buildAppDocument;
+    private final ExportStructuredDocumentUseCase exportStructuredDocument;
     private final SecurityContextHelper secCtx;
 
     public PdfExportController(ManagePdfTemplatesUseCase pdfTemplates,
@@ -47,12 +49,14 @@ public class PdfExportController {
                                ManageProfilePrivateInfoUseCase privateInfoUseCase,
                                PdfRenderingService pdfRenderer,
                                BuildApplicationDocumentUseCase buildAppDocument,
+                               ExportStructuredDocumentUseCase exportStructuredDocument,
                                SecurityContextHelper secCtx) {
         this.pdfTemplates = pdfTemplates;
         this.getUserProfile = getUserProfile;
         this.privateInfoUseCase = privateInfoUseCase;
         this.pdfRenderer = pdfRenderer;
         this.buildAppDocument = buildAppDocument;
+        this.exportStructuredDocument = exportStructuredDocument;
         this.secCtx = secCtx;
     }
 
@@ -98,7 +102,7 @@ public class PdfExportController {
     @Operation(summary = "Export structured document as PDF")
     @PostMapping("/export-structured-pdf")
     public ResponseEntity<byte[]> exportStructuredPdf(@RequestBody StructuredDocumentExportRequest req) {
-        byte[] pdf = pdfRenderer.renderStructured(req.document());
+        byte[] pdf = exportStructuredDocument.exportPdf(req.document());
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
