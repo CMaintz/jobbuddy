@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<rss version="2.0"
+ xmlns:blogChannel="http://backend.userland.com/blogChannelModule"
+>
+
+<channel>
+<title>Computerworld it-jobbank - Alle ledige job</title>
+<link>https://www.it-jobbank.dk/jobsoegning</link>
+<description></description>
+<language>da</language>
+<docs>http://blogs.law.harvard.edu/tech/rss</docs>
+<webMaster>support@it-jobbank.dk (Computerworld it-jobbank)</webMaster>
+<ttl>1440</ttl>
+
+<image>
+<title>Computerworld it-jobbank - Alle ledige job</title>
+<url>https://www.it-jobbank.dk/logo/it-jobbank_243_24042015.gif</url>
+<link>https://www.it-jobbank.dk/jobsoegning</link>
+</image>
+<item>
+<title>Erfaren softwareudvikler til Det Danske Filminstitut &#x2013; hvor teknologi m&#xF8;der film og kultur, Det Danske Filminstitut</title>
+<link>https://www.it-jobbank.dk/vis-job/h1712159</link>
+<description>
+&#x3C;div class=&#x22;jobsearch-result&#x22;&#x3E;
+&#x3C;div class=&#x22;result&#x22; data-jobad-tid=&#x22;h1712159&#x22;&#x3E;
+    &#x3C;header class=&#x22;job-header&#x22;&#x3E;
+        &#x3C;div class=&#x22;logo&#x22;&#x3E;&#x3C;img src=&#x22;https://www.it-jobbank.dk/img/logo/ddf_108_02022017.gif&#x22;&#x3E;&#x3C;/div&#x3E;
+        &#x3C;div class=&#x22;job-info&#x22;&#x3E;
+            &#x3C;div class=&#x22;job-place&#x22;&#x3E;
+                    &#x3C;div class=&#x22;job-company&#x22;&#x3E;Det Danske Filminstitut &#x3C;/div&#x3E;
+                    &#x3C;span class=&#x22;job-location&#x22;&#x3E;K&#xF8;benhavn K&#x3C;/span&#x3E;
+                    
+
+            &#x3C;/div&#x3E;
+            
+
+        &#x3C;/div&#x3E;
+    &#x3C;/header&#x3E;
+    &#x3C;h3 class=&#x22;job-title&#x22;&#x3E;
+        &#x3C;A HREF=&#x22;https://www.it-jobbank.dk/vis-job/h1712159&#x22; onclick=&#x22;jixAnalytics(&#x26;#39;event&#x26;#39;, {category: &#x26;#39;jobannonce&#x26;#39;, action: &#x26;#39;click&#x26;#39;, label: &#x26;#39;Se annonce&#x26;#39;})&#x22; rel=&#x22;noopener&#x22; target=&#x22;_blank&#x22;&#x3E;Erfaren softwareudvikler til Det Danske Filminstitut &#x2013; hvor teknologi m&#xF8;der film og kultur&#x3C;/a&#x3E;
+    &#x3C;/h3&#x3E;
+    &#x3C;div class=&#x22;job-body&#x22;&#x3E;
+            &#x3C;p&#x3E;Hos Det Danske Filminstitut s&#xF8;ger vi en erfaren softwareudvikler, der har lyst til mere end bare at skrive god kode. Du f&#xE5;r mulighed for at pr&#xE6;ge vores digitale l&#xF8;sninger, tage teknisk ansvar og arbejde t&#xE6;t sammen med kolleger, der br&#xE6;nder for at bevare, formidle og udvikle dansk filmkultur.&#x3C;/p&#x3E;
+    &#x3C;/div&#x3E;
+    &#x3C;footer class=&#x22;job-footer&#x22;&#x3E;
+        
+        
+        &#x3C;span class=&#x22;flex-fill&#x22;&#x3E;&#x3C;/span&#x3E;
+        
+        &#x3C;A class=&#x22;btn btn-primary btn-sm&#x22; HREF=&#x22;https://www.it-jobbank.dk/vis-job/h1712159&#x22; onclick=&#x22;jixAnalytics(&#x26;#39;event&#x26;#39;, {category: &#x26;#39;jobannonce&#x26;#39;, action: &#x26;#39;click&#x26;#39;, label: &#x26;#39;Se annonce&#x26;#39;})&#x22; rel=&#x22;noopener&#x22; target=&#x22;_blank&#x22;&#x3E;Se annonce&#x3C;/a&#x3E;
+    &#x3C;/footer&#x3E;
+&#x3C;/div&#x3E;
+&#x3C;/div&#x3E;
+</description>
+<category>Windows server</category>
+<category>Frontend udvikler</category>
+<guid isPermaLink="false">https://www.it-jobbank.dk/1712159</guid>
+<pubDate>Fri, 30 Oct 2026 00:00:00 +0100</pubDate>
+</item>
+<item>
+<title>Partner Manager, KMD A/S</title>
+<link>https://www.it-jobbank.dk/vis-job/h1712069</link>
+<description>
+&#x3C;div class=&#x22;jobsearch-result&#x22;&#x3E;
+&#x3C;div class=&#x22;result&#x22; data-jobad-tid=&#x22;h1712069&#x22;&#x3E;
+    &#x3C;header class=&#x22;job-header&#x22;&#x3E;
+        &#x3C;div class=&#x22;logo&#x22;&#x3E;&#x3C;img src=&#x22;https://www.it-jobbank.dk/img/logo/kmd108100724.png&#x22;&#x3E;&#x3C;/div&#x3E;
+        &#x3C;div class=&#x22;job-info&#x22;&#x3E;
+            &#x3C;div class=&#x22;job-place&#x22;&#x3E;
+                    &#x3C;div class=&#x22;job-company&#x22;&#x3E;KMD A/S &#x3C;/div&#x3E;
+                    &#x3C;span class=&#x22;job-location&#x22;&#x3E;Ballerup&#x3C;/span&#x3E;
+                    
+
+            &#x3C;/div&#x3E;
+            
+
+        &#x3C;/div&#x3E;
+    &#x3C;/header&#x3E;
+    &#x3C;h3 class=&#x22;job-title&#x22;&#x3E;
+        &#x3C;A HREF=&#x22;https://www.it-jobbank.dk/vis-job/h1712069&#x22; onclick=&#x22;jixAnalytics(&#x26;#39;event&#x26;#39;, {category: &#x26;#39;jobannonce&#x26;#39;, action: &#x26;#39;click&#x26;#39;, label: &#x26;#39;Se annonce&#x26;#39;})&#x22; rel=&#x22;noopener&#x22; target=&#x22;_blank&#x22;&#x3E;Partner Manager&#x3C;/a&#x3E;
+    &#x3C;/h3&#x3E;
+    &#x3C;div class=&#x22;job-body&#x22;&#x3E;
+            &#x3C;p&#x3E;Are you someone who takes ownership, creates momentum and enjoys turning ideas into action?&#x3C;/p&#x3E;&#x3C;p&#x3E;We are looking for a Partner Manager to join our Bid Excellence area. What matters to us is your ability to drive, collaborate and execute on our partner strategy.&#x3C;/p&#x3E;
+    &#x3C;/div&#x3E;
+    &#x3C;footer class=&#x22;job-footer&#x22;&#x3E;
+        
+        
+        &#x3C;span class=&#x22;flex-fill&#x22;&#x3E;&#x3C;/span&#x3E;
+        
+        &#x3C;A class=&#x22;btn btn-primary btn-sm&#x22; HREF=&#x22;https://www.it-jobbank.dk/vis-job/h1712069&#x22; onclick=&#x22;jixAnalytics(&#x26;#39;event&#x26;#39;, {category: &#x26;#39;jobannonce&#x26;#39;, action: &#x26;#39;click&#x26;#39;, label: &#x26;#39;Se annonce&#x26;#39;})&#x22; rel=&#x22;noopener&#x22; target=&#x22;_blank&#x22;&#x3E;Se annonce&#x3C;/a&#x3E;
+    &#x3C;/footer&#x3E;
+&#x3C;/div&#x3E;
+&#x3C;/div&#x3E;
+</description>
+<category>Forretningsudvikling</category>
+<category>Salg</category>
+<guid isPermaLink="false">https://www.it-jobbank.dk/1712069</guid>
+<pubDate>Fri, 30 Oct 2026 00:00:00 +0100</pubDate>
+</item>
+</channel>
+</rss>

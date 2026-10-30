@@ -1,0 +1,24 @@
+{
+  "data": {
+    "totalCount": 2,
+    "requisitions": [
+      {
+        "req_id": 4321,
+        "job_req_id": "REQ-4321",
+        "title": "Network Engineer",
+        "city": "Copenhagen",
+        "country": "Denmark",
+        "description": "<p>You will design and operate our core <strong>IP network</strong>.</p>",
+        "date_posted": "2026-10-20T00:00:00Z"
+      },
+      {
+        "id": 4322,
+        "title": "Field Technician",
+        "city": "",
+        "country": "Denmark",
+        "description": "",
+        "created_date": "2026-10-18T00:00:00Z"
+      }
+    ]
+  }
+}
