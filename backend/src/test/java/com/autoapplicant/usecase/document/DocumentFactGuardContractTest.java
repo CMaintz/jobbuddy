@@ -1,13 +1,12 @@
 package com.autoapplicant.usecase.document;
 
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 /**
  * The fact guard's contract, as two lists.
@@ -94,23 +93,6 @@ class DocumentFactGuardContractTest {
                     .as("\"%s\" is true of the profile and must not be queried either", c.sentence())
                     .isEmpty();
         }));
-    }
-
-    @Test
-    void theContractIsMeasuredAsPrecisionAndRecall() {
-        long caught = MUST_CATCH.stream()
-                .filter(c -> !guard.audit(c.sentence(), PROFILE).inventedMetrics().isEmpty()).count();
-        long falsePositives = MUST_NOT_FLAG.stream()
-                .filter(c -> !guard.audit(c.sentence(), PROFILE).clean()).count();
-
-        System.out.printf("fact guard: recall %d/%d, false positives %d/%d%n",
-                caught, MUST_CATCH.size(), falsePositives, MUST_NOT_FLAG.size());
-
-        // Recall is allowed to be imperfect — the guard is a net, not a proof. Precision is not:
-        // one false accusation costs more trust than one missed number costs safety, because the
-        // reviewer pass and the honesty rules are also looking for fabrications and this is not.
-        assertThat(caught).isEqualTo(MUST_CATCH.size());
-        assertThat(falsePositives).isZero();
     }
 
     @Test

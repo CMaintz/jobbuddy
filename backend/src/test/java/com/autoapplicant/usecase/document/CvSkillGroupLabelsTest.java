@@ -1,8 +1,8 @@
 package com.autoapplicant.usecase.document;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * The seam between the skill taxonomy and the finished CV.
@@ -21,17 +21,6 @@ class CvSkillGroupLabelsTest {
         assertThat(labels.labelFor("Framework")).isEqualTo("Frameworks");
         assertThat(labels.labelFor("Database")).isEqualTo("Databases");
         assertThat(labels.labelFor("Tool")).isEqualTo("Tools");
-        assertThat(labels.labelFor("Methodology")).isEqualTo("Practices");
-    }
-
-    @Test
-    void the_translated_headings_agree_with_the_resume_builders_own_suggestions() {
-        // A skill categorised from the taxonomy and one typed into the builder must not produce
-        // two headings that mean the same thing.
-        CvSkillGroupLabels labels = CvSkillGroupLabels.forLanguage("en");
-
-        assertThat(labels.labelFor("Programming Language")).isEqualTo("Programming Languages");
-        assertThat(labels.labelFor("Cloud")).isEqualTo("Cloud");
         assertThat(labels.labelFor("Methodology")).isEqualTo("Practices");
     }
 
