@@ -1,11 +1,11 @@
 package com.autoapplicant.domain.matching;
 
+import static com.autoapplicant.domain.matching.MatchLabel.WEAK;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-
-import static com.autoapplicant.domain.matching.MatchLabel.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 class MatchLabelTest {
 
@@ -23,24 +23,6 @@ class MatchLabelTest {
     })
     void from_score_boundaries(int score, MatchLabel expected) {
         assertThat(MatchLabel.fromScore(score)).isEqualTo(expected);
-    }
-
-    @Test
-    void score_80_is_excellent_not_strong() {
-        assertThat(MatchLabel.fromScore(80)).isEqualTo(EXCELLENT);
-        assertThat(MatchLabel.fromScore(80)).isNotEqualTo(STRONG);
-    }
-
-    @Test
-    void score_60_is_strong_not_moderate() {
-        assertThat(MatchLabel.fromScore(60)).isEqualTo(STRONG);
-        assertThat(MatchLabel.fromScore(60)).isNotEqualTo(MODERATE);
-    }
-
-    @Test
-    void score_40_is_moderate_not_weak() {
-        assertThat(MatchLabel.fromScore(40)).isEqualTo(MODERATE);
-        assertThat(MatchLabel.fromScore(40)).isNotEqualTo(WEAK);
     }
 
     @Test
