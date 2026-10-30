@@ -13,14 +13,12 @@ import com.autoapplicant.domain.user.WorkExperience;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.document.GetDocumentsForJobUseCase;
-import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.in.matching.SubmitRecommendationFeedbackUseCase;
 import com.autoapplicant.port.in.user.*;
 import com.autoapplicant.port.in.user.ManageCustomSectionsUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * Bob is logged in and knows the ids of Alice's rows. Each endpoint has to hand Bob's own id to
  * the use case, and a row he does not own has to come back as 404.
  */
-@WebMvcTest(controllers = {JobController.class, ProfileSectionController.class, PdfTemplateController.class})
+@WebMvcTest(controllers = {JobController.class, ProfileSectionController.class})
 @AutoConfigureMockMvc(addFilters = false)
 class CrossUserAccessWebMvcTest {
 
@@ -64,8 +62,6 @@ class CrossUserAccessWebMvcTest {
     @MockitoBean ManageProfileSocialUseCase   socialUseCase;
     @MockitoBean ManageProfileStrengthUseCase strengthUseCase;
     @MockitoBean ManageSpokenLanguagesUseCase languageUseCase;
-
-    @MockitoBean ManagePdfTemplatesUseCase    pdfTemplates;
 
     @MockitoBean ManageCustomSectionsUseCase  customSections;
     @MockitoBean SecurityContextHelper        secCtx;
@@ -124,10 +120,10 @@ class CrossUserAccessWebMvcTest {
     }
 
     @Test
-    void someone_elses_pdf_template_is_404() throws Exception {
-        when(pdfTemplates.getById(alicesRow, bob)).thenReturn(Optional.empty());
+    void deleting_someone_elses_certification_is_404() throws Exception {
+        doThrow(new NotFoundException("Certification not found"))
+                .when(certUseCase).deleteCertification(bob, alicesRow);
 
-        mvc.perform(get("/api/v1/pdf-templates/" + alicesRow)).andExpect(status().isNotFound());
-        verify(pdfTemplates).getById(alicesRow, bob);
+        mvc.perform(delete("/api/v1/profile/certifications/" + alicesRow)).andExpect(status().isNotFound());
     }
 }

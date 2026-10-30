@@ -8,14 +8,13 @@ import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** User-authored templates must not make the renderer fetch remote or local-file resources. */
+/** A client-supplied document must not make the renderer fetch remote or local-file resources. */
 class PdfRenderingServiceSsrfTest {
 
     private static final int NOT_FOUND = 404;
@@ -40,24 +39,23 @@ class PdfRenderingServiceSsrfTest {
     }
 
     @Test
-    void templateReferencesToInternalHostsAndFilesAreNeverFetched() {
-        byte[] pdf = new PdfRenderingService().render(hostileTemplate(), "", Map.of());
+    void profileImageOnAnInternalHostIsNeverFetched() {
+        String internal = "http://127.0.0.1:" + server.getAddress().getPort() + "/latest/meta-data";
+
+        byte[] pdf = new PdfRenderingService().renderStructured(PdfTestDocuments.withProfileImage(internal));
 
         assertThat(pdf).isNotEmpty();
         assertThat(requests.get()).isZero();
     }
 
     @Test
-    void localFilesOutsideUploadsAreNotEmbedded(@TempDir Path uploads, @TempDir Path elsewhere)
+    void profileImageFromALocalFileOutsideUploadsIsNotEmbedded(@TempDir Path uploads, @TempDir Path elsewhere)
             throws Exception {
         String secret = PdfTestImages.writePng(elsewhere.resolve("secret.png")).toUri().toString();
-        String template = "<html><head><style>{{CSS}}</style></head><body><img src=\"" + secret
-                + "\"/><div style=\"width:40px;height:40px\"></div></body></html>";
-        String css = "div { background: url('" + secret + "'); }";
         PdfRenderingService guarded = new PdfRenderingService(new PdfResourcePolicy(uploads));
 
-        byte[] unguardedPdf = renderUnguarded(template.replace("{{CSS}}", css));
-        byte[] guardedPdf = guarded.render(template, css, Map.of());
+        byte[] unguardedPdf = renderUnguarded("<html><body><img src=\"" + secret + "\"/></body></html>");
+        byte[] guardedPdf = guarded.renderStructured(PdfTestDocuments.withProfileImage(secret));
 
         assertThat(PdfTestImages.imagesOnFirstPage(unguardedPdf)).isPositive();
         assertThat(PdfTestImages.imagesOnFirstPage(guardedPdf)).isZero();
@@ -67,7 +65,7 @@ class PdfRenderingServiceSsrfTest {
     void sanityCheckTheDefaultRendererWouldHaveFetched() throws Exception {
         PdfRendererBuilder unguarded = new PdfRendererBuilder()
                 .useFastMode()
-                .withHtmlContent(templateWith("").replace("{{CSS}}", ""), null);
+                .withHtmlContent(internalReferences(), null);
         unguarded.toStream(new ByteArrayOutputStream()).run();
 
         assertThat(requests.get()).isPositive();
@@ -79,7 +77,7 @@ class PdfRenderingServiceSsrfTest {
         PdfRendererBuilder resolverless = new PdfRendererBuilder()
                 .useFastMode()
                 .useProtocolsStreamImplementation(policy, PdfResourcePolicy.GUARDED_SCHEMES)
-                .withHtmlContent(templateWith("").replace("{{CSS}}", ""), null);
+                .withHtmlContent(internalReferences(), null);
         resolverless.toStream(new ByteArrayOutputStream()).run();
 
         assertThat(requests.get()).isZero();
@@ -98,17 +96,12 @@ class PdfRenderingServiceSsrfTest {
         return out.toByteArray();
     }
 
-    private String hostileTemplate() {
-        return templateWith("<img src=\"http://169.254.169.254/latest/meta-data/\"/>");
-    }
-
     /** Only the loopback server is referenced here, so the unguarded sanity render cannot hang. */
-    private String templateWith(String extraMarkup) {
+    private String internalReferences() {
         String internal = "http://127.0.0.1:" + server.getAddress().getPort();
-        return "<html><head><style>{{CSS}} body { background: url('" + internal + "/bg'); }</style>"
+        return "<html><head><style>body { background: url('" + internal + "/bg'); }</style>"
                 + "<link rel=\"stylesheet\" href=\"" + internal + "/style.css\"/></head><body>"
                 + "<img src=\"" + internal + "/latest/meta-data\"/>"
-                + extraMarkup
                 + "<p>Hello</p></body></html>";
     }
 }
