@@ -102,8 +102,9 @@ public class PdfRenderingService {
                 || (document.templateId() != null && document.templateId().contains("modern"));
         DocumentTheme theme = resolveTheme(document.options() != null ? document.options().theme() : null);
         String css = designed ? designedCss(cv, theme) : atsCss(theme);
+        // openhtmltopdf parses XHTML: an unclosed void element like <meta> fails every render.
         StringBuilder html = new StringBuilder("""
-                <!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+                <!DOCTYPE html><html><head><meta charset="UTF-8"/><style>
                 """);
         html.append(css).append("</style></head><body><article class=\"page ");
         html.append(designed ? "designed" : "ats").append("\">");
