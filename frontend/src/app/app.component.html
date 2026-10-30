@@ -1,6 +1,6 @@
 
     <!-- Auth screens: no shell -->
-    @if (!auth.isAuthenticated()) {
+    @if (!auth.signedIn()) {
       <router-outlet />
     } @else if (isFullscreenRoute()) {
       <router-outlet />
