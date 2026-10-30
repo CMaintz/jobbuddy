@@ -8,13 +8,12 @@ import static org.mockito.Mockito.*;
 
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
-import com.autoapplicant.domain.document.DocumentType;
-import com.autoapplicant.domain.document.GeneratedDocument;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
+import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ApplicationServiceTest {
 
     @Mock ApplicationRepositoryPort repo;
-    @Mock com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort statusEventRepo;
+    @Mock ApplicationStatusEventRepositoryPort statusEventRepo;
     @Mock GeneratedDocumentRepositoryPort generatedDocuments;
 
     ApplicationService service;
@@ -54,6 +53,7 @@ class ApplicationServiceTest {
         ArgumentCaptor<Application> cap = ArgumentCaptor.forClass(Application.class);
         verify(repo).save(cap.capture());
         assertThat(cap.getValue().status()).isEqualTo(SAVED);
+        assertThat(cap.getValue().appliedAt()).isNull();
         assertThat(result).isSameAs(saved);
     }
 
@@ -72,14 +72,41 @@ class ApplicationServiceTest {
     }
 
     @Test
-    void create_passes_null_id_for_repo_to_assign() {
-        Application saved = application(appId, userId, jobId, SAVED, null);
-        when(repo.save(any())).thenReturn(saved);
-        service.createApplication(userId, jobId, null, null);
+    void a_second_application_for_the_same_job_is_refused() {
+        when(repo.existsByUserIdAndJobId(userId, jobId)).thenReturn(true);
 
-        ArgumentCaptor<Application> cap = ArgumentCaptor.forClass(Application.class);
-        verify(repo).save(cap.capture());
-        assertThat(cap.getValue().id()).isNull();
+        assertThatThrownBy(() -> service.createApplication(userId, jobId, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        verify(repo, never()).save(any());
+        verifyNoInteractions(statusEventRepo);
+    }
+
+    @Test
+    void creation_opens_the_ledger_with_a_move_from_nowhere() {
+        when(repo.save(any())).thenAnswer(inv -> withId(inv.getArgument(0)));
+
+        Instant before = Instant.now();
+        service.createApplication(userId, jobId, null, "Found it via a referral");
+
+        ApplicationStatusEvent event = recordedEvent();
+        assertThat(event.applicationId()).isEqualTo(appId);
+        assertThat(event.userId()).isEqualTo(userId);
+        assertThat(event.fromStatus()).isNull();
+        assertThat(event.toStatus()).isEqualTo(SAVED);
+        assertThat(event.notes()).isEqualTo("Found it via a referral");
+        assertThat(event.occurredAt()).isBetween(before, Instant.now());
+    }
+
+    @Test
+    void creating_an_application_already_sent_stamps_when_it_was_applied() {
+        when(repo.save(any())).thenAnswer(inv -> withId(inv.getArgument(0)));
+
+        Application saved = service.createApplication(new CreateApplicationCommand(
+                userId, jobId, null, null, null, APPLIED, null, null, null, null, null));
+
+        assertThat(saved.status()).isEqualTo(APPLIED);
+        assertThat(saved.appliedAt()).isNotNull();
+        assertThat(recordedEvent().occurredAt()).isEqualTo(saved.appliedAt());
     }
 
     // ── updateStatus ──────────────────────────────────────────────────────────
@@ -100,17 +127,20 @@ class ApplicationServiceTest {
     }
 
     @Test
-    void update_status_sets_applied_at_when_transitioning_to_applied() {
-        Application existing = application(appId, userId, jobId, PREPARING, null);
-        when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(existing));
+    void a_status_change_is_written_to_the_ledger_at_the_moment_it_was_applied() {
+        when(repo.findByIdAndUserId(appId, userId))
+                .thenReturn(Optional.of(application(appId, userId, jobId, PREPARING, null)));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Instant before = Instant.now();
-        Application result = service.updateStatus(appId, userId, APPLIED, null);
-        Instant after = Instant.now();
+        Application result = service.updateStatus(appId, userId, APPLIED, "Sent through their portal");
 
-        assertThat(result.appliedAt()).isNotNull();
-        assertThat(result.appliedAt()).isBetween(before, after);
+        ApplicationStatusEvent event = recordedEvent();
+        assertThat(event.applicationId()).isEqualTo(appId);
+        assertThat(event.userId()).isEqualTo(userId);
+        assertThat(event.fromStatus()).isEqualTo(PREPARING);
+        assertThat(event.toStatus()).isEqualTo(APPLIED);
+        assertThat(event.notes()).isEqualTo("Sent through their portal");
+        assertThat(event.occurredAt()).isEqualTo(result.appliedAt()).isEqualTo(result.updatedAt());
     }
 
     @Test
@@ -137,7 +167,8 @@ class ApplicationServiceTest {
 
     @Test
     void update_status_keeps_existing_notes_when_null_provided() {
-        Application existing = applicationWithNotes(appId, userId, jobId, SAVED, "original note");
+        Application existing = application(appId, userId, jobId, SAVED, null).toBuilder()
+                .notes("original note").build();
         when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(existing));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -155,13 +186,15 @@ class ApplicationServiceTest {
     }
 
     @Test
-    void update_status_throws_on_invalid_transition() {
+    void an_invalid_transition_is_refused_and_leaves_no_trace() {
         Application existing = application(appId, userId, jobId, REJECTED, null);
         when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(existing));
 
         assertThatThrownBy(() -> service.updateStatus(appId, userId, ARCHIVED, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("REJECTED");
+        verify(repo, never()).save(any());
+        verifyNoInteractions(statusEventRepo);
     }
 
     @Test
@@ -173,85 +206,48 @@ class ApplicationServiceTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ── getApplications / getApplicationById ──────────────────────────────────
+    // ── recruiter info and outcome ────────────────────────────────────────────
 
     @Test
-    void get_applications_delegates_to_repo() {
-        List<Application> list = List.of(application(appId, userId, jobId, SAVED, null));
-        when(repo.findByUserId(userId)).thenReturn(list);
+    void recruiter_info_fields_left_null_keep_what_was_there() {
+        Application existing = application(appId, userId, jobId, RECRUITER_CONTACT, null).toBuilder()
+                .recruiterName("Mette Hansen").recruiterEmail("mette@acme.dk")
+                .recruiterMessage("Hej Mette").build();
+        when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(existing));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThat(service.getApplications(userId)).isSameAs(list);
+        Application result = service.updateRecruiterInfo(appId, userId,
+                null, "mette.hansen@acme.dk", null, "Tak, vi ringer");
+
+        assertThat(result.recruiterName()).isEqualTo("Mette Hansen");
+        assertThat(result.recruiterEmail()).isEqualTo("mette.hansen@acme.dk");
+        assertThat(result.recruiterMessage()).isEqualTo("Hej Mette");
+        assertThat(result.recruiterReply()).isEqualTo("Tak, vi ringer");
     }
 
     @Test
-    void get_application_by_id_returns_empty_when_not_found() {
-        when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.empty());
-        assertThat(service.getApplicationById(appId, userId)).isEmpty();
-    }
+    void an_outcome_field_left_null_keeps_what_was_there() {
+        Application existing = application(appId, userId, jobId, REJECTED, null).toBuilder()
+                .outcomeFeedback("Wanted more Kubernetes").outcomeLessons("Lead with Kafka").build();
+        when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(existing));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-    @Test
-    void get_application_by_id_returns_present_when_found() {
-        Application app = application(appId, userId, jobId, SAVED, null);
-        when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(app));
-        assertThat(service.getApplicationById(appId, userId)).contains(app);
+        Application result = service.updateOutcome(appId, userId, null, "Lead with the platform work");
+
+        assertThat(result.outcomeFeedback()).isEqualTo("Wanted more Kubernetes");
+        assertThat(result.outcomeLessons()).isEqualTo("Lead with the platform work");
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
-    // ── generated document linking ────────────────────────────────────────────
-
-    @Test
-    void attach_links_the_document_to_the_application_and_keeps_its_other_fields() {
-        GeneratedDocument document = generatedDocument();
-        when(repo.findByIdAndUserId(appId, userId))
-                .thenReturn(Optional.of(application(appId, userId, jobId, SAVED, null)));
-        when(generatedDocuments.findByIdAndUserId(document.id(), userId)).thenReturn(Optional.of(document));
-        when(generatedDocuments.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.attachGeneratedDocument(appId, userId, document.id(), null, null, null);
-
-        assertLinkedToApplication(document);
+    private ApplicationStatusEvent recordedEvent() {
+        ArgumentCaptor<ApplicationStatusEvent> cap = ArgumentCaptor.forClass(ApplicationStatusEvent.class);
+        verify(statusEventRepo).save(cap.capture());
+        return cap.getValue();
     }
 
-    @Test
-    void create_links_the_generated_document_to_the_new_application() {
-        GeneratedDocument document = generatedDocument();
-        when(repo.save(any())).thenReturn(application(appId, userId, jobId, SAVED, null));
-        when(generatedDocuments.findByIdAndUserId(document.id(), userId)).thenReturn(Optional.of(document));
-        when(generatedDocuments.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.createApplication(new CreateApplicationCommand(
-                userId, jobId, null, null, document.id(), SAVED, null, null, null, null, null));
-
-        assertLinkedToApplication(document);
-    }
-
-    @Test
-    void attaching_someone_elses_document_fails() {
-        UUID documentId = UUID.randomUUID();
-        when(repo.findByIdAndUserId(appId, userId))
-                .thenReturn(Optional.of(application(appId, userId, jobId, SAVED, null)));
-        when(generatedDocuments.findByIdAndUserId(documentId, userId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.attachGeneratedDocument(appId, userId, documentId, null, null, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Generated document not found");
-        verify(generatedDocuments, never()).save(any());
-    }
-
-    private void assertLinkedToApplication(GeneratedDocument original) {
-        ArgumentCaptor<GeneratedDocument> cap = ArgumentCaptor.forClass(GeneratedDocument.class);
-        verify(generatedDocuments).save(cap.capture());
-        assertThat(cap.getValue().applicationId()).isEqualTo(appId);
-        assertThat(cap.getValue()).usingRecursiveComparison().ignoringFields("applicationId").isEqualTo(original);
-    }
-
-    /** Every field set, so a link that drops one shows up in the comparison. */
-    private GeneratedDocument generatedDocument() {
-        return new GeneratedDocument(UUID.randomUUID(), userId, null, jobId, DocumentType.COVER_LETTER,
-                "Dear Acme", "{\"bodyContent\":\"Dear Acme\"}", "application-modern", "DESIGNED",
-                UUID.randomUUID(), UUID.randomUUID(), "gpt-4o", 1234, Instant.parse("2026-01-02T03:04:05Z"));
+    private Application withId(Application unsaved) {
+        return unsaved.toBuilder().id(appId).build();
     }
 
     private Application application(UUID id, UUID userId, UUID jobId,
@@ -259,14 +255,6 @@ class ApplicationServiceTest {
         return new Application(id, userId, jobId, status, appliedAt,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now(), null, null);
-    }
-
-    private Application applicationWithNotes(UUID id, UUID userId, UUID jobId,
-                                             ApplicationStatus status, String notes) {
-        return new Application(id, userId, jobId, status, null,
-                null, null, null, null, null,
-                null, null, null, null, notes,
                 Instant.now(), Instant.now(), null, null);
     }
 }

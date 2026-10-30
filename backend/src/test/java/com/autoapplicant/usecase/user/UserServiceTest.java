@@ -1,9 +1,11 @@
 package com.autoapplicant.usecase.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.autoapplicant.domain.job.EmploymentType;
 import com.autoapplicant.domain.job.RemoteType;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.out.user.*;
@@ -22,6 +24,8 @@ import org.springframework.context.ApplicationEventPublisher;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
+    private static final Instant CREATED = Instant.parse("2026-01-05T09:00:00Z");
+
     @Mock UserRepositoryPort              userRepo;
     @Mock ProfileRepositoryPort           profileRepo;
     @Mock PreferencesRepositoryPort       prefsRepo;
@@ -33,38 +37,6 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         service = new UserService(userRepo, profileRepo, prefsRepo, events);
-    }
-
-    // ── getUser ───────────────────────────────────────────────────────────────
-
-    @Test
-    void get_user_delegates_to_user_repo() {
-        User user = user(userId, "alice@example.com", "uid1");
-        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
-        assertThat(service.getUser(userId)).contains(user);
-    }
-
-    @Test
-    void get_user_returns_empty_when_not_found() {
-        when(userRepo.findById(userId)).thenReturn(Optional.empty());
-        assertThat(service.getUser(userId)).isEmpty();
-    }
-
-    // ── getProfile ────────────────────────────────────────────────────────────
-
-    @Test
-    void get_profile_delegates_to_profile_repo() {
-        Profile profile = new Profile(UUID.randomUUID(), userId, null, null, null,
-                List.of(), List.of(),
-                null, null, "DKK", null, null, null, null);
-        when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(profile));
-        assertThat(service.getProfile(userId)).contains(profile);
-    }
-
-    @Test
-    void get_profile_returns_empty_when_not_found() {
-        when(profileRepo.findByUserId(userId)).thenReturn(Optional.empty());
-        assertThat(service.getProfile(userId)).isEmpty();
     }
 
     // ── updateProfile ─────────────────────────────────────────────────────────
@@ -88,6 +60,30 @@ class UserServiceTest {
     }
 
     @Test
+    void a_partial_profile_update_keeps_what_it_leaves_out_and_clears_what_it_blanks() {
+        Profile existing = new Profile(UUID.randomUUID(), userId, "Backend engineer", "Ten years of Java",
+                5, List.of("Danish"), List.of("Climbing"), 600000, 750000, "DKK",
+                RemoteType.HYBRID, EmploymentType.FULL_TIME, CREATED, CREATED);
+        when(profileRepo.findByUserId(userId)).thenReturn(Optional.of(existing));
+        when(profileRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        Profile partial = new Profile(null, null, null, "", 7, null, List.of(),
+                null, 800000, null, RemoteType.REMOTE, null, null, null);
+
+        Profile saved = service.updateProfile(userId, partial);
+
+        assertThat(saved.headline()).isEqualTo("Backend engineer");
+        assertThat(saved.summary()).isEmpty();
+        assertThat(saved.yearsExperience()).isEqualTo(7);
+        assertThat(saved.languages()).containsExactly("Danish");
+        assertThat(saved.interests()).isEmpty();
+        assertThat(saved.desiredSalaryMin()).isEqualTo(600000);
+        assertThat(saved.desiredSalaryMax()).isEqualTo(800000);
+        assertThat(saved.desiredCurrency()).isEqualTo("DKK");
+        assertThat(saved.remotePreference()).isEqualTo(RemoteType.REMOTE);
+        assertThat(saved.employmentTypePreference()).isEqualTo(EmploymentType.FULL_TIME);
+    }
+
+    @Test
     void update_profile_publishes_saved_event_instead_of_embedding_inline() {
         Profile savedProfile = new Profile(UUID.randomUUID(), userId, "Engineer", null, null,
                 List.of(), List.of(),
@@ -102,10 +98,49 @@ class UserServiceTest {
         assertThat(result).isSameAs(savedProfile);
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    // ── updatePreferences ─────────────────────────────────────────────────────
 
-    private User user(UUID id, String email, String firebaseUid) {
-        return new User(id, email, null, null, firebaseUid,
-                UserRole.USER, true, false, Instant.now(), Instant.now());
+    @Test
+    void preferences_are_saved_for_the_caller_whatever_user_the_payload_names() {
+        UserPreferences payload = new UserPreferences(UUID.randomUUID(), UUID.randomUUID(),
+                List.of("Copenhagen"), List.of("Frederiksberg"), List.of("Kotlin"), List.of("On-call"),
+                List.of("Initech"), List.of("REMOTE"), List.of("FULL_TIME"), List.of("SENIOR"),
+                List.of("Fintech"), 600000, 800000, 25, true, "DAILY", 4, CREATED, CREATED);
+        when(prefsRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UserPreferences saved = service.updatePreferences(userId, payload);
+
+        assertThat(saved.userId()).isEqualTo(userId);
+        assertThat(saved.id()).isNull();
+        assertThat(saved).usingRecursiveComparison()
+                .ignoringFields("id", "userId", "createdAt", "updatedAt")
+                .isEqualTo(payload);
+    }
+
+    // ── completeOnboarding ────────────────────────────────────────────────────
+
+    @Test
+    void completing_onboarding_flips_only_that_flag() {
+        User user = new User(userId, "alice@example.com", "g1", "li1", "uid1",
+                UserRole.ADMIN, true, false, CREATED, CREATED);
+        when(userRepo.findById(userId)).thenReturn(Optional.of(user));
+
+        service.completeOnboarding(userId);
+
+        ArgumentCaptor<User> cap = ArgumentCaptor.forClass(User.class);
+        verify(userRepo).save(cap.capture());
+        assertThat(cap.getValue().onboardingComplete()).isTrue();
+        assertThat(cap.getValue()).usingRecursiveComparison()
+                .ignoringFields("onboardingComplete")
+                .isEqualTo(user);
+    }
+
+    @Test
+    void completing_onboarding_for_an_unknown_user_fails_without_saving() {
+        when(userRepo.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.completeOnboarding(userId))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(userRepo, never()).save(any());
     }
 }
