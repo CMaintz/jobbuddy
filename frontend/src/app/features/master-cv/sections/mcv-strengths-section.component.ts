@@ -1,29 +1,32 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Output, model, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
 import { ProfileStrength } from '../../../core/models/profile-section.model';
+import { withItemPatched } from './list-edit';
 
-/** Master CV editor — strengths list. Items are edited in place (parent owns the array). */
+/** Master CV editor: strengths list. */
 @Component({
   selector: 'app-mcv-strengths-section',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-3">
       <div class="text-xs text-jb-text-dim">{{ 'masterCv.form.strengthsHint' | translate }}</div>
-      @for (s of list; track s.id || $index) {
+      @for (s of list(); track s.id || $index) {
         <div class="card p-3.5">
           <div class="flex gap-2 items-start">
             <div class="flex-1 grid gap-2 grid-cols-[1fr_1.6fr]">
               <label class="flex flex-col gap-[5px]">
                 <span class="label">{{ 'masterCv.form.strength' | translate }}</span>
-                <input [(ngModel)]="s.title" class="input" [placeholder]="'masterCv.form.strengthPlaceholder' | translate" />
+                <input [ngModel]="s.title" (ngModelChange)="update($index, { title: $event })"
+                  class="input" [placeholder]="'masterCv.form.strengthPlaceholder' | translate" />
               </label>
               <label class="flex flex-col gap-[5px]">
                 <span class="label">{{ 'masterCv.form.whyMatters' | translate }}</span>
-                <input [(ngModel)]="s.description" class="input" [placeholder]="'masterCv.form.whyPlaceholder' | translate" />
+                <input [ngModel]="s.description" (ngModelChange)="update($index, { description: $event })"
+                  class="input" [placeholder]="'masterCv.form.whyPlaceholder' | translate" />
               </label>
             </div>
             <button class="icon-btn mt-5" [title]="'common.remove' | translate" (click)="removeAt.emit($index)"><jb-icon name="x" [size]="12" /></button>
@@ -35,7 +38,11 @@ import { ProfileStrength } from '../../../core/models/profile-section.model';
   `,
 })
 export class McvStrengthsSectionComponent {
-  @Input({ required: true }) list: ProfileStrength[] = [];
+  list = model.required<ProfileStrength[]>();
   @Output() add = new EventEmitter<void>();
   @Output() removeAt = new EventEmitter<number>();
+
+  update(index: number, patch: Partial<ProfileStrength>): void {
+    this.list.update(list => withItemPatched(list, index, patch));
+  }
 }
