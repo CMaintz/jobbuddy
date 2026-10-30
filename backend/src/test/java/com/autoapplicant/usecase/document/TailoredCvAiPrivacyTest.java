@@ -9,8 +9,11 @@ import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_LI
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_NAME;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.USER_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -40,7 +43,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * End to end through tailored-CV generation: a user with every identity field filled in gets a
  * CV whose prompts (drafting and review) carry none of it, while the finished document still
- * shows their name and their own project and credential links.
+ * shows their name and their own project and credential links. The tailored text also passes
+ * through the content guards, so a blocking guard stops the CV.
  */
 class TailoredCvAiPrivacyTest {
 
@@ -50,6 +54,7 @@ class TailoredCvAiPrivacyTest {
             + FABRICATED_LINK + "\"]}]}";
 
     private final ChatProviderPort ai = mock(ChatProviderPort.class);
+    private final GeneratedContentGuards guards = mock(GeneratedContentGuards.class);
 
     @Test
     void promptsCarryNoIdentityAndTheDocumentGetsTheLinksBack() {
@@ -68,6 +73,18 @@ class TailoredCvAiPrivacyTest {
         assertThat(onlyItem(cv, "projects").links())
                 .containsExactly(PROJECT_GITHUB_URL, PROJECT_LIVE_URL);
         assertThat(onlyItem(cv, "certifications").links()).containsExactly(CREDENTIAL_URL);
+    }
+
+    @Test
+    void aBlockingContentGuardOnTheTailoredTextStopsTheCv() {
+        when(ai.generateJson(any(PromptComposition.class), anyString())).thenReturn(AI_RESPONSE);
+        when(guards.verify(eq(USER_ID), contains("Tailored."), anyString(), eq("CV")))
+                .thenThrow(new IllegalStateException("generation blocked"));
+
+        assertThatThrownBy(() -> service().generateTailoredCv(USER_ID, null, "Java and Kafka.",
+                null, "English", null, null, false, DocumentTheme.defaults(), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("generation blocked");
     }
 
     private static StructuredDocumentItem onlyItem(StructuredDocument cv, String sectionId) {
@@ -91,7 +108,7 @@ class TailoredCvAiPrivacyTest {
                 mock(WritingProfileRepositoryPort.class), IdentityLadenProfile.contextService(),
                 cvAssembler, new TailoredCvGenerator(ai, mapper, promptBuilder), reviewer,
                 mock(ApplicationDocumentAssembler.class),
-                mock(ApplicationRepositoryPort.class), mock(GeneratedContentGuards.class),
+                mock(ApplicationRepositoryPort.class), guards,
                 sectionTemplates());
     }
 

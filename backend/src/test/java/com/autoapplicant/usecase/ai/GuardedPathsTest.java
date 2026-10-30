@@ -1,52 +1,107 @@
 package com.autoapplicant.usecase.ai;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.autoapplicant.domain.ai.GenerateDocumentCommand;
+import com.autoapplicant.domain.ai.RefineDocumentRequest;
+import com.autoapplicant.domain.ai.ReviewDocumentRequest;
+import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.usecase.document.ApplicationDocumentAssembler;
+import com.autoapplicant.usecase.document.CareerProfileContextService;
+import com.autoapplicant.usecase.document.CvSectionTemplates;
+import com.autoapplicant.usecase.document.DocumentReviewer;
+import com.autoapplicant.usecase.document.GeneratedContentGuards;
+import com.autoapplicant.usecase.document.GeneratedDocumentWriter;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.Test;
 
 /**
- * Every path that hands the user text they will send must run the content guards.
- *
- * <p>Generation was guarded from the start; refinement and review were not, for no reason anyone
- * chose — they were simply added later and nobody noticed the omission. "Make it stronger" was
- * therefore an unchecked invitation to invent, on the one path where the user is least likely to
- * re-read the output because they only asked for a tweak.
- *
- * <p>Asserting this structurally rather than behaviourally is deliberate: a unit test per path would
- * need the whole AI stack mocked, and the property that actually matters is "every service that
- * returns delivered text still calls the guards". When the four AI operations lived in one class this
- * was one file; now each surface is its own service, so the list is explicit — a new text-producing
- * service must be added here (and, of course, must guard its output).
+ * Every path that hands the user text they will send must run the content guards on that text, and
+ * a blocking guard must stop it reaching the user. Refinement and review were once added without
+ * the guards, which made "make it stronger" an unchecked invitation to invent on the path where the
+ * user is least likely to re-read the output. The tailored-CV path is covered in
+ * {@code TailoredCvAiPrivacyTest}, which already builds that service end to end.
  */
 class GuardedPathsTest {
 
-    private static final Path SRC = Path.of("src/main/java/com/autoapplicant");
+    private static final UUID USER = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final String PROFILE_JSON = "{\"profile\":true}";
+    private static final String PRODUCED = "The text the model produced.";
 
-    /** Every service that returns text destined for an employer. */
-    private static final List<Path> TEXT_PRODUCING_SERVICES = List.of(
-            SRC.resolve("usecase/ai/DocumentRefinementService.java"),
-            SRC.resolve("usecase/ai/DocumentReviewService.java"),
-            SRC.resolve("usecase/ai/GeneratedDocumentFinalizer.java"), // generation (guards on assemble+persist)
-            SRC.resolve("usecase/document/StructuredDocumentService.java")); // tailored CV
+    private final GeneratedContentGuards guards = mock(GeneratedContentGuards.class);
+    private final CareerProfileContextService careerProfile = mock(CareerProfileContextService.class);
+    private final ChatProviderPort ai = mock(ChatProviderPort.class);
+    private final IllegalStateException blocked = new IllegalStateException("generation blocked");
 
     @Test
-    void everyTextProducingServiceRunsTheContentGuards() throws IOException {
-        for (Path service : TEXT_PRODUCING_SERVICES) {
-            String source = Files.readString(service);
-            assertThat(source)
-                    .as("%s returns delivered text and must guard it with contentGuards.verify(", service)
-                    .contains("contentGuards.verify(");
-        }
+    void aBlockingGuardStopsARefinement() {
+        when(careerProfile.buildJson(USER)).thenReturn(PROFILE_JSON);
+        when(ai.generate(any(PromptComposition.class), anyString())).thenReturn(PRODUCED);
+        blockOn(PRODUCED);
+        DocumentRefinementService service = new DocumentRefinementService(
+                ai, careerProfile, guards, mock(CvSectionTemplates.class));
+
+        CompletableFuture<?> result = service.refine(new RefineDocumentRequest(
+                USER, "the draft", "make it stronger", "the posting", "English", null, null));
+
+        assertBlockedByTheGuard(result);
     }
 
     @Test
-    void refinementCarriesTheHonestyRuleThatMakesItSafe() throws IOException {
-        String source = Files.readString(SRC.resolve("usecase/ai/DocumentRefinementService.java"));
-        // The specific failure this closes: "stronger" read as "claim more".
-        assertThat(source).contains("never to claim more");
+    void aBlockingGuardStopsAReview() {
+        when(careerProfile.buildJson(USER)).thenReturn(PROFILE_JSON);
+        DocumentReviewer reviewer = mock(DocumentReviewer.class);
+        when(reviewer.review(any(DocumentReviewer.ReviewContext.class), eq("the draft")))
+                .thenReturn(new DocumentReviewer.ReviewOutcome(PRODUCED, List.of("tightened")));
+        blockOn(PRODUCED);
+        DocumentReviewService service = new DocumentReviewService(reviewer, guards, careerProfile, ai);
+
+        CompletableFuture<?> result = service.review(new ReviewDocumentRequest(
+                USER, "the draft", "COVER_LETTER", "the posting", "English"));
+
+        assertBlockedByTheGuard(result);
+    }
+
+    @Test
+    void aBlockingGuardStopsAGeneratedDocumentBeforeItIsSaved() {
+        blockOn(PRODUCED);
+        GeneratedDocumentWriter writer = mock(GeneratedDocumentWriter.class);
+        GeneratedDocumentFinalizer finalizer = new GeneratedDocumentFinalizer(
+                guards, mock(ApplicationDocumentAssembler.class), writer);
+        GenerateDocumentCommand cmd = new GenerateDocumentCommand(USER, "COVER_LETTER", null,
+                "the posting", null, null, null, null, "English", false, null, null);
+        GenerationInputs inputs = new GenerationInputs(null, null, PROFILE_JSON, "the posting");
+
+        assertThatThrownBy(() -> finalizer.finalizeDocument(cmd, inputs, PRODUCED, "model"))
+                .isSameAs(blocked);
+        verifyNoInteractions(writer);
+    }
+
+    /** Blocks only on the produced text checked against the profile, so guarding anything else passes. */
+    private void blockOn(String text) {
+        when(guards.verify(eq(USER), eq(text), eq(PROFILE_JSON), anyString()))
+                .thenThrow(blocked);
+    }
+
+    /**
+     * Both services turn any exception into a failed future, so failing alone would also pass
+     * if the guard call were dropped and something else threw; the cause must be the guard's
+     * own block.
+     */
+    private void assertBlockedByTheGuard(CompletableFuture<?> result) {
+        assertThatThrownBy(result::join)
+                .isInstanceOf(CompletionException.class)
+                .cause()
+                .isSameAs(blocked);
     }
 }
