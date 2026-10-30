@@ -257,7 +257,7 @@ public class MatchingService implements GetRecommendationsUseCase {
 
     /**
      * Returns true if the job is within maxCommuteKm of any of the user's preferred
-     * municipalities or preferred locations.
+     * municipalities or preferred locations, or if none of them has known coordinates.
      */
     private boolean isWithinCommuteDistance(UserPreferences prefs, double[] jobCoords, int maxKm) {
         // Try preferred municipalities first (more specific), then fallback to locations
@@ -265,17 +265,19 @@ public class MatchingService implements GetRecommendationsUseCase {
                 ? prefs.preferredMunicipalities()
                 : (notEmpty(prefs.preferredLocations()) ? prefs.preferredLocations() : List.of());
 
-        if (homePoints.isEmpty()) return true; // no reference point configured — skip filter
-
+        boolean anyHomePlaced = false;
         for (String home : homePoints) {
             double[] homeCoords = DanishMunicipalityCoordinates.get(home);
             if (homeCoords != null) {
+                anyHomePlaced = true;
                 double km = DanishMunicipalityCoordinates.haversineKm(
                         homeCoords[0], homeCoords[1], jobCoords[0], jobCoords[1]);
                 if (km <= maxKm) return true;
             }
         }
-        return false;
+        // No home point we can place, configured or not, means no distance to judge by: skip the
+        // filter rather than reject every posting that has coordinates.
+        return !anyHomePlaced;
     }
 
     // ── Score building ────────────────────────────────────────────────────────
@@ -349,14 +351,15 @@ public class MatchingService implements GetRecommendationsUseCase {
                 }
             }
 
-            // Salary in range (only if job has salary data)
-            if (job.salaryMin() != null || job.salaryMax() != null) {
-                boolean inRange = isSalaryInRange(job, prefs);
-                if (inRange) {
+            // Scored only when both sides state a salary. Without a range of the user's there is
+            // nothing to be "within", and a bonus would just lift every posting that lists pay.
+            boolean jobStatesSalary = job.salaryMin() != null || job.salaryMax() != null;
+            boolean userSetRange = prefs.salaryMin() != null || prefs.salaryMax() != null;
+            if (jobStatesSalary && userSetRange) {
+                if (isSalaryInRange(job, prefs)) {
                     prefScore += SALARY_IN_RANGE_BONUS;
                     reasons.add("Salary within your range");
-                } else if (prefs.salaryMin() != null || prefs.salaryMax() != null) {
-                    // Job has salary data but it's outside range — soft penalty
+                } else {
                     prefScore -= SALARY_IN_RANGE_BONUS;
                     reasons.add("Salary may be outside your range");
                 }
@@ -591,8 +594,6 @@ public class MatchingService implements GetRecommendationsUseCase {
         Integer prefMin = prefs.salaryMin();
         Integer prefMax = prefs.salaryMax();
 
-        if (prefMin == null && prefMax == null) return true;
-
         // Use the midpoint of the job's range if both ends available, else whichever end exists
         int jobPoint = jobMin != null && jobMax != null ? (jobMin + jobMax) / 2
                 : jobMin != null ? jobMin : jobMax;
@@ -637,20 +638,24 @@ public class MatchingService implements GetRecommendationsUseCase {
                 .limit(STEER_SIGNALS_HONOURED)
                 .toList();
 
+        // A set, so a job reached by several signals in this direction is adjusted once: five
+        // steers toward similar postings must not add up to more than a direct like.
+        Set<UUID> reached = new HashSet<>();
         for (RecommendationFeedback signal : signals) {
             try {
                 embeddingRepo.findByJobId(signal.jobId())
                         .map(JobEmbedding::embedding)
                         .map(vector -> embeddingRepo.findNearestNeighborJobIds(vector, STEER_NEIGHBOURS))
-                        .ifPresent(neighbours -> neighbours.forEach(id -> {
-                            // Steering the same way twice does not double the effect; steering both
-                            // ways cancels, which is the honest reading of contradictory signals.
-                            if (!id.equals(signal.jobId())) into.merge(id, adjustment, Integer::sum);
-                        }));
+                        .ifPresent(neighbours -> neighbours.stream()
+                                .filter(id -> !id.equals(signal.jobId()))
+                                .forEach(reached::add));
             } catch (Exception e) {
                 log.debug("Could not expand steer signal for job {}: {}", signal.jobId(), e.getMessage());
             }
         }
+        // Summed across directions: a job steered both toward and away from gets both, so the
+        // larger penalty outweighs the boost and contradictory signals lean towards hiding it.
+        reached.forEach(id -> into.merge(id, adjustment, Integer::sum));
     }
 
     /**
