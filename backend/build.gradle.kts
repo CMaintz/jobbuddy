@@ -54,7 +54,7 @@ extra["postgresql.version"] = "42.7.12"    // GHSA-j92g
 extra["commons-lang3.version"] = "3.18.0"  // GHSA-j288 + unblocks SpotBugs
 extra["httpclient5.version"] = "5.6.3"     // GHSA-hjcp
 extra["httpcore5.version"] = "5.4.3"       // GHSA-hf6x/v3jc (7.5)
-extra["opentelemetry.version"] = "1.63.0"  // GHSA-rcgg
+extra["opentelemetry.version"] = "1.67.0"  // GHSA-rcgg, GHSA-ccrj
 
 java {
     toolchain {
@@ -103,6 +103,9 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.archunit.junit5)
     constraints {
+        implementation("com.google.guava:guava:33.7.2-jre") {
+            because("firebase-admin pulls 33.5.0: GHSA-xxph-c9ww-hj94")
+        }
         testImplementation("org.apache.commons:commons-compress:1.28.0") {
             because("Testcontainers pulls 1.24.0: GHSA-4265-ccf5-phj5, GHSA-4g9r-vxhx-9pgx")
         }
