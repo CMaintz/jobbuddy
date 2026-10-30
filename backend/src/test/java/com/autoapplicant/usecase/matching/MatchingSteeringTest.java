@@ -96,6 +96,26 @@ class MatchingSteeringTest extends MatchingServiceFixture {
     }
 
     @Test
+    void steering_toward_one_neighbour_twice_does_not_double_the_boost() {
+        // Several steers toward similar postings must not stack past a direct like on their
+        // shared neighbour: the inferred boost stays at 6 however many signals reach it.
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID neighbour = UUID.randomUUID();
+        stubFeedback(feedback(first, FeedbackType.MORE_LIKE_THIS),
+                feedback(second, FeedbackType.MORE_LIKE_THIS));
+        stubSteerEmbedding(first);
+        stubSteerEmbedding(second);
+        stubFeed(profileWithSkills("Java"), List.of(minimalJob(neighbour)));
+        when(embeddingRepo.findNearestNeighborJobIds(any(), eq(STEER_NEIGHBOURS)))
+                .thenReturn(List.of(neighbour));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(scoreOf(results, neighbour)).isEqualTo(31);
+    }
+
+    @Test
     void only_the_most_recent_steer_signals_are_honoured() {
         // Each signal costs a nearest-neighbour query per request; twelve steers must not mean
         // twelve queries, and the five that are honoured must be the newest.

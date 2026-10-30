@@ -637,20 +637,24 @@ public class MatchingService implements GetRecommendationsUseCase {
                 .limit(STEER_SIGNALS_HONOURED)
                 .toList();
 
+        // A set, so a job reached by several signals in this direction is adjusted once: five
+        // steers toward similar postings must not add up to more than a direct like.
+        Set<UUID> reached = new HashSet<>();
         for (RecommendationFeedback signal : signals) {
             try {
                 embeddingRepo.findByJobId(signal.jobId())
                         .map(JobEmbedding::embedding)
                         .map(vector -> embeddingRepo.findNearestNeighborJobIds(vector, STEER_NEIGHBOURS))
-                        .ifPresent(neighbours -> neighbours.forEach(id -> {
-                            // Steering the same way twice does not double the effect; steering both
-                            // ways cancels, which is the honest reading of contradictory signals.
-                            if (!id.equals(signal.jobId())) into.merge(id, adjustment, Integer::sum);
-                        }));
+                        .ifPresent(neighbours -> neighbours.stream()
+                                .filter(id -> !id.equals(signal.jobId()))
+                                .forEach(reached::add));
             } catch (Exception e) {
                 log.debug("Could not expand steer signal for job {}: {}", signal.jobId(), e.getMessage());
             }
         }
+        // Summed across directions: a job steered both toward and away from gets both, so the
+        // larger penalty outweighs the boost and contradictory signals lean towards hiding it.
+        reached.forEach(id -> into.merge(id, adjustment, Integer::sum));
     }
 
     /**
