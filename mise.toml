@@ -3,7 +3,8 @@
 # One root config pins both toolchains and exposes the six verbs per package
 # (backend:*, frontend:*) plus aggregates. CI path-filters call the per-package
 # gate; `mise run gate` locally runs everything. The extension is static JS/HTML
-# with no build, so it has no verbs — its only check is the CI max-file gate.
+# with no build, so it has no gate verbs: CI checks only its file size, and its unit
+# tests run locally through `extension:test` (node's built-in runner, no npm install).
 
 [tools]
 java = "21"
@@ -161,6 +162,13 @@ run = [
     "mise run frontend:test",
     "mise run frontend:audit",
 ]
+
+# ---- extension (plain JS, no build) ------------------------------------------
+
+[tasks."extension:test"]
+description = "Extension unit tests on node's built-in test runner"
+dir = "extension"
+run = 'node --test "test/*.test.js"'
 
 # ---- aggregate --------------------------------------------------------------
 # Top-level verbs run every package's, so the six-verb contract holds at the root
