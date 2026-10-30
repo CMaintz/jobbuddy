@@ -8,7 +8,7 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
   selector: 'jb-icon',
   imports: [],
   templateUrl: './jb-icon.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./jb-icon.component.css'],
 })
 export class JbIconComponent {

@@ -6,7 +6,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 @Component({
   selector: 'jb-streak-badge',
   imports: [TranslateModule, JbIconComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (streak.days() > 0) {
       <div class="flex items-center gap-2.5 rounded-md py-1.5 px-2 text-base text-jb-text-mid">

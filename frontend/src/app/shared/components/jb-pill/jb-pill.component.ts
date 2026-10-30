@@ -5,7 +5,7 @@ export type PillTone = 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'v
 @Component({
   selector: 'jb-pill',
   templateUrl: './jb-pill.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./jb-pill.component.css']
 })
 export class JbPillComponent {

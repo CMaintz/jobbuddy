@@ -4,7 +4,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
 @Component({
   selector: 'jb-stat-card',
   imports: [JbIconComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './stat-card.component.html'
 })
 export class StatCardComponent {
