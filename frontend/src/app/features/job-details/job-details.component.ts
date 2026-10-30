@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +26,7 @@ const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT'
     CommonModule, RouterLink, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     StatusChipComponent, CompanyMarkComponent, FitBarComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './job-details.component.html'
 })
 export class JobDetailsComponent implements OnInit {
@@ -37,11 +37,13 @@ export class JobDetailsComponent implements OnInit {
   private appsApi = inject(ApplicationsApiService);
   private notesApi = inject(NotesApiService);
   private translate = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
 
-  loading = true;
-  job: Job | null = null;
-  application: Application | null = null;
-  documents: GeneratedDocument[] = [];
+  loading = signal(true);
+  job = signal<Job | null>(null);
+  application = signal<Application | null>(null);
+  documents = signal<GeneratedDocument[]>([]);
+  // A plain field because the notes textarea binds it through ngModel; loads mark the view.
   notesText = '';
   notesStatus = signal('');
   saved = signal(false);
@@ -53,13 +55,13 @@ export class JobDetailsComponent implements OnInit {
 
   stageFlow = STAGE_FLOW;
 
-  tabs = [
+  tabs = computed(() => [
     { key: 'jd' as const, label: 'jobDetails.tab.jd' },
-    { key: 'activity' as const, label: 'jobDetails.tab.activity', count: 0 },
+    { key: 'activity' as const, label: 'jobDetails.tab.activity', count: this.activityEvents().length },
     { key: 'notes' as const, label: 'jobDetails.tab.notes', count: 0 },
-  ];
+  ]);
 
-  openingCv = false;
+  openingCv = signal(false);
 
   generateActions = [
     { label: 'apply.fmt.application', icon: 'layers', format: 'application' },
@@ -68,14 +70,15 @@ export class JobDetailsComponent implements OnInit {
     { label: 'apply.fmt.tailoredCv', icon: 'target', format: 'cv' },
   ];
 
-  activityEvents: { time: string; what: string; who: string; dot: string }[] = [];
+  activityEvents = signal<{ time: string; what: string; who: string; dot: string }[]>([]);
 
   get salaryRange(): string {
-    if (!this.job?.salaryMin && !this.job?.salaryMax) return '';
-    const cur = this.job.currency || '';
-    if (this.job.salaryMin && this.job.salaryMax) return `${cur}${this.job.salaryMin}–${this.job.salaryMax}`;
-    if (this.job.salaryMin) return `${cur}${this.job.salaryMin}+`;
-    return this.translate.instant('jobDetails.upTo', { amount: `${cur}${this.job!.salaryMax}` });
+    const job = this.job();
+    if (!job?.salaryMin && !job?.salaryMax) return '';
+    const cur = job.currency || '';
+    if (job.salaryMin && job.salaryMax) return `${cur}${job.salaryMin}–${job.salaryMax}`;
+    if (job.salaryMin) return `${cur}${job.salaryMin}+`;
+    return this.translate.instant('jobDetails.upTo', { amount: `${cur}${job.salaryMax}` });
   }
 
   /**
@@ -83,31 +86,33 @@ export class JobDetailsComponent implements OnInit {
    * something a keyword check can settle, and the rest are for the reader to judge.
    */
   get requirements(): JobRequirement[] {
-    const all = this.job?.requirements ?? [];
+    const all = this.job()?.requirements ?? [];
     return [...all.filter(r => r.tier === 'REQUIRED'), ...all.filter(r => r.tier !== 'REQUIRED')];
   }
 
   get keywords(): string[] {
+    const job = this.job();
     return [
-      ...(this.job?.technologies || []),
-      ...(this.job?.skills || []),
-      ...(this.job?.aiTags || []),
+      ...(job?.technologies || []),
+      ...(job?.skills || []),
+      ...(job?.aiTags || []),
     ].slice(0, 12);
   }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.loading = false; return; }
+    if (!id) { this.loading.set(false); return; }
     this.load(id);
   }
 
   /** Navigating between jobs reuses this component — reset and reload manually. */
   openSimilar(id: string): void {
     this.router.navigate(['/jobs', id]);
-    this.loading = true;
-    this.job = null;
-    this.application = null;
-    this.documents = [];
+    this.loading.set(true);
+    this.job.set(null);
+    this.application.set(null);
+    this.documents.set([]);
+    this.activityEvents.set([]);
     this.similarJobs.set([]);
     this.note = null;
     this.notesText = '';
@@ -119,8 +124,8 @@ export class JobDetailsComponent implements OnInit {
     // Try loading as a job first
     this.jobsApi.getById(id).subscribe({
       next: (job) => {
-        this.job = job;
-        this.loading = false;
+        this.job.set(job);
+        this.loading.set(false);
         this.buildActivity();
         this.loadJobExtras(job.id);
         // An application may already exist for this job (stepper, documents, recruiter email)
@@ -128,8 +133,8 @@ export class JobDetailsComponent implements OnInit {
           next: apps => {
             const app = apps.find(a => a.jobId === job.id);
             if (app) {
-              this.application = app;
-              if (!this.notesText) this.notesText = app.notes || '';
+              this.application.set(app);
+              if (!this.notesText) this.setNotesText(app.notes || '');
               this.buildActivity();
             }
           },
@@ -137,7 +142,7 @@ export class JobDetailsComponent implements OnInit {
         });
         // Try to load documents for this job
         this.jobsApi.getDocumentsForJob(id).subscribe({
-          next: (docs) => { this.documents = docs; this.tabs[1].count = this.activityEvents.length; },
+          next: (docs) => this.documents.set(docs),
           error: this.notify.onError('notify.loadFailed')
         });
       },
@@ -145,30 +150,30 @@ export class JobDetailsComponent implements OnInit {
         // Maybe the ID is an application ID — try loading application
         this.appsApi.getById(id).subscribe({
           next: (app) => {
-            this.application = app;
-            this.notesText = app.notes || '';
+            this.application.set(app);
+            this.setNotesText(app.notes || '');
             // Now load the job
             if (app.jobId) {
               this.jobsApi.getById(app.jobId).subscribe({
                 next: (job) => {
-                  this.job = job;
-                  this.loading = false;
+                  this.job.set(job);
+                  this.loading.set(false);
                   this.buildActivity();
                   this.loadJobExtras(job.id);
                   this.jobsApi.getDocumentsForJob(app.jobId).subscribe({
-                    next: (docs) => this.documents = docs,
+                    next: (docs) => this.documents.set(docs),
                     error: this.notify.onError('notify.loadFailed')
                   });
                 },
-                error: () => this.loading = false
+                error: () => this.loading.set(false)
               });
             } else {
               // Build a synthetic job from application data
-              this.job = { id: app.id, title: app.jobTitle || this.translate.instant('jobDetails.untitled'), companyName: app.jobCompanyName, url: '' };
-              this.loading = false;
+              this.job.set({ id: app.id, title: app.jobTitle || this.translate.instant('jobDetails.untitled'), companyName: app.jobCompanyName, url: '' });
+              this.loading.set(false);
             }
           },
-          error: () => this.loading = false
+          error: () => this.loading.set(false)
         });
       }
     });
@@ -188,11 +193,16 @@ export class JobDetailsComponent implements OnInit {
       next: notes => {
         if (notes.length > 0) {
           this.note = notes[0];
-          this.notesText = notes[0].content;
+          this.setNotesText(notes[0].content);
         }
       },
       error: this.notify.onError('notify.loadFailed')
     });
+  }
+
+  private setNotesText(text: string): void {
+    this.notesText = text;
+    this.cdr.markForCheck();
   }
 
   stageLabel(status: ApplicationStatus | string): string { return stageLabelKey(status); }
@@ -202,20 +212,22 @@ export class JobDetailsComponent implements OnInit {
   }
 
   moveToStage(stage: ApplicationStatus): void {
-    if (!this.application) return;
-    this.appsApi.updateStatus(this.application.id, stage).subscribe({
-      next: (updated) => { this.application = updated; },
+    const application = this.application();
+    if (!application) return;
+    this.appsApi.updateStatus(application.id, stage).subscribe({
+      next: (updated) => this.application.set(updated),
       error: this.notify.onError('notify.actionFailed')
     });
   }
 
   onGenerate(format: string): void {
-    if (!this.job) return;
+    const job = this.job();
+    if (!job) return;
     if (format === 'cv') {
       this.navigateWithApplication(appId => ['/applications', appId, 'cv']);
       return;
     }
-    this.router.navigate(['/apply'], { queryParams: { jobId: this.job.id, format } });
+    this.router.navigate(['/apply'], { queryParams: { jobId: job.id, format } });
   }
 
   openDocument(doc: GeneratedDocument): void {
@@ -230,19 +242,21 @@ export class JobDetailsComponent implements OnInit {
 
   /** Both CV and output screens are application-scoped; create the application first if none exists yet. */
   private navigateWithApplication(route: (appId: string) => string[], queryParams?: Record<string, string>): void {
-    if (this.application) {
-      this.router.navigate(route(this.application.id), { queryParams });
+    const application = this.application();
+    if (application) {
+      this.router.navigate(route(application.id), { queryParams });
       return;
     }
-    if (!this.job || this.openingCv) return;
-    this.openingCv = true;
-    this.appsApi.create(this.job.id).subscribe({
+    const job = this.job();
+    if (!job || this.openingCv()) return;
+    this.openingCv.set(true);
+    this.appsApi.create(job.id).subscribe({
       next: app => {
-        this.application = app;
-        this.openingCv = false;
+        this.application.set(app);
+        this.openingCv.set(false);
         this.router.navigate(route(app.id), { queryParams });
       },
-      error: () => { this.openingCv = false; }
+      error: () => this.openingCv.set(false)
     });
   }
 
@@ -270,22 +284,25 @@ export class JobDetailsComponent implements OnInit {
   }
 
   toggleSave(): void {
-    if (!this.job) return;
+    const job = this.job();
+    if (!job) return;
     const wasSaved = this.saved();
     this.saved.set(!wasSaved);
-    (wasSaved ? this.jobsApi.unsave(this.job.id) : this.jobsApi.save(this.job.id)).subscribe({
+    (wasSaved ? this.jobsApi.unsave(job.id) : this.jobsApi.save(job.id)).subscribe({
       error: () => this.saved.set(wasSaved)
     });
   }
 
   openOriginal(): void {
-    if (this.job?.url) window.open(this.job.url, '_blank', 'noopener');
+    const url = this.job()?.url;
+    if (url) window.open(url, '_blank', 'noopener');
   }
 
   /** User says the posting is gone: hide it here, let the server verify the URL. */
   reportTakenDown(): void {
-    if (!this.job || this.reportedInactive()) return;
-    this.jobsApi.reportInactive(this.job.id).subscribe({
+    const job = this.job();
+    if (!job || this.reportedInactive()) return;
+    this.jobsApi.reportInactive(job.id).subscribe({
       next: () => {
         this.reportedInactive.set(true);
         this.saved.set(false);
@@ -295,16 +312,17 @@ export class JobDetailsComponent implements OnInit {
   }
 
   saveNotes(): void {
-    if (!this.job) return;
+    const job = this.job();
+    if (!job) return;
     const content = this.notesText.trim();
     if (this.note) {
       if (content === this.note.content) return;
-      this.notesApi.update(this.job.id, this.note.id, content).subscribe({
+      this.notesApi.update(job.id, this.note.id, content).subscribe({
         next: note => { this.note = note; this.flashNotesStatus('jobDetails.notesSaved'); },
         error: () => this.flashNotesStatus('jobDetails.notesSaveFailed')
       });
     } else if (content) {
-      this.notesApi.create(this.job.id, content).subscribe({
+      this.notesApi.create(job.id, content).subscribe({
         next: note => { this.note = note; this.flashNotesStatus('jobDetails.notesSaved'); },
         error: () => this.flashNotesStatus('jobDetails.notesSaveFailed')
       });
@@ -322,12 +340,13 @@ export class JobDetailsComponent implements OnInit {
    * without a recipient but with subject and opener prefilled.
    */
   get contactMailto(): string {
-    const to = this.application?.recruiterEmail ?? '';
+    const job = this.job();
+    const to = this.application()?.recruiterEmail ?? '';
     const subject = encodeURIComponent(this.translate.instant('jobDetails.mailto.subject', {
-      role: this.job?.title ?? this.translate.instant('jobDetails.mailto.openRole'),
-      company: this.job?.companyName ?? this.translate.instant('jobDetails.mailto.yourCompany'),
+      role: job?.title ?? this.translate.instant('jobDetails.mailto.openRole'),
+      company: job?.companyName ?? this.translate.instant('jobDetails.mailto.yourCompany'),
     }));
-    const body = encodeURIComponent(this.translate.instant('jobDetails.mailto.body', { role: this.job?.title ?? '' }));
+    const body = encodeURIComponent(this.translate.instant('jobDetails.mailto.body', { role: job?.title ?? '' }));
     return `mailto:${to}?subject=${subject}&body=${body}`;
   }
 
@@ -347,13 +366,13 @@ export class JobDetailsComponent implements OnInit {
 
   private buildActivity(): void {
     const events: { time: string; what: string; who: string; dot: string }[] = [];
-    if (this.application) {
-      if (this.application.appliedAt) {
-        events.push({ time: this.ageLabel(this.application.appliedAt), what: this.translate.instant('jobDetails.activity.applicationSent'), who: this.translate.instant('jobDetails.activity.via', { source: this.job?.source || this.translate.instant('jobDetails.activity.platform') }), dot: 'var(--jb-info)' });
+    const application = this.application();
+    if (application) {
+      if (application.appliedAt) {
+        events.push({ time: this.ageLabel(application.appliedAt), what: this.translate.instant('jobDetails.activity.applicationSent'), who: this.translate.instant('jobDetails.activity.via', { source: this.job()?.source || this.translate.instant('jobDetails.activity.platform') }), dot: 'var(--jb-info)' });
       }
-      events.push({ time: this.ageLabel(this.application.createdAt), what: this.translate.instant('jobDetails.activity.savedToPipeline'), who: this.translate.instant('jobDetails.activity.you'), dot: 'var(--jb-text-dim)' });
+      events.push({ time: this.ageLabel(application.createdAt), what: this.translate.instant('jobDetails.activity.savedToPipeline'), who: this.translate.instant('jobDetails.activity.you'), dot: 'var(--jb-text-dim)' });
     }
-    this.activityEvents = events;
-    this.tabs[1].count = events.length;
+    this.activityEvents.set(events);
   }
 }
