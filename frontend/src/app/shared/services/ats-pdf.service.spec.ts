@@ -37,14 +37,14 @@ describe('resumeDataToAts', () => {
         endDate: '2024', current: false, description: '' }],
       skills: [{ id: 's', name: 'Java' }],
     });
-    const educationFirst = settings({
+    const skillsFirst = settings({
       leftColumn: [
         { id: 'skills', name: 'Skills', visible: true },
         { id: 'experience', name: 'Experience', visible: true },
       ],
       rightColumn: [],
     });
-    const model = resumeDataToAts(data, data.personalInfo, educationFirst);
+    const model = resumeDataToAts(data, data.personalInfo, skillsFirst);
     expect(model.sections.map(s => s.heading)).toEqual(['Skills', 'Experience']);
   });
 
