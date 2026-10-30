@@ -3,12 +3,15 @@ package com.autoapplicant.domain.document.structured;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class CareerProfileForAiTest {
@@ -16,6 +19,45 @@ class CareerProfileForAiTest {
     /** Components whose items carry links; withoutLinks rebuilds these and nothing else. */
     private static final Set<String> LINK_BEARING = Set.of(
             "experience", "projects", "education", "certifications", "customSections");
+
+    /** Identity fields CLAUDE.md's privacy invariant keeps out of the AI payload. */
+    private static final Pattern IDENTITY_NAME =
+            Pattern.compile("(?i)^(full)?name$|email|phone|photo|linkedin|github|website");
+
+    /**
+     * A tripwire for the privacy invariant: adding an identity field anywhere in the payload's
+     * record tree should be a deliberate decision, not a quiet addition. The behavioural guard
+     * (no identity value in the serialized payload) lives in CareerProfileContextServiceTest.
+     */
+    @Test
+    void no_component_in_the_payload_tree_is_an_identity_field() {
+        List<String> identityLike = new ArrayList<>();
+        collectIdentityLike(CareerProfileForAi.class, identityLike);
+
+        assertThat(identityLike).isEmpty();
+    }
+
+    private static void collectIdentityLike(Class<?> recordType, List<String> found) {
+        for (RecordComponent component : recordType.getRecordComponents()) {
+            if (IDENTITY_NAME.matcher(component.getName()).find()) {
+                found.add(recordType.getSimpleName() + "." + component.getName());
+            }
+            nestedRecords(component.getGenericType())
+                    .forEach(nested -> collectIdentityLike(nested, found));
+        }
+    }
+
+    private static List<Class<?>> nestedRecords(Type type) {
+        if (type instanceof Class<?> cls && cls.isRecord()) {
+            return List.of(cls);
+        }
+        if (type instanceof ParameterizedType parameterized) {
+            return Arrays.stream(parameterized.getActualTypeArguments())
+                    .flatMap(arg -> nestedRecords(arg).stream())
+                    .toList();
+        }
+        return List.of();
+    }
 
     /**
      * withoutLinks re-lists every component positionally, so a swapped or dropped argument would
