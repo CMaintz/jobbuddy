@@ -7,7 +7,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
   selector: 'jb-tag-input',
   imports: [FormsModule, TranslateModule, JbIconComponent],
   templateUrl: './tag-input.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./tag-input.component.css']
 })
 export class TagInputComponent {

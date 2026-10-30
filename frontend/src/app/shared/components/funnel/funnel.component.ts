@@ -6,7 +6,7 @@ import { FunnelStage } from '../../utils/application-insights';
   selector: 'jb-funnel',
   imports: [TranslateModule],
   templateUrl: './funnel.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./funnel.component.css']
 })
 export class FunnelComponent {
