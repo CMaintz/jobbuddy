@@ -8,16 +8,15 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.notification.NotificationPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
+import com.autoapplicant.usecase.common.KeywordMatcher;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 @Service
 public class WeeklyDigestService implements SendWeeklyDigestUseCase {
@@ -96,10 +95,9 @@ public class WeeklyDigestService implements SendWeeklyDigestUseCase {
 
     private boolean matchesAny(Job job, List<String> signals) {
         if (signals == null || signals.isEmpty()) return false;
-        String haystack = ((job.title() == null ? "" : job.title()) + " "
-                + (job.shortDescription() == null ? "" : job.shortDescription())).toLowerCase(Locale.ROOT);
-        return signals.stream().anyMatch(s -> s != null && !s.isBlank()
-                && haystack.contains(s.toLowerCase(Locale.ROOT)));
+        String haystack = (job.title() == null ? "" : job.title()) + " "
+                + (job.shortDescription() == null ? "" : job.shortDescription());
+        return signals.stream().anyMatch(s -> KeywordMatcher.contains(haystack, s));
     }
 
     private Instant newestTimestamp(Job job) {

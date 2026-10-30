@@ -1,20 +1,18 @@
 package com.autoapplicant.usecase.skills;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillCandidate;
-import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.skill.SkillConfirmation;
-import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
-import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
-import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.SkillNames;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,11 +20,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 /**
  * Suggests skills the user has not claimed — passes 1 and 2 of the elicitation design, with no AI
@@ -212,12 +210,6 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         return claimed;
     }
 
-    private static void addAll(Map<String, String> target, List<String> names) {
-        if (names == null) return;
-        names.stream().filter(n -> n != null && !n.isBlank())
-                .forEach(n -> target.put(normalize(n), n.strip()));
-    }
-
     /** How often each skill appears across the postings this user matches. */
     private Map<String, MarketMention> marketMentions(UUID userId) {
         Map<String, MarketMention> mentions = new LinkedHashMap<>();
@@ -254,13 +246,13 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         Map<String, List<String>> adjacency = new LinkedHashMap<>();
         Map<String, String> displayNames = new HashMap<>();
         for (Map.Entry<String, String> entry : claimed.entrySet()) {
-            var node = taxonomyRepo.findByNormalizedName(entry.getKey()).orElse(null);
+            SkillTaxonomy node = taxonomyRepo.findByNormalizedName(entry.getKey()).orElse(null);
             if (node == null) continue;
 
             List<UUID> parents = new ArrayList<>();
             parents.add(node.id());                                   // children of this skill
             if (node.parentId() != null) parents.add(node.parentId()); // and its siblings
-            for (var neighbour : taxonomyRepo.findByParentIds(parents)) {
+            for (SkillTaxonomy neighbour : taxonomyRepo.findByParentIds(parents)) {
                 String normalized = neighbour.normalizedName() != null
                         ? neighbour.normalizedName() : normalize(neighbour.name());
                 if (normalized.equals(entry.getKey())) continue;

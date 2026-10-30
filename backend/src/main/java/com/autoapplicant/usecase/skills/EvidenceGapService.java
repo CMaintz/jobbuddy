@@ -1,17 +1,16 @@
 package com.autoapplicant.usecase.skills;
 
-import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.domain.job.Job;
-import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.user.InterviewStory;
 import com.autoapplicant.port.in.skills.GetEvidenceGapsUseCase;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
+import com.autoapplicant.usecase.common.KeywordMatcher;
+import com.autoapplicant.usecase.common.Values;
 import com.autoapplicant.usecase.job.MarketCorpusService;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -22,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 /**
  * Finds the skills worth asking for evidence about, and stores the answers.
@@ -97,7 +97,7 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
     private record Evidence(Set<String> taggedSkills, List<String> storyBodies) {
         boolean proves(String normalizedSkill) {
             return taggedSkills.contains(normalizedSkill)
-                    || storyBodies.stream().anyMatch(body -> body.contains(normalizedSkill));
+                    || storyBodies.stream().anyMatch(body -> KeywordMatcher.contains(body, normalizedSkill));
         }
     }
 
@@ -123,12 +123,6 @@ public class EvidenceGapService implements GetEvidenceGapsUseCase {
                 .filter(name -> name != null && !name.isBlank())
                 .forEach(name -> claimed.put(normalize(name), name.strip()));
         return claimed;
-    }
-
-    private static void addAll(Map<String, String> target, List<String> names) {
-        if (names == null) return;
-        names.stream().filter(n -> n != null && !n.isBlank())
-                .forEach(n -> target.putIfAbsent(normalize(n), n.strip()));
     }
 
     private Map<String, Integer> marketDemand(UUID userId) {

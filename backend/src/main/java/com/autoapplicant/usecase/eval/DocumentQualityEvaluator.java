@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.eval;
 
 import com.autoapplicant.domain.document.QualityScore;
+import com.autoapplicant.usecase.common.KeywordMatcher;
 import com.autoapplicant.usecase.document.ClicheGuard;
 import com.autoapplicant.usecase.document.DocumentFactGuard;
 import java.util.ArrayList;
@@ -120,9 +121,8 @@ public class DocumentQualityEvaluator {
         if (postingKeywords == null || postingKeywords.isEmpty()) {
             return new QualityScore.Dimension(KEYWORDS, 100, 0, "No posting keywords supplied.");
         }
-        String haystack = text.toLowerCase(Locale.ROOT);
         List<String> missing = postingKeywords.stream()
-                .filter(k -> !haystack.contains(k.toLowerCase(Locale.ROOT))).toList();
+                .filter(k -> !KeywordMatcher.contains(text, k)).toList();
         int hit = postingKeywords.size() - missing.size();
         return new QualityScore.Dimension(KEYWORDS,
                 Math.round(100f * hit / postingKeywords.size()), 2,
