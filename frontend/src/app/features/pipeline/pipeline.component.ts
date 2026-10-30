@@ -24,15 +24,15 @@ interface StageConfig {
     FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbTopbarComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {
   private api = inject(ApplicationsApiService);
   private translate = inject(TranslateService);
 
-  applications: Application[] = [];
-  loading = true;
+  applications = signal<Application[]>([]);
+  loading = signal(true);
   view = signal<'table' | 'kanban'>('table');
   activeFilters = signal<Set<ApplicationStatus>>(new Set());
   search = signal('');
@@ -55,8 +55,8 @@ export class PipelineComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.getAll().subscribe({
-      next: (apps) => { this.applications = apps; this.loading = false; },
-      error: () => this.loading = false
+      next: (apps) => { this.applications.set(apps); this.loading.set(false); },
+      error: () => this.loading.set(false)
     });
   }
 
@@ -84,8 +84,8 @@ export class PipelineComponent implements OnInit {
 
   private searchedApplications(): Application[] {
     const q = this.search().trim().toLowerCase();
-    if (!q) return this.applications;
-    return this.applications.filter(a =>
+    if (!q) return this.applications();
+    return this.applications().filter(a =>
       (a.jobCompanyName ?? '').toLowerCase().includes(q) ||
       (a.jobTitle ?? '').toLowerCase().includes(q) ||
       (a.notes ?? '').toLowerCase().includes(q));

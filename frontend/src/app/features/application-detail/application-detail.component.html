@@ -4,15 +4,15 @@
         <jb-icon name="arrow-left" [size]="11" /> {{ 'nav.applications' | translate }}
       </a>
       <span class="text-sm text-jb-text-dim">/</span>
-      <span class="text-base text-jb-text-mid">{{ app?.jobCompanyName || ('jobDetails.loadingCrumb' | translate) }}</span>
+      <span class="text-base text-jb-text-mid">{{ app()?.jobCompanyName || ('jobDetails.loadingCrumb' | translate) }}</span>
       <div class="ml-auto flex gap-1.5 items-center">
         <jb-button small icon="sparkle" routerLink="/apply">{{ 'jobDetails.regenerate' | translate }}</jb-button>
       </div>
     </div>
 
-    @if (loading) {
+    @if (loading()) {
       <div class="p-12 text-center text-jb-text-dim">{{ 'applicationDetail.loading' | translate }}</div>
-    } @else if (app) {
+    } @else if (app(); as app) {
       <div class="flex-1 overflow-auto p-6 jb-scroll">
         <div class="max-w-[800px]">
           <!-- Header -->

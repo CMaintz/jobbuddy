@@ -2,8 +2,8 @@
     <div class="min-h-screen flex items-center justify-center">
       <div class="card w-full max-w-md">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ 'auth.login.title' | translate }}</h1>
-        @if (error) {
-          <div class="bg-red-50 text-red-700 rounded-md p-3 mb-4 text-sm">{{ error | translate }}</div>
+        @if (error()) {
+          <div class="bg-red-50 text-red-700 rounded-md p-3 mb-4 text-sm">{{ error() | translate }}</div>
         }
         <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
           <div>
@@ -14,8 +14,8 @@
             <label class="label">{{ 'auth.password' | translate }}</label>
             <input type="password" formControlName="password" class="input" placeholder="••••••••" />
           </div>
-          <button type="submit" [disabled]="form.invalid || loading" class="btn-primary w-full">
-            {{ (loading ? 'auth.login.signingIn' : 'auth.login.signIn') | translate }}
+          <button type="submit" [disabled]="form.invalid || loading()" class="btn-primary w-full">
+            {{ (loading() ? 'auth.login.signingIn' : 'auth.login.signIn') | translate }}
           </button>
         </form>
         <div class="mt-4 relative">
