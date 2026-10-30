@@ -154,6 +154,22 @@ class CrawlerOrchestratorTest {
     }
 
     @Test
+    void aFailedCrawlIsRecordedAndReleasesTheRunningFlag() {
+        // Enrichment stands down while any source is running, so a failed crawl that kept its
+        // flag would halt enrichment until the staleness cutoff. The failure must also stay
+        // inside the crawl: a scheduled run of all sources should not die with one connector.
+        JobSourceConnectorPort connector = connector(config -> {
+            throw new IllegalStateException("feed moved");
+        });
+
+        orchestratorFor(connector).runConnector(connector);
+
+        CrawlerState finished = lastSavedState();
+        assertThat(finished.isRunning()).isFalse();
+        assertThat(finished.lastError()).isEqualTo("feed moved");
+    }
+
+    @Test
     void anErrorStillClearsTheRunningFlag() {
         // Only Exception used to clear it. An Error left the flag set, and enrichment stands
         // down while any source is running.

@@ -8,7 +8,6 @@ import com.autoapplicant.port.in.notification.GetNudgesUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -64,7 +63,7 @@ public class NudgeService implements GetNudgesUseCase {
             if (app.status() == ApplicationStatus.APPLIED
                     && app.appliedAt() != null
                     && (app.recruiterReply() == null || app.recruiterReply().isBlank())) {
-                long days = ChronoUnit.DAYS.between(app.appliedAt(), Instant.now());
+                long days = ChronoUnit.DAYS.between(app.appliedAt(), clock.instant());
                 if (days >= FOLLOW_UP_AFTER_DAYS) {
                     followUpNudges.add(Nudge.forApplication(Nudge.NudgeType.FOLLOW_UP, app.id(),
                             job.id(), job.title(), job.companyName(), null, (int) days));

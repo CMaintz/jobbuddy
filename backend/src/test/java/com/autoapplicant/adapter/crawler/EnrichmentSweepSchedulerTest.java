@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 import com.autoapplicant.domain.crawler.CrawlerState;
-import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase.SweepResult;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
@@ -36,17 +35,6 @@ class EnrichmentSweepSchedulerTest {
 
     private static CrawlerState state(boolean running) {
         return new CrawlerState("TEAMTAILOR", 0, Instant.now(), null, 0, 0, null, running, Instant.now());
-    }
-
-    @Test
-    void the_worker_drains_the_queue_without_being_asked() {
-        when(crawlerState.findAll()).thenReturn(List.of(state(false)));
-        when(sweep.sweep(200, BUDGET)).thenReturn(new SweepResult(3, 2, 1, 0));
-        when(jobRepo.countByEnrichmentStatus()).thenReturn(Map.of(EnrichmentStatus.PENDING, 5L));
-
-        scheduler(true).scheduledSweep();
-
-        verify(sweep).sweep(200, BUDGET);
     }
 
     @Test
@@ -100,7 +88,9 @@ class EnrichmentSweepSchedulerTest {
     }
 
     @Test
-    void an_empty_backlog_is_not_worth_a_log_line() {
+    void an_empty_batch_skips_the_backlog_count() {
+        // The count is a grouped query over every job, and an idle queue ticks every few
+        // minutes; it is only worth running when there is a batch to report on.
         when(crawlerState.findAll()).thenReturn(List.of());
         when(sweep.sweep(anyInt(), any())).thenReturn(new SweepResult(0, 0, 0, 0));
 
@@ -108,5 +98,19 @@ class EnrichmentSweepSchedulerTest {
 
         verify(sweep).sweep(200, BUDGET);
         verify(jobRepo, never()).countByEnrichmentStatus();
+    }
+
+    @Test
+    void a_failed_batch_does_not_block_the_next_tick() {
+        // The worker is the only enrichment path. If a throw left it marked busy, every later
+        // tick would skip as "previous batch still running" until the app restarted.
+        when(crawlerState.findAll()).thenReturn(List.of());
+        when(sweep.sweep(anyInt(), any())).thenThrow(new IllegalStateException("db down"));
+        EnrichmentSweepScheduler scheduler = scheduler(true);
+
+        scheduler.scheduledSweep();
+        scheduler.scheduledSweep();
+
+        verify(sweep, times(2)).sweep(200, BUDGET);
     }
 }
