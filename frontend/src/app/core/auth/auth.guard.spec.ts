@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 import { authGuard } from './auth.guard';
@@ -11,16 +12,17 @@ describe('authGuard', () => {
   let authenticated: boolean;
   let unverified: boolean;
   let resolveAuthReady: () => void;
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: Mocked<AuthService>;
 
   beforeEach(() => {
     authenticated = false;
     unverified = false;
-    authService = jasmine.createSpyObj<AuthService>(
-      'AuthService', ['whenAuthReady', 'isAuthenticated', 'needsEmailVerification']);
-    authService.whenAuthReady.and.returnValue(new Promise<void>(resolve => (resolveAuthReady = resolve)));
-    authService.isAuthenticated.and.callFake(() => authenticated);
-    authService.needsEmailVerification.and.callFake(() => unverified);
+    authService = {
+      whenAuthReady: vi.fn(), isAuthenticated: vi.fn(), needsEmailVerification: vi.fn(),
+    } as unknown as Mocked<AuthService>;
+    authService.whenAuthReady.mockReturnValue(new Promise<void>(resolve => (resolveAuthReady = resolve)));
+    authService.isAuthenticated.mockImplementation(() => authenticated);
+    authService.needsEmailVerification.mockImplementation(() => unverified);
 
     TestBed.configureTestingModule({
       providers: [provideRouter([]), { provide: AuthService, useValue: authService }],
@@ -38,7 +40,7 @@ describe('authGuard', () => {
     const result = runGuard();
     resolveAuthReady();
 
-    expect(await result).toBeTrue();
+    expect(await result).toBe(true);
   });
 
   it('redirects a signed-out user to /login', async () => {
@@ -46,7 +48,7 @@ describe('authGuard', () => {
     resolveAuthReady();
 
     const tree = await result;
-    expect(tree instanceof UrlTree).toBeTrue();
+    expect(tree instanceof UrlTree).toBe(true);
     expect(TestBed.inject(Router).serializeUrl(tree as UrlTree)).toBe('/login');
   });
 
@@ -57,7 +59,7 @@ describe('authGuard', () => {
     resolveAuthReady();
 
     const tree = await result;
-    expect(tree instanceof UrlTree).toBeTrue();
+    expect(tree instanceof UrlTree).toBe(true);
     expect(TestBed.inject(Router).serializeUrl(tree as UrlTree)).toBe('/verify-email');
   });
 
@@ -69,7 +71,7 @@ describe('authGuard', () => {
     expect(authService.isAuthenticated).not.toHaveBeenCalled();
 
     resolveAuthReady();
-    expect(await result).toBeTrue();
+    expect(await result).toBe(true);
     expect(authService.isAuthenticated).toHaveBeenCalledTimes(1);
   });
 });

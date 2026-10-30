@@ -69,6 +69,15 @@
                   "with": "src/environments/environment.local.ts"
                 }
               ]
+            },
+            "testing": {
+              "aot": false,
+              "optimization": false,
+              "extractLicenses": false,
+              "polyfills": [
+                "zone.js",
+                "zone.js/testing"
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -92,25 +101,19 @@
           }
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
             "tsConfig": "tsconfig.spec.json",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
+            "reporters": [
+              "default"
             ],
-            "styles": [
-              "src/styles.css",
-              "src/styles/effects.css",
-              "src/styles/document-render.css",
-              "src/styles/resume-forms.css"
+            "coverageReporters": [
+              "text-summary",
+              "lcovonly"
             ],
-            "scripts": [],
-            "karmaConfig": "karma.conf.cjs"
+            "buildTarget": ":build:testing",
+            "runner": "vitest",
+            "runnerConfig": true
           }
         },
         "lint": {

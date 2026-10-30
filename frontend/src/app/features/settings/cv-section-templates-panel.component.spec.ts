@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { of } from 'rxjs';
 import { inUseTemplate, makeDefault } from './cv-section-templates-panel.component';
 import { PromptApiService } from '../../core/api/prompt.api';
@@ -12,12 +13,12 @@ function template(overrides: Partial<PromptTemplate>): PromptTemplate {
 }
 
 describe('cv section templates panel', () => {
-  let api: jasmine.SpyObj<PromptApiService>;
+  let api: Mocked<PromptApiService>;
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<PromptApiService>('PromptApiService', ['selectDefault', 'resetDefault']);
-    api.selectDefault.and.returnValue(of(undefined));
-    api.resetDefault.and.returnValue(of(undefined));
+    api = { selectDefault: vi.fn(), resetDefault: vi.fn() } as unknown as Mocked<PromptApiService>;
+    api.selectDefault.mockReturnValue(of(undefined));
+    api.resetDefault.mockReturnValue(of(undefined));
   });
 
   it("clears the user's choice when the app default is picked", () => {
