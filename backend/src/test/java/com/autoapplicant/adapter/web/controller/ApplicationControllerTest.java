@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.web.controller;
 
 import static com.autoapplicant.domain.application.ApplicationStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -87,23 +89,14 @@ class ApplicationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].status").value("SAVED"))
+                .andExpect(jsonPath("$[0].jobId").value(jobId.toString()))
                 .andExpect(jsonPath("$[1].status").value("PREPARING"));
-    }
-
-    @Test
-    void list_response_includes_job_id() throws Exception {
-        when(getAllUseCase.getApplications(eq(userId), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(application(appId, userId, jobId, SAVED))));
-
-        mvc.perform(get("/api/v1/applications"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].jobId").value(jobId.toString()));
     }
 
     // ── POST /api/v1/applications ─────────────────────────────────────────────
 
     @Test
-    void create_returns_200_with_saved_status() throws Exception {
+    void create_returns_201_with_saved_status() throws Exception {
         Application saved = application(appId, userId, jobId, SAVED);
         when(createUseCase.createApplication(any(CreateApplicationCommand.class)))
                 .thenReturn(saved);
@@ -137,11 +130,32 @@ class ApplicationControllerTest {
         mvc.perform(post("/api/v1/applications")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"jobId":"%s","cvVersionId":"%s","notes":"my notes"}
+                                {"jobId":"%s","cvVersionId":"%s","notes":"my notes","status":"preparing"}
                                 """.formatted(jobId, cvId)))
                 .andExpect(status().isCreated());
 
-        verify(createUseCase).createApplication(any(CreateApplicationCommand.class));
+        CreateApplicationCommand command = capturedCreateCommand();
+        assertThat(command.userId()).isEqualTo(userId);
+        assertThat(command.jobId()).isEqualTo(jobId);
+        assertThat(command.cvVersionId()).isEqualTo(cvId);
+        assertThat(command.notes()).isEqualTo("my notes");
+        assertThat(command.status()).isEqualTo(PREPARING);
+    }
+
+    @Test
+    void create_with_unknown_status_falls_back_to_saved() throws Exception {
+        // Lenient today: an unrecognised status is treated as absent rather than rejected.
+        when(createUseCase.createApplication(any(CreateApplicationCommand.class)))
+                .thenReturn(application(appId, userId, jobId, SAVED));
+
+        mvc.perform(post("/api/v1/applications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"jobId":"%s","status":"HIRED_ALREADY"}
+                                """.formatted(jobId)))
+                .andExpect(status().isCreated());
+
+        assertThat(capturedCreateCommand().status()).isEqualTo(SAVED);
     }
 
     // ── GET /api/v1/applications/{id} ─────────────────────────────────────────
@@ -216,6 +230,13 @@ class ApplicationControllerTest {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private CreateApplicationCommand capturedCreateCommand() {
+        ArgumentCaptor<CreateApplicationCommand> captor =
+                ArgumentCaptor.forClass(CreateApplicationCommand.class);
+        verify(createUseCase).createApplication(captor.capture());
+        return captor.getValue();
+    }
 
     private Application application(UUID id, UUID userId, UUID jobId, ApplicationStatus status) {
         return new Application(id, userId, jobId, status, null,

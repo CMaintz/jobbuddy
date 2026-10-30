@@ -1,8 +1,11 @@
 package com.autoapplicant.domain.job;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.junit.jupiter.api.Test;
 
 class SimHashTest {
 
@@ -20,13 +23,13 @@ class SimHashTest {
 
     @Test
     void wordOrderDoesNotChangeFingerprint() {
-        // bag-of-words: reversing sentence order keeps the same tokens
-        String reordered = "culture engineering strong a and work remote flexible salary competitive "
-                + JD;
-        long a = SimHash.fingerprint(JD);
-        long b = SimHash.fingerprint(reordered);
-        // a light prefix change perturbs few bits — still a near-duplicate
-        assertThat(SimHash.hammingDistance(a, b)).isLessThan(12);
+        // Bag-of-words: the same tokens in reverse order must hash identically, so a repost that
+        // only shuffles sentences is still caught. A shingle/n-gram hash would fail this.
+        List<String> words = Arrays.asList(JD.split("\\s+"));
+        Collections.reverse(words);
+        String reversed = String.join(" ", words);
+
+        assertThat(SimHash.fingerprint(reversed)).isEqualTo(SimHash.fingerprint(JD));
     }
 
     @Test

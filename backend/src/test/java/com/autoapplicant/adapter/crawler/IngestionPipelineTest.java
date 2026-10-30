@@ -102,6 +102,27 @@ class IngestionPipelineTest {
     }
 
     @Test
+    void joins_the_existing_group_when_the_other_job_is_already_clustered() {
+        RawJobData raw = raw("src-6");
+        when(jobRepo.findBySourceAndSourceJobId(any(), any())).thenReturn(Optional.empty());
+        stubCleaning();
+        UUID savedId = UUID.randomUUID();
+        UUID existingGroup = UUID.randomUUID();
+        when(jobRepo.save(any())).thenReturn(job(savedId));
+        Job other = Job.builder().id(UUID.randomUUID()).source(JobSource.TEAMTAILOR)
+                .duplicateGroupId(existingGroup).build();
+        when(jobRepo.findActiveDuplicateByFingerprint(anyLong(), eq(savedId)))
+                .thenReturn(Optional.of(other));
+
+        IngestionPipeline.IngestResult result = pipeline.ingest(raw);
+
+        assertThat(result.crossListed()).isTrue();
+        // Minting a fresh group here would split one role's listings across two groups.
+        verify(jobRepo).assignDuplicateGroup(savedId, existingGroup);
+        verify(jobRepo, never()).assignDuplicateGroup(eq(other.id()), any());
+    }
+
+    @Test
     void resolves_company_and_backfills_missing_website() {
         RawJobData raw = new RawJobData(JobSource.TEAMTAILOR, "src-4", "https://x/4", "<p>b</p>",
                 null, Instant.now(), List.of(), null, null, "Acme A/S", "https://acme.dk", "CPH", null);
