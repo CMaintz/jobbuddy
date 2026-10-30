@@ -169,6 +169,18 @@ class MatchingServiceTest extends MatchingServiceFixture {
         assertThat(results).extracting(MatchResult::jobId).containsExactly(freshId);
     }
 
+    @Test
+    void a_job_you_ignored_is_not_recommended() {
+        UUID ignoredId = UUID.randomUUID();
+        UUID freshId = UUID.randomUUID();
+        when(ignoredJobRepo.findJobIdsByUserId(userId)).thenReturn(Set.of(ignoredId));
+        stubFeed(profileWithSkills("Java"), List.of(minimalJob(ignoredId), minimalJob(freshId)));
+
+        List<MatchResult> results = service.getRecommendations(userId, 10);
+
+        assertThat(results).extracting(MatchResult::jobId).containsExactly(freshId);
+    }
+
     private static Job untiered(UUID id, String... technologies) {
         return minimalJob(id).toBuilder().technologies(List.of(technologies)).build();
     }
