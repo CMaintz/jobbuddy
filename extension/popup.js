@@ -60,6 +60,9 @@ document.getElementById('capture').addEventListener('click', async () => {
       return;
     }
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    // Both injections land in the extension's isolated world of the tab, so the scraper
+    // can call what job-posting.js defined.
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['job-posting.js'] });
     const [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: scrapeJobPosting,
@@ -81,8 +84,9 @@ document.getElementById('capture').addEventListener('click', async () => {
 });
 
 /**
- * Runs inside the job-posting page. Prefers schema.org JobPosting JSON-LD
- * (present on most job boards and ATS pages); falls back to page heuristics.
+ * Runs inside the job-posting page, after job-posting.js (which defines jobPostingFromJsonLd).
+ * Prefers schema.org JobPosting JSON-LD (present on most job boards and ATS pages); falls back
+ * to page heuristics.
  */
 function scrapeJobPosting() {
   const htmlToText = (html) => {
@@ -91,35 +95,21 @@ function scrapeJobPosting() {
     return div.textContent.replace(/\n{3,}/g, '\n\n').trim();
   };
 
-  const findJobPosting = (node) => {
-    if (!node || typeof node !== 'object') return null;
-    if (Array.isArray(node)) {
-      for (const item of node) {
-        const found = findJobPosting(item);
-        if (found) return found;
-      }
-      return null;
-    }
-    const type = node['@type'];
-    if (type === 'JobPosting' || (Array.isArray(type) && type.includes('JobPosting'))) return node;
-    return findJobPosting(node['@graph']);
-  };
-
-  for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+  const jsonLdTexts = Array.from(
+    document.querySelectorAll('script[type="application/ld+json"]'), (script) => script.textContent);
+  const posting = jobPostingFromJsonLd(jsonLdTexts);
+  if (posting) {
     try {
-      const posting = findJobPosting(JSON.parse(script.textContent));
-      if (!posting) continue;
-      const address = [].concat(posting.jobLocation || [])[0]?.address;
-      const location = address
-        ? [address.addressLocality, address.addressRegion].filter(Boolean).join(', ')
-        : '';
       return {
-        title: posting.title || '',
-        company: posting.hiringOrganization?.name || '',
-        location,
-        description: posting.description ? htmlToText(posting.description).slice(0, 20000) : '',
+        title: posting.title,
+        company: posting.company,
+        location: posting.location,
+        description: posting.descriptionHtml ? htmlToText(posting.descriptionHtml).slice(0, 20000) : '',
       };
-    } catch { /* malformed JSON-LD — try the next block */ }
+    } catch {
+      // A page enforcing Trusted Types rejects the innerHTML assignment; its visible text
+      // still holds the posting, so the heuristics below can capture it.
+    }
   }
 
   // Heuristic fallback: user selection first, then the page's main content
