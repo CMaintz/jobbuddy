@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,22 +34,6 @@ public class PdfRenderingService {
 
     PdfRenderingService(PdfResourcePolicy resourcePolicy) {
         this.resourcePolicy = resourcePolicy;
-    }
-
-    public byte[] render(String htmlTemplate, String cssStyles, Map<String, String> placeholders) {
-        String html = htmlTemplate.replace("{{CSS}}", cssStyles != null ? cssStyles : "");
-
-        for (Map.Entry<String, String> e : placeholders.entrySet()) {
-            html = html.replace("{{" + e.getKey() + "}}", e.getValue() != null ? e.getValue() : "");
-        }
-
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            newBuilder(html).toStream(baos).run();
-            return baos.toByteArray();
-        } catch (Exception ex) {
-            throw new RuntimeException("PDF rendering failed", ex);
-        }
     }
 
     public byte[] renderStructured(StructuredDocument document) {
