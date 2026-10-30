@@ -19,7 +19,7 @@ import { CompaniesApiService, Company, OutreachContact, OutreachStatus, Outreach
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent,
     CompanyMarkComponent, RouterLink,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './companies.component.html'
 })
 export class CompaniesComponent implements OnInit, OnDestroy {

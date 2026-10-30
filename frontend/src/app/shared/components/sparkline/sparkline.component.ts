@@ -4,7 +4,7 @@ import { Component, Input, OnChanges, ChangeDetectionStrategy } from '@angular/c
   selector: 'jb-sparkline',
   imports: [],
   templateUrl: './sparkline.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./sparkline.component.css']
 })
 export class SparklineComponent implements OnChanges {

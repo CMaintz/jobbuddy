@@ -11,7 +11,7 @@ import {
 @Component({
   selector: 'app-master-cv-preview',
   imports: [CommonModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './master-cv-preview.component.html',
 })
 export class MasterCvPreviewComponent {

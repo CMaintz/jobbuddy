@@ -8,7 +8,7 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
 @Component({
   selector: 'app-education-form',
   imports: [FormsModule, TranslateModule, MonthYearPickerComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './education-form.component.html',
 })
 export class EducationFormComponent {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -70,6 +70,17 @@ export function yearsDemanded(text: string | undefined): number | null {
   return match ? +match[1] : null;
 }
 
+function toggled(set: Set<string>, value: string): Set<string> {
+  const next = new Set(set);
+  if (next.has(value)) next.delete(value);
+  else next.add(value);
+  return next;
+}
+
+/** A filter only counts as narrowing when there was a choice and something is unticked. */
+function narrows(options: string[], active: Set<string>): boolean {
+  return options.length > 1 && active.size < options.length;
+}
 
 @Component({
   selector: 'app-job-feed',
@@ -77,7 +88,7 @@ export function yearsDemanded(text: string | undefined): number | null {
     CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbTopbarComponent,
     JbButtonComponent, JbPillComponent, CompanyMarkComponent, MatchBadgeComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './job-feed.component.html'
 })
 export class JobFeedComponent implements OnInit, OnDestroy {
@@ -88,6 +99,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
 
   private notify = inject(NotifyService);
   private translate = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
 
   loading = signal(true);
   /** true while showing search results instead of recommendations */
@@ -112,12 +124,12 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   sortBy: 'match' | 'newest' | 'deadline' = 'match';
   /** true = embed the query and rank by meaning; false = Postgres keyword search. */
   semanticMode = false;
-  activeSources = new Set<string>();
-  sourceFilters: string[] = [];
-  activeSeniorities = new Set<string>();
-  seniorityFilters: string[] = [];
-  activeCategories = new Set<string>();
-  categoryFilters: string[] = [];
+  sourceFilters = signal<string[]>([]);
+  seniorityFilters = signal<string[]>([]);
+  categoryFilters = signal<string[]>([]);
+  activeSources = signal(new Set<string>());
+  activeSeniorities = signal(new Set<string>());
+  activeCategories = signal(new Set<string>());
 
   private search$ = new Subject<string>();
   private searchSub?: Subscription;
@@ -264,13 +276,23 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     return {};
   }
 
+  /**
+   * The options are taken from a fresh result set only. Deriving them from the live rows would
+   * drop an unticked option once its last row is hidden, leaving that filter applied but invisible.
+   */
   private refreshSourceFilters(): void {
-    this.sourceFilters = [...new Set(this.feedRows().map(r => r.source))].sort();
-    this.activeSources = new Set(this.sourceFilters);
-    this.seniorityFilters = [...new Set(this.feedRows().map(r => r.seniority).filter((s): s is string => !!s))].sort();
-    this.activeSeniorities = new Set(this.seniorityFilters);
-    this.categoryFilters = [...new Set(this.feedRows().map(r => r.category).filter((c): c is string => !!c))].sort();
-    this.activeCategories = new Set(this.categoryFilters);
+    const rows = this.feedRows();
+    this.sourceFilters.set([...new Set(rows.map(r => r.source))].sort());
+    this.seniorityFilters.set([...new Set(rows.map(r => r.seniority).filter((s): s is string => !!s))].sort());
+    this.categoryFilters.set([...new Set(rows.map(r => r.category).filter((c): c is string => !!c))].sort());
+    this.resetActiveFilters();
+  }
+
+  /** Ticks every option of the current result set. */
+  private resetActiveFilters(): void {
+    this.activeSources.set(new Set(this.sourceFilters()));
+    this.activeSeniorities.set(new Set(this.seniorityFilters()));
+    this.activeCategories.set(new Set(this.categoryFilters()));
   }
 
   private ageLabel(iso?: string): string {
@@ -283,14 +305,17 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   }
 
   filteredJobs(): FeedRow[] {
+    const sources = this.activeSources();
+    const seniorities = this.activeSeniorities();
+    const categories = this.activeCategories();
     const rows = this.feedRows().filter(row => {
       if (row.matchScore !== undefined && row.matchScore < this.minMatch) return false;
       if (this.locationFilter === 'remote' && !row.remote) return false;
       if (this.locationFilter === 'onsite' && row.remote) return false;
       if (this.hideExpired && row.deadlinePassed) return false;
-      if (this.activeSources.size > 0 && !this.activeSources.has(row.source)) return false;
-      if (row.seniority && this.seniorityFilters.length > 1 && !this.activeSeniorities.has(row.seniority)) return false;
-      if (row.category && this.categoryFilters.length > 1 && !this.activeCategories.has(row.category)) return false;
+      if (sources.size > 0 && !sources.has(row.source)) return false;
+      if (row.seniority && this.seniorityFilters().length > 1 && !seniorities.has(row.seniority)) return false;
+      if (row.category && this.categoryFilters().length > 1 && !categories.has(row.category)) return false;
       return true;
     });
     return this.sortRows(rows);
@@ -311,21 +336,15 @@ export class JobFeedComponent implements OnInit, OnDestroy {
   }
 
   toggleSource(src: string): void {
-    if (this.activeSources.has(src)) this.activeSources.delete(src);
-    else this.activeSources.add(src);
-    this.activeSources = new Set(this.activeSources);
+    this.activeSources.update(set => toggled(set, src));
   }
 
   toggleSeniority(level: string): void {
-    if (this.activeSeniorities.has(level)) this.activeSeniorities.delete(level);
-    else this.activeSeniorities.add(level);
-    this.activeSeniorities = new Set(this.activeSeniorities);
+    this.activeSeniorities.update(set => toggled(set, level));
   }
 
   toggleCategory(cat: string): void {
-    if (this.activeCategories.has(cat)) this.activeCategories.delete(cat);
-    else this.activeCategories.add(cat);
-    this.activeCategories = new Set(this.activeCategories);
+    this.activeCategories.update(set => toggled(set, cat));
   }
 
   categoryLabel(cat: string): string {
@@ -376,6 +395,8 @@ export class JobFeedComponent implements OnInit, OnDestroy {
         row.fullDescription = job.descriptionClean ?? row.description;
         // The full posting also carries the preferences the list response left out.
         if (job.requirements?.length) row.requirements = job.requirements;
+        // The row is cached and mutated in place, so no signal sees this change.
+        this.cdr.markForCheck();
         this.descriptionLoading.set(false);
         this.descriptionExpanded.set(true);
       },
@@ -392,9 +413,9 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     if (!this.searchMode() && this.minMatch > 50) n++;
     if (this.locationFilter !== 'all') n++;
     if (this.hideExpired) n++;
-    if (this.seniorityFilters.length > 1 && this.activeSeniorities.size < this.seniorityFilters.length) n++;
-    if (this.categoryFilters.length > 1 && this.activeCategories.size < this.categoryFilters.length) n++;
-    if (this.sourceFilters.length > 1 && this.activeSources.size < this.sourceFilters.length) n++;
+    if (narrows(this.seniorityFilters(), this.activeSeniorities())) n++;
+    if (narrows(this.categoryFilters(), this.activeCategories())) n++;
+    if (narrows(this.sourceFilters(), this.activeSources())) n++;
     return n;
   }
 
@@ -407,9 +428,7 @@ export class JobFeedComponent implements OnInit, OnDestroy {
     this.minMatch = 50;
     this.locationFilter = 'all';
     this.hideExpired = false;
-    this.activeSeniorities = new Set(this.seniorityFilters);
-    this.activeCategories = new Set(this.categoryFilters);
-    this.activeSources = new Set(this.sourceFilters);
+    this.resetActiveFilters();
   }
 
   saveJob(row: FeedRow): void {

@@ -21,7 +21,7 @@ const HEATMAP_WEEKS = 14;
     TranslateModule, JbIconComponent, JbTopbarComponent, StatCardComponent,
     FunnelComponent, HeatmapComponent, SparklineComponent, CompanyMarkComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './analytics.component.html'
 })
 export class AnalyticsComponent implements OnInit {

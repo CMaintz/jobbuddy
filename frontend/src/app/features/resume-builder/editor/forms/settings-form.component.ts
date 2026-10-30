@@ -9,7 +9,7 @@ import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-to
 @Component({
   selector: 'app-settings-form',
   imports: [FormsModule, TranslateModule, JbToggleComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-form.component.html',
 })
 export class SettingsFormComponent {

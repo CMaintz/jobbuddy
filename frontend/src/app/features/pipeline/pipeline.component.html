@@ -45,7 +45,7 @@
 
     <!-- Content -->
     <div class="flex-1 overflow-auto jb-scroll">
-      @if (loading) {
+      @if (loading()) {
         <div class="p-12 text-center text-jb-text-dim">{{ 'pipeline.loading' | translate }}</div>
       } @else if (view() === 'table') {
         <!-- ═══ TABLE VIEW ═══ -->

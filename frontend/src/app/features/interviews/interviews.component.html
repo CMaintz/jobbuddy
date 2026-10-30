@@ -18,7 +18,7 @@
         <label class="flex flex-col gap-[5px]">
           <span class="label">{{ 'interviews.application' | translate }}</span>
           <select class="input" [(ngModel)]="logAppId">
-            @for (app of allApps; track app.id) {
+            @for (app of allApps(); track app.id) {
               <option [value]="app.id">{{ app.jobCompanyName }} — {{ app.jobTitle }}</option>
             }
           </select>

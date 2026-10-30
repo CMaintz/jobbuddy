@@ -9,7 +9,7 @@ interface DiffSegment {
 @Component({
   selector: 'jb-diff-viewer',
   imports: [TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './diff-viewer.component.html',
 })
 export class DiffViewerComponent {
