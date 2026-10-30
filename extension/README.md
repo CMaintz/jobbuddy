@@ -36,6 +36,20 @@ The popup has a **Jobbuddy URL** field (default `http://localhost:4200`). Change
   No manifest edit or reload needed. If you decline, captures can't reach the app; save again
   to be asked again.
 
+## Tests
+
+The JSON-LD extraction (`job-posting.js`), the page scraper and the capture bridge have unit
+tests on Node's built-in runner, so there is nothing to install. With Node 22 (the version mise pins):
+
+```bash
+mise run extension:test
+# or, from extension/
+node --test "test/*.test.js"
+```
+
+The tests load the scripts as plain browser scripts in a sandbox, so the files stay free of
+`module.exports` and load unchanged in the browser.
+
 ## Tips
 
 - If a page has no structured data and grabs too much text, select the job description
