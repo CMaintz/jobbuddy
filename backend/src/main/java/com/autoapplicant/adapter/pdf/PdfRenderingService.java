@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.pdf;
 
+import com.autoapplicant.adapter.render.AtsText;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -243,30 +244,11 @@ public class PdfRenderingService {
 
     String escape(String value) {
         if (value == null) return "";
-        return normalizeAtsText(value)
+        return AtsText.normalize(value)
                 .replaceAll("[\\u00A0\\u2009\\u202F]", " ")        // nbsp / thin / narrow -> space
                 .replaceAll("[\\u200B\\u200C\\u200D\\uFEFF]", "")  // zero-width chars -> removed
                 .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                 .replace("\"", "&quot;").replace("'", "&#39;");
-    }
-
-    /**
-     * Normalizes ATS-hostile Unicode in the PDF text layer to plain ASCII equivalents.
-     * Parsers read the embedded text, not the rendered glyphs; smart quotes, en/em dashes,
-     * ellipses, non-breaking/thin spaces, and zero-width characters all degrade keyword
-     * extraction, and models routinely emit them. The decorative middot separator (U+00B7)
-     * inserted by this renderer is intentionally left alone.
-     */
-    private static String normalizeAtsText(String value) {
-        return value
-                .replace('‘', '\'').replace('’', '\'')  // smart single quotes
-                .replace('“', '"').replace('”', '"')    // smart double quotes
-                .replace('–', '-').replace('—', '-')    // en / em dash
-                .replace('−', '-')                           // minus sign
-                .replace("…", "...")                         // ellipsis
-                .replace(' ', ' ').replace(' ', ' ').replace(' ', ' ') // nbsp / narrow / thin
-                .replace("​", "").replace("‌", "")      // zero-width space / non-joiner
-                .replace("‍", "").replace("﻿", "");     // zero-width joiner / BOM
     }
 
     private String atsCss(DocumentTheme theme) {

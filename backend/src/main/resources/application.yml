@@ -95,6 +95,12 @@ app:
     economy-model: gemini-2.5-flash
     standard-model: gemini-2.5-flash
     premium-model: gemini-2.5-pro
+  render:
+    # The Typst CLI that renders structured documents. Default `typst` resolves on PATH (mise
+    # locally and in CI, /usr/local/bin in the Docker image); pin the same version everywhere.
+    typst-path: ${TYPST_PATH:typst}
+    # Wall-clock limit per compile; the process is killed when it runs over.
+    typst-timeout: ${TYPST_TIMEOUT:PT10S}
   reminders:
     # Daily "due today" email: reminders the user set and outreach follow-ups that have arrived.
     # Users with nothing due are not mailed — a usually-empty daily email gets filtered, and then
