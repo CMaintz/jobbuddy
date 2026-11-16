@@ -135,7 +135,8 @@ app:
       batch-size: ${JOB_URL_CHECK_BATCH:150}
       # Ceiling, so a runaway corpus count cannot turn into a runaway crawl.
       max-batch-size: ${JOB_URL_CHECK_MAX_BATCH:3000}
-      # Must match the cron above; the batch maths needs to know how often it runs.
+      # Must match the cron above; the batch maths needs to know how often it runs. A crawl
+      # run that probes states its own cadence with --crawler.runs-per-day instead.
       runs-per-day: ${JOB_URL_CHECK_RUNS_PER_DAY:4}
       politeness-delay-ms: ${JOB_URL_CHECK_DELAY_MS:300}
   enrichment:

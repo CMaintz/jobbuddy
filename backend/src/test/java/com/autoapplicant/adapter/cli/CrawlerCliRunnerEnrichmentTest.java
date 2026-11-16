@@ -8,7 +8,9 @@ import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.crawler.CrawlRunReport;
 import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
+import com.autoapplicant.port.in.job.CheckJobUrlsUseCase;
 import com.autoapplicant.port.in.job.EmbedJobsUseCase;
+import com.autoapplicant.port.in.job.ExpireStaleJobsUseCase;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import java.time.Duration;
 import java.util.List;
@@ -35,7 +37,8 @@ class CrawlerCliRunnerEnrichmentTest {
     }
 
     private void runWithEnrichment(boolean enabled) {
-        new CrawlerCliRunner(crawl, new QueueDrainer(enrichment, embedding), enabled)
+        new CrawlerCliRunner(crawl, new QueueDrainer(enrichment, embedding),
+                Mockito.mock(ExpireStaleJobsUseCase.class), Mockito.mock(CheckJobUrlsUseCase.class), enabled)
                 .run(new DefaultApplicationArguments());
     }
 
