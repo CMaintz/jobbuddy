@@ -49,8 +49,17 @@ app:
       # servers, or Codex under a read-only sandbox (see CliAgentCommands). Prompts carry crawled
       # posting text, so an override replaces those sandbox flags and must carry its own.
       command: ${AI_CLI_COMMAND:}
-      timeout-seconds: 120
-      model-label: ${AI_CLI_MODEL_LABEL:cli-agent}
+      # Claude model for the default command (--model). Blank = sonnet. Not applied to codex or to
+      # an AI_CLI_COMMAND override, which carry their own.
+      model: ${AI_CLI_MODEL:}
+      # Per agent call. Observed calls take 15-35 s; the slack covers a slow model or a cold start.
+      timeout-seconds: ${AI_CLI_TIMEOUT_SECONDS:120}
+      # Blank = the pinned model's name, or cli-agent when the app does not choose the model.
+      model-label: ${AI_CLI_MODEL_LABEL:}
+    # How long an AI request waits for its answer before the client gets 504. A document on the
+    # CLI provider is two sequential agent calls (generate + review), so the default is two CLI
+    # timeouts plus margin; raise it with AI_CLI_TIMEOUT_SECONDS.
+    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:270}
     auto-review:
       # Automatic reviewer critique/revise pass after document generation.
       # Each pass is one extra LLM call — disable to halve generation cost.
