@@ -78,23 +78,45 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     List<UUID> findStaleActiveJobIds(@Param("cutoff") Instant cutoff);
 
     /**
-     * The embedding queue: enriched postings without a vector, never-attempted first. Enriched
-     * only, because the text worth embedding is the cleaned description enrichment produces.
+     * The embedding queue: postings without a vector, never-attempted first. With
+     * {@code requireEnriched} only enriched ones, because enrichment trims boilerplate from the
+     * text; without it, a run that never enriches can still embed what ingest stored.
      */
     @Query("""
             SELECT j FROM JobEntity j
             WHERE j.embeddingStatus = 'PENDING'
-              AND j.enrichmentStatus = 'ENRICHED'
+              AND (:requireEnriched = false OR j.enrichmentStatus = 'ENRICHED')
               AND j.embeddingAttempts < :maxAttempts
               AND (j.embeddingLastAttemptAt IS NULL OR j.embeddingLastAttemptAt < :retryBefore)
             ORDER BY j.embeddingLastAttemptAt ASC NULLS FIRST, j.createdAt ASC
             """)
     List<JobEntity> findForEmbedding(@Param("maxAttempts") int maxAttempts,
                                      @Param("retryBefore") Instant retryBefore,
+                                     @Param("requireEnriched") boolean requireEnriched,
                                      Pageable pageable);
 
     @Query("SELECT j.embeddingStatus, COUNT(j) FROM JobEntity j GROUP BY j.embeddingStatus")
     List<Object[]> countByEmbeddingStatus();
+
+    /**
+     * Marks a posting embedded only if its text is still the text the vector was made from, in
+     * one statement, so a save that changed the text in between (and re-queued the posting)
+     * cannot be overwritten. The expression must match {@code Job.embeddingText()}. Clears the
+     * persistence context, since entities loaded before it still hold the old status.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE JobEntity j
+            SET j.embeddingStatus = 'EMBEDDED',
+                j.embeddingAttempts = j.embeddingAttempts + 1,
+                j.embeddingLastAttemptAt = :now,
+                j.embeddingLastError = NULL
+            WHERE j.id = :id
+              AND CONCAT(COALESCE(j.title, ''), ' ', COALESCE(j.descriptionClean, '')) = :embeddedText
+            """)
+    int markEmbeddedIfTextUnchanged(@Param("id") UUID id,
+                                    @Param("embeddedText") String embeddedText,
+                                    @Param("now") Instant now);
 
     /** Seen again by a connector that skipped re-emitting it — liveness only, nothing else. */
     @Modifying

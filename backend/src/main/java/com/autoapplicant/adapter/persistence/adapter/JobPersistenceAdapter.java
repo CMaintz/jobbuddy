@@ -96,9 +96,26 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
                 if (entity.getDuplicateGroupId() == null && existing.getDuplicateGroupId() != null) {
                     entity.setDuplicateGroupId(existing.getDuplicateGroupId());
                 }
+                keepEmbeddingStateUnlessTextChanged(existing, entity, job);
             });
         }
         return JobMapper.toDomain(repo.save(entity));
+    }
+
+    /**
+     * The vector belongs to the text it was made from. When enrichment trims the description of
+     * a posting that was embedded at crawl time, the fresh entity's PENDING defaults re-queue it;
+     * otherwise the embedding state is carried over, so a save that leaves the text alone does
+     * not pay for the same vector again.
+     */
+    private static void keepEmbeddingStateUnlessTextChanged(JobEntity existing, JobEntity entity, Job job) {
+        if (!JobMapper.toDomain(existing).embeddingText().equals(job.embeddingText())) {
+            return;
+        }
+        entity.setEmbeddingStatus(existing.getEmbeddingStatus());
+        entity.setEmbeddingAttempts(existing.getEmbeddingAttempts());
+        entity.setEmbeddingLastAttemptAt(existing.getEmbeddingLastAttemptAt());
+        entity.setEmbeddingLastError(existing.getEmbeddingLastError());
     }
 
     @Override
@@ -287,20 +304,16 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore) {
-        return repo.findForEmbedding(maxAttempts, retryBefore, PageRequest.of(0, limit))
+    public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore,
+                                      boolean requireEnriched) {
+        return repo.findForEmbedding(maxAttempts, retryBefore, requireEnriched, PageRequest.of(0, limit))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
     @Override
-    public void markEmbedded(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setEmbeddingStatus(com.autoapplicant.domain.job.EmbeddingStatus.EMBEDDED.name());
-            e.setEmbeddingAttempts(e.getEmbeddingAttempts() + 1);
-            e.setEmbeddingLastAttemptAt(Instant.now());
-            e.setEmbeddingLastError(null);
-            repo.save(e);
-        });
+    @org.springframework.transaction.annotation.Transactional
+    public boolean markEmbedded(UUID jobId, String embeddedText) {
+        return repo.markEmbeddedIfTextUnchanged(jobId, embeddedText, Instant.now()) > 0;
     }
 
     @Override
