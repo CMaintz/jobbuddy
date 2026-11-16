@@ -328,11 +328,12 @@ public class JobindexConnector extends AbstractJobSourceConnector {
                      String area, Instant firstDate) {}
 
     private static final String SEARCH_PAGE = "https://www.jobindex.dk/jobsoegning?page=";
-    private static final Pattern TID_PATTERN = Pattern.compile("/jobannonce/([^/?#]+)");
+    // RSS links are /vis-job/{tid}; /jobannonce/{tid} is the older form of the same page.
+    private static final Pattern TID_PATTERN = Pattern.compile("/(?:vis-job|jobannonce)/([^/?#]+)");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /** tid from a /jobannonce/{tid}… URL, or null. */
+    /** tid from a /vis-job/{tid} or /jobannonce/{tid} URL, or null. */
     static String extractTid(String url) {
         if (url == null) return null;
         Matcher m = TID_PATTERN.matcher(url);
