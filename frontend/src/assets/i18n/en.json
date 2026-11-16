@@ -928,6 +928,14 @@
     "notFound": "Application not found.",
     "timeline": {
       "heading": "Progress"
+    },
+    "dates": {
+      "title": "Dates",
+      "hint": "Your own application deadline and interview time. We remind you by email a couple of days before.",
+      "deadline": "Application deadline",
+      "interview": "Interview",
+      "saved": "Dates saved",
+      "saveFailed": "Could not save the dates. Please try again."
     }
   },
   "jobDetails": {
@@ -1516,7 +1524,8 @@
       "offer": "Offer",
       "rejected": "Rejected",
       "archived": "Archived"
-    }
+    },
+    "changeStatus": "Change status"
   },
   "jobFeed": {
     "results": "results",

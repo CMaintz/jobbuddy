@@ -928,6 +928,14 @@
     "notFound": "Ansøgning ikke fundet.",
     "timeline": {
       "heading": "Forløb"
+    },
+    "dates": {
+      "title": "Datoer",
+      "hint": "Din egen ansøgningsfrist og tid til samtale. Vi minder dig om dem på mail et par dage før.",
+      "deadline": "Ansøgningsfrist",
+      "interview": "Samtale",
+      "saved": "Datoerne er gemt",
+      "saveFailed": "Datoerne kunne ikke gemmes. Prøv igen."
     }
   },
   "jobDetails": {
@@ -1516,7 +1524,8 @@
       "offer": "Tilbud",
       "rejected": "Afvist",
       "archived": "Arkiveret"
-    }
+    },
+    "changeStatus": "Skift status"
   },
   "jobFeed": {
     "results": "resultater",
