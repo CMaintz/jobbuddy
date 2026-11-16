@@ -207,9 +207,6 @@ app:
     companies:
       # Copenhagen
       - veo               # Veo Technologies, Copenhagen — sports cameras
-      - dixa              # Dixa, Copenhagen — customer service platform
-      - vivino            # Vivino, Copenhagen — wine marketplace
-      - contractbook      # Contractbook, Copenhagen — contract management
   teamtailor:
     # Format: {company}.teamtailor.com — verify at https://{slug}.teamtailor.com/jobs before adding.
     career-page-urls:

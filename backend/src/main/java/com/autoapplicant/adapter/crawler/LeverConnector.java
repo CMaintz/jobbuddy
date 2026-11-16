@@ -6,11 +6,10 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.List;
+import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches job listings from Lever ATS job boards.
@@ -20,7 +19,7 @@ import java.util.List;
  *
  * Companies are configured via app.lever.companies.
  * The company slug is the one in Lever job URLs:
- *   https://jobs.lever.co/dixa  →  slug = "dixa"
+ *   https://jobs.lever.co/veo  →  slug = "veo"
  */
 @Component
 public class LeverConnector extends AbstractJobSourceConnector {
@@ -104,6 +103,13 @@ public class LeverConnector extends AbstractJobSourceConnector {
                             posting.toString(),
                             Instant.now(),
                             List.of(),
+                            null,
+                            null,
+                            // The postings API carries no company, so the configured slug is
+                            // the only name there is.
+                            company,
+                            null,
+                            null,
                             null
                     ));
                     count++;
