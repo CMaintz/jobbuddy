@@ -1,13 +1,13 @@
 package com.autoapplicant.adapter.cli;
 
 import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Drains the enrichment queue, then the embedding queue, as a one-shot CLI command.
+ * Drains the enrichment queue, then the embedding queue, as a one-shot CLI command that ends
+ * the process when done.
  *
  * <p>Usage (from repo root):
  * <pre>
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("enrich")
 @Order(2)
-public class EnrichmentSweepRunner implements ApplicationRunner {
+public class EnrichmentSweepRunner implements OneShotCommand {
 
     private final QueueDrainer drainer;
 

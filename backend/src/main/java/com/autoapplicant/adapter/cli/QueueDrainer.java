@@ -2,11 +2,10 @@ package com.autoapplicant.adapter.cli;
 
 import com.autoapplicant.port.in.job.EmbedJobsUseCase;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.time.Duration;
 
 /**
  * Empties the enrichment and embedding queues, for the one-shot CLI commands.
@@ -32,10 +31,14 @@ public class QueueDrainer {
         this.embedJobs = embedJobs;
     }
 
-    /** Enriches until the queue is empty, then embeds until that queue is empty. */
-    public void drainAll() {
+    /**
+     * Enriches until the queue is empty, then embeds until that queue is empty.
+     *
+     * @return the result of {@link #drainEmbedding()}
+     */
+    public boolean drainAll() {
         drainEnrichment(Integer.MAX_VALUE);
-        drainEmbedding();
+        return drainEmbedding();
     }
 
     /**
@@ -64,17 +67,28 @@ public class QueueDrainer {
         log.info("Enrichment: reached the requested limit of {} postings.", maxPostings);
     }
 
-    public void drainEmbedding() {
+    /**
+     * Embeds until the queue is empty or a pass makes no progress.
+     *
+     * @return false when a pass attempted postings and embedded none of them. That is what a
+     *     missing or revoked key looks like, and each such run spends an attempt on every
+     *     posting until they are given up on, so the caller should fail rather than report done.
+     */
+    public boolean drainEmbedding() {
         log.info("Draining the embedding queue...");
+        boolean everyPassEmbeddedSomething = true;
         while (true) {
             EmbedJobsUseCase.EmbedResult result = embedJobs.embedPending(BATCH, SLICE);
             if (result.total() == 0) {
                 log.info("Embedding queue empty.");
-                return;
+                return everyPassEmbeddedSomething;
+            }
+            if (result.succeeded() == 0) {
+                everyPassEmbeddedSomething = false;
             }
             if (result.succeeded() == 0 && result.gaveUp() == 0) {
-                log.warn("Embedding made no progress on {} postings — stopping here", result.total());
-                return;
+                log.warn("Embedding made no progress on {} postings; stopping here", result.total());
+                return false;
             }
         }
     }
