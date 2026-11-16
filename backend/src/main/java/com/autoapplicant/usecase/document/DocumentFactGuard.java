@@ -141,10 +141,26 @@ public class DocumentFactGuard {
     private static final Map<String, String> CURRENCY_SYNONYMS = Map.of(
             "kr", "dkk", "kr.", "dkk", "kroner", "dkk");
     private static final Pattern MULTIPLIER = Pattern.compile("\\b\\d+(?:\\.\\d+)?\\s?x\\b", Pattern.CASE_INSENSITIVE);
+    /**
+     * Nouns that are just as often verbs ("to reach", "the team leads"). They only count when the
+     * number sits directly before them: with the modifier window, "from 3 channels to reach"
+     * becomes the invented claim "3 reach", which blocks generation in enforce mode.
+     */
+    private static final Set<String> VERB_SHAPED_NOUNS =
+            Set.of("reach", "leads", "views", "posts", "shares", "likes", "clicks");
+
     private static final Pattern COUNT = Pattern.compile(
             "\\b(\\d[\\d,.]*(?:[kKmMbB]\\b)?)\\s*\\+?\\s*(?:[\\p{L}][\\p{L}-]*\\s+){0," + MODIFIER_WINDOW + "}?("
-                    + String.join("|", METRIC_NOUNS) + ")\\b",
+                    + String.join("|", METRIC_NOUNS.stream()
+                            .filter(noun -> !VERB_SHAPED_NOUNS.contains(noun)).toList()) + ")\\b",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS);
+
+    private static final Pattern DIRECT_COUNT = Pattern.compile(
+            "\\b(\\d[\\d,.]*(?:[kKmMbB]\\b)?)\\s*\\+?\\s*(" + String.join("|", VERB_SHAPED_NOUNS) + ")\\b",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS);
+
+    /** "In 2021 I trained teams" dates the sentence; it does not claim 2021 teams. */
+    private static final Pattern YEAR = Pattern.compile("19\\d\\d|20\\d\\d|2100");
 
     private static final Pattern THOUSANDS = Pattern.compile("(\\d)[,.\\s\\u00a0\\u202f](?=\\d{3}(?!\\d))");
     private static final Pattern SPACE_GROUP = Pattern.compile("(?<!\\d)(\\d{1,3})[\\s\\u00a0\\u202f](?=\\d{3}(?!\\d))");
@@ -350,8 +366,14 @@ public class DocumentFactGuard {
 
     /** "&lt;number&gt; &lt;metric-noun&gt;" counts, folding noun synonyms to one canonical form. */
     private static void addCountClaims(Map<String, String> claims, String clean) {
-        Matcher m = COUNT.matcher(clean);
+        addCountClaims(claims, clean, COUNT);
+        addCountClaims(claims, clean, DIRECT_COUNT);
+    }
+
+    private static void addCountClaims(Map<String, String> claims, String clean, Pattern pattern) {
+        Matcher m = pattern.matcher(clean);
         while (m.find()) {
+            if (YEAR.matcher(m.group(1)).matches()) continue;
             String noun = m.group(2).toLowerCase();
             String canonical = NOUN_SYNONYMS.getOrDefault(noun, noun);
             claims.putIfAbsent(normalizeClaim(m.group(1) + " " + canonical),
@@ -438,12 +460,41 @@ public class DocumentFactGuard {
 
     private static final Set<String> DANISH_NUMBER_WORDS_ALSO_ENGLISH = Set.of("to", "fire");
 
-    private static final List<Pattern> NUMBER_WORD_COUNTS = List.of(
-            numberWordCount(NUMBER_WORDS.keySet().stream()
-                            .filter(word -> !DANISH_NUMBER_WORDS_ALSO_ENGLISH.contains(word)).toList(),
-                    METRIC_NOUNS),
-            numberWordCount(DANISH_NUMBER_WORDS_ALSO_ENGLISH, DANISH_METRIC_NOUNS.stream()
-                    .filter(noun -> !ENGLISH_METRIC_NOUNS.contains(noun)).toList()));
+    private static final Pattern UNAMBIGUOUS_NUMBER_WORD_COUNT = numberWordCount(
+            NUMBER_WORDS.keySet().stream()
+                    .filter(word -> !DANISH_NUMBER_WORDS_ALSO_ENGLISH.contains(word)).toList(),
+            METRIC_NOUNS);
+
+    /** "to"/"fire" in Danish text: the number, before any noun ("to teams"). */
+    private static final Pattern AMBIGUOUS_WORD_COUNT_IN_DANISH =
+            numberWordCount(DANISH_NUMBER_WORDS_ALSO_ENGLISH, METRIC_NOUNS);
+
+    /** "to"/"fire" elsewhere: only before a noun English never uses ("to medarbejdere"). */
+    private static final Pattern AMBIGUOUS_WORD_COUNT = numberWordCount(
+            DANISH_NUMBER_WORDS_ALSO_ENGLISH,
+            DANISH_METRIC_NOUNS.stream().filter(noun -> !ENGLISH_METRIC_NOUNS.contains(noun)).toList());
+
+    // Function words that settle whether "to" is the Danish two or the English preposition.
+    // "to" itself is left out of the English list because it is the word being decided.
+    private static final Set<String> DANISH_FUNCTION_WORDS = Set.of(
+            "jeg", "og", "har", "ikke", "på", "af", "med", "det", "der", "vi", "er", "til",
+            "som", "hos", "mig", "min", "mit", "også", "eller", "kan", "var", "blev");
+    private static final Set<String> ENGLISH_FUNCTION_WORDS = Set.of(
+            "the", "and", "of", "with", "i", "we", "is", "in", "my", "our", "was", "have",
+            "has", "for", "at", "it", "this", "that", "as", "by");
+    private static final Pattern WORD = Pattern.compile("\\p{L}+", Pattern.UNICODE_CHARACTER_CLASS);
+
+    private static boolean readsAsDanish(String text) {
+        int danish = 0;
+        int english = 0;
+        Matcher m = WORD.matcher(text);
+        while (m.find()) {
+            String word = m.group().toLowerCase();
+            if (DANISH_FUNCTION_WORDS.contains(word)) danish++;
+            else if (ENGLISH_FUNCTION_WORDS.contains(word)) english++;
+        }
+        return danish > english;
+    }
 
     private static Pattern numberWordCount(Collection<String> words, List<String> nouns) {
         return Pattern.compile(
@@ -452,9 +503,8 @@ public class DocumentFactGuard {
     }
 
     static String foldNumberWords(String text) {
-        String folded = text;
-        for (Pattern pattern : NUMBER_WORD_COUNTS) folded = foldNumberWords(folded, pattern);
-        return folded;
+        Pattern ambiguous = readsAsDanish(text) ? AMBIGUOUS_WORD_COUNT_IN_DANISH : AMBIGUOUS_WORD_COUNT;
+        return foldNumberWords(foldNumberWords(text, UNAMBIGUOUS_NUMBER_WORD_COUNT), ambiguous);
     }
 
     private static String foldNumberWords(String text, Pattern pattern) {

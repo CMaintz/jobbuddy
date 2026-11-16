@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class DocumentFactGuardTest {
 
@@ -189,5 +190,23 @@ class DocumentFactGuardTest {
                 COMMS_SOURCE).clean()).isTrue();
         assertThat(guard.audit("Jeg kørte 8 kampagner for at skabe leads.", COMMS_SOURCE).clean())
                 .isTrue();
+    }
+
+    @Test
+    void danishToAndFireStillCountASharedNounInDanishText() {
+        assertThat(guard.audit("Jeg ledte to teams.", COMMS_SOURCE).inventedMetrics())
+                .containsExactly("2 teams");
+        assertThat(guard.audit("Jeg har ledet fire teams.", COMMS_SOURCE).inventedMetrics())
+                .containsExactly("4 teams");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "We went from 3 channels to reach 1,000 users.",
+            "Since 2020 the team leads every release.",
+            "In 2021 I shared my views on the strategy.",
+            "In 2023 our posts reach a wide audience."})
+    void aVerbOrAYearIsNotReadAsACount(String sentence) {
+        assertThat(guard.audit(sentence, COMMS_SOURCE + " Reached 1,000 users.").clean()).isTrue();
     }
 }
