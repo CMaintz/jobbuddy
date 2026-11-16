@@ -15,7 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -26,6 +29,13 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final ProvisionFirebaseUserUseCase provisionUser;
     private final FirebaseAuth firebaseAuth;
+    // A DeferredResult response is written on a second (ASYNC) dispatch, which this filter skips.
+    // SecurityContextHolderFilter reloads the context from this request attribute on that
+    // dispatch; without the save it finds nothing and the finished result is answered with 403.
+    // Saving beats re-running the filter on the async dispatch: no second token verification or
+    // user lookup, and a token that expires while the AI call runs cannot lose the result.
+    private final SecurityContextRepository contextRepository =
+            new RequestAttributeSecurityContextRepository();
 
     public FirebaseTokenFilter(ProvisionFirebaseUserUseCase provisionUser, FirebaseAuth firebaseAuth) {
         this.provisionUser = provisionUser;
@@ -66,7 +76,10 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                     user.id(), null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + user.role().name())));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(auth);
+            SecurityContextHolder.setContext(context);
+            contextRepository.saveContext(context, request, response);
 
         } catch (FirebaseAuthException e) {
             log.debug("Firebase token verification failed: {}", e.getMessage());
