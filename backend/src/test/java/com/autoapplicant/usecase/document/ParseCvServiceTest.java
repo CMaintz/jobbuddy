@@ -9,8 +9,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.CvParseException.Reason;
+import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
@@ -19,6 +21,7 @@ import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
 import com.autoapplicant.usecase.skills.ProfileSkillIngestion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -141,5 +144,31 @@ class ParseCvServiceTest {
                 .isInstanceOf(CvParseException.class)
                 .hasFieldOrPropertyWithValue("reason", Reason.UNREADABLE)
                 .hasMessage(ParseCvService.UNREADABLE_RESPONSE_MESSAGE);
+    }
+
+    @Test
+    void sends_the_cv_text_as_the_message_the_provider_delivers_to_the_model() {
+        // Every adapter sends only resolvedFinalPrompt as the user message (CliAgentAdapter,
+        // OpenAiAdapter), so that is the field the CV text has to reach.
+        List<String> delivered = new ArrayList<>();
+        ChatProviderPort provider = new ChatProviderPort() {
+            @Override
+            public AiCompletion complete(PromptComposition composition, boolean jsonObject,
+                                         String operation) {
+                delivered.add(composition.resolvedFinalPrompt());
+                return AiCompletion.untracked("{\"headline\":\"Dev\"}", chatModelName());
+            }
+
+            @Override
+            public String chatModelName() {
+                return "fake";
+            }
+        };
+        String cv = "Jane Doe. Kommunikationsmedarbejder hos Region Hovedstaden 2019-2024";
+
+        new ParseCvService(provider, new ObjectMapper(), writer, impliedSkills, skillIngestion)
+                .parseCvText(userId, cv);
+
+        assertThat(delivered).singleElement().asString().contains(cv);
     }
 }

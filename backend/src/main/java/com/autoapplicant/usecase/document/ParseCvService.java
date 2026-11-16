@@ -140,7 +140,7 @@ public class ParseCvService implements ParseCvUseCase {
 
     private String askAi(String rawCvText) {
         PromptComposition composition = new PromptComposition(
-                SYSTEM_PROMPT, rawCvText, null, null, null, null, null);
+                SYSTEM_PROMPT, rawCvText, null, null, null, null, rawCvText);
         try {
             return aiProvider.generate(composition, AiOperations.CV_PARSE);
         } catch (RuntimeException e) {
