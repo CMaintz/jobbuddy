@@ -63,7 +63,8 @@ public class AiConfig {
      * <p>Separate from {@link #enrichmentAiProvider} because the two halves have different
      * constraints — this one only needs chat, and chat is the half a CLI agent can do.
      * {@code app.ai.enrichment-chat-provider} defaults to whatever enrichment-provider is set to,
-     * so an install that has not thought about it keeps its current behaviour.
+     * so an install that has not thought about it keeps its current behaviour. Company grounding
+     * uses it too, so an install whose only API key is for embeddings still researches companies.
      */
     @Bean("enrichmentChatProvider")
     public ChatProviderPort enrichmentChatProvider(

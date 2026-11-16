@@ -84,7 +84,7 @@ public class AiController {
                         @Qualifier("userAiTaskExecutor")
                         java.util.concurrent.Executor userAiExecutor,
                         SecurityContextHelper secCtx,
-                        @Value("${app.ai.request-timeout-seconds:270}") long requestTimeoutSeconds) {
+                        @Value("${app.ai.request-timeout-seconds:390}") long requestTimeoutSeconds) {
         this.analyze = analyze;
         this.parseCv = parseCv;
         this.refine = refine;

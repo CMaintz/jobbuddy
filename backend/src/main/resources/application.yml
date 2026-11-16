@@ -35,6 +35,8 @@ app:
     # Extraction (summary, skills, requirements) is chat-only, so it may run on the local CLI
     # agent even though embeddings cannot. This is the high-volume half — one call per posting,
     # thousands per crawl — so pointing it at a flat-fee CLI is what keeps a backfill cheap.
+    # Company grounding for cover letters runs here too, so with a CLI value the only API key an
+    # install needs is the embeddings one.
     # Blank = same as enrichment-provider. Values: openai | gemini | claude-cli | codex | cli
     enrichment-chat-provider: ${ENRICHMENT_CHAT_AI_PROVIDER:}
     # generation-provider: openai | gemini | claude-cli | codex | cli
@@ -56,10 +58,10 @@ app:
       timeout-seconds: ${AI_CLI_TIMEOUT_SECONDS:120}
       # Blank = the pinned model's name, or cli-agent when the app does not choose the model.
       model-label: ${AI_CLI_MODEL_LABEL:}
-    # How long an AI request waits for its answer before the client gets 504. A document on the
-    # CLI provider is two sequential agent calls (generate + review), so the default is two CLI
-    # timeouts plus margin; raise it with AI_CLI_TIMEOUT_SECONDS.
-    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:270}
+    # How long an AI request waits for its answer before the client gets 504. A cover letter on
+    # the CLI provider is up to three sequential agent calls (company research, generate, review),
+    # so the default is three CLI timeouts plus margin; raise it with AI_CLI_TIMEOUT_SECONDS.
+    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:390}
     auto-review:
       # Automatic reviewer critique/revise pass after document generation.
       # Each pass is one extra LLM call — disable to halve generation cost.

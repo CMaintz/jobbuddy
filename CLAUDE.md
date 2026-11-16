@@ -316,7 +316,7 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
   those flags and must carry its own. See `CliAgentCommands`.
 - `AI_CLI_MODEL` - Claude model for the default command (default `sonnet`); `AI_CLI_MODEL_LABEL`
   overrides the name in the usage log. `AI_CLI_TIMEOUT_SECONDS` limits each CLI call (default
-  `120`); `AI_REQUEST_TIMEOUT_SECONDS` is the DeferredResult deadline (default `270`). Raise both
+  `120`); `AI_REQUEST_TIMEOUT_SECONDS` is the DeferredResult deadline (default `390`, three CLI calls). Raise both
   together, and keep nginx `proxy_read_timeout` above the request deadline.
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
 - `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
