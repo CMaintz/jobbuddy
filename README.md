@@ -97,7 +97,11 @@ Optional: `DB_*`, `LINKEDIN_CLIENT_ID`/`SECRET`, `ALLOWED_ORIGINS` (all have loc
 AI provider and feature toggles (optional, with defaults):
 
 - `GENERATION_AI_PROVIDER`: `openai` (default), `gemini`, or `claude-cli` / `codex` / `cli` for a local agent. `ENRICHMENT_AI_PROVIDER` has to stay a real API because it produces embeddings.
-- `AI_CLI_COMMAND`: optional override of the local-agent command line (prompt piped to stdin). Blank picks a sandboxed default per provider: Claude Code with no tools, no MCP servers and no session transcript, or Codex under a read-only sandbox. An override replaces those flags, so it has to carry its own.
+- `AI_CLI_COMMAND`: optional override of the local-agent command line (prompt piped to stdin). Blank picks a sandboxed default per provider: Claude Code with no tools, no MCP servers, no session transcript and none of the user's own Claude Code settings (`--setting-sources=`), or Codex under a read-only sandbox. An override replaces those flags, so it has to carry its own.
+- `AI_CLI_MODEL`: Claude model for the default command, passed as `--model` (default `sonnet`, so generation does not run on the user's own default model). Not applied to `codex` or to an `AI_CLI_COMMAND` override.
+- `AI_CLI_MODEL_LABEL`: model name recorded in the usage log and on saved documents. Blank uses the pinned model, or `cli-agent` when the app does not choose one.
+- `AI_CLI_TIMEOUT_SECONDS`: limit per local-agent call (default `120`).
+- `AI_REQUEST_TIMEOUT_SECONDS`: how long an AI request waits before answering 504 (default `270`, two CLI calls plus margin).
 - `AUTO_REVIEW_ENABLED`: the reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
 - `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE`: the fact gate on generated metrics (`warn` by default, or `block`).
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS`: the LinkedIn connector (see `app.linkedin.*` in `application.yml`).

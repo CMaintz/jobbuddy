@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -66,6 +67,7 @@ public class AiController {
     private final SecretCipherPort secretCipher;
     private final java.util.concurrent.Executor userAiExecutor;
     private final SecurityContextHelper secCtx;
+    private final long requestTimeoutMillis;
 
     public AiController(AnalyzeCvUseCase analyze,
                         ParseCvUseCase parseCv,
@@ -81,7 +83,8 @@ public class AiController {
                         SecretCipherPort secretCipher,
                         @Qualifier("userAiTaskExecutor")
                         java.util.concurrent.Executor userAiExecutor,
-                        SecurityContextHelper secCtx) {
+                        SecurityContextHelper secCtx,
+                        @Value("${app.ai.request-timeout-seconds:270}") long requestTimeoutSeconds) {
         this.analyze = analyze;
         this.parseCv = parseCv;
         this.refine = refine;
@@ -96,6 +99,7 @@ public class AiController {
         this.secretCipher = secretCipher;
         this.userAiExecutor = userAiExecutor;
         this.secCtx = secCtx;
+        this.requestTimeoutMillis = requestTimeoutSeconds * 1000L;
     }
 
     @Operation(summary = "Whether the user has their own generation key stored, and for which provider")
@@ -141,9 +145,8 @@ public class AiController {
     @PostMapping("/cv/generate-structured")
     public DeferredResult<ResponseEntity<StructuredDocument>> generateStructuredCv(
             @Valid @RequestBody StructuredGenerateRequest req) {
-        DeferredResult<ResponseEntity<StructuredDocument>> result = new DeferredResult<>(60_000L);
-        result.onTimeout(() -> result.setErrorResult(
-                ResponseEntity.status(504).body("AI generation timed out. Please try again.")));
+        DeferredResult<ResponseEntity<StructuredDocument>> result =
+                deferred("AI generation timed out. Please try again.");
         UUID userId = secCtx.getCurrentUserId();
         CompletableFuture.supplyAsync(() -> generateTailoredCv.generateTailoredCv(
                         userId,
@@ -170,9 +173,8 @@ public class AiController {
     @PostMapping("/generate-document")
     public DeferredResult<ResponseEntity<StructuredDocument>> generateDocument(
             @Valid @RequestBody GenerateDocumentRequest req) {
-        DeferredResult<ResponseEntity<StructuredDocument>> result = new DeferredResult<>(60_000L);
-        result.onTimeout(() -> result.setErrorResult(
-                ResponseEntity.status(504).body("AI generation timed out. Please try again.")));
+        DeferredResult<ResponseEntity<StructuredDocument>> result =
+                deferred("AI generation timed out. Please try again.");
         UUID userId = secCtx.getCurrentUserId();
         generateDocument.generateDocument(new GenerateDocumentCommand(
                         userId,
@@ -224,9 +226,8 @@ public class AiController {
     @PostMapping("/refine")
     public DeferredResult<ResponseEntity<RefineDocumentResult>> refine(
             @Valid @RequestBody RefineRequest req) {
-        DeferredResult<ResponseEntity<RefineDocumentResult>> result = new DeferredResult<>(60_000L);
-        result.onTimeout(() -> result.setErrorResult(
-                ResponseEntity.status(504).body("AI refinement timed out. Please try again.")));
+        DeferredResult<ResponseEntity<RefineDocumentResult>> result =
+                deferred("AI refinement timed out. Please try again.");
         UUID userId = secCtx.getCurrentUserId();
         RefineDocumentRequest request = new RefineDocumentRequest(
                 userId, req.currentContent(), req.userMessage(),
@@ -243,9 +244,8 @@ public class AiController {
     @Operation(summary = "Skill-gap heatmap across the user's pipeline + matched market jobs")
     @PostMapping("/skill-gaps")
     public DeferredResult<ResponseEntity<SkillGapReport>> skillGaps() {
-        DeferredResult<ResponseEntity<SkillGapReport>> result = new DeferredResult<>(90_000L);
-        result.onTimeout(() -> result.setErrorResult(
-                ResponseEntity.status(504).body("Skill-gap analysis timed out. Please try again.")));
+        DeferredResult<ResponseEntity<SkillGapReport>> result =
+                deferred("Skill-gap analysis timed out. Please try again.");
         skillGaps.analyzeSkillGaps(secCtx.getCurrentUserId())
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
@@ -259,9 +259,8 @@ public class AiController {
     @PostMapping("/review")
     public DeferredResult<ResponseEntity<ReviewDocumentResult>> review(
             @Valid @RequestBody ReviewRequest req) {
-        DeferredResult<ResponseEntity<ReviewDocumentResult>> result = new DeferredResult<>(60_000L);
-        result.onTimeout(() -> result.setErrorResult(
-                ResponseEntity.status(504).body("AI review timed out. Please try again.")));
+        DeferredResult<ResponseEntity<ReviewDocumentResult>> result =
+                deferred("AI review timed out. Please try again.");
         ReviewDocumentRequest request = new ReviewDocumentRequest(
                 secCtx.getCurrentUserId(), req.currentContent(), req.documentType(),
                 req.jobDescription(), req.targetLanguage());
@@ -278,15 +277,23 @@ public class AiController {
     @PostMapping("/analyze")
     public DeferredResult<ResponseEntity<AiAnalysisResult>> analyze(
             @Valid @RequestBody AnalyzeCvRequest req) {
-        DeferredResult<ResponseEntity<AiAnalysisResult>> result = new DeferredResult<>(60_000L);
-        result.onTimeout(() -> result.setErrorResult(
-                ResponseEntity.status(504).body("AI analysis timed out. Please try again.")));
+        DeferredResult<ResponseEntity<AiAnalysisResult>> result =
+                deferred("AI analysis timed out. Please try again.");
         analyze.analyze(secCtx.getCurrentUserId(), req.cvVersionId(), req.jobId(), req.jobDescription())
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);
                     return null;
                 });
+        return result;
+    }
+
+    // One shared deadline: a CLI document is several sequential agent calls, and an endpoint
+    // with a shorter deadline of its own answers 504 while the work runs on.
+    private <T> DeferredResult<ResponseEntity<T>> deferred(String timeoutMessage) {
+        DeferredResult<ResponseEntity<T>> result = new DeferredResult<>(requestTimeoutMillis);
+        result.onTimeout(() -> result.setErrorResult(
+                ResponseEntity.status(504).body(timeoutMessage)));
         return result;
     }
 }

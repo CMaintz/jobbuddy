@@ -31,9 +31,13 @@ public class CliAgentAdapter implements ChatProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(CliAgentAdapter.class);
 
+    /** Label for a run whose model the app does not choose (Codex, or an operator override). */
+    private static final String GENERIC_MODEL_LABEL = "cli-agent";
+
     private final AppProperties props;
     private final String provider;
     private final String command;
+    private final String modelLabel;
 
     /**
      * {@code provider} picks the default command line when {@code app.ai.cli.command} is blank,
@@ -42,7 +46,18 @@ public class CliAgentAdapter implements ChatProviderPort {
     public CliAgentAdapter(AppProperties props, String provider) {
         this.props = props;
         this.provider = provider;
-        this.command = CliAgentCommands.resolve(provider, props.getAi().getCli().getCommand());
+        AppProperties.Cli cli = props.getAi().getCli();
+        this.command = CliAgentCommands.resolve(provider, cli.getCommand(), cli.getModel());
+        this.modelLabel = modelLabel(cli,
+                CliAgentCommands.pinnedModel(provider, cli.getCommand(), cli.getModel()));
+    }
+
+    /** An explicit label wins; otherwise the usage log records the model the CLI was told to run. */
+    private static String modelLabel(AppProperties.Cli cli, String pinnedModel) {
+        if (cli.getModelLabel() != null && !cli.getModelLabel().isBlank()) {
+            return cli.getModelLabel();
+        }
+        return pinnedModel != null ? pinnedModel : GENERIC_MODEL_LABEL;
     }
 
     /**
@@ -123,6 +138,6 @@ public class CliAgentAdapter implements ChatProviderPort {
 
     @Override
     public String chatModelName() {
-        return props.getAi().getCli().getModelLabel();
+        return modelLabel;
     }
 }

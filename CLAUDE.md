@@ -309,10 +309,15 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
 - `AI_CLI_COMMAND` - optional override of the local-agent command line (prompt on stdin). Blank
   picks a sandboxed default per provider: `claude -p --tools= --strict-mcp-config
-  --no-session-persistence` (no tools, no MCP, no transcript), or for `codex` `codex exec --sandbox
+  --no-session-persistence --setting-sources= --model <AI_CLI_MODEL>` (no tools, no MCP, no
+  transcript, none of the user's own Claude Code settings, pinned model), or for `codex` `codex exec --sandbox
   read-only --skip-git-repo-check --ignore-user-config --ephemeral -` (Codex cannot drop its tools,
   so its shell is read-only instead). Prompts carry crawled posting text, so an override replaces
   those flags and must carry its own. See `CliAgentCommands`.
+- `AI_CLI_MODEL` - Claude model for the default command (default `sonnet`); `AI_CLI_MODEL_LABEL`
+  overrides the name in the usage log. `AI_CLI_TIMEOUT_SECONDS` limits each CLI call (default
+  `120`); `AI_REQUEST_TIMEOUT_SECONDS` is the DeferredResult deadline (default `270`). Raise both
+  together, and keep nginx `proxy_read_timeout` above the request deadline.
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
 - `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
   restructuring a free-text answer). Off = template questions and the user's raw text; the feature

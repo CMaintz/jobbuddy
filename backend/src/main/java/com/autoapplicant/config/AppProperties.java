@@ -68,12 +68,19 @@ public class AppProperties {
          */
         private String command = "";
         private int timeoutSeconds = 120;
-        /** Label reported as the model name for provenance in saved documents. */
-        private String modelLabel = "cli-agent";
+        /** Claude model passed with {@code --model} on the default command; blank = sonnet. */
+        private String model = "";
+        /**
+         * Model name recorded in the usage log and saved documents. Blank = the model the
+         * default command pins, or "cli-agent" when the app does not choose one.
+         */
+        private String modelLabel = "";
         public String getCommand() { return command; }
         public void setCommand(String command) { this.command = command; }
         public int getTimeoutSeconds() { return timeoutSeconds; }
         public void setTimeoutSeconds(int timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
+        public String getModel() { return model; }
+        public void setModel(String model) { this.model = model; }
         public String getModelLabel() { return modelLabel; }
         public void setModelLabel(String modelLabel) { this.modelLabel = modelLabel; }
     }
