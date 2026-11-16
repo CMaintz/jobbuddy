@@ -1924,7 +1924,13 @@
       "signingIn": "Logger ind…",
       "withLinkedIn": "Log ind med LinkedIn",
       "noAccount": "Har du ikke en konto?",
-      "registerLink": "Opret konto"
+      "registerLink": "Opret konto",
+      "forgotPassword": "Glemt adgangskode?"
+    },
+    "reset": {
+      "sent": "Hvis {{email}} har en konto, har vi sendt et link, så du kan vælge en ny adgangskode. Tjek din indbakke.",
+      "needEmail": "Skriv din e-mail ovenfor, og klik så på \"Glemt adgangskode?\" igen.",
+      "failed": "Vi kunne ikke sende mailen. Prøv igen om lidt."
     },
     "register": {
       "title": "Opret din konto",
