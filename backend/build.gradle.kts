@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
     java
     jacoco
-    id("com.diffplug.spotless") version "6.25.0"
+    id("com.diffplug.spotless") version "8.10.4"
     id("com.github.spotbugs") version "6.5.11"
 }
 
