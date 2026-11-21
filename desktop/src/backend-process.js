@@ -8,6 +8,8 @@ const SHELL_ORIGIN = 'app://jobbuddy';
 // Printed by DesktopReadyAnnouncer on a line of its own. Anchored, so a log line that merely
 // quotes it (say, in crawled posting text) cannot pass as the announcement.
 const READY_LINE = /^JOBBUDDY_DESKTOP_READY port=(\d{1,5})$/;
+// Printed instead when it cannot be ready for a reason she can fix (DesktopReadyAnnouncer).
+const ERROR_LINE = /^JOBBUDDY_DESKTOP_ERROR ([a-z-]+) provider=([a-z]+)$/;
 
 const EMBEDDING_KEY_VARS = { openai: 'OPENAI_API_KEY', gemini: 'GEMINI_API_KEY' };
 
@@ -75,8 +77,13 @@ function startBackend({ spawn, launch, log }) {
   child.stderr.pipe(log, { end: false });
   const ready = new Promise((resolve, reject) => {
     readline.createInterface({ input: child.stdout }).on('line', (line) => {
-      const match = READY_LINE.exec(line.trim());
-      if (match) resolve(Number(match[1]));
+      const ready = READY_LINE.exec(line.trim());
+      if (ready) resolve(Number(ready[1]));
+      const failed = ERROR_LINE.exec(line.trim());
+      if (failed) {
+        reject(Object.assign(new Error(`The backend refused to start: ${failed[1]}`),
+          { code: failed[1], provider: failed[2] }));
+      }
     });
     child.once('error', reject);
     child.once('exit', (code, signal) => {

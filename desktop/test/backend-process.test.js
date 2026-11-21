@@ -115,6 +115,15 @@ test('a backend that exits before it is ready fails the start, so nothing connec
   await assert.rejects(ready, /exited with code 1 before it was ready/);
 });
 
+test('a backend missing its embeddings key fails the start with that reason, not a bare exit', async () => {
+  const child = fakeChild();
+  const { ready } = start(child);
+  child.stdout.write('JOBBUDDY_DESKTOP_ERROR embedding-key-missing provider=gemini\n');
+  child.exitCode = 1;
+  child.emit('exit', 1, null);
+  await assert.rejects(ready, (error) => error.code === 'embedding-key-missing' && error.provider === 'gemini');
+});
+
 test('quitting kills the whole process tree on Windows', async () => {
   const calls = [];
   const execFile = (cmd, args, cb) => {
