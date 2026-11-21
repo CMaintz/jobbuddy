@@ -36,7 +36,7 @@ describe('SettingsComponent preferences', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: AuthService, useValue: { currentUser$: of(null), isEmailVerified: () => true, signInProvider: () => 'password' } },
+        { provide: AuthService, useValue: { currentUser$: of(null), isEmailVerified: () => true, signInProvider: () => 'password', canSignOut: () => true } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
         { provide: WritingProfileApiService, useValue: { get: () => of({}) } },
         { provide: StructuredDocumentTemplatesApiService, useValue: { getActive: () => of([]) } },
