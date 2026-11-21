@@ -33,10 +33,12 @@ win:
     - target: nsis
       arch: [x64]
   icon: assets/icon.png
+# One-click and per-user: no pages, no "all users" choice, so never a UAC prompt. It installs
+# under her own local app data (Programs\jobbuddy-desktop, from package.json's name) and starts
+# the app when done.
 nsis:
-  oneClick: false
+  oneClick: true
   perMachine: false
-  allowToChangeInstallationDirectory: false
   createDesktopShortcut: always
   createStartMenuShortcut: true
   shortcutName: JobBuddy
