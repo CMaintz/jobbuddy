@@ -33,8 +33,9 @@ class EnrichmentSweepServiceTest {
         // No delay and no concurrency in tests: the behaviour under test is the bookkeeping,
         // not the pacing.
         service = new EnrichmentSweepService(jobRepo, enrichJob,
+                org.mockito.Mockito.mock(BatchedEnrichment.class),
                 org.mockito.Mockito.mock(com.autoapplicant.port.out.user.PreferencesRepositoryPort.class),
-                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMinutes(5), 0L, 1));
+                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMinutes(5), 0L, 1, 1));
     }
 
     private static Job job(String summary) {

@@ -48,6 +48,8 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
 
     private final JobRepositoryPort jobRepo;
     private final JobEnrichmentService enrichJob;
+    private final BatchedEnrichment batched;
+    private final int batchSize;
     private final PreferencesRepositoryPort prefsRepo;
     private final int maxAttempts;
     private final Duration retryDelay;
@@ -55,10 +57,13 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
 
     public EnrichmentSweepService(JobRepositoryPort jobRepo,
                                   JobEnrichmentService enrichJob,
+                                  BatchedEnrichment batched,
                                   PreferencesRepositoryPort prefsRepo,
                                   EnrichmentSweepSettings settings) {
         this.jobRepo = jobRepo;
         this.enrichJob = enrichJob;
+        this.batched = batched;
+        this.batchSize = settings.batchSize();
         this.prefsRepo = prefsRepo;
         this.maxAttempts = settings.maxAttempts();
         this.retryDelay = settings.retryDelay();
@@ -98,6 +103,10 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
         int gaveUp = 0;
 
         log.info("Enrichment: starting batch of {} ({} pending overall)", total, pending);
+
+        if (batchSize > 1) {
+            return sweepInBatches(queue, deadline);
+        }
 
         // Windowed: `concurrency` postings are submitted together and awaited together, so the
         // provider is kept busy without an unbounded number of calls in flight.
@@ -166,6 +175,32 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
         SweepResult result = new SweepResult(total, succeeded, failed, gaveUp);
         logProgress(succeeded, failed, succeeded + failed, total, pending, startedAt);
         return result;
+    }
+
+    /**
+     * Many postings per call, for a provider where the call is the cost. Batches run one after
+     * another: each is already a long call, and two at once would only queue on the same login.
+     */
+    private SweepResult sweepInBatches(List<Job> queue, Instant deadline) {
+        int succeeded = 0;
+        int failed = 0;
+        int gaveUp = 0;
+        for (int start = 0; start < queue.size(); start += batchSize) {
+            if (Instant.now().isAfter(deadline)) {
+                log.info("Enrichment: time budget spent after {} of {}", start, queue.size());
+                break;
+            }
+            BatchedEnrichment.Result result = batched.enrich(
+                    queue.subList(start, Math.min(start + batchSize, queue.size())), batchSize, maxAttempts);
+            succeeded += result.succeeded();
+            failed += result.failed();
+            gaveUp += result.gaveUp();
+            if (result.stopped()) {
+                break;
+            }
+        }
+        log.info("Enrichment batches done: {} enriched, {} failed, {} given up on", succeeded, failed, gaveUp);
+        return new SweepResult(succeeded + failed, succeeded, failed, gaveUp);
     }
 
     /** Postings still waiting — the number that makes a progress line mean something. */
