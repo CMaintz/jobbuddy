@@ -25,7 +25,7 @@ description = "Backend jar, Angular build, pinned JRE and Electron binary, stage
 depends = ["install"]
 run = [
     "cd .. && ./gradlew :backend:bootJar",
-    "cd ../frontend && npm run build",
+    "cd ../frontend && npx ng build --configuration production,desktop",
     "node scripts/fetch-jre.mjs",
     "node scripts/stage.mjs",
     "npx install-electron",
