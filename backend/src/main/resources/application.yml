@@ -26,6 +26,10 @@ app:
   # Writable directory for uploads and logs. The working directory by default; the desktop
   # profile moves it out of the install folder (see application-desktop.yml).
   data-dir: ${APP_DATA_DIR:.}
+  firebase:
+    # Service-account file for Firebase Admin. Blank falls back to the classpath. Unused by the
+    # crawler profile, which has no users to authenticate.
+    credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
   security:
     # Base64 AES key (16/24/32 bytes) used to encrypt users' own API keys at rest.
     # Unset means the app refuses to store them rather than keeping them in the clear.
@@ -138,7 +142,8 @@ app:
       batch-size: ${JOB_URL_CHECK_BATCH:150}
       # Ceiling, so a runaway corpus count cannot turn into a runaway crawl.
       max-batch-size: ${JOB_URL_CHECK_MAX_BATCH:3000}
-      # Must match the cron above; the batch maths needs to know how often it runs.
+      # Must match the cron above; the batch maths needs to know how often it runs. A crawl
+      # run that probes states its own cadence with --crawler.runs-per-day instead.
       runs-per-day: ${JOB_URL_CHECK_RUNS_PER_DAY:4}
       politeness-delay-ms: ${JOB_URL_CHECK_DELAY_MS:300}
   enrichment:
@@ -176,6 +181,10 @@ app:
   # mode: extraction can succeed while embedding never runs, leaving a posting that looks
   # complete and is invisible to search and matching.
   embedding:
+    # true: embed a posting only once enrichment has trimmed its text. false: embed the text
+    # ingest stored, for a crawl that does not enrich (the scheduled crawl); a later enrichment
+    # that changes the text re-queues the posting for embedding.
+    require-enriched: ${EMBEDDING_REQUIRE_ENRICHED:true}
     sweep:
       enabled: ${EMBEDDING_SWEEP_ENABLED:true}
       interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:60000}

@@ -7,16 +7,15 @@ import com.autoapplicant.port.in.job.EmbedJobsUseCase;
 import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The only place a job embedding is written.
@@ -42,19 +41,22 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
     private final Duration retryDelay;
     /** Texts per API call. The endpoint accepts an array; there is no reason to send one. */
     private final int chunkSize;
+    private final boolean requireEnriched;
 
     public JobEmbeddingService(JobRepositoryPort jobRepo,
                                JobEmbeddingRepositoryPort embeddingRepo,
                                @Qualifier("enrichmentAiProvider") EmbeddingProviderPort embeddingProvider,
                                @Value("${app.enrichment.max-attempts:4}") int maxAttempts,
                                @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay,
-                               @Value("${app.embedding.sweep.chunk-size:100}") int chunkSize) {
+                               @Value("${app.embedding.sweep.chunk-size:100}") int chunkSize,
+                               @Value("${app.embedding.require-enriched:true}") boolean requireEnriched) {
         this.jobRepo = jobRepo;
         this.embeddingRepo = embeddingRepo;
         this.embeddingProvider = embeddingProvider;
         this.maxAttempts = maxAttempts;
         this.retryDelay = retryDelay;
         this.chunkSize = Math.max(1, chunkSize);
+        this.requireEnriched = requireEnriched;
     }
 
     @Override
@@ -67,7 +69,7 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
     }
 
     private float[] embedVector(Job job) {
-        String text = textFor(job);
+        String text = job.embeddingText();
         return text.isBlank() ? null : embeddingProvider.embed(text);
     }
 
@@ -75,7 +77,7 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
     public EmbedResult embedPending(int limit, Duration budget) {
         Instant deadline = Instant.now().plus(budget);
         List<Job> queue = jobRepo.findForEmbedding(limit, maxAttempts,
-                Instant.now().minus(retryDelay));
+                Instant.now().minus(retryDelay), requireEnriched);
         int total = queue.size();
         if (total == 0) return new EmbedResult(0, 0, 0, 0);
 
@@ -96,7 +98,7 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
                 break;
             }
             List<Job> chunk = queue.subList(start, Math.min(start + chunkSize, total));
-            List<String> texts = chunk.stream().map(JobEmbeddingService::textFor).toList();
+            List<String> texts = chunk.stream().map(Job::embeddingText).toList();
 
             List<float[]> vectors;
             try {
@@ -117,7 +119,12 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
                     if (vector != null && vector.length > 0) {
                         embeddingRepo.save(new JobEmbedding(null, job.id(), vector,
                                 embeddingProvider.embeddingModelName(), Instant.now()));
-                        jobRepo.markEmbedded(job.id());
+                        if (!jobRepo.markEmbedded(job.id(), job.embeddingText())) {
+                            // Counted as done: the newer text is already queued, and calling
+                            // this a failure would fail a run over a race it lost harmlessly.
+                            log.info("Embedding: job {} changed while it was embedded; re-queued",
+                                    job.id());
+                        }
                         succeeded++;
                     } else {
                         if (jobRepo.markEmbeddingFailed(job.id(), "no vector returned", maxAttempts)) gaveUp++;
@@ -144,11 +151,5 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
         log.info("Embedding batch done: {} attempted, {} embedded, {} failed, {} given up on. "
                  + "Backlog now {}", total, succeeded, failed, gaveUp, backlog);
         return new EmbedResult(total, succeeded, failed, gaveUp);
-    }
-
-    /** Title plus cleaned description — the same text the old ingest-path embedding used. */
-    private static String textFor(Job job) {
-        return (job.title() != null ? job.title() : "") + " "
-                + (job.descriptionClean() != null ? job.descriptionClean() : "");
     }
 }
