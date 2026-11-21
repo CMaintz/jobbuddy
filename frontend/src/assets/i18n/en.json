@@ -712,6 +712,28 @@
     "refinementDiff": "Refinement diff",
     "accept": "Accept",
     "guardFindings": "Guard findings",
+    "gate": {
+      "title": "Letter gate",
+      "passed": "Passed",
+      "failed": "Failed",
+      "noVerdict": "No verdict",
+      "rounds": "After {{n}} rewrite(s)",
+      "stale": "You edited the letter after the gate checked it. The result applies to the earlier text.",
+      "needs": "Employer needs",
+      "point": {
+        "1": "Colour test (mostly about the employer)",
+        "8": "Forward, not backward",
+        "13": "Posting echo",
+        "14": "CV recap"
+      },
+      "stop": {
+        "OUT_OF_ROUNDS": "The letter still fails after the last rewrite. Fix the quoted sentences yourself.",
+        "OUT_OF_TIME": "There was no time for more rewrites. Fix the quoted sentences yourself.",
+        "REWRITE_FAILED": "The rewrite failed, so the letter is as the gate last saw it.",
+        "NO_VERDICT": "The gate could not give a verdict. Read the letter through yourself.",
+        "REWRITE_NOT_JUDGED": "The gate gave no verdict on the last rewrite, so the version before it is kept."
+      }
+    },
     "evidence": {
       "heading": "Thin on evidence",
       "body": "This letter scored {{score}}/100 on concrete proof — it argues without citing much of your actual work. Two questions about a project would give the next one something to point at.",
@@ -1905,7 +1927,7 @@
     "quickApplyHint": "Generates a tailored CV and a cover letter together, then shows them side by side.",
     "generationFailed": "Generation failed",
     "drafting": "Drafting your application...",
-    "draftingSub": "Reading the job ad and comparing it with your CV.",
+    "draftingSub": "Reading the job ad and comparing it with your CV. A letter is checked afterwards and rewritten if it fails, so this usually takes a few minutes and at most 18 minutes.",
     "writing": "Writing...",
     "source": {
       "paste": {

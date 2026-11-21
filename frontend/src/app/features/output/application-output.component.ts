@@ -8,6 +8,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { LetterPaperComponent } from './letter-paper.component';
+import { LetterGateReportComponent } from './letter-gate-report.component';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -30,6 +31,7 @@ import { NotifyService } from '../../shared/services/notify.service';
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbDropdownComponent, DiffViewerComponent, LetterPaperComponent, PageBudgetWarningComponent,
+    LetterGateReportComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-output.component.html',

@@ -128,6 +128,6 @@ class PdfExportPageBudgetTest {
         DocumentIdentity identity = new DocumentIdentity("Test Person", "Kommunikation",
                 "test@example.com", null, "Aarhus", null, null, null, null);
         return new StructuredDocument(null, type, "ATS", null, identity,
-                DocumentRenderOptions.defaults(), sections, body, null);
+                DocumentRenderOptions.defaults(), sections, body, null, null);
     }
 }
