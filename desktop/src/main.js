@@ -15,6 +15,7 @@ const { startReminders } = require('./reminder-loop');
 const { refuseRemoteDebugging } = require('./debug-guard');
 const { freshEnv } = require('./fresh-env');
 const { mergeSettingsEdit } = require('./settings-edit');
+const { startupPlan } = require('./startup-plan');
 const { applyMenuPolicy, isAppSender, permissionAllowed } = require('./window-policy');
 
 // Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
@@ -54,7 +55,8 @@ async function boot() {
     environment: () => freshEnv({ env: process.env }),
     onCrash: () => showError('JobBuddy stoppede uventet.'),
   });
-  const window = createShellWindow({ paths, startHidden: process.argv.includes(HIDDEN_ARG) });
+  const startHidden = process.argv.includes(HIDDEN_ARG);
+  const window = createShellWindow({ paths, startHidden });
   Object.assign(state, { paths, dataDir, store, backend, window });
 
   registerAppProtocol({ protocol, fetch: net.fetch, distRoot: paths.ui, backendOrigin: backend.origin });
@@ -65,7 +67,11 @@ async function boot() {
 
   state.settings = await store.load();
   state.checks = await check();
-  if (state.settings && state.checks.every((c) => c.ok)) await startApp();
+  const plan = startupPlan({
+    hasSettings: Boolean(state.settings), checksOk: state.checks.every((c) => c.ok), hidden: startHidden,
+  });
+  if (plan.warn) warnFromTray();
+  if (plan.start) await startApp();
   else await window.showPage('setup.html');
 }
 
@@ -81,6 +87,18 @@ function denyPermissions(ses) {
   });
   ses.setPermissionCheckHandler((webContents, permission, requestingOrigin) =>
     permissionAllowed(permission, requestingOrigin));
+}
+
+// Started at login, nobody sees the window: the tray has to say that something needs her.
+function warnFromTray() {
+  if (!Notification.isSupported()) return;
+  const note = new Notification({
+    title: 'JobBuddy mangler noget',
+    body: 'Åbn JobBuddy for at se, hvad der skal ordnes.',
+    icon: state.paths.icon,
+  });
+  note.on('click', () => state.window.reveal());
+  note.show();
 }
 
 function isFile(file) {
