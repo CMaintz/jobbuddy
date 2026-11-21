@@ -48,6 +48,30 @@ describe('ChatStore', () => {
     expect(store.chats()[0].title).toBe('Hej');
   });
 
+  it('keeps a running answer on the chat it was sent from while she opens another', () => {
+    openNewChat();
+    store.send('Hej');
+    const turn = backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages');
+
+    store.open('c2');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/c2/messages')
+      .flush([{ role: 'USER', text: 'Anden samtale', at: CHAT.createdAt }]);
+    progress(turn, 'event:delta\ndata:{"text":"Svar til den første"}\n\n');
+
+    expect(store.messages().map(m => m.text)).toEqual(['Anden samtale']);
+    expect(store.streaming()).toBeFalse();
+    store.stop();
+    backend.expectNone(r => r.url.endsWith('/stop'));
+
+    store.open('c1');
+    expect(store.messages().map(m => m.text)).toEqual(['Hej', 'Svar til den første']);
+    store.stop();
+    backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/stop').flush(null);
+    turn.flush('event:stopped\ndata:{}\n\n');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
+    expect(store.streaming()).toBeFalse();
+  });
+
   it('shows why a turn failed and keeps her message', () => {
     openNewChat();
     store.send('Hej');

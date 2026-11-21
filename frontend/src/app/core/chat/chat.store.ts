@@ -1,6 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
 import { ChatApiService } from '../api/chat.api';
 import {
   ChatFailureCode, ChatMessage, ChatStreamEvent, ChatSummary,
@@ -8,18 +7,27 @@ import {
 
 const NOT_FOUND = 404;
 
+interface Thread {
+  messages: ChatMessage[];
+  streaming: boolean;
+  error: ChatFailureCode | null;
+}
+
+const EMPTY: Thread = { messages: [], streaming: false, error: null };
+
 @Injectable({ providedIn: 'root' })
 export class ChatStore {
   private api = inject(ChatApiService);
-  private turn: Subscription | null = null;
+  private readonly threads = signal<Record<string, Thread>>({});
 
   readonly available = signal<boolean | null>(null);
   readonly chats = signal<ChatSummary[]>([]);
   readonly activeId = signal<string | null>(null);
-  readonly messages = signal<ChatMessage[]>([]);
-  readonly streaming = signal(false);
-  readonly error = signal<ChatFailureCode | null>(null);
   readonly active = computed(() => this.chats().find(c => c.id === this.activeId()) ?? null);
+  private readonly thread = computed(() => this.threads()[this.activeId() ?? ''] ?? EMPTY);
+  readonly messages = computed(() => this.thread().messages);
+  readonly streaming = computed(() => this.thread().streaming);
+  readonly error = computed(() => this.thread().error);
 
   load(): void {
     this.api.list().subscribe({
@@ -36,44 +44,43 @@ export class ChatStore {
   newChat(): void {
     this.api.create().subscribe(chat => {
       this.chats.update(chats => [chat, ...chats]);
-      this.show(chat.id, []);
+      this.activeId.set(chat.id);
     });
   }
 
   open(chatId: string): void {
-    this.show(chatId, []);
+    this.activeId.set(chatId);
+    if (this.threads()[chatId]?.streaming) return;
     this.api.messages(chatId).subscribe({
-      next: messages => {
-        if (this.activeId() === chatId) this.messages.set(messages);
-      },
-      error: () => this.error.set('FAILED'),
+      next: messages => this.update(chatId, t => ({ ...t, messages, error: null })),
+      error: () => this.update(chatId, t => ({ ...t, error: 'FAILED' })),
     });
   }
 
   closeChat(): void {
     this.activeId.set(null);
-    this.messages.set([]);
-    this.error.set(null);
   }
 
   send(text: string): void {
     const chatId = this.activeId();
     const message = text.trim();
-    if (!chatId || !message || this.streaming()) return;
-    const now = new Date().toISOString();
-    this.error.set(null);
-    this.messages.update(m => [...m, { role: 'USER', text: message, at: now }]);
-    this.streaming.set(true);
-    this.turn = this.api.send(chatId, message).subscribe({
-      next: event => this.onEvent(event),
-      error: (err: HttpErrorResponse) => this.endTurn(codeOf(err)),
-      complete: () => this.endTurn(null),
+    if (!chatId || !message || this.threads()[chatId]?.streaming) return;
+    this.update(chatId, t => ({
+      ...t,
+      error: null,
+      streaming: true,
+      messages: [...t.messages, { role: 'USER', text: message, at: new Date().toISOString() }],
+    }));
+    this.api.send(chatId, message).subscribe({
+      next: event => this.onEvent(chatId, event),
+      error: (err: HttpErrorResponse) => this.endTurn(chatId, codeOf(err)),
+      complete: () => this.endTurn(chatId, null),
     });
   }
 
   stop(): void {
     const chatId = this.activeId();
-    if (chatId && this.streaming()) this.api.stop(chatId).subscribe();
+    if (chatId && this.threads()[chatId]?.streaming) this.api.stop(chatId).subscribe();
   }
 
   rename(chatId: string, title: string): void {
@@ -84,47 +91,45 @@ export class ChatStore {
   remove(chatId: string): void {
     this.api.delete(chatId).subscribe(() => {
       this.chats.update(chats => chats.filter(c => c.id !== chatId));
+      this.threads.update(({ [chatId]: _gone, ...rest }) => rest);
       if (this.activeId() === chatId) this.closeChat();
     });
   }
 
-  private show(chatId: string, messages: ChatMessage[]): void {
-    this.activeId.set(chatId);
-    this.messages.set(messages);
-    this.error.set(null);
-  }
-
-  private onEvent(event: ChatStreamEvent): void {
+  private onEvent(chatId: string, event: ChatStreamEvent): void {
     switch (event.type) {
       case 'delta':
-        this.appendToAnswer(event.text);
+        this.updateAnswer(chatId, answer => ({ ...answer, text: answer.text + event.text }));
         break;
       case 'error':
-        this.error.set(event.code);
+        this.update(chatId, t => ({ ...t, error: event.code }));
         break;
       default:
         break;
     }
   }
 
-  private appendToAnswer(text: string): void {
-    this.messages.update(messages => {
-      const last = messages[messages.length - 1];
-      if (last?.role === 'ASSISTANT') {
-        return [...messages.slice(0, -1), { ...last, text: last.text + text }];
-      }
-      return [...messages, { role: 'ASSISTANT', text, at: new Date().toISOString() }];
+  private updateAnswer(chatId: string, change: (answer: ChatMessage) => ChatMessage): void {
+    this.update(chatId, t => {
+      const last = t.messages[t.messages.length - 1];
+      const messages = last?.role === 'ASSISTANT'
+        ? [...t.messages.slice(0, -1), change(last)]
+        : [...t.messages, change({ role: 'ASSISTANT', text: '', at: new Date().toISOString() })];
+      return { ...t, messages };
     });
   }
 
-  private endTurn(failure: ChatFailureCode | null): void {
-    this.turn = null;
-    this.streaming.set(false);
-    if (failure) {
-      this.error.set(failure);
-      return;
+  private endTurn(chatId: string, failure: ChatFailureCode | null): void {
+    this.update(chatId, t => ({
+      ...t, streaming: false, error: failure ?? t.error,
+    }));
+    if (!failure && !this.threads()[chatId]?.error) {
+      this.api.list().subscribe(chats => this.chats.set(chats));
     }
-    if (!this.error()) this.api.list().subscribe(chats => this.chats.set(chats));
+  }
+
+  private update(chatId: string, change: (thread: Thread) => Thread): void {
+    this.threads.update(all => ({ ...all, [chatId]: change(all[chatId] ?? EMPTY) }));
   }
 }
 
