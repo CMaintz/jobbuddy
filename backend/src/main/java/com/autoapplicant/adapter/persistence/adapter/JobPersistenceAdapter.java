@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
@@ -347,6 +348,12 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
         }
         return com.autoapplicant.domain.job.EmbeddingStatus.FAILED.name()
                 .equals(repo.findEmbeddingStatus(jobId));
+    }
+
+    @Override
+    @Transactional
+    public int requeueEmbeddingsForModel(String model) {
+        return repo.requeueEmbeddingsForModel(model);
     }
 
     @Override

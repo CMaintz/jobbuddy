@@ -14,7 +14,7 @@ import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
@@ -91,7 +91,7 @@ public class MatchingService implements GetRecommendationsUseCase {
     private final JobRepositoryPort jobRepo;
     private final ProfileRepositoryPort profileRepo;
     private final PreferencesRepositoryPort prefsRepo;
-    private final AiProviderPort aiProvider;
+    private final EmbeddingProviderPort aiProvider;
     private final IgnoredJobRepositoryPort ignoredJobRepo;
     private final RecommendationFeedbackRepositoryPort feedbackRepo;
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
@@ -103,7 +103,7 @@ public class MatchingService implements GetRecommendationsUseCase {
                            JobRepositoryPort jobRepo,
                            ProfileRepositoryPort profileRepo,
                            PreferencesRepositoryPort prefsRepo,
-                           @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
+                           @Qualifier("embeddingProvider") EmbeddingProviderPort aiProvider,
                            IgnoredJobRepositoryPort ignoredJobRepo,
                            RecommendationFeedbackRepositoryPort feedbackRepo,
                            ProfileEmbeddingRepositoryPort profileEmbeddingRepo,

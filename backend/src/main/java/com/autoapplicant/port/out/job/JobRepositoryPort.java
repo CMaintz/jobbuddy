@@ -68,6 +68,13 @@ public interface JobRepositoryPort {
     /** Returns true when this was the attempt that gave up on the posting. */
     boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts);
 
+    /**
+     * Queues every posting that has no vector for {@code model}, with fresh attempts, after the
+     * install switched embedding model. Vectors of other models are kept: switching back finds
+     * them again. Returns how many postings were queued.
+     */
+    int requeueEmbeddingsForModel(String model);
+
     /** How many jobs sit in each embedding state. */
     java.util.Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> countByEmbeddingStatus();
 

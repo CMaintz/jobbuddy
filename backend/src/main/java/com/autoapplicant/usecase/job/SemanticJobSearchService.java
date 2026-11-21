@@ -2,7 +2,7 @@ package com.autoapplicant.usecase.job;
 
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.job.SemanticSearchJobsUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.util.List;
@@ -24,12 +24,12 @@ public class SemanticJobSearchService implements SemanticSearchJobsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(SemanticJobSearchService.class);
 
-    private final AiProviderPort aiProvider;
+    private final EmbeddingProviderPort aiProvider;
     private final JobEmbeddingRepositoryPort embeddingRepo;
     private final JobRepositoryPort jobRepo;
     private final com.autoapplicant.port.out.user.PreferencesRepositoryPort prefsRepo;
 
-    public SemanticJobSearchService(@Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
+    public SemanticJobSearchService(@Qualifier("embeddingProvider") EmbeddingProviderPort aiProvider,
                                     JobEmbeddingRepositoryPort embeddingRepo,
                                     JobRepositoryPort jobRepo,
                                     com.autoapplicant.port.out.user.PreferencesRepositoryPort prefsRepo) {

@@ -149,6 +149,21 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
                                      @Param("today") java.time.LocalDate today,
                                      Pageable pageable);
 
+    /**
+     * After a model switch: every posting without a vector for {@code model}, embedded or given up
+     * on, goes back in the queue with fresh attempts. Other models' vectors are left in place.
+     */
+    @Modifying
+    @Query(value = """
+            UPDATE jobs SET embedding_status = 'PENDING',
+                            embedding_attempts = 0,
+                            embedding_last_attempt_at = NULL,
+                            embedding_last_error = NULL
+            WHERE NOT EXISTS (SELECT 1 FROM job_embeddings e
+                              WHERE e.job_id = jobs.id AND e.model = :model)
+            """, nativeQuery = true)
+    int requeueEmbeddingsForModel(@Param("model") String model);
+
     @Query("SELECT j.embeddingStatus, COUNT(j) FROM JobEntity j GROUP BY j.embeddingStatus")
     List<Object[]> countByEmbeddingStatus();
 

@@ -45,7 +45,7 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
 
     public JobEmbeddingService(JobRepositoryPort jobRepo,
                                JobEmbeddingRepositoryPort embeddingRepo,
-                               @Qualifier("enrichmentAiProvider") EmbeddingProviderPort embeddingProvider,
+                               @Qualifier("embeddingProvider") EmbeddingProviderPort embeddingProvider,
                                @Value("${app.enrichment.max-attempts:4}") int maxAttempts,
                                @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay,
                                @Value("${app.embedding.sweep.chunk-size:100}") int chunkSize,
