@@ -207,4 +207,47 @@ class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
 
         assertThat(enrichmentQueue()).contains(remote).doesNotContain(onSite);
     }
+
+    private UUID userWithPreferences() {
+        UUID id = UUID.randomUUID();
+        jdbc.update("INSERT INTO users (id, email) VALUES (?, ?)", id, id + "@example.com");
+        jdbc.update("INSERT INTO preferences (user_id) VALUES (?)", id);
+        return id;
+    }
+
+    private void ignore(UUID by, UUID job) {
+        jdbc.update("INSERT INTO ignored_jobs (user_id, job_id) VALUES (?, ?)", by, job);
+    }
+
+    private void apply(UUID by, UUID job) {
+        jdbc.update("INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, 'APPLIED')", by, job);
+    }
+
+    @Test
+    void aPostingOneUserIgnoredOrAppliedToIsStillEnrichedForTheOther() {
+        // Bug: the ignore and application checks have no user, so one user's ignore drops the
+        // posting from enrichment for everyone, against the every-user rule the skip list uses.
+        UUID first = userWithPreferences();
+        UUID second = userWithPreferences();
+        UUID ignoredByOne = jobs.insert("Ignored by one", "d", NOW);
+        UUID appliedByOne = jobs.insert("Applied by one", "d", NOW);
+        UUID doneByBoth = jobs.insert("Done by both", "d", NOW);
+        ignore(first, ignoredByOne);
+        apply(first, appliedByOne);
+        ignore(first, doneByBoth);
+        apply(second, doneByBoth);
+
+        assertThat(enrichmentQueue()).contains(ignoredByOne, appliedByOne).doesNotContain(doneByBoth);
+    }
+
+    @Test
+    void onlyUsersWithSavedPreferencesCountOnceAnyHave() {
+        // Bug: a user who never opened Settings keeps every posting she has not ignored in the
+        // queue, so the user who did set things up cannot ignore anything out of it.
+        UUID configured = userWithPreferences();
+        UUID ignored = jobs.insert("Ignored", "d", NOW);
+        ignore(configured, ignored);
+
+        assertThat(enrichmentQueue()).doesNotContain(ignored);
+    }
 }

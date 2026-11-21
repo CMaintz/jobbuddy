@@ -30,9 +30,11 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     /**
      * The enrichment queue: never-attempted jobs first, then the ones tried longest ago,
      * skipping any that have been given up on or retried too recently. Only postings a user
-     * could still act on: live, not past their deadline, not ignored, not already applied to
-     * or closed (SAVED and PREPARING are leads still being worked on, so they stay in), not in
-     * a category everyone skips, and within one of the areas. A posting with no known place,
+     * could still act on: live, not past their deadline, not ignored, applied to or closed by
+     * every user (SAVED and PREPARING are leads still being worked on, so they stay in), not in
+     * a category everyone skips, and within one of the areas. "Every user" is every user with
+     * saved preferences, or every user when none has saved any, the same rule as the skip list:
+     * one user's ignore must not take a posting away from another. A posting with no known place,
      * or a remote or hybrid one (empty places), is always in, and so is one she chose herself
      * (saved, being prepared, or added by hand). A posting not placed yet (NULL) waits until
      * it is, rather than passing as "anywhere" while a backlog is placed slice by slice.
@@ -47,9 +49,15 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
               AND (j.enrichment_last_attempt_at IS NULL OR j.enrichment_last_attempt_at < :retryBefore)
               AND j.is_active = true
               AND (j.application_deadline IS NULL OR j.application_deadline >= :today)
-              AND NOT EXISTS (SELECT 1 FROM ignored_jobs i WHERE i.job_id = j.id)
-              AND NOT EXISTS (SELECT 1 FROM applications a
-                              WHERE a.job_id = j.id AND a.status NOT IN ('SAVED', 'PREPARING'))
+              AND (NOT EXISTS (SELECT 1 FROM users) OR EXISTS (
+                    SELECT 1 FROM users u
+                    WHERE (u.id IN (SELECT p.user_id FROM preferences p)
+                           OR NOT EXISTS (SELECT 1 FROM preferences))
+                      AND NOT EXISTS (SELECT 1 FROM ignored_jobs i
+                                      WHERE i.job_id = j.id AND i.user_id = u.id)
+                      AND NOT EXISTS (SELECT 1 FROM applications a
+                                      WHERE a.job_id = j.id AND a.user_id = u.id
+                                        AND a.status NOT IN ('SAVED', 'PREPARING'))))
               AND (j.job_category IS NULL OR j.job_category NOT IN (:excludedCategories))
               AND (:anywhere OR cardinality(j.place_lats) = 0 OR j.source = 'MANUAL'
                    OR EXISTS (SELECT 1 FROM applications s
