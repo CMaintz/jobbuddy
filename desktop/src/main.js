@@ -2,19 +2,20 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { app, ipcMain, net, Notification, protocol, safeStorage, session, shell } = require('electron');
+const { app, ipcMain, Menu, net, Notification, protocol, safeStorage, session, shell } = require('electron');
 const { resourcePaths, dataDirectory } = require('./paths');
 const { runChecks } = require('./first-run-checks');
 const { runCommand } = require('./run-command');
 const { createSettingsStore, validateSettings } = require('./settings-store');
 const { createBackendSession } = require('./backend-session');
-const { createShellWindow, APP_URL } = require('./shell-window');
+const { createShellWindow } = require('./shell-window');
 const { registerAppProtocol } = require('./app-protocol-handler');
 const { createTray, HIDDEN_ARG } = require('./tray');
 const { startReminders } = require('./reminder-loop');
 const { refuseRemoteDebugging } = require('./debug-guard');
 const { freshEnv } = require('./fresh-env');
 const { mergeSettingsEdit } = require('./settings-edit');
+const { applyMenuPolicy, isAppSender, permissionAllowed } = require('./window-policy');
 
 // Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
 // Windows drops the installed app's toasts. Set at load, so it precedes any notification.
@@ -41,6 +42,8 @@ if (refuseRemoteDebugging(app)) {
 }
 
 async function boot() {
+  applyMenuPolicy(Menu, app.isPackaged);
+  denyPermissions(session.defaultSession);
   const paths = resourcePaths(app);
   const dataDir = dataDirectory();
   const store = createSettingsStore({
@@ -70,6 +73,14 @@ async function boot() {
 // read the registry's.
 async function check() {
   return runChecks({ env: await freshEnv({ env: process.env }), exists: isFile, run: runCommand });
+}
+
+function denyPermissions(ses) {
+  ses.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    callback(permissionAllowed(permission, details?.requestingUrl ?? webContents.getURL()));
+  });
+  ses.setPermissionCheckHandler((webContents, permission, requestingOrigin) =>
+    permissionAllowed(permission, requestingOrigin));
 }
 
 function isFile(file) {
@@ -123,14 +134,14 @@ app.on('before-quit', (event) => {
 });
 
 function registerIpc() {
-  const fromShellPage = (event) => state.window.isShellPage(event.senderFrame?.url ?? '');
+  const fromShellPage = (event) => state.window.isShellPage(event.senderFrame?.url);
   const handle = (channel, fn) => ipcMain.handle(channel, (event, ...args) => {
     if (!fromShellPage(event)) throw new Error('Not allowed');
     return fn(...args);
   });
 
   ipcMain.on('desktop:backend-origin', (event) => {
-    event.returnValue = (event.senderFrame?.url ?? '').startsWith(APP_URL) ? state.backend.origin() : null;
+    event.returnValue = isAppSender(event.senderFrame?.url) ? state.backend.origin() : null;
   });
   handle('shell:state', () => ({
     checks: state.checks,

@@ -2,49 +2,43 @@
 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
+const policy = require('./window-policy');
 
-const APP_URL = 'app://jobbuddy/';
+const { APP_URL } = policy;
 
 /**
  * The one window. It shows the shell's own pages (setup, loading, error) or the app itself, and
- * goes nowhere else: links out open in her browser.
+ * goes nowhere else: web links open in her browser, mail and phone links in her own programs.
+ * The decisions are in window-policy.js; this only wires them to Electron.
  *
  * @param {object} p
  * @param {ReturnType<import('./paths').resourcePaths>} p.paths
  * @param {boolean} p.startHidden launched by Windows at login
  */
 function createShellWindow({ paths, startHidden }) {
-  const win = new BrowserWindow({
-    width: 1280,
-    height: 860,
-    minWidth: 900,
-    minHeight: 600,
-    show: !startHidden,
-    title: 'JobBuddy',
+  const win = new BrowserWindow(policy.windowOptions({
+    isPackaged: app.isPackaged,
+    preload: path.join(__dirname, 'preload.js'),
     icon: paths.icon,
-    autoHideMenuBar: true,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      sandbox: true,
-      nodeIntegration: false,
-    },
-  });
+    startHidden,
+  }));
   const shellPagesUrl = pathToFileURL(paths.shellPages).href + '/';
-  const allowed = (url) => url.startsWith(APP_URL) || url.startsWith(shellPagesUrl);
 
   win.webContents.on('will-navigate', (event, url) => {
-    if (!allowed(url)) event.preventDefault();
+    const decision = policy.navigationDecision(url, shellPagesUrl);
+    if (decision === 'allow') return;
+    event.preventDefault();
+    if (decision === 'external') shell.openExternal(url);
   });
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//.test(url)) shell.openExternal(url);
+    if (policy.windowOpenDecision(url) === 'external') shell.openExternal(url);
     return { action: 'deny' };
   });
 
   return {
     win,
-    isShellPage: (url) => url.startsWith(shellPagesUrl),
+    isShellPage: (url) => policy.isShellSender(url, shellPagesUrl),
     showPage(name, query = {}) {
       return win.loadFile(path.join(paths.shellPages, name), { query });
     },
