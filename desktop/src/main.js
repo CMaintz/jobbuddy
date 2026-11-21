@@ -13,6 +13,7 @@ const { registerAppProtocol } = require('./app-protocol-handler');
 const { createTray, HIDDEN_ARG } = require('./tray');
 const { startReminders } = require('./reminder-loop');
 const { refuseRemoteDebugging } = require('./debug-guard');
+const { freshEnv } = require('./fresh-env');
 
 // Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
 // Windows drops the installed app's toasts. Set at load, so it precedes any notification.
@@ -46,6 +47,7 @@ async function boot() {
   });
   const backend = createBackendSession({
     session: session.defaultSession, fetch: net.fetch, paths, dataDir,
+    environment: () => freshEnv({ env: process.env }),
     onCrash: () => showError('JobBuddy stoppede uventet.'),
   });
   const window = createShellWindow({ paths, startHidden: process.argv.includes(HIDDEN_ARG) });
@@ -63,8 +65,10 @@ async function boot() {
   else await window.showPage('setup.html');
 }
 
-function check() {
-  return runChecks({ env: process.env, exists: isFile, run: runCommand });
+// The PATH this process started with is stale once she installs Git or Claude Code; the checks
+// read the registry's.
+async function check() {
+  return runChecks({ env: await freshEnv({ env: process.env }), exists: isFile, run: runCommand });
 }
 
 function isFile(file) {

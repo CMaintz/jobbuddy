@@ -38,9 +38,11 @@ function withTimeout(promise, ms, message) {
  * @param {typeof fetch} deps.fetch Electron's net.fetch
  * @param {ReturnType<import('./paths').resourcePaths>} deps.paths
  * @param {string} deps.dataDir
+ * @param {() => Promise<NodeJS.ProcessEnv>} deps.environment read at each start, so a program
+ *   installed while JobBuddy ran is on the backend's PATH (fresh-env.js)
  * @param {(error: Error) => void} deps.onCrash
  */
-function createBackendSession({ session, fetch, paths, dataDir, onCrash }) {
+function createBackendSession({ session, fetch, paths, dataDir, environment, onCrash }) {
   const logPath = path.join(dataDir, 'logs', 'desktop-backend.log');
   let current = null;
 
@@ -53,7 +55,7 @@ function createBackendSession({ session, fetch, paths, dataDir, onCrash }) {
 
     const token = generateToken();
     const launch = backendLaunch({
-      javaExe: paths.java, jarPath: paths.jar, token, dataDir, settings, baseEnv: process.env,
+      javaExe: paths.java, jarPath: paths.jar, token, dataDir, settings, baseEnv: await environment(),
     });
     const { child, ready } = startBackend({ spawn, launch, log });
     const run = { child, token, origin: null, stopping: false };
