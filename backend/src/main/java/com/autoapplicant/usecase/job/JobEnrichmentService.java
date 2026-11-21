@@ -115,7 +115,7 @@ public class JobEnrichmentService {
                   "municipality": "primary Danish municipality name or null",
                   "applicationDeadline": "YYYY-MM-DD or null",
                   "contact": {"name": "...", "title": "...", "email": "...", "phone": "..."},
-                  "jobCategory": "SOFTWARE_IT|DATA_ANALYTICS|DESIGN_UX|MARKETING|SALES|FINANCE|HR|ENGINEERING|OPERATIONS_LOGISTICS|CUSTOMER_SERVICE|LEGAL|HEALTHCARE|MANAGEMENT|EDUCATION|CREATIVE_MEDIA|OTHER"
+                  "jobCategory": "SOFTWARE_IT|DATA_ANALYTICS|DESIGN_UX|GRC_COMPLIANCE|MARKETING|SALES|FINANCE|HR|ENGINEERING|OPERATIONS_LOGISTICS|CUSTOMER_SERVICE|LEGAL|HEALTHCARE|MANAGEMENT|EDUCATION|CREATIVE_MEDIA|OTHER"
                 }
 
                 Rules:
@@ -127,7 +127,9 @@ public class JobEnrichmentService {
                 addresses, phone numbers, or application instructions. Return [] when nothing is \
                 boilerplate — an empty list is a better answer than a guess.
                 - shortDescription: ignore any navigation text, cookie banners, or other page chrome
-                - technologies: specific tools, languages, frameworks, libraries, platforms, cloud services
+                - technologies: specific tools, languages, frameworks, libraries, platforms, cloud services. \
+                A non-technical posting often has few or none: a communications role may list only \
+                Umbraco and Canva, and its skills carry "Intern kommunikation", "SoMe" or "NIS2".
                 - skills: soft skills, methodologies, domain competencies (NOT technologies)
                 - requiredSkills / preferredSkills: the SAME asks as technologies+skills, re-sorted by \
                 how the posting phrases them. Requirements read "du skal", "det er et krav", "du har \
@@ -149,7 +151,9 @@ public class JobEnrichmentService {
                 of SKILL, EXPERIENCE, EDUCATION, LANGUAGE, CERTIFICATION, OTHER. Set "skill" only \
                 for kind SKILL, to the same short label you used in technologies/skills; null \
                 otherwise. This list is NOT filtered against those lists — it is the full picture.
-                - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits.
+                - jobCategory: choose the single best-fit category. Use OTHER only if nothing fits. \
+                GRC_COMPLIANCE is governance, risk and compliance work (informationssikkerhed, NIS2, \
+                GDPR, security awareness, beredskab), not hands-on IT security and not guarding.
 
                 Job title: %s
                 Company: %s

@@ -96,7 +96,7 @@ public class JobCategoryClassifier {
         RSS_CATEGORY_MAP.put("callcenter", JobCategory.CUSTOMER_SERVICE);
         // Legal
         RSS_CATEGORY_MAP.put("jura", JobCategory.LEGAL);
-        RSS_CATEGORY_MAP.put("compliance", JobCategory.LEGAL);
+        RSS_CATEGORY_MAP.put("compliance", JobCategory.GRC_COMPLIANCE);
         // Healthcare
         RSS_CATEGORY_MAP.put("sundhed", JobCategory.HEALTHCARE);
         RSS_CATEGORY_MAP.put("sygepleje", JobCategory.HEALTHCARE);
@@ -142,6 +142,17 @@ public class JobCategoryClassifier {
                 "graphic designer", "visual designer", "product designer",
                 "interaction designer", "grafiker", "designer"
         ));
+        // No bare "awareness", "sikkerhed" or "beredskab": brand awareness is marketing, most
+        // "sikkerhed" postings are guards, and Beredskab Fyn hires firefighters.
+        KEYWORDS.put(JobCategory.GRC_COMPLIANCE, List.of(
+                "informationssikkerhed", "information security officer",
+                "information security manager", "grc", "governance, risk", "nis2", "nis 2",
+                "nis-2", "iso 27001", "iso27001", "compliance", "gdpr", "databeskyttelse",
+                "data protection", "persondata", "security awareness", "sikkerhedsawareness",
+                "cyber awareness", "risikostyring", "risk management", "risk manager",
+                "beredskabskoordinator", "beredskabskonsulent", "beredskabsplan",
+                "kriseberedskab", "it-beredskab", "business continuity"
+        ));
         KEYWORDS.put(JobCategory.MARKETING, List.of(
                 "marketing", "content manager", "content strategist", "seo", "sem",
                 "social media", "campaign manager", "brand manager", "communications",
@@ -179,7 +190,7 @@ public class JobCategoryClassifier {
         ));
         KEYWORDS.put(JobCategory.LEGAL, List.of(
                 "lawyer", "legal counsel", "attorney", "general counsel",
-                "jurist", "compliance officer", "gdpr", "paralegal", "advokat"
+                "jurist", "paralegal", "advokat"
         ));
         KEYWORDS.put(JobCategory.HEALTHCARE, List.of(
                 "nurse", "physician", "doctor", "pharmacist", "therapist",
@@ -211,6 +222,11 @@ public class JobCategoryClassifier {
      * @return best-matching {@link JobCategory}, never null
      */
     public JobCategory classify(List<String> rawCategories, String title, String descriptionClean) {
+        // Sources file GRC work as IT security, as "sikkerhed" next to guards, or as law, so a
+        // GRC title outranks the source category. Every other title still defers to the source.
+        if (matchIn(title == null ? "" : title.toLowerCase()) == JobCategory.GRC_COMPLIANCE) {
+            return JobCategory.GRC_COMPLIANCE;
+        }
         if (rawCategories != null) {
             for (String raw : rawCategories) {
                 JobCategory mapped = RSS_CATEGORY_MAP.get(raw.toLowerCase().trim());
@@ -234,22 +250,20 @@ public class JobCategoryClassifier {
                 ? descriptionClean.substring(0, Math.min(DESC_PREVIEW_CHARS, descriptionClean.length())).toLowerCase()
                 : "";
 
+        JobCategory byTitle = matchIn(lowerTitle);
+        if (byTitle != null) return byTitle;
+        JobCategory byDescription = matchIn(lowerDesc);
+        return byDescription != null ? byDescription : JobCategory.OTHER;
+    }
+
+    /** The first category, in priority order, with a keyword in this lowercased text; else null. */
+    private static JobCategory matchIn(String lowerText) {
+        if (lowerText.isBlank()) return null;
         for (Map.Entry<JobCategory, List<String>> entry : KEYWORDS.entrySet()) {
             for (String keyword : entry.getValue()) {
-                if (!lowerTitle.isBlank() && lowerTitle.contains(keyword)) {
-                    return entry.getKey();
-                }
+                if (lowerText.contains(keyword)) return entry.getKey();
             }
         }
-
-        for (Map.Entry<JobCategory, List<String>> entry : KEYWORDS.entrySet()) {
-            for (String keyword : entry.getValue()) {
-                if (!lowerDesc.isBlank() && lowerDesc.contains(keyword)) {
-                    return entry.getKey();
-                }
-            }
-        }
-
-        return JobCategory.OTHER;
+        return null;
     }
 }
