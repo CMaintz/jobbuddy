@@ -25,13 +25,13 @@ public class StepThroughPostingsTool extends ActionTool {
     public String description() {
         return "Show the user a button that walks her through these postings one at a time, in"
                 + " this order, with next and previous. Use it when she wants to go through several."
-                + " At most " + ChatActionCalls.MAX_STEPS + ".";
+                + " At most " + ChatAction.MAX_STEP_THROUGH + ".";
     }
 
     @Override
     public Map<String, Object> inputSchema() {
         return McpSchema.object(Map.of(ChatActionCalls.POSTING_IDS,
-                McpSchema.ids("The postings, in the order to show them", ChatActionCalls.MAX_STEPS)),
+                McpSchema.ids("The postings, in the order to show them", ChatAction.MAX_STEP_THROUGH)),
                 List.of(ChatActionCalls.POSTING_IDS));
     }
 

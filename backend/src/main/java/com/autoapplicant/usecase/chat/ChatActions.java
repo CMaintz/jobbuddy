@@ -19,9 +19,6 @@ import java.util.stream.Collectors;
  */
 final class ChatActions {
 
-    /** More than this is not "one at a time" any more. */
-    static final int MAX_STEP_THROUGH = 10;
-
     private final JobRepositoryPort jobs;
 
     ChatActions(JobRepositoryPort jobs) {
@@ -49,7 +46,7 @@ final class ChatActions {
         return switch (kind) {
             case OPEN_POSTING, START_APPLICATION -> count == 1;
             case SHOW_PIPELINE -> count == 0;
-            case STEP_THROUGH -> count >= 1 && count <= MAX_STEP_THROUGH;
+            case STEP_THROUGH -> count >= 1 && count <= ChatAction.MAX_STEP_THROUGH;
         };
     }
 }

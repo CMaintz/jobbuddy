@@ -12,6 +12,9 @@ import java.util.UUID;
  */
 public record ChatAction(Kind kind, List<Posting> postings) {
 
+    /** More postings than this is not "one at a time" any more. */
+    public static final int MAX_STEP_THROUGH = 10;
+
     public enum Kind {
         /** Opens one posting. */
         OPEN_POSTING,

@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.mcp;
 
 import com.autoapplicant.domain.chat.ChatAction;
+import com.autoapplicant.port.out.chat.ChatToolsPort;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.springframework.context.annotation.Profile;
@@ -10,13 +11,13 @@ import org.springframework.stereotype.Component;
 /** Opens JobBuddy's own MCP server to one chat turn, on the port this server actually got. */
 @Component
 @Profile("desktop")
-public class McpChatToolAccess implements ChatToolAccess {
+public class McpChatTools implements ChatToolsPort {
 
     private final McpGrants grants;
     private final McpServer server;
     private final Environment environment;
 
-    public McpChatToolAccess(McpGrants grants, McpServer server, Environment environment) {
+    public McpChatTools(McpGrants grants, McpServer server, Environment environment) {
         this.grants = grants;
         this.server = server;
         this.environment = environment;

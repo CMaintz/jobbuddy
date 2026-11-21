@@ -2,9 +2,9 @@ package com.autoapplicant.adapter.ai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.autoapplicant.adapter.mcp.ChatToolAccess;
 import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
+import com.autoapplicant.port.out.chat.ChatToolsPort;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -95,7 +95,7 @@ class ClaudeChatToolsTest {
         return String.join("", pieces);
     }
 
-    private static final class FakeToolAccess implements ChatToolAccess {
+    private static final class FakeToolAccess implements ChatToolsPort {
 
         final String token;
         final List<UUID> openedFor = new ArrayList<>();

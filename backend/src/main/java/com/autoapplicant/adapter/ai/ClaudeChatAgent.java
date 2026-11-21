@@ -1,12 +1,12 @@
 package com.autoapplicant.adapter.ai;
 
-import com.autoapplicant.adapter.mcp.ChatToolAccess;
-import com.autoapplicant.adapter.mcp.ChatToolAccess.ToolSession;
 import com.autoapplicant.config.AppDataDirectory;
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
+import com.autoapplicant.port.out.chat.ChatToolsPort;
+import com.autoapplicant.port.out.chat.ChatToolsPort.ToolSession;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -58,14 +58,14 @@ public class ClaudeChatAgent implements ChatAgentPort {
             "--permission-mode", "dontAsk");
 
     private final ClaudeChatSettings settings;
-    private final ChatToolAccess tools;
+    private final ChatToolsPort tools;
     private final ClaudeChatSessions sessions;
     private final ClaudeChatFiles files;
 
     @Autowired
     public ClaudeChatAgent(AppDataDirectory dataDirectory,
                            AppProperties props,
-                           ChatToolAccess tools,
+                           ChatToolsPort tools,
                            @Value("${app.chat.turn-timeout-seconds:300}") long timeoutSeconds) {
         this(new ClaudeChatSettings(
                 List.of("claude"),
@@ -76,7 +76,7 @@ public class ClaudeChatAgent implements ChatAgentPort {
     }
 
     /** {@code tools} may be null for a chat with no access to JobBuddy's data. */
-    ClaudeChatAgent(ClaudeChatSettings settings, ChatToolAccess tools) {
+    ClaudeChatAgent(ClaudeChatSettings settings, ChatToolsPort tools) {
         this.settings = settings;
         this.tools = tools;
         this.sessions = new ClaudeChatSessions(settings.claudeConfigDir());

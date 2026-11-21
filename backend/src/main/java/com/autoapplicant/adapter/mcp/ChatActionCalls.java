@@ -19,7 +19,6 @@ final class ChatActionCalls {
     static final String TARGET = "target";
     static final String POSTING_ID = "posting_id";
     static final String POSTING_IDS = "posting_ids";
-    static final int MAX_STEPS = 10;
 
     /** What the model may ask the app to open; anything else, a URL included, is refused. */
     static final Map<String, Kind> TARGETS = Map.of(
@@ -38,7 +37,7 @@ final class ChatActionCalls {
     }
 
     static ChatAction stepThrough(JsonNode input) {
-        return unchecked(Kind.STEP_THROUGH, McpArgs.ids(input, POSTING_IDS, MAX_STEPS));
+        return unchecked(Kind.STEP_THROUGH, McpArgs.ids(input, POSTING_IDS, ChatAction.MAX_STEP_THROUGH));
     }
 
     private static ChatAction unchecked(Kind kind, List<UUID> ids) {

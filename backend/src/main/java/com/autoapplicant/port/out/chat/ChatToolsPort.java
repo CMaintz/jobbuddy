@@ -1,4 +1,4 @@
-package com.autoapplicant.adapter.mcp;
+package com.autoapplicant.port.out.chat;
 
 import com.autoapplicant.domain.chat.ChatAction;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /** How a chat turn's agent is let into JobBuddy's MCP server for the length of one turn. */
-public interface ChatToolAccess {
+public interface ChatToolsPort {
 
     /**
      * Opens access for one turn, reading as {@code userId}; buttons the model offers go to
