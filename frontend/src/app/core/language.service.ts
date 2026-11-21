@@ -1,5 +1,6 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { DESKTOP_BACKEND_ORIGIN } from './desktop/desktop-shell';
 
 export type Lang = 'en' | 'da';
 
@@ -17,6 +18,8 @@ export class LanguageService {
    */
   private readonly LEGACY_KEY = 'jb_lang';
   private readonly translate = inject(TranslateService);
+  /** Many Danes run English Windows, so in the desktop app the OS language is no signal. */
+  private readonly desktop = inject(DESKTOP_BACKEND_ORIGIN) !== null;
 
   readonly lang = signal<Lang>(this.loadLang());
 
@@ -47,7 +50,7 @@ export class LanguageService {
   }
 
   private loadLang(): Lang {
-    return this.storedLang() ?? browserLang() ?? DEFAULT_LANG;
+    return this.storedLang() ?? (this.desktop ? null : browserLang()) ?? DEFAULT_LANG;
   }
 
   private storedLang(): Lang | null {

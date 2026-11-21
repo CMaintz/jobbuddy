@@ -310,13 +310,15 @@
               </div>
             }
 
-            <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
-              <div class="flex-1">
-                <div class="text-base font-medium">{{ 'settings.account.signOut' | translate }}</div>
-                <div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.account.signOutDesc' | translate }}</div>
+            @if (canSignOut) {
+              <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
+                <div class="flex-1">
+                  <div class="text-base font-medium">{{ 'settings.account.signOut' | translate }}</div>
+                  <div class="text-xs text-jb-text-dim mt-[1px]">{{ 'settings.account.signOutDesc' | translate }}</div>
+                </div>
+                <jb-button small icon="arrow-right" (clicked)="signOut()">{{ 'settings.account.signOut' | translate }}</jb-button>
               </div>
-              <jb-button small icon="arrow-right" (clicked)="signOut()">{{ 'settings.account.signOut' | translate }}</jb-button>
-            </div>
+            }
           }
 
           @if (activeSection() === 'taxonomy') {

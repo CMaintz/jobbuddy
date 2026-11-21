@@ -105,6 +105,7 @@ export class SettingsComponent implements OnInit {
   private notify = inject(NotifyService);
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  readonly canSignOut = this.auth.canSignOut();
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);

@@ -191,6 +191,11 @@ export class AuthService {
       .then(() => auth.currentUser ? auth.currentUser.getIdToken() : null);
   }
 
+  /** False in the desktop app: there is no account to leave, only a login page she has no login for. */
+  canSignOut(): boolean {
+    return !this.desktop;
+  }
+
   /** Always true in the desktop app, where the shell signs every request in as the local user. */
   isAuthenticated(): boolean {
     return this.desktop || !!auth.currentUser;

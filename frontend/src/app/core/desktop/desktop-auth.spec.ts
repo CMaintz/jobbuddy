@@ -30,6 +30,18 @@ describe('AuthService in desktop mode', () => {
 
     expect(TestBed.inject(AuthService).isAuthenticated()).toBeTrue();
   });
+
+  it('offers no sign-out, which would only strand her on a login page', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: DESKTOP_BACKEND_ORIGIN, useValue: BACKEND },
+      ],
+    });
+
+    expect(TestBed.inject(AuthService).canSignOut()).toBeFalse();
+  });
 });
 
 describe('desktop mode', () => {
