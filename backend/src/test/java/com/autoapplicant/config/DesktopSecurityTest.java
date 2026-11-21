@@ -60,7 +60,9 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
             "app.desktop.token=" + DesktopSecurityTest.TOKEN,
             "app.desktop.shell-origin=" + DesktopSecurityTest.SHELL_ORIGIN,
             // The profile's default is the user's real local app data.
-            "app.data-dir=build/desktop-test-data"
+            "app.data-dir=build/desktop-test-data",
+            // One AI call per window. Each test has its own local user id, so its own bucket.
+            "app.rate-limit.ai.max-requests=1"
         })
 @ActiveProfiles("desktop")
 @Import({SecurityConfig.class, SecurityContextHelper.class})
@@ -125,6 +127,12 @@ class DesktopSecurityTest {
     }
 
     @Test
+    void uploads_and_health_need_the_token_too() throws Exception {
+        mvc.perform(get("/uploads/profile-photos/someone.jpg")).andExpect(status().isForbidden());
+        mvc.perform(get("/actuator/health")).andExpect(status().isForbidden());
+    }
+
+    @Test
     void the_right_token_from_another_machine_is_refused() throws Exception {
         mvc.perform(get(ME).header(TOKEN_HEADER, TOKEN).with(remoteAddress("192.168.1.20")))
                 .andExpect(status().isForbidden());
@@ -163,6 +171,17 @@ class DesktopSecurityTest {
         mvc.perform(asyncDispatch(started))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jobsAnalyzed").value(3));
+    }
+
+    @Test
+    void a_rate_limited_answer_still_carries_cors_so_the_shell_can_read_it() throws Exception {
+        when(skillGaps.analyzeSkillGaps(local.id())).thenReturn(
+                CompletableFuture.completedFuture(new SkillGapReport(List.of(), "summary", 0)));
+        mvc.perform(post(SKILL_GAPS).header(TOKEN_HEADER, TOKEN).header("Origin", SHELL_ORIGIN));
+
+        mvc.perform(post(SKILL_GAPS).header(TOKEN_HEADER, TOKEN).header("Origin", SHELL_ORIGIN))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("Access-Control-Allow-Origin", SHELL_ORIGIN));
     }
 
     @Test

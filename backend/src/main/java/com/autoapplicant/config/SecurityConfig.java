@@ -91,7 +91,9 @@ public class SecurityConfig {
                 // Ahead of CORS, so a request from another machine is refused before anything,
                 // a preflight included, answers it.
                 .addFilterBefore(tokenFilter, CorsFilter.class)
-                .addFilterAfter(aiRateLimitFilter, DesktopTokenFilter.class)
+                // After CORS, so a 429 carries Access-Control-Allow-Origin and the shell can read
+                // RATE_LIMIT_EXCEEDED instead of seeing an opaque network error.
+                .addFilterAfter(aiRateLimitFilter, CorsFilter.class)
                 .build();
     }
 

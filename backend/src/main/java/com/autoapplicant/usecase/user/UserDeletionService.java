@@ -29,15 +29,16 @@ public class UserDeletionService implements DeleteUserAccountUseCase {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        // Delete from DB — all user-owned tables cascade via ON DELETE CASCADE on users.id FK.
+        // Delete from DB: all user-owned tables cascade via ON DELETE CASCADE on users.id FK.
         userRepo.deleteById(userId);
 
-        // Delete from Firebase — best effort; log if it fails but don't roll back the DB delete.
+        // Delete the sign-in provider's account too, best effort: log if it fails but don't roll
+        // back the DB delete.
         if (user.firebaseUid() != null) {
             try {
                 identityProvider.deleteAccount(user.firebaseUid());
             } catch (IllegalStateException e) {
-                log.error("DB account deleted but Firebase user deletion failed for UID {}",
+                log.error("DB account deleted but the sign-in provider kept account {}",
                         user.firebaseUid(), e);
             }
         }

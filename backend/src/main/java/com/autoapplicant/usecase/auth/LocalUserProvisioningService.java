@@ -7,8 +7,10 @@ import com.autoapplicant.port.in.auth.ProvisionLocalUserUseCase;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @org.springframework.context.annotation.Profile("desktop")
@@ -24,21 +26,35 @@ public class LocalUserProvisioningService implements ProvisionLocalUserUseCase {
 
     private final UserRepositoryPort userRepo;
     private final ProfileRepositoryPort profileRepo;
+    // Creation gets a transaction of its own, so a losing insert rolls back on its own and the
+    // re-read below runs outside it: Postgres refuses every statement in an aborted transaction.
+    private final TransactionTemplate creation;
 
     public LocalUserProvisioningService(UserRepositoryPort userRepo,
-                                        ProfileRepositoryPort profileRepo) {
+                                        ProfileRepositoryPort profileRepo,
+                                        PlatformTransactionManager transactions) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
+        this.creation = new TransactionTemplate(transactions);
     }
 
     @Override
-    @Transactional
     public User provisionLocalUser() {
-        return userRepo.findByEmail(LOCAL_EMAIL).orElseGet(this::createLocalUser);
+        return userRepo.findByEmail(LOCAL_EMAIL).orElseGet(this::createOrAdoptLocalUser);
     }
 
-    // USER, not ADMIN: the admin endpoints trigger crawls and LinkedIn runs, which the desktop
-    // leaves to the scheduled workflow, and edit data shared across users, of whom there is one.
+    private User createOrAdoptLocalUser() {
+        try {
+            return creation.execute(status -> createLocalUser());
+        } catch (DataIntegrityViolationException concurrentInsert) {
+            // Parallel requests right after the account was deleted both found no user and both
+            // inserted; the other one won. Its row is the local user.
+            return userRepo.findByEmail(LOCAL_EMAIL).orElseThrow(() -> concurrentInsert);
+        }
+    }
+
+    // USER, not ADMIN: the admin endpoints run crawls and LinkedIn plans on demand, outside their
+    // schedules, and edit data shared across users, of whom there is one here.
     private User createLocalUser() {
         User saved = userRepo.save(new User(null, LOCAL_EMAIL, null, null, null,
                 UserRole.USER, true, false, null, null));

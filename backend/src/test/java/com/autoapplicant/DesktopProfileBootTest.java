@@ -15,7 +15,16 @@ import com.autoapplicant.port.out.user.UserRepositoryPort;
 import com.autoapplicant.usecase.job.JobExpiryService;
 import com.autoapplicant.usecase.job.JobUrlCheckService;
 import com.google.firebase.auth.FirebaseAuth;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +58,7 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers(disabledWithoutDocker = true)
 class DesktopProfileBootTest {
 
+    private static final int PARALLEL_REQUESTS = 8;
     static final String TOKEN = "boot-test-token-0123456789abcdef0123456789";
 
     @Container @ServiceConnection
@@ -82,6 +92,31 @@ class DesktopProfileBootTest {
         User again = localUser.provisionLocalUser();
 
         assertThat(again.id()).isEqualTo(first.id());
+    }
+
+    @Test
+    void parallel_requests_right_after_the_account_is_deleted_all_get_the_same_new_user()
+            throws Exception {
+        users.deleteById(localUser.provisionLocalUser().id());
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService requests = Executors.newFixedThreadPool(PARALLEL_REQUESTS);
+        try {
+            List<Future<User>> provisioned = new ArrayList<>();
+            for (int i = 0; i < PARALLEL_REQUESTS; i++) {
+                provisioned.add(requests.submit(() -> {
+                    start.await();
+                    return localUser.provisionLocalUser();
+                }));
+            }
+            start.countDown();
+            Set<UUID> ids = new HashSet<>();
+            for (Future<User> user : provisioned) {
+                ids.add(user.get(30, TimeUnit.SECONDS).id());
+            }
+            assertThat(ids).hasSize(1);
+        } finally {
+            requests.shutdownNow();
+        }
     }
 
     @Test
