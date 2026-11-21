@@ -2063,5 +2063,37 @@
     "searchFailed": "Search failed. Try again in a moment.",
     "autosaveFailed": "Autosave failed. It will retry on your next edit.",
     "draftLoadFailed": "This draft could not be opened."
+  },
+  "chat": {
+    "launcher": "Ask JobBuddy",
+    "open": "Open the chat",
+    "title": "Chat with JobBuddy",
+    "close": "Close the chat",
+    "back": "All chats",
+    "newChat": "New chat",
+    "untitled": "New chat",
+    "yourChats": "Your chats",
+    "noChats": "You have no chats yet. Start one and ask anything about your job search.",
+    "lastActivity": "Last",
+    "rename": "Rename",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this chat? It cannot be recovered.",
+    "emptyChat": "What can I help with? You could ask how to sharpen an application, or what to prepare for an interview.",
+    "placeholder": "Write a message",
+    "send": "Send",
+    "stop": "Stop",
+    "thinking": "Thinking ...",
+    "errors": {
+      "CLAUDE_MISSING": "Claude Code was not found on this computer. Install Claude Code and try again.",
+      "NOT_LOGGED_IN": "You are not logged in to Claude Code. Open Claude Code, log in with your account and try again.",
+      "USAGE_LIMIT": "You have used what your Claude plan allows for now. Try again once the limit resets.",
+      "TIMEOUT": "The answer took too long, so it was stopped. Try again, perhaps with a shorter question.",
+      "CHAT_BUSY": "Wait for the answer to finish before you write again.",
+      "TOO_MANY_CHATS": "Other chats are already answering. Wait a moment and try again.",
+      "FAILED": "Something went wrong and no answer came. Try again.",
+      "NETWORK": "The connection to JobBuddy was lost. Try again."
+    },
+    "contextLost": "The earlier conversation is no longer stored in Claude Code. Your messages are still here, and the chat continues from a short summary of them, without the finer details."
   }
 }

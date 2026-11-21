@@ -8,6 +8,7 @@ import { LanguageService } from './core/language.service';
 import { JbIconComponent } from './shared/components/jb-icon/jb-icon.component';
 import { StreakBadgeComponent } from './shared/components/streak-badge/streak-badge.component';
 import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
+import { ChatPanelComponent } from './shared/components/chat-panel/chat-panel.component';
 import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
 import { UiLanguageSyncService } from './core/ui-language-sync.service';
@@ -21,7 +22,7 @@ const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
   selector: 'app-root',
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
-    JbToastComponent,
+    JbToastComponent, ChatPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app.component.html'

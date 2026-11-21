@@ -165,5 +165,6 @@
           <router-outlet />
         </div>
       </div>
+      <jb-chat-panel />
     }
     <jb-toast [message]="notify.notice()?.message ?? ''" [tone]="notify.notice()?.tone ?? 'success'" (dismissed)="notify.dismiss()" />
