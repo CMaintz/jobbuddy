@@ -8,7 +8,9 @@ import static org.mockito.Mockito.when;
 import com.autoapplicant.adapter.crawler.CrawlerOrchestrator;
 import com.autoapplicant.adapter.crawler.IngestionPipeline;
 import com.autoapplicant.domain.job.JobSource;
+import com.autoapplicant.port.in.job.CheckJobUrlsUseCase;
 import com.autoapplicant.port.in.job.EmbedJobsUseCase;
+import com.autoapplicant.port.in.job.ExpireStaleJobsUseCase;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
@@ -54,7 +56,8 @@ class CrawlerCliRunnerExitCodeTest {
                 Mockito.mock(IngestionPipeline.class), Mockito.mock(JobRepositoryPort.class),
                 Mockito.mock(CrawlerStateRepositoryPort.class), Runnable::run);
         return new CrawlerCliRunner(new CrawlManagementService(orchestrator),
-                new QueueDrainer(enrichment, embedding), true);
+                new QueueDrainer(enrichment, embedding),
+                Mockito.mock(ExpireStaleJobsUseCase.class), Mockito.mock(CheckJobUrlsUseCase.class), true);
     }
 
     private static int exitCodeAfterRunning(CrawlerCliRunner runner, String... args) {
