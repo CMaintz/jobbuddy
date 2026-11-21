@@ -97,4 +97,14 @@ describe('PipelineComponent status change', () => {
 
     expect(navigate).toHaveBeenCalledWith(['/applications', 'a1']);
   });
+
+  it('shows an application still in preparation on the board, under saved', () => {
+    fixture.componentInstance.view.set('kanban');
+    fixture.detectChanges();
+
+    const savedColumn = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="kanban-column"]')!;
+
+    expect(savedColumn.querySelectorAll('a').length).toBe(2);
+    expect(savedColumn.textContent).toContain('Kommunikationsmedarbejder');
+  });
 });

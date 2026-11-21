@@ -30,7 +30,9 @@ public enum ApplicationStatus {
 
     public boolean canTransitionTo(ApplicationStatus next) {
         return switch (this) {
-            case SAVED -> Set.of(PREPARING, ARCHIVED).contains(next);
+            // Straight to APPLIED as well: many people send the application the day they save
+            // the posting, and recording that should not take two moves.
+            case SAVED -> Set.of(PREPARING, APPLIED, ARCHIVED).contains(next);
             case PREPARING -> Set.of(APPLIED, SAVED, ARCHIVED).contains(next);
             case APPLIED -> Set.of(RECRUITER_CONTACT, REJECTED, ARCHIVED).contains(next);
             case RECRUITER_CONTACT -> Set.of(INTERVIEW, REJECTED, ARCHIVED).contains(next);
