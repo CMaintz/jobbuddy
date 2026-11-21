@@ -55,7 +55,8 @@ public class AiConfig {
         return new SelectedEmbeddingProvider(choice, chosen -> EmbeddingChoice.GEMINI.equals(chosen.provider())
                 ? new GeminiEmbeddingClient(GeminiEmbeddingClient.DEFAULT_BASE_URL,
                         props.getGemini().getApiKey(), chosen.model())
-                : new OpenAiAdapter(openAi, props, tierModel("openai", props.getAi().getEnrichmentTier(), props)));
+                : new OpenAiAdapter(openAi, props, tierModel("openai", props.getAi().getEnrichmentTier(), props),
+                        chosen.model()));
     }
 
     /**
