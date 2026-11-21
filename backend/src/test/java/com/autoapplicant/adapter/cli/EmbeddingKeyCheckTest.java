@@ -10,6 +10,7 @@ import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.ai.EmbeddingChoice;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.DefaultApplicationArguments;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 
 class EmbeddingKeyCheckTest {
@@ -34,6 +35,13 @@ class EmbeddingKeyCheckTest {
     void with_the_key_the_crawl_goes_ahead() {
         assertThatCode(() -> new EmbeddingKeyCheck(guard("gemini-key")).run(new DefaultApplicationArguments()))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void the_enrich_command_is_checked_too_since_it_drains_embeddings() {
+        assertThat(EmbeddingKeyCheck.class.getAnnotation(Profile.class).value()).contains("crawler", "enrich");
+        assertThat(EmbeddingKeyCheck.class.getAnnotation(Order.class).value())
+                .isLessThan(EnrichmentSweepRunner.class.getAnnotation(Order.class).value());
     }
 
     @Test
