@@ -68,13 +68,15 @@ public class ParseCvService implements ParseCvUseCase {
 
             Put a skill here when the CV describes doing the work but never names the skill — a CV
             that describes running fortnightly retrospectives and grooming a backlog evidences
-            Scrum even with the word absent; one that describes building the deployment pipeline
-            that ships every merge evidences CI/CD. Rules:
+            Scrum even with the word absent; one that describes writing the staff newsletter and
+            the intranet news evidences internal communication; one that describes mapping the
+            organisation's information assets and their threats evidences risk assessment. Rules:
             - "evidence" must quote or closely paraphrase the CV's own line. No line, no entry.
             - Never repeat a skill already in "skills" or "technologies" — those are extracted, and
               a suggestion the candidate has already made is noise.
             - Do not list a skill merely adjacent to one they have. "Uses Java" is not evidence of
-              Kotlin. Only what the described work itself demonstrates.
+              Kotlin, and writing press releases is not evidence of crisis communication. Only what
+              the described work itself demonstrates.
             - Six entries at most. Omit the field entirely rather than padding it.
             """;
 

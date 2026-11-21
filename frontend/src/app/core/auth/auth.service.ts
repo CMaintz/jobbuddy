@@ -150,9 +150,12 @@ export class AuthService {
     return sendEmailVerification(auth.currentUser);
   }
 
-  /** Sends the Firebase password-reset email to the signed-in user's address. */
-  sendPasswordReset(): Promise<void> {
-    const email = auth.currentUser?.email;
+  /**
+   * Sends the Firebase password-reset email. Without an address it goes to the signed-in
+   * user; the login page passes the typed address, since a locked-out user has no session.
+   */
+  sendPasswordReset(to?: string): Promise<void> {
+    const email = to ?? auth.currentUser?.email;
     if (!email) return Promise.reject(new Error('No email on the account'));
     return sendPasswordResetEmail(auth, email);
   }
@@ -175,6 +178,11 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return !!auth.currentUser;
+  }
+
+  /** From the cached /me record, so it is known synchronously on a reload. */
+  isAdmin(): boolean {
+    return this.currentUserSubject.value?.role === 'ADMIN';
   }
 
   isOnboardingComplete(): boolean {

@@ -90,6 +90,18 @@ class PromptCompositionBuilderTest {
                 .doesNotContain("## Section Guidance");
     }
 
+    @Test
+    void cvPromptDoesNotShapeEveryRoleAsAnEngineers() {
+        // A communications or compliance role has no technologies. Headings named after code and
+        // a schema that asks every role for a technologies list push the model to file NIS2 as a
+        // framework or pad the list with whatever office tool it can find.
+        String prompt = cv("Kommunikationskonsulent til NIS2-awareness", "Danish", "Denmark")
+                .userPromptTemplate();
+
+        assertThat(prompt).doesNotContain("Languages, Frameworks")
+                .contains("return [] when the source role lists none");
+    }
+
     private PromptComposition cv(String posting, String targetLanguage, String country) {
         return builder.composeCvTailoringPrompt("{}", new PostingContext(posting, country, null),
                 null, targetLanguage, null, null, List.of(), "STANDARD");

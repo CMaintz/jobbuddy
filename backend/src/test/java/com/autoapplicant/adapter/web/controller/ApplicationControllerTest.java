@@ -12,6 +12,7 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
+import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
@@ -203,6 +204,25 @@ class ApplicationControllerTest {
     }
 
     @Test
+    void update_status_keeps_the_job_on_the_row_and_lists_the_next_moves() throws Exception {
+        when(updateStatusUseCase.updateStatus(eq(appId), eq(userId), eq(APPLIED), any()))
+                .thenReturn(application(appId, userId, jobId, APPLIED));
+        when(getJobByIdUseCase.getJobById(jobId)).thenReturn(Optional.of(
+                Job.builder().id(jobId).title("Kommunikationsmedarbejder").companyName("Acme A/S").build()));
+
+        mvc.perform(patch("/api/v1/applications/{id}/status", appId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"APPLIED"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("APPLIED"))
+                .andExpect(jsonPath("$.jobTitle").value("Kommunikationsmedarbejder"))
+                .andExpect(jsonPath("$.jobCompanyName").value("Acme A/S"))
+                .andExpect(jsonPath("$.nextStatuses", containsInAnyOrder("RECRUITER_CONTACT", "REJECTED", "ARCHIVED")));
+    }
+
+    @Test
     void update_status_returns_400_on_not_found() throws Exception {
         when(updateStatusUseCase.updateStatus(any(), any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Application not found"));
@@ -221,6 +241,6 @@ class ApplicationControllerTest {
         return new Application(id, userId, jobId, status, null,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now(), null, null);
+                Instant.now(), Instant.now(), null, null, null, null);
     }
 }

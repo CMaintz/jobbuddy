@@ -9,6 +9,8 @@ import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.notification.Nudge;
+import com.autoapplicant.domain.notification.UpcomingDate;
+import com.autoapplicant.domain.user.UiLanguage;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
@@ -17,11 +19,13 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.notification.NotificationPort;
 import com.autoapplicant.port.out.reminder.FollowUpReminderRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
+import com.autoapplicant.port.out.user.UserLanguagePort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -37,11 +41,12 @@ class DueReminderDigestServiceTest {
 
     private final PreferencesRepositoryPort preferencesRepo = Mockito.mock(PreferencesRepositoryPort.class);
     private final UserRepositoryPort userRepo = Mockito.mock(UserRepositoryPort.class);
+    private final UserLanguagePort languages = Mockito.mock(UserLanguagePort.class);
     private final DueNudgeFinder nudges = Mockito.mock(DueNudgeFinder.class);
     private final NotificationPort notification = Mockito.mock(NotificationPort.class);
 
     private final DueReminderDigestService service =
-            new DueReminderDigestService(preferencesRepo, userRepo, nudges, notification);
+            new DueReminderDigestService(preferencesRepo, userRepo, languages, nudges, notification);
 
     private static UserPreferences prefs(UUID userId) {
         return new UserPreferences(UUID.randomUUID(), userId, List.of(), List.of(), List.of(),
@@ -65,7 +70,7 @@ class DueReminderDigestServiceTest {
         return new Application(UUID.randomUUID(), USER, jobId, status, appliedAt,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                appliedAt, appliedAt, null, null);
+                appliedAt, appliedAt, null, null, null, null);
     }
 
     @Test
@@ -111,18 +116,61 @@ class DueReminderDigestServiceTest {
                 .containsExactlyInAnyOrder(Nudge.NudgeType.DEADLINE_SOON, Nudge.NudgeType.FOLLOW_UP);
 
         DueReminderDigestService digest =
-                new DueReminderDigestService(preferencesRepo, userRepo, realFinder, notification);
+                new DueReminderDigestService(preferencesRepo, userRepo, languages, realFinder, notification);
         assertThat(digest.sendDueReminders()).isZero();
         Mockito.verifyNoInteractions(notification);
     }
 
     @Test
     void theSubjectCountsWhatIsDue() {
+        when(languages.findLanguage(USER)).thenReturn(Optional.of(UiLanguage.EN));
         when(nudges.findDueToday(USER)).thenReturn(List.of(outreachDue("A"), outreachDue("B")));
-        service.sendDueReminders();
+
+        assertThat(mailed().subject()).isEqualTo("2 reminders from Jobbuddy");
+    }
+
+    @Test
+    void anOwnDeadlineIsMailedEvenWhenNothingIsDueToday() {
+        when(nudges.findUpcoming(USER)).thenReturn(List.of(new UpcomingDate(UpcomingDate.Kind.DEADLINE,
+                UUID.randomUUID(), "Kommunikationsmedarbejder", "Acme A/S", LocalDate.of(2026, 11, 18), null)));
+
+        Mail mail = mailed();
+
+        assertThat(mail.subject()).isEqualTo("1 påmindelse fra Jobbuddy");
+        assertThat(mail.body()).contains("Ansøgningsfrist 18. november: Kommunikationsmedarbejder hos Acme A/S");
+    }
+
+    @Test
+    void anInterviewShowsTheTimeTheUserTyped() {
+        when(nudges.findUpcoming(USER)).thenReturn(List.of(new UpcomingDate(UpcomingDate.Kind.INTERVIEW,
+                UUID.randomUUID(), "Kommunikationsmedarbejder", "Acme A/S",
+                LocalDate.of(2026, 11, 17), LocalTime.of(9, 0))));
+
+        assertThat(mailed().body()).contains("17. november kl. 09:00: Kommunikationsmedarbejder hos Acme A/S");
+    }
+
+    @Test
+    void aUserWhoChoseEnglishGetsTheMailInEnglish() {
+        when(languages.findLanguage(USER)).thenReturn(Optional.of(UiLanguage.EN));
+        when(nudges.findDueToday(USER)).thenReturn(List.of(outreachDue("Acme A/S")));
+        when(nudges.findUpcoming(USER)).thenReturn(List.of(new UpcomingDate(UpcomingDate.Kind.DEADLINE,
+                UUID.randomUUID(), "Copywriter", "Acme A/S", LocalDate.of(2026, 11, 18), null)));
+
+        String body = mailed().body();
+
+        assertThat(body).contains("Follow up with Acme A/S (Mette Hansen)");
+        assertThat(body).contains("Deadline 18 November: Copywriter at Acme A/S");
+        assertThat(body).doesNotContain("Ansøgningsfrist");
+    }
+
+    private record Mail(String subject, String body) {}
+
+    private Mail mailed() {
+        assertThat(service.sendDueReminders()).isEqualTo(1);
         ArgumentCaptor<String> subject = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(notification).send(anyString(), subject.capture(), anyString());
-        assertThat(subject.getValue()).isEqualTo("2 follow-ups due today");
+        ArgumentCaptor<String> body = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(notification).send(anyString(), subject.capture(), body.capture());
+        return new Mail(subject.getValue(), body.getValue());
     }
 
     @Test

@@ -14,6 +14,7 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { AiUsagePanelComponent } from './ai-usage-panel.component';
+import { Section, SettingsSection, settingsSectionsFor } from './settings-sections';
 import { SkillTaxonomyPanelComponent } from './skill-taxonomy-panel.component';
 import { AiKeyPanelComponent } from './ai-key-panel.component';
 import { CvSectionTemplatesPanelComponent } from './cv-section-templates-panel.component';
@@ -26,8 +27,6 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
 import { NotifyService } from '../../shared/services/notify.service';
-
-type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy' | 'taxonomy';
 
 /** Generation defaults have no backend home yet — kept client-side so the apply screen can read them. */
 export interface GenDefaults {
@@ -127,14 +126,7 @@ export class SettingsComponent implements OnInit {
   sendingVerification = signal(false);
   sendingReset = signal(false);
 
-  sections: { key: Section; label: string; icon: string }[] = [
-    { key: 'match', label: 'settings.section.match', icon: 'target' },
-    { key: 'gen', label: 'settings.section.gen', icon: 'wand' },
-    { key: 'style', label: 'settings.section.style', icon: 'edit' },
-    { key: 'usage', label: 'settings.section.usage', icon: 'chart-up' },
-    { key: 'account', label: 'settings.section.account', icon: 'user' },
-    { key: 'privacy', label: 'settings.section.privacy', icon: 'key' },
-  ];
+  sections: SettingsSection[] = settingsSectionsFor(undefined);
 
   // Match settings (persisted as UserPreferences)
   boostKeywords: string[] = [];
@@ -173,19 +165,13 @@ export class SettingsComponent implements OnInit {
   analysisBaseline: StyleSnapshot | null = null;
 
   ngOnInit(): void {
-    const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
-    if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
-
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
       this.userEmail = u?.email ?? '';
-      // The taxonomy is shared reference data, so its review queue is an admin section —
-      // added to the nav rather than rendered and refused, which would just be a dead tab.
-      const isAdmin = u?.role === 'ADMIN';
-      const listed = this.sections.some(s => s.key === 'taxonomy');
-      if (isAdmin && !listed) {
-        this.sections = [...this.sections, { key: 'taxonomy', label: 'settings.section.taxonomy', icon: 'sparkle' }];
-      }
+      this.sections = settingsSectionsFor(u?.role);
     });
+    // After the role is known, so a link to an admin-only section still opens it for an admin.
+    const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
+    if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
     this.emailVerified = this.auth.isEmailVerified();
     this.provider = this.auth.signInProvider();
 
