@@ -32,6 +32,14 @@ public interface JobRepositoryPort {
     void markEnriched(UUID jobId);
 
     /**
+     * Writes what enrichment produced (description, summary, skills, requirements, category and
+     * the other extracted fields) and nothing else, so crawl-owned columns such as is_active and
+     * last_seen_at keep whatever the crawl wrote while the AI call ran. Re-queues the embedding
+     * when the embedded text changed.
+     */
+    void saveEnrichment(Job enriched);
+
+    /**
      * An attempt failed. Increments the attempt count and gives up on the job once it
      * reaches {@code maxAttempts}, so a posting that can never be enriched stops
      * consuming quota. Returns true when this was the attempt that gave up.

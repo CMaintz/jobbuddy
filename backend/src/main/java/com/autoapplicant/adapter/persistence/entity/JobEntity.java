@@ -1,18 +1,24 @@
 package com.autoapplicant.adapter.persistence.entity;
 
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
-import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
-
+import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.Type;
 
+/**
+ * Updates write only the columns that changed. The crawl and the enrichment sweep run in
+ * different processes against one database, each owning different columns; a full-row UPDATE
+ * from either would revert what the other wrote since it read the row.
+ */
 @Entity
 @Table(name = "jobs")
+@DynamicUpdate
 public class JobEntity {
 
     @Id
