@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile("desktop")
-public class DesktopServerGuard {
+public final class DesktopServerGuard {
 
     static final String LOOPBACK_ONLY = "The desktop profile must listen on loopback only:"
             + " server.address (SERVER_ADDRESS) has to be 127.0.0.1";
