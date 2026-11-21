@@ -1924,7 +1924,13 @@
       "signingIn": "Signing in…",
       "withLinkedIn": "Sign in with LinkedIn",
       "noAccount": "Don't have an account?",
-      "registerLink": "Register"
+      "registerLink": "Register",
+      "forgotPassword": "Forgot password?"
+    },
+    "reset": {
+      "sent": "If {{email}} has an account, we have sent it a link to choose a new password. Check your inbox.",
+      "needEmail": "Type your email above, then click \"Forgot password?\" again.",
+      "failed": "We could not send the email. Please try again in a moment."
     },
     "register": {
       "title": "Create your account",
