@@ -200,11 +200,7 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void refreshLastSeen(UUID jobId, Instant lastSeenAt, java.time.LocalDate applicationDeadline) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setLastSeenAt(lastSeenAt);
-            e.setApplicationDeadline(applicationDeadline);
-            repo.save(e);
-        });
+        repo.refreshLastSeen(jobId, lastSeenAt, applicationDeadline);
     }
 
     @Override
@@ -216,33 +212,22 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void markUrlAlive(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setUrlCheckFailures(0);
-            e.setLastUrlCheckAt(Instant.now());
-            e.setLastSeenAt(Instant.now()); // confirmed alive counts as "seen" for staleness expiry
-            repo.save(e);
-        });
+        repo.markUrlAlive(jobId, Instant.now());
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void markUrlCheckInconclusive(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setLastUrlCheckAt(Instant.now());
-            repo.save(e);
-        });
+        repo.markUrlCheckInconclusive(jobId, Instant.now());
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public boolean markUrlTakenDown(UUID jobId, int failureThreshold) {
-        return repo.findById(jobId).map(e -> {
-            e.setUrlCheckFailures(e.getUrlCheckFailures() + 1);
-            e.setLastUrlCheckAt(Instant.now());
-            boolean deactivate = e.getUrlCheckFailures() >= failureThreshold && e.isActive();
-            if (deactivate) e.setActive(false);
-            repo.save(e);
-            return deactivate;
-        }).orElse(false);
+        repo.countUrlCheckFailure(jobId, Instant.now());
+        return repo.deactivateAtFailureThreshold(jobId, failureThreshold) > 0;
     }
 
     @Override
@@ -317,19 +302,13 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts) {
-        return repo.findById(jobId).map(e -> {
-            int attempts = e.getEmbeddingAttempts() + 1;
-            boolean givingUp = attempts >= maxAttempts;
-            e.setEmbeddingAttempts(attempts);
-            e.setEmbeddingLastAttemptAt(Instant.now());
-            e.setEmbeddingLastError(truncate(reason));
-            e.setEmbeddingStatus((givingUp
-                    ? com.autoapplicant.domain.job.EmbeddingStatus.FAILED
-                    : com.autoapplicant.domain.job.EmbeddingStatus.PENDING).name());
-            repo.save(e);
-            return givingUp;
-        }).orElse(false);
+        if (repo.markEmbeddingFailed(jobId, truncate(reason), maxAttempts, Instant.now()) == 0) {
+            return false;
+        }
+        return com.autoapplicant.domain.job.EmbeddingStatus.FAILED.name()
+                .equals(repo.findEmbeddingStatus(jobId));
     }
 
     @Override
