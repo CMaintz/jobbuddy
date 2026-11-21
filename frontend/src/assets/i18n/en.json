@@ -285,6 +285,16 @@
       }
     }
   },
+  "pageBudget": {
+    "letter": {
+      "over": "The application runs to {{pages}} pages. Keep it to 1 page.",
+      "shorten": "Cut repetition and whatever matters least for this job, then export again."
+    },
+    "cv": {
+      "over": "The CV runs to {{pages}} pages. Keep it to 2 pages at most.",
+      "shorten": "Trim older or less relevant experience, then export again."
+    }
+  },
   "resumeBuilder": {
     "wizardStep": "Step 2 of 4 — Review and edit your tailored CV",
     "continueCover": "Continue to Cover Letter",

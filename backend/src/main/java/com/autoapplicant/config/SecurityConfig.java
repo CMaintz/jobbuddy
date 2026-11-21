@@ -4,7 +4,9 @@ import com.autoapplicant.adapter.security.AiRateLimitFilter;
 import com.autoapplicant.adapter.security.DesktopToken;
 import com.autoapplicant.adapter.security.DesktopTokenFilter;
 import com.autoapplicant.adapter.security.FirebaseTokenFilter;
+import com.autoapplicant.adapter.web.controller.PageBudgetHeaders;
 import com.autoapplicant.port.in.auth.ProvisionLocalUserUseCase;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -135,7 +137,9 @@ public class SecurityConfig {
 
     private static CorsConfigurationSource forAllPaths(CorsConfiguration config) {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setExposedHeaders(List.of("Content-Disposition"));
+        List<String> exposed = new ArrayList<>(List.of("Content-Disposition"));
+        exposed.addAll(PageBudgetHeaders.NAMES);
+        config.setExposedHeaders(exposed);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
