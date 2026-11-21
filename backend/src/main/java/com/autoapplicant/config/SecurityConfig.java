@@ -111,7 +111,9 @@ public class SecurityConfig {
     public SecurityFilterChain mcpFilterChain(HttpSecurity http, McpGrants grants) throws Exception {
         return http
                 .securityMatcher(McpTokenFilter.PATH)
-                .csrf(AbstractHttpConfigurer::disable)
+                // A bearer token in a header, no cookie or session: a cross-site request carries no
+                // credential here, so there is nothing for a CSRF token to protect.
+                .csrf(csrf -> csrf.ignoringRequestMatchers(McpTokenFilter.PATH))
                 .cors(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new McpTokenFilter(grants), UsernamePasswordAuthenticationFilter.class)
