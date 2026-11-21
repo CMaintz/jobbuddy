@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 @Profile("desktop")
 public class UpcomingDatesTool implements McpTool {
 
+    static final int MAX_RESULTS = 25;
     private static final int DEFAULT_DAYS = 14;
     private static final int MAX_DAYS = 60;
     private static final Set<ApplicationStatus> CLOSED =
@@ -58,7 +59,8 @@ public class UpcomingDatesTool implements McpTool {
 
     @Override
     public String description() {
-        return "The user's coming application deadlines and interviews, soonest first.";
+        return "The user's coming application deadlines and interviews, soonest first, at most "
+                + MAX_RESULTS + ".";
     }
 
     @Override
@@ -76,6 +78,7 @@ public class UpcomingDatesTool implements McpTool {
                 .flatMap(a -> datesOf(a, a.jobId() == null ? Optional.empty() : jobs.getJobById(a.jobId())))
                 .filter(d -> !d.day().isBefore(today) && !d.day().isAfter(last))
                 .sorted(Comparator.comparing(UpcomingDate::at))
+                .limit(MAX_RESULTS)
                 .toList();
         return Map.of("dates", dates);
     }
@@ -84,8 +87,8 @@ public class UpcomingDatesTool implements McpTool {
         LocalDate deadline = a.deadline() != null
                 ? a.deadline() : job.map(Job::applicationDeadline).orElse(null);
         LocalDateTime interview = a.interviewAt();
-        String title = job.map(Job::title).orElse(null);
-        String company = job.map(Job::companyName).orElse(null);
+        String title = job.map(Job::title).map(PostingSummary::cut).orElse(null);
+        String company = job.map(Job::companyName).map(PostingSummary::cut).orElse(null);
         return Stream.of(
                 deadline == null ? null : new UpcomingDate(Kind.DEADLINE, deadline.toString(),
                         a.id(), title, company, deadline),

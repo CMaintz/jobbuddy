@@ -144,6 +144,27 @@ class McpToolsTest {
     }
 
     @Test
+    void long_titles_and_company_names_are_cut_and_coming_dates_are_capped() throws Exception {
+        Job verbose = job(UUID.randomUUID(), "T".repeat(600), "C".repeat(600));
+        when(f.jobs.getJobById(verbose.id())).thenReturn(Optional.of(verbose));
+        when(f.applications.getApplications(her)).thenReturn(IntStream.range(0, 40)
+                .mapToObj(i -> application(her, verbose.id(), ApplicationStatus.PREPARING,
+                        today.plusDays(1 + i % 10), null))
+                .toList());
+
+        JsonNode listed = f.content(f.call(f.grantFor(her), "list_applications", "{}"))
+                .get("applications").get(0);
+        JsonNode dates = f.content(f.call(f.grantFor(her), "upcoming_dates", "{\"days\":14}"))
+                .get("dates");
+
+        assertThat(listed.get("title").asText()).hasSizeLessThan(200);
+        assertThat(listed.get("company").asText()).hasSizeLessThan(200);
+        assertThat(dates.get(0).get("title").asText()).hasSizeLessThan(200);
+        assertThat(dates.get(0).get("company").asText()).hasSizeLessThan(200);
+        assertThat(dates).hasSize(UpcomingDatesTool.MAX_RESULTS);
+    }
+
+    @Test
     void saved_and_ignored_postings_are_hers() throws Exception {
         Job saved = job(UUID.randomUUID(), "Gemt", "Arla");
         Job skipped = job(UUID.randomUUID(), "Sprunget over", "Coop");

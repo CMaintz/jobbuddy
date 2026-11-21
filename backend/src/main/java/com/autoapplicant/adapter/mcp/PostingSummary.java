@@ -16,9 +16,14 @@ record PostingSummary(UUID id, String title, String company, String location, St
 
     static final int TITLE_CHARS = 120;
 
+    /** A title, company or place, the employer's words, cut to a length worth its tokens. */
+    static String cut(String name) {
+        return McpText.cut(name, TITLE_CHARS);
+    }
+
     static PostingSummary of(Job job, MatchResult match) {
-        return new PostingSummary(job.id(), McpText.cut(job.title(), TITLE_CHARS),
-                McpText.cut(job.companyName(), TITLE_CHARS), McpText.cut(job.location(), TITLE_CHARS),
+        return new PostingSummary(job.id(), cut(job.title()), cut(job.companyName()),
+                cut(job.location()),
                 job.jobCategory() == null ? null : job.jobCategory().name(),
                 job.postedAt() == null ? null : job.postedAt().atZone(ZoneOffset.UTC).toLocalDate()
                         .toString(),

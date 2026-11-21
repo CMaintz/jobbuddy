@@ -73,8 +73,8 @@ public class ListApplicationsTool implements McpTool {
     private ApplicationSummary summarise(Application a) {
         Optional<Job> job = a.jobId() == null ? Optional.empty() : jobs.getJobById(a.jobId());
         return new ApplicationSummary(a.id(), a.jobId(),
-                job.map(Job::title).map(t -> McpText.cut(t, PostingSummary.TITLE_CHARS)).orElse(null),
-                job.map(Job::companyName).orElse(null), a.status().name(),
+                job.map(Job::title).map(PostingSummary::cut).orElse(null),
+                job.map(Job::companyName).map(PostingSummary::cut).orElse(null), a.status().name(),
                 text(a.appliedAt()), text(a.deadline()), text(a.interviewAt()));
     }
 
