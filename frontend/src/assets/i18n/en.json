@@ -220,6 +220,8 @@
     "queue": {
       "now": "now",
       "today": "today",
+      "tomorrow": "tomorrow",
+      "interview": "Job interview",
       "followUp": "Follow up",
       "applyDeadline": "Apply before the deadline",
       "noReply": "No reply yet — send a follow-up",
@@ -227,6 +229,7 @@
     },
     "tag": {
       "followUp": "follow-up",
+      "interview": "interview",
       "deadline": "deadline",
       "noReply": "no reply",
       "outreach": "Outreach"
