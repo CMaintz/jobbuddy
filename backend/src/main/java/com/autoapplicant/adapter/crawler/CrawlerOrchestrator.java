@@ -41,6 +41,18 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
     private final JobRepositoryPort jobRepository;
     private final CrawlerStateRepositoryPort crawlerStateRepo;
     private final Executor crawlerTaskExecutor;
+    private final java.time.Duration heartbeatEvery;
+
+    /**
+     * One daemon thread for every crawl's heartbeat: a beat is a single small UPDATE, and a
+     * daemon thread never keeps a finished one-shot run from exiting.
+     */
+    private static final java.util.concurrent.ScheduledExecutorService HEARTBEATS =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "crawl-heartbeat");
+                thread.setDaemon(true);
+                return thread;
+            });
 
     /**
      * Sources with a crawl in progress in this JVM. Two crawls of one source race each other's
@@ -55,11 +67,26 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                                 JobRepositoryPort jobRepository,
                                 CrawlerStateRepositoryPort crawlerStateRepo,
                                 Executor crawlerTaskExecutor) {
+        this(connectors, ingestionPipeline, jobRepository, crawlerStateRepo, crawlerTaskExecutor,
+                java.time.Duration.ofHours(2));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public CrawlerOrchestrator(List<JobSourceConnectorPort> connectors,
+                                IngestionPipeline ingestionPipeline,
+                                JobRepositoryPort jobRepository,
+                                CrawlerStateRepositoryPort crawlerStateRepo,
+                                Executor crawlerTaskExecutor,
+                                @org.springframework.beans.factory.annotation.Value("${app.crawler.stale-running-after:PT2H}")
+                                java.time.Duration staleRunningAfter) {
         this.connectors = connectors;
         this.ingestionPipeline = ingestionPipeline;
         this.jobRepository = jobRepository;
         this.crawlerStateRepo = crawlerStateRepo;
         this.crawlerTaskExecutor = crawlerTaskExecutor;
+        // Four beats per stale window, so one late or failed beat never makes a live crawl
+        // look abandoned to a process that starts meanwhile.
+        this.heartbeatEvery = staleRunningAfter.dividedBy(4);
     }
 
     /**
@@ -165,6 +192,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
         crawlerStateRepo.save(new CrawlerState(
                 sourceName, 0, startedAt, null, 0, 0, null, true, Instant.now()));
 
+        java.util.concurrent.ScheduledFuture<?> heartbeat = startHeartbeat(sourceName);
         String error = null;
         try {
             log.info("Crawling source: {} (force={})", connector.getSource(), force);
@@ -207,6 +235,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
             error = e.toString();
             throw e;
         } finally {
+            heartbeat.cancel(false);
             // Mark the crawl finished, whatever happened, so the running flag never outlives it.
             // jobsFound is everything the source showed us; jobsIngested is what was actually
             // new. They were the same number before, which made a re-crawl of unchanged
@@ -217,6 +246,21 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     error, false, Instant.now()));
         }
         return error;
+    }
+
+    private java.util.concurrent.ScheduledFuture<?> startHeartbeat(String sourceName) {
+        long everyMillis = Math.max(1, heartbeatEvery.toMillis());
+        return HEARTBEATS.scheduleAtFixedRate(() -> beat(sourceName),
+                everyMillis, everyMillis, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+    /** A failed beat is only logged: the crawl itself must not stop over its flag. */
+    private void beat(String sourceName) {
+        try {
+            crawlerStateRepo.heartbeat(sourceName, Instant.now());
+        } catch (RuntimeException e) {
+            log.warn("Crawl heartbeat for {} failed: {}", sourceName, e.getMessage());
+        }
     }
 
     public void runSource(JobSource source) {
