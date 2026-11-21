@@ -220,6 +220,8 @@
     "queue": {
       "now": "nu",
       "today": "i dag",
+      "tomorrow": "i morgen",
+      "interview": "Jobsamtale",
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
       "noReply": "Intet svar endnu — send en opfølgning",
@@ -227,6 +229,7 @@
     },
     "tag": {
       "followUp": "opfølgning",
+      "interview": "samtale",
       "deadline": "frist",
       "noReply": "intet svar",
       "outreach": "Uopfordret"

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 /** Computed "needs attention" item — not stored, recomputed by the backend on request. */
 export interface Nudge {
-  type: 'DEADLINE_SOON' | 'FOLLOW_UP' | 'REMINDER_DUE' | 'OUTREACH_FOLLOW_UP';
+  type: 'DEADLINE_SOON' | 'FOLLOW_UP' | 'REMINDER_DUE' | 'OUTREACH_FOLLOW_UP' | 'INTERVIEW_SOON';
   applicationId: string | null;
   jobId: string | null;
   /** OUTREACH_FOLLOW_UP only: the tracked outreach that is due. */

@@ -17,7 +17,7 @@ public record Nudge(
         UUID reminderId,
         String jobTitle,
         String companyName,
-        /** Set for DEADLINE_SOON and the two due types: the date it is due. */
+        /** Set for DEADLINE_SOON and the two due types: the date it is due. For INTERVIEW_SOON: its date. */
         LocalDate deadline,
         /** Set for FOLLOW_UP: days since the application was sent. */
         Integer daysSinceApplied,
@@ -25,14 +25,19 @@ public record Nudge(
         String note
 ) {
     public enum NudgeType {
-        /** A saved/in-preparation job's application deadline is within the next 7 days. */
+        /**
+         * A saved/in-preparation job's deadline is within the next 7 days: the one the user entered,
+         * else the posting's.
+         */
         DEADLINE_SOON,
         /** Applied 14+ days ago with no reply — time to send a follow-up. */
         FOLLOW_UP,
         /** A reminder the user set on an application has come due. */
         REMINDER_DUE,
         /** A tracked unsolicited outreach has reached its follow-up date. */
-        OUTREACH_FOLLOW_UP
+        OUTREACH_FOLLOW_UP,
+        /** An interview the user entered is today or tomorrow. */
+        INTERVIEW_SOON
     }
 
     /** An application-shaped nudge — the two original types. */
