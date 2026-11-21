@@ -13,6 +13,3 @@ CREATE TABLE embedding_choice (
     CONSTRAINT embedding_choice_single_row CHECK (id = 1),
     CONSTRAINT embedding_choice_provider CHECK (provider IN ('openai', 'gemini'))
 );
-
--- Neighbour queries now filter on the model; without this they scan every model's rows.
-CREATE INDEX idx_job_embeddings_model ON job_embeddings (model);
