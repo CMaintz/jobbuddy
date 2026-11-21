@@ -1,0 +1,38 @@
+# Must equal APP_ID in src/main.js, or Windows drops the installed app's notifications.
+appId: dk.maintz.jobbuddy
+productName: JobBuddy
+copyright: Copyright (c) 2026 Christoffer Maintz
+directories:
+  output: dist
+  buildResources: assets
+files:
+  - src/**
+  - ui/**
+  - assets/icon.png
+  - package.json
+# Staged by `mise run desktop:build`: the bundled JRE, the backend jar and the Angular build.
+# Outside the asar, since java.exe and the jar must be real files on disk.
+extraResources:
+  - from: stage/jre
+    to: jre
+  - from: stage/backend
+    to: backend
+  - from: stage/ui
+    to: ui
+asar: true
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: assets/icon.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: JobBuddy
+  # Her connection and data stay when she uninstalls to reinstall a newer version.
+  deleteAppDataOnUninstall: false
+  artifactName: JobBuddy-Setup-${version}.${ext}
+publish: null

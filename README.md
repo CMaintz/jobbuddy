@@ -126,6 +126,18 @@ Environment:
 - `DB_URL`, `DB_USER`, `DB_PASS`: the install's own database.
 - `SERVER_PORT`: the shell passes `0`, so the OS picks a free port as the server binds it. Once it takes requests, the backend prints `JOBBUDDY_DESKTOP_READY port=<n>` on stdout, and the shell connects only to that port. No other process can write to the child's stdout, so a process that grabbed a port first never gets the token.
 
+### Desktop app (Windows)
+
+`desktop/` is the Electron shell around the desktop profile: one installer with a bundled Temurin JRE, the backend jar and the Angular build.
+
+- **Starting:** it checks that `claude` is installed and logged in and that Git for Windows is there, and shows each fix in plain Danish. On first run it asks for the database connection and the embeddings key, and stores them encrypted with Electron `safeStorage` (Windows DPAPI) in `%APPDATA%\JobBuddy`. Then it starts the backend with a fresh token and loads the UI from `app://jobbuddy`. The shell adds `X-JobBuddy-Token` to requests for the backend's exact origin only.
+- **Running:** closing the window keeps JobBuddy in the tray ("Åbn", "Start med Windows", "Afslut"), so enrichment, LinkedIn and reminders keep running. Due reminders appear as Windows notifications. "Afslut" kills the backend's whole process tree.
+- **If it breaks:** a crash shows a Danish error screen with the log path, `%LOCALAPPDATA%\JobBuddy\logs\desktop-backend.log`.
+
+Build on Windows with `mise run desktop:package`. It writes `desktop/dist/JobBuddy-Setup-<version>.exe`. `mise run desktop:build` followed by `mise run desktop:start` runs it from the checkout.
+
+**Updating.** There is no auto-update: it needs a code-signing certificate and a release feed, and we have neither. To update, build the new installer and run it over the old install. Her connection, data and logs live outside the install folder, so they are kept. The installer is unsigned, so Windows SmartScreen asks once per new version: "Flere oplysninger", then "Kør alligevel".
+
 ## Tests
 
 ```bash

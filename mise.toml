@@ -162,6 +162,41 @@ run = [
     "mise run frontend:audit",
 ]
 
+# ---- desktop (Electron shell for Windows) ----------------------------------
+# desktop/mise.toml is the single source of truth; these delegate, like backend:*. Its gate is
+# ESLint plus node:test on plain Node (no Electron binary, no network), a few seconds, so the
+# root gate runs it too. build/package/start are Windows-only and stay out of the gate.
+
+[tasks."desktop:lint"]
+description = "ESLint on the desktop shell"
+dir = "desktop"
+run = "mise run lint"
+
+[tasks."desktop:test"]
+description = "Desktop shell unit tests (node:test)"
+dir = "desktop"
+run = "mise run test"
+
+[tasks."desktop:gate"]
+description = "The desktop oracle: lint and tests"
+dir = "desktop"
+run = "mise run gate"
+
+[tasks."desktop:build"]
+description = "Backend jar, Angular build, pinned JRE and Electron, staged in desktop/stage"
+dir = "desktop"
+run = "mise run build"
+
+[tasks."desktop:start"]
+description = "Run the desktop app from the checkout (after desktop:build)"
+dir = "desktop"
+run = "mise run start"
+
+[tasks."desktop:package"]
+description = "Windows x64 NSIS installer in desktop/dist (unsigned)"
+dir = "desktop"
+run = "mise run package"
+
 # ---- aggregate --------------------------------------------------------------
 # Top-level verbs run every package's, so the six-verb contract holds at the root
 # too (`mise run typecheck` etc.), not just per package. Sequential — no `depends`.
@@ -172,7 +207,7 @@ run = ["mise run backend:fix", "mise run frontend:fix"]
 
 [tasks.lint]
 description = "Lint every package"
-run = ["mise run backend:lint", "mise run frontend:lint"]
+run = ["mise run backend:lint", "mise run frontend:lint", "mise run desktop:lint"]
 
 [tasks.typecheck]
 description = "Type-check every package"
@@ -180,7 +215,7 @@ run = ["mise run backend:typecheck", "mise run frontend:typecheck"]
 
 [tasks.test]
 description = "Test every package"
-run = ["mise run backend:test", "mise run frontend:test"]
+run = ["mise run backend:test", "mise run frontend:test", "mise run desktop:test"]
 
 [tasks.audit]
 description = "Audit every package"
@@ -188,4 +223,4 @@ run = ["mise run backend:audit", "mise run frontend:audit"]
 
 [tasks.gate]
 description = "The oracle — every package's gate. Sequential, no `depends` (parallel, unordered)."
-run = ["mise run backend:gate", "mise run frontend:gate"]
+run = ["mise run backend:gate", "mise run frontend:gate", "mise run desktop:gate"]

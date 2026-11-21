@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+  <title>JobBuddy</title>
+  <link rel="stylesheet" href="shell.css">
+</head>
+<body>
+  <main>
+    <h1>Velkommen til JobBuddy</h1>
+    <p class="lead">Før JobBuddy kan skrive ansøgninger og CV'er, tjekker vi et par ting på din PC.</p>
+
+    <h2>Din PC</h2>
+    <div class="card"><ul class="checks" id="checks"><li>Tjekker...</li></ul></div>
+    <div class="row">
+      <button id="recheck">Tjek igen</button>
+      <button id="continue" hidden>Fortsæt alligevel</button>
+    </div>
+
+    <form id="connection" autocomplete="off">
+      <h2>Forbindelse</h2>
+      <p class="lead">Du får oplysningerne fra den, der har sat JobBuddy op til dig. De gemmes krypteret på din PC og kan kun læses af din Windows-bruger.</p>
+      <div class="card">
+        <label for="dbUrl">Databaseadresse <small>(starter med jdbc:postgresql://)</small></label>
+        <input id="dbUrl" name="dbUrl" spellcheck="false" required>
+        <label for="dbUser">Brugernavn</label>
+        <input id="dbUser" name="dbUser" spellcheck="false" required>
+        <label for="dbPassword">Adgangskode <small id="keepPassword" hidden>(lad feltet stå tomt for at beholde den gemte)</small></label>
+        <input id="dbPassword" name="dbPassword" type="password">
+        <label for="embeddingProvider">Tjeneste til jobsøgning</label>
+        <select id="embeddingProvider" name="embeddingProvider">
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Gemini</option>
+        </select>
+        <label for="embeddingKey">Nøgle til tjenesten <small id="keepKey" hidden>(lad feltet stå tomt for at beholde den gemte)</small></label>
+        <input id="embeddingKey" name="embeddingKey" type="password" spellcheck="false">
+      </div>
+      <div class="errors" id="errors"></div>
+      <div class="row"><button class="primary" type="submit">Gem og start JobBuddy</button></div>
+    </form>
+  </main>
+  <script src="setup.js"></script>
+</body>
+</html>

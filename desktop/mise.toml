@@ -1,0 +1,40 @@
+# Verbs for the Windows desktop shell. The root mise.toml delegates desktop:* here.
+
+[tasks.install]
+description = "npm ci when node_modules is missing or older than the lockfile"
+run = """
+[ node_modules/.package-lock.json -nt package-lock.json ] && exit 0
+npm ci --no-audit --no-fund
+"""
+
+[tasks.lint]
+depends = ["install"]
+run = "npm run lint"
+
+[tasks.test]
+description = "Unit tests on plain Node: no Electron binary, no network"
+depends = ["install"]
+run = "npm test"
+
+[tasks.gate]
+description = "The desktop oracle: lint and tests, a few seconds"
+run = ["mise run lint", "mise run test"]
+
+[tasks.build]
+description = "Backend jar, Angular build, pinned JRE and Electron binary, staged for the app"
+depends = ["install"]
+run = [
+    "cd .. && ./gradlew :backend:bootJar",
+    "cd ../frontend && npm run build",
+    "node scripts/fetch-jre.mjs",
+    "node scripts/stage.mjs",
+    "npx install-electron",
+]
+
+[tasks.start]
+description = "Run the app from the checkout (after desktop:build)"
+run = "npx electron ."
+
+[tasks.package]
+description = "Windows x64 NSIS installer in desktop/dist (unsigned)"
+run = ["mise run build", "npx electron-builder --win nsis --x64 --publish never"]
