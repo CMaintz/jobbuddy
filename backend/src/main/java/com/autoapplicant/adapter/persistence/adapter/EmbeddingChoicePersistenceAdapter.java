@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-/** The single embedding_choice row (V046). Plain JDBC: one row, two columns, no entity needed. */
+/** The single embedding_choice row (V047). Plain JDBC: one row, two columns, no entity needed. */
 @Component
 public class EmbeddingChoicePersistenceAdapter implements EmbeddingChoiceRepositoryPort {
 

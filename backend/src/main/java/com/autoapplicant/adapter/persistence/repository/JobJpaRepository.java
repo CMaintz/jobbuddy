@@ -167,7 +167,7 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
             """, nativeQuery = true)
     int requeueEmbeddingsForModel(@Param("model") String model);
 
-    /** The model in embedding_choice (V046), read at the moment of a write; empty when unset. */
+    /** The model in embedding_choice (V047), read at the moment of a write; empty when unset. */
     @Query(value = "SELECT model FROM embedding_choice WHERE id = 1", nativeQuery = true)
     Optional<String> findStoredEmbeddingModel();
 
