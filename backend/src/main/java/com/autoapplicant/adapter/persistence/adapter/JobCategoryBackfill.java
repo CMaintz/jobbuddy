@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -40,10 +41,20 @@ public class JobCategoryBackfill {
         this.tx = new TransactionTemplate(transactionManager);
     }
 
+    /**
+     * Never fails startup. The crawler CLI runs with Flyway off and can meet a database that has
+     * not reached V042; an exception here would turn a finished crawl into a failed run. The
+     * transaction rolls back, so the version stays unclaimed and the next start tries again.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void onStartup() {
-        int moved = run();
-        if (moved >= 0) log.info("Job category rules v{} applied: {} active jobs moved", RULES_VERSION, moved);
+        try {
+            int moved = run();
+            if (moved >= 0) log.info("Job category rules v{} applied: {} active jobs moved", RULES_VERSION, moved);
+        } catch (DataAccessException e) {
+            log.warn("Job category rules v{} not applied, will retry on next start: {}",
+                    RULES_VERSION, e.getMessage());
+        }
     }
 
     /** @return the number of jobs whose category changed, or -1 when this version already ran */
