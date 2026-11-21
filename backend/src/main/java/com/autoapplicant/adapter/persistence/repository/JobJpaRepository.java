@@ -167,28 +167,35 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
             """, nativeQuery = true)
     int requeueEmbeddingsForModel(@Param("model") String model);
 
+    /** The model in embedding_choice (V046), read at the moment of a write; empty when unset. */
+    @Query(value = "SELECT model FROM embedding_choice WHERE id = 1", nativeQuery = true)
+    Optional<String> findStoredEmbeddingModel();
+
     @Query("SELECT j.embeddingStatus, COUNT(j) FROM JobEntity j GROUP BY j.embeddingStatus")
     List<Object[]> countByEmbeddingStatus();
 
     /**
-     * Marks a posting embedded only if its text is still the text the vector was made from, in
-     * one statement, so a save that changed the text in between (and re-queued the posting)
-     * cannot be overwritten. The expression must match {@code Job.embeddingText()}. Clears the
-     * persistence context, since entities loaded before it still hold the old status.
+     * Marks a posting embedded only if its text is still the text the vector was made from and
+     * the vector's model is still the stored one (or none is stored), in one statement. So a save
+     * that changed the text, or a model switch made while a crawl still embeds with the old
+     * model, cannot be overwritten. The text expression must match {@code Job.embeddingText()}.
+     * Clears the persistence context, since entities loaded before it still hold the old status.
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("""
-            UPDATE JobEntity j
-            SET j.embeddingStatus = 'EMBEDDED',
-                j.embeddingAttempts = j.embeddingAttempts + 1,
-                j.embeddingLastAttemptAt = :now,
-                j.embeddingLastError = NULL
-            WHERE j.id = :id
-              AND CONCAT(COALESCE(j.title, ''), ' ', COALESCE(j.descriptionClean, '')) = :embeddedText
-            """)
-    int markEmbeddedIfTextUnchanged(@Param("id") UUID id,
-                                    @Param("embeddedText") String embeddedText,
-                                    @Param("now") Instant now);
+    @Query(value = """
+            UPDATE jobs
+            SET embedding_status = 'EMBEDDED',
+                embedding_attempts = embedding_attempts + 1,
+                embedding_last_attempt_at = :now,
+                embedding_last_error = NULL
+            WHERE id = :id
+              AND CONCAT(COALESCE(title, ''), ' ', COALESCE(description_clean, '')) = :embeddedText
+              AND NOT EXISTS (SELECT 1 FROM embedding_choice c WHERE c.model <> :model)
+            """, nativeQuery = true)
+    int markEmbeddedIfCurrent(@Param("id") UUID id,
+                              @Param("embeddedText") String embeddedText,
+                              @Param("model") String model,
+                              @Param("now") Instant now);
 
     /**
      * Enrichment's own columns only. A whole-row save from a job read before the AI call would

@@ -336,8 +336,12 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
 
     @Override
     @org.springframework.transaction.annotation.Transactional
-    public boolean markEmbedded(UUID jobId, String embeddedText) {
-        return repo.markEmbeddedIfTextUnchanged(jobId, embeddedText, Instant.now()) > 0;
+    public EmbeddedMark markEmbedded(UUID jobId, String embeddedText, String model) {
+        if (repo.markEmbeddedIfCurrent(jobId, embeddedText, model, Instant.now()) > 0) {
+            return EmbeddedMark.MARKED;
+        }
+        boolean modelChanged = repo.findStoredEmbeddingModel().filter(stored -> !stored.equals(model)).isPresent();
+        return modelChanged ? EmbeddedMark.MODEL_CHANGED : EmbeddedMark.TEXT_CHANGED;
     }
 
     @Override

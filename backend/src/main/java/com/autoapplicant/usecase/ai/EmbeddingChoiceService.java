@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>The desktop app is where she picks it (setup passes it in as the setup provider): that
  * choice is stored, and a change queues every posting without a vector for the new model. Every
  * other process (the scheduled crawl) follows what is stored, whatever its own env says. Env is
- * only the fallback for an install that never stored a choice, and is not written back.
+ * only the fallback for an install that never stored a choice, and is not written back. Whoever
+ * settles also queues active postings counted as embedded but without a vector for the model.
  */
 @Service
 public class EmbeddingChoiceService implements ResolveEmbeddingChoiceUseCase {
@@ -48,11 +49,15 @@ public class EmbeddingChoiceService implements ResolveEmbeddingChoiceUseCase {
     @Override
     @Transactional
     public synchronized EmbeddingChoice currentChoice() {
-        if (resolved == null) resolved = resolve();
+        if (resolved == null) {
+            resolved = settle();
+            requeueMissingVectors(resolved);
+        }
         return resolved;
     }
 
-    private EmbeddingChoice resolve() {
+    /** The setup choice, stored when it differs; otherwise the stored one, then env. */
+    private EmbeddingChoice settle() {
         Optional<EmbeddingChoice> current = stored.find();
         if (setupProvider == null || setupProvider.isBlank()) {
             return current.orElseGet(() -> choiceFor(fallbackProvider));
@@ -60,12 +65,18 @@ public class EmbeddingChoiceService implements ResolveEmbeddingChoiceUseCase {
         EmbeddingChoice chosen = choiceFor(setupProvider);
         if (!current.equals(Optional.of(chosen))) {
             stored.save(chosen);
-            int queued = jobs.requeueEmbeddingsForModel(chosen.model());
-            log.info("Embedding model is now {} ({}), was {}; {} postings queued for it",
-                    chosen.model(), chosen.provider(), current.map(EmbeddingChoice::model).orElse("unset"),
-                    queued);
+            log.info("Embedding model is now {} ({}), was {}", chosen.model(), chosen.provider(),
+                    current.map(EmbeddingChoice::model).orElse("unset"));
         }
         return chosen;
+    }
+
+    // Every process does this, not only the one that switched: a crawl that settled on the old
+    // model before a switch, on a build without the write-time check, may have marked postings
+    // embedded with old vectors only. Cheap when nothing needs it.
+    private void requeueMissingVectors(EmbeddingChoice chosen) {
+        int queued = jobs.requeueEmbeddingsForModel(chosen.model());
+        if (queued > 0) log.info("{} postings queued for embedding with {}", queued, chosen.model());
     }
 
     private EmbeddingChoice choiceFor(String provider) {

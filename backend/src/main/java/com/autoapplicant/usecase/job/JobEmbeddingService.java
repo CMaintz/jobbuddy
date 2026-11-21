@@ -7,6 +7,7 @@ import com.autoapplicant.port.in.job.EmbedJobsUseCase;
 import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.port.out.job.JobRepositoryPort.EmbeddedMark;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -68,6 +69,19 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
         return true;
     }
 
+    /** Saves the vector and marks the posting embedded if its text and the stored model still hold. */
+    private EmbeddedMark store(Job job, float[] vector) {
+        String model = embeddingProvider.embeddingModelName();
+        embeddingRepo.save(new JobEmbedding(null, job.id(), vector, model, Instant.now()));
+        EmbeddedMark mark = jobRepo.markEmbedded(job.id(), job.embeddingText(), model);
+        if (mark == EmbeddedMark.TEXT_CHANGED) {
+            // Counted as done: the newer text is already queued, and calling this a failure would
+            // fail a run over a race it lost harmlessly.
+            log.info("Embedding: job {} changed while it was embedded; re-queued", job.id());
+        }
+        return mark;
+    }
+
     private float[] embedVector(Job job) {
         String text = job.embeddingText();
         return text.isBlank() ? null : embeddingProvider.embed(text);
@@ -88,6 +102,7 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
         int succeeded = 0;
         int failed = 0;
         int gaveUp = 0;
+        boolean modelChanged = false;
 
         // Chunked rather than one-at-a-time: the embeddings endpoint takes an array and returns
         // vectors in order, so a chunk is one round trip instead of `chunkSize` of them. On a
@@ -117,13 +132,9 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
                     float[] vector = i < vectors.size() ? vectors.get(i) : null;
                     if (vector == null || vector.length == 0) vector = embedVector(job);
                     if (vector != null && vector.length > 0) {
-                        embeddingRepo.save(new JobEmbedding(null, job.id(), vector,
-                                embeddingProvider.embeddingModelName(), Instant.now()));
-                        if (!jobRepo.markEmbedded(job.id(), job.embeddingText())) {
-                            // Counted as done: the newer text is already queued, and calling
-                            // this a failure would fail a run over a race it lost harmlessly.
-                            log.info("Embedding: job {} changed while it was embedded; re-queued",
-                                    job.id());
+                        if (store(job, vector) == EmbeddedMark.MODEL_CHANGED) {
+                            modelChanged = true;
+                            break;
                         }
                         succeeded++;
                     } else {
@@ -135,6 +146,14 @@ public class JobEmbeddingService implements EmbedJobsUseCase {
                     if (jobRepo.markEmbeddingFailed(job.id(), e.getMessage(), maxAttempts)) gaveUp++;
                     failed++;
                 }
+            }
+            if (modelChanged) {
+                // Another process switched the stored model since this one settled its choice.
+                // Every vector this process makes is now the wrong model, so stop: the postings
+                // stay queued for the new model, and the drain sees no progress and ends.
+                log.warn("Embedding: the stored model is no longer {}; stopping this batch",
+                        embeddingProvider.embeddingModelName());
+                break;
             }
 
             if (start + chunkSize < total) {

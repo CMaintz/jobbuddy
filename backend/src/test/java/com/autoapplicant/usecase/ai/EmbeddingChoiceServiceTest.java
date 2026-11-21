@@ -3,7 +3,6 @@ package com.autoapplicant.usecase.ai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,13 +49,12 @@ class EmbeddingChoiceServiceTest {
     }
 
     @Test
-    void the_same_choice_again_writes_and_requeues_nothing() {
+    void the_same_choice_again_writes_nothing() {
         when(stored.find()).thenReturn(Optional.of(GEMINI));
 
         assertThat(service("gemini", "openai").currentChoice()).isEqualTo(GEMINI);
 
         verify(stored, never()).save(any());
-        verify(jobs, never()).requeueEmbeddingsForModel(anyString());
     }
 
     @Test
@@ -71,13 +69,23 @@ class EmbeddingChoiceServiceTest {
     }
 
     @Test
+    void every_process_that_settles_requeues_for_the_stored_model() {
+        // A crawl that settled on the old model before a switch may have marked postings embedded
+        // with old vectors only. Whoever starts next puts them back in the queue.
+        when(stored.find()).thenReturn(Optional.of(GEMINI));
+
+        service("", "openai").currentChoice();
+
+        verify(jobs).requeueEmbeddingsForModel(GEMINI_MODEL);
+    }
+
+    @Test
     void with_nothing_stored_env_config_is_the_fallback_and_is_not_written() {
         when(stored.find()).thenReturn(Optional.empty());
 
         assertThat(service("", "openai").currentChoice()).isEqualTo(OPENAI);
 
         verify(stored, never()).save(any());
-        verify(jobs, never()).requeueEmbeddingsForModel(anyString());
     }
 
     @Test
