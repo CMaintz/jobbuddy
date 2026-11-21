@@ -1038,7 +1038,7 @@
       }
     },
     "dim": {
-      "technical": "Tekniske færdigheder",
+      "technical": "Kompetencematch",
       "experience": "Erfaring",
       "culture": "Kulturmatch",
       "career": "Karriereretning"
@@ -1163,8 +1163,8 @@
       "applicationTextStandard": "Appens indbyggede stemme til ansøgningstekster: personlig, men professionel, med fokus på konkrete resultater, og bløde kompetencer vist gennem det, du har gjort, i stedet for i en liste. Et sikkert udgangspunkt, hvis du ikke har en klar præference.",
       "applicationTextFormField": "Til fritekstfeltet i et online ansøgningsskema. Maks. 200 ord og ingen overskrifter: hvem du er, ét konkret eksempel der beviser det, hvorfor netop denne arbejdsplads, og en rolig afslutning. Vælg den, når pladsen er trang, og du vil bevise én ting godt.",
       "applicationTextCompact": "En kompakt tekst til skemafelter (maks. 200 ord) med en fast struktur i fire trin, der slutter med en invitation til en snak. Lidt mere traditionel end prompten til formularfelter; god når skemaet spørger om både motivation og erfaring.",
-      "cvPlaintextTailoredEn": "En ældre engelsk CV-prompt i ren tekst: grupperer tekniske kompetencer i underkategorier, giver talte sprog deres egen sektion og væver bløde kompetencer ind i erfaringsteksten. Mest nyttig som reference, når du skriver din egen CV-prompt.",
-      "cvPlaintextTailoredDa": "Den danske udgave af CV-prompten i ren tekst: tekniske kompetencer grupperet i underkategorier, talte sprog i egen sektion og bløde kompetencer vist i beskrivelserne. Mest nyttig som reference, når du skriver din egen CV-prompt.",
+      "cvPlaintextTailoredEn": "En ældre engelsk CV-prompt i ren tekst: grupperer kompetencer i værktøjer, metoder og fagviden, giver talte sprog deres egen sektion og væver bløde kompetencer ind i erfaringsteksten. Mest nyttig som reference, når du skriver din egen CV-prompt.",
+      "cvPlaintextTailoredDa": "Den danske udgave af CV-prompten i ren tekst: kompetencer grupperet i værktøjer, metoder og fagviden, talte sprog i egen sektion og bløde kompetencer vist i beskrivelserne. Mest nyttig som reference, når du skriver din egen CV-prompt.",
       "cvPlaintextAngled": "En kort, generel CV-prompt i ren tekst: omprioritér efter relevans, brug opslagets nøgleord og sæt tal på, hvor fakta tillader det. Mest nyttig som et minimalt udgangspunkt for din egen CV-prompt.",
       "coverLetterDanishMarket": "Standarden for danske ansøgninger. Skrevet sådan som en dansk arbejdsgiver læser: kort, almindeligt dansk, du-form, ét gennemtænkt eksempel frem for tre nævnte, og tal kun når de står i din profil. Vælg denne, medmindre du har en grund til andet.",
       "coverLetterDanishClassic": "En mere traditionel dansk ansøgning: en fængende indledning, 2-3 erfaringer koblet til de vigtigste krav og en klar opfordring til samtale, under 350 ord. Vælg den til mere formelle arbejdsgivere, eller når du vil have en klassisk struktur.",

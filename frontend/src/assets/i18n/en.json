@@ -1038,7 +1038,7 @@
       }
     },
     "dim": {
-      "technical": "Technical skills",
+      "technical": "Skills match",
       "experience": "Experience",
       "culture": "Culture fit",
       "career": "Career alignment"
@@ -1163,8 +1163,8 @@
       "applicationTextStandard": "The app's built-in voice for application texts: personal but professional, focused on concrete results, with soft skills shown through what you did rather than listed. A safe starting point when you have no strong preference.",
       "applicationTextFormField": "For the free-text box in an online application form. Max 200 words, no headings: who you are, one concrete example that proves it, why this workplace, and a calm close. Pick it when space is tight and you want to prove one thing well.",
       "applicationTextCompact": "A compact form-field text (max 200 words) with a fixed four-step structure ending in an invitation to talk. Slightly more conventional than the form-field prompt; good when the form asks for motivation as well as experience.",
-      "cvPlaintextTailoredEn": "An older plain-text CV prompt in English: groups technical skills by subcategory, gives spoken languages their own section and weaves soft skills into the experience text. Mainly useful as a reference when writing your own CV prompt.",
-      "cvPlaintextTailoredDa": "The Danish version of the plain-text CV prompt: technical skills grouped by subcategory, spoken languages as their own section, soft skills shown in the descriptions. Mainly useful as a reference when writing your own CV prompt.",
+      "cvPlaintextTailoredEn": "An older plain-text CV prompt in English: groups skills by tools, methods and domain knowledge, gives spoken languages their own section and weaves soft skills into the experience text. Mainly useful as a reference when writing your own CV prompt.",
+      "cvPlaintextTailoredDa": "The Danish version of the plain-text CV prompt: skills grouped by tools, methods and domain knowledge, spoken languages as their own section, soft skills shown in the descriptions. Mainly useful as a reference when writing your own CV prompt.",
       "cvPlaintextAngled": "A short, general plain-text CV prompt: reorder for relevance, use the posting's keywords, quantify where the facts allow. Mainly useful as a minimal starting point for your own CV prompt.",
       "coverLetterDanishMarket": "The default for Danish cover letters. Written as a Danish employer reads: short, plain Danish, informal 'du', one example thought through instead of three mentioned, and numbers only when your profile has them. Pick this unless you have a reason not to.",
       "coverLetterDanishClassic": "A more traditional Danish cover letter: a catchy opening, 2-3 experiences mapped to the main requirements and a clear call to action, under 350 words. Pick it for more formal employers or when you want a conventional structure.",
