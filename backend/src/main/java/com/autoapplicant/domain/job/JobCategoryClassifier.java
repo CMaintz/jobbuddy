@@ -9,9 +9,9 @@ import java.util.Map;
 /**
  * Keyword-based job category classifier.
  *
- * Checks the job title first (high confidence); if no match, checks the first
- * 300 characters of the cleaned description. Returns {@link JobCategory#OTHER}
- * when nothing matches.
+ * An unambiguous GRC title wins first, then the source's own category, then keywords in the job
+ * title, then the first 300 characters of the cleaned description. Returns
+ * {@link JobCategory#OTHER} when nothing matches.
  *
  * Categories are checked in priority order so that more specific categories
  * (e.g. SOFTWARE_IT) take precedence over broader ones (e.g. MANAGEMENT).
@@ -146,7 +146,9 @@ public class JobCategoryClassifier {
         // "sikkerhed" postings are guards, and Beredskab Fyn hires firefighters.
         KEYWORDS.put(JobCategory.GRC_COMPLIANCE, List.of(
                 "informationssikkerhed", "information security officer",
-                "information security manager", "grc", "governance, risk", "nis2", "nis 2",
+                "information security manager", "information security consultant",
+                "information security director", "awareness-konsulent", "awarenesskonsulent",
+                "awareness-koordinator", "awarenesskoordinator", "iso/iec 27001", "grc", "governance, risk", "nis2", "nis 2",
                 "nis-2", "iso 27001", "iso27001", "compliance", "gdpr", "databeskyttelse",
                 "data protection", "persondata", "security awareness", "sikkerhedsawareness",
                 "cyber awareness", "risikostyring", "risk management", "risk manager",
@@ -213,8 +215,9 @@ public class JobCategoryClassifier {
     }
 
     /**
-     * Classifies a job using RSS categories as the primary signal, falling back to
-     * keyword matching on title then description if no RSS category maps to a known value.
+     * Classifies a job. An unambiguous GRC title wins outright (see {@link GrcSignals}); then the
+     * source category, when it maps to a known value; then keywords in the title, then the start
+     * of the description.
      *
      * @param rawCategories  source-supplied category strings (e.g. from RSS {@code <category>} tags)
      * @param title          job title (may be null)
@@ -222,9 +225,7 @@ public class JobCategoryClassifier {
      * @return best-matching {@link JobCategory}, never null
      */
     public JobCategory classify(List<String> rawCategories, String title, String descriptionClean) {
-        // Sources file GRC work as IT security, as "sikkerhed" next to guards, or as law, so a
-        // GRC title outranks the source category. Every other title still defers to the source.
-        if (matchIn(title == null ? "" : title.toLowerCase()) == JobCategory.GRC_COMPLIANCE) {
+        if (GrcSignals.isUnambiguousTitle(title == null ? "" : title.toLowerCase())) {
             return JobCategory.GRC_COMPLIANCE;
         }
         if (rawCategories != null) {
@@ -234,6 +235,18 @@ public class JobCategoryClassifier {
             }
         }
         return classify(title, descriptionClean);
+    }
+
+    /**
+     * Re-runs the rules on a job already stored. The source category was never persisted, so the
+     * stored category stands in for it: only an unambiguous GRC title moves a categorised job,
+     * and an uncategorised one gets the keyword classification it would get today.
+     */
+    public JobCategory reclassify(JobCategory stored, String title, String descriptionClean) {
+        if (GrcSignals.isUnambiguousTitle(title == null ? "" : title.toLowerCase())) {
+            return JobCategory.GRC_COMPLIANCE;
+        }
+        return stored == null || stored == JobCategory.OTHER ? classify(title, descriptionClean) : stored;
     }
 
     /**
@@ -250,18 +263,19 @@ public class JobCategoryClassifier {
                 ? descriptionClean.substring(0, Math.min(DESC_PREVIEW_CHARS, descriptionClean.length())).toLowerCase()
                 : "";
 
-        JobCategory byTitle = matchIn(lowerTitle);
+        JobCategory byTitle = matchIn(lowerTitle, true);
         if (byTitle != null) return byTitle;
-        JobCategory byDescription = matchIn(lowerDesc);
+        JobCategory byDescription = matchIn(lowerDesc, false);
         return byDescription != null ? byDescription : JobCategory.OTHER;
     }
 
     /** The first category, in priority order, with a keyword in this lowercased text; else null. */
-    private static JobCategory matchIn(String lowerText) {
+    private static JobCategory matchIn(String lowerText, boolean isTitle) {
         if (lowerText.isBlank()) return null;
         for (Map.Entry<JobCategory, List<String>> entry : KEYWORDS.entrySet()) {
             for (String keyword : entry.getValue()) {
-                if (lowerText.contains(keyword)) return entry.getKey();
+                if (!isTitle && GrcSignals.countsOnlyInTitle(keyword)) continue;
+                if (KeywordMatch.contains(lowerText, keyword)) return entry.getKey();
             }
         }
         return null;

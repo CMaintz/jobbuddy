@@ -36,4 +36,21 @@ class CommsGrcTaxonomyTest extends PostgresIntegrationTest {
         assertThat(canonicalizer.canonical("Beredskabsplanlægning")).isEqualTo("business continuity");
         assertThat(canonicalizer.canonical("Governance, risk and compliance")).isEqualTo("grc");
     }
+
+    @Test
+    void the_danish_abbreviation_some_means_social_media_only_when_spelled_as_such() {
+        // Enrichment returns posting skills as written, and Danish postings write "SoMe". The
+        // lowercase word is ordinary English and must stay unknown.
+        assertThat(canonicalizer.canonical("SoMe")).isEqualTo("social media");
+        assertThat(canonicalizer.canonical("some")).isEqualTo("some");
+    }
+
+    @Test
+    void the_dora_regulation_is_not_found_by_an_engineers_dora_metrics() {
+        // Every surface form is searched as a whole token in a CV. A bare "dora" form would let
+        // "DORA metrics" (deployment frequency, lead time) satisfy the EU regulation.
+        assertThat(canonicalizer.surfaceForms("Digital Operational Resilience Act"))
+                .map(String::toLowerCase)
+                .doesNotContain("dora");
+    }
 }

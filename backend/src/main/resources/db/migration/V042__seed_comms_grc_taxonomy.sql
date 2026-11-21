@@ -9,9 +9,11 @@
 --
 -- Deliberately not aliased:
 --   * "SoMe": lowercased it is the English word "some", so every English CV would count as
---     covering a social media requirement. "sociale medier" and "some-marketing" carry it instead.
+--     covering a social media requirement. SkillCanonicalizer maps the exact label "SoMe" instead.
 --   * "PR": a developer's CV says "PR" for pull requests. "presse" and "pressearbejde" carry it.
 --   * bare "beredskab": Beredskab Fyn and the other fire services use it for firefighting.
+--   * bare "DORA": engineers write "DORA metrics" for delivery performance, so the regulation is
+--     only known by its full name and "DORA-forordningen".
 
 INSERT INTO skill_taxonomy (name, normalized_name, category, aliases) VALUES
   -- Communications
@@ -37,8 +39,16 @@ INSERT INTO skill_taxonomy (name, normalized_name, category, aliases) VALUES
   ('Data Protection', 'data protection', 'Domain', '{databeskyttelse,persondatabeskyttelse}'),
   ('Business Continuity', 'business continuity', 'Domain', '{beredskabsplanlægning,kriseberedskab,it-beredskab}'),
   ('ISO 27002', 'iso 27002', 'Domain', '{}'),
-  ('DORA', 'dora', 'Domain', '{digital operational resilience act}'),
+  ('Digital Operational Resilience Act', 'digital operational resilience act', 'Domain', '{dora-forordningen}'),
   ('CIS Controls', 'cis controls', 'Domain', '{}'),
   ('Risk Management', 'risk management', 'Methodology', '{risikostyring}'),
   ('Risk Assessment', 'risk assessment', 'Methodology', '{risikovurdering,risikoanalyse}')
 ON CONFLICT (name) DO NOTHING;
+
+-- Which classifier rules version has been applied to stored jobs. JobCategoryBackfill claims a
+-- version by inserting it, reclassifies the active jobs in the same transaction, and skips any
+-- version already present. The source category is never stored, so this cannot be done in SQL.
+CREATE TABLE job_category_backfill (
+    rules_version integer PRIMARY KEY,
+    applied_at timestamp with time zone DEFAULT now() NOT NULL
+);
