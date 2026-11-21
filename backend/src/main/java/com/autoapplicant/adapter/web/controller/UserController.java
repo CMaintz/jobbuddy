@@ -3,13 +3,13 @@ package com.autoapplicant.adapter.web.controller;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.UserPreferences;
-import java.util.List;
-import java.util.Map;
 import com.autoapplicant.port.in.user.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,7 +61,7 @@ public class UserController {
                 .orElse(new UserPreferences(null, userId,
                         List.of(), List.of(), List.of(), List.of(), List.of(),
                         List.of(), List.of(), List.of(), List.of(), null, null, null,
-                        false, "DAILY", null, null, null)));
+                        false, "DAILY", null, null, null, List.of(), null)));
     }
 
     @Operation(summary = "Update current user preferences")

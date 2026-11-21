@@ -234,6 +234,12 @@ public class MatchingService implements GetRecommendationsUseCase {
             }
         }
 
+        // Categories she never wants to see are out, whatever else matches.
+        if (job.jobCategory() != null
+                && prefs.excludedCategoriesOrEmpty().contains(job.jobCategory().name())) {
+            return false;
+        }
+
         // Industry hard constraint — jobs with null/OTHER category are never filtered out
         if (notEmpty(prefs.preferredIndustries())
                 && job.jobCategory() != null

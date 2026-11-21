@@ -29,18 +29,64 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
 
     /**
      * The enrichment queue: never-attempted jobs first, then the ones tried longest ago,
-     * skipping any that have been given up on or retried too recently.
+     * skipping any that have been given up on or retried too recently. Only postings a user
+     * could still act on: live, not past their deadline, not ignored, applied to or closed by
+     * every user (SAVED and PREPARING are leads still being worked on, so they stay in), not in
+     * a category everyone skips, and within one of the areas. "Every user" is every user with
+     * saved preferences, or every user when none has saved any, the same rule as the skip list:
+     * one user's ignore must not take a posting away from another. A posting with no known place,
+     * or a remote or hybrid one (empty places), is always in, and so is one she chose herself
+     * (saved, being prepared, or added by hand). A posting not placed yet (NULL) waits until
+     * it is, rather than passing as "anywhere" while a backlog is placed slice by slice.
+     *
+     * <p>Native for the distance test over the place arrays. The areas arrive as three parallel
+     * array literals ({@code "{lat,...}"}); {@code anywhere} switches the area test off.
      */
-    @Query("""
-            SELECT j FROM JobEntity j
-            WHERE j.enrichmentStatus = 'PENDING'
-              AND j.enrichmentAttempts < :maxAttempts
-              AND (j.enrichmentLastAttemptAt IS NULL OR j.enrichmentLastAttemptAt < :retryBefore)
-            ORDER BY j.enrichmentLastAttemptAt ASC NULLS FIRST, j.createdAt ASC
-            """)
+    @Query(value = """
+            SELECT j.* FROM jobs j
+            WHERE j.enrichment_status = 'PENDING'
+              AND j.enrichment_attempts < :maxAttempts
+              AND (j.enrichment_last_attempt_at IS NULL OR j.enrichment_last_attempt_at < :retryBefore)
+              AND j.is_active = true
+              AND (j.application_deadline IS NULL OR j.application_deadline >= :today)
+              AND (NOT EXISTS (SELECT 1 FROM users) OR EXISTS (
+                    SELECT 1 FROM users u
+                    WHERE (u.id IN (SELECT p.user_id FROM preferences p)
+                           OR NOT EXISTS (SELECT 1 FROM preferences))
+                      AND NOT EXISTS (SELECT 1 FROM ignored_jobs i
+                                      WHERE i.job_id = j.id AND i.user_id = u.id)
+                      AND NOT EXISTS (SELECT 1 FROM applications a
+                                      WHERE a.job_id = j.id AND a.user_id = u.id
+                                        AND a.status NOT IN ('SAVED', 'PREPARING'))))
+              AND (j.job_category IS NULL OR j.job_category NOT IN (:excludedCategories))
+              AND (:anywhere OR cardinality(j.place_lats) = 0 OR j.source = 'MANUAL'
+                   OR EXISTS (SELECT 1 FROM applications s
+                              WHERE s.job_id = j.id AND s.status IN ('SAVED', 'PREPARING'))
+                   OR EXISTS (
+                    SELECT 1
+                    FROM unnest(j.place_lats, j.place_lons) AS p(lat, lon),
+                         unnest(CAST(:areaLats AS double precision[]), CAST(:areaLons AS double precision[]),
+                                CAST(:areaKms AS double precision[])) AS h(lat, lon, km)
+                    WHERE 2 * 6371 * asin(sqrt(
+                            power(sin(radians(p.lat - h.lat) / 2), 2)
+                            + cos(radians(h.lat)) * cos(radians(p.lat))
+                              * power(sin(radians(p.lon - h.lon) / 2), 2))) <= h.km))
+            ORDER BY j.enrichment_last_attempt_at ASC NULLS FIRST, j.created_at ASC
+            LIMIT :limit
+            """, nativeQuery = true)
     List<JobEntity> findForEnrichment(@Param("maxAttempts") int maxAttempts,
                                       @Param("retryBefore") Instant retryBefore,
-                                      Pageable pageable);
+                                      @Param("today") java.time.LocalDate today,
+                                      @Param("excludedCategories") java.util.Collection<String> excludedCategories,
+                                      @Param("anywhere") boolean anywhere,
+                                      @Param("areaLats") String areaLats,
+                                      @Param("areaLons") String areaLons,
+                                      @Param("areaKms") String areaKms,
+                                      @Param("limit") int limit);
+
+    /** Pending postings whose location has not been placed on the map yet. */
+    @Query("SELECT j FROM JobEntity j WHERE j.enrichmentStatus = 'PENDING' AND j.placeLats IS NULL")
+    List<JobEntity> findUnplacedPending(Pageable pageable);
 
     @Query("SELECT j.enrichmentStatus, count(j) FROM JobEntity j GROUP BY j.enrichmentStatus")
     List<Object[]> countByEnrichmentStatus();
@@ -51,13 +97,17 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
      * The page query and the count share it, so the total always matches what the pages hold.
      */
     String ACTIVE_NOT_IGNORED = " FROM JobEntity j WHERE j.isActive = true AND NOT EXISTS ("
-            + "SELECT 1 FROM IgnoredJobEntity i WHERE i.userId = :userId AND i.jobId = j.id)";
+            + "SELECT 1 FROM IgnoredJobEntity i WHERE i.userId = :userId AND i.jobId = j.id)"
+            + " AND (j.jobCategory IS NULL OR j.jobCategory NOT IN :excludedCategories)";
 
     @Query("SELECT j" + ACTIVE_NOT_IGNORED + " ORDER BY j.postedAt DESC")
-    List<JobEntity> findActiveNotIgnoredBy(@Param("userId") UUID userId, Pageable pageable);
+    List<JobEntity> findActiveNotIgnoredBy(@Param("userId") UUID userId,
+                                           @Param("excludedCategories") java.util.Collection<String> excludedCategories,
+                                           Pageable pageable);
 
     @Query("SELECT count(j)" + ACTIVE_NOT_IGNORED)
-    long countActiveNotIgnoredBy(@Param("userId") UUID userId);
+    long countActiveNotIgnoredBy(@Param("userId") UUID userId,
+                                 @Param("excludedCategories") java.util.Collection<String> excludedCategories);
 
     long countByIsActiveTrue();
 
@@ -80,11 +130,14 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     /**
      * The embedding queue: postings without a vector, never-attempted first. With
      * {@code requireEnriched} only enriched ones, because enrichment trims boilerplate from the
-     * text; without it, a run that never enriches can still embed what ingest stored.
+     * text; without it, a run that never enriches can still embed what ingest stored. Live,
+     * not-yet-expired postings only: no search returns the others.
      */
     @Query("""
             SELECT j FROM JobEntity j
             WHERE j.embeddingStatus = 'PENDING'
+              AND j.isActive = true
+              AND (j.applicationDeadline IS NULL OR j.applicationDeadline >= :today)
               AND (:requireEnriched = false OR j.enrichmentStatus = 'ENRICHED')
               AND j.embeddingAttempts < :maxAttempts
               AND (j.embeddingLastAttemptAt IS NULL OR j.embeddingLastAttemptAt < :retryBefore)
@@ -93,6 +146,7 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     List<JobEntity> findForEmbedding(@Param("maxAttempts") int maxAttempts,
                                      @Param("retryBefore") Instant retryBefore,
                                      @Param("requireEnriched") boolean requireEnriched,
+                                     @Param("today") java.time.LocalDate today,
                                      Pageable pageable);
 
     @Query("SELECT j.embeddingStatus, COUNT(j) FROM JobEntity j GROUP BY j.embeddingStatus")

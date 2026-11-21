@@ -5,16 +5,15 @@ import com.autoapplicant.port.in.job.SemanticSearchJobsUseCase;
 import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 /**
  * "Search by meaning": embeds the query and ranks jobs by vector distance,
@@ -28,19 +27,23 @@ public class SemanticJobSearchService implements SemanticSearchJobsUseCase {
     private final AiProviderPort aiProvider;
     private final JobEmbeddingRepositoryPort embeddingRepo;
     private final JobRepositoryPort jobRepo;
+    private final com.autoapplicant.port.out.user.PreferencesRepositoryPort prefsRepo;
 
     public SemanticJobSearchService(@Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
                                     JobEmbeddingRepositoryPort embeddingRepo,
-                                    JobRepositoryPort jobRepo) {
+                                    JobRepositoryPort jobRepo,
+                                    com.autoapplicant.port.out.user.PreferencesRepositoryPort prefsRepo) {
+        this.prefsRepo = prefsRepo;
         this.aiProvider = aiProvider;
         this.embeddingRepo = embeddingRepo;
         this.jobRepo = jobRepo;
     }
 
     @Override
-    public List<Job> semanticSearch(String query, int limit) {
+    public List<Job> semanticSearch(UUID userId, String query, int limit) {
         if (query == null || query.isBlank()) return List.of();
         try {
+            List<String> skipped = SkippedCategories.of(prefsRepo, userId);
             float[] vector = aiProvider.embed(query.trim());
             // Over-fetch to survive inactive hits without a second query
             List<UUID> nearestIds = embeddingRepo.findNearestNeighborJobIds(vector, limit * 2);
@@ -52,6 +55,7 @@ public class SemanticJobSearchService implements SemanticSearchJobsUseCase {
             return nearestIds.stream()
                     .map(byId::get)
                     .filter(job -> job != null && job.isActive())
+                    .filter(job -> job.jobCategory() == null || !skipped.contains(job.jobCategory().name()))
                     .limit(limit)
                     .toList();
         } catch (Exception e) {

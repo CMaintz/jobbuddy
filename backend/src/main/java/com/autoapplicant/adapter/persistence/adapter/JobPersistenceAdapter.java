@@ -3,7 +3,9 @@ package com.autoapplicant.adapter.persistence.adapter;
 import com.autoapplicant.adapter.persistence.entity.JobEntity;
 import com.autoapplicant.adapter.persistence.mapper.JobMapper;
 import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
+import com.autoapplicant.domain.job.DanishPlaces;
 import com.autoapplicant.domain.job.EnrichmentStatus;
+import com.autoapplicant.domain.job.GeoArea;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -19,6 +21,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
+
+    private static final String NO_CATEGORY = "-";
+    /** Postings placed per sweep; a backlog of thousands is placed over a few sweeps. */
+    private static final int PLACE_BACKFILL_SLICE = 2000;
 
     /**
      * Ceiling on postings pulled for the company-hiring aggregate. Generous for a personal-scale
@@ -84,6 +90,7 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public Job save(Job job) {
         JobEntity entity = JobMapper.toEntity(job);
+        entity.setPlaces(DanishPlaces.shared().placesOfPosting(job.location(), job.title(), job.descriptionClean()));
         // URL-check state and the content fingerprint live only on the entity; carry them
         // over so crawl/enrichment re-saves don't reset them. The duplicate group is on the
         // domain but only the dedup pass sets it — preserve an existing group when the
@@ -148,8 +155,9 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size) {
-        return repo.findActiveNotIgnoredBy(userId, PageRequest.of(page, size))
+    public List<Job> findActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories,
+                                            int page, int size) {
+        return repo.findActiveNotIgnoredBy(userId, notInList(excludedCategories), PageRequest.of(page, size))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -249,9 +257,33 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore) {
-        return repo.findForEnrichment(maxAttempts, retryBefore, PageRequest.of(0, limit))
+    @org.springframework.transaction.annotation.Transactional
+    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore,
+                                       com.autoapplicant.domain.job.EnrichmentScope scope) {
+        placeUnplacedPendingPostings();
+        List<GeoArea> areas = scope.areas();
+        return repo.findForEnrichment(maxAttempts, retryBefore, java.time.LocalDate.now(),
+                        notInList(scope.excludedCategories()), areas.isEmpty(),
+                        sqlArray(areas, a -> a.centre().lat()), sqlArray(areas, a -> a.centre().lon()),
+                        sqlArray(areas, a -> (double) a.radiusKm()), limit)
                 .stream().map(JobMapper::toDomain).toList();
+    }
+
+    /**
+     * Postings saved before places were resolved (or written straight to the table) are placed
+     * here, a slice per sweep, so the area filter sees them rather than letting them all through.
+     */
+    private void placeUnplacedPendingPostings() {
+        DanishPlaces places = DanishPlaces.shared();
+        for (JobEntity unplaced : repo.findUnplacedPending(PageRequest.of(0, PLACE_BACKFILL_SLICE))) {
+            unplaced.setPlaces(places.placesOfPosting(
+                    unplaced.getLocation(), unplaced.getTitle(), unplaced.getDescriptionClean()));
+        }
+    }
+
+    private static String sqlArray(List<GeoArea> areas, java.util.function.ToDoubleFunction<GeoArea> value) {
+        return areas.stream().map(a -> Double.toString(value.applyAsDouble(a)))
+                .collect(Collectors.joining(",", "{", "}"));
     }
 
     @Override
@@ -296,7 +328,8 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore,
                                       boolean requireEnriched) {
-        return repo.findForEmbedding(maxAttempts, retryBefore, requireEnriched, PageRequest.of(0, limit))
+        return repo.findForEmbedding(maxAttempts, retryBefore, requireEnriched,
+                        java.time.LocalDate.now(), PageRequest.of(0, limit))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -344,7 +377,15 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public long countActiveNotIgnoredBy(UUID userId) {
-        return repo.countActiveNotIgnoredBy(userId);
+    public long countActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories) {
+        return repo.countActiveNotIgnoredBy(userId, notInList(excludedCategories));
+    }
+
+    /**
+     * A NOT IN list that is never empty: an empty list renders as NOT IN (), which Postgres
+     * rejects. The placeholder matches no category, so it excludes nothing.
+     */
+    private static java.util.Collection<String> notInList(java.util.Collection<String> categories) {
+        return categories == null || categories.isEmpty() ? List.of(NO_CATEGORY) : categories;
     }
 }

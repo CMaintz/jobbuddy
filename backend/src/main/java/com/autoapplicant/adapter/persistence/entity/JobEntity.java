@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.persistence.entity;
 
+import io.hypersistence.utils.hibernate.type.array.DoubleArrayType;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
@@ -83,6 +84,19 @@ public class JobEntity {
     private String remoteType;
 
     private String location;
+
+    /**
+     * The places {@link #location} names, from DanishPlaces, as parallel arrays so SQL can
+     * measure distance. NULL is not resolved yet; empty is anywhere (remote, hybrid, unknown).
+     */
+    @Type(DoubleArrayType.class)
+    @Column(name = "place_lats", columnDefinition = "double precision[]")
+    private double[] placeLats;
+
+    @Type(DoubleArrayType.class)
+    @Column(name = "place_lons", columnDefinition = "double precision[]")
+    private double[] placeLons;
+
     private String municipality;
     private String region;
     private String country;
@@ -297,4 +311,13 @@ public class JobEntity {
     public void setUrlCheckFailures(int urlCheckFailures) { this.urlCheckFailures = urlCheckFailures; }
     public Long getContentFingerprint() { return contentFingerprint; }
     public void setContentFingerprint(Long contentFingerprint) { this.contentFingerprint = contentFingerprint; }
+
+    public double[] getPlaceLats() { return placeLats; }
+    public double[] getPlaceLons() { return placeLons; }
+
+    /** Places this posting at {@code points}; empty means it can be anywhere. */
+    public void setPlaces(List<com.autoapplicant.domain.job.GeoPoint> points) {
+        this.placeLats = points.stream().mapToDouble(com.autoapplicant.domain.job.GeoPoint::lat).toArray();
+        this.placeLons = points.stream().mapToDouble(com.autoapplicant.domain.job.GeoPoint::lon).toArray();
+    }
 }

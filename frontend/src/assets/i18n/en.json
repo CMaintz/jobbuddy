@@ -1639,7 +1639,13 @@
       "management": "Management",
       "creativeMedia": "Creative & Media",
       "grcCompliance": "GRC, compliance & information security",
-      "legal": "Legal"
+      "legal": "Legal",
+      "sales": "Sales",
+      "hr": "HR",
+      "operationsLogistics": "Operations & logistics",
+      "customerService": "Customer service",
+      "healthcare": "Healthcare",
+      "education": "Education"
     },
     "docType": {
       "coverLetter": "Cover letter",
@@ -1663,6 +1669,13 @@
       "avoidPlaceholder": "e.g. on-call, gambling…",
       "industries": "Industries",
       "industriesDesc": "We prioritise roles in these sectors. Nothing selected = everything.",
+      "area": "Where should we look for jobs?",
+      "areaDesc": "We only prepare jobs within this distance of your home. Remote jobs and jobs with no known address are always included. 85 km is about an hour's drive.",
+      "areaHome": "Home (postcode or town)",
+      "areaHomePlaceholder": "e.g. 8260 Viby J",
+      "areaRadius": "Distance in km",
+      "excluded": "Categories I don't want to see",
+      "excludedDesc": "Jobs in these categories stay out of your feed and your matches, and we don't spend time preparing them. Nothing selected = show everything.",
       "seniority": "Seniority",
       "seniorityDesc": "The level you want surfaced",
       "remote": "Open to remote",

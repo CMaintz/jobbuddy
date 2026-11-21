@@ -7,7 +7,10 @@ import static org.mockito.Mockito.when;
 import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
+import com.autoapplicant.usecase.job.BatchedEnrichment;
 import com.autoapplicant.usecase.job.EnrichmentSweepService;
+import com.autoapplicant.usecase.job.EnrichmentSweepSettings;
 import com.autoapplicant.usecase.job.JobEnrichmentService;
 import jakarta.persistence.EntityManager;
 import java.sql.Timestamp;
@@ -58,8 +61,9 @@ class EnrichmentWriteBackTest extends PostgresIntegrationTest {
             meanwhile.run();
             return CompletableFuture.completedFuture(enrichment.apply(read));
         });
-        new EnrichmentSweepService(jobsAdapter, enrichJob, 4, Duration.ofHours(6),
-                Duration.ofMinutes(1), 0, 1).sweep(10);
+        new EnrichmentSweepService(jobsAdapter, enrichJob, Mockito.mock(BatchedEnrichment.class),
+                Mockito.mock(PreferencesRepositoryPort.class),
+                new EnrichmentSweepSettings(4, Duration.ofHours(6), Duration.ofMinutes(1), 0, 1, 1)).sweep(10);
         entityManager.flush();
         entityManager.clear();
     }

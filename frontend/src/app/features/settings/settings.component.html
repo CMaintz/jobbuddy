@@ -95,6 +95,43 @@
               </div>
             </div>
 
+            <!-- Area enrichment looks in -->
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">{{ 'settings.match.area' | translate }}</div>
+              <div class="text-xs text-jb-text-dim mb-2.5">{{ 'settings.match.areaDesc' | translate }}</div>
+              <div class="flex flex-wrap items-center gap-3">
+                <label class="flex flex-col gap-1 text-xs text-jb-text-dim">
+                  {{ 'settings.match.areaHome' | translate }}
+                  <input type="text" [(ngModel)]="areaHome" (ngModelChange)="markDirty()" class="input"
+                    [placeholder]="'settings.match.areaHomePlaceholder' | translate" />
+                </label>
+                <label class="flex flex-col gap-1 text-xs text-jb-text-dim">
+                  {{ 'settings.match.areaRadius' | translate }}
+                  <input type="number" min="5" max="400" [(ngModel)]="areaRadiusKm" (ngModelChange)="markDirty()"
+                    class="input w-[110px]" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Categories she never wants to see -->
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">{{ 'settings.match.excluded' | translate }}</div>
+              <div class="text-xs text-jb-text-dim mb-2.5">{{ 'settings.match.excludedDesc' | translate }}</div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (cat of categoryOptions; track cat.key) {
+                  <button (click)="toggleExcludedCategory(cat.key)"
+                    class="p-[5px_11px] rounded-full cursor-pointer text-sm font-medium inline-flex items-center gap-[5px]"
+                    [attr.aria-pressed]="excludedCategories.has(cat.key)"
+                    [style.background]="excludedCategories.has(cat.key) ? 'var(--jb-accent-soft)' : 'var(--jb-surface-2)'"
+                    [style.border]="'1px solid ' + (excludedCategories.has(cat.key) ? 'var(--jb-accent-border)' : 'var(--jb-border)')"
+                    [style.color]="excludedCategories.has(cat.key) ? 'var(--jb-accent-2)' : 'var(--jb-text-mid)'">
+                    @if (excludedCategories.has(cat.key)) { <jb-icon name="x" [size]="9" [strokeWidth]="3" /> }
+                    {{ cat.label | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+
             <!-- Seniority -->
             <div class="flex items-center gap-4 py-3 border-b border-jb-border-faint">
               <div class="flex-1">

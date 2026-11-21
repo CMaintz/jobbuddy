@@ -51,7 +51,7 @@ class DueReminderDigestServiceTest {
     private static UserPreferences prefs(UUID userId) {
         return new UserPreferences(UUID.randomUUID(), userId, List.of(), List.of(), List.of(),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null, null, null,
-                true, "DAILY", null, null, null);
+                true, "DAILY", null, null, null, List.of(), null);
     }
 
     @BeforeEach
