@@ -29,17 +29,25 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
 
     /**
      * The enrichment queue: never-attempted jobs first, then the ones tried longest ago,
-     * skipping any that have been given up on or retried too recently.
+     * skipping any that have been given up on or retried too recently. Only postings a user
+     * could still act on: live, not past their deadline, not ignored, and not already applied
+     * to or closed. SAVED and PREPARING are leads still being worked on, so they stay in.
      */
     @Query("""
             SELECT j FROM JobEntity j
             WHERE j.enrichmentStatus = 'PENDING'
               AND j.enrichmentAttempts < :maxAttempts
               AND (j.enrichmentLastAttemptAt IS NULL OR j.enrichmentLastAttemptAt < :retryBefore)
+              AND j.isActive = true
+              AND (j.applicationDeadline IS NULL OR j.applicationDeadline >= :today)
+              AND NOT EXISTS (SELECT 1 FROM IgnoredJobEntity i WHERE i.jobId = j.id)
+              AND NOT EXISTS (SELECT 1 FROM ApplicationEntity a
+                              WHERE a.jobId = j.id AND a.status NOT IN ('SAVED', 'PREPARING'))
             ORDER BY j.enrichmentLastAttemptAt ASC NULLS FIRST, j.createdAt ASC
             """)
     List<JobEntity> findForEnrichment(@Param("maxAttempts") int maxAttempts,
                                       @Param("retryBefore") Instant retryBefore,
+                                      @Param("today") java.time.LocalDate today,
                                       Pageable pageable);
 
     @Query("SELECT j.enrichmentStatus, count(j) FROM JobEntity j GROUP BY j.enrichmentStatus")
@@ -80,11 +88,14 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     /**
      * The embedding queue: postings without a vector, never-attempted first. With
      * {@code requireEnriched} only enriched ones, because enrichment trims boilerplate from the
-     * text; without it, a run that never enriches can still embed what ingest stored.
+     * text; without it, a run that never enriches can still embed what ingest stored. Live,
+     * not-yet-expired postings only: no search returns the others.
      */
     @Query("""
             SELECT j FROM JobEntity j
             WHERE j.embeddingStatus = 'PENDING'
+              AND j.isActive = true
+              AND (j.applicationDeadline IS NULL OR j.applicationDeadline >= :today)
               AND (:requireEnriched = false OR j.enrichmentStatus = 'ENRICHED')
               AND j.embeddingAttempts < :maxAttempts
               AND (j.embeddingLastAttemptAt IS NULL OR j.embeddingLastAttemptAt < :retryBefore)
@@ -93,6 +104,7 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
     List<JobEntity> findForEmbedding(@Param("maxAttempts") int maxAttempts,
                                      @Param("retryBefore") Instant retryBefore,
                                      @Param("requireEnriched") boolean requireEnriched,
+                                     @Param("today") java.time.LocalDate today,
                                      Pageable pageable);
 
     @Query("SELECT j.embeddingStatus, COUNT(j) FROM JobEntity j GROUP BY j.embeddingStatus")

@@ -265,7 +265,8 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
 
     @Override
     public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore) {
-        return repo.findForEnrichment(maxAttempts, retryBefore, PageRequest.of(0, limit))
+        return repo.findForEnrichment(maxAttempts, retryBefore, java.time.LocalDate.now(),
+                        PageRequest.of(0, limit))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -311,7 +312,8 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore,
                                       boolean requireEnriched) {
-        return repo.findForEmbedding(maxAttempts, retryBefore, requireEnriched, PageRequest.of(0, limit))
+        return repo.findForEmbedding(maxAttempts, retryBefore, requireEnriched,
+                        java.time.LocalDate.now(), PageRequest.of(0, limit))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
