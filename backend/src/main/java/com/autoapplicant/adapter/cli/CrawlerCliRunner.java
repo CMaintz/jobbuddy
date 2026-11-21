@@ -6,6 +6,7 @@ import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
@@ -36,11 +37,14 @@ public class CrawlerCliRunner implements OneShotCommand {
 
     private final TriggerCrawlUseCase triggerCrawl;
     private final QueueDrainer drainer;
+    private final boolean enrichmentEnabled;
     private int exitCode;
 
-    public CrawlerCliRunner(TriggerCrawlUseCase triggerCrawl, QueueDrainer drainer) {
+    public CrawlerCliRunner(TriggerCrawlUseCase triggerCrawl, QueueDrainer drainer,
+                            @Value("${app.enrichment.sweep.enabled:true}") boolean enrichmentEnabled) {
         this.triggerCrawl = triggerCrawl;
         this.drainer = drainer;
+        this.enrichmentEnabled = enrichmentEnabled;
     }
 
     @Override
@@ -54,8 +58,15 @@ public class CrawlerCliRunner implements OneShotCommand {
         banner("Crawl complete" + (source != null ? " [" + source + "]" : " [all sources]"));
 
         // The scheduled worker never gets a turn in CLI mode, because the process exits. Draining
-        // here is what makes "the command finished" mean "the postings are usable".
-        boolean embedded = drainer.drainAll();
+        // here is what makes "the command finished" mean "the postings are usable". Enrichment
+        // follows the worker's flag: a run with it off leaves postings PENDING, without spending
+        // their attempts, for a process that has a chat provider to enrich them.
+        if (enrichmentEnabled) {
+            drainer.drainEnrichment(Integer.MAX_VALUE);
+        } else {
+            log.info("Enrichment is off (app.enrichment.sweep.enabled=false); embedding only");
+        }
+        boolean embedded = drainer.drainEmbedding();
 
         if (report.anyFailed()) {
             log.error("Crawl failed for {}; see crawler_state.last_error and the log above",
@@ -67,7 +78,8 @@ public class CrawlerCliRunner implements OneShotCommand {
                       + "and its key before the attempts run out");
             exitCode = 1;
         }
-        banner("Done: postings are crawled, enriched and embedded");
+        banner(enrichmentEnabled ? "Done: postings are crawled, enriched and embedded"
+                : "Done: postings are crawled and embedded (not enriched)");
     }
 
     private CrawlRunReport crawl(String source, boolean force) {

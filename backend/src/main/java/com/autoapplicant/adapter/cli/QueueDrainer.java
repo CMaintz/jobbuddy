@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
  * Empties the enrichment and embedding queues, for the one-shot CLI commands.
  *
  * <p>The scheduled worker never gets a turn in a process that exits when its command finishes,
- * so a CLI run has to drain the queues itself. Shared by the crawl and sweep runners because
- * both need the same thing afterwards: a posting is only usable once it is enriched AND
- * embedded, and a command that leaves half of that undone has not really finished.
+ * so a CLI run has to drain the queues itself. Shared by the crawl and sweep runners. A posting
+ * is searchable once it is embedded; enrichment adds the summary, skills and requirements, and
+ * a crawl run that has no chat provider leaves it to a process that does.
  */
 @Component
 public class QueueDrainer {
@@ -29,16 +29,6 @@ public class QueueDrainer {
     public QueueDrainer(SweepUnenrichedJobsUseCase enrichmentSweep, EmbedJobsUseCase embedJobs) {
         this.enrichmentSweep = enrichmentSweep;
         this.embedJobs = embedJobs;
-    }
-
-    /**
-     * Enriches until the queue is empty, then embeds until that queue is empty.
-     *
-     * @return the result of {@link #drainEmbedding()}
-     */
-    public boolean drainAll() {
-        drainEnrichment(Integer.MAX_VALUE);
-        return drainEmbedding();
     }
 
     /**

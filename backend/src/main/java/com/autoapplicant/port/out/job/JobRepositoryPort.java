@@ -39,11 +39,21 @@ public interface JobRepositoryPort {
     boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts);
 
     // ── Embedding queue (same shape as enrichment: state on the job, vectors elsewhere) ──
-    /** Postings enriched but not yet embedded, never-attempted first. */
-    List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore);
+    /**
+     * Postings not yet embedded, never-attempted first.
+     *
+     * @param requireEnriched true to wait for enrichment to trim the text first; false to
+     *     embed what ingest stored, for a run that does not enrich
+     */
+    List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore,
+                               boolean requireEnriched);
 
-    /** A vector was stored; stop asking about this one. */
-    void markEmbedded(UUID jobId);
+    /**
+     * A vector was stored for {@code embeddedText}; stop asking about this one. Does nothing
+     * and returns false when the posting's text has changed since it was read, because that
+     * save re-queued it and the stored vector is already stale.
+     */
+    boolean markEmbedded(UUID jobId, String embeddedText);
 
     /** Returns true when this was the attempt that gave up on the posting. */
     boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts);

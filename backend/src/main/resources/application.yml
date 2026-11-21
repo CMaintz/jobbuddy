@@ -173,6 +173,10 @@ app:
   # mode: extraction can succeed while embedding never runs, leaving a posting that looks
   # complete and is invisible to search and matching.
   embedding:
+    # true: embed a posting only once enrichment has trimmed its text. false: embed the text
+    # ingest stored, for a crawl that does not enrich (the scheduled crawl); a later enrichment
+    # that changes the text re-queues the posting for embedding.
+    require-enriched: ${EMBEDDING_REQUIRE_ENRICHED:true}
     sweep:
       enabled: ${EMBEDDING_SWEEP_ENABLED:true}
       interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:60000}
