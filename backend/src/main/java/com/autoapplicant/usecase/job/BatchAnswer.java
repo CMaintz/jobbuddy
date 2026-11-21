@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +57,6 @@ final class BatchAnswer {
     }
 
     /** The answer's items; empty when it does not parse or holds no postings list. */
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> items(String answer) {
         try {
             Map<String, Object> root = json.readValue(
@@ -67,7 +67,9 @@ final class BatchAnswer {
             List<Map<String, Object>> items = new ArrayList<>();
             for (Object entry : list) {
                 if (entry instanceof Map<?, ?> map) {
-                    items.add((Map<String, Object>) map);
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    map.forEach((key, value) -> item.put(String.valueOf(key), value));
+                    items.add(item);
                 }
             }
             return items;
