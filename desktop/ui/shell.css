@@ -30,6 +30,7 @@ ul.checks .mark { font-weight: 700; }
 ul.checks .ok .mark { color: var(--ok); }
 ul.checks .bad .mark { color: var(--bad); }
 ul.checks .fix { grid-column: 2; color: var(--muted); user-select: text; }
+p.hint { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
 label { display: block; margin: 12px 0 4px; font-weight: 600; }
 label small { font-weight: 400; color: var(--muted); }
 input, select {
