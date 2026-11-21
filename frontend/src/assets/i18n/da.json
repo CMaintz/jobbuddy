@@ -285,6 +285,16 @@
       }
     }
   },
+  "pageBudget": {
+    "letter": {
+      "over": "Ansøgningen fylder {{pages}} sider. Den bør holdes på 1 side.",
+      "shorten": "Skær gentagelser og det mindst relevante for stillingen væk, og eksportér igen."
+    },
+    "cv": {
+      "over": "CV'et fylder {{pages}} sider. Det bør højst fylde 2 sider.",
+      "shorten": "Skær ældre eller mindre relevante erfaringer ned, og eksportér igen."
+    }
+  },
   "resumeBuilder": {
     "wizardStep": "Trin 2 af 4 — Gennemse og rediger dit tilpassede CV",
     "continueCover": "Fortsæt til følgebrev",
