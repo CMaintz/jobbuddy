@@ -2,10 +2,10 @@
 # user. Security is SecurityConfig.desktopFilterChain (no Firebase); see README "Desktop profile".
 
 server:
-  # Only this PC can connect. DesktopTokenFilter checks the peer address as well, in case this is
-  # ever overridden.
+  # Only this PC can connect, and the peer address DesktopTokenFilter checks is the socket's,
+  # never one a client claims in X-Forwarded-For. Env vars could override both, so
+  # DesktopServerGuard refuses to start unless they still hold.
   address: 127.0.0.1
-  # The peer address must be the socket's, never one a client claims in X-Forwarded-For.
   forward-headers-strategy: none
 
 app:

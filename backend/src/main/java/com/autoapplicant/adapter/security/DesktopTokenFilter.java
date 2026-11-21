@@ -43,8 +43,8 @@ public class DesktopTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // The socket peer, never a forwarded header: the desktop profile turns forwarded-header
-    // handling off, so a remote client cannot claim to be local.
+    // The remote address is the socket peer only while forwarded-header handling is off;
+    // DesktopServerGuard refuses to start otherwise, so a remote client cannot claim to be local.
     private static boolean fromLoopback(HttpServletRequest request) {
         try {
             return InetAddress.getByName(request.getRemoteAddr()).isLoopbackAddress();
