@@ -1,0 +1,113 @@
+@if (store.available()) {
+  @if (!open()) {
+    <button type="button" (click)="toggle()"
+            class="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold jb-btn-primary bg-jb-accent border shadow-lg cursor-pointer"
+            [attr.aria-label]="'chat.open' | translate">
+      <jb-icon name="chat" [size]="16" />
+      <span>{{ 'chat.launcher' | translate }}</span>
+    </button>
+  } @else {
+    <section class="fixed inset-y-0 right-0 z-50 flex flex-col w-full sm:w-[420px] bg-jb-surface border-l border-jb-border shadow-2xl text-jb-text"
+             role="dialog" [attr.aria-label]="'chat.title' | translate">
+      <header class="flex items-center gap-2 h-12 px-3 border-b border-jb-border shrink-0">
+        @if (store.activeId()) {
+          <button type="button" (click)="store.closeChat()" [title]="'chat.back' | translate"
+                  class="p-1.5 rounded-md bg-transparent border-none text-jb-text-mid cursor-pointer">
+            <jb-icon name="arrow-left" [size]="14" />
+          </button>
+          <span class="font-semibold truncate">{{ store.active()?.title ?? ('chat.untitled' | translate) }}</span>
+        } @else {
+          <jb-icon name="chat" [size]="16" />
+          <span class="font-semibold">{{ 'chat.title' | translate }}</span>
+        }
+        <button type="button" (click)="toggle()" [title]="'chat.close' | translate"
+                class="ml-auto p-1.5 rounded-md bg-transparent border-none text-jb-text-mid cursor-pointer">
+          <jb-icon name="x" [size]="14" />
+        </button>
+      </header>
+
+      @if (!store.activeId()) {
+        <div class="flex-1 overflow-y-auto jb-scroll p-3 flex flex-col gap-2">
+          <button type="button" (click)="store.newChat()"
+                  class="flex items-center justify-center gap-2 rounded-md py-2 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer">
+            <jb-icon name="plus" [size]="14" />
+            <span>{{ 'chat.newChat' | translate }}</span>
+          </button>
+          @if (store.chats().length === 0) {
+            <p class="text-sm text-jb-text-mid px-1 pt-2">{{ 'chat.noChats' | translate }}</p>
+          } @else {
+            <div class="px-1 pt-2 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'chat.yourChats' | translate }}</div>
+          }
+          @for (chat of store.chats(); track chat.id) {
+            <div class="group flex items-center gap-2 rounded-md border border-jb-border px-2.5 py-2 hover:bg-jb-surface-3">
+              @if (renamingId() === chat.id) {
+                <input class="flex-1 min-w-0 rounded bg-jb-bg border border-jb-border-strong px-2 py-1 text-sm text-jb-text"
+                       [ngModel]="renameDraft()" (ngModelChange)="renameDraft.set($event)"
+                       (keydown.enter)="saveRename(chat.id)" (keydown.escape)="renamingId.set(null)"
+                       [attr.aria-label]="'chat.rename' | translate" maxlength="120" />
+                <button type="button" (click)="saveRename(chat.id)" [title]="'chat.save' | translate"
+                        class="p-1 rounded bg-transparent border-none text-jb-text-mid cursor-pointer">
+                  <jb-icon name="check" [size]="14" />
+                </button>
+              } @else {
+                <button type="button" (click)="store.open(chat.id)"
+                        class="flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer text-jb-text p-0">
+                  <div class="text-sm font-medium truncate">{{ chat.title ?? ('chat.untitled' | translate) }}</div>
+                  <div class="text-2xs text-jb-text-dim">{{ 'chat.lastActivity' | translate }} {{ chat.lastActivityAt | date: 'd. MMM HH:mm' }}</div>
+                </button>
+                <button type="button" (click)="startRename(chat)" [title]="'chat.rename' | translate"
+                        class="p-1 rounded bg-transparent border-none text-jb-text-dim cursor-pointer">
+                  <jb-icon name="edit" [size]="13" />
+                </button>
+                <button type="button" (click)="remove(chat)" [title]="'chat.delete' | translate"
+                        class="p-1 rounded bg-transparent border-none text-jb-text-dim cursor-pointer">
+                  <jb-icon name="x-circle" [size]="13" />
+                </button>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div #scroller class="flex-1 overflow-y-auto jb-scroll p-3 flex flex-col gap-3">
+          @if (store.messages().length === 0 && !store.streaming()) {
+            <p class="text-sm text-jb-text-mid">{{ 'chat.emptyChat' | translate }}</p>
+          }
+          @for (message of store.messages(); track $index) {
+            <div class="max-w-[88%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words"
+                 [class.self-end]="message.role === 'USER'"
+                 [class.bg-jb-accent-soft]="message.role === 'USER'"
+                 [class.self-start]="message.role === 'ASSISTANT'"
+                 [class.bg-jb-surface-3]="message.role === 'ASSISTANT'">{{ message.text }}</div>
+          }
+          @if (store.streaming() && store.messages()[store.messages().length - 1]?.role !== 'ASSISTANT') {
+            <div class="self-start text-sm text-jb-text-dim">{{ 'chat.thinking' | translate }}</div>
+          }
+          @if (store.error(); as code) {
+            <div class="rounded-md border border-jb-border-strong bg-jb-surface-3 px-3 py-2 text-sm" role="alert">
+              {{ 'chat.errors.' + code | translate }}
+            </div>
+          }
+        </div>
+        <footer class="shrink-0 border-t border-jb-border p-3 flex gap-2 items-end">
+          <textarea rows="2"
+                    class="flex-1 resize-none rounded-md bg-jb-bg border border-jb-border-strong px-2.5 py-2 text-sm text-jb-text"
+                    [placeholder]="'chat.placeholder' | translate"
+                    [attr.aria-label]="'chat.placeholder' | translate"
+                    [ngModel]="draft()" (ngModelChange)="draft.set($event)"
+                    (keydown)="onKeydown($event)"></textarea>
+          @if (store.streaming()) {
+            <button type="button" (click)="store.stop()"
+                    class="rounded-md px-3 py-2 text-sm font-semibold border border-jb-border-strong bg-jb-surface-3 text-jb-text cursor-pointer">
+              {{ 'chat.stop' | translate }}
+            </button>
+          } @else {
+            <button type="button" (click)="send()" [disabled]="!draft().trim()"
+                    class="rounded-md px-3 py-2 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer disabled:opacity-50">
+              {{ 'chat.send' | translate }}
+            </button>
+          }
+        </footer>
+      }
+    </section>
+  }
+}
