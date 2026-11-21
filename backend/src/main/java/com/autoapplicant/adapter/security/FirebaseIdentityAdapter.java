@@ -6,9 +6,11 @@ import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!desktop")
 public class FirebaseIdentityAdapter implements IdentityProviderPort {
 
   private final FirebaseAuth firebaseAuth;
@@ -44,6 +46,15 @@ public class FirebaseIdentityAdapter implements IdentityProviderPort {
         throw new AccountExistsException();
       }
       throw new IllegalStateException("Could not provision the Firebase account", e);
+    }
+  }
+
+  @Override
+  public void deleteAccount(String uid) {
+    try {
+      firebaseAuth.deleteUser(uid);
+    } catch (FirebaseAuthException e) {
+      throw new IllegalStateException("Could not delete the Firebase account", e);
     }
   }
 
