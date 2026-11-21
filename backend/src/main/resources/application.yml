@@ -23,6 +23,10 @@ server:
   port: 8080
 
 app:
+  firebase:
+    # Service-account file for Firebase Admin. Blank falls back to the classpath. Unused by the
+    # crawler profile, which has no users to authenticate.
+    credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
   security:
     # Base64 AES key (16/24/32 bytes) used to encrypt users' own API keys at rest.
     # Unset means the app refuses to store them rather than keeping them in the clear.
