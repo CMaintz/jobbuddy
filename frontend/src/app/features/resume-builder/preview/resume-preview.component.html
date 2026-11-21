@@ -7,6 +7,7 @@
           (clicked)="downloadAtsPdf()">{{ 'resumeBuilder.preview.pdfAts' | translate }}</jb-button>
         <jb-button icon="copy" (clicked)="printResume()">{{ 'resumeBuilder.preview.print' | translate }}</jb-button>
       </div>
+      <jb-page-budget-warning class="w-full max-w-[794px]" [budget]="exportedPages()" />
 
       <!-- Preview container -->
       <div

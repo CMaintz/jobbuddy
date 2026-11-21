@@ -1,6 +1,8 @@
 package com.autoapplicant.adapter.pdf;
 
 import com.autoapplicant.config.AppDataDirectory;
+import com.autoapplicant.domain.document.ExportedPdf;
+import com.autoapplicant.domain.document.PageBudget;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -13,6 +15,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,14 +59,15 @@ public class PdfRenderingService {
         }
     }
 
-    public byte[] renderStructured(StructuredDocument document) {
+    public ExportedPdf renderStructured(StructuredDocument document) {
         String html = structuredHtml(document);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             newBuilder(html).toStream(baos).run();
             byte[] pdf = baos.toByteArray();
-            enforcePageBudget(pdf, document);
-            return pdf;
+            Optional<PageBudget> budget = measurePageBudget(pdf, document);
+            budget.ifPresent(this::enforcePageBudget);
+            return new ExportedPdf(pdf, budget);
         } catch (Exception ex) {
             throw new RuntimeException("Structured PDF rendering failed", ex);
         }
@@ -78,25 +82,23 @@ public class PdfRenderingService {
                 .withHtmlContent(html, null);
     }
 
-    /**
-     * Post-render page-budget check: a CV should be 2 pages or fewer, other documents 1.
-     * Measures the true page count of the rendered PDF (layout is never mutated to fit).
-     * Warns by default; fails when {@code app.pdf.page-budget.strict=true}.
-     */
-    private void enforcePageBudget(byte[] pdf, StructuredDocument document) {
-        boolean cv = document.documentType() != null && "CV".equals(document.documentType().name());
-        int max = cv ? 2 : 1;
+    /** The true page count of the rendered PDF; the layout is never mutated to fit. */
+    private static Optional<PageBudget> measurePageBudget(byte[] pdf, StructuredDocument document) {
         try (PDDocument doc = PDDocument.load(pdf)) {
-            int pages = doc.getNumberOfPages();
-            if (pages > max) {
-                String msg = "PDF page budget exceeded: " + (cv ? "CV" : "document")
-                        + " rendered " + pages + " pages (max " + max + ")";
-                if (pageBudgetStrict) throw new IllegalStateException(msg);
-                log.warn(msg);
-            }
+            return Optional.of(PageBudget.of(document.documentType(), doc.getNumberOfPages()));
         } catch (IOException e) {
             log.warn("Could not verify PDF page count: {}", e.getMessage());
+            return Optional.empty();
         }
+    }
+
+    /** Warns by default; fails when {@code app.pdf.page-budget.strict=true}. */
+    private void enforcePageBudget(PageBudget budget) {
+        if (!budget.overBudget()) return;
+        String msg = "PDF page budget exceeded: rendered " + budget.pageCount()
+                + " pages (max " + budget.budget() + ")";
+        if (pageBudgetStrict) throw new IllegalStateException(msg);
+        log.warn(msg);
     }
 
     private String structuredHtml(StructuredDocument document) {
@@ -106,7 +108,7 @@ public class PdfRenderingService {
         DocumentTheme theme = resolveTheme(document.options() != null ? document.options().theme() : null);
         String css = designed ? designedCss(cv, theme) : atsCss(theme);
         StringBuilder html = new StringBuilder("""
-                <!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+                <!DOCTYPE html><html><head><meta charset="UTF-8"/><style>
                 """);
         html.append(css).append("</style></head><body><article class=\"page ");
         html.append(designed ? "designed" : "ats").append("\">");

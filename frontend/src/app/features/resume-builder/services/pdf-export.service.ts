@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class PdfExportService {
-  async download(el: HTMLElement, name: string, docSize: 'A4' | 'Letter' = 'A4'): Promise<void> {
+  /** Saves the capture and resolves to its page count, so the caller can hold it to the page budget. */
+  async download(el: HTMLElement, name: string, docSize: 'A4' | 'Letter' = 'A4'): Promise<number> {
     const html2canvas = (await import('html2canvas')).default;
     const jsPDF = (await import('jspdf')).jsPDF;
 
@@ -33,6 +34,7 @@ export class PdfExportService {
     }
 
     pdf.save(`${name || 'resume'}.pdf`);
+    return pdf.getNumberOfPages();
   }
 
   async print(el: HTMLElement): Promise<void> {

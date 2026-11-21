@@ -13,6 +13,8 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
+import { PageBudget, pageBudget } from '../../shared/page-budget';
+import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
 import { htmlTextContent } from '../../shared/utils/sanitize-html';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
@@ -27,7 +29,7 @@ import { NotifyService } from '../../shared/services/notify.service';
   selector: 'app-application-output',
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbDropdownComponent, DiffViewerComponent, LetterPaperComponent,
+    JbDropdownComponent, DiffViewerComponent, LetterPaperComponent, PageBudgetWarningComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-output.component.html',
@@ -49,6 +51,8 @@ export class ApplicationOutputComponent implements OnInit {
 
   loading = signal(true);
   downloading = signal(false);
+  /** Page count of the last PDF the user downloaded, against the one-page letter budget. */
+  exportedPages = signal<PageBudget | null>(null);
   loadError = signal('');
   application = signal<Application | null>(null);
   documents = signal<GeneratedDocument[]>([]);
@@ -435,6 +439,7 @@ export class ApplicationOutputComponent implements OnInit {
     if (!paperEl || this.downloading() || this.editing()) return;
     this.downloading.set(true);
     this.pdfExport.download(paperEl, this.exportFilename())
+      .then(pages => this.exportedPages.set(pageBudget('letter', pages)))
       .finally(() => this.downloading.set(false));
   }
 
@@ -449,7 +454,8 @@ export class ApplicationOutputComponent implements OnInit {
       contactLine: [id.email, id.phone, id.location].filter(Boolean).join('  ·  ') || undefined,
       paragraphs: this.plainText().split(/\n{2,}/).map(p => p.trim()).filter(Boolean),
       filename: `${this.exportFilename()} (ATS)`,
-    }).finally(() => this.downloading.set(false));
+    }).then(pages => this.exportedPages.set(pageBudget('letter', pages)))
+      .finally(() => this.downloading.set(false));
   }
 
   private exportFilename(): string {
