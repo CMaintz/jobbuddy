@@ -7,10 +7,11 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChatStore } from '../../../core/chat/chat.store';
 import { ChatSummary } from '../../../core/models/chat.model';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
+import { ChatTextComponent } from '../chat-text/chat-text.component';
 
 @Component({
   selector: 'jb-chat-panel',
-  imports: [DatePipe, FormsModule, TranslateModule, JbIconComponent],
+  imports: [DatePipe, FormsModule, TranslateModule, JbIconComponent, ChatTextComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chat-panel.component.html',
 })

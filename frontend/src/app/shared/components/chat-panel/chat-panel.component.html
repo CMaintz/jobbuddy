@@ -77,7 +77,7 @@
                  [class.self-end]="message.role === 'USER'"
                  [class.bg-jb-accent-soft]="message.role === 'USER'"
                  [class.self-start]="message.role === 'ASSISTANT'"
-                 [class.bg-jb-surface-3]="message.role === 'ASSISTANT'">{{ message.text }}</div>
+                 [class.bg-jb-surface-3]="message.role === 'ASSISTANT'">@if (message.role === 'ASSISTANT') {<jb-chat-text [text]="message.text" />} @else {{{ message.text }}}</div>
           }
           @if (store.streaming() && store.messages()[store.messages().length - 1]?.role !== 'ASSISTANT') {
             <div class="self-start text-sm text-jb-text-dim">{{ 'chat.thinking' | translate }}</div>
