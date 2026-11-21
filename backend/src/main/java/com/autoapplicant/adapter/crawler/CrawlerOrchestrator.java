@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.crawler;
 
+import com.autoapplicant.domain.crawler.CrawlRunReport;
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
@@ -8,6 +9,7 @@ import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.crawler.JobSourceConnectorPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -130,20 +132,22 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
         runConnectorInternal(connector, true);
     }
 
-    private void runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
+    /** @return true when the crawl ran and recorded an error; a skipped crawl is not a failure */
+    private boolean runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
         String sourceName = connector.getSource().name();
         if (!inFlight.add(sourceName)) {
             log.warn("Skipping crawl of {}: a crawl of that source is already running", sourceName);
-            return;
+            return false;
         }
         try {
-            crawl(connector, force);
+            return crawl(connector, force) != null;
         } finally {
             inFlight.remove(sourceName);
         }
     }
 
-    private void crawl(JobSourceConnectorPort connector, boolean force) {
+    /** @return the error the crawl recorded in crawler_state, or null when it finished cleanly */
+    private String crawl(JobSourceConnectorPort connector, boolean force) {
         String sourceName = connector.getSource().name();
         // Four numbers, because one was hiding three different things. A connector that
         // re-emits everything (Greenhouse) and one that skips what it recognises (Teamtailor)
@@ -197,7 +201,8 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     knownSkipped.get(), failed.get(), crossListed.get());
         } catch (Exception e) {
             log.error("Crawl failed for {}: {}", connector.getSource(), e.getMessage(), e);
-            error = e.getMessage();
+            // Some exceptions carry no message; a null here would record the crawl as clean.
+            error = e.getMessage() != null ? e.getMessage() : e.toString();
         } catch (Error e) {
             error = e.toString();
             throw e;
@@ -211,6 +216,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     emitted.get() + knownSkipped.get(), ingestedNew.get(),
                     error, false, Instant.now()));
         }
+        return error;
     }
 
     public void runSource(JobSource source) {
@@ -236,36 +242,57 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                 CompletableFuture.runAsync(() -> runConnectorForce(connector), crawlerTaskExecutor));
     }
 
-    /** Synchronous variants used by the CLI runner — blocks until all connectors finish. */
-    public void runAllSync() {
+    /** Synchronous variants used by the CLI runner: they block until all connectors finish. */
+    @Override
+    public CrawlRunReport runAllSync() {
         List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting synchronous crawl for {} sources", scheduled.size());
-        scheduled.forEach(this::runConnector);
+        CrawlRunReport report = runEachSync(scheduled, false);
         log.info("All sources finished.");
+        return report;
     }
 
-    public void runSourceSync(JobSource source) {
-        connectors.stream()
-                .filter(c -> c.getSource() == source)
-                .findFirst()
-                .ifPresentOrElse(
-                        this::runConnector,
-                        () -> log.warn("No connector found for source: {}", source));
+    @Override
+    public CrawlRunReport runSourceSync(JobSource source) {
+        return runOneSync(source, false);
     }
 
-    public void runAllSyncForce() {
+    @Override
+    public CrawlRunReport runAllSyncForce() {
         List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting synchronous force crawl for {} sources", scheduled.size());
-        scheduled.forEach(this::runConnectorForce);
+        CrawlRunReport report = runEachSync(scheduled, true);
         log.info("All sources finished (force mode).");
+        return report;
     }
 
-    public void runSourceSyncForce(JobSource source) {
-        connectors.stream()
+    @Override
+    public CrawlRunReport runSourceSyncForce(JobSource source) {
+        return runOneSync(source, true);
+    }
+
+    private CrawlRunReport runEachSync(List<JobSourceConnectorPort> toRun, boolean force) {
+        List<JobSource> failed = new ArrayList<>();
+        for (JobSourceConnectorPort connector : toRun) {
+            if (runConnectorInternal(connector, force)) {
+                failed.add(connector.getSource());
+            }
+        }
+        return new CrawlRunReport(failed);
+    }
+
+    /**
+     * A source that was asked for by name but has no connector (disabled, or not configured)
+     * counts as failed: the caller asked for a crawl and none happened.
+     */
+    private CrawlRunReport runOneSync(JobSource source, boolean force) {
+        return connectors.stream()
                 .filter(c -> c.getSource() == source)
                 .findFirst()
-                .ifPresentOrElse(
-                        this::runConnectorForce,
-                        () -> log.warn("No connector found for source: {}", source));
+                .map(connector -> runEachSync(List.of(connector), force))
+                .orElseGet(() -> {
+                    log.warn("No connector found for source: {}", source);
+                    return new CrawlRunReport(List.of(source));
+                });
     }
 }
