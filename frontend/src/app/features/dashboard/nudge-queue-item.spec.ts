@@ -13,7 +13,7 @@ describe('nudgeQueueItem', () => {
     return {
       type: 'INTERVIEW_SOON', applicationId: 'a1', jobId: null, outreachId: null, reminderId: null,
       jobTitle: 'Kommunikationsmedarbejder', companyName: 'Acme A/S', deadline: date,
-      daysSinceApplied: null, note: null,
+      daysSinceApplied: null, note: null, time: '10:00:00',
     };
   }
 
