@@ -77,6 +77,22 @@ class McpToolsTest {
     }
 
     @Test
+    void search_with_words_also_finds_postings_by_meaning_without_repeats() throws Exception {
+        Job byWords = job(UUID.randomUUID(), "Kommunikationskonsulent", "Arla");
+        Job byMeaning = job(UUID.randomUUID(), "Presserådgiver", "Vestas");
+        when(f.search.searchJobs(any())).thenReturn(
+                new JobSearchResult(List.of(byWords), 1, 0, 50, Map.of()));
+        when(f.semantic.semanticSearch(eq(her), eq("kommunikation"), anyInt()))
+                .thenReturn(List.of(byMeaning, byWords));
+
+        JsonNode found = f.content(f.call(f.grantFor(her), "search_postings",
+                "{\"query\":\"kommunikation\"}"));
+
+        assertThat(texts(found.get("postings"), "title"))
+                .containsExactly("Kommunikationskonsulent", "Presserådgiver");
+    }
+
+    @Test
     void search_never_returns_more_than_ten_postings() throws Exception {
         List<MatchResult> many = IntStream.range(0, 30)
                 .mapToObj(i -> match(her, job(UUID.randomUUID(), "Opslag " + i, "X"), 50))

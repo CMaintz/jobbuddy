@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -29,8 +30,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Finds postings for her. Without words it is her own ranked matches; with words it is a text
- * search (semantic when the text finds nothing), scored with her matches where it has one. What
+ * Finds postings for her. Without words it is her own ranked matches. With words it is a text
+ * search followed by a semantic one (by meaning, so "presse" also finds "kommunikation"), merged
+ * without repeats and scored with her matches where it has one. The semantic half embeds the
+ * query, one embedding API call per search, and finds nothing when no embedding key is set. What
  * she has ignored never comes back.
  */
 @Component
@@ -67,8 +70,8 @@ public class SearchPostingsTool implements McpTool {
     @Override
     public String description() {
         return "Find job postings for the user. Without a query: her best matches, ranked by match"
-                + " score (0-100). With a query: postings matching the words, with her match score"
-                + " where there is one. Returns at most " + MAX_RESULTS + ".";
+                + " score (0-100). With a query: postings matching the words or their meaning,"
+                + " with her match score where there is one. Returns at most " + MAX_RESULTS + ".";
     }
 
     @Override
@@ -132,9 +135,16 @@ public class SearchPostingsTool implements McpTool {
         }
         JobSearchFilters filters = new JobSearchFilters(null, null, null, null, null, null, null,
                 null, null, null, criteria.category().map(List::of).orElse(null));
-        List<Job> found = search.searchJobs(
+        List<Job> byWords = search.searchJobs(
                 new JobSearchQuery(query.get(), filters, 0, POOL, null)).jobs();
-        return (found.isEmpty() ? semantic.semanticSearch(userId, query.get(), POOL) : found).stream();
+        return distinct(Stream.concat(byWords.stream(),
+                semantic.semanticSearch(userId, query.get(), POOL).stream()));
+    }
+
+    /** The first occurrence of each posting, so a hit found both ways keeps its text rank. */
+    private static Stream<Job> distinct(Stream<Job> jobs) {
+        Set<UUID> seen = new HashSet<>();
+        return jobs.filter(job -> seen.add(job.id()));
     }
 
     private static boolean mentions(Job job, String place) {
