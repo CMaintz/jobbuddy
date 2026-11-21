@@ -13,6 +13,13 @@ import { CompanyMarkComponent } from '../../shared/components/company-mark/compa
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 
+/**
+ * Statuses without a board column of their own, shown under the column they belong with. The
+ * apply flow starts drafts as PREPARING, and to the user a draft is still a saved job not
+ * sent yet; without this it would vanish from the board.
+ */
+const KANBAN_COLUMN_OF: Partial<Record<ApplicationStatus, ApplicationStatus>> = { PREPARING: 'SAVED' };
+
 interface StageConfig {
   key: ApplicationStatus;
   label: string;
@@ -111,7 +118,7 @@ export class PipelineComponent implements OnInit {
   }
 
   appsForStage(stage: ApplicationStatus): Application[] {
-    return this.searchedApplications().filter(a => a.status === stage);
+    return this.searchedApplications().filter(a => (KANBAN_COLUMN_OF[a.status] ?? a.status) === stage);
   }
 
   private searchedApplications(): Application[] {
