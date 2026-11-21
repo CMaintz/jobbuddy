@@ -7,9 +7,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobRequirement;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.RequirementTier;
 import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.user.Education;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
@@ -19,6 +23,8 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import com.autoapplicant.port.out.user.CertificationRepositoryPort;
+import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -53,6 +59,8 @@ class MatchingServiceSkillFitTest {
     @Mock ProfileSkillRepositoryPort profileSkillRepo;
     @Mock ApplicationRepositoryPort applicationRepo;
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
+    @Mock EducationRepositoryPort educationRepo;
+    @Mock CertificationRepositoryPort certificationRepo;
 
     MatchingService service;
     final UUID userId = UUID.randomUUID();
@@ -60,8 +68,9 @@ class MatchingServiceSkillFitTest {
     @BeforeEach
     void setUp() {
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
-                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo,
-                applicationRepo, new SkillCanonicalizer(taxonomyRepo));
+                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
+                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo), profileSkillRepo,
+                        educationRepo, certificationRepo));
     }
 
     @Test
@@ -185,6 +194,51 @@ class MatchingServiceSkillFitTest {
         List<MatchResult> results = feed(shared, plain);
 
         assertThat(scoreOf(results, shared)).isEqualTo(scoreOf(results, plain));
+    }
+
+    @Test
+    void holding_most_of_what_a_posting_demands_reaches_the_top_band() {
+        givenProfile(NO_SUMMARY, "Intern kommunikation", "Projektkoordinering", "SharePoint",
+                "InDesign");
+        Job job = required("Intern kommunikation", "Projektkoordinering", "SharePoint",
+                "InDesign", "Photoshop");
+
+        assertThat(resultFor(job).matchLabel()).isEqualTo(MatchLabel.EXCELLENT);
+    }
+
+    @Test
+    void related_skills_count_half_toward_answering_a_postings_demands() {
+        // Three held and three only related: the shape of a technical security post read by a
+        // GRC profile. Counting the related ones in full would put it in the top band.
+        givenProfile(NO_SUMMARY, "SharePoint", "InDesign", "Photoshop", "Projektkoordinering",
+                "Intern kommunikation", "Kampagneplanlægning");
+        Job job = required("SharePoint", "InDesign", "Photoshop", "Koordinering", "Kommunikation",
+                "Planlægning", "Bogholderi", "Fakturering");
+
+        assertThat(resultFor(job).matchLabel()).isEqualTo(MatchLabel.STRONG);
+    }
+
+    @Test
+    void a_degree_the_profile_lacks_puts_a_matching_posting_out_of_reach_and_says_why() {
+        // The skills all match; the posting is still for lawyers only.
+        givenProfile(NO_SUMMARY, "GDPR", "NIS2", "Informationssikkerhed");
+        givenEducation("Kandidat", "Kommunikation");
+        Job lawyer = posting().technologies(List.of("GDPR", "NIS2", "Informationssikkerhed"))
+                .requiredSkills(List.of("GDPR", "NIS2", "Informationssikkerhed"))
+                .requirements(List.of(new JobRequirement("Du er uddannet cand.jur.",
+                        RequirementTier.REQUIRED, RequirementKind.EDUCATION, null)))
+                .build();
+
+        MatchResult result = resultFor(lawyer);
+
+        assertThat(result.matchLabel()).isEqualTo(MatchLabel.WEAK);
+        assertThat(result.matchReasons()).first().isEqualTo("Kræver cand.jur.");
+    }
+
+    private void givenEducation(String degree, String field) {
+        when(educationRepo.findByUserId(userId)).thenReturn(List.of(new Education(
+                UUID.randomUUID(), userId, null, degree, field, null, null, null, null, 0,
+                null, null, List.of())));
     }
 
     private void givenProfile(String summary, String... skills) {

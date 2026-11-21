@@ -1,5 +1,5 @@
 {
- "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them.",
+ "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only.",
  "profiles": {
   "comms-grc": {
    "headline": "Kommunikationsmedarbejder | Marketing og informationssikkerhed",
@@ -24,6 +24,12 @@
     "Mailchimp",
     "Canva",
     "WordPress"
+   ],
+   "education": [
+    {
+     "degree": "Kandidat",
+     "field": "Kommunikation"
+    }
    ]
   },
   "engineer": {
@@ -52,6 +58,12 @@
     "Scrum",
     "Code review",
     "Java 21"
+   ],
+   "education": [
+    {
+     "degree": "Master",
+     "field": "Computer Science"
+    }
    ]
   }
  }

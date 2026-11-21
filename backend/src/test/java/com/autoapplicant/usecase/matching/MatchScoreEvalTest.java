@@ -11,9 +11,13 @@ import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
 import com.autoapplicant.adapter.persistence.adapter.SkillTaxonomyPersistenceAdapter;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobCategory;
+import com.autoapplicant.domain.job.JobRequirement;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.RequirementTier;
 import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.user.Education;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
@@ -22,6 +26,8 @@ import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.user.CertificationRepositoryPort;
+import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -39,6 +45,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +64,9 @@ import org.springframework.context.annotation.Import;
  * rows marked {@code tuning}; the {@code holdout} rows were labelled and scored only afterwards,
  * so a change that passes on tuning rows alone is overfitting. The {@code unenriched} rows repeat
  * three postings with no ask lists and their crawled page text, chrome included, so the fallback
- * that reads the text is held to the same bar.
+ * that reads the text is held to the same bar. Each row still online when #338 came along also
+ * carries its frozen requirements (degrees, certifications), so the hard-requirement gate is
+ * measured on the wording real postings use.
  */
 @Import({SkillCanonicalizer.class, SkillTaxonomyPersistenceAdapter.class})
 class MatchScoreEvalTest extends PostgresIntegrationTest {
@@ -69,6 +78,15 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     private static final Set<String> COMMS_FIELD = Set.of("comms", "grc", "kommune");
     private static final Set<String> ENGINEER_FIELD = Set.of("eng");
     private static final int FEED_SIZE = 100;
+    private static final String OUT_OF_REACH = "Kræver ";
+    private static final int HIGHEST_MISMATCH_SCORE = 76;
+
+    /**
+     * Posts inside the comms profile's own field that demand a law degree. Their skill labels
+     * make them look like good fits; only their requirements rule them out.
+     */
+    private static final Set<String> LAW_DEGREE_POSTS = Set.of(
+            "jurist-med-fokus-paa-informationssikkerh", "compliance-og-gdpr-specialist-hos-forsyn");
 
     @Autowired SkillCanonicalizer canonicalizer;
 
@@ -110,10 +128,55 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         assertThat(strong * 2).isGreaterThanOrEqualTo(good.size());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {COMMS, ENGINEER})
+    void no_good_or_plausible_fit_is_ruled_out_by_a_hard_requirement(String profile)
+            throws IOException {
+        Map<String, MatchResult> results = resultsFor(profile);
+
+        postings.forEach(p -> {
+            String id = p.get("id").asText();
+            if (!fit(p, profile).equals(MISMATCH)) {
+                assertThat(results.get(id).matchReasons()).as(id)
+                        .noneMatch(reason -> reason.startsWith(OUT_OF_REACH));
+            }
+        });
+    }
+
+    @Test
+    void a_law_degree_post_in_the_comms_field_scores_weak_and_says_why() throws IOException {
+        Map<String, MatchResult> results = resultsFor(COMMS);
+
+        LAW_DEGREE_POSTS.forEach(id -> {
+            assertThat(results.get(id).matchLabel()).as(id).isEqualTo(MatchLabel.WEAK);
+            assertThat(results.get(id).matchReasons()).as(id).first().isEqualTo("Kræver cand.jur.");
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {COMMS, ENGINEER})
+    void the_best_good_fit_reaches_the_top_band(String profile) throws IOException {
+        Map<String, Integer> scores = scores(profile);
+
+        assertThat(MatchLabel.fromScore(highest(scores, p -> fit(p, profile).equals(GOOD))))
+                .isEqualTo(MatchLabel.EXCELLENT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {COMMS, ENGINEER})
+    void no_mismatch_reaches_the_top_band(String profile) throws IOException {
+        Map<String, Integer> scores = scores(profile);
+
+        // Held below 80 with room to spare: a preference bonus in a real feed adds up to 8 more.
+        // 76 is the technical security post's score before the top band was lifted.
+        assertThat(highest(scores, p -> fit(p, profile).equals(MISMATCH)))
+                .isLessThanOrEqualTo(HIGHEST_MISMATCH_SCORE);
+    }
+
     /**
      * A posting outside the profile's own field and labelled a mismatch. Mismatches inside the
-     * field (a lawyer post for someone with a GRC course) are left out on purpose: skill labels
-     * cannot see a degree requirement, and the scorer does not read one.
+     * field are left out: a technical security post or a SOC post shares a GRC profile's skill
+     * labels and differs in the experience it asks for, which the scorer does not weigh.
      */
     private Predicate<JsonNode> clearMismatches(String profile) {
         Set<String> ownField = profile.equals(COMMS) ? COMMS_FIELD : ENGINEER_FIELD;
@@ -153,6 +216,12 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     }
 
     private Map<String, Integer> scoresFor(String profileKey) throws IOException {
+        Map<String, Integer> scores = new LinkedHashMap<>();
+        resultsFor(profileKey).forEach((id, result) -> scores.put(id, result.totalScore()));
+        return scores;
+    }
+
+    private Map<String, MatchResult> resultsFor(String profileKey) throws IOException {
         JsonNode profile = fixture("profiles.json").get("profiles").get(profileKey);
         UUID userId = UUID.randomUUID();
         Map<UUID, String> idsByJob = new LinkedHashMap<>();
@@ -163,9 +232,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
             jobs.add(job);
         }
         MatchingService service = serviceFor(userId, profile, jobs);
-        Map<String, Integer> byPosting = new LinkedHashMap<>();
+        Map<String, MatchResult> byPosting = new LinkedHashMap<>();
         for (MatchResult r : service.getRecommendations(userId, FEED_SIZE)) {
-            byPosting.put(idsByJob.get(r.jobId()), r.totalScore());
+            byPosting.put(idsByJob.get(r.jobId()), r);
         }
         return byPosting;
     }
@@ -177,6 +246,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 null, List.of(), List.of(), null, null, null, null, null, null, null)));
         ProfileSkillRepositoryPort skills = mock(ProfileSkillRepositoryPort.class);
         when(skills.findByUserId(userId)).thenReturn(skillRows(userId, profile.get("skills")));
+        EducationRepositoryPort education = mock(EducationRepositoryPort.class);
+        when(education.findByUserId(userId))
+                .thenReturn(educationRows(userId, profile.get("education")));
         EmbeddingProviderPort ai = mock(EmbeddingProviderPort.class);
         when(ai.embed(anyString())).thenReturn(new float[] {1f});
         JobEmbeddingRepositoryPort embeddings = mock(JobEmbeddingRepositoryPort.class);
@@ -187,8 +259,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         return new MatchingService(embeddings, jobRepo, profiles,
                 mock(PreferencesRepositoryPort.class), ai, mock(IgnoredJobRepositoryPort.class),
                 mock(RecommendationFeedbackRepositoryPort.class),
-                mock(ProfileEmbeddingRepositoryPort.class), skills,
-                mock(ApplicationRepositoryPort.class), canonicalizer);
+                mock(ProfileEmbeddingRepositoryPort.class), mock(ApplicationRepositoryPort.class),
+                new MatchProfileLoader(canonicalizer, skills, education,
+                        mock(CertificationRepositoryPort.class)));
     }
 
     private static List<ProfileSkill> skillRows(UUID userId, JsonNode names) {
@@ -196,6 +269,14 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         names.forEach(n -> rows.add(new ProfileSkill(UUID.randomUUID(), userId, n.asText(),
                 null, null, null, false, 0, null)));
         return rows;
+    }
+
+    private static List<Education> educationRows(UUID userId, JsonNode rows) {
+        List<Education> out = new ArrayList<>();
+        rows.forEach(e -> out.add(new Education(UUID.randomUUID(), userId, null,
+                e.get("degree").asText(), e.get("field").asText(), null, null, null, null, 0,
+                null, null, List.of())));
+        return out;
     }
 
     private static Job toJob(JsonNode p) {
@@ -206,7 +287,16 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 .technologies(strings(p.get("technologies"))).skills(strings(p.get("skills")))
                 .requiredSkills(strings(p.get("requiredSkills")))
                 .preferredSkills(strings(p.get("preferredSkills")))
+                .requirements(requirements(p.path("requirements")))
                 .build();
+    }
+
+    private static List<JobRequirement> requirements(JsonNode array) {
+        List<JobRequirement> out = new ArrayList<>();
+        array.forEach(r -> out.add(new JobRequirement(r.get("text").asText(),
+                RequirementTier.parse(r.get("tier").asText()),
+                RequirementKind.parse(r.get("kind").asText()), null)));
+        return out;
     }
 
     private static List<String> strings(JsonNode array) {
