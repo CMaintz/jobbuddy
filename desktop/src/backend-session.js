@@ -5,7 +5,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { generateToken } = require('./token');
 const { TOKEN_HEADER, installTokenHeader } = require('./token-header');
-const { backendLaunch, startBackend, stopBackend } = require('./backend-process');
+const { backendLaunch, startBackend, stopBackend, exitActions } = require('./backend-process');
 
 // Flyway against a remote Supabase on a slow line can take a while on first start.
 const READY_TIMEOUT_MS = 180_000;
@@ -45,6 +45,8 @@ function withTimeout(promise, ms, message) {
 function createBackendSession({ session, fetch, paths, dataDir, environment, onCrash }) {
   const logPath = path.join(dataDir, 'logs', 'desktop-backend.log');
   let current = null;
+  // The run whose token the session's request listener adds; not always the current run.
+  let listenerOwner = null;
 
   async function start(settings) {
     await stop();
@@ -62,14 +64,14 @@ function createBackendSession({ session, fetch, paths, dataDir, environment, onC
     current = run;
     child.once('exit', (code) => {
       log.end(`=== backend exited with ${code} ===\n`);
-      const wasReady = run.origin !== null;
-      // The freed port could be bound by anything now: stop sending the token there, and stop
-      // telling pages and the reminder poll that the backend lives at it.
-      if (current === run) {
-        current = null;
+      const actions = exitActions({ run, current, listenerOwner });
+      if (actions.clearCurrent) current = null;
+      if (actions.removeTokenListener) {
+        // The freed port could be bound by anything now; no request to it gets her token.
         session.webRequest.onBeforeSendHeaders(null);
+        listenerOwner = null;
       }
-      if (!run.stopping && wasReady) onCrash(new Error(`exit code ${code}`));
+      if (actions.reportCrash) onCrash(new Error(`exit code ${code}`));
     });
 
     try {
@@ -78,6 +80,7 @@ function createBackendSession({ session, fetch, paths, dataDir, environment, onC
       // resolve to ::1 first.
       run.origin = `http://127.0.0.1:${port}`;
       installTokenHeader(session.webRequest, run.origin, token);
+      listenerOwner = run;
       await checkHealth(run);
       return run.origin;
     } catch (error) {

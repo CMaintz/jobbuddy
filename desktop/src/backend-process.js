@@ -106,4 +106,23 @@ function stopBackend(child, { platform = process.platform, execFile } = {}) {
   });
 }
 
-module.exports = { SHELL_ORIGIN, backendLaunch, startBackend, stopBackend };
+/**
+ * What a backend's exit means for the session. Pure, so the three decisions are tested apart:
+ * - forget the origin only if this run is still the current one, or a late exit of an old run
+ *   would hide the new backend;
+ * - drop the token listener if it belongs to this run, current or not: stop() forgets the run
+ *   before its process is gone, and a listener left behind would still add her token to
+ *   requests for a port anything could bind now;
+ * - call it a crash only for a run that was ready and not being stopped.
+ *
+ * @param {{ run: object, current: object | null, listenerOwner: object | null }} p
+ */
+function exitActions({ run, current, listenerOwner }) {
+  return {
+    clearCurrent: current === run,
+    removeTokenListener: listenerOwner === run,
+    reportCrash: !run.stopping && run.origin !== null,
+  };
+}
+
+module.exports = { SHELL_ORIGIN, backendLaunch, startBackend, stopBackend, exitActions };

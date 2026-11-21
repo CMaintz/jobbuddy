@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 const { PassThrough } = require('node:stream');
-const { backendLaunch, startBackend, stopBackend } = require('../src/backend-process');
+const { backendLaunch, startBackend, stopBackend, exitActions } = require('../src/backend-process');
 
 // Built at runtime: a literal token-shaped string trips the secret scanner.
 const TOKEN = 'launch-token-' + 'ab'.repeat(16);
@@ -131,4 +131,30 @@ test('a backend that already exited is not killed again', async () => {
   let called = false;
   await stopBackend(child, { platform: 'win32', execFile: () => { called = true; } });
   assert.equal(called, false);
+});
+
+const RUN = { origin: 'http://127.0.0.1:51234', stopping: false };
+
+test('a crash of the running backend stops the token, forgets the origin and says so', () => {
+  assert.deepEqual(exitActions({ run: RUN, current: RUN, listenerOwner: RUN }),
+    { clearCurrent: true, removeTokenListener: true, reportCrash: true });
+});
+
+test('a backend that was stopped on purpose still takes its token listener with it', () => {
+  // stop() forgets the run before the process is gone, so the listener cannot hang on current.
+  const stopped = { ...RUN, stopping: true };
+  assert.deepEqual(exitActions({ run: stopped, current: null, listenerOwner: stopped }),
+    { clearCurrent: false, removeTokenListener: true, reportCrash: false });
+});
+
+test('an old backend exiting late leaves the new one alone', () => {
+  const old = { ...RUN, stopping: true };
+  const fresh = { origin: 'http://127.0.0.1:52000', stopping: false };
+  assert.deepEqual(exitActions({ run: old, current: fresh, listenerOwner: fresh }),
+    { clearCurrent: false, removeTokenListener: false, reportCrash: false });
+});
+
+test('a backend that dies before it was ready is a failed start, not a crash', () => {
+  const starting = { origin: null, stopping: false };
+  assert.equal(exitActions({ run: starting, current: starting, listenerOwner: null }).reportCrash, false);
 });
