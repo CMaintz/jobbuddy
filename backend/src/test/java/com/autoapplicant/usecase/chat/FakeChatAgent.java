@@ -19,6 +19,8 @@ final class FakeChatAgent implements ChatAgentPort {
 
     final List<Turn> turns = new ArrayList<>();
     final Set<UUID> forgotten = new HashSet<>();
+    /** What happened to sessions, in order: "stop:<id>" and "forget:<id>". */
+    final List<String> operations = new ArrayList<>();
     final Map<UUID, List<ChatMessage>> transcripts = new HashMap<>();
     ChatEvent failImmediately;
 
@@ -28,7 +30,10 @@ final class FakeChatAgent implements ChatAgentPort {
         if (failImmediately != null) {
             events.accept(failImmediately);
         }
-        return () -> events.accept(new ChatEvent.Stopped());
+        return () -> {
+            operations.add("stop:" + sessionId);
+            events.accept(new ChatEvent.Stopped());
+        };
     }
 
     @Override
@@ -39,6 +44,7 @@ final class FakeChatAgent implements ChatAgentPort {
     @Override
     public void forget(UUID sessionId) {
         forgotten.add(sessionId);
+        operations.add("forget:" + sessionId);
     }
 
     Turn last() {

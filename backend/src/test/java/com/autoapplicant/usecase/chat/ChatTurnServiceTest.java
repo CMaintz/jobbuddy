@@ -24,7 +24,7 @@ class ChatTurnServiceTest {
     private final InMemoryChatRepository chats = new InMemoryChatRepository();
     private final FakeChatAgent agent = new FakeChatAgent();
     private final ChatTurnService turns = new ChatTurnService(
-            chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), MAX_CONCURRENT);
+            chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), new ChatTurns(MAX_CONCURRENT));
     private final UUID her = UUID.randomUUID();
     private final List<ChatEvent> received = new ArrayList<>();
 
@@ -106,9 +106,33 @@ class ChatTurnServiceTest {
 
         assertThatThrownBy(() -> turns.send(her, theirs.id(), "Hej", received::add))
                 .isInstanceOf(NotFoundException.class);
-        assertThatThrownBy(() -> turns.stop(her, theirs.id()))
-                .isInstanceOf(NotFoundException.class);
+        turns.stop(her, theirs.id());
         assertThat(received).isEmpty();
+    }
+
+    @Test
+    void stopping_a_chat_that_is_gone_or_idle_is_harmless() {
+        Chat idle = newChat(her);
+
+        turns.stop(her, idle.id());
+        turns.stop(her, UUID.randomUUID());
+
+        assertThat(received).isEmpty();
+    }
+
+    @Test
+    void a_failure_while_starting_frees_the_chat_and_its_slot() {
+        Chat chat = newChat(her);
+        chats.failNextSave = new IllegalStateException("database down");
+
+        assertThatThrownBy(() -> turns.send(her, chat.id(), "Hej", received::add))
+                .isInstanceOf(IllegalStateException.class);
+
+        for (int i = 0; i < MAX_CONCURRENT - 1; i++) {
+            turns.send(her, newChat(her).id(), "Hej", received::add);
+        }
+        turns.send(her, chat.id(), "Igen", received::add);
+        assertThat(agent.turns).hasSize(MAX_CONCURRENT);
     }
 
     @Test

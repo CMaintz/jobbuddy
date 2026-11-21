@@ -88,6 +88,19 @@ class ClaudeChatAgentTest {
     }
 
     @Test
+    void a_listener_that_throws_does_not_kill_the_relay_and_the_turn_still_ends() throws Exception {
+        agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(session, "Hej", event -> {
+            events.add(event);
+            if (event instanceof ChatEvent.Delta) {
+                throw new IllegalStateException("the chat was deleted");
+            }
+        });
+
+        assertThat(next()).isInstanceOf(ChatEvent.Delta.class);
+        assertThat(next()).isEqualTo(new ChatEvent.Completed());
+    }
+
+    @Test
     void stop_kills_the_agent_and_ends_the_turn_as_stopped() throws Exception {
         Set<ProcessHandle> already = children();
         ChatAgentPort.RunningTurn turn = agent(GENEROUS, FakeClaudeChat.HANG_AFTER_DELTA)

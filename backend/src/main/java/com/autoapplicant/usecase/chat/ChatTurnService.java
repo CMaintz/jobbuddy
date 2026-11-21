@@ -2,25 +2,17 @@ package com.autoapplicant.usecase.chat;
 
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatEvent;
-import com.autoapplicant.domain.chat.ChatFailure;
-import com.autoapplicant.domain.chat.ChatRejectedException;
 import com.autoapplicant.port.in.chat.ChatTurnUseCase;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
 import java.time.Clock;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
- * Runs chat turns: one at a time per chat, since two processes resuming the same Claude Code
- * session would interleave its transcript, and only a few chats at once, since each turn is a
- * {@code claude} process on the same subscription that generation and enrichment use.
+ * Runs chat turns, one at a time per chat and a few at once ({@link ChatTurns}).
  */
 @Service
 @Profile("desktop")
@@ -37,47 +29,40 @@ public class ChatTurnService implements ChatTurnUseCase {
     private final ChatRepositoryPort chats;
     private final ChatAgentPort agent;
     private final Clock clock;
-    private final Semaphore slots;
-    private final Map<UUID, ActiveTurn> active = new ConcurrentHashMap<>();
+    private final ChatTurns running;
 
-    public ChatTurnService(ChatRepositoryPort chats,
-                           ChatAgentPort agent,
-                           Clock clock,
-                           @Value("${app.chat.max-concurrent-turns:2}") int maxConcurrentTurns) {
+    public ChatTurnService(ChatRepositoryPort chats, ChatAgentPort agent, Clock clock,
+                           ChatTurns running) {
         this.chats = chats;
         this.agent = agent;
         this.clock = clock;
-        this.slots = new Semaphore(maxConcurrentTurns);
+        this.running = running;
     }
 
+    /**
+     * The chat and the slot are freed by the turn's terminal event, or here when the turn never
+     * got going (the database or the agent failed first), so neither can leak.
+     */
     @Override
     public void send(UUID userId, UUID chatId, String message, Consumer<ChatEvent> events) {
         String text = requireMessage(message);
         Chat chat = OwnedChats.require(chats, userId, chatId);
-        ActiveTurn turn = new ActiveTurn();
-        if (active.putIfAbsent(chatId, turn) != null) {
-            throw new ChatRejectedException(ChatFailure.CHAT_BUSY);
+        ChatTurns.ActiveTurn turn = running.claim(chatId);
+        try {
+            chats.save(named(chat, text).touchedAt(clock.instant()));
+            turn.attach(agent.start(chat.sessionId(), text, turn.releasingOnEnd(events)));
+        } catch (RuntimeException e) {
+            turn.release();
+            throw e;
         }
-        if (!slots.tryAcquire()) {
-            active.remove(chatId, turn);
-            throw new ChatRejectedException(ChatFailure.TOO_MANY_CHATS);
-        }
-        chats.save(named(chat, text).touchedAt(clock.instant()));
-        turn.attach(agent.start(chat.sessionId(), text, event -> {
-            if (event.isTerminal() && active.remove(chatId, turn)) {
-                slots.release();
-            }
-            events.accept(event);
-        }));
     }
 
+    /** Idempotent: a chat that is idle, gone or someone else's has nothing of hers to stop. */
     @Override
     public void stop(UUID userId, UUID chatId) {
-        OwnedChats.require(chats, userId, chatId);
-        ActiveTurn turn = active.get(chatId);
-        if (turn != null) {
-            turn.stop();
-        }
+        chats.findById(chatId)
+                .filter(chat -> chat.userId().equals(userId))
+                .ifPresent(chat -> running.stop(chatId));
     }
 
     private static String requireMessage(String message) {
@@ -100,29 +85,5 @@ public class ChatTurnService implements ChatTurnUseCase {
         String cut = oneLine.substring(0, TITLE_LENGTH);
         int lastSpace = cut.lastIndexOf(' ');
         return chat.withTitle((lastSpace > 0 ? cut.substring(0, lastSpace) : cut) + ELLIPSIS);
-    }
-
-    /**
-     * A turn from the moment it claims its chat. A stop that arrives before the agent has handed
-     * back its handle is remembered and applied once it does.
-     */
-    private static final class ActiveTurn {
-
-        private ChatAgentPort.RunningTurn running;
-        private boolean stopRequested;
-
-        synchronized void attach(ChatAgentPort.RunningTurn handle) {
-            running = handle;
-            if (stopRequested) {
-                handle.stop();
-            }
-        }
-
-        synchronized void stop() {
-            stopRequested = true;
-            if (running != null) {
-                running.stop();
-            }
-        }
     }
 }

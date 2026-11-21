@@ -22,11 +22,14 @@ public class ChatService implements ManageChatsUseCase {
     private final ChatRepositoryPort chats;
     private final ChatAgentPort agent;
     private final Clock clock;
+    private final ChatTurns running;
 
-    public ChatService(ChatRepositoryPort chats, ChatAgentPort agent, Clock clock) {
+    public ChatService(ChatRepositoryPort chats, ChatAgentPort agent, Clock clock,
+                       ChatTurns running) {
         this.chats = chats;
         this.agent = agent;
         this.clock = clock;
+        this.running = running;
     }
 
     @Override
@@ -54,6 +57,8 @@ public class ChatService implements ManageChatsUseCase {
     @Override
     public void delete(UUID userId, UUID chatId) {
         Chat chat = OwnedChats.require(chats, userId, chatId);
+        // Stopped first: a running claude would go on writing the transcript forget deletes.
+        running.stop(chat.id());
         chats.deleteById(chat.id());
         agent.forget(chat.sessionId());
     }

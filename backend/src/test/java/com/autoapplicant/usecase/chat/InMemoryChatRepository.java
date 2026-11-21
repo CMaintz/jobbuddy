@@ -12,6 +12,7 @@ import java.util.UUID;
 final class InMemoryChatRepository implements ChatRepositoryPort {
 
     private final Map<UUID, Chat> chats = new LinkedHashMap<>();
+    RuntimeException failNextSave;
 
     @Override
     public List<Chat> findByUserId(UUID userId) {
@@ -28,6 +29,11 @@ final class InMemoryChatRepository implements ChatRepositoryPort {
 
     @Override
     public Chat save(Chat chat) {
+        if (failNextSave != null) {
+            RuntimeException failure = failNextSave;
+            failNextSave = null;
+            throw failure;
+        }
         Chat stored = chat.id() == null
                 ? new Chat(UUID.randomUUID(), chat.userId(), chat.sessionId(), chat.title(),
                         chat.createdAt(), chat.lastActivityAt())

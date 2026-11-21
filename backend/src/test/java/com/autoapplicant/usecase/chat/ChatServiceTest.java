@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.autoapplicant.domain.chat.Chat;
+import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.domain.common.NotFoundException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -19,8 +21,11 @@ class ChatServiceTest {
 
     private final InMemoryChatRepository chats = new InMemoryChatRepository();
     private final FakeChatAgent agent = new FakeChatAgent();
+    private final ChatTurns running = new ChatTurns(2);
     private final ChatService service =
-            new ChatService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC));
+            new ChatService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running);
+    private final ChatTurnService turns =
+            new ChatTurnService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running);
     private final UUID her = UUID.randomUUID();
     private final UUID someoneElse = UUID.randomUUID();
 
@@ -58,6 +63,19 @@ class ChatServiceTest {
 
         assertThat(service.list(her)).isEmpty();
         assertThat(agent.forgotten).containsExactly(chat.sessionId());
+    }
+
+    @Test
+    void deleting_a_chat_mid_answer_stops_its_turn_before_the_transcript_goes() {
+        Chat chat = service.create(her);
+        List<ChatEvent> received = new ArrayList<>();
+        turns.send(her, chat.id(), "Hej", received::add);
+
+        service.delete(her, chat.id());
+
+        assertThat(received).containsExactly(new ChatEvent.Stopped());
+        assertThat(agent.operations).containsExactly(
+                "stop:" + chat.sessionId(), "forget:" + chat.sessionId());
     }
 
     @Test

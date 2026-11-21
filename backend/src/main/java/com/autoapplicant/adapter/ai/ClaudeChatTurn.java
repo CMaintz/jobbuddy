@@ -78,10 +78,25 @@ final class ClaudeChatTurn implements ChatAgentPort.RunningTurn {
      * tree is gone: Claude Code still writes the session file after printing its result, and the
      * next turn resumes that file as soon as this one is reported over.
      */
+    /**
+     * Whatever goes wrong here, the turn still ends with a terminal event: that event is what
+     * frees the chat, its slot and its tool access, so a relay that died silently would hold
+     * them until a restart.
+     */
     private void relay(Process proc, CliAgentPipe stderr) {
-        ChatEvent verdict = readAnswer(proc).orElseGet(parser::atExit);
-        awaitExit(proc);
-        killTree();
+        ChatEvent verdict = new ChatEvent.Failed(ChatFailure.FAILED);
+        try {
+            verdict = readAnswer(proc).orElseGet(parser::atExit);
+            awaitExit(proc);
+        } catch (RuntimeException e) {
+            log.warn("Chat agent relay failed", e);
+        } finally {
+            killTree();
+            finish(verdict, proc, stderr);
+        }
+    }
+
+    private void finish(ChatEvent verdict, Process proc, CliAgentPipe stderr) {
         ChatEvent reason = endedBy;
         if (emit(reason != null ? reason : verdict) && reason == null
                 && verdict instanceof ChatEvent.Failed) {
@@ -157,7 +172,12 @@ final class ClaudeChatTurn implements ChatAgentPort.RunningTurn {
             return false;
         }
         ended = event.isTerminal();
-        listener.accept(event);
+        try {
+            listener.accept(event);
+        } catch (RuntimeException e) {
+            // The listener is the use case and the open stream; neither may stop the relay.
+            log.warn("Chat event listener failed on {}", event.getClass().getSimpleName(), e);
+        }
         return true;
     }
 
