@@ -17,7 +17,7 @@ test('reads the value out of reg query output, plain or expandable', () => {
     '',
   ].join('\r\n');
   assert.equal(parseRegQuery(out), `${win('%USERPROFILE%', '.local', 'bin')};${win('C:', 'Tools')}`);
-  assert.equal(parseRegQuery('    Path    REG_SZ    C:\\x'.replace('\\', BS)), win('C:', 'x'));
+  assert.equal(parseRegQuery(`    Path    REG_SZ    ${win('C:', 'x')}`), win('C:', 'x'));
   assert.equal(parseRegQuery('ERROR: The system was unable to find the specified registry key'), null);
 });
 
