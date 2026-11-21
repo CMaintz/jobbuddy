@@ -2134,5 +2134,13 @@
     "next": "Next",
     "apply": "Start an application",
     "end": "End the walk-through"
+  },
+  "buddy": {
+    "alt": "Buddy, the JobBuddy axolotl",
+    "wait": {
+      "cvTitle": "Buddy is tailoring your CV",
+      "cvDetail": "He reads the posting and picks what fits it best from your profile.",
+      "import": "Buddy is reading your CV and sorting it into sections."
+    }
   }
 }

@@ -6,8 +6,14 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="assets/buddy/buddy.css">
 </head>
 <body>
-  <app-root></app-root>
+  <!-- Shown until Angular boots and replaces it; plain CSS, since no script has run yet. -->
+  <app-root>
+    <div class="jb-boot">
+      <span class="buddy buddy--x3 buddy--loading" role="img" aria-label="Buddy, JobBuddys axolotl. JobBuddy starter."><span class="buddy__sprite"></span></span>
+    </div>
+  </app-root>
 </body>
 </html>

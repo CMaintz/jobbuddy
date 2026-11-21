@@ -8,12 +8,13 @@ import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.compone
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { Job } from '../../core/models/job.model';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
 
 @Component({
   selector: 'app-saved-roles',
   imports: [
     JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, CompanyMarkComponent,
+    JbPillComponent, CompanyMarkComponent, BuddyComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './saved-roles.component.html'
