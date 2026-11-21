@@ -10,6 +10,7 @@ import { StreakBadgeComponent } from './shared/components/streak-badge/streak-ba
 import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
 import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
+import { UiLanguageSyncService } from './core/ui-language-sync.service';
 import { filter } from 'rxjs';
 import { NavItem, visibleNav } from './app-nav';
 
@@ -32,6 +33,7 @@ export class AppComponent implements OnInit {
   notify = inject(NotifyService);
   private router = inject(Router);
   private streak = inject(ActivityStreakService);
+  private languageSync = inject(UiLanguageSyncService);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
 
@@ -68,6 +70,7 @@ export class AppComponent implements OnInit {
   libraryNav: NavItem[] = visibleNav(this.allLibraryNav, undefined);
 
   ngOnInit(): void {
+    this.languageSync.start();
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.currentUserEmail = user?.email || '';
       this.currentUserName = user?.email?.split('@')[0] ?? '';

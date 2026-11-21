@@ -1,6 +1,7 @@
 package com.autoapplicant.domain.application;
 
-import java.util.EnumSet;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public enum ApplicationStatus {
@@ -39,5 +40,10 @@ public enum ApplicationStatus {
             case OFFER -> Set.of(ARCHIVED).contains(next);
             case REJECTED, ARCHIVED -> false;
         };
+    }
+
+    /** Every status this one may move to, so a client offers only moves the server accepts. */
+    public List<ApplicationStatus> nextStatuses() {
+        return Arrays.stream(values()).filter(this::canTransitionTo).toList();
     }
 }
