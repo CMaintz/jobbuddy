@@ -14,3 +14,17 @@ CREATE TABLE chats (
 );
 
 CREATE INDEX idx_chats_user_activity ON chats (user_id, last_activity_at DESC);
+
+-- JobBuddy's own copy of what she saw in each chat, in order. Claude Code deletes old sessions on
+-- its own schedule, so its transcript cannot be what the chat shows.
+CREATE TABLE chat_messages (
+    id         uuid DEFAULT uuid_generate_v4() NOT NULL,
+    chat_id    uuid NOT NULL,
+    position   integer NOT NULL,
+    role       varchar(10) NOT NULL,
+    text       text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+    CONSTRAINT chat_messages_position_key UNIQUE (chat_id, position),
+    CONSTRAINT chat_messages_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
+);

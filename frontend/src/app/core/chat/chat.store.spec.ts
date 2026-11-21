@@ -55,7 +55,7 @@ describe('ChatStore', () => {
 
     store.open('c2');
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/c2/messages')
-      .flush([{ role: 'USER', text: 'Anden samtale', at: CHAT.createdAt }]);
+      .flush({ messages: [{ role: 'USER', text: 'Anden samtale', at: CHAT.createdAt }], contextLost: false });
     progress(turn, 'event:delta\ndata:{"text":"Svar til den første"}\n\n');
 
     expect(store.messages().map(m => m.text)).toEqual(['Anden samtale']);
@@ -70,6 +70,21 @@ describe('ChatStore', () => {
     turn.flush('event:stopped\ndata:{}\n\n');
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
     expect(store.streaming()).toBeFalse();
+  });
+
+  it('says when an old chat lost its context, until the next answer starts afresh', () => {
+    store.open('c1');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/c1/messages')
+      .flush({ messages: [{ role: 'USER', text: 'Gammel besked', at: CHAT.createdAt }], contextLost: true });
+    expect(store.messages().map(m => m.text)).toEqual(['Gammel besked']);
+    expect(store.contextLost()).toBeTrue();
+
+    store.send('Hej igen');
+    backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages')
+      .flush('event:delta\ndata:{"text":"Hej"}\n\nevent:done\ndata:{}\n\n');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
+
+    expect(store.contextLost()).toBeFalse();
   });
 
   it('shows why a turn failed and keeps her message', () => {

@@ -2083,6 +2083,7 @@
       "TOO_MANY_CHATS": "Der er allerede svar i gang i andre samtaler. Vent lidt, og prøv igen.",
       "FAILED": "Noget gik galt, og der kom ikke noget svar. Prøv igen.",
       "NETWORK": "Forbindelsen til JobBuddy blev afbrudt. Prøv igen."
-    }
+    },
+    "contextLost": "Den tidligere samtale er ikke længere gemt i Claude Code. Dine beskeder står her stadig, og samtalen fortsætter med et kort resumé af dem, men uden de nærmere detaljer."
   }
 }

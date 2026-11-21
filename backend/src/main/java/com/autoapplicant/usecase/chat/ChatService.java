@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.chat;
 
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.port.in.chat.ManageChatsUseCase;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
@@ -64,7 +65,9 @@ public class ChatService implements ManageChatsUseCase {
     }
 
     @Override
-    public List<ChatMessage> messages(UUID userId, UUID chatId) {
-        return agent.transcript(OwnedChats.require(chats, userId, chatId).sessionId());
+    public ChatTranscript messages(UUID userId, UUID chatId) {
+        Chat chat = OwnedChats.require(chats, userId, chatId);
+        List<ChatMessage> messages = chats.findMessages(chat.id());
+        return new ChatTranscript(messages, !messages.isEmpty() && !agent.hasSession(chat.sessionId()));
     }
 }

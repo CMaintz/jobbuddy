@@ -1,12 +1,10 @@
 package com.autoapplicant.port.out.chat;
 
 import com.autoapplicant.domain.chat.ChatEvent;
-import com.autoapplicant.domain.chat.ChatMessage;
-import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/** The local agent that answers chat turns and keeps each conversation's transcript. */
+/** The local agent that answers chat turns and keeps each conversation's own context. */
 public interface ChatAgentPort {
 
     /**
@@ -16,8 +14,11 @@ public interface ChatAgentPort {
      */
     RunningTurn start(UUID sessionId, String message, Consumer<ChatEvent> events);
 
-    /** The session's messages so far, oldest first; empty for a session that never ran. */
-    List<ChatMessage> transcript(UUID sessionId);
+    /**
+     * Whether the agent still has the session. Claude Code deletes old sessions on its own
+     * schedule, so a chat can outlive its session.
+     */
+    boolean hasSession(UUID sessionId);
 
     /** Deletes the session's transcript, which holds her own words. */
     void forget(UUID sessionId);

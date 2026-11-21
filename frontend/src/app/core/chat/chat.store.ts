@@ -11,9 +11,10 @@ interface Thread {
   messages: ChatMessage[];
   streaming: boolean;
   error: ChatFailureCode | null;
+  contextLost: boolean;
 }
 
-const EMPTY: Thread = { messages: [], streaming: false, error: null };
+const EMPTY: Thread = { messages: [], streaming: false, error: null, contextLost: false };
 
 @Injectable({ providedIn: 'root' })
 export class ChatStore {
@@ -28,6 +29,7 @@ export class ChatStore {
   readonly messages = computed(() => this.thread().messages);
   readonly streaming = computed(() => this.thread().streaming);
   readonly error = computed(() => this.thread().error);
+  readonly contextLost = computed(() => this.thread().contextLost);
 
   load(): void {
     this.api.list().subscribe({
@@ -52,7 +54,9 @@ export class ChatStore {
     this.activeId.set(chatId);
     if (this.threads()[chatId]?.streaming) return;
     this.api.messages(chatId).subscribe({
-      next: messages => this.update(chatId, t => ({ ...t, messages, error: null })),
+      next: transcript => this.update(chatId, t => ({
+        ...t, messages: transcript.messages, contextLost: transcript.contextLost, error: null,
+      })),
       error: () => this.update(chatId, t => ({ ...t, error: 'FAILED' })),
     });
   }
@@ -121,7 +125,7 @@ export class ChatStore {
 
   private endTurn(chatId: string, failure: ChatFailureCode | null): void {
     this.update(chatId, t => ({
-      ...t, streaming: false, error: failure ?? t.error,
+      ...t, streaming: false, contextLost: false, error: failure ?? t.error,
     }));
     if (!failure && !this.threads()[chatId]?.error) {
       this.api.list().subscribe(chats => this.chats.set(chats));

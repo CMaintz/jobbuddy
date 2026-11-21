@@ -1,13 +1,10 @@
 package com.autoapplicant.usecase.chat;
 
 import com.autoapplicant.domain.chat.ChatEvent;
-import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -21,12 +18,14 @@ final class FakeChatAgent implements ChatAgentPort {
     final Set<UUID> forgotten = new HashSet<>();
     /** What happened to sessions, in order: "stop:<id>" and "forget:<id>". */
     final List<String> operations = new ArrayList<>();
-    final Map<UUID, List<ChatMessage>> transcripts = new HashMap<>();
+    /** The sessions the agent still has; a turn creates its session, as Claude Code does. */
+    final Set<UUID> sessions = new HashSet<>();
     ChatEvent failImmediately;
 
     @Override
     public RunningTurn start(UUID sessionId, String message, Consumer<ChatEvent> events) {
         turns.add(new Turn(sessionId, message, events));
+        sessions.add(sessionId);
         if (failImmediately != null) {
             events.accept(failImmediately);
         }
@@ -37,8 +36,8 @@ final class FakeChatAgent implements ChatAgentPort {
     }
 
     @Override
-    public List<ChatMessage> transcript(UUID sessionId) {
-        return transcripts.getOrDefault(sessionId, List.of());
+    public boolean hasSession(UUID sessionId) {
+        return sessions.contains(sessionId);
     }
 
     @Override

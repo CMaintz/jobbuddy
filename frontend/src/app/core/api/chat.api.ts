@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ChatMessage, ChatStreamEvent, ChatSummary } from '../models/chat.model';
+import { ChatStreamEvent, ChatSummary, ChatTranscript } from '../models/chat.model';
 import { SseParser } from '../chat/sse-parser';
 
 const BASE = '/api/v1/chats';
@@ -26,8 +26,8 @@ export class ChatApiService {
     return this.http.delete<void>(`${BASE}/${chatId}`);
   }
 
-  messages(chatId: string): Observable<ChatMessage[]> {
-    return this.http.get<ChatMessage[]>(`${BASE}/${chatId}/messages`);
+  messages(chatId: string): Observable<ChatTranscript> {
+    return this.http.get<ChatTranscript>(`${BASE}/${chatId}/messages`);
   }
 
   stop(chatId: string): Observable<void> {

@@ -69,6 +69,9 @@
         </div>
       } @else {
         <div #scroller class="flex-1 overflow-y-auto jb-scroll p-3 flex flex-col gap-3">
+          @if (store.contextLost()) {
+            <p class="rounded-md border border-jb-border px-3 py-2 text-xs text-jb-text-mid">{{ 'chat.contextLost' | translate }}</p>
+          }
           @if (store.messages().length === 0 && !store.streaming()) {
             <p class="text-sm text-jb-text-mid">{{ 'chat.emptyChat' | translate }}</p>
           }

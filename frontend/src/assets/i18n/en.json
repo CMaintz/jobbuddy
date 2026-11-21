@@ -2083,6 +2083,7 @@
       "TOO_MANY_CHATS": "Other chats are already answering. Wait a moment and try again.",
       "FAILED": "Something went wrong and no answer came. Try again.",
       "NETWORK": "The connection to JobBuddy was lost. Try again."
-    }
+    },
+    "contextLost": "The earlier conversation is no longer stored in Claude Code. Your messages are still here, and the chat continues from a short summary of them, without the finer details."
   }
 }

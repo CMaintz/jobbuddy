@@ -4,7 +4,7 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.chat.ChatRequests;
 import com.autoapplicant.adapter.web.dto.chat.ChatView;
 import com.autoapplicant.domain.chat.Chat;
-import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.port.in.chat.ChatTurnUseCase;
 import com.autoapplicant.port.in.chat.ManageChatsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,9 +72,9 @@ public class ChatController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "The chat's messages so far")
+    @Operation(summary = "The chat's messages so far, and whether the agent still has them")
     @GetMapping("/{chatId}/messages")
-    public List<ChatMessage> messages(@PathVariable UUID chatId) {
+    public ChatTranscript messages(@PathVariable UUID chatId) {
         return chats.messages(secCtx.getCurrentUserId(), chatId);
     }
 

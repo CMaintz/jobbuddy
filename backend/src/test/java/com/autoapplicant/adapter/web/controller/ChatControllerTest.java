@@ -23,7 +23,9 @@ import com.autoapplicant.config.SecurityConfig;
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
+import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.domain.chat.ChatRejectedException;
+import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserRole;
 import com.autoapplicant.port.in.auth.ProvisionLocalUserUseCase;
@@ -150,6 +152,19 @@ class ChatControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(turns).stop(local.id(), chatId);
+    }
+
+    @Test
+    void the_messages_say_when_the_conversation_lost_its_context() throws Exception {
+        when(chats.messages(local.id(), chatId)).thenReturn(new ChatTranscript(List.of(
+                new ChatMessage(ChatMessage.Role.USER, "Hej", Instant.parse("2026-11-21T10:00:00Z"))),
+                true));
+
+        mvc.perform(get("/api/v1/chats/" + chatId + "/messages").header(TOKEN_HEADER, TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contextLost").value(true))
+                .andExpect(jsonPath("$.messages[0].role").value("USER"))
+                .andExpect(jsonPath("$.messages[0].text").value("Hej"));
     }
 
     @Test

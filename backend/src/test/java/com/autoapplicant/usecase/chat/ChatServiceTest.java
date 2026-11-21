@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.domain.common.NotFoundException;
 import java.time.Clock;
 import java.time.Instant;
@@ -47,12 +48,23 @@ class ChatServiceTest {
     }
 
     @Test
-    void messages_come_from_the_chats_session() {
+    void messages_are_jobbuddys_own_copy_and_survive_the_session() {
         Chat chat = service.create(her);
-        List<ChatMessage> transcript = List.of(new ChatMessage(ChatMessage.Role.USER, "Hej", NOW));
-        agent.transcripts.put(chat.sessionId(), transcript);
+        ChatMessage hello = new ChatMessage(ChatMessage.Role.USER, "Hej", NOW);
+        chats.appendMessage(chat.id(), hello);
+        agent.sessions.add(chat.sessionId());
 
-        assertThat(service.messages(her, chat.id())).isEqualTo(transcript);
+        assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), false));
+
+        agent.sessions.remove(chat.sessionId());
+        assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), true));
+    }
+
+    @Test
+    void a_new_chat_has_lost_nothing() {
+        Chat chat = service.create(her);
+
+        assertThat(service.messages(her, chat.id()).contextLost()).isFalse();
     }
 
     @Test

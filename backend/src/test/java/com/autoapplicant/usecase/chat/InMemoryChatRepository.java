@@ -1,7 +1,9 @@
 package com.autoapplicant.usecase.chat;
 
 import com.autoapplicant.domain.chat.Chat;
+import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +15,7 @@ final class InMemoryChatRepository implements ChatRepositoryPort {
 
     private final Map<UUID, Chat> chats = new LinkedHashMap<>();
     RuntimeException failNextSave;
+    private final Map<UUID, List<ChatMessage>> messages = new LinkedHashMap<>();
 
     @Override
     public List<Chat> findByUserId(UUID userId) {
@@ -45,5 +48,16 @@ final class InMemoryChatRepository implements ChatRepositoryPort {
     @Override
     public void deleteById(UUID chatId) {
         chats.remove(chatId);
+        messages.remove(chatId);
+    }
+
+    @Override
+    public void appendMessage(UUID chatId, ChatMessage message) {
+        messages.computeIfAbsent(chatId, id -> new ArrayList<>()).add(message);
+    }
+
+    @Override
+    public List<ChatMessage> findMessages(UUID chatId) {
+        return List.copyOf(messages.getOrDefault(chatId, List.of()));
     }
 }

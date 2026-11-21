@@ -1,7 +1,7 @@
 package com.autoapplicant.port.in.chat;
 
 import com.autoapplicant.domain.chat.Chat;
-import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatTranscript;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,5 +22,5 @@ public interface ManageChatsUseCase {
 
     void delete(UUID userId, UUID chatId);
 
-    List<ChatMessage> messages(UUID userId, UUID chatId);
+    ChatTranscript messages(UUID userId, UUID chatId);
 }

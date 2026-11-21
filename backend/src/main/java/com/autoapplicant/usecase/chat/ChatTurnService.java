@@ -2,10 +2,12 @@ package com.autoapplicant.usecase.chat;
 
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatEvent;
+import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.port.in.chat.ChatTurnUseCase;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
 import java.time.Clock;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.springframework.context.annotation.Profile;
@@ -49,8 +51,11 @@ public class ChatTurnService implements ChatTurnUseCase {
         Chat chat = OwnedChats.require(chats, userId, chatId);
         ChatTurns.ActiveTurn turn = running.claim(chatId);
         try {
+            String prompt = promptFor(chat, text);
             chats.save(named(chat, text).touchedAt(clock.instant()));
-            turn.attach(agent.start(chat.sessionId(), text, turn.releasingOnEnd(events)));
+            chats.appendMessage(chatId, new ChatMessage(ChatMessage.Role.USER, text, clock.instant()));
+            turn.attach(agent.start(chat.sessionId(), prompt,
+                    new AnswerRecorder(chats, chatId, clock, turn.releasingOnEnd(events))));
         } catch (RuntimeException e) {
             turn.release();
             throw e;
@@ -63,6 +68,17 @@ public class ChatTurnService implements ChatTurnUseCase {
         chats.findById(chatId)
                 .filter(chat -> chat.userId().equals(userId))
                 .ifPresent(chat -> running.stop(chatId));
+    }
+
+    /**
+     * Her message, after a recap when the agent has lost the session (Claude Code deletes old
+     * ones) but she can still see earlier messages. Only her own words are kept.
+     */
+    private String promptFor(Chat chat, String text) {
+        List<ChatMessage> earlier = chats.findMessages(chat.id());
+        return earlier.isEmpty() || agent.hasSession(chat.sessionId())
+                ? text
+                : ChatRecap.before(earlier, text);
     }
 
     private static String requireMessage(String message) {

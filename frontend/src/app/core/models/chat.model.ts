@@ -11,6 +11,11 @@ export interface ChatMessage {
   at: string;
 }
 
+export interface ChatTranscript {
+  messages: ChatMessage[];
+  contextLost: boolean;
+}
+
 export type ChatFailureCode =
   | 'CLAUDE_MISSING'
   | 'NOT_LOGGED_IN'

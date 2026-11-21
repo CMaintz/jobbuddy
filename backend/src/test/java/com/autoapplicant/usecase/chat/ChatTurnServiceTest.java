@@ -2,10 +2,13 @@ package com.autoapplicant.usecase.chat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
+import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatMessage.Role;
 import com.autoapplicant.domain.chat.ChatRejectedException;
 import com.autoapplicant.domain.common.NotFoundException;
 import java.time.Clock;
@@ -146,6 +149,61 @@ class ChatTurnServiceTest {
         assertThat(agent.turns).isEmpty();
         turns.send(her, chat.id(), "  Hej  ", received::add);
         assertThat(agent.last().message()).isEqualTo("Hej");
+    }
+
+    @Test
+    void jobbuddy_keeps_her_message_and_the_answer_she_saw() {
+        Chat chat = newChat(her);
+        turns.send(her, chat.id(), "Hej", received::add);
+        agent.last().events().accept(new ChatEvent.Delta("Hej "));
+        agent.last().events().accept(new ChatEvent.Delta("med dig"));
+        agent.last().events().accept(new ChatEvent.Completed());
+
+        assertThat(chats.findMessages(chat.id()))
+                .extracting(ChatMessage::role, ChatMessage::text)
+                .containsExactly(tuple(Role.USER, "Hej"), tuple(Role.ASSISTANT, "Hej med dig"));
+    }
+
+    @Test
+    void a_stopped_answer_is_kept_as_far_as_it_got_and_a_failed_turn_keeps_only_her_words() {
+        Chat stopped = newChat(her);
+        turns.send(her, stopped.id(), "Første", received::add);
+        agent.last().events().accept(new ChatEvent.Delta("Halvt svar"));
+        turns.stop(her, stopped.id());
+        Chat failed = newChat(her);
+        turns.send(her, failed.id(), "Anden", received::add);
+        agent.last().events().accept(new ChatEvent.Failed(ChatFailure.USAGE_LIMIT));
+
+        assertThat(chats.findMessages(stopped.id())).extracting(ChatMessage::text)
+                .containsExactly("Første", "Halvt svar");
+        assertThat(chats.findMessages(failed.id())).extracting(ChatMessage::text)
+                .containsExactly("Anden");
+    }
+
+    @Test
+    void a_chat_whose_session_is_gone_goes_on_from_a_recap_of_what_she_sees() {
+        Chat chat = newChat(her);
+        chats.appendMessage(chat.id(), new ChatMessage(Role.USER, "Jeg hedder Mette.", NOW));
+        chats.appendMessage(chat.id(), new ChatMessage(Role.ASSISTANT, "Hej Mette.", NOW));
+
+        turns.send(her, chat.id(), "Hvad hedder jeg?", received::add);
+
+        assertThat(agent.last().message())
+                .contains("Jeg hedder Mette.", "Hej Mette.")
+                .endsWith("Hvad hedder jeg?");
+        assertThat(chats.findMessages(chat.id())).extracting(ChatMessage::text)
+                .containsExactly("Jeg hedder Mette.", "Hej Mette.", "Hvad hedder jeg?");
+    }
+
+    @Test
+    void a_chat_whose_session_is_still_there_gets_only_her_message() {
+        Chat chat = newChat(her);
+        chats.appendMessage(chat.id(), new ChatMessage(Role.USER, "Jeg hedder Mette.", NOW));
+        agent.sessions.add(chat.sessionId());
+
+        turns.send(her, chat.id(), "Hvad hedder jeg?", received::add);
+
+        assertThat(agent.last().message()).isEqualTo("Hvad hedder jeg?");
     }
 
     @Test

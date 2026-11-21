@@ -4,7 +4,6 @@ import com.autoapplicant.config.AppDataDirectory;
 import com.autoapplicant.config.AppProperties;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
-import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +58,7 @@ public class ClaudeChatAgent implements ChatAgentPort {
             "--permission-mode", "dontAsk");
 
     private final ClaudeChatSettings settings;
-    private final ClaudeChatTranscripts transcripts;
+    private final ClaudeChatSessions sessions;
 
     @Autowired
     public ClaudeChatAgent(AppDataDirectory dataDirectory,
@@ -75,7 +74,7 @@ public class ClaudeChatAgent implements ChatAgentPort {
 
     ClaudeChatAgent(ClaudeChatSettings settings) {
         this.settings = settings;
-        this.transcripts = new ClaudeChatTranscripts(settings.claudeConfigDir());
+        this.sessions = new ClaudeChatSessions(settings.claudeConfigDir());
     }
 
     @Override
@@ -93,13 +92,13 @@ public class ClaudeChatAgent implements ChatAgentPort {
     }
 
     @Override
-    public List<ChatMessage> transcript(UUID sessionId) {
-        return transcripts.read(sessionId);
+    public boolean hasSession(UUID sessionId) {
+        return sessions.exists(sessionId);
     }
 
     @Override
     public void forget(UUID sessionId) {
-        transcripts.delete(sessionId);
+        sessions.delete(sessionId);
     }
 
     /**
@@ -111,7 +110,7 @@ public class ClaudeChatAgent implements ChatAgentPort {
         argv.addAll(FLAGS);
         argv.addAll(List.of("--model", settings.model(),
                 "--system-prompt-file", systemPrompt.toString(),
-                transcripts.exists(sessionId) ? "--resume" : "--session-id", sessionId.toString()));
+                sessions.exists(sessionId) ? "--resume" : "--session-id", sessionId.toString()));
         return argv;
     }
 
