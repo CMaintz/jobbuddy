@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, from, switchMap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, from, switchMap, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 import { auth } from '../firebase/firebase.config';
 import { OAuthState } from './oauth-state';
 import { requiresEmailVerification } from './email-verification';
+import { DESKTOP_BACKEND_ORIGIN } from '../desktop/desktop-shell';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -34,6 +35,8 @@ export class AuthService {
   private http = inject(HttpClient);
   private readonly USER_KEY = 'aa_user';
   private readonly linkedInState = new OAuthState('linkedin_state');
+  private readonly desktop = inject(DESKTOP_BACKEND_ORIGIN) !== null;
+  private currentUserLoad: Promise<MeResponse> | null = null;
 
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUser());
   currentUser$ = this.currentUserSubject.asObservable();
@@ -145,6 +148,18 @@ export class AuthService {
     return this.fetchMe();
   }
 
+  /**
+   * The desktop app's user record, fetched once per app start: there is no sign-in step that
+   * would load it, and onboarding depends on it.
+   */
+  ensureCurrentUser(): Promise<MeResponse> {
+    this.currentUserLoad ??= firstValueFrom(this.fetchMe()).catch(error => {
+      this.currentUserLoad = null;
+      throw error;
+    });
+    return this.currentUserLoad;
+  }
+
   resendVerification(): Promise<void> {
     if (!auth.currentUser) return Promise.reject(new Error('Not signed in'));
     return sendEmailVerification(auth.currentUser);
@@ -176,8 +191,9 @@ export class AuthService {
       .then(() => auth.currentUser ? auth.currentUser.getIdToken() : null);
   }
 
+  /** Always true in the desktop app, where the shell signs every request in as the local user. */
   isAuthenticated(): boolean {
-    return !!auth.currentUser;
+    return this.desktop || !!auth.currentUser;
   }
 
   /** From the cached /me record, so it is known synchronously on a reload. */
