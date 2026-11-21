@@ -1,46 +1,93 @@
 package com.autoapplicant.usecase.matching;
 
+import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
 import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Loads what a match score reads about one user, once per feed: their skills, and the education
- * and certifications that decide whether a posting's hard requirements are within reach.
+ * Loads what a match score reads about one user, once per feed: their skills, the suggested
+ * skills they have not answered yet, and the education and certifications that decide whether a
+ * posting's hard requirements are within reach.
  */
 @Component
 public class MatchProfileLoader {
 
-    /** The scorers for one profile, plus the skill rows its search text is built from. */
-    record MatchProfile(List<ProfileSkill> skills, SkillFitScorer skillFit,
-                        HardRequirements hardRequirements) {}
+    /**
+     * The scorers for one profile, plus the skill rows its search text is built from. Suggested
+     * skills are kept apart from {@code skills}: they are not the user's account of themselves.
+     */
+    record MatchProfile(Profile profile, List<ProfileSkill> skills, List<String> suggested,
+                        SkillFitScorer skillFit, HardRequirements hardRequirements) {}
+
+    /** The repositories a match profile is read from. */
+    record Sources(ProfileSkillRepositoryPort skills, ParsedSkillSuggestionRepositoryPort suggested,
+                   EducationRepositoryPort education, CertificationRepositoryPort certifications) {}
 
     private final SkillCanonicalizer canonicalizer;
-    private final ProfileSkillRepositoryPort skillRepo;
-    private final EducationRepositoryPort educationRepo;
-    private final CertificationRepositoryPort certificationRepo;
+    private final Sources sources;
+    private final SkillSimilaritySource similarity;
 
+    @Autowired
     public MatchProfileLoader(SkillCanonicalizer canonicalizer,
                               ProfileSkillRepositoryPort skillRepo,
+                              ParsedSkillSuggestionRepositoryPort suggestionRepo,
                               EducationRepositoryPort educationRepo,
-                              CertificationRepositoryPort certificationRepo) {
-        this.canonicalizer = canonicalizer;
-        this.skillRepo = skillRepo;
-        this.educationRepo = educationRepo;
-        this.certificationRepo = certificationRepo;
+                              CertificationRepositoryPort certificationRepo,
+                              SkillLabelEmbeddings embeddings) {
+        this(canonicalizer, new Sources(skillRepo, suggestionRepo, educationRepo,
+                certificationRepo), embeddings);
     }
 
+    MatchProfileLoader(SkillCanonicalizer canonicalizer, Sources sources,
+                       SkillSimilaritySource similarity) {
+        this.canonicalizer = canonicalizer;
+        this.sources = sources;
+        this.similarity = similarity;
+    }
+
+    /** The profile scored on spelling alone, until {@link #againstPostings} knows the asks. */
     MatchProfile load(Profile profile) {
-        List<ProfileSkill> skills = skillRepo.findByUserId(profile.userId());
-        return new MatchProfile(skills,
-                SkillFitScorer.forProfile(canonicalizer, profile, skills),
+        List<ProfileSkill> skills = sources.skills().findByUserId(profile.userId());
+        List<String> suggested = sources.suggested().findByUserId(profile.userId()).stream()
+                .map(ParsedSkillSuggestion::skillName).filter(Objects::nonNull).toList();
+        return new MatchProfile(profile, skills, suggested,
+                SkillFitScorer.forProfile(canonicalizer, profile, skills, suggested,
+                        SkillSimilarity.NONE),
                 HardRequirements.forProfile(profile, skills,
-                        educationRepo.findByUserId(profile.userId()),
-                        certificationRepo.findByUserId(profile.userId())));
+                        sources.education().findByUserId(profile.userId()),
+                        sources.certifications().findByUserId(profile.userId())));
+    }
+
+    /**
+     * The same profile, now also crediting asks close in meaning to its skills. Done once for
+     * the whole candidate list, so the labels nobody has embedded yet go out in one batch.
+     */
+    MatchProfile againstPostings(MatchProfile loaded, List<Job> jobs) {
+        List<String> labels = new ArrayList<>(loaded.suggested());
+        loaded.skills().stream().map(ProfileSkill::skillName).forEach(labels::add);
+        jobs.forEach(job -> asksOf(job).forEach(labels::add));
+        SkillSimilarity known = similarity.among(labels.stream().filter(Objects::nonNull).toList());
+        return new MatchProfile(loaded.profile(), loaded.skills(), loaded.suggested(),
+                SkillFitScorer.forProfile(canonicalizer, loaded.profile(), loaded.skills(),
+                        loaded.suggested(), known),
+                loaded.hardRequirements());
+    }
+
+    private static Stream<String> asksOf(Job job) {
+        return Stream.of(job.requiredSkills(), job.preferredSkills(), job.technologies(),
+                        job.skills())
+                .filter(Objects::nonNull).flatMap(List::stream);
     }
 }

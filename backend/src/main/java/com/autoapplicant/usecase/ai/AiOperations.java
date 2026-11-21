@@ -23,6 +23,7 @@ public final class AiOperations {
     public static final String COMPANY_GROUNDING = "COMPANY_GROUNDING";
     public static final String SKILL_GAP = "SKILL_GAP";
     public static final String SKILL_EVIDENCE = "SKILL_EVIDENCE";
+    public static final String ADJACENT_SKILLS = "ADJACENT_SKILLS";
     public static final String WRITING_PROFILE = "WRITING_PROFILE";
 
     private AiOperations() {}

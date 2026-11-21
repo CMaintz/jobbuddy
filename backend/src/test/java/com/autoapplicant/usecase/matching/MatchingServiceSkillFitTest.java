@@ -21,6 +21,7 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
@@ -61,6 +62,7 @@ class MatchingServiceSkillFitTest {
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
     @Mock EducationRepositoryPort educationRepo;
     @Mock CertificationRepositoryPort certificationRepo;
+    @Mock ParsedSkillSuggestionRepositoryPort suggestionRepo;
 
     MatchingService service;
     final UUID userId = UUID.randomUUID();
@@ -69,8 +71,10 @@ class MatchingServiceSkillFitTest {
     void setUp() {
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
                 aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
-                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo), profileSkillRepo,
-                        educationRepo, certificationRepo));
+                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo),
+                        new MatchProfileLoader.Sources(profileSkillRepo, suggestionRepo,
+                                educationRepo, certificationRepo),
+                        labels -> SkillSimilarity.NONE));
     }
 
     @Test
