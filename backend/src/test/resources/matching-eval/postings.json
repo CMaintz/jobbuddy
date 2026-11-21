@@ -1,0 +1,1883 @@
+{
+ "source": "Real Danish postings from Jobindex, November 2026, run through EnrichmentPrompt and JobEnrichmentService.applyEnrichment with the claude-cli provider (sonnet). fit is a human label per profile written before scoring: G good fit, P plausible, M mismatch. The scorer's constants were chosen on the tuning rows; the holdout rows were labelled and scored after that. The unenriched rows are three of the same postings with no ask lists and their page text as crawled, page chrome included, to measure the fallback that reads the text instead.",
+ "postings": [
+  {
+   "id": "kommunikationsmedarbejder",
+   "title": "Kommunikationsmedarbejder",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "CMS-systemer",
+    "Nyhedsbrevsværktøjer"
+   ],
+   "skills": [
+    "Skriftlig formidling",
+    "Faglig formidling",
+    "Digital kommunikation",
+    "Sociale medier",
+    "Visuel kommunikation",
+    "Målgruppeforståelse",
+    "Foto- og videoproduktion",
+    "Samarbejde",
+    "Selvstændighed",
+    "Struktur"
+   ],
+   "requiredSkills": [
+    "CMS-systemer",
+    "Nyhedsbrevsværktøjer",
+    "Skriftlig formidling",
+    "Faglig formidling",
+    "Digital kommunikation",
+    "Sociale medier",
+    "Målgruppeforståelse",
+    "Selvstændighed",
+    "Samarbejde",
+    "Visuel kommunikation"
+   ],
+   "preferredSkills": [
+    "Foto- og videoproduktion"
+   ]
+  },
+  {
+   "id": "dynamisk-kommunikationsmedarbejder-til-k",
+   "title": "Dynamisk kommunikationsmedarbejder til Københavns Domkirke",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Journalistik",
+    "Kommunikation",
+    "Visuel kommunikation",
+    "Grafisk arbejde",
+    "Filmredigering",
+    "Projektledelse",
+    "Kommunikationsstrategi",
+    "Samarbejde",
+    "Prioritering",
+    "Selvstændighed"
+   ],
+   "requiredSkills": [
+    "Kommunikation",
+    "Visuel kommunikation",
+    "Projektledelse",
+    "Samarbejde",
+    "Prioritering",
+    "Selvstændighed"
+   ],
+   "preferredSkills": [
+    "Grafisk arbejde",
+    "Filmredigering"
+   ]
+  },
+  {
+   "id": "kommunikationskonsulent-med-flair-for-di",
+   "title": "Kommunikationskonsulent med flair for digital markedsføring og data",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "Mailchimp",
+    "Meta-annoncering",
+    "AI",
+    "A/B-test",
+    "Webanalyse"
+   ],
+   "skills": [
+    "Digital markedsføring",
+    "E-mailmarketing",
+    "Marketing automation",
+    "Segmentering",
+    "Kampagneoptimering",
+    "Sociale medier",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Digital markedsføring",
+    "Marketing automation",
+    "Segmentering",
+    "Mailchimp",
+    "AI",
+    "Sociale medier",
+    "A/B-test",
+    "Webanalyse"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "marketingkoordinator-soeges-til-jydsk-ta",
+   "title": "Marketingkoordinator søges til Jydsk Tagteknik A/S i Østjylland - 30 timer om ugen",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Koordinering",
+    "Planlægning",
+    "Korrekturlæsning",
+    "Struktur",
+    "Samarbejde",
+    "Servicemindedhed",
+    "Initiativ",
+    "Dansk skriftlig formulering"
+   ],
+   "requiredSkills": [
+    "Koordinering",
+    "Struktur",
+    "Korrekturlæsning",
+    "Samarbejde",
+    "Servicemindedhed",
+    "Initiativ"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "marketingkoordinator-til-bygma-gruppen-j",
+   "title": "Marketingkoordinator til Bygma Gruppen Joboplysninger",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Marketingkoordinering",
+    "Projektledelse",
+    "Kampagnestyring",
+    "Dataanalyse",
+    "Rapportering",
+    "Korrektur",
+    "Sociale medier",
+    "E-mailmarketing",
+    "Struktureret arbejdsform",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Marketingkoordinering",
+    "Projektledelse",
+    "Struktureret arbejdsform",
+    "Korrektur",
+    "Rapportering"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "konsulent-til-kommunikation-og-projekter",
+   "title": "Konsulent til kommunikation og projekter",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "SharePoint",
+    "InDesign",
+    "Photoshop"
+   ],
+   "skills": [
+    "Intern kommunikation",
+    "Projektkoordinering",
+    "Kommunikationsstrategi",
+    "Organisationsforståelse",
+    "Organisationsudvikling",
+    "Forandringsprocesser",
+    "Relationsopbygning",
+    "Skriftlig og mundtlig kommunikation"
+   ],
+   "requiredSkills": [
+    "SharePoint",
+    "Intern kommunikation",
+    "Projektkoordinering",
+    "Kommunikationsstrategi",
+    "Skriftlig og mundtlig kommunikation"
+   ],
+   "preferredSkills": [
+    "InDesign",
+    "Photoshop",
+    "Organisationsudvikling",
+    "Forandringsprocesser"
+   ]
+  },
+  {
+   "id": "agramkow-fluid-systems-a-s-customer-succ",
+   "title": "AGRAMKOW Fluid Systems A/S - Customer Success Manager",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "SALES",
+   "technologies": [
+    "PLIS Factory",
+    "MES",
+    "ERP",
+    "SQL",
+    "Web APIs",
+    "OPC UA",
+    "Power BI",
+    "Tableau"
+   ],
+   "skills": [
+    "Customer Success",
+    "Kunderelationer",
+    "Træning",
+    "Upselling",
+    "Cross-selling",
+    "Account Management",
+    "Kommerciel forståelse",
+    "LEAN",
+    "Kommunikation"
+   ],
+   "requiredSkills": [
+    "Customer Success",
+    "Kommerciel forståelse"
+   ],
+   "preferredSkills": [
+    "MES",
+    "ERP",
+    "SQL",
+    "Web APIs",
+    "OPC UA",
+    "Power BI",
+    "Tableau",
+    "LEAN"
+   ]
+  },
+  {
+   "id": "sem-specialist-til-auxo-i-aarhus",
+   "title": "SEM-specialist til Auxo i Aarhus",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "Google Ads"
+   ],
+   "skills": [
+    "SEO",
+    "SEM",
+    "Søgeordsanalyse",
+    "Kundekontakt",
+    "Rapportering",
+    "Analyse",
+    "Overblik"
+   ],
+   "requiredSkills": [
+    "SEO",
+    "Google Ads",
+    "Kundekontakt"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "informationssikkerhedskonsulent",
+   "title": "Informationssikkerhedskonsulent",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Informationssikkerhed",
+    "ISO 27001",
+    "NIS2",
+    "GDPR",
+    "Beredskabsøvelser",
+    "Awareness",
+    "Politikker og procedurer",
+    "Dokumentation",
+    "Rådgivning",
+    "Selvstændighed",
+    "Struktureret arbejdsform",
+    "Forretningsforståelse"
+   ],
+   "requiredSkills": [
+    "Informationssikkerhed"
+   ],
+   "preferredSkills": [
+    "ISO 27001",
+    "NIS2",
+    "GDPR"
+   ]
+  },
+  {
+   "id": "grc-konsulent-med-fokus-paa-informations",
+   "title": "GRC-konsulent med fokus på informationssikkerhed og kritisk infrastruktur",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GRC",
+    "Intern audit",
+    "Compliance",
+    "Risikostyring",
+    "ISO 27001",
+    "NIS 2",
+    "ISO 27004/27005",
+    "Kontrolmiljøer",
+    "Rapportering til ledelse",
+    "Analytisk tæft",
+    "Kommunikation"
+   ],
+   "requiredSkills": [
+    "GRC",
+    "Intern audit",
+    "Compliance",
+    "Risikostyring"
+   ],
+   "preferredSkills": [
+    "ISO 27001",
+    "NIS 2",
+    "ISO 27004/27005",
+    "Kontrolmiljøer",
+    "Rapportering til ledelse"
+   ]
+  },
+  {
+   "id": "compliancespecialist-med-ansvar-for-gdpr",
+   "title": "Compliancespecialist med ansvar for GDPR og AI",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GDPR",
+    "AI-forordningen",
+    "Compliance",
+    "Cybersikkerhed",
+    "Informationssikkerhed",
+    "Risikovurdering",
+    "Projektledelse",
+    "Governance",
+    "Analytisk tilgang",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "GDPR",
+    "AI-forordningen",
+    "Cybersikkerhed",
+    "Compliance",
+    "Projektledelse"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "karriere-og-ledige-stillinger-i-greve-ko",
+   "title": "Karriere og ledige stillinger i Greve Kommune",
+   "kind": "kommune",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "FM3"
+   ],
+   "skills": [
+    "Beredskab",
+    "Brandsikkerhed",
+    "BR18",
+    "Risikostyring",
+    "Beredskabsplaner",
+    "Koordinering",
+    "Rådgivning",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Beredskab",
+    "Brandsikkerhed",
+    "BR18"
+   ]
+  },
+  {
+   "id": "vil-du-vaere-med-til-at-saette-retningen",
+   "title": "Vil du være med til at sætte retningen for informationssikkerheden i en samfundskritisk organisation?",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "Microsoft 365",
+    "Azure"
+   ],
+   "skills": [
+    "Informationssikkerhed",
+    "Sikkerhedsarkitektur",
+    "Risikovurdering",
+    "NIS2",
+    "ISO 27001",
+    "Statens tekniske minimumskrav",
+    "Zero trust",
+    "Identitets- og adgangsstyring",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Sikkerhedsarkitektur",
+    "Microsoft 365",
+    "Azure",
+    "Risikovurdering",
+    "ISO 27001",
+    "NIS2",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "cybersikkerhedsspecialist-til-kritisk-in",
+   "title": "Cybersikkerhedsspecialist til kritisk infrastruktur",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [],
+   "skills": [
+    "IT-sikkerhed",
+    "Cybersikkerhed",
+    "Incident Response",
+    "SOC",
+    "Risikovurdering",
+    "Sårbarhedsanalyse",
+    "Endpoint-sikkerhed",
+    "Logning og monitorering",
+    "OT-sikkerhed",
+    "Log management",
+    "Automatisering",
+    "Sårbarhedsscanning",
+    "Hardening"
+   ],
+   "requiredSkills": [
+    "IT-sikkerhed",
+    "Incident Response",
+    "SOC",
+    "Risikovurdering",
+    "Sårbarhedsanalyse",
+    "Endpoint-sikkerhed",
+    "Logning og monitorering"
+   ],
+   "preferredSkills": [
+    "OT-sikkerhed",
+    "Log management",
+    "Automatisering",
+    "Sårbarhedsscanning"
+   ]
+  },
+  {
+   "id": "jurist-med-fokus-paa-informationssikkerh",
+   "title": "Jurist med fokus på informationssikkerhed til ledelsessekretariatet i Midt- og Vestjyllands Politi Joboplysninger",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "LEGAL",
+   "technologies": [],
+   "skills": [
+    "Juridisk sagsbehandling",
+    "Databeskyttelse",
+    "GDPR",
+    "NIS2",
+    "ISO 27001",
+    "Informationssikkerhed",
+    "Awareness",
+    "Samarbejde",
+    "Kommunikation",
+    "Selvstændighed"
+   ],
+   "requiredSkills": [
+    "Juridisk sagsbehandling",
+    "GDPR",
+    "NIS2",
+    "Samarbejde",
+    "Kommunikation",
+    "Selvstændighed"
+   ],
+   "preferredSkills": [
+    "ISO 27001"
+   ]
+  },
+  {
+   "id": "java-architect-twoday-denmark",
+   "title": "Java Architect - Twoday Denmark",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Java"
+   ],
+   "skills": [
+    "Software architecture",
+    "Integrations",
+    "APIs",
+    "Technical guidance",
+    "Collaboration"
+   ],
+   "requiredSkills": [
+    "Java",
+    "Software architecture",
+    "Integrations",
+    "APIs"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "backend-developer-foss-iqx",
+   "title": "Backend Developer - FOSS IQX",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "relabel": "engineer G to P before scoring changes: Requires C#, .NET and MS SQL Server; the engineer CV is Java and TypeScript.",
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "C#",
+    ".NET",
+    "MS SQL Server",
+    "SQL",
+    "Azure",
+    "Snowflake",
+    "SAP",
+    "Salesforce",
+    "Azure DevOps",
+    "OpenAPI",
+    "Infrastructure as Code",
+    "Web APIs"
+   ],
+   "skills": [
+    "TDD",
+    "Clean code",
+    "Design patterns",
+    "Agile",
+    "DevOps mindset",
+    "Communication",
+    "Teamwork",
+    "Performance optimization"
+   ],
+   "requiredSkills": [
+    "C#",
+    ".NET",
+    "SQL",
+    "Azure",
+    "TDD",
+    "Clean code",
+    "Design patterns"
+   ],
+   "preferredSkills": [
+    "Azure DevOps",
+    "Web APIs",
+    "OpenAPI",
+    "Snowflake",
+    "Agile"
+   ]
+  },
+  {
+   "id": "full-stack-udvikler-til-habeo",
+   "title": "Full-stack-udvikler til Habeo",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Vite",
+    "PostgreSQL",
+    "Supabase",
+    "SQL",
+    "Deno",
+    "Microsoft Graph",
+    "Amazon SES",
+    "GatewayAPI",
+    "Scrive",
+    "Slack",
+    "Datafordeleren",
+    "MCP",
+    "OAuth",
+    "PKCE",
+    "Claude",
+    "Claude Code",
+    "Codex",
+    "Astro",
+    "Netlify",
+    "Vitest",
+    "GitHub"
+   ],
+   "skills": [
+    "Datamodellering",
+    "API-design",
+    "Sikkerhed",
+    "AI-værktøjer",
+    "Ansvarlighed",
+    "Sans for detaljer",
+    "Kommunikation",
+    "Samarbejde",
+    "Dansk"
+   ],
+   "requiredSkills": [
+    "TypeScript",
+    "JavaScript",
+    "Dansk"
+   ],
+   "preferredSkills": [
+    "React",
+    "SQL",
+    "PostgreSQL",
+    "Datamodellering",
+    "API-design",
+    "Sikkerhed",
+    "AI-værktøjer"
+   ]
+  },
+  {
+   "id": "ai-udvikler-ai-engineer-til-krifa",
+   "title": "AI-udvikler / AI Engineer til Krifa",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "relabel": "engineer G to P before scoring changes: Requires RAG, prompt engineering and AI agents, none of which the engineer CV shows.",
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Python",
+    "C#",
+    "TypeScript",
+    "RAG",
+    "GitHub Copilot",
+    "Claude Code",
+    "Azure",
+    "CI/CD",
+    "LLM API'er"
+   ],
+   "skills": [
+    "Prompt engineering",
+    "AI-agenter",
+    "Softwarearkitektur",
+    "API-first design",
+    "Versionsstyring",
+    "Automatiserede test",
+    "Code review",
+    "Kravspecifikation",
+    "Informationssikkerhed",
+    "Databeskyttelse",
+    "Ansvarlig AI",
+    "Kommunikation"
+   ],
+   "requiredSkills": [
+    "RAG",
+    "Prompt engineering",
+    "AI-agenter",
+    "Softwarearkitektur",
+    "Versionsstyring",
+    "Automatiserede test",
+    "Code review",
+    "CI/CD",
+    "Kravspecifikation",
+    "Databeskyttelse"
+   ],
+   "preferredSkills": [
+    "Azure",
+    "Ansvarlig AI"
+   ]
+  },
+  {
+   "id": "fe-soeger-devops-data-science-profiler",
+   "title": "FE søger DevOps & Data Science Profiler",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Python",
+    "Kubernetes",
+    "PySpark",
+    "Linux",
+    "GitLab",
+    "Java",
+    "Docker"
+   ],
+   "skills": [
+    "DevOps",
+    "Data science",
+    "Big Data",
+    "Agil softwareudvikling",
+    "Analytisk tænkning",
+    "Samarbejde",
+    "Selvstændighed",
+    "Nysgerrighed"
+   ],
+   "requiredSkills": [
+    "Samarbejde",
+    "Selvstændighed"
+   ],
+   "preferredSkills": [
+    "Python",
+    "Kubernetes",
+    "PySpark",
+    "Linux",
+    "GitLab",
+    "Java",
+    "Docker"
+   ]
+  },
+  {
+   "id": "senior-data-engineer",
+   "title": "Senior Data Engineer",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "DATA_ANALYTICS",
+   "technologies": [
+    "SQL",
+    "Microsoft Fabric",
+    "Databricks",
+    "Git",
+    "Azure DevOps",
+    "Microsoft"
+   ],
+   "skills": [
+    "Data Engineering",
+    "Datamodellering",
+    "Databaseoptimering",
+    "ETL/ELT",
+    "Integrationer",
+    "Kundedialog",
+    "Workshopfacilitering",
+    "Rådgivning"
+   ],
+   "requiredSkills": [
+    "SQL",
+    "Datamodellering",
+    "Databaseoptimering",
+    "Data Engineering",
+    "ETL/ELT",
+    "Git",
+    "Azure DevOps",
+    "Microsoft Fabric",
+    "Databricks"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "sap-abap-udviklere-erfarne-og-senior-s-4",
+   "title": "SAP/ABAP-udviklere (erfarne og senior) - S/4HANA",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "ABAP",
+    "SAP S/4HANA",
+    "SAP ECC",
+    "ABAP Objects",
+    "ABAP Cloud",
+    "RAP/CDS",
+    "Fiori/UI5",
+    "SAP BTP",
+    "SAP HCM",
+    "Java",
+    "CI/CD",
+    "ATC"
+   ],
+   "skills": [
+    "Kodegennemgang",
+    "Teknisk dokumentation",
+    "Test",
+    "Kommunikation",
+    "Samarbejde",
+    "Faglig vejledning",
+    "Leverandørvurdering"
+   ],
+   "requiredSkills": [
+    "ABAP",
+    "Kommunikation"
+   ],
+   "preferredSkills": [
+    "ABAP Objects",
+    "ABAP Cloud",
+    "RAP/CDS",
+    "Fiori/UI5",
+    "SAP BTP",
+    "SAP HCM",
+    "Java",
+    "CI/CD"
+   ]
+  },
+  {
+   "id": "microsoft-365-og-azure-konsulent",
+   "title": "Microsoft 365- og Azure-konsulent",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Microsoft 365",
+    "Azure",
+    "Intune",
+    "Entra ID",
+    "Exchange Online",
+    "Teams",
+    "SharePoint",
+    "Microsoft Defender",
+    "MFA",
+    "Conditional Access"
+   ],
+   "skills": [
+    "Modern Workplace",
+    "IT-sikkerhed",
+    "Rådgivning",
+    "Kundekontakt",
+    "Fejlsøgning",
+    "Implementering og migrering",
+    "Struktureret arbejdsform"
+   ],
+   "requiredSkills": [
+    "Microsoft 365",
+    "Azure",
+    "Modern Workplace",
+    "Intune",
+    "IT-sikkerhed",
+    "Kundekontakt"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "erfaren-sygeplejerske-soeges-til-almen-p",
+   "title": "Erfaren sygeplejerske søges til almen praksis",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "HEALTHCARE",
+   "technologies": [],
+   "skills": [
+    "Selvstændigt ansvar",
+    "Klinisk blik",
+    "Patientkontakt",
+    "Samarbejde",
+    "Overblik"
+   ],
+   "requiredSkills": [
+    "Selvstændigt ansvar",
+    "Klinisk blik"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "lagermedarbejder",
+   "title": "Lagermedarbejder",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "OPERATIONS_LOGISTICS",
+   "technologies": [
+    "Business Central"
+   ],
+   "skills": [
+    "Struktureret",
+    "Selvstændighed",
+    "Kvalitetsbevidsthed",
+    "Teamwork",
+    "Fleksibilitet"
+   ],
+   "requiredSkills": [
+    "Struktureret",
+    "Selvstændighed",
+    "Kvalitetsbevidsthed"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "toemrer-soeges-snarest",
+   "title": "Tømrer søges snarest",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "ENGINEERING",
+   "technologies": [],
+   "skills": [
+    "Bygningsforståelse",
+    "Kundekommunikation",
+    "Selvstændighed",
+    "Teamwork",
+    "Fleksibilitet",
+    "Skadeservice",
+    "Skimmelhåndtering"
+   ],
+   "requiredSkills": [
+    "Bygningsforståelse",
+    "Kundekommunikation",
+    "Selvstændighed",
+    "Teamwork",
+    "Fleksibilitet"
+   ],
+   "preferredSkills": [
+    "Skadeservice",
+    "Skimmelhåndtering"
+   ]
+  },
+  {
+   "id": "erfaren-bogholder-til-central-rolle-i-in",
+   "title": "Erfaren bogholder til central rolle i international produktionsvirksomhed",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "FINANCE",
+   "technologies": [
+    "Excel",
+    "Navision"
+   ],
+   "skills": [
+    "Bogholderi",
+    "Fakturering",
+    "Debitor- og kreditorhåndtering",
+    "Afstemninger",
+    "Struktur",
+    "Detaljeorientering",
+    "Samarbejde",
+    "Import/eksport"
+   ],
+   "requiredSkills": [
+    "Bogholderi",
+    "Excel",
+    "Navision",
+    "Struktur",
+    "Detaljeorientering",
+    "Samarbejde"
+   ],
+   "preferredSkills": [
+    "Import/eksport"
+   ]
+  },
+  {
+   "id": "logopaed-til-ppr-i-taarnby-kommune-taarn",
+   "title": "Logopæd til PPR i Tårnby kommune - Tårnby Kommune",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "HEALTHCARE",
+   "technologies": [],
+   "skills": [
+    "Logopædi",
+    "Konsultativ vejledning",
+    "Tværfagligt samarbejde",
+    "Struktur",
+    "Selvstændig opgaveløsning",
+    "Sproglig vurdering"
+   ],
+   "requiredSkills": [
+    "Logopædi",
+    "Konsultativ vejledning",
+    "Tværfagligt samarbejde",
+    "Struktur",
+    "Selvstændig opgaveløsning"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "digitaliseringskonsulent-til-digitaliser",
+   "title": "Digitaliseringskonsulent til Digitalisering & Informationssikkerhed",
+   "kind": "kommune",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Informationssikkerhed",
+    "GDPR",
+    "AI",
+    "Risikovurdering",
+    "DPIA",
+    "Procesoptimering",
+    "Compliance",
+    "Analytiske evner",
+    "Skriftlig formidling",
+    "Samarbejde",
+    "Teknisk forståelse"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "GDPR",
+    "Informationssikkerhed",
+    "Teknisk forståelse"
+   ]
+  },
+  {
+   "id": "sikkerheds-og-risikokoordinator",
+   "title": "Sikkerheds- og risikokoordinator",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "NIS2",
+    "CER",
+    "Risikostyring",
+    "Informationssikkerhed",
+    "Beredskab",
+    "Compliance",
+    "Awareness",
+    "Koordinering",
+    "Dokumentation",
+    "Facilitering"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "NIS2",
+    "CER",
+    "Risikostyring"
+   ]
+  },
+  {
+   "id": "konsulent-til-governance-risk-compliance",
+   "title": "Konsulent til Governance, Risk & Compliance i BDO Risk Assurance",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GRC",
+    "NIS2",
+    "GDPR",
+    "AI Act",
+    "AI Governance",
+    "ISO 27001/27002",
+    "CIS 18",
+    "NIST CSF",
+    "Risikostyring",
+    "Informationssikkerhed",
+    "Kundekontakt",
+    "Analytiske evner",
+    "Kommunikation",
+    "ISAE 3000",
+    "ISAE 3402",
+    "IT-revision"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "GDPR",
+    "NIS2",
+    "AI Act",
+    "ISO 27001/27002",
+    "CIS 18",
+    "NIST CSF",
+    "Risikostyring",
+    "Informationssikkerhed"
+   ]
+  },
+  {
+   "id": "gdpr-konsulent-til-konsulentvirksomhed-i",
+   "title": "GDPR-konsulent til konsulentvirksomhed i vækst",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "GapPortalen"
+   ],
+   "skills": [
+    "GDPR",
+    "Databeskyttelse",
+    "Rådgivning",
+    "Informationssikkerhed",
+    "Dokumentation",
+    "Kundeservice",
+    "Projektstyring",
+    "Undervisning",
+    "DPO"
+   ],
+   "requiredSkills": [
+    "GDPR"
+   ],
+   "preferredSkills": [
+    "DPO"
+   ]
+  },
+  {
+   "id": "security-compliance-governance-specialis",
+   "title": "Security Compliance & Governance Specialist",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Regulatory compliance",
+    "NIS2",
+    "AI Act",
+    "CER directive",
+    "Cyber Resilience Act",
+    "GDPR",
+    "ISO 27001",
+    "Information security governance",
+    "IT risk",
+    "Policy development",
+    "Written communication",
+    "Stakeholder management",
+    "Gap analysis"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "NIS2",
+    "AI Act",
+    "GDPR",
+    "ISO 27001",
+    "Policy development",
+    "Written communication"
+   ]
+  },
+  {
+   "id": "software-developer-xci",
+   "title": "Software Developer - XCI",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Java",
+    "Spring Boot",
+    "PostgreSQL",
+    "Elasticsearch",
+    "Apache Kafka",
+    "Apache Flink",
+    "Template engines"
+   ],
+   "skills": [
+    "Microservices",
+    "Big data processing",
+    "Software architecture",
+    "Clean code",
+    "Knowledge sharing",
+    "Collaboration"
+   ],
+   "requiredSkills": [
+    "Java",
+    "Spring Boot",
+    "Microservices",
+    "Big data processing",
+    "PostgreSQL",
+    "Elasticsearch",
+    "Apache Kafka",
+    "Software architecture",
+    "Clean code"
+   ],
+   "preferredSkills": [
+    "Apache Flink",
+    "Template engines"
+   ]
+  },
+  {
+   "id": "platformsudvikler-til-platformteam-med-f",
+   "title": "Platformsudvikler til platformteam med fokus på at understøtte fremtidens digitale energimarked",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Microsoft Azure",
+    "Terraform",
+    "GitHub Actions",
+    "Databricks",
+    ".NET",
+    "Python",
+    "Shell scripting",
+    "CI/CD"
+   ],
+   "skills": [
+    "Platform Engineering",
+    "Agile",
+    "Cloud infrastructure",
+    "Containerization",
+    "IT security",
+    "Facilitation",
+    "Knowledge sharing"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Platform Engineering",
+    "Agile",
+    "IT security",
+    "Cloud infrastructure",
+    "Containerization",
+    "Facilitation"
+   ]
+  },
+  {
+   "id": "partner-til-employer-branding-og-ledelse",
+   "title": "Partner til Employer Branding og ledelseskommunikation",
+   "kind": "comms",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Employer branding",
+    "Ledelseskommunikation",
+    "Intern kommunikation",
+    "Strategisk kommunikation",
+    "Projektledelse",
+    "Rådgivning af ledere",
+    "Bureausamarbejde",
+    "Dataanalyse",
+    "Interessenthåndtering",
+    "Dansk",
+    "Engelsk"
+   ],
+   "requiredSkills": [
+    "Employer branding",
+    "Ledelseskommunikation",
+    "Intern kommunikation",
+    "Rådgivning af ledere",
+    "Projektledelse",
+    "Bureausamarbejde",
+    "Dansk",
+    "Engelsk"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "vil-du-vaere-med-til-at-understoette-den",
+   "title": "Vil du være med til at understøtte den øverste ledelse i Østjyllands Politi? Joboplysninger",
+   "kind": "comms",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "OTHER",
+   "technologies": [],
+   "skills": [
+    "Kalenderstyring",
+    "Mødeplanlægning",
+    "Referatskrivning",
+    "Eventkoordinering",
+    "Organisatorisk forståelse",
+    "Initiativ",
+    "Struktur og overblik",
+    "Skriftlig kommunikation",
+    "Mundtlig kommunikation",
+    "Serviceorientering",
+    "Diskretion",
+    "Visuel formidling"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Kalenderstyring",
+    "Mødeplanlægning",
+    "Referatskrivning",
+    "Eventkoordinering",
+    "Organisatorisk forståelse",
+    "Initiativ",
+    "Struktur og overblik",
+    "Skriftlig kommunikation",
+    "Mundtlig kommunikation",
+    "Serviceorientering",
+    "Diskretion",
+    "Visuel formidling"
+   ]
+  },
+  {
+   "id": "europabevaegelsen-soeger-presse-og-kommu",
+   "title": "Europabevægelsen søger presse- og kommunikationspraktikant!",
+   "kind": "comms",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Pressearbejde",
+    "Digital kommunikation",
+    "SoMe",
+    "Videoproduktion",
+    "Debatindlæg og pressemeddelelser",
+    "Politisk forståelse",
+    "Kreativ formidling",
+    "Struktur"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Struktur",
+    "Politisk forståelse",
+    "Kreativ formidling"
+   ]
+  },
+  {
+   "id": "studentermedhjaelper-til-gdpr-compliance",
+   "title": "Studentermedhjælper til GDPR, compliance og informationssikkerhed - Danske Spil",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GDPR",
+    "Compliance",
+    "Informationssikkerhed",
+    "ISO 27001",
+    "Awareness-træning",
+    "Databehandleraftaler",
+    "Konsekvensanalyser",
+    "Interne audits",
+    "Kommunikation",
+    "Struktur",
+    "Samarbejde",
+    "Initiativ"
+   ],
+   "requiredSkills": [
+    "Kommunikation",
+    "Struktur",
+    "Samarbejde",
+    "Initiativ"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "crossbridge-energy-a-s-security-coordina",
+   "title": "Crossbridge Energy A/S - Security Coordinator",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Security",
+    "Fysisk sikring",
+    "Beredskab",
+    "ISPS",
+    "Compliance",
+    "Security awareness",
+    "Koordinering",
+    "Risikovurdering",
+    "Kommunikation"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Security",
+    "Fysisk sikring",
+    "Beredskab",
+    "Compliance",
+    "ISPS"
+   ]
+  },
+  {
+   "id": "compliance-og-gdpr-specialist-hos-forsyn",
+   "title": "Compliance- og GDPR-specialist hos Forsyningsservice A/S",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GDPR",
+    "NIS2",
+    "CER-direktivet",
+    "AI-forordningen",
+    "Compliance",
+    "Informationssikkerhed",
+    "Risikovurdering",
+    "Rådgivning",
+    "ISO-standarder",
+    "Ledelsessystemer",
+    "Projektledelse",
+    "Formidling",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "GDPR",
+    "Compliance",
+    "Formidling",
+    "Samarbejde"
+   ],
+   "preferredSkills": [
+    "ISO-standarder",
+    "Ledelsessystemer",
+    "NIS2",
+    "AI-forordningen",
+    "CER-direktivet"
+   ]
+  },
+  {
+   "id": "it-revisor-eller-compliancekonsulent",
+   "title": "IT-Revisor eller Compliancekonsulent",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "ISO 27001",
+    "FODA"
+   ],
+   "skills": [
+    "IT-revision",
+    "Risikostyring",
+    "Informationssikkerhed",
+    "Dokumentation",
+    "Compliance",
+    "Analytisk sans",
+    "Formidling",
+    "Offentlig forvaltning"
+   ],
+   "requiredSkills": [
+    "Dokumentation",
+    "Analytisk sans",
+    "Formidling"
+   ],
+   "preferredSkills": [
+    "Offentlig forvaltning",
+    "Informationssikkerhed",
+    "IT-revision"
+   ]
+  },
+  {
+   "id": "paedagog-til-vuggestue",
+   "title": "Pædagog til vuggestue",
+   "kind": "mismatch",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "EDUCATION",
+   "technologies": [],
+   "skills": [
+    "ICDP",
+    "Tryghedscirklen",
+    "Forældresamarbejde",
+    "Samarbejde",
+    "Empati",
+    "Omstillingsparathed",
+    "Legebaseret læring"
+   ],
+   "requiredSkills": [
+    "Forældresamarbejde",
+    "Samarbejde",
+    "Omstillingsparathed"
+   ],
+   "preferredSkills": [
+    "ICDP",
+    "Tryghedscirklen"
+   ]
+  },
+  {
+   "id": "ejendomsmaegler-til-estate-varde-vaer-me",
+   "title": "Ejendomsmægler til Estate Varde - vær med til at udvikle forretningen",
+   "kind": "mismatch",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "SALES",
+   "technologies": [],
+   "skills": [
+    "Boligsalg",
+    "Salgsvurdering",
+    "Kommissionering",
+    "Forhandling",
+    "Kreditvurdering",
+    "Relationsopbygning",
+    "Markedsføring",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Boligsalg",
+    "Salgsvurdering",
+    "Kommissionering",
+    "Forhandling",
+    "Relationsopbygning",
+    "Samarbejde"
+   ],
+   "preferredSkills": []
+  },
+  {
+   "id": "frontend-software-developer-xci",
+   "title": "Frontend Software Developer - XCI",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "React",
+    "JavaScript",
+    "TypeScript",
+    "Storybook",
+    "HTML5",
+    "CSS",
+    "SASS",
+    "SCSS",
+    "Node.js",
+    "MCP"
+   ],
+   "skills": [
+    "UX principles",
+    "Responsive design",
+    "Component libraries",
+    "Frontend architecture",
+    "Code quality",
+    "Code review",
+    "Automated testing",
+    "Performance optimization",
+    "Agentic AI",
+    "Collaboration",
+    "English communication"
+   ],
+   "requiredSkills": [
+    "React",
+    "JavaScript",
+    "TypeScript",
+    "Storybook",
+    "HTML5",
+    "CSS",
+    "SASS",
+    "SCSS",
+    "Component libraries",
+    "UX principles",
+    "Responsive design",
+    "Frontend architecture",
+    "English communication"
+   ],
+   "preferredSkills": [
+    "Node.js",
+    "Performance optimization",
+    "Automated testing",
+    "Agentic AI",
+    "MCP"
+   ]
+  },
+  {
+   "id": "cloud-engineer-til-danmarks-eksport-og-i",
+   "title": "Cloud Engineer til Danmarks Eksport- og Investeringsfond",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Azure",
+    "Terraform",
+    "Bicep",
+    "Azure DevOps",
+    "GitHub Actions",
+    "Microsoft Entra ID",
+    "Azure Policy",
+    "Azure API Management",
+    "OpenTelemetry",
+    "Microsoft Defender for Cloud",
+    "Kubernetes",
+    "Nutanix",
+    "Log Analytics",
+    "KQL",
+    "Azure Monitor",
+    "Service Bus",
+    "RabbitMQ",
+    "Grafana"
+   ],
+   "skills": [
+    "Platform engineering",
+    "Infrastructure as Code",
+    "CI/CD",
+    "Vendor management",
+    "Automation",
+    "Cloud security",
+    "Communication",
+    "Ownership"
+   ],
+   "requiredSkills": [
+    "Azure",
+    "Platform engineering",
+    "Infrastructure as Code",
+    "CI/CD",
+    "Microsoft Entra ID",
+    "Vendor management",
+    "Communication",
+    "Ownership"
+   ],
+   "preferredSkills": [
+    "Azure Policy",
+    "Log Analytics",
+    "KQL",
+    "Azure Monitor",
+    "Azure API Management",
+    "Service Bus",
+    "RabbitMQ",
+    "OpenTelemetry",
+    "Grafana",
+    "Kubernetes",
+    "Microsoft Defender for Cloud"
+   ]
+  },
+  {
+   "id": "jn-data-cloud-service-architect",
+   "title": "JN DATA - Cloud Service Architect",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Azure",
+    "Infrastructure as Code"
+   ],
+   "skills": [
+    "Cloud architecture",
+    "DevOps",
+    "CI/CD",
+    "Cloud security",
+    "Governance",
+    "Compliance",
+    "Test automation",
+    "Hybrid cloud",
+    "Collaboration",
+    "English"
+   ],
+   "requiredSkills": [
+    "Azure",
+    "DevOps",
+    "Infrastructure as Code",
+    "CI/CD",
+    "Governance",
+    "Compliance",
+    "Collaboration"
+   ],
+   "preferredSkills": [
+    "Test automation",
+    "Hybrid cloud"
+   ]
+  },
+  {
+   "id": "erfaren-softwareudvikler-til-forsyningsk",
+   "title": "Erfaren softwareudvikler til forsyningskritisk integrationsplatform",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Kafka",
+    "Kubernetes",
+    "Helm",
+    "CI/CD",
+    "Infrastructure as Code",
+    "Strimzi",
+    "MirrorMaker2",
+    "Azure DevOps",
+    "SeaWeedFS",
+    "Grafana",
+    "Loki",
+    "Alloy",
+    "Prometheus",
+    "C#"
+   ],
+   "skills": [
+    "Scrum",
+    "Agile",
+    "Videndeling",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Kafka",
+    "Kubernetes",
+    "Helm",
+    "CI/CD",
+    "Infrastructure as Code"
+   ],
+   "preferredSkills": [
+    "Strimzi",
+    "MirrorMaker2",
+    "Azure DevOps",
+    "SeaWeedFS",
+    "Grafana",
+    "Loki",
+    "Alloy",
+    "Prometheus",
+    "C#",
+    "Agile"
+   ]
+  },
+  {
+   "id": "kommunikationsmedarbejder-unenriched",
+   "title": "Kommunikationsmedarbejder",
+   "kind": "comms",
+   "set": "unenriched",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [],
+   "requiredSkills": [],
+   "preferredSkills": [],
+   "description": "Gå til sidens indhold\n36.700 job i dag\nFor jobsøgere\nFor arbejdsgivere\nDA\nEN\nLog ind\nOpret profil\nJobsøgning\nSøg job\nVælg mellem flere søgekriterier\nDin side\nSkab overblik over din jobsøgning\nJobagent\nFå nye job direkte i din indbakke\nProfil\nOpret din profil og bliv headhuntet\nJobannoncearkiv\nFind inspiration i udløbne jobopslag\nFå en jobvejleder\nBliv afklaret i din jobsøgning\nJobs For Ukraine\nHjælper ukrainske flygtninge med at få job\nArbejdspladser\nSe virksomhedsprofiler\nFå viden om din næste arbejdsplads\nEvaluér arbejdsplads\nHvordan er din arbejdsplads?\nElevplads\nSe virksomheder med elevpladser\nGraduate program\nSe virksomheder med Graduate Programmer\nTest dig selv\nTjek din løn\nHvad tjener andre som dig?\nJobglædetest\nHvordan er din jobglæde?\nPersontypetest\nKender du dine styrker?\nStresstest\nMål dit stressniveau\nTalenttest\nFind dine arbejdstalenter\nGuides\nAnsøgninger\nSådan skriver du en god ansøgning\nCV\nFå de bedste tips til dit CV\nJobsamtale\nGør et godt indtryk til samtalen\nLønforhandling\nStå stærkt til lønforhandlingen\nOpsigelse\nBrug denne guide og kom godt videre\nUopfordret ansøgning\nSådan søger du uopfordret\nBliv headhuntet\nSådan bliver du headhuntet\nJobagent\nFå en bedre Jobagent\nAI i arbejdslivet\nFå inspiration til hverdag og karriere\nDit første job\nVærktøjer og tips til dit nye arbejdsliv\nJobglæde\nSæt jobglæde på agendaen\nKurser\n6 ugers jobrettet uddannelse\nOpgrader dine kompetencer\nJobsøgningskursus\nSkab struktur i din jobsøgning\nForedrag\nGode råd til dig, der søger nyt job\nJobindex Kurser\nLedig? Find det rigtige kursus for dig\nFor arbejdsgivere\nTilmeld dig Jobindex\nSwitch to English\nLog ind\nOpret profil\nFor jobsøgere\nLog ind som jobsøger\nFor arbejdsgivere\nLog ind som arbejdsgiver\nSøg job\nProfil\nGemte job\nMere\nOverblik\nJobagent\nAnsøgninger\nHenvendelser\nDokumenter\nVirksomheder\nRåd og vejledning\nIndstillinger\nGem job\nDel\nAnsøg\nKommunikationsmedarbejder\nKomiteen for Sundhedsoplysning\nKøbenhavn Ø\nEr du en solid kommunikationshåndværker, der også kan tænke strategisk?\nKan du omsætte gode historier og faglige resultater til knivskarpt indhold på forskellige kommunikationskanaler? Og trives du i en hverdag, hvor du både arbejder strategisk og selv producerer indhold?\nSå er du måske vores nye kommunikationsmedarbejder.\nVi søger en engageret og alsidig kommunikationsmedarbejder, som kan understøtte vores aktiviteter, styrke vores synlighed og formidle de mange stærke historier, der opstår i mødet mellem frivillige, borgere, og samarbejdspartnere.\nOm stillingen\nSom kommunikationsmedarbejder får du en central rolle i enheden Mestring og Empowerment i Komiteen for Sundhedsoplysning. Enheden udvikler, skalerer og understøtter mestringsforløb i hele landet til mange forskellige målgrupper inden for sundheds-, social-, beskæftigelses-, familie-, skole- og uddannelsesområdet. Du bliver ansvarlig for at planlægge, udvikle og producere skriftlig/visuel kommunikation på tværs af vores platforme og til mange forskellige målgrupper.\nDu bliver desuden den kommunikationsfaglige sparringspartner for flere projektteams og kommer til at samarbejde tæt med ledelse, projektledere, frivillige undervisere og eksterne samarbejdspartnere om at omsætte faglige indsatser og resultater til relevant kommunikation.\nDine opgaver\nDu kommer blandt andet til at:\nProducere projektunderstøttende kommunikation i samarbejde med ledelse og projektteams, fx:\nnyheder, artikler, cases, pressemeddelelser, hjemmesideindhold\nindhold til sociale medier\nproduktion af fotos og korte videoer til digitale platforme\nVedligeholde og videreudvikle hjemmesider\nProducere grafisk materiale, der både kan bruges digitalt og analogt\nUnderstøtte arrangementer, konferencer og netværksaktiviteter\nEvaluere virkningen/kvaliteten af kommunikationsindsatser\nVi forestiller os, at du\nHar en relevant uddannelse inden for kommunikation, journalistik, marketing eller lignende og har mindst 3 års erfaring\nEr en stærk skriftlig formidler, også i forhold til faglig formidling\nKan omsætte faglig viden, evalueringer, metoder og projektresultater til levende og målrettet kommunikation\nKan sætte dig tilstrækkeligt ind i faglige områder til at kunne levere solid kommunikation\nHar erfaring med hjemmesider, sociale medier og digital kommunikation\nHar erfaring med CMS-systemer og nyhedsbrevsværktøjer\nHar blik for målgrupper og ved, hvordan kommunikation tilpasses forskellige kanaler\nKan arbejde selvstændigt og tage ansvar for egne opgaver\nEr god til at skabe relationer og samarbejde på tværs af fagligheder\nHar flair for visuel kommunikation\nVi lægger desuden vægt på, at du er struktureret, initiativrig, kreativ, ansvarsbevidst, kan bevare overblikket i en travl hverdag og kan få dine opgaver ført sikkert i mål til tiden.\nDet er en fordel, men ikke et krav, hvis du har erfaring med kommunikation inden for sundhedsområdet eller beslægtede områder. Erfaring med foto- og videoproduktion er også et plus.\nVi tilbyder\nEn meningsfuld stilling, hvor du bidrager til bedre sundhed, livskvalitet og stærkere fællesskaber i det danske samfund\nStor indflydelse på udviklingen af enhedens kommunikation\nEn varieret hverdag med mange kontaktflader\nEngagerede kolleger og samarbejdspartnere\nFleksibilitet og høj grad af selvstændighed\nEt uformelt arbejdsmiljø med fokus på samarbejde, fællesskab og høj faglighed\nKomiteen for Sundhedsoplysning er en sygdomsbekæmpende, almennyttig forening. Komiteens hovedaktiviteter er projektudvikling, efteruddannelse af sundhedsprofessionelle, partnerskaber, udvikling og skalering af indsatser samt udgivelse og distribution af sundhedsoplysende materialer. Vi er en organisation med godt 40 engagerede medarbejdere, der tilsammen repræsenterer forskellige fagligheder, især inden for sundhed, læring, kommunikation og psykologi. Komiteen har til huse på Østerbro, København.\nPraktiske oplysninger\nDer er tale om en fuldtidsstilling. Tiltrædelse hurtigst muligt og senest d. 1. februar 2027.\nSpørgsmål vedrørende stillingen rettes til Enhedschef Lea Hegaard på 22 66 26 71/ la@sundkom.dk eller Teamleder Line Vinther Andersen på 40 54 16 68/ lva@sundkom.dk\nSend din ansøgning og CV på e-mail til job@sundkom.dk senest d. 26. november . Skriv ”Kommunikation” i emnefeltet.\nAnsættelsessamtaler afholdes d. 7. og 8. december 2026. Eventuelle 2. samtaler vil blive afholdt den 10. og 11. december 2026.\nVi glæder os til at høre fra dig!\nAnsøg\nGem job\nDel\nAnsøg\n195 følgere\nFølger Følg\nKomiteen for Sundhedsoplysning\n2 jobannoncer\nOm virksomheden\nClassensgade 71, 5. sal, 2100 København Ø\nVigtige datoer\nIndrykket:\n6. november 2026\nAnsøgningsfrist:\n26. november 2026\nVirksomheden tilbyder\nAnsættelsestype:\nFastansættelse\nHjemmearbejde:\nIkke oplyst\nUgentlig arbejdstid:\nFuldtid\nVil du også følge virksomheden?\nVil du følge virksomheden?\n× Luk\nHvad sker der, når du følger en virksomhed?\nDu viser virksomheden, at du er interesseret i at arbejde hos dem. Når virksomheden har et job, der matcher din profil, vil du blive foreslået som kandidat (dog kun, hvis dit din profil er sat til, at du gerne vil kontaktes).\nLæs mere\nTip:\nOpdater din profil, så du fremstår bedst muligt\nTjek, at din profil er sat til ‘Vil gerne kontaktes’\nUnder privatlivsindstillinger kan du skjule særlige dele af din profil\nOpret CV\nSæt CV online\nOpdater CV\nVis kun interesse for job\nFølg virksomheden\nVil du vise interesse for dette job?\n× Luk\nHvad sker der, når du viser interesse for et job?\nDu viser virksomheden, at du er interesseret i jobbet. Virksomheden kan derefter kontakte dig, hvis du i din profil har givet tilladelse til at blive kontaktet.\nLæs mere\nTip: Opdater din profil og vis, at du vil kontaktes med job.\nVis ikke igen\nAnnuller\nVis interesse\nVis interesse for job\n× Luk\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og opret dit CV - det tager kun 5 minutter.\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og sæt dit CV online.\nLæs mere om interessevisning her .\nLuk\nOpret CV\nRet CV\nFor jobsøgere\nDin side\nEvaluer din arbejdsplads\nSe evalueringer\nOpret profil\nApps til jobsøgning\nKaares Klumme\nAnsøgningsmaskinen\nSupport for jobsøgere\nFor arbejdsgivere\nDin kundeside\nIndryk annonce\nJobannoncering\nRekruttering\nEmployer branding\nInternational\nSe virksomhedsprofil\nSupport for arbejdsgivere\nOm Jobindex\nOm Jobindex\nJob hos Jobindex\nFor investorer\nGennemsigtighedsrapporter\nPresse\n#JobsForUkraine\nModtag nyheder\nFor jobsøgere\nFor arbejdsgivere\nHent job-apps\nFølg os\n© Jobindex A/S, Carl Jacobsens Vej 29-31, 2500 Valby, Tlf. 38 32 33 55 , CVR-nr. 21367087\nBetingelser og persondatapolitik\nHandelsbetingelser\nGDPR\nCookiepolitik ( ret samtykke )\nBaseret på 400 evalueringer\nAnsvarlig brug af dine oplysninger\n×\nJobindex ønsker at tilbyde en service, der giver dig den bedste oplevelse. Til dette ønsker vi at bruge cookies og personoplysninger til statistik og markedsføring. Vi indsamler oplysninger om din enhed, tidspunkt, besøgte sider og din IP-adresse. Jobindex bruger egne cookies og cookies fra samarbejdspartnere. Vi og vores samarbejdspartnere opbevarer og/eller tilgår oplysninger på din enhed med henblik på at vise tilpassede annoncer og annoncemåling, tilpasset indhold, indholdsmåling, målgruppeindsigter og produktudvikling.\nLæs mere om Jobindex' brug af cookies og om vores behandling af personoplysninger .\nOplysningerne indsamles kun med dit samtykke, som til hver en tid kan ændres ved at klikke på \" Cookiepolitik \" nederst på siden.\nNødvendige\nStatistik\nMarkedsføring\nAfvis\nAccepter valgte\nAccepter alle"
+  },
+  {
+   "id": "software-developer-xci-unenriched",
+   "title": "Software Developer - XCI",
+   "kind": "eng",
+   "set": "unenriched",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [],
+   "skills": [],
+   "requiredSkills": [],
+   "preferredSkills": [],
+   "description": "Skip to main content\nThis website uses cookies to ensure you get the best experience.\nXCI and our selected partners use cookies and similar technologies (together “cookies”) that are necessary to present this website, and to ensure you get the best experience of it.\nIf you consent to it, we will also use cookies for analytics purposes.\nSee our Cookie Policy to read more about the cookies we set.\nYou can withdraw and manage your consent at any time, by clicking “Manage cookies” at the bottom of each website page.\nAccept all cookies\nDecline all non-necessary cookies\nCookie preferences\nSelect which cookies you accept\nOn this site, we always set cookies that are strictly necessary, meaning they are necessary for the site to function properly.\nIf you consent to it, we will also set other types of cookies. You can provide or withdraw your consent to the different types of cookies using the toggles below. You can change or withdraw your consent at any time, by clicking the link “Manage Cookies”, that is always available at the bottom of the site.\nTo learn more about what the different types of cookies do, how your data is used when they are set etc, see our Cookie Policy .\nStrictly necessary\nThese cookies are necessary to make the site work properly, and are always set when you visit the site.\nVendors\nTeamtailor\nAnalytics\nThese cookies collect information to help us understand how the site is being used.\nVendors\nTeamtailor\nAccept these cookies\nDecline all non-necessary cookies\nxci.dk\nShare page\nFacebook\nX\nLinkedIn\nMail\nDevelopment\n·\nCopenhagen, Aalborg\nSoftware Developer\nBuild the technology behind intelligence operations. Develop scalable solutions that help intelligence professionals process complex data, gain valuable insights and protect society.\nApply for this job\nJoin a rapidly growing technology company with an important purpose: Developing software that helps prevent and fight crime.\nAt XCI, we develop advanced software solutions for police authorities, intelligence services and other organizations working to protect society. Our solutions support intelligence professionals and investigators in handling complex information, identifying patterns and turning large volumes of data into valuable insights.\nWe are looking for an experienced Software Developer with strong Java skills and an interest in big data processing to join our team. You will help develop the technologies that enable intelligence services and national security organizations to process and analyze complex data flows, supporting their important work in protecting society.\nWe are looking for candidates to join our teams at either of our two locations in Aalborg or Copenhagen.\nDevelop technology that supports intelligence operations\nYou will work on advanced software solutions designed to support intelligence and national security organizations. Your primary focus will be developing and maintaining scalable, high-quality software systems that handle large data flows and enable advanced analytics.\nYou will work with complex technical challenges where performance, reliability and scalability are essential. Your work will contribute to solutions that help intelligence professionals process and make sense of large amounts of information, providing them with the technological capabilities they need in their daily operations.\nYou will join a dedicated and experienced team where technical expertise, knowledge sharing and collaboration are highly valued. You will have significant influence over your own tasks and the opportunity to contribute to architecture and technical decisions.\nThis is an opportunity to combine your passion for software development with technology that has a meaningful impact on society.\nKey responsibilities\nSoftware Development: Design, develop and maintain high-quality software using Java and Spring Boot, including microservices.\nBig Data Processing: Develop scalable solutions for processing, handling and analyzing large and complex data flows.\nIntelligence Solutions: Contribute to software capabilities that support intelligence professionals and national security organizations in their operational work.\nArchitecture & Solution Design: Take part in defining and driving architecture and technical solutions, ensuring scalability, performance and maintainability.\nData Technologies: Work with technologies such as PostgreSQL, Elasticsearch and Apache Kafka to build robust data-driven solutions.\nCross-functional Collaboration: Collaborate with colleagues across Engineering and Development, combining different technologies and competencies to create effective solutions.\nContinuous Improvement: Contribute to improving our software, development practices and technical solutions through knowledge sharing and collaboration.\nAbout you\nAs an experienced Software Developer with a strong background in Java and data processing, you enjoy tackling complex technical challenges and developing robust software solutions that handle large volumes of data.\nTaking pride in writing clean, structured and maintainable code, you are motivated by contributing to architectural decisions and finding the right technical solutions. Curiosity drives you to explore new technologies and share knowledge with colleagues.\nWith an interest in emerging AI technologies, including Agentic AI, you are keen to explore how they can be applied to complex software systems. You recognise the importance of combining AI capabilities with human expertise, ensuring that technology supports rather than replaces human judgement.\nBeyond the technical aspects, you are motivated by the purpose behind the products you develop. Understanding how technology supports intelligence professionals and contributes to a safer society gives your work meaning.\nWe imagine that you:\nHave several years of experience with Java development.\nHave experience designing and developing Java/Spring Boot microservices.\nHave a solid understanding of big data flows and data processing.\nHave experience with PostgreSQL, Elasticsearch and Apache Kafka.\nComfortable contributing to architecture and technical solution design.\nWrite clean, structured and maintainable code.\nEnjoy collaborating with colleagues across teams and sharing your knowledge.\nAre curious about new technologies and continuously look for ways to improve.\nCommunicate effectively in English, both written and spoken.\nIt would be an advantage if you also have:\nPrevious experience working within an intelligence organization, law enforcement or national security environment.\nAn understanding of intelligence operations, workflows and the challenges faced by intelligence professionals.\nExperience developing software solutions for intelligence, investigation or other security-sensitive domains.\nExperience with Apache Flink.\nExperience working with template engines.\nMost importantly, you bring strong technical skills, curiosity and an interest in developing software that supports important work within intelligence and national security.\nYou do not need to tick every box. We believe in continuous learning and professional development, and we are interested in what you can bring to the team and how you would like to grow with us.\nBe part of the XCI team\nYou will join a growing team of more than 170 experts who share XCI's mission of protecting society against criminal threats.\nOur customer projects are never \"mission impossible\", but they always carry personal meaning and, for many of us, even feel like a childhood dream come true.\nAt XCI, you will work with highly skilled and motivated colleagues in an informal and collaborative environment. Our culture is built around \"freedom under responsibility\", giving you flexibility, trust and the opportunity to take ownership of your work.\nWe place great importance on employee development and offer opportunities for on-the-job learning, internal training, as well as external courses and certifications.\nInterested in making a difference?\nIf you have any questions about the position, you are welcome to contact the Development Manager responsible for the team.\nWe conduct interviews on an ongoing basis and will close the recruitment process as soon as we find the right candidate.\nWe look forward to hearing from you!\nDue to GDPR, applications can only be submitted via the link.\nAll employees at XCI must be able to obtain a security clearance. We will therefore ask you to present a clean criminal record during the recruitment process.\nDepartment\nDevelopment\nLocations\nCopenhagen, Aalborg\nContact\nMette Kellberg Jensen\nHead of People & Culture\n-\nAdministration\nApply for this job\nDevelopment\n·\nCopenhagen, Aalborg\nSoftware Developer\nBuild the technology behind intelligence operations. Develop scalable solutions that help intelligence professionals process complex data, gain valuable insights and protect society.\nLoading application form\nClose modal\nCareer site\nData & privacy\nManage cookies\nxci.dk\nLinkedIn\nEmployee login\nCandidate Connect login\nApplicant tracking system\nby Teamtailor"
+  },
+  {
+   "id": "lagermedarbejder-unenriched",
+   "title": "Lagermedarbejder",
+   "kind": "mismatch",
+   "set": "unenriched",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "OPERATIONS_LOGISTICS",
+   "technologies": [],
+   "skills": [],
+   "requiredSkills": [],
+   "preferredSkills": [],
+   "description": "Gå til sidens indhold\n36.700 job i dag\nFor jobsøgere\nFor arbejdsgivere\nDA\nEN\nLog ind\nOpret profil\nJobsøgning\nSøg job\nVælg mellem flere søgekriterier\nDin side\nSkab overblik over din jobsøgning\nJobagent\nFå nye job direkte i din indbakke\nProfil\nOpret din profil og bliv headhuntet\nJobannoncearkiv\nFind inspiration i udløbne jobopslag\nFå en jobvejleder\nBliv afklaret i din jobsøgning\nJobs For Ukraine\nHjælper ukrainske flygtninge med at få job\nArbejdspladser\nSe virksomhedsprofiler\nFå viden om din næste arbejdsplads\nEvaluér arbejdsplads\nHvordan er din arbejdsplads?\nElevplads\nSe virksomheder med elevpladser\nGraduate program\nSe virksomheder med Graduate Programmer\nTest dig selv\nTjek din løn\nHvad tjener andre som dig?\nJobglædetest\nHvordan er din jobglæde?\nPersontypetest\nKender du dine styrker?\nStresstest\nMål dit stressniveau\nTalenttest\nFind dine arbejdstalenter\nGuides\nAnsøgninger\nSådan skriver du en god ansøgning\nCV\nFå de bedste tips til dit CV\nJobsamtale\nGør et godt indtryk til samtalen\nLønforhandling\nStå stærkt til lønforhandlingen\nOpsigelse\nBrug denne guide og kom godt videre\nUopfordret ansøgning\nSådan søger du uopfordret\nBliv headhuntet\nSådan bliver du headhuntet\nJobagent\nFå en bedre Jobagent\nAI i arbejdslivet\nFå inspiration til hverdag og karriere\nDit første job\nVærktøjer og tips til dit nye arbejdsliv\nJobglæde\nSæt jobglæde på agendaen\nKurser\n6 ugers jobrettet uddannelse\nOpgrader dine kompetencer\nJobsøgningskursus\nSkab struktur i din jobsøgning\nForedrag\nGode råd til dig, der søger nyt job\nJobindex Kurser\nLedig? Find det rigtige kursus for dig\nFor arbejdsgivere\nTilmeld dig Jobindex\nSwitch to English\nLog ind\nOpret profil\nFor jobsøgere\nLog ind som jobsøger\nFor arbejdsgivere\nLog ind som arbejdsgiver\nSøg job\nProfil\nGemte job\nMere\nOverblik\nJobagent\nAnsøgninger\nHenvendelser\nDokumenter\nVirksomheder\nRåd og vejledning\nIndstillinger\nGem job\nDel\nAnsøg\nLagermedarbejder\nBoii\nAlbertslund\nKom og vær en del af et engageret lagerteam, hvor du selvstændigt løser opgaver hver dag. Vi søger en struktureret og driftssikker lagermedarbejder, som kan bidrage til den daglige drift og sammen med kollegerne sikre, at lageret kører optimalt.\nOm stillingen\nI samarbejde med lagerteamet har du ansvar for en række centrale lageropgaver, herunder modtagelse af varer, plukning, forsendelse og kørsel. Du arbejder i et team, hvor vi vægter samarbejde, struktur og kvalitet. Den primære arbejdstid er kl. 09.00-17.00 på hverdage, men det kan variere, og det er vigtigt for os, at du er fleksibel.\nDine opgaver er blandt andet:\nModtagelse og kontrol af varer fra leverandører\nRegistrering og håndtering af varer i vores system (Business Central)\nPlukning og pakning af ordrer til webshop og butikker\nForsendelsesklargøring og returhåndtering\nLageroptælling og vedligeholdelse af lagerstatus\nKørsel med varevogn til leveringer (B-kørekort påkrævet)\nDin profil\nDu har erfaring fra lagerarbejde og arbejder struktureret, selvstændigt og kvalitetsbevidst\nDu har et gyldigt B-kørekort\nTruckkørekort er en stor fordel\nDu trives med både fysisk og logistisk arbejde\nDu tager gerne ansvar for dine opgaver, men arbejder som en del af et team\nPraktisk\nArbejdssted: Albertslund\nTiltrædelse: Hurtigst muligt\nArbejdstid: 37 timer ugentligt\nLøn: Efter kvalifikationer. Lønnen udbetales hver 14. dag.\nSådan ansøger du\nSend din ansøgning og CV til Thomas Andersen via QuickApply-knappen “Ansøg”. Vi behandler ansøgninger løbende og lukker rekrutteringen, når den rette kandidat er fundet.\nJobbet søges via QuickApply på Jobindex.\nAnsøg\nGem job\nDel\nAnsøg\n11 følgere\nFølger Følg\nBoii\n2 jobannoncer\nOm virksomheden\nWebshop, Roholmsvej 8, 2620 Albertslund\nVigtige datoer\nIndrykket:\n18. november 2026\nAnsøgningsfrist:\nSnarest muligt\nVirksomheden tilbyder\nAnsættelsestype:\nFastansættelse\nHjemmearbejde:\nTilbydes ikke\nUgentlig arbejdstid:\nFuldtid\nVil du også følge virksomheden?\nVil du følge virksomheden?\n× Luk\nHvad sker der, når du følger en virksomhed?\nDu viser virksomheden, at du er interesseret i at arbejde hos dem. Når virksomheden har et job, der matcher din profil, vil du blive foreslået som kandidat (dog kun, hvis dit din profil er sat til, at du gerne vil kontaktes).\nLæs mere\nTip:\nOpdater din profil, så du fremstår bedst muligt\nTjek, at din profil er sat til ‘Vil gerne kontaktes’\nUnder privatlivsindstillinger kan du skjule særlige dele af din profil\nOpret CV\nSæt CV online\nOpdater CV\nVis kun interesse for job\nFølg virksomheden\nVil du vise interesse for dette job?\n× Luk\nHvad sker der, når du viser interesse for et job?\nDu viser virksomheden, at du er interesseret i jobbet. Virksomheden kan derefter kontakte dig, hvis du i din profil har givet tilladelse til at blive kontaktet.\nLæs mere\nTip: Opdater din profil og vis, at du vil kontaktes med job.\nVis ikke igen\nAnnuller\nVis interesse\nVis interesse for job\n× Luk\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og opret dit CV - det tager kun 5 minutter.\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og sæt dit CV online.\nLæs mere om interessevisning her .\nLuk\nOpret CV\nRet CV\nFor jobsøgere\nDin side\nEvaluer din arbejdsplads\nSe evalueringer\nOpret profil\nApps til jobsøgning\nKaares Klumme\nAnsøgningsmaskinen\nSupport for jobsøgere\nFor arbejdsgivere\nDin kundeside\nIndryk annonce\nJobannoncering\nRekruttering\nEmployer branding\nInternational\nSe virksomhedsprofil\nSupport for arbejdsgivere\nOm Jobindex\nOm Jobindex\nJob hos Jobindex\nFor investorer\nGennemsigtighedsrapporter\nPresse\n#JobsForUkraine\nModtag nyheder\nFor jobsøgere\nFor arbejdsgivere\nHent job-apps\nFølg os\n© Jobindex A/S, Carl Jacobsens Vej 29-31, 2500 Valby, Tlf. 38 32 33 55 , CVR-nr. 21367087\nBetingelser og persondatapolitik\nHandelsbetingelser\nGDPR\nCookiepolitik ( ret samtykke )\nBaseret på 400 evalueringer\nAnsvarlig brug af dine oplysninger\n×\nJobindex ønsker at tilbyde en service, der giver dig den bedste oplevelse. Til dette ønsker vi at bruge cookies og personoplysninger til statistik og markedsføring. Vi indsamler oplysninger om din enhed, tidspunkt, besøgte sider og din IP-adresse. Jobindex bruger egne cookies og cookies fra samarbejdspartnere. Vi og vores samarbejdspartnere opbevarer og/eller tilgår oplysninger på din enhed med henblik på at vise tilpassede annoncer og annoncemåling, tilpasset indhold, indholdsmåling, målgruppeindsigter og produktudvikling.\nLæs mere om Jobindex' brug af cookies og om vores behandling af personoplysninger .\nOplysningerne indsamles kun med dit samtykke, som til hver en tid kan ændres ved at klikke på \" Cookiepolitik \" nederst på siden.\nNødvendige\nStatistik\nMarkedsføring\nAfvis\nAccepter valgte\nAccepter alle"
+  }
+ ]
+}
