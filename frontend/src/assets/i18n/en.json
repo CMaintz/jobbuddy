@@ -222,6 +222,7 @@
       "today": "today",
       "tomorrow": "tomorrow",
       "interview": "Job interview",
+      "interviewAt": "Job interview at {{time}}",
       "followUp": "Follow up",
       "applyDeadline": "Apply before the deadline",
       "noReply": "No reply yet — send a follow-up",
