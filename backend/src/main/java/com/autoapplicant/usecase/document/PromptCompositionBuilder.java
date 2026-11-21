@@ -82,7 +82,7 @@ public class PromptCompositionBuilder {
                 : "";
 
         // Fixed task + JSON schema (never user-editable)
-        String schema = """
+        String schema = isLetter ? LETTER_SCHEMA : """
                 {
                   "body": "<full document text>",
                   "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job — omit if none"]
@@ -92,7 +92,7 @@ public class PromptCompositionBuilder {
 
         // Structural scaffolding for prose letters (not the short recruiter/follow-up messages,
         // which carry their own word caps in docLabel).
-        String structure = isLetter ? "\n\n" + LETTER_STRUCTURE : "";
+        String structure = isLetter ? "\n\n" + LETTER_STRUCTURE + "\n\n" + LetterRules.BLOCK : "";
         String lengthGuidance = isLetter ? "\n\n## Length\n" + letterLengthGuidance(lengthPreference) : "";
         String marketBlock = guardrails.marketRules().isBlank() ? "" : "\n\n" + guardrails.marketRules();
         // A posting-supplied contact is the one named recipient the letter may address. Everything
@@ -120,7 +120,6 @@ public class PromptCompositionBuilder {
                 + (careerProfileJson != null ? careerProfileJson : "")
                 + "\n\n## Job Description\n"
                 + (jobDescription != null ? jobDescription : "(no job description provided)")
-                + requirementsBlock(posting)
                 + (company.hasFacts()
                     ? "\n\n## Verified Company Facts\n(From the company's own website — trustworthy and safe "
                       + "to reference; distinct from the untrusted posting above.)\n" + company.facts() : "")
@@ -321,16 +320,28 @@ public class PromptCompositionBuilder {
      */
     private static final String LETTER_STRUCTURE = """
             ## Structure
+            First derive the employer's needs into "needs", then write the letter from them.
             Write it as a flowing letter (no headings, no bullet lists in the body):
-            - Open with a specific hook — why THIS role at THIS company, not a generic greeting line.
-            - One evidence paragraph that proves fit with a concrete, NAMED role or project from the \
-            profile and its most relevant quantified outcome — depth over a list.
-            - A short company-fit paragraph connecting the candidate's direction to the employer; \
-            ground any company reference in the Verified Company Facts, or the candidate's Company \
-            Research where the facts are silent, when either is provided.
+            - Open with a specific hook about the employer's situation, not a generic greeting line.
+            - A short motivation: 1-2 concrete tasks the candidate looks forward to, and why.
+            - A paragraph for each of the 2-3 needs the profile proves best, by the Letter Rules \
+            below. Ground any company reference in the \
+            Verified Company Facts, or the candidate's Company Research where the facts are silent, \
+            when either is provided.
             - Close with a brief, confident call to action.
             Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.
             If — and only if — the profile carries an "availability" value, state it as one short             factual clause near the close (employers routinely ask, and a candidate who volunteers             it reads as someone who has thought the move through). Never invent a notice period or             start date the profile does not state.""";
+
+    /**
+     * The JSON a prose letter answers with. The needs come first so the model derives them before it
+     * writes, and the letter is written from them rather than from the posting's task list.
+     */
+    private static final String LETTER_SCHEMA = """
+            {
+              "needs": ["3-5 employer needs, each one line from the employer's side: a pain, what is at stake, or what success looks like in 1-3 years. A need is the reason the tasks exist, never a task: '680 drivers without screens must follow the rules', not 'write GDPR procedures'."],
+              "body": "<full document text, one paragraph for each of the 2-3 needs the profile proves best>",
+              "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job; omit if none"]
+            }""";
 
     /**
      * The document types that get prose-letter treatment (structure, length target, market
@@ -359,12 +370,12 @@ public class PromptCompositionBuilder {
     private static String letterLengthGuidance(String pref) {
         int target = letterWordTarget(pref);
         return switch (normalizeLength(pref)) {
-            case "SHORT" -> "Keep it tight — about " + target
-                    + " words across 3 short paragraphs. One page maximum.";
-            case "DETAILED" -> "You may go fuller — about " + target
-                    + " words across 4 paragraphs — but never exceed one page.";
-            default -> "Aim for about " + target
-                    + " words across 3–4 short paragraphs. One page maximum.";
+            case "SHORT" -> "Keep it tight: about " + target
+                    + " words, with paragraphs for two needs only. One page maximum.";
+            case "DETAILED" -> "You may go fuller: about " + target
+                    + " words, with paragraphs for three needs, but never exceed one page.";
+            default -> "Aim for about " + target + " words in short paragraphs: an opening with the "
+                    + "motivation, two or three need paragraphs, and a close. One page maximum.";
         };
     }
 

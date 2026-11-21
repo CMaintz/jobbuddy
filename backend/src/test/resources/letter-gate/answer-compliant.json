@@ -1,0 +1,9 @@
+{
+  "points": [
+    {"point": 1, "employerSentences": 7, "totalSentences": 10, "passed": true, "quotes": [], "reason": "7 af 10 sætninger handler om virksomheden og dens udbytte (NIS2-udfordringen, procedurerne, dokumentationen, ledelsens status). Kun to sætninger har ansøgeren som grundled: 'Jeg glæder mig især til at uddanne chaufførerne ...' og 'Jeg glæder mig til at høre, hvor I står ...'. Det er under halvdelen, så teksten tipper ikke over i for meget 'jeg'."},
+    {"point": 8, "passed": true, "quotes": [], "reason": "Ansøgningen ser fremad. Den bruger 'I får ...' om tjekliste, vejledning, databehandling med ejer og dato og kvartalsstatus på én side. Den eneste tilbageskuende passage er kursusbeviset, og det understøtter en påstand om fremtidigt udbytte i stedet for at genfortælle CV'et."},
+    {"point": 13, "passed": true, "quotes": [], "reason": "Ingen sætning opremser tre eller flere af opslagets opgaver eller krav, og ingen genfortæller, hvad stillingen går ud på. Hver sætning tager fat i én opgave (procedurer, dokumentation, rapportering til ledelsen, uddannelse) og siger, hvordan den løses, f.eks. 'en tjekliste i lommeformat til chaufføren og en kort vejledning til terminalen'."},
+    {"point": 14, "pastTenseApplicantSentencesPerParagraph": [0, 1, 0, 0, 0], "paragraphsOpeningWithApplicantInPast": 0, "passed": true, "quotes": [], "reason": "Der er højst én datidssætning om ansøgeren pr. afsnit: kun afsnit 2 har en, 'Det ved jeg virker, fordi deltagerne på mine kurser i Region Midt stadig brugte tjeklisten et halvt år efter.' Den er skrevet som bevis for afsnittets påstand om procedurer, der bliver brugt, og kan ikke flyttes uændret ind i et CV. Intet afsnit åbner med ansøgeren i datid; alle åbner med arbejdsgiverens behov eller udbytte."}
+  ],
+  "verdict": "PORT: BESTÅET"
+}

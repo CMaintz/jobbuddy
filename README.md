@@ -102,7 +102,8 @@ AI provider and feature toggles (optional, with defaults):
 - `AI_CLI_MODEL`: Claude model for the default command, passed as `--model` (default `sonnet`, so generation does not run on the user's own default model). Not applied to `codex` or to an `AI_CLI_COMMAND` override.
 - `AI_CLI_MODEL_LABEL`: model name recorded in the usage log and on saved documents. Blank uses the pinned model, or `cli-agent` when the app does not choose one.
 - `AI_CLI_TIMEOUT_SECONDS`: limit per local-agent call (default `120`).
-- `AI_REQUEST_TIMEOUT_SECONDS`: how long an AI request waits before answering 504 (default `390`: company research, generation and review are up to three CLI calls).
+- `AI_REQUEST_TIMEOUT_SECONDS`: how long an AI request waits before answering 504 (default `1080`: a cover letter is company research, generation, review and a first gate verdict of up to two calls, then up to three gate rounds of up to three calls each; the default fits one full round with every call at the CLI limit, and the gate starts a round only if it can finish before this deadline).
+- `LETTER_GATE_MAX_ROUNDS`: how many times a letter the gate fails is rewritten and gated again before the remaining fails are shown (default `3`).
 - `AUTO_REVIEW_ENABLED`: the reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
 - `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE`: the fact gate on generated metrics (`warn` by default, or `block`).
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS`: the LinkedIn connector (see `app.linkedin.*` in `application.yml`).

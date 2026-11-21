@@ -278,6 +278,8 @@
         </div>
       }
 
+      <app-letter-gate-report [structuredContent]="activeDoc()?.structuredContent" />
+
       <!-- Deterministic guard findings (unsupported metrics, filler phrases, retracted claims) -->
       @if (guardFindings().length) {
         <div class="p-4 border-b border-jb-border">
