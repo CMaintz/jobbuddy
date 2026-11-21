@@ -22,6 +22,8 @@ import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import com.autoapplicant.port.out.user.CertificationRepositoryPort;
+import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
@@ -51,6 +53,8 @@ class MatchingServiceTest {
     @Mock ProfileSkillRepositoryPort profileSkillRepo;
     @Mock ApplicationRepositoryPort applicationRepo;
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
+    @Mock EducationRepositoryPort educationRepo;
+    @Mock CertificationRepositoryPort certificationRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
@@ -60,8 +64,9 @@ class MatchingServiceTest {
         // Empty taxonomy: canonicalisation falls back to plain normalisation, so these cases match
         // exactly as before. Alias folding has its own dedicated test.
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
-                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo,
-                applicationRepo, new SkillCanonicalizer(taxonomyRepo));
+                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
+                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo), profileSkillRepo,
+                        educationRepo, certificationRepo));
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────
