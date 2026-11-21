@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,6 +34,10 @@ import org.springframework.web.client.RestTemplate;
 @Tag(name = "Authentication")
 @Profile("!desktop")
 public class LinkedInAuthController {
+
+  /** LinkedIn answers both calls with a JSON object; typed so the body needs no unchecked cast. */
+  private static final ParameterizedTypeReference<Map<String, Object>> JSON_OBJECT =
+      new ParameterizedTypeReference<>() {};
 
   private final ResolveLinkedInUserUseCase resolveLinkedInUser;
   private final AppProperties appProperties;
@@ -81,15 +86,14 @@ public class LinkedInAuthController {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private String exchangeCodeForToken(String code, String redirectUri) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     HttpEntity<MultiValueMap<String, String>> entity =
         new HttpEntity<>(tokenRequestForm(code, redirectUri), headers);
-    ResponseEntity<Map> response =
-        restTemplate.postForEntity(
-            "https://www.linkedin.com/oauth/v2/accessToken", entity, Map.class);
+    ResponseEntity<Map<String, Object>> response =
+        restTemplate.exchange(
+            "https://www.linkedin.com/oauth/v2/accessToken", HttpMethod.POST, entity, JSON_OBJECT);
 
     Map<String, Object> responseBody = response.getBody();
     if (responseBody == null || !responseBody.containsKey("access_token")) {
@@ -108,15 +112,14 @@ public class LinkedInAuthController {
     return form;
   }
 
-  @SuppressWarnings("unchecked")
   private Map<String, Object> fetchUserInfo(String accessToken) {
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + accessToken);
     HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-    ResponseEntity<Map> response =
+    ResponseEntity<Map<String, Object>> response =
         restTemplate.exchange(
-            "https://api.linkedin.com/v2/userinfo", HttpMethod.GET, entity, Map.class);
+            "https://api.linkedin.com/v2/userinfo", HttpMethod.GET, entity, JSON_OBJECT);
 
     Map<String, Object> responseBody = response.getBody();
     if (responseBody == null) {
