@@ -222,4 +222,51 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
             LIMIT :maxLabels
             """, nativeQuery = true)
     List<Object[]> findSkillMentions(@Param("maxLabels") int maxLabels);
+
+    // Crawl-side writes. Each is one UPDATE of its own columns: the desktop app may be enriching
+    // the same posting, and a save of the row read earlier would put back what it replaced.
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE JobEntity j SET j.lastSeenAt = :lastSeenAt, j.applicationDeadline = :deadline "
+         + "WHERE j.id = :id")
+    int refreshLastSeen(@Param("id") UUID id, @Param("lastSeenAt") Instant lastSeenAt,
+                        @Param("deadline") java.time.LocalDate deadline);
+
+    /** A live URL also counts as seen, which is what keeps expiry off a posting nobody re-crawls. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE JobEntity j SET j.urlCheckFailures = 0, j.lastUrlCheckAt = :now, j.lastSeenAt = :now "
+         + "WHERE j.id = :id")
+    int markUrlAlive(@Param("id") UUID id, @Param("now") Instant now);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE JobEntity j SET j.lastUrlCheckAt = :now WHERE j.id = :id")
+    int markUrlCheckInconclusive(@Param("id") UUID id, @Param("now") Instant now);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE JobEntity j SET j.urlCheckFailures = j.urlCheckFailures + 1, j.lastUrlCheckAt = :now "
+         + "WHERE j.id = :id")
+    int countUrlCheckFailure(@Param("id") UUID id, @Param("now") Instant now);
+
+    /** Deactivates the posting once its failures reach the threshold; 1 when this call did it. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE JobEntity j SET j.isActive = false "
+         + "WHERE j.id = :id AND j.isActive = true AND j.urlCheckFailures >= :threshold")
+    int deactivateAtFailureThreshold(@Param("id") UUID id, @Param("threshold") int threshold);
+
+    /** Counts the attempt and gives up once it reaches the limit. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE JobEntity j
+            SET j.embeddingAttempts = j.embeddingAttempts + 1,
+                j.embeddingLastAttemptAt = :now,
+                j.embeddingLastError = :reason,
+                j.embeddingStatus = CASE WHEN j.embeddingAttempts + 1 >= :maxAttempts
+                                         THEN 'FAILED' ELSE 'PENDING' END
+            WHERE j.id = :id
+            """)
+    int markEmbeddingFailed(@Param("id") UUID id, @Param("reason") String reason,
+                            @Param("maxAttempts") int maxAttempts, @Param("now") Instant now);
+
+    @Query("SELECT j.embeddingStatus FROM JobEntity j WHERE j.id = :id")
+    String findEmbeddingStatus(@Param("id") UUID id);
 }
