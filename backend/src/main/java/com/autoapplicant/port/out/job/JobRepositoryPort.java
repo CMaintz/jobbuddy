@@ -14,7 +14,8 @@ public interface JobRepositoryPort {
     /** Active (not expired/taken-down) jobs only — the user-facing feed. */
     List<Job> findActive(int page, int size);
     /** The feed for one user: active jobs minus the ones they have ignored. */
-    List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size);
+    List<Job> findActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories,
+                                     int page, int size);
     Optional<Job> findBySourceAndSourceJobId(JobSource source, String sourceJobId);
     boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
@@ -26,7 +27,8 @@ public interface JobRepositoryPort {
      * up on after {@code maxAttempts}, and ones tried since {@code retryBefore}, are
      * left out.
      */
-    List<Job> findForEnrichment(int limit, int maxAttempts, java.time.Instant retryBefore);
+    List<Job> findForEnrichment(int limit, int maxAttempts, java.time.Instant retryBefore,
+                                com.autoapplicant.domain.job.EnrichmentScope scope);
 
     /** Enrichment produced a usable result; stop asking about this one. */
     void markEnriched(UUID jobId);
@@ -76,7 +78,7 @@ public interface JobRepositoryPort {
     long count();
     long countActive();
     /** How many jobs {@link #findActiveNotIgnoredBy} pages over in total. */
-    long countActiveNotIgnoredBy(UUID userId);
+    long countActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories);
 
     /**
      * How often each skill label appears across every posting we hold, most-named first.

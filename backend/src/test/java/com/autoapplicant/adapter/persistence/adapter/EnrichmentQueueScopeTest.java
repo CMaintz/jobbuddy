@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
+import com.autoapplicant.domain.job.EnrichmentScope;
 import com.autoapplicant.domain.job.Job;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
 
     JobRows jobs;
     UUID user;
+    EnrichmentScope scope = EnrichmentScope.everything();
 
     @BeforeEach
     void setUp() {
@@ -40,7 +43,7 @@ class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
     }
 
     private List<UUID> enrichmentQueue() {
-        return adapter.findForEnrichment(100, MAX_ATTEMPTS, NOW).stream().map(Job::id).toList();
+        return adapter.findForEnrichment(100, MAX_ATTEMPTS, NOW, scope).stream().map(Job::id).toList();
     }
 
     private List<UUID> embeddingQueue() {
@@ -104,5 +107,17 @@ class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
         UUID expired = pastDeadline();
 
         assertThat(embeddingQueue()).contains(open).doesNotContain(closed, expired);
+    }
+
+    @Test
+    void aCategoryEveryoneSkipsIsNotEnriched() {
+        // Bug: the skip list reaches the feed but not the queue, so quota still goes on
+        // postings she will never be shown.
+        UUID sales = jobs.insert("Sales", "s", NOW, true, "SALES");
+        UUID software = jobs.insert("Software", "s", NOW, true, "SOFTWARE_IT");
+        UUID uncategorised = jobs.insert("Uncategorised", "u", NOW);
+        scope = new EnrichmentScope(Set.of("SALES"));
+
+        assertThat(enrichmentQueue()).contains(software, uncategorised).doesNotContain(sales);
     }
 }

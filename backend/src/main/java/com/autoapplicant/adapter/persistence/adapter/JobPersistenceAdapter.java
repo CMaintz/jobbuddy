@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
 
+    private static final String NO_CATEGORY = "-";
+
     /**
      * Ceiling on postings pulled for the company-hiring aggregate. Generous for a personal-scale
      * jobs table, and bounded so the query can never turn into a full-table load.
@@ -148,8 +150,9 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size) {
-        return repo.findActiveNotIgnoredBy(userId, PageRequest.of(page, size))
+    public List<Job> findActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories,
+                                            int page, int size) {
+        return repo.findActiveNotIgnoredBy(userId, notInList(excludedCategories), PageRequest.of(page, size))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -264,9 +267,10 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore) {
+    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore,
+                                       com.autoapplicant.domain.job.EnrichmentScope scope) {
         return repo.findForEnrichment(maxAttempts, retryBefore, java.time.LocalDate.now(),
-                        PageRequest.of(0, limit))
+                        notInList(scope.excludedCategories()), PageRequest.of(0, limit))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -367,7 +371,15 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public long countActiveNotIgnoredBy(UUID userId) {
-        return repo.countActiveNotIgnoredBy(userId);
+    public long countActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories) {
+        return repo.countActiveNotIgnoredBy(userId, notInList(excludedCategories));
+    }
+
+    /**
+     * A NOT IN list that is never empty: an empty list renders as NOT IN (), which Postgres
+     * rejects. The placeholder matches no category, so it excludes nothing.
+     */
+    private static java.util.Collection<String> notInList(java.util.Collection<String> categories) {
+        return categories == null || categories.isEmpty() ? List.of(NO_CATEGORY) : categories;
     }
 }

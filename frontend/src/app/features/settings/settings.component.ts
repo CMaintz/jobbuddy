@@ -61,6 +61,17 @@ const INDUSTRY_OPTIONS: { key: string; label: string }[] = [
   { key: 'CREATIVE_MEDIA', label: 'settings.industry.creativeMedia' },
 ];
 
+/** Every job category, for the list of ones she never wants to see. */
+const CATEGORY_OPTIONS: { key: string; label: string }[] = [
+  ...INDUSTRY_OPTIONS,
+  { key: 'SALES', label: 'settings.industry.sales' },
+  { key: 'HR', label: 'settings.industry.hr' },
+  { key: 'OPERATIONS_LOGISTICS', label: 'settings.industry.operationsLogistics' },
+  { key: 'CUSTOMER_SERVICE', label: 'settings.industry.customerService' },
+  { key: 'HEALTHCARE', label: 'settings.industry.healthcare' },
+  { key: 'EDUCATION', label: 'settings.industry.education' },
+];
+
 const SENIORITY_MAP: Record<string, string[]> = {
   'Junior': ['JUNIOR'],
   'Mid': ['MID'],
@@ -132,7 +143,9 @@ export class SettingsComponent implements OnInit {
   boostKeywords: string[] = [];
   avoidKeywords: string[] = [];
   industryOptions = INDUSTRY_OPTIONS;
+  categoryOptions = CATEGORY_OPTIONS;
   industries = new Set<string>();
+  excludedCategories = new Set<string>();
   seniorityOptions = Object.keys(SENIORITY_MAP);
   seniority = 'Senior';
   remote = true;
@@ -181,6 +194,7 @@ export class SettingsComponent implements OnInit {
         this.boostKeywords = prefs.positiveSignals ?? [];
         this.avoidKeywords = prefs.negativeSignals ?? [];
         this.industries = new Set(prefs.preferredIndustries ?? []);
+        this.excludedCategories = new Set(prefs.excludedCategories ?? []);
         this.seniority = Object.entries(SENIORITY_MAP)
           .find(([, values]) => values.some(v => (prefs.preferredSeniority ?? []).includes(v)))?.[0] ?? 'Senior';
         this.remote = (prefs.preferredRemoteTypes ?? []).length === 0
@@ -232,6 +246,13 @@ export class SettingsComponent implements OnInit {
     this.markDirty();
   }
 
+  toggleExcludedCategory(key: string): void {
+    if (this.excludedCategories.has(key)) this.excludedCategories.delete(key);
+    else this.excludedCategories.add(key);
+    this.excludedCategories = new Set(this.excludedCategories);
+    this.markDirty();
+  }
+
   save(): void {
     if (this.saving()) return;
     this.saving.set(true);
@@ -244,6 +265,7 @@ export class SettingsComponent implements OnInit {
       positiveSignals: this.boostKeywords,
       negativeSignals: this.avoidKeywords,
       preferredIndustries: [...this.industries],
+      excludedCategories: [...this.excludedCategories],
       preferredSeniority: SENIORITY_MAP[this.seniority] ?? [],
       preferredRemoteTypes: this.remote ? [] : ['ON_SITE', 'HYBRID'],
       weeklyApplicationGoal: this.weeklyGoal,

@@ -34,6 +34,8 @@ export interface UserPreferences {
   preferredEmploymentTypes: string[];
   preferredSeniority: string[];
   preferredIndustries: string[];
+  /** Job categories left out of the feed, matching and enrichment. */
+  excludedCategories: string[];
   salaryMin: number | null;
   salaryMax: number | null;
   maxCommuteKm: number | null;

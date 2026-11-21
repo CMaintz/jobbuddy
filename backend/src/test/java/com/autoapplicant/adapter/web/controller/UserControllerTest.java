@@ -124,7 +124,7 @@ class UserControllerTest {
         UserPreferences saved = new UserPreferences(UUID.randomUUID(), userId,
                 List.of("Copenhagen"), List.of(), List.of(), List.of(), List.of(),
                 List.of(), List.of(), List.of(), List.of(), 50000, null, 30,
-                true, "WEEKLY", 5, Instant.now(), Instant.now());
+                true, "WEEKLY", 5, Instant.now(), Instant.now(), List.of());
         when(updatePreferences.updatePreferences(eq(userId), any(UserPreferences.class)))
                 .thenReturn(saved);
 

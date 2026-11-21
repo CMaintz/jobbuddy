@@ -4,12 +4,11 @@ import com.autoapplicant.adapter.persistence.entity.PreferencesEntity;
 import com.autoapplicant.adapter.persistence.repository.PreferencesJpaRepository;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort {
@@ -33,6 +32,7 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         e.setPreferredEmploymentTypes(toArray(prefs.preferredEmploymentTypes()));
         e.setPreferredSeniority(toArray(prefs.preferredSeniority()));
         e.setPreferredIndustries(toArray(prefs.preferredIndustries()));
+        e.setExcludedCategories(toArray(prefs.excludedCategoriesOrEmpty()));
         e.setSalaryMin(prefs.salaryMin());
         e.setSalaryMax(prefs.salaryMax());
         e.setMaxCommuteKm(prefs.maxCommuteKm());
@@ -52,6 +52,11 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         return repo.findByNotificationEnabledTrue().stream().map(this::toDomain).toList();
     }
 
+    @Override
+    public List<UserPreferences> findAll() {
+        return repo.findAll().stream().map(this::toDomain).toList();
+    }
+
     private UserPreferences toDomain(PreferencesEntity e) {
         return new UserPreferences(e.getId(), e.getUserId(),
                 toList(e.getPreferredLocations()), toList(e.getPreferredMunicipalities()),
@@ -61,7 +66,8 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
                 toList(e.getPreferredSeniority()), toList(e.getPreferredIndustries()),
                 e.getSalaryMin(), e.getSalaryMax(), e.getMaxCommuteKm(),
                 e.isNotificationEnabled(), e.getNotificationFrequency(),
-                e.getWeeklyApplicationGoal(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getWeeklyApplicationGoal(), e.getCreatedAt(), e.getUpdatedAt(),
+                toList(e.getExcludedCategories()));
     }
 
     private static String[] toArray(List<String> l) { return l != null ? l.toArray(String[]::new) : new String[0]; }

@@ -2,10 +2,9 @@ package com.autoapplicant.adapter.persistence.entity;
 
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
-
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "preferences")
@@ -53,6 +52,9 @@ public class PreferencesEntity {
     @Type(StringArrayType.class)
     @Column(name = "preferred_industries", columnDefinition = "text[]")
     private String[] preferredIndustries;
+
+    @Column(name = "excluded_categories", columnDefinition = "text[]")
+    private String[] excludedCategories;
 
     @Column(name = "salary_min")
     private Integer salaryMin;
@@ -103,6 +105,8 @@ public class PreferencesEntity {
     public void setPreferredSeniority(String[] v) { this.preferredSeniority = v; }
     public String[] getPreferredIndustries() { return preferredIndustries; }
     public void setPreferredIndustries(String[] v) { this.preferredIndustries = v; }
+    public String[] getExcludedCategories() { return excludedCategories; }
+    public void setExcludedCategories(String[] v) { this.excludedCategories = v; }
     public Integer getSalaryMin() { return salaryMin; }
     public void setSalaryMin(Integer v) { this.salaryMin = v; }
     public Integer getSalaryMax() { return salaryMax; }

@@ -1639,7 +1639,13 @@
       "management": "Ledelse",
       "creativeMedia": "Kreativ & Medier",
       "grcCompliance": "GRC, compliance og informationssikkerhed",
-      "legal": "Jura"
+      "legal": "Jura",
+      "sales": "Salg",
+      "hr": "HR",
+      "operationsLogistics": "Drift & logistik",
+      "customerService": "Kundeservice",
+      "healthcare": "Sundhed",
+      "education": "Undervisning"
     },
     "docType": {
       "coverLetter": "Følgebrev",
@@ -1663,6 +1669,8 @@
       "avoidPlaceholder": "f.eks. vagt, gambling…",
       "industries": "Brancher",
       "industriesDesc": "Vi prioriterer stillinger i disse brancher. Intet valgt = alt.",
+      "excluded": "Kategorier jeg ikke vil se",
+      "excludedDesc": "Job i disse kategorier kommer ikke i dit feed eller dine match, og vi bruger ikke tid på at forberede dem. Intet valgt = vis alt.",
       "seniority": "Senioritet",
       "seniorityDesc": "Det niveau, du vil se",
       "remote": "Åben for remote",

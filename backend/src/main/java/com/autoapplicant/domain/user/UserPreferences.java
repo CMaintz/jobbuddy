@@ -23,5 +23,13 @@ public record UserPreferences(
         String notificationFrequency,
         Integer weeklyApplicationGoal,
         Instant createdAt,
-        Instant updatedAt
-) {}
+        Instant updatedAt,
+        /** Job categories (JobCategory names) left out of the feed, matching and enrichment. */
+        List<String> excludedCategories
+) {
+
+    /** The excluded categories, never null: a client that omits the field excludes nothing. */
+    public List<String> excludedCategoriesOrEmpty() {
+        return excludedCategories != null ? excludedCategories : List.of();
+    }
+}

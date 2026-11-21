@@ -10,4 +10,6 @@ public interface PreferencesRepositoryPort {
     UserPreferences save(UserPreferences preferences);
     Optional<UserPreferences> findByUserId(UUID userId);
     List<UserPreferences> findAllWithNotificationsEnabled();
+    /** Every user's saved preferences; for decisions shared across users, like enrichment scope. */
+    List<UserPreferences> findAll();
 }

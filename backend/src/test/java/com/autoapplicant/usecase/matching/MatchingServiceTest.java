@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.MatchResult;
@@ -327,6 +328,25 @@ class MatchingServiceTest {
         verify(embeddingRepo).findNearestNeighborJobIds(any(), eq(150));
     }
 
+    @Test
+    void a_category_she_skips_is_not_recommended() {
+        // Bug: matching ignores the skip list, so the postings she said she never wants to see
+        // come back as recommendations.
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID sales = UUID.randomUUID();
+        UUID software = UUID.randomUUID();
+        stubFeed(p, List.of(
+                minimalJob(sales).toBuilder().jobCategory(JobCategory.SALES).build(),
+                minimalJob(software).toBuilder().jobCategory(JobCategory.SOFTWARE_IT).build()));
+        UserPreferences skipsSales = new UserPreferences(UUID.randomUUID(), userId, List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
+                null, null, null, false, null, null, null, null, List.of("SALES"));
+        when(prefsRepo.findByUserId(userId)).thenReturn(Optional.of(skipsSales));
+
+        assertThat(service.getRecommendations(userId, 10)).extracting(MatchResult::jobId)
+                .containsExactly(software);
+    }
+
     // ── already-applied exclusion ─────────────────────────────────────────────
 
     @Test
@@ -533,7 +553,7 @@ class MatchingServiceTest {
     private UserPreferences prefsWithRadius(int km) {
         return new UserPreferences(UUID.randomUUID(), userId, List.of(), List.of("K\u00f8benhavn"),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                null, null, km, false, null, null, null, null);
+                null, null, km, false, null, null, null, null, List.of());
     }
 
     private RecommendationFeedback feedback(UUID jobId, FeedbackType type) {

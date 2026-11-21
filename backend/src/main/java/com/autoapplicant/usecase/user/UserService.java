@@ -79,7 +79,8 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                 preferences.salaryMin(), preferences.salaryMax(),
                 preferences.maxCommuteKm(),
                 preferences.notificationEnabled(), preferences.notificationFrequency(),
-                preferences.weeklyApplicationGoal(), null, null));
+                preferences.weeklyApplicationGoal(), null, null,
+                preferences.excludedCategoriesOrEmpty()));
     }
 
     @Override

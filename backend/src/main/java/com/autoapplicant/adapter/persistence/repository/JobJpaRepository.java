@@ -43,11 +43,13 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
               AND NOT EXISTS (SELECT 1 FROM IgnoredJobEntity i WHERE i.jobId = j.id)
               AND NOT EXISTS (SELECT 1 FROM ApplicationEntity a
                               WHERE a.jobId = j.id AND a.status NOT IN ('SAVED', 'PREPARING'))
+              AND (j.jobCategory IS NULL OR j.jobCategory NOT IN :excludedCategories)
             ORDER BY j.enrichmentLastAttemptAt ASC NULLS FIRST, j.createdAt ASC
             """)
     List<JobEntity> findForEnrichment(@Param("maxAttempts") int maxAttempts,
                                       @Param("retryBefore") Instant retryBefore,
                                       @Param("today") java.time.LocalDate today,
+                                      @Param("excludedCategories") java.util.Collection<String> excludedCategories,
                                       Pageable pageable);
 
     @Query("SELECT j.enrichmentStatus, count(j) FROM JobEntity j GROUP BY j.enrichmentStatus")
@@ -59,13 +61,17 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
      * The page query and the count share it, so the total always matches what the pages hold.
      */
     String ACTIVE_NOT_IGNORED = " FROM JobEntity j WHERE j.isActive = true AND NOT EXISTS ("
-            + "SELECT 1 FROM IgnoredJobEntity i WHERE i.userId = :userId AND i.jobId = j.id)";
+            + "SELECT 1 FROM IgnoredJobEntity i WHERE i.userId = :userId AND i.jobId = j.id)"
+            + " AND (j.jobCategory IS NULL OR j.jobCategory NOT IN :excludedCategories)";
 
     @Query("SELECT j" + ACTIVE_NOT_IGNORED + " ORDER BY j.postedAt DESC")
-    List<JobEntity> findActiveNotIgnoredBy(@Param("userId") UUID userId, Pageable pageable);
+    List<JobEntity> findActiveNotIgnoredBy(@Param("userId") UUID userId,
+                                           @Param("excludedCategories") java.util.Collection<String> excludedCategories,
+                                           Pageable pageable);
 
     @Query("SELECT count(j)" + ACTIVE_NOT_IGNORED)
-    long countActiveNotIgnoredBy(@Param("userId") UUID userId);
+    long countActiveNotIgnoredBy(@Param("userId") UUID userId,
+                                 @Param("excludedCategories") java.util.Collection<String> excludedCategories);
 
     long countByIsActiveTrue();
 
