@@ -1,0 +1,131 @@
+# Scheduled crawl into the install's Supabase database: every source but LinkedIn (that stays on
+# the desktop app), then the URL probe, expiry and embeddings. No other AI runs here. The repo is
+# public, so its logs are too: secrets reach only the steps that need them, and no log or
+# artifact is uploaded. Setup and the secrets it needs: docs/guides/db.md.
+name: crawl
+
+on:
+  schedule:
+    # UTC, every 4 hours. RUNS_PER_DAY below must match: the URL probe sizes its batch from it,
+    # and under-probing lets expiry retire live postings.
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "One source, e.g. JOBINDEX. Blank crawls every scheduled source."
+        required: false
+        default: ""
+
+# Runs share one database and their running flags, so a run waits for the previous one
+# instead of overlapping or cancelling it halfway through writing postings.
+concurrency:
+  group: crawler
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  crawl:
+    runs-on: ubuntu-24.04
+    # A cold first crawl is estimated at 1-2 hours plus the URL probe; an incremental run takes
+    # minutes. Below the 4-hour cadence, so a hung run never stacks up behind the next one.
+    timeout-minutes: 180
+    steps:
+      # Until the database secrets exist, every scheduled run ends here as a success with a
+      # notice, so the repo does not collect a failed run every 4 hours while setup is pending.
+      # Only the database secrets are checked: a missing embedding key must still fail the run,
+      # through the app's own check against the provider the install stored.
+      - name: Check setup
+        id: setup
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          DB_PASS: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          set_count=0
+          for value in "$DB_URL" "$DB_USER" "$DB_PASS"; do
+            [ -n "$value" ] && set_count=$((set_count + 1))
+          done
+          if [ "$set_count" -eq 0 ]; then
+            echo "::notice::Crawl skipped: setup is pending. Add the SUPABASE_DB_* secrets (docs/guides/db.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A partial set is a typo'd or forgotten secret name, not pending setup; skipping
+          # quietly would hide it forever.
+          if [ "$set_count" -ne 3 ]; then
+            echo "::error::Only some of SUPABASE_DB_URL, SUPABASE_DB_USER and SUPABASE_DB_PASSWORD are set."
+            exit 1
+          fi
+          # GitHub masks whole secret values only, and driver errors print the host on its own.
+          host="${DB_URL#jdbc:postgresql://}"
+          host="${host%%[:/?]*}"
+          [ -n "$host" ] && echo "::add-mask::$host"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check source
+        if: steps.setup.outputs.ready == 'true'
+        env:
+          SOURCE: ${{ inputs.source }}
+        run: |
+          set -euo pipefail
+          case "$SOURCE" in
+            "") ;;
+            LINKEDIN|MANUAL)
+              echo "::error::$SOURCE is not crawled here (LinkedIn runs on the desktop app)."
+              exit 1 ;;
+            *[!A-Z_]*)
+              echo "::error::Source must be a JobSource name in capitals, e.g. JOBINDEX."
+              exit 1 ;;
+          esac
+
+      # The release the desktop app runs, so the jar expects the schema the app migrated to;
+      # SchemaVersionCheck stops the crawl at startup otherwise.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          ref: ${{ vars.CRAWLER_REF || 'main' }}
+          persist-credentials: false
+
+      # Java comes from the checked-out ref's mise.toml. Installing only java still runs that
+      # config's postinstall hook (PMD and a gate script), which the crawl does not use.
+      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          version: "2026.9.4"
+          install_args: java
+          cache: true
+
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        if: steps.setup.outputs.ready == 'true'
+
+      - name: Build the crawler jar
+        if: steps.setup.outputs.ready == 'true'
+        run: ./gradlew :backend:bootJar --no-daemon -q
+
+      - name: Crawl
+        if: steps.setup.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          DB_PASS: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SOURCE: ${{ inputs.source }}
+          RUNS_PER_DAY: "6"
+          # Embeddings only: postings stay PENDING for the desktop app to enrich on its own login.
+          ENRICHMENT_SWEEP_ENABLED: "false"
+          # The session pooler gives each database user 15 connections on the smallest compute,
+          # and the desktop app's pool takes 10 of them.
+          SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "4"
+          # Flyway prints the database URL when SchemaVersionCheck connects.
+          LOGGING_LEVEL_ORG_FLYWAYDB: WARN
+          APP_DATA_DIR: ${{ runner.temp }}/jobbuddy
+        run: |
+          set -euo pipefail
+          jar="$(find backend/build/libs -name '*.jar' ! -name '*-plain.jar')"
+          args=(--spring.profiles.active=crawler --crawler.url-check "--crawler.runs-per-day=$RUNS_PER_DAY")
+          if [ -n "$SOURCE" ]; then args+=("--crawler.source=$SOURCE"); fi
+          java -jar "$jar" "${args[@]}"
