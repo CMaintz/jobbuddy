@@ -136,9 +136,9 @@ Environment:
 - **The window:** the UI, fonts included, is served from the app itself under a Content-Security-Policy that allows scripts only from the app and requests only to the backend. Every web permission is denied except clipboard writes from the app (its copy buttons). Mail and phone links open in her own programs; nothing else leaves the window. The installed app has no DevTools and no menu.
 - **If it breaks:** a crash shows a Danish error screen with the log path, `%LOCALAPPDATA%\JobBuddy\logs\desktop-backend.log`.
 
-Build on Windows with `mise run desktop:package`. It writes `desktop/dist/JobBuddy-Setup-<version>.exe`, a one-click installer for the current user only, so it never asks for administrator rights. `mise run desktop:build` followed by `mise run desktop:start` runs it from the checkout.
+Build on Windows from `desktop/` with `mise run package`. It writes `desktop/dist/JobBuddy-Setup-<version>.exe`, a one-click installer for the current user only, so it never asks for administrator rights. `mise run build` followed by `mise run start` (also in `desktop/`) runs it from the checkout.
 
-The installer's exe has Electron's fuses set: no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, no `--inspect`, and the app loads only from its asar. The package task reads the fuses back and fails if any is off. The installed app also exits when started with `--remote-debugging-port` or `--remote-debugging-pipe`, which no fuse covers. To debug, run it from the checkout with `mise run desktop:start`.
+The installer's exe has Electron's fuses set: no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, no `--inspect`, and the app loads only from its asar. The package task reads the fuses back and fails if any is off. The installed app also exits when started with `--remote-debugging-port` or `--remote-debugging-pipe`, which no fuse covers. To debug, run it from the checkout with `mise run start` in `desktop/`.
 
 **Updating.** There is no auto-update: it needs a code-signing certificate and a release feed, and we have neither. To update, build the new installer and run it over the old install. Her connection, data and logs live outside the install folder, so they are kept. The installer is unsigned, so Windows SmartScreen asks once per new version: "Flere oplysninger", then "Kør alligevel".
 

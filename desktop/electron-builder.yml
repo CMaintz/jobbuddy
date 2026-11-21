@@ -10,7 +10,7 @@ files:
   - ui/**
   - assets/icon.png
   - package.json
-# Staged by `mise run desktop:build`: the bundled JRE, the backend jar and the Angular build.
+# Staged by `mise run build` in `desktop/`: the bundled JRE, the backend jar and the Angular build.
 # Outside the asar, since java.exe and the jar must be real files on disk.
 extraResources:
   - from: stage/jre

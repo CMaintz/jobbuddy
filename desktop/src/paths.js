@@ -4,7 +4,7 @@ const path = require('node:path');
 
 /**
  * Where the bundled pieces are: next to the app when installed, in desktop/stage when run from a
- * checkout (`mise run desktop:build` fills it).
+ * checkout (`mise run build` in `desktop/` fills it).
  *
  * @param {{ isPackaged: boolean }} app
  */
