@@ -56,6 +56,12 @@ final class BatchAnswer {
         return times;
     }
 
+    private static Map<String, Object> stringKeyed(Map<?, ?> map) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        map.forEach((key, value) -> item.put(String.valueOf(key), value));
+        return item;
+    }
+
     /** The answer's items; empty when it does not parse or holds no postings list. */
     private List<Map<String, Object>> items(String answer) {
         try {
@@ -67,9 +73,7 @@ final class BatchAnswer {
             List<Map<String, Object>> items = new ArrayList<>();
             for (Object entry : list) {
                 if (entry instanceof Map<?, ?> map) {
-                    Map<String, Object> item = new LinkedHashMap<>();
-                    map.forEach((key, value) -> item.put(String.valueOf(key), value));
-                    items.add(item);
+                    items.add(stringKeyed(map));
                 }
             }
             return items;
