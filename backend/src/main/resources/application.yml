@@ -23,6 +23,9 @@ server:
   port: 8080
 
 app:
+  # Writable directory for uploads and logs. The working directory by default; the desktop
+  # profile moves it out of the install folder (see application-desktop.yml).
+  data-dir: ${APP_DATA_DIR:.}
   security:
     # Base64 AES key (16/24/32 bytes) used to encrypt users' own API keys at rest.
     # Unset means the app refuses to store them rather than keeping them in the clear.
