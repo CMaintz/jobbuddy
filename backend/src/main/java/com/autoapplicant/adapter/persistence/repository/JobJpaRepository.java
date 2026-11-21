@@ -118,6 +118,38 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
                                     @Param("embeddedText") String embeddedText,
                                     @Param("now") Instant now);
 
+    /**
+     * Enrichment's own columns only. A whole-row save from a job read before the AI call would
+     * revert what the crawl wrote in the meantime (is_active, last_seen_at).
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE JobEntity j
+            SET j.enrichmentStatus = 'ENRICHED',
+                j.enrichmentAttempts = j.enrichmentAttempts + 1,
+                j.enrichmentLastAttemptAt = :now,
+                j.enrichmentLastError = NULL
+            WHERE j.id = :id
+            """)
+    int markEnriched(@Param("id") UUID id, @Param("now") Instant now);
+
+    /** As {@link #markEnriched}: counts the attempt and gives up once it reaches the limit. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE JobEntity j
+            SET j.enrichmentAttempts = j.enrichmentAttempts + 1,
+                j.enrichmentLastAttemptAt = :now,
+                j.enrichmentLastError = :reason,
+                j.enrichmentStatus = CASE WHEN j.enrichmentAttempts + 1 >= :maxAttempts
+                                          THEN 'FAILED' ELSE 'PENDING' END
+            WHERE j.id = :id
+            """)
+    int markEnrichmentFailed(@Param("id") UUID id, @Param("reason") String reason,
+                             @Param("maxAttempts") int maxAttempts, @Param("now") Instant now);
+
+    @Query("SELECT j.enrichmentStatus FROM JobEntity j WHERE j.id = :id")
+    String findEnrichmentStatus(@Param("id") UUID id);
+
     /** Seen again by a connector that skipped re-emitting it — liveness only, nothing else. */
     @Modifying
     @Query("UPDATE JobEntity j SET j.lastSeenAt = :lastSeenAt "

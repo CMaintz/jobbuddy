@@ -119,7 +119,7 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
                     // nobody will ever complete, and the thread waits on it forever.
                     Job enriched = entry.getValue().get(callTimeout.toMillis(), TimeUnit.MILLISECONDS);
                     if (enriched.aiSummary() != null) {
-                        jobRepo.save(enriched);
+                        jobRepo.saveEnrichment(enriched);
                         jobRepo.markEnriched(job.id());
                         succeeded++;
                     } else {

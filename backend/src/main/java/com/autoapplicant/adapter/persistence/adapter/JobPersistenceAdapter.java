@@ -270,28 +270,33 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void markEnriched(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setEnrichmentStatus(EnrichmentStatus.ENRICHED.name());
-            e.setEnrichmentAttempts(e.getEnrichmentAttempts() + 1);
-            e.setEnrichmentLastAttemptAt(Instant.now());
-            e.setEnrichmentLastError(null);
-            repo.save(e);
+        repo.markEnriched(jobId, Instant.now());
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void saveEnrichment(Job enriched) {
+        repo.findById(enriched.id()).ifPresent(current -> {
+            String embeddedTextBefore = JobMapper.toDomain(current).embeddingText();
+            JobMapper.copyEnrichmentFields(JobMapper.toEntity(enriched), current);
+            if (!JobMapper.toDomain(current).embeddingText().equals(embeddedTextBefore)) {
+                current.setEmbeddingStatus(com.autoapplicant.domain.job.EmbeddingStatus.PENDING.name());
+                current.setEmbeddingAttempts(0);
+                current.setEmbeddingLastAttemptAt(null);
+                current.setEmbeddingLastError(null);
+            }
         });
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts) {
-        return repo.findById(jobId).map(e -> {
-            int attempts = e.getEnrichmentAttempts() + 1;
-            boolean givingUp = attempts >= maxAttempts;
-            e.setEnrichmentAttempts(attempts);
-            e.setEnrichmentLastAttemptAt(Instant.now());
-            e.setEnrichmentLastError(truncate(reason));
-            e.setEnrichmentStatus((givingUp ? EnrichmentStatus.FAILED : EnrichmentStatus.PENDING).name());
-            repo.save(e);
-            return givingUp;
-        }).orElse(false);
+        if (repo.markEnrichmentFailed(jobId, truncate(reason), maxAttempts, Instant.now()) == 0) {
+            return false;
+        }
+        return EnrichmentStatus.FAILED.name().equals(repo.findEnrichmentStatus(jobId));
     }
 
     @Override
