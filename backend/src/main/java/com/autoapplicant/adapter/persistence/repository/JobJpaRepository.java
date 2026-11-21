@@ -150,8 +150,9 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
                                      Pageable pageable);
 
     /**
-     * After a model switch: every posting without a vector for {@code model}, embedded or given up
-     * on, goes back in the queue with fresh attempts. Other models' vectors are left in place.
+     * Active postings counted as embedded that have no vector for {@code model} go back in the
+     * queue with fresh attempts. Other models' vectors are left in place. A posting given up on
+     * keeps its status and count, and an expired one is not worth a new vector.
      */
     @Modifying
     @Query(value = """
@@ -159,7 +160,9 @@ public interface JobJpaRepository extends JpaRepository<JobEntity, UUID> {
                             embedding_attempts = 0,
                             embedding_last_attempt_at = NULL,
                             embedding_last_error = NULL
-            WHERE NOT EXISTS (SELECT 1 FROM job_embeddings e
+            WHERE is_active = true
+              AND embedding_status = 'EMBEDDED'
+              AND NOT EXISTS (SELECT 1 FROM job_embeddings e
                               WHERE e.job_id = jobs.id AND e.model = :model)
             """, nativeQuery = true)
     int requeueEmbeddingsForModel(@Param("model") String model);

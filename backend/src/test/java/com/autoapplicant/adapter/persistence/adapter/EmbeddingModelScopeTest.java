@@ -104,20 +104,35 @@ class EmbeddingModelScopeTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void a_switch_queues_postings_without_a_vector_for_the_new_model_and_deletes_nothing() {
+    void a_switch_queues_active_postings_embedded_only_with_the_old_model_and_deletes_nothing() {
         UUID oldOnly = embedded(OPENAI);
         UUID alreadyNew = embedded(GEMINI);
         UUID gaveUp = jobs.insert("C", "c", NOW);
         jdbc.update("UPDATE jobs SET embedding_status = 'FAILED', embedding_attempts = 4 WHERE id = ?", gaveUp);
+        UUID expired = embedded(OPENAI);
+        jdbc.update("UPDATE jobs SET is_active = false WHERE id = ?", expired);
 
         entityManager.flush();
         int queued = jobsAdapter.requeueEmbeddingsForModel(GEMINI);
 
-        assertThat(queued).isEqualTo(2);
+        assertThat(queued).isEqualTo(1);
         assertThat(status(oldOnly)).isEqualTo("PENDING:0");
-        assertThat(status(gaveUp)).isEqualTo("PENDING:0");
         assertThat(status(alreadyNew)).isEqualTo("EMBEDDED:1");
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM job_embeddings", Integer.class)).isEqualTo(2);
+        // A posting given up on keeps its count: resetting it would spend another full round of
+        // attempts on whatever made it fail. An expired posting is not worth a new vector.
+        assertThat(status(gaveUp)).isEqualTo("FAILED:4");
+        assertThat(status(expired)).isEqualTo("EMBEDDED:1");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM job_embeddings", Integer.class)).isEqualTo(3);
+    }
+
+    @Test
+    void the_embedding_queue_holds_active_postings_only() {
+        UUID active = jobs.insert("Active", "a", NOW);
+        jobs.insert("Expired", "e", NOW, false, null);
+
+        assertThat(jobsAdapter.findForEmbedding(10, 4, NOW.plusSeconds(60), false))
+                .extracting(com.autoapplicant.domain.job.Job::id)
+                .containsExactly(active);
     }
 
     @Test
