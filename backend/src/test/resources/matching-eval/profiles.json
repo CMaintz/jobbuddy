@@ -1,0 +1,70 @@
+{
+ "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only.",
+ "profiles": {
+  "comms-grc": {
+   "headline": "Kommunikationsmedarbejder | Marketing og informationssikkerhed",
+   "summary": "Kommunikationsmedarbejder med erfaring fra kampagner, presse, SEO-indhold og nyhedsbreve. Cand.mag. i kommunikation. Har taget et kursus i informationssikkerhed og GRC (NIS2, ISO 27001, risikovurdering, awareness og beredskab) og søger stillinger, hvor kommunikation og informationssikkerhed mødes.",
+   "skills": [
+    "Kampagneplanlægning",
+    "Pressearbejde",
+    "SEO",
+    "Content marketing",
+    "Nyhedsbreve",
+    "Sociale medier",
+    "Intern kommunikation",
+    "Kundesucces",
+    "Stakeholderhåndtering",
+    "Projektkoordinering",
+    "Tekstforfatning",
+    "NIS2",
+    "ISO 27001",
+    "Risikovurdering",
+    "Security awareness",
+    "Beredskabsplanlægning",
+    "Mailchimp",
+    "Canva",
+    "WordPress"
+   ],
+   "education": [
+    {
+     "degree": "Kandidat",
+     "field": "Kommunikation"
+    }
+   ]
+  },
+  "engineer": {
+   "headline": "Senior Software Engineer",
+   "summary": "Full-stack engineer building web platforms in Java and TypeScript, from backend APIs to Angular and React frontends, deployed on Kubernetes in Azure and AWS.",
+   "skills": [
+    "Java",
+    "Spring Boot",
+    "TypeScript",
+    "Angular",
+    "React",
+    "Node.js",
+    "Python",
+    "PostgreSQL",
+    "SQL",
+    "Docker",
+    "Kubernetes",
+    "Azure",
+    "AWS",
+    "Terraform",
+    "Kafka",
+    "CI/CD",
+    "GitHub Actions",
+    "REST APIs",
+    "Microservices",
+    "Scrum",
+    "Code review",
+    "Java 21"
+   ],
+   "education": [
+    {
+     "degree": "Master",
+     "field": "Computer Science"
+    }
+   ]
+  }
+ }
+}

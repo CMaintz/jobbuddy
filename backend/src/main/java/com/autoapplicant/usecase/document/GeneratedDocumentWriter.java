@@ -1,11 +1,13 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.GeneratedDocument;
+import com.autoapplicant.domain.document.structured.LetterReview;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -31,10 +33,22 @@ public class GeneratedDocumentWriter {
     }
 
     public StructuredDocument save(UUID userId, UUID jobId, StructuredDocument document, String modelUsed) {
-        GeneratedDocument row = document.generatedDocumentId() != null
-                ? revised(findOwned(userId, document.generatedDocumentId()), jobId, document, modelUsed)
-                : created(userId, jobId, document, modelUsed);
-        return withGeneratedDocumentId(document, documents.save(row).id());
+        if (document.generatedDocumentId() == null) {
+            StructuredDocument kept = document.withLetterReview(checked(document.letterReview(), document));
+            return withGeneratedDocumentId(kept, documents.save(created(userId, jobId, kept, modelUsed)).id());
+        }
+        GeneratedDocument existing = findOwned(userId, document.generatedDocumentId());
+        StructuredDocument kept = document.withLetterReview(storedReview(existing, document.bodyContent()));
+        return withGeneratedDocumentId(kept, documents.save(revised(existing, jobId, kept, modelUsed)).id());
+    }
+
+    /**
+     * A new row's review, marked stale once the text differs from what the gate judged. The editor
+     * saves an edit as a new row carrying the old structure, so this is where an edited letter's
+     * verdict stops claiming to describe it.
+     */
+    private static LetterReview checked(LetterReview review, StructuredDocument document) {
+        return review != null ? review.checkedAgainst(document.bodyContent()) : null;
     }
 
     private GeneratedDocument findOwned(UUID userId, UUID generatedDocumentId) {
@@ -60,6 +74,22 @@ public class GeneratedDocumentWriter {
                 modelUsed,
                 existing.tokensUsed(),
                 existing.createdAt());
+    }
+
+    /**
+     * The stored row's letter review checked against {@code body}, or null when it has none. A
+     * re-save of the same row keeps the server's verdict, not the copy the client sent back.
+     */
+    private LetterReview storedReview(GeneratedDocument existing, String body) {
+        if (existing.structuredContent() == null) {
+            return null;
+        }
+        try {
+            JsonNode review = objectMapper.readTree(existing.structuredContent()).path("letterReview");
+            return review.isObject() ? objectMapper.treeToValue(review, LetterReview.class).checkedAgainst(body) : null;
+        } catch (JsonProcessingException unreadable) {
+            return null;
+        }
     }
 
     private GeneratedDocument created(UUID userId, UUID jobId, StructuredDocument document, String modelUsed) {
@@ -124,7 +154,8 @@ public class GeneratedDocumentWriter {
                 document.options(),
                 document.sections(),
                 document.bodyContent(),
-                document.atsReport());
+                document.atsReport(),
+                document.letterReview());
     }
 
     private String structuredJson(StructuredDocument document) {

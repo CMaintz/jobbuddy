@@ -66,9 +66,19 @@ app:
       # Blank = the pinned model's name, or cli-agent when the app does not choose the model.
       model-label: ${AI_CLI_MODEL_LABEL:}
     # How long an AI request waits for its answer before the client gets 504. A cover letter on
-    # the CLI provider is up to three sequential agent calls (company research, generate, review),
-    # so the default is three CLI timeouts plus margin; raise it with AI_CLI_TIMEOUT_SECONDS.
-    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:390}
+    # the CLI provider is company research, generate and review, then a first gate verdict of up
+    # to two calls (one retry of an unreadable answer): five calls before any rewrite. Each of up
+    # to max-rounds rounds is up to three more (rewrite, gate, retry). The default fits those five
+    # plus one full round with every call at the CLI timeout, and margin for the save
+    # (5 x 120 + 3 x 120 + 120 = 1080); at the observed 15-35 s per call all three rounds fit. The
+    # gate starts a round only if it can finish before this deadline, so a slow provider shows the
+    # remaining fails instead of a 504. Raise it with AI_CLI_TIMEOUT_SECONDS, and keep nginx
+    # proxy_read_timeout above it.
+    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:1080}
+    letter-gate:
+      # Rewrites of a letter the gate (writing guide KORREKTUR points 1, 8, 13, 14) fails, each
+      # followed by a fresh gate; after the last one the remaining fails are shown to the user.
+      max-rounds: ${LETTER_GATE_MAX_ROUNDS:3}
     auto-review:
       # Automatic reviewer critique/revise pass after document generation.
       # Each pass is one extra LLM call — disable to halve generation cost.

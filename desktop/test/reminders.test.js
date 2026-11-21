@@ -13,6 +13,10 @@ const OUTREACH = {
 };
 const DEADLINE = { type: 'DEADLINE_SOON', applicationId: 'a1', companyName: 'Lego', deadline: '2026-11-25' };
 const FOLLOW_UP = { type: 'FOLLOW_UP', applicationId: 'a2', companyName: 'Maersk', daysSinceApplied: 15 };
+const INTERVIEW = {
+  type: 'INTERVIEW_SOON', applicationId: 'a3', companyName: 'Coloplast', jobTitle: 'Kommunikationsrådgiver',
+  deadline: '2026-11-21', time: '10:30:00',
+};
 
 function setup(nudges, { day = '2026-11-21', seen = [] } = {}) {
   const shown = [];
@@ -59,4 +63,49 @@ test('a failed poll shows nothing and forgets nothing', async () => {
   await notifier.poll();
   assert.equal(shown.length, 0);
   assert.deepEqual(state.saved, ['k']);
+});
+
+test('an interview today pops up with its company and time', async () => {
+  const { notifier, shown } = setup([INTERVIEW]);
+  await notifier.poll();
+  assert.equal(shown.length, 1);
+  assert.equal(shown[0].title, 'Jobsamtale i dag hos Coloplast');
+  assert.match(shown[0].body, /kl\. 10:30(?!:)/);
+  assert.match(shown[0].body, /Kommunikationsrådgiver/);
+});
+
+test('an interview tomorrow says tomorrow, and says today on the day', async () => {
+  const { notifier, shown, state } = setup([{ ...INTERVIEW, deadline: '2026-11-22' }]);
+  await notifier.poll();
+  state.day = '2026-11-22';
+  await notifier.poll();
+  assert.deepEqual(shown.map((n) => n.title),
+    ['Jobsamtale i morgen hos Coloplast', 'Jobsamtale i dag hos Coloplast']);
+});
+
+test('two interviews the same day both pop up, each only once', async () => {
+  const other = { ...INTERVIEW, applicationId: 'a4', companyName: 'Danske Bank', time: '14:00' };
+  const first = setup([INTERVIEW, other]);
+  await first.notifier.poll();
+  await first.notifier.poll();
+  assert.deepEqual(first.shown.map((n) => n.title),
+    ['Jobsamtale i dag hos Coloplast', 'Jobsamtale i dag hos Danske Bank']);
+
+  const restarted = setup([INTERVIEW, other], { seen: first.state.saved });
+  await restarted.notifier.poll();
+  assert.equal(restarted.shown.length, 0);
+});
+
+test('an interview without a time or company still pops up, without a made-up time', async () => {
+  const { notifier, shown } = setup([{ ...INTERVIEW, companyName: null, time: null }]);
+  await notifier.poll();
+  assert.equal(shown[0].title, 'Jobsamtale i dag hos en virksomhed');
+  assert.doesNotMatch(shown[0].body, /kl\./);
+});
+
+test("yesterday's interview, still served just after midnight, does not pop up as tomorrow", async () => {
+  // The backend clock is UTC, so for an hour or two after Danish midnight it still counts yesterday.
+  const { notifier, shown } = setup([{ ...INTERVIEW, deadline: '2026-11-20' }]);
+  await notifier.poll();
+  assert.equal(shown.length, 0);
 });

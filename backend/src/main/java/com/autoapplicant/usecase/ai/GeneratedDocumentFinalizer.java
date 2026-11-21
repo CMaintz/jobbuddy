@@ -5,6 +5,7 @@ import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
 import com.autoapplicant.domain.document.structured.DocumentRenderOptions;
 import com.autoapplicant.domain.document.structured.JobKeywords;
+import com.autoapplicant.domain.document.structured.LetterReview;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.usecase.document.ApplicationDocumentAssembler;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
@@ -33,8 +34,9 @@ public class GeneratedDocumentFinalizer {
         this.documentWriter = documentWriter;
     }
 
+    /** Guards, assembles and saves {@code body}, with the letter gate's review when there is one. */
     public StructuredDocument finalizeDocument(GenerateDocumentCommand cmd, GenerationInputs in,
-                                               String body, String modelName) {
+                                               String body, LetterReview letterReview, String modelName) {
         // Deterministic backstops (fact gate + retracted claims + filler), shared with the CV path.
         // The findings ride along into the ATS report so the user sees them.
         ContentGuardFindings guardFindings =
@@ -45,7 +47,7 @@ public class GeneratedDocumentFinalizer {
                 cmd.userId(), parseDocumentType(cmd.documentType()), body, cmd.templateId(),
                 JobKeywords.of(in.job()), new DocumentRenderOptions(cmd.showProfileImage(), cmd.theme()),
                 guardFindings);
-        return documentWriter.save(cmd.userId(), cmd.jobId(), doc, modelName);
+        return documentWriter.save(cmd.userId(), cmd.jobId(), doc.withLetterReview(letterReview), modelName);
     }
 
     private static DocumentType parseDocumentType(String type) {

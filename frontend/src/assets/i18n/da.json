@@ -220,6 +220,8 @@
     "queue": {
       "now": "nu",
       "today": "i dag",
+      "tomorrow": "i morgen",
+      "interview": "Jobsamtale",
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
       "noReply": "Intet svar endnu — send en opfølgning",
@@ -227,6 +229,7 @@
     },
     "tag": {
       "followUp": "opfølgning",
+      "interview": "samtale",
       "deadline": "frist",
       "noReply": "intet svar",
       "outreach": "Uopfordret"
@@ -712,6 +715,28 @@
     "refinementDiff": "Finpudsningsdiff",
     "accept": "Accepter",
     "guardFindings": "Fund fra kontrol",
+    "gate": {
+      "title": "Ansøgningsporten",
+      "passed": "Bestået",
+      "failed": "Dumpet",
+      "noVerdict": "Intet svar",
+      "rounds": "Efter {{n}} omskrivning(er)",
+      "stale": "Du har rettet ansøgningen, efter porten tjekkede den. Resultatet gælder den tidligere tekst.",
+      "needs": "Arbejdsgiverens behov",
+      "point": {
+        "1": "Farvetesten (handler mest om virksomheden)",
+        "8": "Fremad frem for bagud",
+        "13": "Opslags-ekko",
+        "14": "CV-referat"
+      },
+      "stop": {
+        "OUT_OF_ROUNDS": "Ansøgningen dumper stadig efter sidste omskrivning. Ret de citerede sætninger selv.",
+        "OUT_OF_TIME": "Der var ikke tid til flere omskrivninger. Ret de citerede sætninger selv.",
+        "REWRITE_FAILED": "Omskrivningen mislykkedes, så ansøgningen står, som porten sidst så den.",
+        "NO_VERDICT": "Porten kunne ikke give et svar. Læs ansøgningen igennem selv.",
+        "REWRITE_NOT_JUDGED": "Porten gav intet svar på sidste omskrivning, så den forrige udgave er beholdt."
+      }
+    },
     "evidence": {
       "heading": "Tynd på dokumentation",
       "body": "Dette brev fik {{score}}/100 på konkret dokumentation — det argumenterer uden at henvise til dit faktiske arbejde. To spørgsmål om et projekt ville give det næste noget at pege på.",
@@ -1905,7 +1930,7 @@
     "quickApplyHint": "Genererer et tilpasset CV og et følgebrev sammen og viser dem side om side.",
     "generationFailed": "Generering mislykkedes",
     "drafting": "Skriver din ansøgning...",
-    "draftingSub": "Læser jobopslaget og sammenligner det med dit CV.",
+    "draftingSub": "Læser jobopslaget og sammenligner det med dit CV. En ansøgning bliver tjekket bagefter og skrevet om, hvis den dumper, så det tager typisk et par minutter og højst 18 minutter.",
     "writing": "Skriver...",
     "source": {
       "paste": {
