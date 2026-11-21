@@ -127,6 +127,7 @@ Environment:
 - `DESKTOP_SHELL_ORIGIN`: the origin the shell's UI is served from (default `app://jobbuddy`).
 - `APP_DATA_DIR`: defaults to `%LOCALAPPDATA%\JobBuddy`, since the install folder is not writable.
 - `GENERATION_AI_PROVIDER` and `ENRICHMENT_CHAT_AI_PROVIDER` default to `claude-cli`. Embeddings still need `OPENAI_API_KEY` (or `GEMINI_API_KEY` with `ENRICHMENT_AI_PROVIDER=gemini`).
+- **One embedding model per install.** The provider she picks in the desktop setup (`ENRICHMENT_AI_PROVIDER` from the shell) is stored in the `embedding_choice` table at startup. The scheduled crawl and every other process embed with the stored choice and ignore their own `ENRICHMENT_AI_PROVIDER`, which applies only while nothing is stored. Gemini is asked for 1536 dimensions, to match the `vector(1536)` columns. A switch keeps every vector and queues the postings that have none for the new model; search and matching read only the stored model's vectors. Without the stored provider's key, the crawl fails before crawling and the desktop app says which key is missing.
 - `DB_URL`, `DB_USER`, `DB_PASS`: the install's own database.
 - `SERVER_PORT`: the shell passes `0`, so the OS picks a free port as the server binds it. Once it takes requests, the backend prints `JOBBUDDY_DESKTOP_READY port=<n>` on stdout, and the shell connects only to that port. No other process can write to the child's stdout, so a process that grabbed a port first never gets the token.
 

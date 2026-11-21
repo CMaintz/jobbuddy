@@ -16,6 +16,7 @@ const { refuseRemoteDebugging } = require('./debug-guard');
 const { freshEnv } = require('./fresh-env');
 const { mergeSettingsEdit } = require('./settings-edit');
 const { startupPlan } = require('./startup-plan');
+const { startFailureMessage } = require('./start-failure');
 const { applyMenuPolicy, isAppSender, permissionAllowed } = require('./window-policy');
 
 // Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
@@ -116,7 +117,7 @@ async function startApp() {
     await state.window.showApp();
     state.reminders.poll();
   } catch (error) {
-    await showError(`JobBuddy kunne ikke starte. (${error.message})`);
+    await showError(startFailureMessage(error));
   }
 }
 

@@ -25,7 +25,12 @@ import org.testcontainers.utility.DockerImageName;
  * migrates, with no Firebase project and no one to answer a schedule. The credentials path points
  * at a file that does not exist, so reading it at all fails the context.
  */
-@SpringBootTest(properties = "app.firebase.credentials-path=does-not-exist/service-account.json")
+@SpringBootTest(properties = {
+    "app.firebase.credentials-path=does-not-exist/service-account.json",
+    // The crawl refuses to start without the stored embedding provider's key (EmbeddingKeyCheck),
+    // as the scheduled run has it in its secrets.
+    "app.openai.api-key=present-but-unused-here"
+})
 @ActiveProfiles("crawler")
 @Testcontainers(disabledWithoutDocker = true)
 class CrawlerProfileContextTest {

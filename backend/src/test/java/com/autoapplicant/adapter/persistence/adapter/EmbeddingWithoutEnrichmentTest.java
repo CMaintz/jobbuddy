@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.autoapplicant.adapter.persistence.FixedEmbeddingModel;
 import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
 import com.autoapplicant.domain.job.Job;
@@ -23,7 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * A scheduled crawl embeds postings without enriching them; enrichment happens later, elsewhere,
  * and may trim the very text the vector was made from. The vector has to follow the text.
  */
-@Import({JobPersistenceAdapter.class, JobEmbeddingPersistenceAdapter.class})
+@Import({JobPersistenceAdapter.class, JobEmbeddingPersistenceAdapter.class, FixedEmbeddingModel.class})
 class EmbeddingWithoutEnrichmentTest extends PostgresIntegrationTest {
 
     private static final int DIMENSIONS = 1536;
@@ -59,7 +60,8 @@ class EmbeddingWithoutEnrichmentTest extends PostgresIntegrationTest {
 
         @Override
         public String embeddingModelName() {
-            return "test-embedding";
+            // The provider is built from the stored choice, so it embeds with that model.
+            return FixedEmbeddingModel.MODEL;
         }
     };
 
