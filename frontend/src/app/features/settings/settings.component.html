@@ -95,6 +95,24 @@
               </div>
             </div>
 
+            <!-- Area enrichment looks in -->
+            <div class="py-3.5 border-b border-jb-border-faint">
+              <div class="text-base font-medium mb-[4px]">{{ 'settings.match.area' | translate }}</div>
+              <div class="text-xs text-jb-text-dim mb-2.5">{{ 'settings.match.areaDesc' | translate }}</div>
+              <div class="flex flex-wrap items-center gap-3">
+                <label class="flex flex-col gap-1 text-xs text-jb-text-dim">
+                  {{ 'settings.match.areaHome' | translate }}
+                  <input type="text" [(ngModel)]="areaHome" (ngModelChange)="markDirty()" class="input"
+                    [placeholder]="'settings.match.areaHomePlaceholder' | translate" />
+                </label>
+                <label class="flex flex-col gap-1 text-xs text-jb-text-dim">
+                  {{ 'settings.match.areaRadius' | translate }}
+                  <input type="number" min="5" max="400" [(ngModel)]="areaRadiusKm" (ngModelChange)="markDirty()"
+                    class="input w-[110px]" />
+                </label>
+              </div>
+            </div>
+
             <!-- Categories she never wants to see -->
             <div class="py-3.5 border-b border-jb-border-faint">
               <div class="text-base font-medium mb-[4px]">{{ 'settings.match.excluded' | translate }}</div>

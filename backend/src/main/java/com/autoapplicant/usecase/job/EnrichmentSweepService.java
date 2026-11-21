@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.job;
 
+import com.autoapplicant.domain.job.DanishPlaces;
 import com.autoapplicant.domain.job.EnrichmentScope;
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
@@ -83,7 +84,7 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
         Instant deadline = Instant.now().plus(budget);
         Instant retryBefore = Instant.now().minus(retryDelay);
         List<Job> queue = jobRepo.findForEnrichment(limit, maxAttempts, retryBefore,
-                EnrichmentScope.of(prefsRepo.findAll()));
+                EnrichmentScope.of(prefsRepo.findAll(), DanishPlaces.shared()));
         int total = queue.size();
         if (total == 0) return new SweepResult(0, 0, 0, 0);
 

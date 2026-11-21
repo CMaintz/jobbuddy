@@ -52,7 +52,7 @@ class JobServiceFeedTest {
         Job job = Job.builder().id(UUID.randomUUID()).title("Dev").build();
         UserPreferences prefs = new UserPreferences(null, userId, List.of(), List.of(), List.of(),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null, null, null,
-                false, null, null, null, null, List.of("SALES"));
+                false, null, null, null, null, List.of("SALES"), null);
         when(prefsRepo.findByUserId(userId)).thenReturn(Optional.of(prefs));
         when(jobRepo.findActiveNotIgnoredBy(userId, List.of("SALES"), PAGE, SIZE)).thenReturn(List.of(job));
         when(jobRepo.countActiveNotIgnoredBy(userId, List.of("SALES"))).thenReturn(NOT_IGNORED_TOTAL);

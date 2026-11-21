@@ -72,6 +72,9 @@ const CATEGORY_OPTIONS: { key: string; label: string }[] = [
   { key: 'EDUCATION', label: 'settings.industry.education' },
 ];
 
+/** The area used until she sets her own; the backend applies the same default. */
+const DEFAULT_AREA = { home: '8260 Viby J', radiusKm: 85 };
+
 const SENIORITY_MAP: Record<string, string[]> = {
   'Junior': ['JUNIOR'],
   'Mid': ['MID'],
@@ -146,6 +149,8 @@ export class SettingsComponent implements OnInit {
   categoryOptions = CATEGORY_OPTIONS;
   industries = new Set<string>();
   excludedCategories = new Set<string>();
+  areaHome = DEFAULT_AREA.home;
+  areaRadiusKm = DEFAULT_AREA.radiusKm;
   seniorityOptions = Object.keys(SENIORITY_MAP);
   seniority = 'Senior';
   remote = true;
@@ -195,6 +200,8 @@ export class SettingsComponent implements OnInit {
         this.avoidKeywords = prefs.negativeSignals ?? [];
         this.industries = new Set(prefs.preferredIndustries ?? []);
         this.excludedCategories = new Set(prefs.excludedCategories ?? []);
+        this.areaHome = prefs.enrichmentArea?.home ?? DEFAULT_AREA.home;
+        this.areaRadiusKm = prefs.enrichmentArea?.radiusKm ?? DEFAULT_AREA.radiusKm;
         this.seniority = Object.entries(SENIORITY_MAP)
           .find(([, values]) => values.some(v => (prefs.preferredSeniority ?? []).includes(v)))?.[0] ?? 'Senior';
         this.remote = (prefs.preferredRemoteTypes ?? []).length === 0
@@ -266,6 +273,7 @@ export class SettingsComponent implements OnInit {
       negativeSignals: this.avoidKeywords,
       preferredIndustries: [...this.industries],
       excludedCategories: [...this.excludedCategories],
+      enrichmentArea: { home: this.areaHome.trim(), radiusKm: this.areaRadiusKm },
       preferredSeniority: SENIORITY_MAP[this.seniority] ?? [],
       preferredRemoteTypes: this.remote ? [] : ['ON_SITE', 'HYBRID'],
       weeklyApplicationGoal: this.weeklyGoal,
@@ -280,9 +288,11 @@ export class SettingsComponent implements OnInit {
         this.dirty.set(false);
         this.notify.success('settings.toast.saved');
       },
-      error: () => {
+      error: (err: { status?: number; error?: { message?: string } }) => {
         this.saving.set(false);
-        this.notify.error('settings.toast.saveFailed');
+        // A home the backend cannot place comes back as 400 with a message in plain Danish.
+        if (err?.status === 400 && err.error?.message) this.notify.errorText(err.error.message);
+        else this.notify.error('settings.toast.saveFailed');
       }
     });
 

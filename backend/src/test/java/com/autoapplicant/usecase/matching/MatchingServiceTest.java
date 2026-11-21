@@ -340,7 +340,7 @@ class MatchingServiceTest {
                 minimalJob(software).toBuilder().jobCategory(JobCategory.SOFTWARE_IT).build()));
         UserPreferences skipsSales = new UserPreferences(UUID.randomUUID(), userId, List.of(),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                null, null, null, false, null, null, null, null, List.of("SALES"));
+                null, null, null, false, null, null, null, null, List.of("SALES"), null);
         when(prefsRepo.findByUserId(userId)).thenReturn(Optional.of(skipsSales));
 
         assertThat(service.getRecommendations(userId, 10)).extracting(MatchResult::jobId)
@@ -553,7 +553,7 @@ class MatchingServiceTest {
     private UserPreferences prefsWithRadius(int km) {
         return new UserPreferences(UUID.randomUUID(), userId, List.of(), List.of("K\u00f8benhavn"),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                null, null, km, false, null, null, null, null, List.of());
+                null, null, km, false, null, null, null, null, List.of(), null);
     }
 
     private RecommendationFeedback feedback(UUID jobId, FeedbackType type) {

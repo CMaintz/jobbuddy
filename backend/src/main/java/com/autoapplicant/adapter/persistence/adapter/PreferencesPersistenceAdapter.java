@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.PreferencesEntity;
 import com.autoapplicant.adapter.persistence.repository.PreferencesJpaRepository;
+import com.autoapplicant.domain.user.EnrichmentArea;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import java.util.Arrays;
@@ -33,6 +34,9 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
         e.setPreferredSeniority(toArray(prefs.preferredSeniority()));
         e.setPreferredIndustries(toArray(prefs.preferredIndustries()));
         e.setExcludedCategories(toArray(prefs.excludedCategoriesOrEmpty()));
+        EnrichmentArea area = prefs.enrichmentArea();
+        e.setEnrichmentHome(area != null ? area.home() : null);
+        e.setEnrichmentRadiusKm(area != null ? area.radiusKm() : null);
         e.setSalaryMin(prefs.salaryMin());
         e.setSalaryMax(prefs.salaryMax());
         e.setMaxCommuteKm(prefs.maxCommuteKm());
@@ -67,7 +71,9 @@ public class PreferencesPersistenceAdapter implements PreferencesRepositoryPort 
                 e.getSalaryMin(), e.getSalaryMax(), e.getMaxCommuteKm(),
                 e.isNotificationEnabled(), e.getNotificationFrequency(),
                 e.getWeeklyApplicationGoal(), e.getCreatedAt(), e.getUpdatedAt(),
-                toList(e.getExcludedCategories()));
+                toList(e.getExcludedCategories()),
+                e.getEnrichmentHome() != null
+                        ? new EnrichmentArea(e.getEnrichmentHome(), e.getEnrichmentRadiusKm()) : null);
     }
 
     private static String[] toArray(List<String> l) { return l != null ? l.toArray(String[]::new) : new String[0]; }

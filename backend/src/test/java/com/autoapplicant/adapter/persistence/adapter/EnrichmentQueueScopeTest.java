@@ -4,7 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
+import com.autoapplicant.adapter.persistence.entity.JobEntity;
+import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
+import com.autoapplicant.domain.job.DanishPlaces;
 import com.autoapplicant.domain.job.EnrichmentScope;
+import com.autoapplicant.domain.job.GeoArea;
 import com.autoapplicant.domain.job.Job;
 import java.sql.Date;
 import java.time.Instant;
@@ -30,6 +34,7 @@ class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
 
     @Autowired JobPersistenceAdapter adapter;
     @Autowired JdbcTemplate jdbc;
+    @Autowired JobJpaRepository jobJpa;
 
     JobRows jobs;
     UUID user;
@@ -116,8 +121,90 @@ class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
         UUID sales = jobs.insert("Sales", "s", NOW, true, "SALES");
         UUID software = jobs.insert("Software", "s", NOW, true, "SOFTWARE_IT");
         UUID uncategorised = jobs.insert("Uncategorised", "u", NOW);
-        scope = new EnrichmentScope(Set.of("SALES"));
+        scope = new EnrichmentScope(Set.of("SALES"), List.of());
 
         assertThat(enrichmentQueue()).contains(software, uncategorised).doesNotContain(sales);
+    }
+
+    private UUID locatedAt(String location) {
+        UUID job = jobs.insert("Developer in " + location, "d", NOW);
+        jdbc.update("UPDATE jobs SET location = ? WHERE id = ?", location, job);
+        return job;
+    }
+
+    private static GeoArea around(String home, int km) {
+        return new GeoArea(DanishPlaces.shared().locate(home).orElseThrow(), km);
+    }
+
+    @Test
+    void onlyPostingsInTheCommuteAreaAreEnrichedPlusRemoteAndUnknownOnes() {
+        // Bug: the queue ignores geography and spends her quota on all of Denmark; or it drops
+        // the postings it cannot place, so remote roles and unplaced boards are never enriched.
+        UUID aarhus = locatedAt("Aarhus N");
+        UUID copenhagen = locatedAt("København K");
+        UUID esbjerg = locatedAt("Esbjerg");
+        UUID hybridFarAway = locatedAt("Ballerup og mulighed for hjemmearbejde");
+        UUID unplaced = locatedAt("Flere lokationer");
+        UUID noLocation = jobs.insert("No location", "d", NOW);
+        scope = new EnrichmentScope(Set.of(), List.of(around("8260 Viby J", 85)));
+
+        assertThat(enrichmentQueue()).contains(aarhus, hybridFarAway, unplaced, noLocation)
+                .doesNotContain(copenhagen, esbjerg);
+    }
+
+    @Test
+    void aPostingInAnyUsersAreaIsEnriched() {
+        // Bug: only the first user's area counts, so the second user's postings are never
+        // enriched.
+        UUID aarhus = locatedAt("Aarhus N");
+        UUID copenhagen = locatedAt("København K");
+        UUID esbjerg = locatedAt("Esbjerg");
+        scope = new EnrichmentScope(Set.of(),
+                List.of(around("8260 Viby J", 30), around("1050 København K", 30)));
+
+        assertThat(enrichmentQueue()).contains(aarhus, copenhagen).doesNotContain(esbjerg);
+    }
+
+    @Test
+    void aPostingNotYetPlacedIsHeldBackUntilItIs() {
+        // Bug: an unplaced row counts as "anywhere", so on a backlog larger than one placing
+        // slice the queue fills with far-away postings before they are placed.
+        UUID esbjerg = locatedAt("Esbjerg");
+        GeoArea vibyJ = around("8260 Viby J", 85);
+
+        List<JobEntity> queued = jobJpa.findForEnrichment(MAX_ATTEMPTS, NOW, LocalDate.now(),
+                List.of("-"), false, "{" + vibyJ.centre().lat() + "}", "{" + vibyJ.centre().lon() + "}",
+                "{85}", 100);
+
+        assertThat(queued).extracting(JobEntity::getId).doesNotContain(esbjerg);
+    }
+
+    @Test
+    void aPostingSheChoseHerselfIsEnrichedWhereverItIs() {
+        // Bug: a posting she saved, is preparing an application for, or added by hand loses its
+        // enrichment because it sits outside the commute area.
+        UUID saved = locatedAt("Esbjerg");
+        jdbc.update("INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, 'SAVED')", user, saved);
+        UUID manual = locatedAt("Esbjerg");
+        jdbc.update("UPDATE jobs SET source = 'MANUAL' WHERE id = ?", manual);
+        UUID other = locatedAt("Esbjerg");
+        scope = new EnrichmentScope(Set.of(), List.of(around("8260 Viby J", 85)));
+
+        assertThat(enrichmentQueue()).contains(saved, manual).doesNotContain(other);
+    }
+
+    @Test
+    void aRemotePostingFarAwayIsEnrichedWhenItsTextSaysSo() {
+        // Bug: the crawl never sets remote_type, so a remote role whose location names its
+        // office in Esbjerg is skipped; and a posting merely mentioning district heating passes.
+        UUID remote = locatedAt("Esbjerg");
+        jdbc.update("UPDATE jobs SET description_clean = ? WHERE id = ?",
+                "Du kan arbejde hjemmefra det meste af ugen.", remote);
+        UUID onSite = locatedAt("Esbjerg");
+        jdbc.update("UPDATE jobs SET description_clean = ? WHERE id = ?",
+                "Moderne kontor med fjernvarme.", onSite);
+        scope = new EnrichmentScope(Set.of(), List.of(around("8260 Viby J", 85)));
+
+        assertThat(enrichmentQueue()).contains(remote).doesNotContain(onSite);
     }
 }

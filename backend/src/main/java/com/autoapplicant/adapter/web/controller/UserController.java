@@ -61,7 +61,7 @@ public class UserController {
                 .orElse(new UserPreferences(null, userId,
                         List.of(), List.of(), List.of(), List.of(), List.of(),
                         List.of(), List.of(), List.of(), List.of(), null, null, null,
-                        false, "DAILY", null, null, null, List.of())));
+                        false, "DAILY", null, null, null, List.of(), null)));
     }
 
     @Operation(summary = "Update current user preferences")

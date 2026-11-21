@@ -56,6 +56,12 @@ public class PreferencesEntity {
     @Column(name = "excluded_categories", columnDefinition = "text[]")
     private String[] excludedCategories;
 
+    @Column(name = "enrichment_home")
+    private String enrichmentHome;
+
+    @Column(name = "enrichment_radius_km")
+    private Integer enrichmentRadiusKm;
+
     @Column(name = "salary_min")
     private Integer salaryMin;
 
@@ -107,6 +113,10 @@ public class PreferencesEntity {
     public void setPreferredIndustries(String[] v) { this.preferredIndustries = v; }
     public String[] getExcludedCategories() { return excludedCategories; }
     public void setExcludedCategories(String[] v) { this.excludedCategories = v; }
+    public String getEnrichmentHome() { return enrichmentHome; }
+    public void setEnrichmentHome(String v) { this.enrichmentHome = v; }
+    public Integer getEnrichmentRadiusKm() { return enrichmentRadiusKm; }
+    public void setEnrichmentRadiusKm(Integer v) { this.enrichmentRadiusKm = v; }
     public Integer getSalaryMin() { return salaryMin; }
     public void setSalaryMin(Integer v) { this.salaryMin = v; }
     public Integer getSalaryMax() { return salaryMax; }
