@@ -76,15 +76,26 @@ function fakeChild() {
   return child;
 }
 
-function start(child) {
+function start(child, spawned = []) {
   const log = new PassThrough();
   log.resume();
   return startBackend({
-    spawn: () => child,
+    spawn: (command, args, options) => {
+      spawned.push(options);
+      return child;
+    },
     launch: launchWith(),
     log,
   });
 }
+
+test('the backend gets a stdin pipe it can watch for the shell going away', () => {
+  // DesktopParentWatch stops the JVM on EOF. With stdin ignored it reads EOF at once and stops,
+  // and with no pipe at all a crashed shell would leave the JVM running.
+  const spawned = [];
+  start(fakeChild(), spawned);
+  assert.equal(spawned[0].stdio[0], 'pipe');
+});
 
 test('the shell trusts only the port the child itself reports', async () => {
   const child = fakeChild();

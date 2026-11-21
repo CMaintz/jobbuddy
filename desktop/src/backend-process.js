@@ -67,7 +67,9 @@ function startBackend({ spawn, launch, log }) {
     env: launch.env,
     cwd: launch.cwd,
     windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    // stdin is a pipe the shell never writes to: when the shell dies, however it dies, Windows
+    // closes it and DesktopParentWatch stops the JVM.
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
   child.stdout.pipe(log, { end: false });
   child.stderr.pipe(log, { end: false });
