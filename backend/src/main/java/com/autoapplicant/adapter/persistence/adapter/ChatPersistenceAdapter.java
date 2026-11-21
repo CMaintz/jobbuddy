@@ -61,6 +61,7 @@ public class ChatPersistenceAdapter implements ChatRepositoryPort {
         e.setRole(message.role().name());
         e.setText(message.text());
         e.setCreatedAt(message.at());
+        e.setActions(message.actions());
         messages.save(e);
     }
 
@@ -68,7 +69,7 @@ public class ChatPersistenceAdapter implements ChatRepositoryPort {
     public List<ChatMessage> findMessages(UUID chatId) {
         return messages.findByChatIdOrderByPositionAsc(chatId).stream()
                 .map(e -> new ChatMessage(ChatMessage.Role.valueOf(e.getRole()), e.getText(),
-                        e.getCreatedAt()))
+                        e.getCreatedAt(), e.getActions()))
                 .toList();
     }
 

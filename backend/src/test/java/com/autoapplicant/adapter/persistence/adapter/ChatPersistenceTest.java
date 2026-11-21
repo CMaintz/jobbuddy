@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
 import com.autoapplicant.domain.chat.Chat;
+import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.domain.chat.ChatMessage.Role;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.domain.user.UserRole;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,16 @@ class ChatPersistenceTest extends PostgresIntegrationTest {
                 .containsExactly(new ChatMessage(Role.USER, "Hej", AT),
                         new ChatMessage(Role.ASSISTANT, "Hej med dig", AT),
                         new ChatMessage(Role.USER, "Tak", AT));
+    }
+
+    @Test
+    void an_answers_buttons_come_back_with_it() {
+        ChatAction open = new ChatAction(ChatAction.Kind.STEP_THROUGH, List.of(
+                ChatAction.Posting.unresolved(UUID.randomUUID()),
+                ChatAction.Posting.unresolved(UUID.randomUUID())));
+        chats.appendMessage(chat.id(), new ChatMessage(Role.ASSISTANT, "Gennemgå dem", AT, List.of(open)));
+
+        assertThat(chats.findMessages(chat.id()).get(0).actions()).containsExactly(open);
     }
 
     @Test

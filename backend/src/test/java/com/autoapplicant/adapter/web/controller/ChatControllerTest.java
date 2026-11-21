@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.autoapplicant.adapter.mcp.McpGrants;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.GlobalExceptionHandler;
 import com.autoapplicant.config.SecurityConfig;
@@ -56,7 +57,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
             "app.data-dir=build/desktop-test-data"
         })
 @ActiveProfiles("desktop")
-@Import({SecurityConfig.class, SecurityContextHelper.class, GlobalExceptionHandler.class})
+@Import({SecurityConfig.class, SecurityContextHelper.class, GlobalExceptionHandler.class,
+        McpGrants.class})
 class ChatControllerTest {
 
     /** Plain words, so the secret scanner does not read it as a leaked key. */

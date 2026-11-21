@@ -1,5 +1,7 @@
 package com.autoapplicant.config;
 
+import com.autoapplicant.adapter.mcp.McpGrants;
+import com.autoapplicant.adapter.mcp.McpTokenFilter;
 import com.autoapplicant.adapter.security.AiRateLimitFilter;
 import com.autoapplicant.adapter.security.DesktopToken;
 import com.autoapplicant.adapter.security.DesktopTokenFilter;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -94,6 +97,25 @@ public class SecurityConfig {
                 // After CORS, so a 429 carries Access-Control-Allow-Origin and the shell can read
                 // RATE_LIMIT_EXCEEDED instead of seeing an opaque network error.
                 .addFilterAfter(aiRateLimitFilter, CorsFilter.class)
+                .build();
+    }
+
+    /**
+     * The chat's own {@code claude} reaching JobBuddy's MCP server. Its own chain, ahead of the
+     * shell's: only a running turn's token gets in, it gets in nowhere else, and the desktop
+     * token does not open it either. No CORS: no web page has any business here.
+     */
+    @Bean
+    @Order(1)
+    @Profile("desktop")
+    public SecurityFilterChain mcpFilterChain(HttpSecurity http, McpGrants grants) throws Exception {
+        return http
+                .securityMatcher(McpTokenFilter.PATH)
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new McpTokenFilter(grants), UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth.anyRequest().hasRole(McpTokenFilter.ROLE))
                 .build();
     }
 

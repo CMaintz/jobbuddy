@@ -1,0 +1,25 @@
+@if (queue.position(); as position) {
+  <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-jb-border-strong bg-jb-surface px-3 py-2 shadow-lg text-jb-text"
+       role="navigation" [attr.aria-label]="'queue.label' | translate">
+    <span class="text-sm font-semibold whitespace-nowrap">
+      {{ 'queue.position' | translate: { n: position.index + 1, total: position.total } }}
+    </span>
+    <span class="text-sm text-jb-text-mid truncate max-w-[240px]">{{ queue.current()?.title }}</span>
+    <button type="button" (click)="queue.previous()" [disabled]="position.index === 0"
+            class="rounded-full px-3 py-1 text-sm border border-jb-border-strong bg-jb-surface-3 text-jb-text cursor-pointer disabled:opacity-40">
+      <jb-icon name="arrow-left" [size]="12" /> {{ 'queue.previous' | translate }}
+    </button>
+    <button type="button" (click)="apply()"
+            class="rounded-full px-3 py-1 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer">
+      {{ 'queue.apply' | translate }}
+    </button>
+    <button type="button" (click)="queue.next()" [disabled]="position.index + 1 === position.total"
+            class="rounded-full px-3 py-1 text-sm border border-jb-border-strong bg-jb-surface-3 text-jb-text cursor-pointer disabled:opacity-40">
+      {{ 'queue.next' | translate }} <jb-icon name="arrow-right" [size]="12" />
+    </button>
+    <button type="button" (click)="queue.end()" [title]="'queue.end' | translate"
+            class="p-1 rounded-full bg-transparent border-none text-jb-text-dim cursor-pointer">
+      <jb-icon name="x" [size]="14" />
+    </button>
+  </div>
+}

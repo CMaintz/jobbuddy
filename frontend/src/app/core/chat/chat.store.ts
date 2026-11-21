@@ -105,6 +105,9 @@ export class ChatStore {
       case 'delta':
         this.updateAnswer(chatId, answer => ({ ...answer, text: answer.text + event.text }));
         break;
+      case 'action':
+        this.updateAnswer(chatId, answer => ({ ...answer, actions: [...(answer.actions ?? []), event.action] }));
+        break;
       case 'error':
         this.update(chatId, t => ({ ...t, error: event.code }));
         break;

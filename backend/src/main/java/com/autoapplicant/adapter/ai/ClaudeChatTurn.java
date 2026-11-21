@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.ai;
 
+import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
@@ -42,21 +43,32 @@ final class ClaudeChatTurn implements ChatAgentPort.RunningTurn {
     /** Set before the tree is killed on purpose, so the relay reports why stdout closed. */
     private volatile ChatEvent endedBy;
 
-    private ClaudeChatTurn(Consumer<ChatEvent> listener) {
+    /** A turn not started yet, so tool access can be opened for it before its process starts. */
+    ClaudeChatTurn(Consumer<ChatEvent> listener) {
         this.listener = listener;
     }
 
     /** Starts {@code pb} with {@code message} on its stdin and returns at once. */
-    static ClaudeChatTurn start(ProcessBuilder pb, String message, Duration timeout,
-                                Consumer<ChatEvent> listener) {
-        ClaudeChatTurn turn = new ClaudeChatTurn(listener);
+    void launch(ProcessBuilder pb, String message, Duration timeout) {
         try {
-            turn.run(CliAgentProcessRunner.start(pb), message, timeout);
+            run(CliAgentProcessRunner.start(pb), message, timeout);
         } catch (CliAgentProcessRunner.LaunchException e) {
             log.warn("Could not start the chat agent: {}", e.getMessage());
-            turn.emit(new ChatEvent.Failed(ChatFailure.CLAUDE_MISSING));
+            fail(ChatFailure.CLAUDE_MISSING);
         }
-        return turn;
+    }
+
+    /** Ends a turn that never started. */
+    void fail(ChatFailure failure) {
+        emit(new ChatEvent.Failed(failure));
+    }
+
+    /**
+     * Passes a checked button on to her, in order with the answer's text. One offered after the
+     * turn has ended (a tool call still in flight when it was stopped) is dropped.
+     */
+    void offer(ChatAction action) {
+        emit(new ChatEvent.Action(action));
     }
 
     /** Feeds the message, relays the output and watches the clock, each on its own thread. */

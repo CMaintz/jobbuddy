@@ -87,6 +87,20 @@ describe('ChatStore', () => {
     expect(store.contextLost()).toBeFalse();
   });
 
+  it('attaches an offered button to the answer it came with', () => {
+    openNewChat();
+    store.send('Find opslag');
+    backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages').flush(
+      'event:delta\ndata:{"text":"Her er et."}\n\n'
+      + 'event:action\ndata:{"action":{"kind":"OPEN_POSTING","postings":[{"id":"j1","title":"Rådgiver","company":"Arla"}]}}\n\n'
+      + 'event:done\ndata:{}\n\n');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
+
+    const answer = store.messages()[1];
+    expect(answer.text).toBe('Her er et.');
+    expect(answer.actions?.map(a => [a.kind, a.postings[0].id])).toEqual([['OPEN_POSTING', 'j1']]);
+  });
+
   it('shows why a turn failed and keeps her message', () => {
     openNewChat();
     store.send('Hej');

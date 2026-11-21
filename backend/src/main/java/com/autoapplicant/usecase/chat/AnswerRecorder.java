@@ -1,16 +1,19 @@
 package com.autoapplicant.usecase.chat;
 
+import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
 import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Keeps the answer she saw, however the turn ended: a stopped or failed answer is kept as far as
+ * Keeps the answer she saw, its text and the buttons it offered, however the turn ended: a stopped or failed answer is kept as far as
  * it got. It is stored before the terminal event is passed on, because that event frees the chat
  * for her next message, which must come after this answer.
  */
@@ -23,6 +26,7 @@ final class AnswerRecorder implements Consumer<ChatEvent> {
     private final Clock clock;
     private final Consumer<ChatEvent> next;
     private final StringBuilder answer = new StringBuilder();
+    private final List<ChatAction> actions = new ArrayList<>();
 
     AnswerRecorder(ChatRepositoryPort chats, UUID chatId, Clock clock, Consumer<ChatEvent> next) {
         this.chats = chats;
@@ -33,18 +37,30 @@ final class AnswerRecorder implements Consumer<ChatEvent> {
 
     @Override
     public void accept(ChatEvent event) {
-        if (event instanceof ChatEvent.Delta delta) {
-            answer.append(delta.text());
-        }
+        collect(event);
         try {
-            if (event.isTerminal() && !answer.isEmpty()) {
-                chats.appendMessage(chatId,
-                        new ChatMessage(ChatMessage.Role.ASSISTANT, answer.toString(), clock.instant()));
+            if (event.isTerminal()) {
+                keepAnswer();
             }
         } catch (RuntimeException e) {
             log.warn("Could not keep the answer of chat {}", chatId, e);
         } finally {
             next.accept(event);
+        }
+    }
+
+    private void collect(ChatEvent event) {
+        if (event instanceof ChatEvent.Delta delta) {
+            answer.append(delta.text());
+        } else if (event instanceof ChatEvent.Action action) {
+            actions.add(action.action());
+        }
+    }
+
+    private void keepAnswer() {
+        if (!answer.isEmpty() || !actions.isEmpty()) {
+            chats.appendMessage(chatId, new ChatMessage(ChatMessage.Role.ASSISTANT,
+                    answer.toString(), clock.instant(), actions));
         }
     }
 }

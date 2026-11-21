@@ -2084,6 +2084,20 @@
       "FAILED": "Noget gik galt, og der kom ikke noget svar. Prøv igen.",
       "NETWORK": "Forbindelsen til JobBuddy blev afbrudt. Prøv igen."
     },
-    "contextLost": "Den tidligere samtale er ikke længere gemt i Claude Code. Dine beskeder står her stadig, og samtalen fortsætter med et kort resumé af dem, men uden de nærmere detaljer."
+    "contextLost": "Den tidligere samtale er ikke længere gemt i Claude Code. Dine beskeder står her stadig, og samtalen fortsætter med et kort resumé af dem, men uden de nærmere detaljer.",
+    "actions": {
+      "OPEN_POSTING": "Åbn opslaget",
+      "START_APPLICATION": "Start ansøgning",
+      "SHOW_PIPELINE": "Vis pipeline",
+      "STEP_THROUGH": "Gennemgå de {{count}} opslag ét ad gangen"
+    }
+  },
+  "queue": {
+    "label": "Gennemgang af opslag",
+    "position": "Opslag {{n}} af {{total}}",
+    "previous": "Forrige",
+    "next": "Næste",
+    "apply": "Start ansøgning",
+    "end": "Afslut gennemgangen"
   }
 }

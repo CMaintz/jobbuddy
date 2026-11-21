@@ -81,6 +81,19 @@
                  [class.bg-jb-accent-soft]="message.role === 'USER'"
                  [class.self-start]="message.role === 'ASSISTANT'"
                  [class.bg-jb-surface-3]="message.role === 'ASSISTANT'">@if (message.role === 'ASSISTANT') {<jb-chat-text [text]="message.text" />} @else {{{ message.text }}}</div>
+            @if (message.actions?.length) {
+              <div class="self-start flex flex-col gap-1.5 max-w-[88%]">
+                @for (action of message.actions; track $index) {
+                  <button type="button" (click)="act(action)" [attr.data-chat-action]="action.kind"
+                          class="flex flex-col items-start text-left rounded-md px-3 py-1.5 text-sm jb-btn-primary bg-jb-accent border cursor-pointer">
+                    <span class="font-semibold">{{ 'chat.actions.' + action.kind | translate: { count: action.postings.length } }}</span>
+                    @if (action.kind === 'OPEN_POSTING' || action.kind === 'START_APPLICATION') {
+                      <span class="text-xs opacity-80">{{ action.postings[0].title }} · {{ action.postings[0].company }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
           }
           @if (store.streaming() && store.messages()[store.messages().length - 1]?.role !== 'ASSISTANT') {
             <div class="self-start text-sm text-jb-text-dim">{{ 'chat.thinking' | translate }}</div>

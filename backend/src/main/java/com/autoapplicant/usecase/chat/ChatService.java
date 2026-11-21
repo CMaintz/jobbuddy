@@ -6,6 +6,7 @@ import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.port.in.chat.ManageChatsUseCase;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -24,13 +25,15 @@ public class ChatService implements ManageChatsUseCase {
     private final ChatAgentPort agent;
     private final Clock clock;
     private final ChatTurns running;
+    private final ChatActions actions;
 
     public ChatService(ChatRepositoryPort chats, ChatAgentPort agent, Clock clock,
-                       ChatTurns running) {
+                       ChatTurns running, JobRepositoryPort jobs) {
         this.chats = chats;
         this.agent = agent;
         this.clock = clock;
         this.running = running;
+        this.actions = new ChatActions(jobs);
     }
 
     @Override
@@ -67,7 +70,19 @@ public class ChatService implements ManageChatsUseCase {
     @Override
     public ChatTranscript messages(UUID userId, UUID chatId) {
         Chat chat = OwnedChats.require(chats, userId, chatId);
-        List<ChatMessage> messages = chats.findMessages(chat.id());
+        List<ChatMessage> messages = chats.findMessages(chat.id()).stream()
+                .map(this::withCheckedActions)
+                .toList();
         return new ChatTranscript(messages, !messages.isEmpty() && !agent.hasSession(chat.sessionId()));
+    }
+
+    /** Buttons are checked again on every read: a posting may have gone since it was offered. */
+    private ChatMessage withCheckedActions(ChatMessage message) {
+        if (message.actions().isEmpty()) {
+            return message;
+        }
+        return message.withActions(message.actions().stream()
+                .flatMap(a -> actions.resolve(a.kind(), a.postingIds()).stream())
+                .toList());
     }
 }
