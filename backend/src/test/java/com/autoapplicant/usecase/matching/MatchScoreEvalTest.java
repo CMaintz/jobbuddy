@@ -79,6 +79,7 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     private static final Set<String> ENGINEER_FIELD = Set.of("eng");
     private static final int FEED_SIZE = 100;
     private static final String OUT_OF_REACH = "Kræver ";
+    private static final int HIGHEST_MISMATCH_SCORE = 76;
 
     /**
      * Posts inside the comms profile's own field that demand a law degree. Their skill labels
@@ -166,8 +167,10 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     void no_mismatch_reaches_the_top_band(String profile) throws IOException {
         Map<String, Integer> scores = scores(profile);
 
-        assertThat(MatchLabel.fromScore(highest(scores, p -> fit(p, profile).equals(MISMATCH))))
-                .isNotEqualTo(MatchLabel.EXCELLENT);
+        // Held below 80 with room to spare: a preference bonus in a real feed adds up to 8 more.
+        // 76 is the technical security post's score before the top band was lifted.
+        assertThat(highest(scores, p -> fit(p, profile).equals(MISMATCH)))
+                .isLessThanOrEqualTo(HIGHEST_MISMATCH_SCORE);
     }
 
     /**

@@ -180,11 +180,16 @@ final class SkillFitScorer {
     /**
      * Nothing until more than half of the required asks are answered, the whole bonus when all
      * are. A posting that tiers nothing earns none: there is no list of demands to answer.
+     *
+     * <p>An ask is answered by its credit, so a related skill answers half of one. Counting it in
+     * full put a technical security post, read by a GRC profile, on the edge of the top band.
      */
     private static double coverageBonus(double strength, List<String> required,
                                         Map<String, Credit> credits) {
-        double answered = 1 - missingShare(required, credits);
-        if (required.isEmpty() || answered <= BONUS_FROM_COVERAGE) return 0;
+        if (required.isEmpty()) return 0;
+        double answered = required.stream().map(credits::get)
+                .mapToDouble(c -> Math.max(c.exact(), c.related())).sum() / required.size();
+        if (answered <= BONUS_FROM_COVERAGE) return 0;
         return MAX_COVERAGE_BONUS * strength
                 * (answered - BONUS_FROM_COVERAGE) / (1 - BONUS_FROM_COVERAGE);
     }

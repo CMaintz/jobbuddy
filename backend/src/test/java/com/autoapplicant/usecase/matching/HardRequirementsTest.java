@@ -6,6 +6,7 @@ import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.RequirementTier;
+import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.Certification;
 import com.autoapplicant.domain.user.Education;
 import com.autoapplicant.domain.user.Profile;
@@ -27,6 +28,8 @@ class HardRequirementsTest {
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
             Du er uddannet cand.jur.                       | EDUCATION     | Kræver cand.jur.
+            cand.jur. eller cand.merc.jur.                 | EDUCATION     | Kræver cand.jur.
+            Tømrer/snedker-uddannelse                      | EDUCATION     | Kræver en tømrer- eller snedkeruddannelse
             Uddannet pædagog                               | EDUCATION     | Kræver en pædagoguddannelse
             Du har en CISSP-certificering                  | CERTIFICATION | Kræver CISSP
             Du har en gyldig sikkerhedsgodkendelse         | OTHER         | Kræver sikkerhedsgodkendelse
@@ -45,8 +48,12 @@ class HardRequirementsTest {
             Relevant kandidatuddannelse inden for kommunikation eller jura   | EDUCATION
             Kørekort og egen bil er et krav                                  | CERTIFICATION
             Du har eller kan få en sikkerhedsgodkendelse                     | OTHER
+            Du har eller opnår en sikkerhedsgodkendelse                      | OTHER
             Sikkerhedsgodkendelse er et krav                                 | OTHER
             5 års erfaring som jurist                                        | EXPERIENCE
+            Cand.jur. er ønskeligt                                           | EDUCATION
+            Du behøver ikke være jurist                                      | EDUCATION
+            Uddannet jurist eller cand.polit.                                | EDUCATION
             """)
     void an_ask_that_leaves_a_way_in_is_met(String ask, RequirementKind kind) {
         HardRequirements gate = gateFor(education("Bachelor", "Datalogi"), NO_CERTIFICATIONS);
@@ -69,6 +76,12 @@ class HardRequirementsTest {
             Bachelor            | Erhvervsjuridisk | Du er uddannet cand.jur.
             Professionsbachelor | Sygepleje        | Autoriseret sygeplejerske
             Kandidat            | Dansk            | Du er uddannet cand.mag. i dansk
+            Bachelor of Laws    | Law              | Du er uddannet cand.jur.
+            LLB                 | International    | Du er uddannet cand.jur.
+            Professionsbachelor | Socialpædagogik  | Uddannet pædagog
+            Professionsbachelor | Dagtilbudspædagogik | Uddannet pædagog
+            Professionsbachelor | Skole- og fritidspædagogik | Uddannet pædagog
+            Uddannet            | Socialpædagog    | Uddannet pædagog
             """)
     void a_degree_the_profile_holds_under_another_name_is_met(String degree, String field,
                                                              String ask) {
@@ -84,6 +97,33 @@ class HardRequirementsTest {
 
         assertThat(gate.unmet(posting(required("Du er uddannet cand.jur.",
                 RequirementKind.EDUCATION)))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            CISSP, CISM eller CISA                     | CISM
+            PMP or PRINCE2                             | PRINCE2
+            Lead Auditor eller Lead Implementer        | Lead Implementer
+            """)
+    void holding_any_of_the_named_alternatives_is_enough(String ask, String held) {
+        HardRequirements gate = gateFor(education("Bachelor", "Datalogi"), List.of(
+                new Certification(UUID.randomUUID(), USER, held, null, null, null, null, null)));
+
+        assertThat(gate.unmet(posting(required(ask, RequirementKind.CERTIFICATION)))).isEmpty();
+    }
+
+    @Test
+    void law_words_outside_the_education_record_are_not_a_law_degree() {
+        Profile profile = new Profile(UUID.randomUUID(), USER, "Advokatsekretær",
+                "Samarbejde med jurister, tidligere jurymedlem.", null, List.of(), List.of(),
+                null, null, null, null, null, null, null);
+        HardRequirements gate = HardRequirements.forProfile(profile,
+                List.of(new ProfileSkill(UUID.randomUUID(), USER, "Juridisk korrektur", null,
+                        null, null, false, 0, null)),
+                education("Kandidat", "Kommunikation"), NO_CERTIFICATIONS);
+
+        assertThat(gate.unmet(posting(required("Du er uddannet cand.jur.",
+                RequirementKind.EDUCATION)))).contains("Kræver cand.jur.");
     }
 
     @Test

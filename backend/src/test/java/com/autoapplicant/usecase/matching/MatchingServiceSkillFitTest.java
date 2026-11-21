@@ -207,6 +207,18 @@ class MatchingServiceSkillFitTest {
     }
 
     @Test
+    void related_skills_count_half_toward_answering_a_postings_demands() {
+        // Three held and three only related: the shape of a technical security post read by a
+        // GRC profile. Counting the related ones in full would put it in the top band.
+        givenProfile(NO_SUMMARY, "SharePoint", "InDesign", "Photoshop", "Projektkoordinering",
+                "Intern kommunikation", "Kampagneplanlægning");
+        Job job = required("SharePoint", "InDesign", "Photoshop", "Koordinering", "Kommunikation",
+                "Planlægning", "Bogholderi", "Fakturering");
+
+        assertThat(resultFor(job).matchLabel()).isEqualTo(MatchLabel.STRONG);
+    }
+
+    @Test
     void a_degree_the_profile_lacks_puts_a_matching_posting_out_of_reach_and_says_why() {
         // The skills all match; the posting is still for lawyers only.
         givenProfile(NO_SUMMARY, "GDPR", "NIS2", "Informationssikkerhed");
