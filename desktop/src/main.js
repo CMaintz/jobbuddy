@@ -13,8 +13,10 @@ const { registerAppProtocol } = require('./app-protocol-handler');
 const { createTray, HIDDEN_ARG } = require('./tray');
 const { startReminders } = require('./reminder-loop');
 
-// Must equal electron-builder's appId, or Windows drops the toasts of the installed app.
+// Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
+// Windows drops the installed app's toasts. Set at load, so it precedes any notification.
 const APP_ID = 'dk.maintz.jobbuddy';
+app.setAppUserModelId(APP_ID);
 
 // Before "ready". `standard` gives the page a real origin (app://jobbuddy) instead of "null",
 // which the backend's CORS would refuse; `secure` makes it a secure context.
@@ -34,7 +36,6 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function boot() {
-  app.setAppUserModelId(APP_ID);
   const paths = resourcePaths(app);
   const dataDir = dataDirectory();
   const store = createSettingsStore({
