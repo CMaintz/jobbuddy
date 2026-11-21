@@ -30,6 +30,15 @@ final class ClaudeStreamParser {
 
     private ChatFailure failure;
 
+    /**
+     * An answer's text can come in several blocks, split by a tool call. Each later block starts
+     * a new paragraph, so the text before and after the call does not run together.
+     */
+    private static final String PARAGRAPH = "\n\n";
+
+    private boolean textSeen;
+    private boolean breakBeforeNextText;
+
     /** The event this line means for the chat, if any. Lines that are not JSON are skipped. */
     Optional<ChatEvent> parse(String line) {
         JsonNode node = read(line);
@@ -49,18 +58,35 @@ final class ClaudeStreamParser {
         return new ChatEvent.Failed(failure != null ? failure : ChatFailure.FAILED);
     }
 
-    private static Optional<ChatEvent> textDelta(JsonNode node) {
+    private Optional<ChatEvent> textDelta(JsonNode node) {
         // Text from a subagent's own conversation carries the tool call it runs under.
         if (!node.path("parent_tool_use_id").isNull()) {
             return Optional.empty();
         }
         JsonNode event = node.path("event");
+        if (isTextBlockStart(event)) {
+            breakBeforeNextText = textSeen;
+            return Optional.empty();
+        }
         JsonNode delta = event.path("delta");
         if (!"content_block_delta".equals(event.path("type").asText())
                 || !"text_delta".equals(delta.path("type").asText())) {
             return Optional.empty();
         }
-        return Optional.of(new ChatEvent.Delta(delta.path("text").asText()));
+        return Optional.of(new ChatEvent.Delta(paragraphed(delta.path("text").asText())));
+    }
+
+    /** The piece of text, starting a new paragraph if it opens a later text block. */
+    private String paragraphed(String text) {
+        String piece = (breakBeforeNextText ? PARAGRAPH : "") + text;
+        breakBeforeNextText = false;
+        textSeen = true;
+        return piece;
+    }
+
+    private static boolean isTextBlockStart(JsonNode event) {
+        return "content_block_start".equals(event.path("type").asText())
+                && "text".equals(event.path("content_block").path("type").asText());
     }
 
     /** Remembers why the turn is failing, for the result line or the exit that follows. */

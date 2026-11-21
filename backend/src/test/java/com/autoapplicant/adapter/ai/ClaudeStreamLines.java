@@ -23,6 +23,12 @@ final class ClaudeStreamLines {
                 + "\"parent_tool_use_id\":null}";
     }
 
+    /** A new content block starting: a text block, or a tool call between two text blocks. */
+    static String blockStart(String blockType) {
+        return "{\"type\":\"stream_event\",\"event\":{\"type\":\"content_block_start\",\"index\":1,"
+                + "\"content_block\":{\"type\":\"" + blockType + "\"}},\"parent_tool_use_id\":null}";
+    }
+
     static String thinkingDelta(String thinking) {
         return "{\"type\":\"stream_event\",\"event\":{\"type\":\"content_block_delta\",\"index\":0,"
                 + "\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"" + thinking + "\"}},"

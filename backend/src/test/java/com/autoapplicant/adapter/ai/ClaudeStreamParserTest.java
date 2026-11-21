@@ -27,6 +27,19 @@ class ClaudeStreamParserTest {
     }
 
     @Test
+    void a_text_block_after_earlier_text_starts_a_new_paragraph() {
+        List<ChatEvent> events = parseAll(
+                ClaudeStreamLines.blockStart("text"),
+                ClaudeStreamLines.textDelta("Jeg søger."),
+                ClaudeStreamLines.blockStart("tool_use"),
+                ClaudeStreamLines.blockStart("text"),
+                ClaudeStreamLines.textDelta("Her er de."));
+
+        assertThat(events).containsExactly(
+                new ChatEvent.Delta("Jeg søger."), new ChatEvent.Delta("\n\nHer er de."));
+    }
+
+    @Test
     void thinking_and_bookkeeping_lines_are_not_shown() {
         List<ChatEvent> events = parseAll(
                 ClaudeStreamLines.thinkingDelta("hmm, the user wants"),
