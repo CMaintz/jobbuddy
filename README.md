@@ -115,7 +115,7 @@ AI provider and feature toggles (optional, with defaults):
 - There is one local user (`local@jobbuddy.invalid`, role `USER`), created on first start.
 - The server listens on `127.0.0.1` only. Every request, `/uploads` and `/actuator/health` included, must come from loopback and carry the shell's per-launch token in an `X-JobBuddy-Token` header. Anything else gets 403.
 - CORS admits only the shell's origin.
-- The crawl and LinkedIn schedules are off, because the crawl runs as a scheduled workflow. The enrichment and embedding sweeps and the reminders still run.
+- A scheduled workflow crawls every source except LinkedIn, and also checks posting URLs and expires stale postings, so those schedules are off here. LinkedIn planning and crawling stay on: the keyword plans need the user's Claude login, and LinkedIn is gentler on a residential IP. The enrichment and embedding sweeps and the reminders also run.
 
 Environment:
 

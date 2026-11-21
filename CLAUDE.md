@@ -319,8 +319,10 @@ request, uploads and health included, must come from loopback with the shell's t
 - `APP_DATA_DIR` defaults to `%LOCALAPPDATA%\JobBuddy` here.
 - `GENERATION_AI_PROVIDER` / `ENRICHMENT_CHAT_AI_PROVIDER` default to `claude-cli`; embeddings
   still need an API key.
-- The crawl and LinkedIn crons are off (the crawl runs in GitHub Actions); the enrichment and
-  embedding sweeps and the reminder schedulers still run.
+- Off here, because the GitHub Actions crawl run owns them: `app.crawler.cron` (every source but
+  LinkedIn), the URL check and expiry. On here: LinkedIn planning and crawl (plans need the
+  user's Claude login; a residential IP suits LinkedIn), the enrichment and embedding sweeps,
+  and the reminder schedulers.
 
 AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app.linkedin.*`):
 - `GENERATION_AI_PROVIDER` — `openai` (default) | `gemini` | `claude-cli` | `codex` | `cli`. The
