@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
+@Profile("!desktop")
 public class FirebaseConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseConfig.class);

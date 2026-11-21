@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.pdf;
 
+import com.autoapplicant.config.AppDataDirectory;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -15,6 +16,7 @@ import java.util.Map;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +31,9 @@ public class PdfRenderingService {
 
     private final PdfResourcePolicy resourcePolicy;
 
-    public PdfRenderingService() {
-        this(new PdfResourcePolicy());
+    @Autowired
+    public PdfRenderingService(AppDataDirectory dataDirectory) {
+        this(new PdfResourcePolicy(dataDirectory.uploads()));
     }
 
     PdfRenderingService(PdfResourcePolicy resourcePolicy) {

@@ -23,6 +23,9 @@ server:
   port: 8080
 
 app:
+  # Writable directory for uploads and logs. The working directory by default; the desktop
+  # profile moves it out of the install folder (see application-desktop.yml).
+  data-dir: ${APP_DATA_DIR:.}
   firebase:
     # Service-account file for Firebase Admin. Blank falls back to the classpath. Unused by the
     # crawler profile, which has no users to authenticate.
