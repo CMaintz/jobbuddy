@@ -260,7 +260,7 @@
     "techCount": "Teknologier ({{n}})",
     "discard": "Kassér",
     "applying": "Anvender…",
-    "applyToCv": "Anvend på master-CV",
+    "applyToCv": "Tilføj til mit CV",
     "mergesInfo": "Flettes ind i din eksisterende profil — intet overskrives med tomme felter.",
     "pdf": {
       "label": "Upload PDF",
@@ -292,7 +292,7 @@
     "editorTab": "Editor",
     "previewTab": "Forhåndsvisning",
     "section": {
-      "aiTailor": "AI-tilpasning & ATS",
+      "aiTailor": "Tilpas til jobbet",
       "personal": "Personlige oplysninger",
       "experience": "Erhvervserfaring",
       "education": "Uddannelse",
@@ -383,19 +383,19 @@
       }
     },
     "aiTailor": {
-      "atsScore": "ATS-score",
+      "atsScore": "Match med opslagets nøgleord",
       "keywordCoverage": "{{pct}}% nøgleorddækning",
       "missing": "Mangler",
       "instrPlaceholder": "f.eks. fremhæv ledelse, drop alt ældre end 2018…",
       "retailoring": "Tilpasser igen… (op til et minut)",
       "retailorCta": "Tilpas dette CV igen",
-      "retailorHint": "Regenererer indholdet fra dit master-CV til dette job. Din skabelon, layout og styling forbliver som de er.",
+      "retailorHint": "Skriver indholdet om ud fra dit CV til dette job. Din skabelon, opsætning og stil forbliver som de er.",
       "summaryChanged": "Profilresumé — hvad ændrede sig",
       "summaryUnchanged": "Resuméet er uændret — erfaring og færdighedsvalg kan stadig afvige.",
       "discard": "Kassér",
       "applyToDraft": "Anvend på kladde",
       "applyHint": "Anvendelse erstatter kladdens indhold med den regenererede version. Layout & styling bevares.",
-      "genFailed": "Generering mislykkedes — tjek dit master-CV og prøv igen."
+      "genFailed": "Det lykkedes ikke at skrive teksten. Tjek dit CV, og prøv igen."
     },
     "settings": {
       "themeColor": "Temafarve",
@@ -501,9 +501,9 @@
     },
     "preview": {
       "pdfDesigned": "PDF — Designet",
-      "pdfAts": "PDF — ATS",
+      "pdfAts": "PDF - enkel (til jobportaler)",
       "print": "Udskriv",
-      "atsTitle": "Tekstbaseret enkeltkolonne-PDF — markerbar tekst, læsbar af ansøgningssystemer",
+      "atsTitle": "Enkel PDF i én kolonne med ren tekst, som jobportaler og rekrutteringssystemer kan læse",
       "dragToResize": "Træk for at ændre størrelse"
     },
     "cv": {
@@ -670,7 +670,7 @@
       "shorter": "Kortere — sigt efter én side"
     },
     "toast": {
-      "genFailed": "CV-generering mislykkedes — tjek dit master-CV og prøv igen.",
+      "genFailed": "CV'et kunne ikke skrives. Tjek dit CV, og prøv igen.",
       "draftFailed": "Genereret, men kladden kunne ikke oprettes — prøv igen"
     }
   },
@@ -679,15 +679,15 @@
     "pdfDesigned": "PDF — Designet",
     "finishEditing": "Afslut redigering først",
     "pdfDesignedDesc": "Pixel-perfekt gengivelse af denne skabelon",
-    "pdfAts": "PDF — ATS-tekst",
-    "pdfAtsDesc": "Markerbar tekst, læsbar af ansøgningssystemer",
+    "pdfAts": "PDF - enkel tekst",
+    "pdfAtsDesc": "Ren tekst, som jobportaler og rekrutteringssystemer kan læse",
     "loadingApp": "Indlæser ansøgning…",
     "wordsGenerated": "{{words}} ord · genereret {{age}}",
     "notGenerated": "ikke genereret endnu",
     "editText": "Rediger tekst",
     "templateLabel": "Skabelon",
     "noFormatYet": "Ingen {{format}} endnu",
-    "generateHint": "Generér en ud fra dit master-CV og dette jobs beskrivelse.",
+    "generateHint": "Lav en ud fra dit CV og dette jobopslag.",
     "generating": "Genererer…",
     "generateFormat": "Generér {{format}}",
     "reviseFab": "Revidér",
@@ -750,7 +750,7 @@
   "masterCv": {
     "import": "Importér",
     "importTitle": "Importér dit CV",
-    "importDesc": "Upload en PDF, indsæt tekst, eller brug din LinkedIn-PDF-eksport. Vi analyserer det ind i dit master-CV.",
+    "importDesc": "Upload en PDF, indsæt tekst, eller brug din PDF fra LinkedIn. Vi læser det ind i dit CV.",
     "yourName": "Dit navn",
     "yourTitle": "Din titel",
     "present": "Nuværende",
@@ -758,9 +758,9 @@
     "candidate": "Kandidat",
     "exporting": "Eksporterer…",
     "export": "Eksportér",
-    "pdfFull": "PDF — fuld (ATS-sikker)",
+    "pdfFull": "PDF - fuld (kan læses af jobportaler)",
     "pdfFullDesc": "Markerbar tekst, med dine kontaktoplysninger",
-    "pdfAnon": "PDF — anonymiseret (ATS-sikker)",
+    "pdfAnon": "PDF - anonymiseret (kan læses af jobportaler)",
     "pdfAnonDesc": "Kun initialer, ingen kontakt/foto/links",
     "openInBuilder": "Åbn i CV-bygger",
     "openInBuilderDesc": "Style det først — skabeloner, skrifttyper, layout",
@@ -900,13 +900,13 @@
     "toast": {
       "loadFailed": "Kunne ikke indlæse profil",
       "pdfFailed": "PDF-eksport mislykkedes — prøv igen",
-      "renderFailed": "Kunne ikke bygge CV-visningen — tjek dit master-CV-indhold",
+      "renderFailed": "CV'et kunne ikke vises. Tjek det, du har udfyldt.",
       "photoUpdated": "Foto opdateret",
       "photoFailed": "Foto-upload mislykkedes",
       "photoRemoveFailed": "Kunne ikke fjerne fotoet",
       "deleteFailed": "Sletning mislykkedes",
       "certFailed": "Kunne ikke tilføje certificering",
-      "saved": "Master-CV gemt",
+      "saved": "Dit CV er gemt",
       "saveFailed": "Gemning mislykkedes — tjek dine indtastninger og prøv igen"
     }
   },
@@ -991,13 +991,13 @@
     }
   },
   "analysis": {
-    "editMasterCv": "Rediger master-CV",
+    "editMasterCv": "Rediger mit CV",
     "step1": "1 · Hvad skal der vurderes op imod",
     "noJobs": "Ingen gemte stillinger eller ansøgninger endnu — gem en stilling først, eller indsæt et jobopslag i stedet.",
-    "pastePlaceholder": "Indsæt jobbeskrivelsen, dit master-CV skal vurderes op imod…",
+    "pastePlaceholder": "Indsæt jobopslaget, som dit CV skal sammenlignes med...",
     "analyzingLong": "Analyserer… (op til et minut)",
     "findGaps": "Find mine kompetencehuller",
-    "analyzeCta": "Analysér mit master-CV",
+    "analyzeCta": "Tjek mit CV",
     "skillGaps": "Kompetencehuller",
     "postingsAnalyzed": "{{count}} opslag analyseret",
     "noGaps": "Ingen væsentlige huller fundet — din profil dækker det, disse stillinger kræver.",
@@ -1016,13 +1016,13 @@
       "suspicious": "Ægte: mistænkelig"
     },
     "suggestions": "Foreslåede forbedringer",
-    "applyInCv": "Anvend i master-CV",
-    "emptyTitle": "Få en ærlig score på dit master-CV",
+    "applyInCv": "Tilføj til mit CV",
+    "emptyTitle": "Få en ærlig vurdering af dit CV",
     "emptyDesc": "Styrker, huller og konkrete rettelser — generelt eller mod en bestemt stilling.",
     "target": {
       "general": {
         "label": "Generel styrke",
-        "hint": "Klarhed, resultater, ATS-parathed"
+        "hint": "Klarhed, resultater, kan læses af jobportaler"
       },
       "job": {
         "label": "Mod en stilling",
@@ -1050,7 +1050,7 @@
     },
     "toast": {
       "gapFailed": "Analyse af kompetencehuller mislykkedes — prøv igen",
-      "analyzeFailed": "Analyse mislykkedes — sørg for, at dit master-CV har indhold, og prøv igen"
+      "analyzeFailed": "Tjekket mislykkedes. Sørg for, at dit CV har indhold, og prøv igen."
     }
   },
   "analytics": {
@@ -1321,7 +1321,7 @@
     },
     "cv": {
       "title": "Importér dit CV",
-      "subtitle": "Upload dit CV, indsæt det, eller brug din LinkedIn-PDF-eksport — vi forudfylder dit master-CV.",
+      "subtitle": "Upload dit CV, indsæt det, eller brug din PDF fra LinkedIn. Vi udfylder dit CV her ud fra det.",
       "skip": "Spring over for nu"
     },
     "prefs": {
@@ -1353,8 +1353,8 @@
       "headline": "overskrift \"{{value}}\"",
       "skills": "{{n}} færdigheder",
       "technologies": "{{n}} teknologier",
-      "summary": "Importerede {{items}} til dit master-CV.",
-      "applied": "Import anvendt på dit master-CV."
+      "summary": "Tilføjede {{items}} til dit CV.",
+      "applied": "Tilføjet til dit CV."
     },
     "error": {
       "profile": "Kunne ikke gemme profil. Prøv igen.",
@@ -1370,7 +1370,7 @@
     "targets": {
       "intro": "Virksomheder der ansætter folk med dine kompetencer. Omkring halvdelen af danske stillinger bliver aldrig slået op — det er dem her, en uopfordret ansøgning er til.",
       "includeHiringNow": "Vis også virksomheder der søger lige nu",
-      "empty": "Ingen emner endnu. Tilføj kompetencer og teknologier til din profil, og lad crawleren opbygge lidt ansættelseshistorik.",
+      "empty": "Ingen forslag endnu. Tilføj dine kompetencer til din profil, og giv os lidt tid til at samle jobopslag.",
       "write": "Skriv uopfordret",
       "reason": {
         "skillOverlap": "Ansætter inden for {{skills}}",
@@ -1402,7 +1402,7 @@
     "searchPlaceholder": "Søg virksomheder…",
     "count": "{{count}} virksomheder",
     "loading": "Indlæser virksomheder…",
-    "empty": "Ingen virksomheder endnu — de vises, efterhånden som job crawles og beriges.",
+    "empty": "Ingen virksomheder endnu. De dukker op, efterhånden som vi finder nye jobopslag.",
     "consulting": "konsulent",
     "agency": "bureau",
     "size": "Størrelse",
@@ -1535,7 +1535,7 @@
     "source": "Kilde",
     "loadingRoles": "Indlæser stillinger…",
     "noSearchResults": "Ingen stillinger matcher din søgning.",
-    "noRecommendations": "Ingen anbefalinger endnu. Udfyld dine master-CV-færdigheder & teknologier — matchning kører på dem — eller søg i hele indekset ovenfor.",
+    "noRecommendations": "Ingen forslag endnu. Tilføj dine kompetencer i dit CV, for det er dem, vi matcher job ud fra, eller søg i alle job ovenfor.",
     "backToFeed": "Tilbage til feed",
     "matchScore": "match-score",
     "salary": "Løn",
@@ -1643,7 +1643,7 @@
       "linkedin": "LinkedIn"
     },
     "match": {
-      "intro": "Hvad Jobbuddy bruger til at score og anbefale stillinger i dit feed. Selve færdighederne kommer fra dit master-CV.",
+      "intro": "Det, Jobbuddy bruger til at finde og sortere job til dig. Selve dine kompetencer kommer fra dit CV.",
       "boost": "Fremhæv nøgleord",
       "boostDesc": "Stillinger, hvis beskrivelse nævner disse, scorer højere.",
       "boostPlaceholder": "f.eks. designsystemer, greenfield…",
@@ -1673,7 +1673,7 @@
       "cvTemplateDefault": "Systemstandard"
     },
     "sectionPrompts": {
-      "heading": "Prompts til CV-sektioner",
+      "heading": "Sådan skrives hver del af CV'et",
       "intro": "Vælg, hvordan hver CV-sektion skal skrives. Den valgte prompt bruges hver gang et CV tilpasses, og når du finpudser et felt, og den går aldrig forud for ærlighedsreglerne.",
       "saving": "Gemmer…",
       "saved": "Gemt",
@@ -1721,7 +1721,7 @@
       "verified": "bekræftet",
       "unverified": "ikke bekræftet",
       "detailsPre": "Navn, foto & kontaktoplysninger findes i dit",
-      "masterCvHeader": "Master-CV-hoved",
+      "masterCvHeader": "Toppen af dit CV",
       "verifyEmail": "Bekræft din e-mail",
       "verifyDesc": "Vi sender et nyt bekræftelseslink til {{email}}",
       "sending": "Sender…",
@@ -1817,7 +1817,10 @@
       "provider": {
         "openai": "OpenAI",
         "gemini": "Google Gemini"
-      }
+      },
+      "storedTitle": "Du har en gemt API-nøgle",
+      "storedDesc": "Du har tilføjet den tidligere, og Jobbuddy bruger den, når den skriver for dig. Du kan fjerne den her.",
+      "storedRemove": "Fjern den"
     }
   },
   "apply": {
@@ -1843,7 +1846,7 @@
     "step3Unsolicited": "3 · Om virksomheden & hvad du søger (valgfrit)",
     "charsWords": "{{chars}} tegn · ~{{words}} ord",
     "jdPlaceholder": "Indsæt hele jobbeskrivelsen her...\n\nDe fleste stillinger fungerer bedst med hele opslaget — ansvar, krav og de gode-at-have. Vi trækker nøgleordene ud og tilpasser dit CV efter dem.",
-    "unsolicitedPlaceholder": "Hvad laver virksomheden, hvorfor dem, og hvilken slags stilling søger du?\n\nAlt hvad du ved om deres teknologi, produkter eller planer gør brevet skarpere — men du kan lade dette være tomt og lade dit master-CV bære det.",
+    "unsolicitedPlaceholder": "Hvad laver virksomheden, hvorfor dem, og hvilket job søger du?\n\nAlt, hvad du ved om deres produkter eller planer, gør brevet skarpere, men du kan lade feltet stå tomt og lade dit CV tale for sig selv.",
     "tooShort": "Det ser lidt kort ud — indsæt hele opslaget for bedre tilpasning.",
     "generateFromJd": "Generér ud fra dette opslag",
     "format": "Format",
@@ -1868,7 +1871,7 @@
     "quickApplyHint": "Genererer et tilpasset CV og et følgebrev sammen og viser dem side om side.",
     "generationFailed": "Generering mislykkedes",
     "drafting": "Skriver din ansøgning...",
-    "draftingSub": "Læser opslaget og matcher det mod dit master-CV.",
+    "draftingSub": "Læser jobopslaget og sammenligner det med dit CV.",
     "writing": "Skriver...",
     "source": {
       "paste": {
@@ -1907,7 +1910,7 @@
     },
     "error": {
       "loadJob": "Kunne ikke indlæse det valgte job — du kan stadig indsætte beskrivelsen.",
-      "generateFailed": "Generering mislykkedes. Tjek at dit master-CV har indhold, og prøv igen."
+      "generateFailed": "Det lykkedes ikke at skrive teksten. Tjek, at dit CV har indhold, og prøv igen."
     }
   },
   "auth": {
@@ -1988,7 +1991,7 @@
     "newApplication": "Ny ansøgning",
     "tasks": "Opgaver",
     "interviews": "Samtaler",
-    "masterCv": "Master-CV",
+    "masterCv": "Mit CV",
     "applications": "Ansøgninger",
     "documents": "Dokumenter",
     "savedRoles": "Gemte stillinger",

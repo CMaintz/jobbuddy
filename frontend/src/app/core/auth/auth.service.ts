@@ -180,6 +180,11 @@ export class AuthService {
     return !!auth.currentUser;
   }
 
+  /** From the cached /me record, so it is known synchronously on a reload. */
+  isAdmin(): boolean {
+    return this.currentUserSubject.value?.role === 'ADMIN';
+  }
+
   isOnboardingComplete(): boolean {
     return this.currentUserSubject.value?.onboardingComplete ?? true;
   }
