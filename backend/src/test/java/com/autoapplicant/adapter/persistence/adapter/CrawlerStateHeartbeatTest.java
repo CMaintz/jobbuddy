@@ -29,7 +29,9 @@ class CrawlerStateHeartbeatTest extends PostgresIntegrationTest {
     void aHeartbeatFreshensTheFlagAndTouchesNothingElse() {
         // Bug: the heartbeat writes the state as the crawl knew it at the start, resetting the
         // counters and error another write has recorded since; or it never reaches the row.
-        Instant started = Instant.now().minus(3, ChronoUnit.HOURS);
+        // Millisecond precision so the stored value is exact: Postgres keeps microseconds and
+        // rounds rather than truncates, so a nanosecond Instant could come back one micro off.
+        Instant started = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MILLIS);
         states.save(new CrawlerState("JOBINDEX", 0, started, null, FOUND, 7, null, true, started));
         Instant beat = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
@@ -39,7 +41,7 @@ class CrawlerStateHeartbeatTest extends PostgresIntegrationTest {
         assertThat(after.updatedAt()).isEqualTo(beat);
         assertThat(after.isRunning()).isTrue();
         assertThat(after.jobsFound()).isEqualTo(FOUND);
-        assertThat(after.lastCrawlStartedAt()).isEqualTo(started.truncatedTo(ChronoUnit.MICROS));
+        assertThat(after.lastCrawlStartedAt()).isEqualTo(started);
     }
 
     @Test
