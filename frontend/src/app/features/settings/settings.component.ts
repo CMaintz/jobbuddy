@@ -55,6 +55,8 @@ const INDUSTRY_OPTIONS: { key: string; label: string }[] = [
   { key: 'ENGINEERING', label: 'settings.industry.engineering' },
   { key: 'FINANCE', label: 'settings.industry.finance' },
   { key: 'MARKETING', label: 'settings.industry.marketing' },
+  { key: 'GRC_COMPLIANCE', label: 'settings.industry.grcCompliance' },
+  { key: 'LEGAL', label: 'settings.industry.legal' },
   { key: 'MANAGEMENT', label: 'settings.industry.management' },
   { key: 'CREATIVE_MEDIA', label: 'settings.industry.creativeMedia' },
 ];

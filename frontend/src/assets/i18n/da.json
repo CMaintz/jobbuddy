@@ -1637,7 +1637,9 @@
       "finance": "Finans",
       "marketing": "Marketing",
       "management": "Ledelse",
-      "creativeMedia": "Kreativ & Medier"
+      "creativeMedia": "Kreativ & Medier",
+      "grcCompliance": "GRC, compliance og informationssikkerhed",
+      "legal": "Jura"
     },
     "docType": {
       "coverLetter": "Følgebrev",

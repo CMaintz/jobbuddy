@@ -1637,7 +1637,9 @@
       "finance": "Finance",
       "marketing": "Marketing",
       "management": "Management",
-      "creativeMedia": "Creative & Media"
+      "creativeMedia": "Creative & Media",
+      "grcCompliance": "GRC, compliance & information security",
+      "legal": "Legal"
     },
     "docType": {
       "coverLetter": "Cover letter",
