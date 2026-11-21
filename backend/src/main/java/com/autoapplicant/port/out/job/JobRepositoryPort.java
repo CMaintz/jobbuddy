@@ -58,15 +58,32 @@ public interface JobRepositoryPort {
     List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore,
                                boolean requireEnriched);
 
+    /** What {@link #markEmbedded} did. */
+    enum EmbeddedMark {
+        /** The posting counts as embedded. */
+        MARKED,
+        /** Its text changed since it was read; that save re-queued it, and the vector is stale. */
+        TEXT_CHANGED,
+        /** The stored embedding model is no longer the vector's: it stays queued for the new one. */
+        MODEL_CHANGED
+    }
+
     /**
-     * A vector was stored for {@code embeddedText}; stop asking about this one. Does nothing
-     * and returns false when the posting's text has changed since it was read, because that
-     * save re-queued it and the stored vector is already stale.
+     * A vector of {@code model} was stored for {@code embeddedText}; stop asking about this one,
+     * unless the text changed since or {@code model} is no longer the stored embedding model.
+     * Both are checked in the same statement as the write.
      */
-    boolean markEmbedded(UUID jobId, String embeddedText);
+    EmbeddedMark markEmbedded(UUID jobId, String embeddedText, String model);
 
     /** Returns true when this was the attempt that gave up on the posting. */
     boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts);
+
+    /**
+     * Queues every posting that has no vector for {@code model}, with fresh attempts, after the
+     * install switched embedding model. Vectors of other models are kept: switching back finds
+     * them again. Returns how many postings were queued.
+     */
+    int requeueEmbeddingsForModel(String model);
 
     /** How many jobs sit in each embedding state. */
     java.util.Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> countByEmbeddingStatus();

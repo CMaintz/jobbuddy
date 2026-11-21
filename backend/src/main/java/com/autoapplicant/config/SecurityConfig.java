@@ -1,10 +1,14 @@
 package com.autoapplicant.config;
 
+import com.autoapplicant.adapter.mcp.McpGrants;
+import com.autoapplicant.adapter.mcp.McpTokenFilter;
 import com.autoapplicant.adapter.security.AiRateLimitFilter;
 import com.autoapplicant.adapter.security.DesktopToken;
 import com.autoapplicant.adapter.security.DesktopTokenFilter;
 import com.autoapplicant.adapter.security.FirebaseTokenFilter;
+import com.autoapplicant.adapter.web.controller.PageBudgetHeaders;
 import com.autoapplicant.port.in.auth.ProvisionLocalUserUseCase;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -13,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -97,6 +102,27 @@ public class SecurityConfig {
                 .build();
     }
 
+    /**
+     * The chat's own {@code claude} reaching JobBuddy's MCP server. Its own chain, ahead of the
+     * shell's: only a running turn's token gets in, it gets in nowhere else, and the desktop
+     * token does not open it either. No CORS: no web page has any business here.
+     */
+    @Bean
+    @Order(1)
+    @Profile("desktop")
+    public SecurityFilterChain mcpFilterChain(HttpSecurity http, McpGrants grants) throws Exception {
+        return http
+                .securityMatcher(McpTokenFilter.PATH)
+                // A bearer token in a header, no cookie or session: a cross-site request carries no
+                // credential here, so there is nothing for a CSRF token to protect.
+                .csrf(csrf -> csrf.ignoringRequestMatchers(McpTokenFilter.PATH))
+                .cors(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new McpTokenFilter(grants), UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth.anyRequest().hasRole(McpTokenFilter.ROLE))
+                .build();
+    }
+
     /** Creates the desktop's local user before the server takes its first request. */
     @Bean
     @Profile("desktop")
@@ -135,7 +161,9 @@ public class SecurityConfig {
 
     private static CorsConfigurationSource forAllPaths(CorsConfiguration config) {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setExposedHeaders(List.of("Content-Disposition"));
+        List<String> exposed = new ArrayList<>(List.of("Content-Disposition"));
+        exposed.addAll(PageBudgetHeaders.NAMES);
+        config.setExposedHeaders(exposed);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

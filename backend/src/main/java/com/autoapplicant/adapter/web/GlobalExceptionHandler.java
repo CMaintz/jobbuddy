@@ -1,5 +1,7 @@
 package com.autoapplicant.adapter.web;
 
+import com.autoapplicant.domain.chat.ChatFailure;
+import com.autoapplicant.domain.chat.ChatRejectedException;
 import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
@@ -60,6 +62,15 @@ public class GlobalExceptionHandler {
                 ? HttpStatus.SERVICE_UNAVAILABLE
                 : HttpStatus.UNPROCESSABLE_ENTITY;
         return error(status, ex.reason().name(), ex.getMessage(), req);
+    }
+
+    /** A busy chat waits for its own answer (409); too many busy chats wait for any (429). */
+    @ExceptionHandler(ChatRejectedException.class)
+    public ResponseEntity<ApiError> handleChatRejected(ChatRejectedException ex, WebRequest req) {
+        HttpStatus status = ex.failure() == ChatFailure.TOO_MANY_CHATS
+                ? HttpStatus.TOO_MANY_REQUESTS
+                : HttpStatus.CONFLICT;
+        return error(status, ex.failure().name(), ex.getMessage(), req);
     }
 
     @ExceptionHandler({SecurityException.class, AccessDeniedException.class})

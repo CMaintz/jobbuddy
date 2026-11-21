@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.autoapplicant.adapter.mcp.McpGrants;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.controller.AiController;
 import com.autoapplicant.adapter.web.controller.AuthController;
@@ -65,7 +66,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
             "app.rate-limit.ai.max-requests=1"
         })
 @ActiveProfiles("desktop")
-@Import({SecurityConfig.class, SecurityContextHelper.class})
+@Import({SecurityConfig.class, SecurityContextHelper.class, McpGrants.class})
 class DesktopSecurityTest {
 
     static final String TOKEN = "per-launch-token-0123456789abcdef0123456789";

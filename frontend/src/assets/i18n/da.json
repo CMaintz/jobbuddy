@@ -288,6 +288,16 @@
       }
     }
   },
+  "pageBudget": {
+    "letter": {
+      "over": "Ansøgningen fylder {{pages}} sider. Den bør holdes på 1 side.",
+      "shorten": "Skær gentagelser og det mindst relevante for stillingen væk, og eksportér igen."
+    },
+    "cv": {
+      "over": "CV'et fylder {{pages}} sider. Det bør højst fylde 2 sider.",
+      "shorten": "Skær ældre eller mindre relevante erfaringer ned, og eksportér igen."
+    }
+  },
   "resumeBuilder": {
     "wizardStep": "Trin 2 af 4 — Gennemse og rediger dit tilpassede CV",
     "continueCover": "Fortsæt til følgebrev",
@@ -2056,5 +2066,51 @@
     "searchFailed": "Søgningen mislykkedes. Prøv igen om lidt.",
     "autosaveFailed": "Automatisk gemning mislykkedes. Den prøver igen ved din næste ændring.",
     "draftLoadFailed": "Kladden kunne ikke åbnes."
+  },
+  "chat": {
+    "launcher": "Spørg JobBuddy",
+    "open": "Åbn chatten",
+    "title": "Chat med JobBuddy",
+    "close": "Luk chatten",
+    "back": "Alle samtaler",
+    "newChat": "Ny samtale",
+    "untitled": "Ny samtale",
+    "yourChats": "Dine samtaler",
+    "noChats": "Du har ingen samtaler endnu. Start en ny, og spørg om alt, der har med din jobsøgning at gøre.",
+    "lastActivity": "Senest",
+    "rename": "Omdøb",
+    "save": "Gem",
+    "delete": "Slet",
+    "deleteConfirm": "Vil du slette samtalen? Den kan ikke hentes tilbage.",
+    "emptyChat": "Hvad kan jeg hjælpe med? Du kan fx spørge, hvordan du gør en ansøgning skarpere, eller hvad du skal forberede til en jobsamtale.",
+    "placeholder": "Skriv en besked",
+    "send": "Send",
+    "stop": "Stop",
+    "thinking": "Tænker ...",
+    "errors": {
+      "CLAUDE_MISSING": "Claude Code blev ikke fundet på computeren. Installer Claude Code, og prøv igen.",
+      "NOT_LOGGED_IN": "Du er ikke logget ind i Claude Code. Åbn Claude Code, log ind med din konto, og prøv igen.",
+      "USAGE_LIMIT": "Du har brugt det, dit Claude-abonnement giver lige nu. Prøv igen, når grænsen er nulstillet.",
+      "TIMEOUT": "Svaret tog for lang tid, så det blev stoppet. Prøv igen, gerne med et kortere spørgsmål.",
+      "CHAT_BUSY": "Vent, til svaret er færdigt, før du skriver igen.",
+      "TOO_MANY_CHATS": "Der er allerede svar i gang i andre samtaler. Vent lidt, og prøv igen.",
+      "FAILED": "Noget gik galt, og der kom ikke noget svar. Prøv igen.",
+      "NETWORK": "Forbindelsen til JobBuddy blev afbrudt. Prøv igen."
+    },
+    "contextLost": "Den tidligere samtale er ikke længere gemt i Claude Code. Dine beskeder står her stadig, og samtalen fortsætter med et kort resumé af dem, men uden de nærmere detaljer.",
+    "actions": {
+      "OPEN_POSTING": "Åbn opslaget",
+      "START_APPLICATION": "Start ansøgning",
+      "SHOW_PIPELINE": "Vis pipeline",
+      "STEP_THROUGH": "Gennemgå de {{count}} opslag ét ad gangen"
+    }
+  },
+  "queue": {
+    "label": "Gennemgang af opslag",
+    "position": "Opslag {{n}} af {{total}}",
+    "previous": "Forrige",
+    "next": "Næste",
+    "apply": "Start ansøgning",
+    "end": "Afslut gennemgangen"
   }
 }

@@ -18,11 +18,20 @@ app:
     token: ${JOBBUDDY_DESKTOP_TOKEN:}
     # The one origin the shell's UI is served from. Every other origin is refused by CORS.
     shell-origin: ${DESKTOP_SHELL_ORIGIN:app://jobbuddy}
+  embedding:
+    # Her choice in the desktop setup form. Stored at startup, so the scheduled crawl embeds with
+    # the same model; a change queues every posting for the new model (EmbeddingChoiceService).
+    setup-provider: ${ENRICHMENT_AI_PROVIDER:}
   ai:
     # Generation and extraction run on the user's own Claude Code login. Embeddings still need
     # an API key (ENRICHMENT_AI_PROVIDER), because the CLI cannot produce them.
     generation-provider: ${GENERATION_AI_PROVIDER:claude-cli}
     enrichment-chat-provider: ${ENRICHMENT_CHAT_AI_PROVIDER:claude-cli}
+  chat:
+    # Each answering chat is a claude process on the same subscription as generation and
+    # enrichment, so only a few run at once.
+    max-concurrent-turns: ${CHAT_MAX_CONCURRENT_TURNS:2}
+    turn-timeout-seconds: ${CHAT_TURN_TIMEOUT_SECONDS:300}
   crawler:
     # Every source but LinkedIn is crawled by a scheduled GitHub Actions workflow, not here.
     # LinkedIn stays on this PC (app.linkedin.schedule): its keyword plans need the user's Claude

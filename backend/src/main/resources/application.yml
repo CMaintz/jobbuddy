@@ -188,6 +188,10 @@ app:
   # mode: extraction can succeed while embedding never runs, leaving a posting that looks
   # complete and is invisible to search and matching.
   embedding:
+    # The embedding provider the desktop setup chose (openai | gemini). Blank everywhere but the
+    # desktop app: other processes follow the stored choice, and app.ai.enrichment-provider only
+    # when nothing is stored yet.
+    setup-provider: ${EMBEDDING_SETUP_PROVIDER:}
     # true: embed a posting only once enrichment has trimmed its text. false: embed the text
     # ingest stored, for a crawl that does not enrich (the scheduled crawl); a later enrichment
     # that changes the text re-queues the posting for embedding.

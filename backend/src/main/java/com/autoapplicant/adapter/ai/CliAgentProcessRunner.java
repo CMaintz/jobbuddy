@@ -4,10 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
@@ -24,9 +20,6 @@ final class CliAgentProcessRunner {
 
     /** How often the wait re-lists descendants, so ones the agent spawns are known before it exits. */
     private static final Duration DESCENDANT_POLL = Duration.ofMillis(200);
-
-    /** How long a killed process tree gets to exit, so its files in the work dir are released. */
-    private static final Duration KILL_WAIT = Duration.ofSeconds(5);
 
     /** How long the pipe threads get to finish once the process tree is gone. */
     private static final Duration DRAIN_WAIT = Duration.ofSeconds(2);
@@ -53,13 +46,13 @@ final class CliAgentProcessRunner {
     static Result run(ProcessBuilder pb, String stdin, Duration timeout)
             throws IOException, InterruptedException, TimeoutException {
         Process proc = start(pb);
-        Set<ProcessHandle> tree = new LinkedHashSet<>();
+        CliAgentProcessTree tree = new CliAgentProcessTree(proc);
         Pipes pipes = Pipes.attach(proc, stdin);
         try {
             awaitExit(proc, timeout, tree);
         } finally {
             // Also after a normal exit: children it left behind would hold the pipes open.
-            killAll(proc, tree);
+            tree.killAll();
             pipes.awaitStdinWriter();
         }
         return pipes.result(proc.exitValue());
@@ -95,7 +88,7 @@ final class CliAgentProcessRunner {
         return thread;
     }
 
-    private static Process start(ProcessBuilder pb) throws LaunchException {
+    static Process start(ProcessBuilder pb) throws LaunchException {
         try {
             return pb.start();
         } catch (IOException e) {
@@ -103,44 +96,23 @@ final class CliAgentProcessRunner {
         }
     }
 
-    /**
-     * Waits for exit while recording descendants. They have to be listed while the agent lives:
-     * once it exits, Linux reparents its orphans and {@code descendants()} no longer finds them.
-     */
-    private static void awaitExit(Process proc, Duration timeout, Set<ProcessHandle> tree)
+    /** Waits for exit while recording descendants, so ones the agent spawns can be killed. */
+    private static void awaitExit(Process proc, Duration timeout, CliAgentProcessTree tree)
             throws InterruptedException, TimeoutException {
         long deadline = System.nanoTime() + timeout.toNanos();
         while (!proc.waitFor(DESCENDANT_POLL.toMillis(), TimeUnit.MILLISECONDS)) {
-            proc.descendants().forEach(tree::add);
+            tree.recordDescendants();
             if (System.nanoTime() - deadline >= 0) {
                 throw new TimeoutException("no exit after " + timeout.toSeconds() + "s");
             }
         }
     }
 
-    private static void writeStdin(Process proc, String stdin) {
+    static void writeStdin(Process proc, String stdin) {
         try (OutputStream os = proc.getOutputStream()) {
             os.write(stdin.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             log.debug("CLI agent stdin closed early: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Force-kills the process, the descendants recorded earlier and any still attached, then waits
-     * for them to exit. {@code destroyForcibly} alone neither reaches grandchildren nor waits, and
-     * on Windows a live child keeps the work dir locked so it cannot be deleted.
-     */
-    private static void killAll(Process proc, Set<ProcessHandle> tree) throws InterruptedException {
-        proc.descendants().forEach(tree::add);
-        tree.add(proc.toHandle());
-        tree.forEach(ProcessHandle::destroyForcibly);
-        CompletableFuture<?>[] exits =
-                tree.stream().map(ProcessHandle::onExit).toArray(CompletableFuture[]::new);
-        try {
-            CompletableFuture.allOf(exits).get(KILL_WAIT.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (ExecutionException | TimeoutException e) {
-            log.warn("CLI agent process tree did not exit within {}s", KILL_WAIT.toSeconds());
         }
     }
 }

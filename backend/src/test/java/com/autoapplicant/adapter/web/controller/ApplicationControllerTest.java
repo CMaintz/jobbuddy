@@ -223,6 +223,16 @@ class ApplicationControllerTest {
     }
 
     @Test
+    void a_saved_application_offers_applied_as_a_next_move() throws Exception {
+        when(getAllUseCase.getApplications(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(application(appId, userId, jobId, SAVED))));
+
+        mvc.perform(get("/api/v1/applications"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nextStatuses", containsInAnyOrder("PREPARING", "APPLIED", "ARCHIVED")));
+    }
+
+    @Test
     void update_status_returns_400_on_not_found() throws Exception {
         when(updateStatusUseCase.updateStatus(any(), any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Application not found"));

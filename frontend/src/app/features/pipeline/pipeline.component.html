@@ -105,7 +105,7 @@
         <!-- ═══ KANBAN VIEW ═══ -->
         <div class="flex gap-2.5 p-4 h-full items-start overflow-x-auto jb-scroll">
           @for (stage of kanbanStages; track stage.key) {
-            <div class="min-w-[240px] w-[240px] flex flex-col gap-2">
+            <div data-testid="kanban-column" class="min-w-[240px] w-[240px] flex flex-col gap-2">
               <!-- Column header -->
               <div class="flex items-center gap-2 py-2 px-2.5">
                 <jb-pill [tone]="stage.tone">{{ stage.label | translate }}</jb-pill>
