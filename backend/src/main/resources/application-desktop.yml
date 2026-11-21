@@ -24,9 +24,13 @@ app:
     generation-provider: ${GENERATION_AI_PROVIDER:claude-cli}
     enrichment-chat-provider: ${ENRICHMENT_CHAT_AI_PROVIDER:claude-cli}
   crawler:
-    # The crawl runs as a scheduled GitHub Actions workflow, not on the user's PC.
+    # Every source but LinkedIn is crawled by a scheduled GitHub Actions workflow, not here.
+    # LinkedIn stays on this PC (app.linkedin.schedule): its keyword plans need the user's Claude
+    # login, and it is gentler on LinkedIn from a residential IP than from a datacenter.
     cron: "-"
-  linkedin:
-    schedule:
-      # The LinkedIn connector is a crawl too, so it is left to the same workflow.
+  job:
+    # The workflow's crawl run also probes posting URLs and expires stale postings. Doing it
+    # here as well would race it on the same database.
+    expiry-cron: "-"
+    url-check:
       cron: "-"

@@ -7,12 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.autoapplicant.adapter.crawler.CrawlerOrchestrator;
 import com.autoapplicant.adapter.crawler.EnrichmentSweepScheduler;
+import com.autoapplicant.adapter.crawler.LinkedInCrawlScheduler;
 import com.autoapplicant.adapter.notification.DueReminderScheduler;
 import com.autoapplicant.domain.user.User;
 import com.autoapplicant.port.in.auth.ProvisionLocalUserUseCase;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
+import com.autoapplicant.usecase.job.JobExpiryService;
+import com.autoapplicant.usecase.job.JobUrlCheckService;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.List;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -81,16 +85,31 @@ class DesktopProfileBootTest {
     }
 
     @Test
-    void runs_enrichment_and_reminders_but_not_the_crawl() {
-        // A task describes itself by its method's qualified name, through any wrapper Spring adds.
-        List<String> scheduled = schedules.getScheduledTasks().stream()
+    void runs_what_needs_this_pc_and_leaves_the_shared_jobs_to_the_crawl_workflow() {
+        List<String> scheduled = scheduledTasks();
+
+        // Needs the user's Claude login or residential IP, or is per-user: runs here.
+        assertThat(scheduled)
+                .anyMatch(isTaskOf(EnrichmentSweepScheduler.class))
+                .anyMatch(isTaskOf(DueReminderScheduler.class))
+                .anyMatch(isTaskOf(LinkedInCrawlScheduler.class));
+        // The GitHub Actions crawl run owns these; running them here too would race it on the
+        // same database.
+        assertThat(scheduled)
+                .noneMatch(isTaskOf(CrawlerOrchestrator.class))
+                .noneMatch(isTaskOf(JobUrlCheckService.class))
+                .noneMatch(isTaskOf(JobExpiryService.class));
+    }
+
+    // A task describes itself by its method's qualified name, through any wrapper Spring adds.
+    private List<String> scheduledTasks() {
+        return schedules.getScheduledTasks().stream()
                 .map(task -> task.getTask().toString())
                 .toList();
+    }
 
-        assertThat(scheduled)
-                .anyMatch(task -> task.startsWith(EnrichmentSweepScheduler.class.getName() + "."))
-                .anyMatch(task -> task.startsWith(DueReminderScheduler.class.getName() + "."))
-                .noneMatch(task -> task.startsWith(CrawlerOrchestrator.class.getName() + "."));
+    private static Predicate<String> isTaskOf(Class<?> scheduler) {
+        return task -> task.startsWith(scheduler.getName() + ".");
     }
 
     /** The fixed address the desktop profile's single user is stored under. */
