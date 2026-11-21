@@ -4,8 +4,10 @@ import {
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 import { ChatStore } from '../../../core/chat/chat.store';
-import { ChatSummary } from '../../../core/models/chat.model';
+import { PostingQueue } from '../../../core/chat/posting-queue';
+import { ChatAction, ChatSummary } from '../../../core/models/chat.model';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { ChatTextComponent } from '../chat-text/chat-text.component';
 
@@ -18,6 +20,8 @@ import { ChatTextComponent } from '../chat-text/chat-text.component';
 export class ChatPanelComponent implements OnInit {
   readonly store = inject(ChatStore);
   private translate = inject(TranslateService);
+  private router = inject(Router);
+  private queue = inject(PostingQueue);
   private scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
   readonly open = signal(false);
@@ -63,6 +67,24 @@ export class ChatPanelComponent implements OnInit {
     const title = this.renameDraft().trim();
     if (title) this.store.rename(chatId, title);
     this.renamingId.set(null);
+  }
+
+  act(action: ChatAction): void {
+    const first = action.postings[0]?.id;
+    switch (action.kind) {
+      case 'OPEN_POSTING':
+        void this.router.navigate(['/jobs', first]);
+        break;
+      case 'START_APPLICATION':
+        void this.router.navigate(['/apply'], { queryParams: { jobId: first } });
+        break;
+      case 'SHOW_PIPELINE':
+        void this.router.navigate(['/pipeline']);
+        break;
+      case 'STEP_THROUGH':
+        this.queue.start(action.postings);
+        break;
+    }
   }
 
   remove(chat: ChatSummary): void {

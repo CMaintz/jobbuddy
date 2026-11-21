@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import com.autoapplicant.domain.chat.Chat;
+import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
 import com.autoapplicant.domain.chat.ChatMessage;
@@ -39,6 +40,8 @@ class ChatTurnServiceTest {
 
         assertThat(agent.last().sessionId()).isEqualTo(chat.sessionId());
         assertThat(agent.last().message()).isEqualTo("Hej");
+        // The agent reads her JobBuddy data as this user; nothing else tells it who she is.
+        assertThat(agent.last().userId()).isEqualTo(her);
     }
 
     @Test
@@ -162,6 +165,18 @@ class ChatTurnServiceTest {
         assertThat(chats.findMessages(chat.id()))
                 .extracting(ChatMessage::role, ChatMessage::text)
                 .containsExactly(tuple(Role.USER, "Hej"), tuple(Role.ASSISTANT, "Hej med dig"));
+    }
+
+    @Test
+    void the_buttons_an_answer_offered_are_kept_with_it() {
+        Chat chat = newChat(her);
+        ChatAction pipeline = new ChatAction(ChatAction.Kind.SHOW_PIPELINE, List.of());
+        turns.send(her, chat.id(), "Vis min pipeline", received::add);
+        agent.last().events().accept(new ChatEvent.Delta("Her er knappen."));
+        agent.last().events().accept(new ChatEvent.Action(pipeline));
+        agent.last().events().accept(new ChatEvent.Completed());
+
+        assertThat(chats.findMessages(chat.id()).get(1).actions()).containsExactly(pipeline);
     }
 
     @Test

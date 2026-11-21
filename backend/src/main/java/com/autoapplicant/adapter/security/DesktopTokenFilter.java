@@ -6,8 +6,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -33,7 +31,7 @@ public class DesktopTokenFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        if (!fromLoopback(request)) {
+        if (!LoopbackRequests.isFromLoopback(request)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -41,15 +39,5 @@ public class DesktopTokenFilter extends OncePerRequestFilter {
             RequestSignIn.signIn(localUser.provisionLocalUser(), request, response);
         }
         filterChain.doFilter(request, response);
-    }
-
-    // The remote address is the socket peer only while forwarded-header handling is off;
-    // DesktopServerGuard refuses to start otherwise, so a remote client cannot claim to be local.
-    private static boolean fromLoopback(HttpServletRequest request) {
-        try {
-            return InetAddress.getByName(request.getRemoteAddr()).isLoopbackAddress();
-        } catch (UnknownHostException e) {
-            return false;
-        }
     }
 }

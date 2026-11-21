@@ -2,12 +2,17 @@ package com.autoapplicant.usecase.chat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.chat.Chat;
+import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.domain.common.NotFoundException;
+import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -23,8 +28,9 @@ class ChatServiceTest {
     private final InMemoryChatRepository chats = new InMemoryChatRepository();
     private final FakeChatAgent agent = new FakeChatAgent();
     private final ChatTurns running = new ChatTurns(2);
+    private final JobRepositoryPort jobs = mock(JobRepositoryPort.class);
     private final ChatService service =
-            new ChatService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running);
+            new ChatService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running, jobs);
     private final ChatTurnService turns =
             new ChatTurnService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running);
     private final UUID her = UUID.randomUUID();
@@ -58,6 +64,27 @@ class ChatServiceTest {
 
         agent.sessions.remove(chat.sessionId());
         assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), true));
+    }
+
+    @Test
+    void offered_buttons_come_back_checked_and_a_vanished_posting_loses_its_button() {
+        Chat chat = service.create(her);
+        UUID kept = UUID.randomUUID();
+        UUID deleted = UUID.randomUUID();
+        when(jobs.findByIds(List.of(kept))).thenReturn(List.of(
+                Job.builder().id(kept).title("Kommunikationskonsulent").companyName("Arla").build()));
+        when(jobs.findByIds(List.of(deleted))).thenReturn(List.of());
+        chats.appendMessage(chat.id(), new ChatMessage(ChatMessage.Role.ASSISTANT, "Her er to.", NOW,
+                List.of(unresolved(ChatAction.Kind.OPEN_POSTING, kept),
+                        unresolved(ChatAction.Kind.OPEN_POSTING, deleted))));
+
+        assertThat(service.messages(her, chat.id()).messages().get(0).actions()).containsExactly(
+                new ChatAction(ChatAction.Kind.OPEN_POSTING, List.of(
+                        new ChatAction.Posting(kept, "Kommunikationskonsulent", "Arla"))));
+    }
+
+    private static ChatAction unresolved(ChatAction.Kind kind, UUID postingId) {
+        return new ChatAction(kind, List.of(ChatAction.Posting.unresolved(postingId)));
     }
 
     @Test

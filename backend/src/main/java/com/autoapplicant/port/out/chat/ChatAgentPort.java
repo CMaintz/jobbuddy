@@ -8,11 +8,12 @@ import java.util.function.Consumer;
 public interface ChatAgentPort {
 
     /**
-     * Starts one turn of session {@code sessionId} in the background and returns at once.
-     * {@code events} gets the answer as it is written and then exactly one terminal event, on a
-     * thread of the agent's own; the session is created on its first turn and resumed after.
+     * Starts one turn of session {@code sessionId} for {@code userId} in the background and
+     * returns at once. {@code events} gets the answer as it is written and then exactly one
+     * terminal event, on a thread of the agent's own; the session is created on its first turn
+     * and resumed after. Whatever the agent reads of her data is read as {@code userId}.
      */
-    RunningTurn start(UUID sessionId, String message, Consumer<ChatEvent> events);
+    RunningTurn start(UUID userId, UUID sessionId, String message, Consumer<ChatEvent> events);
 
     /**
      * Whether the agent still has the session. Claude Code deletes old sessions on its own

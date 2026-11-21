@@ -26,6 +26,8 @@ public final class FakeClaudeChat {
     /** Answers with its own arguments and the prompt it read. */
     static final String ECHO_ARGS = "echo-args";
 
+    static final String MCP_TOKEN_VARIABLE = "JOBBUDDY_MCP_TOKEN";
+
     static final String FIRST_PIECE = "Hej ";
     static final String SECOND_PIECE = "med dig";
 
@@ -40,7 +42,9 @@ public final class FakeClaudeChat {
         if (ECHO_ARGS.equals(mode)) {
             String prompt = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
             String echoed = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-            print(ClaudeStreamLines.textDelta(escape(echoed + " | stdin:" + prompt)));
+            String token = System.getenv().getOrDefault(MCP_TOKEN_VARIABLE, "none");
+            print(ClaudeStreamLines.textDelta(
+                    escape(echoed + " | stdin:" + prompt + " | env:" + token)));
             print(ClaudeStreamLines.RESULT_OK);
             return;
         }

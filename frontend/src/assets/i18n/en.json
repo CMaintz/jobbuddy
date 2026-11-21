@@ -2094,6 +2094,20 @@
       "FAILED": "Something went wrong and no answer came. Try again.",
       "NETWORK": "The connection to JobBuddy was lost. Try again."
     },
-    "contextLost": "The earlier conversation is no longer stored in Claude Code. Your messages are still here, and the chat continues from a short summary of them, without the finer details."
+    "contextLost": "The earlier conversation is no longer stored in Claude Code. Your messages are still here, and the chat continues from a short summary of them, without the finer details.",
+    "actions": {
+      "OPEN_POSTING": "Open the posting",
+      "START_APPLICATION": "Start an application",
+      "SHOW_PIPELINE": "Show the pipeline",
+      "STEP_THROUGH": "Go through the {{count}} postings one at a time"
+    }
+  },
+  "queue": {
+    "label": "Going through postings",
+    "position": "Posting {{n}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "apply": "Start an application",
+    "end": "End the walk-through"
   }
 }

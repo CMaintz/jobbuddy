@@ -310,8 +310,11 @@ Desktop profile (`--spring.profiles.active=desktop`, `application-desktop.yml`):
 the user's own PC for one user, with no Firebase. `SecurityConfig` swaps the Firebase chain for
 `desktopFilterChain`: a fixed local user (`USER` role), the server bound to `127.0.0.1`, and every
 request, uploads and health included, must come from loopback with the shell's token in
-`X-JobBuddy-Token`. Firebase beans are `@Profile("!desktop")`; anything new that needs
-`FirebaseAuth` must be too, or the desktop app stops booting (`DesktopProfileBootTest`).
+`X-JobBuddy-Token`. The one exception is `/mcp`, the chat's MCP server: its own chain
+(`mcpFilterChain`, ordered first) takes only a bearer token minted for one running chat turn
+(`McpGrants`), from loopback, revoked when the turn ends. `X-JobBuddy-Token` does not open `/mcp`,
+and the turn token opens nothing else. Firebase beans are `@Profile("!desktop")`; anything new
+that needs `FirebaseAuth` must be too, or the desktop app stops booting (`DesktopProfileBootTest`).
 - `JOBBUDDY_DESKTOP_TOKEN` (required) - per-launch secret from the shell, at least 32 characters.
   Passed in the environment, so it never touches disk; `CliAgentEnvironment`'s allowlist keeps it
   out of the agent CLI's environment.

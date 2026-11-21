@@ -5,10 +5,24 @@ export interface ChatSummary {
   lastActivityAt: string;
 }
 
+type ChatActionKind = 'OPEN_POSTING' | 'START_APPLICATION' | 'SHOW_PIPELINE' | 'STEP_THROUGH';
+
+export interface ChatActionPosting {
+  id: string;
+  title: string | null;
+  company: string | null;
+}
+
+export interface ChatAction {
+  kind: ChatActionKind;
+  postings: ChatActionPosting[];
+}
+
 export interface ChatMessage {
   role: 'USER' | 'ASSISTANT';
   text: string;
   at: string;
+  actions?: ChatAction[];
 }
 
 export interface ChatTranscript {
@@ -28,6 +42,7 @@ export type ChatFailureCode =
 
 export type ChatStreamEvent =
   | { type: 'delta'; text: string }
+  | { type: 'action'; action: ChatAction }
   | { type: 'done' }
   | { type: 'stopped' }
   | { type: 'error'; code: ChatFailureCode };

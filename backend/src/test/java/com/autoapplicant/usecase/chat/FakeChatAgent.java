@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 /** Holds every turn open until the test finishes it. */
 final class FakeChatAgent implements ChatAgentPort {
 
-    record Turn(UUID sessionId, String message, Consumer<ChatEvent> events) {}
+    record Turn(UUID userId, UUID sessionId, String message, Consumer<ChatEvent> events) {}
 
     final List<Turn> turns = new ArrayList<>();
     final Set<UUID> forgotten = new HashSet<>();
@@ -23,8 +23,9 @@ final class FakeChatAgent implements ChatAgentPort {
     ChatEvent failImmediately;
 
     @Override
-    public RunningTurn start(UUID sessionId, String message, Consumer<ChatEvent> events) {
-        turns.add(new Turn(sessionId, message, events));
+    public RunningTurn start(UUID userId, UUID sessionId, String message,
+                             Consumer<ChatEvent> events) {
+        turns.add(new Turn(userId, sessionId, message, events));
         sessions.add(sessionId);
         if (failImmediately != null) {
             events.accept(failImmediately);

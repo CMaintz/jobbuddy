@@ -12,7 +12,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * turn wanted: when it goes away mid-answer (the window closed, the connection dropped) the turn
  * is stopped, so no {@code claude} process runs on for nobody.
  *
- * <p>Events: {@code delta} ({@code {"text"}}), then one of {@code done}, {@code stopped} or
+ * <p>Events: {@code delta} ({@code {"text"}}) and {@code action} ({@code {"action"}}, a checked
+ * button), then one of {@code done}, {@code stopped} or
  * {@code error} ({@code {"code"}}, a {@link com.autoapplicant.domain.chat.ChatFailure} name).
  */
 final class ChatSseRelay implements Consumer<ChatEvent> {
@@ -53,13 +54,16 @@ final class ChatSseRelay implements Consumer<ChatEvent> {
         if (event instanceof ChatEvent.Delta delta) {
             return named("delta", Map.of("text", delta.text()));
         }
+        if (event instanceof ChatEvent.Action action) {
+            return named("action", Map.of("action", action.action()));
+        }
         if (event instanceof ChatEvent.Failed failed) {
             return named("error", Map.of("code", failed.failure().name()));
         }
         return named(event instanceof ChatEvent.Completed ? "done" : "stopped", Map.of());
     }
 
-    private static SseEmitter.SseEventBuilder named(String name, Map<String, String> data) {
+    private static SseEmitter.SseEventBuilder named(String name, Map<String, ?> data) {
         return SseEmitter.event().name(name).data(data);
     }
 }

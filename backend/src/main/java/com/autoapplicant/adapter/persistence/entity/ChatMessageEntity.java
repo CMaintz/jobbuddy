@@ -1,5 +1,7 @@
 package com.autoapplicant.adapter.persistence.entity;
 
+import com.autoapplicant.domain.chat.ChatAction;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,7 +9,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "chat_messages")
@@ -32,6 +37,10 @@ public class ChatMessageEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Type(JsonType.class)
+    @Column(name = "actions", columnDefinition = "jsonb", nullable = false)
+    private List<ChatAction> actions = new ArrayList<>();
+
     public UUID getId() { return id; }
     public UUID getChatId() { return chatId; }
     public void setChatId(UUID chatId) { this.chatId = chatId; }
@@ -43,4 +52,6 @@ public class ChatMessageEntity {
     public void setText(String text) { this.text = text; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public List<ChatAction> getActions() { return actions; }
+    public void setActions(List<ChatAction> actions) { this.actions = new ArrayList<>(actions); }
 }
