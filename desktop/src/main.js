@@ -14,6 +14,7 @@ const { createTray, HIDDEN_ARG } = require('./tray');
 const { startReminders } = require('./reminder-loop');
 const { refuseRemoteDebugging } = require('./debug-guard');
 const { freshEnv } = require('./fresh-env');
+const { mergeSettingsEdit } = require('./settings-edit');
 
 // Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
 // Windows drops the installed app's toasts. Set at load, so it precedes any notification.
@@ -145,12 +146,7 @@ function registerIpc() {
     return state.checks;
   });
   handle('shell:save', async (input) => {
-    const settings = { ...input };
-    // Blank secrets on an edit keep the saved ones.
-    if (state.settings) {
-      if (!settings.dbPassword) settings.dbPassword = state.settings.dbPassword;
-      if (!settings.embeddingKey) settings.embeddingKey = state.settings.embeddingKey;
-    }
+    const settings = mergeSettingsEdit(state.settings, input);
     const errors = validateSettings(settings);
     if (errors.length) return { errors };
     await state.store.save(settings);
