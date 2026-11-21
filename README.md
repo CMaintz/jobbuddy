@@ -124,7 +124,23 @@ Environment:
 - `APP_DATA_DIR`: defaults to `%LOCALAPPDATA%\JobBuddy`, since the install folder is not writable.
 - `GENERATION_AI_PROVIDER` and `ENRICHMENT_CHAT_AI_PROVIDER` default to `claude-cli`. Embeddings still need `OPENAI_API_KEY` (or `GEMINI_API_KEY` with `ENRICHMENT_AI_PROVIDER=gemini`).
 - `DB_URL`, `DB_USER`, `DB_PASS`: the install's own database.
-- `SERVER_PORT`: the port the shell chose (default `8080`).
+- `SERVER_PORT`: the shell passes `0`, so the OS picks a free port as the server binds it. Once it takes requests, the backend prints `JOBBUDDY_DESKTOP_READY port=<n>` on stdout, and the shell connects only to that port. No other process can write to the child's stdout, so a process that grabbed a port first never gets the token.
+
+### Desktop app (Windows)
+
+`desktop/` is the Electron shell around the desktop profile: one installer with a bundled Temurin JRE, the backend jar and the Angular build.
+
+- **Starting:** it checks that `claude` is installed and logged in and that Git for Windows is there, and shows each fix in plain Danish. On first run it asks for the database connection and the embeddings key, and stores them encrypted with Electron `safeStorage` (Windows DPAPI) in `%APPDATA%\JobBuddy`. Then it starts the backend with a fresh token and loads the UI from `app://jobbuddy`. The shell adds `X-JobBuddy-Token` to requests for the backend's exact origin only.
+- **Running:** closing the window keeps JobBuddy in the tray ("Åbn", "Start med Windows", "Afslut"), so enrichment, LinkedIn and reminders keep running. Due reminders appear as Windows notifications. "Afslut" kills the backend's whole process tree, and the backend also stops by itself when its stdin closes, so a crashed shell leaves no JVM behind. A start at Windows login runs the backend even when a check fails, and says so from the tray.
+- **Checks and restarts** read PATH from the registry, not the shell's own environment, so Git or Claude Code installed while JobBuddy runs is found by "Tjek igen" and "Start igen".
+- **The window:** the UI, fonts included, is served from the app itself under a Content-Security-Policy that allows scripts only from the app and requests only to the backend. Every web permission is denied except clipboard writes from the app (its copy buttons). Mail and phone links open in her own programs; nothing else leaves the window. The installed app has no DevTools and no menu.
+- **If it breaks:** a crash shows a Danish error screen with the log path, `%LOCALAPPDATA%\JobBuddy\logs\desktop-backend.log`.
+
+Build on Windows from `desktop/` with `mise run package`. It writes `desktop/dist/JobBuddy-Setup-<version>.exe`, a one-click installer for the current user only, so it never asks for administrator rights. `mise run build` followed by `mise run start` (also in `desktop/`) runs it from the checkout.
+
+The installer's exe has Electron's fuses set: no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, no `--inspect`, and the app loads only from its asar. The package task reads the fuses back and fails if any is off. The installed app also exits when started with `--remote-debugging-port` or `--remote-debugging-pipe`, which no fuse covers. To debug, run it from the checkout with `mise run start` in `desktop/`.
+
+**Updating.** There is no auto-update: it needs a code-signing certificate and a release feed, and we have neither. To update, build the new installer and run it over the old install. Her connection, data and logs live outside the install folder, so they are kept. The installer is unsigned, so Windows SmartScreen asks once per new version: "Flere oplysninger", then "Kør alligevel".
 
 ## Tests
 
