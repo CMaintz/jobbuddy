@@ -12,6 +12,7 @@ const { createShellWindow, APP_URL } = require('./shell-window');
 const { registerAppProtocol } = require('./app-protocol-handler');
 const { createTray, HIDDEN_ARG } = require('./tray');
 const { startReminders } = require('./reminder-loop');
+const { refuseRemoteDebugging } = require('./debug-guard');
 
 // Must equal electron-builder's appId, which the installer puts on the Start-menu shortcut, or
 // Windows drops the installed app's toasts. Set at load, so it precedes any notification.
@@ -27,8 +28,10 @@ protocol.registerSchemesAsPrivileged([{
 
 const state = { quitting: false, stopped: false, toldAboutTray: false, settings: null, checks: [] };
 
-// A second JVM against the same database would run every sweep twice: show the first instead.
-if (!app.requestSingleInstanceLock()) {
+if (refuseRemoteDebugging(app)) {
+  // Exiting; nothing else may start.
+} else if (!app.requestSingleInstanceLock()) {
+  // A second JVM against the same database would run every sweep twice: show the first instead.
   app.quit();
 } else {
   app.on('second-instance', () => state.window?.reveal());

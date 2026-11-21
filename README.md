@@ -136,6 +136,8 @@ Environment:
 
 Build on Windows with `mise run desktop:package`. It writes `desktop/dist/JobBuddy-Setup-<version>.exe`. `mise run desktop:build` followed by `mise run desktop:start` runs it from the checkout.
 
+The installer's exe has Electron's fuses set: no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, no `--inspect`, and the app loads only from its asar. The package task reads the fuses back and fails if any is off. The installed app also exits when started with `--remote-debugging-port` or `--remote-debugging-pipe`, which no fuse covers. To debug, run it from the checkout with `mise run desktop:start`.
+
 **Updating.** There is no auto-update: it needs a code-signing certificate and a release feed, and we have neither. To update, build the new installer and run it over the old install. Her connection, data and logs live outside the install folder, so they are kept. The installer is unsigned, so Windows SmartScreen asks once per new version: "Flere oplysninger", then "Kør alligevel".
 
 ## Tests

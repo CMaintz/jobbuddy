@@ -20,6 +20,14 @@ extraResources:
   - from: stage/ui
     to: ui
 asar: true
+# Fuses are compiled into the packaged exe, so no command line or environment can turn these back
+# on. scripts/check-fuses.mjs reads them back after every package build. --remote-debugging-port
+# is a Chromium switch no fuse covers; src/debug-guard.js refuses it in the installed app.
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  onlyLoadAppFromAsar: true
 win:
   target:
     - target: nsis

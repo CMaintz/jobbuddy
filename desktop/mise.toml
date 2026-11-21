@@ -37,4 +37,8 @@ run = "npx electron ."
 
 [tasks.package]
 description = "Windows x64 NSIS installer in desktop/dist (unsigned)"
-run = ["mise run build", "npx electron-builder --win nsis --x64 --publish never"]
+run = [
+    "mise run build",
+    "npx electron-builder --win nsis --x64 --publish never",
+    "node scripts/check-fuses.mjs",
+]
