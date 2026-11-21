@@ -106,6 +106,7 @@ class NudgeServiceOwnDatesTest {
         assertThat(service.getNudges(USER)).singleElement().satisfies(nudge -> {
             assertThat(nudge.type()).isEqualTo(Nudge.NudgeType.INTERVIEW_SOON);
             assertThat(nudge.deadline()).isEqualTo(TODAY);
+            assertThat(nudge.time()).isEqualTo(TEN);
             assertThat(nudge.companyName()).isEqualTo("Acme A/S");
         });
     }

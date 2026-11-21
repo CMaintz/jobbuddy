@@ -138,7 +138,7 @@ public class DueNudgeFinder {
                     return new Nudge(Nudge.NudgeType.REMINDER_DUE,
                             reminder.applicationId(), job != null ? job.id() : null, null, reminder.id(),
                             job != null ? job.title() : null, job != null ? job.companyName() : null,
-                            LocalDate.ofInstant(reminder.dueAt(), ZoneOffset.UTC), null, reminder.note());
+                            LocalDate.ofInstant(reminder.dueAt(), ZoneOffset.UTC), null, reminder.note(), null);
                 })
                 .sorted(Comparator.comparing(Nudge::deadline))
                 .toList();
@@ -150,7 +150,7 @@ public class DueNudgeFinder {
                 .filter(contact -> contact.isFollowUpDue(today))
                 .map(contact -> new Nudge(Nudge.NudgeType.OUTREACH_FOLLOW_UP, null, null,
                         contact.id(), null, null, contact.companyName(),
-                        contact.followUpDue(), null, contact.contactName()))
+                        contact.followUpDue(), null, contact.contactName(), null))
                 .sorted(Comparator.comparing(Nudge::deadline))
                 .toList();
     }

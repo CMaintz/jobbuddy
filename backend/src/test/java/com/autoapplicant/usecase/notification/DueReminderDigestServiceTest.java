@@ -63,7 +63,7 @@ class DueReminderDigestServiceTest {
 
     private static Nudge outreachDue(String company) {
         return new Nudge(Nudge.NudgeType.OUTREACH_FOLLOW_UP, null, null, UUID.randomUUID(), null,
-                null, company, LocalDate.of(2026, 8, 26), null, "Mette Hansen");
+                null, company, LocalDate.of(2026, 8, 26), null, "Mette Hansen", null);
     }
 
     private static Application application(ApplicationStatus status, UUID jobId, Instant appliedAt) {

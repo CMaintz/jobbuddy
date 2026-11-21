@@ -100,9 +100,8 @@ public class NudgeService implements GetNudgesUseCase {
     private List<Nudge> interviewNudges(UUID userId) {
         return dueNudges.findUpcoming(userId).stream()
                 .filter(upcoming -> upcoming.kind() == UpcomingDate.Kind.INTERVIEW)
-                .map(upcoming -> Nudge.forApplication(Nudge.NudgeType.INTERVIEW_SOON,
-                        upcoming.applicationId(), null, upcoming.jobTitle(), upcoming.companyName(),
-                        upcoming.date(), null))
+                .map(upcoming -> Nudge.forInterview(upcoming.applicationId(), upcoming.jobTitle(),
+                        upcoming.companyName(), upcoming.date(), upcoming.time()))
                 .toList();
     }
 }

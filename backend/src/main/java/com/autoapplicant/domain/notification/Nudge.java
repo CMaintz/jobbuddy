@@ -1,6 +1,7 @@
 package com.autoapplicant.domain.notification;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 /**
@@ -22,7 +23,9 @@ public record Nudge(
         /** Set for FOLLOW_UP: days since the application was sent. */
         Integer daysSinceApplied,
         /** Set for REMINDER_DUE: what the user wrote when they set it. */
-        String note
+        String note,
+        /** Set for INTERVIEW_SOON: the interview's wall-clock time as the user typed it. */
+        LocalTime time
 ) {
     public enum NudgeType {
         /**
@@ -44,6 +47,13 @@ public record Nudge(
     public static Nudge forApplication(NudgeType type, UUID applicationId, UUID jobId, String jobTitle,
                                        String companyName, LocalDate deadline, Integer daysSinceApplied) {
         return new Nudge(type, applicationId, jobId, null, null, jobTitle, companyName,
-                deadline, daysSinceApplied, null);
+                deadline, daysSinceApplied, null, null);
+    }
+
+    /** An interview today or tomorrow, at the time the user entered. */
+    public static Nudge forInterview(UUID applicationId, String jobTitle, String companyName,
+                                     LocalDate date, LocalTime time) {
+        return new Nudge(NudgeType.INTERVIEW_SOON, applicationId, null, null, null, jobTitle, companyName,
+                date, null, null, time);
     }
 }
