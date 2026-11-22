@@ -32,29 +32,38 @@ public class QueueDrainer {
     }
 
     /**
+     * Enriches until the queue is empty, the ceiling is reached or a pass makes no progress.
+     *
      * @param maxPostings ceiling across all passes; {@code Integer.MAX_VALUE} means "until empty"
+     * @return false when a pass attempted postings and enriched none of them, which is what a
+     *     provider outage or a missing login looks like; true otherwise, including an empty queue
      */
-    public void drainEnrichment(int maxPostings) {
+    public boolean drainEnrichment(int maxPostings) {
         log.info("Draining the enrichment queue...");
+        boolean everyPassEnrichedSomething = true;
         int processed = 0;
         while (processed < maxPostings) {
             int batch = Math.min(BATCH, maxPostings - processed);
             SweepUnenrichedJobsUseCase.SweepResult result = enrichmentSweep.sweep(batch);
             if (result.total() == 0) {
                 log.info("Enrichment queue empty.");
-                return;
+                return everyPassEnrichedSomething;
             }
             processed += result.total();
+            if (result.succeeded() == 0) {
+                everyPassEnrichedSomething = false;
+            }
             // Everything attempted failed and nothing was given up on: another pass would
             // retry the same postings immediately and spin. They stay PENDING for the
             // scheduled worker to revisit after the retry delay.
             if (result.succeeded() == 0 && result.gaveUp() == 0) {
                 log.warn("Enrichment made no progress on {} postings — stopping rather than "
                          + "spinning; they stay PENDING and are retried later", result.total());
-                return;
+                return false;
             }
         }
         log.info("Enrichment: reached the requested limit of {} postings.", maxPostings);
+        return everyPassEnrichedSomething;
     }
 
     /**

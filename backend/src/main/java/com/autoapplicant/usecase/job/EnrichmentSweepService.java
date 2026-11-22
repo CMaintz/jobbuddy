@@ -182,6 +182,7 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
      * another: each is already a long call, and two at once would only queue on the same login.
      */
     private SweepResult sweepInBatches(List<Job> queue, Instant deadline) {
+        int attempted = 0;
         int succeeded = 0;
         int failed = 0;
         int gaveUp = 0;
@@ -192,6 +193,10 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
             }
             BatchedEnrichment.Result result = batched.enrich(
                     queue.subList(start, Math.min(start + batchSize, queue.size())), batchSize, maxAttempts);
+            // A batch the provider failed on counts as attempted although no posting in it is
+            // marked failed; counting only the outcomes reports an empty queue and hides the
+            // outage from the caller.
+            attempted += result.total();
             succeeded += result.succeeded();
             failed += result.failed();
             gaveUp += result.gaveUp();
@@ -200,7 +205,7 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
             }
         }
         log.info("Enrichment batches done: {} enriched, {} failed, {} given up on", succeeded, failed, gaveUp);
-        return new SweepResult(succeeded + failed, succeeded, failed, gaveUp);
+        return new SweepResult(attempted, succeeded, failed, gaveUp);
     }
 
     /** Postings still waiting — the number that makes a progress line mean something. */
