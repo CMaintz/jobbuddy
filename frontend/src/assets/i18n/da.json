@@ -741,6 +741,17 @@
         "REWRITE_NOT_JUDGED": "Porten gav intet svar på sidste omskrivning, så den forrige udgave er beholdt."
       }
     },
+    "exportCheck": {
+      "title": "Før du henter ansøgningen",
+      "failed": "Ansøgningen dumpede i porten. Ret punkterne herunder, eller hent den alligevel.",
+      "noVerdict": "Porten har ikke givet et svar på ansøgningen, så du ved ikke, om den holder.",
+      "stale": "Du har rettet ansøgningen, efter porten tjekkede den, så resultatet gælder ikke den tekst, du henter nu.",
+      "recheck": "Tjek igen",
+      "rechecking": "Tjekker...",
+      "exportAnyway": "Hent alligevel",
+      "recheckFailed": "Tjekket kunne ikke gennemføres. Prøv igen om lidt.",
+      "cannotRecheck": "Ansøgningen kan ikke tjekkes igen, fordi den ikke hænger sammen med et opslag med tekst."
+    },
     "evidence": {
       "heading": "Tynd på dokumentation",
       "body": "Dette brev fik {{score}}/100 på konkret dokumentation — det argumenterer uden at henvise til dit faktiske arbejde. To spørgsmål om et projekt ville give det næste noget at pege på.",

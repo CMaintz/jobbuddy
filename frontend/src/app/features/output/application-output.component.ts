@@ -9,6 +9,9 @@ import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-drop
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { LetterPaperComponent } from './letter-paper.component';
 import { LetterGateReportComponent } from './letter-gate-report.component';
+import { LetterExportWarningComponent } from './letter-export-warning.component';
+import { ExportKind, LetterExportGuard } from './letter-export-guard';
+import { LetterCheckState, letterCheckState } from './letter-export-check';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -17,6 +20,8 @@ import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { ExportedPageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
 import { htmlTextContent } from '../../shared/utils/sanitize-html';
+import { Observable, tap, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -26,12 +31,21 @@ import { DocumentApiService } from '../../core/api/document.api';
 import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_TARGETS } from './letter-templates';
 import { NotifyService } from '../../shared/services/notify.service';
 
+/**
+ * The re-check answers with the row's id inside the document. Stored content never carries it, and
+ * a save that does overwrites that row instead of saving the edit as a new version.
+ */
+function storedForm(document: StructuredDocument): string {
+  return JSON.stringify({ ...document, generatedDocumentId: undefined });
+}
+
 @Component({
   selector: 'app-application-output',
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbDropdownComponent, DiffViewerComponent, LetterPaperComponent, PageBudgetWarningComponent,
     LetterGateReportComponent,
+    LetterExportWarningComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-output.component.html',
@@ -73,6 +87,11 @@ export class ApplicationOutputComponent implements OnInit {
   copied = signal(false);
   editing = signal(false);
   editDirty = signal(false);
+  /**
+   * Letters whose shown text is ahead of the server: an accepted refinement or an edit not yet
+   * reloaded. Their stored review cannot describe that text, even after a failed save.
+   */
+  private unsavedDocIds = signal<ReadonlySet<string>>(new Set());
   savingEdit = signal(false);
   originalText = signal('');
   refinedText = signal('');
@@ -283,6 +302,7 @@ export class ApplicationOutputComponent implements OnInit {
         // newest first so activeDoc picks the latest version per type
         this.documents.set([...docs].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        this.unsavedDocIds.set(new Set());
         // If the requested format has no document but another does, switch to it
         if (!this.activeDoc()) {
           const withDoc = this.formats.find(f => this.docCountForFormat(f.key) > 0);
@@ -329,6 +349,7 @@ export class ApplicationOutputComponent implements OnInit {
     if (!doc) return;
     this.documents.update(docs => docs.map(d =>
       d.id === doc.id ? { ...d, content: html } : d));
+    this.markUnsaved(doc.id);
     this.editDirty.set(true);
   }
 
@@ -407,6 +428,7 @@ export class ApplicationOutputComponent implements OnInit {
     // Update locally so the paper reflects the accepted text immediately
     this.documents.update(docs => docs.map(d =>
       d.id === doc.id ? { ...d, content: refined } : d));
+    this.markUnsaved(doc.id);
     this.originalText.set('');
     this.refinedText.set('');
     this.reviewCritique.set([]);
@@ -436,8 +458,53 @@ export class ApplicationOutputComponent implements OnInit {
     };
   }
 
+  /** The gate's standing on the text an export would contain now. */
+  exportCheck = computed<LetterCheckState>(() => {
+    const doc = this.activeDoc();
+    return doc ? letterCheckState(doc, this.hasUnsavedText(doc)) : 'notApplicable';
+  });
+
+  /**
+   * The server judges the saved, structured text against the posting's description, so unsaved
+   * text, a legacy row without structure or a job without a description rule it out.
+   */
+  canRecheck = computed<boolean>(() => {
+    const doc = this.activeDoc();
+    return !!doc?.jobId && !!doc.structuredContent && !!this.job()?.descriptionClean?.trim()
+      && !this.hasUnsavedText(doc);
+  });
+
+  private hasUnsavedText(doc: GeneratedDocument): boolean {
+    return this.editDirty() || this.unsavedDocIds().has(doc.id);
+  }
+
+  private markUnsaved(id: string): void {
+    this.unsavedDocIds.update(ids => new Set([...ids, id]));
+  }
+
+  readonly exportGuard = new LetterExportGuard(
+    () => this.exportCheck(),
+    (kind: ExportKind) => (kind === 'designed' ? this.exportDesigned() : this.exportAts()),
+    () => this.recheckActiveLetter(),
+  );
+
+  private recheckActiveLetter(): Observable<StructuredDocument> {
+    const doc = this.activeDoc();
+    if (!doc) return throwError(() => new Error('No letter to check'));
+    return this.aiApi.recheckLetter(doc.id).pipe(tap({
+      next: checked => this.documents.update(docs => docs.map(d =>
+        d.id === doc.id ? { ...d, structuredContent: storedForm(checked) } : d)),
+      error: (err: unknown) => this.notify.error(err instanceof HttpErrorResponse && err.status === 409
+        ? 'output.exportCheck.cannotRecheck' : 'output.exportCheck.recheckFailed'),
+    }));
+  }
+
   /** Pixel-perfect capture of the styled letter (image-based). */
   downloadPdf(): void {
+    this.exportGuard.request('designed');
+  }
+
+  private exportDesigned(): void {
     const paperEl = this.paper?.el.nativeElement;
     if (!paperEl || this.downloading() || this.editing()) return;
     this.downloading.set(true);
@@ -447,6 +514,10 @@ export class ApplicationOutputComponent implements OnInit {
 
   /** Text-based letter PDF — selectable text, safe for ATS parsers. */
   downloadAtsPdf(): void {
+    this.exportGuard.request('ats');
+  }
+
+  private exportAts(): void {
     if (!this.activeDoc() || this.downloading()) return;
     this.downloading.set(true);
     const id = this.identity();

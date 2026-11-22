@@ -741,6 +741,17 @@
         "REWRITE_NOT_JUDGED": "The gate gave no verdict on the last rewrite, so the version before it is kept."
       }
     },
+    "exportCheck": {
+      "title": "Before you download the letter",
+      "failed": "The letter failed the gate. Fix the points below, or download it anyway.",
+      "noVerdict": "The gate has not given a verdict on this letter, so you don't know whether it holds up.",
+      "stale": "You edited the letter after the gate checked it, so the result does not apply to the text you are downloading.",
+      "recheck": "Check again",
+      "rechecking": "Checking...",
+      "exportAnyway": "Download anyway",
+      "recheckFailed": "The check could not run. Try again in a moment.",
+      "cannotRecheck": "This letter can't be checked again, because it isn't tied to a posting with text."
+    },
     "evidence": {
       "heading": "Thin on evidence",
       "body": "This letter scored {{score}}/100 on concrete proof — it argues without citing much of your actual work. Two questions about a project would give the next one something to point at.",
