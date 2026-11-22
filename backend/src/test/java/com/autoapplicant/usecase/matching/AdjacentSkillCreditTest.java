@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /** Credit for asks a profile answers by meaning or by a suggestion it has not confirmed. */
 class AdjacentSkillCreditTest {
@@ -106,6 +109,28 @@ class AdjacentSkillCreditTest {
 
         assertThat(score(List.of(), HELD, "Leverandørvurdering"))
                 .isEqualTo(score(List.of(), HELD, "Ukendt"));
+    }
+
+    /**
+     * "Arbejde", "analyse" and "service" end too many real Danish skills to be generic as a
+     * compound's last part: press work and media work are close, and so are their embeddings.
+     */
+    @ParameterizedTest
+    @CsvSource({"Mediearbejde, Pressearbejde", "Markedsanalyse, Målgruppeanalyse",
+            "Skadeservice, Kundeservice"})
+    void compounds_ending_on_a_common_word_still_earn_credit_by_meaning(String ask, String held) {
+        similar(ask, held, 0.8);
+
+        assertThat(score(List.of(), held, ask)).isGreaterThan(score(List.of(), held, "Ukendt"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Field service", "Field services"})
+    void a_generic_head_earns_nothing_by_meaning_in_either_number(String ask) {
+        similar(ask, "Customer service", 0.8);
+
+        assertThat(score(List.of(), "Customer service", ask))
+                .isEqualTo(score(List.of(), "Customer service", "Ukendt"));
     }
 
     /** A posting requiring the held skill and {@code other}, scored for a profile holding one. */

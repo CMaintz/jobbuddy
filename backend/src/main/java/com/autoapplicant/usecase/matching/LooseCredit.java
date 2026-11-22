@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Partial credit for an ask the profile does not hold outright but very likely answers.
@@ -53,13 +54,37 @@ final class LooseCredit {
     LooseCredit(SkillCanonicalizer canonicalizer, MatchSkills skills, String ownWords,
                 SkillSimilarity similarity) {
         this.canonicalizer = canonicalizer;
-        this.heldLabels = skills.held();
-        this.heldHeads = heldLabels.stream().map(CompoundHeads::headOf).distinct().toList();
-        this.suggestedLabels = skills.suggested();
-        this.suggestedKeys = suggestedLabels.stream().map(canonicalizer::canonical)
+        this.heldLabels = comparedForms(skills.held(), canonicalizer);
+        this.heldHeads = Stream.concat(skills.held().stream(),
+                        heldLabels.stream().filter(LooseCredit::isPhrase))
+                .map(CompoundHeads::headOf).distinct().toList();
+        this.suggestedLabels = comparedForms(skills.suggested(), canonicalizer);
+        this.suggestedKeys = skills.suggested().stream().map(canonicalizer::canonical)
                 .collect(Collectors.toUnmodifiableSet());
         this.ownWords = normalized(ownWords);
         this.similarity = similarity;
+    }
+
+    /**
+     * Each label under every name the taxonomy knows it by. An ask is compared with all of them,
+     * so all of them must be embedded. A CV import stores the English master name ("Public
+     * Relations") where the user wrote "Pressearbejde", and English sits further from a Danish
+     * ask in meaning ("Communication" scores 0.53 against "Intern kommunikation", where
+     * "Kommunikation" scores 0.75) and shares no head word with it. Taking the best over every
+     * name credits her the same whichever spelling she has.
+     */
+    static List<String> comparedForms(List<String> labels, SkillCanonicalizer canonicalizer) {
+        return labels.stream().flatMap(label -> canonicalizer.surfaceForms(label).stream())
+                .distinct().toList();
+    }
+
+    /**
+     * Whether a taxonomy name is a phrase, whose last word names its field ("Intern
+     * kommunikation"). A one-word alias is often only a stem ("presse"), which starts factory
+     * skills ("Presseoperatør") as readily as press ones, so it relates asks by meaning alone.
+     */
+    private static boolean isPhrase(String label) {
+        return WHITESPACE.split(label.strip()).length > 1;
     }
 
     /** The loose credit for an ask the profile does not hold, 0 when nothing vouches for it. */

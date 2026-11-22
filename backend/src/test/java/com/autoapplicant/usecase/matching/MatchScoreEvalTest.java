@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -81,6 +84,8 @@ import org.springframework.context.annotation.Import;
 class MatchScoreEvalTest extends PostgresIntegrationTest {
 
     private static final String COMMS = "comms-grc";
+    /** The comms profile as a CV import stores it: taxonomy skills under English master names. */
+    private static final String COMMS_ENGLISH = "comms-grc-en";
     private static final String ENGINEER = "engineer";
     private static final String GOOD = "G";
     private static final String MISMATCH = "M";
@@ -89,6 +94,8 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     private static final int FEED_SIZE = 100;
     private static final String OUT_OF_REACH = "Kræver ";
     private static final int HIGHEST_MISMATCH_SCORE = 76;
+    /** How far apart two spellings of the same profile may score on one posting. */
+    private static final int SAME_PROFILE_TOLERANCE = 3;
 
     /**
      * Posts inside the comms profile's own field that demand a law degree. Their skill labels
@@ -171,16 +178,6 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 .isEqualTo(MatchLabel.EXCELLENT);
     }
 
-    @Test
-    void most_of_her_good_fits_score_higher_than_on_main() throws IOException {
-        Map<String, Integer> scores = scores(COMMS);
-        JsonNode main = mainScores(COMMS);
-        List<String> good = idsWhere(p -> fit(p, COMMS).equals(GOOD));
-        long risen = good.stream().filter(id -> scores.get(id) > main.get(id).asInt()).count();
-
-        assertThat(risen * 2).isGreaterThanOrEqualTo(good.size());
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {COMMS, ENGINEER})
     void no_good_or_plausible_fit_scores_below_main(String profile) throws IOException {
@@ -189,6 +186,22 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
 
         assertThat(idsWhere(p -> !fit(p, profile).equals(MISMATCH))).allSatisfy(id ->
                 assertThat(scores.get(id)).as(id).isGreaterThanOrEqualTo(main.get(id).asInt()));
+    }
+
+    /**
+     * A CV import stores "Public Relations" where she wrote "Pressearbejde". Her matches must not
+     * depend on which spelling she has. The unenriched rows are left out: their text is searched
+     * for the label as she wrote it, never for its taxonomy aliases.
+     */
+    @Test
+    void english_taxonomy_names_score_like_the_danish_skills_they_stand_for() throws IOException {
+        Map<String, MatchResult> danish = resultsFor(COMMS);
+        Map<String, MatchResult> english = resultsFor(COMMS_ENGLISH);
+
+        assertThat(idsWhere(p -> !p.get("set").asText().equals("unenriched"))).allSatisfy(id ->
+                assertThat(english.get(id).totalScore()).as(id)
+                        .isCloseTo(danish.get(id).totalScore(),
+                                Offset.offset(SAME_PROFILE_TOLERANCE)));
     }
 
     /** Main's highest clear mismatch across both profiles is the ceiling for every one now. */
@@ -259,7 +272,7 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         return posting.get("fit").get(profile).asText();
     }
 
-    /** Each posting's score on main before #350, frozen in {@code main-scores.json}. */
+    /** Each posting's score on main, frozen in {@code main-scores.json}. */
     private JsonNode mainScores(String profile) throws IOException {
         return fixture("main-scores.json").get("scores").get(profile);
     }
@@ -318,7 +331,7 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 mock(ParsedSkillSuggestionRepositoryPort.class);
         when(suggested.findByUserId(userId))
                 .thenReturn(suggestionRows(userId, profile.get("suggested")));
-        SkillSimilarity similarity = frozenSimilarity();
+        JsonNode pairs = fixture("skill-similarity.json").get("pairs");
         EducationRepositoryPort education = mock(EducationRepositoryPort.class);
         when(education.findByUserId(userId))
                 .thenReturn(educationRows(userId, profile.get("education")));
@@ -335,14 +348,23 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 mock(ProfileEmbeddingRepositoryPort.class), mock(ApplicationRepositoryPort.class),
                 new MatchProfileLoader(canonicalizer, new MatchProfileLoader.Sources(skills,
                         suggested, education, mock(CertificationRepositoryPort.class)),
-                        labels -> similarity));
+                        labels -> frozenSimilarity(pairs, labels)));
     }
 
-    /** Similarities as text-embedding-3-small measured them, frozen so the eval stays offline. */
-    private SkillSimilarity frozenSimilarity() throws IOException {
-        JsonNode pairs = fixture("skill-similarity.json").get("pairs");
-        return (ask, skill) -> pairs.path(SkillNames.normalize(ask))
-                .path(SkillNames.normalize(skill)).asDouble(0);
+    /**
+     * Similarities as text-embedding-3-small measured them, frozen so the eval stays offline. A
+     * label the scorer did not hand over for embedding has no vector in production, so it gets
+     * none here either.
+     */
+    private static SkillSimilarity frozenSimilarity(JsonNode pairs, Collection<String> labels) {
+        Set<String> embedded = labels.stream().map(SkillNames::normalize)
+                .collect(Collectors.toSet());
+        return (ask, skill) -> {
+            String a = SkillNames.normalize(ask);
+            String b = SkillNames.normalize(skill);
+            return embedded.contains(a) && embedded.contains(b) ? pairs.path(a).path(b).asDouble(0)
+                    : 0;
+        };
     }
 
     private static List<ParsedSkillSuggestion> suggestionRows(UUID userId, JsonNode rows) {

@@ -75,8 +75,10 @@ public class MatchProfileLoader {
      * the whole candidate list, so the labels nobody has embedded yet go out in one batch.
      */
     MatchProfile againstPostings(MatchProfile loaded, List<Job> jobs) {
-        List<String> labels = new ArrayList<>(loaded.suggested());
-        loaded.skills().stream().map(ProfileSkill::skillName).forEach(labels::add);
+        List<String> held = loaded.skills().stream().map(ProfileSkill::skillName)
+                .filter(Objects::nonNull).toList();
+        List<String> labels = new ArrayList<>(LooseCredit.comparedForms(held, canonicalizer));
+        labels.addAll(LooseCredit.comparedForms(loaded.suggested(), canonicalizer));
         jobs.forEach(job -> asksOf(job).forEach(labels::add));
         SkillSimilarity known = similarity.among(labels.stream().filter(Objects::nonNull).toList());
         return new MatchProfile(loaded.profile(), loaded.skills(), loaded.suggested(),
