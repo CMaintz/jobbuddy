@@ -111,11 +111,11 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
             "jurist-med-fokus-paa-informationssikkerh", "compliance-og-gdpr-specialist-hos-forsyn");
 
     /**
-     * Posts inside the comms profile's own field that require hands-on technical security
-     * experience: defining security architecture, and incident response in a SOC. Their labels
-     * overlap her GRC course; only her work history rules them out.
+     * Posts inside the comms profile's own field that require hands-on security experience
+     * (security architecture, incident response) with no year count. Asking for experience is
+     * normal, so only a senior ask may rule a post out; these score on their labels.
      */
-    private static final Set<String> TECHNICAL_SECURITY_POSTS = Set.of(
+    private static final Set<String> JUNIOR_SECURITY_ASK_POSTS = Set.of(
             "vil-du-vaere-med-til-at-saette-retningen", "cybersikkerhedsspecialist-til-kritisk-in");
 
     /** The day the eval scores on, so the profiles' current roles don't grow with the calendar. */
@@ -188,16 +188,12 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void a_technical_security_post_falls_below_strong_for_the_comms_profile_and_says_why()
+    void a_security_post_asking_experience_without_years_is_not_ruled_out_for_the_comms_profile()
             throws IOException {
         Map<String, MatchResult> results = resultsFor(COMMS);
 
-        TECHNICAL_SECURITY_POSTS.forEach(id -> {
-            assertThat(results.get(id).matchLabel()).as(id)
-                    .isIn(MatchLabel.MODERATE, MatchLabel.WEAK);
-            assertThat(results.get(id).matchReasons()).as(id).first().asString()
-                    .startsWith(OUT_OF_REACH).contains("erfaring");
-        });
+        JUNIOR_SECURITY_ASK_POSTS.forEach(id -> assertThat(results.get(id).matchReasons()).as(id)
+                .noneMatch(reason -> reason.startsWith(OUT_OF_REACH)));
     }
 
     @ParameterizedTest
@@ -275,8 +271,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     /**
      * A posting outside the profile's own field and labelled a mismatch. Mismatches inside the
      * field are left out: they share a GRC profile's skill labels and differ in the experience
-     * they ask for, which the scorer weighs only for catalogued specialist areas (a GDPR post
-     * asking three years of legal advice still scores on its labels).
+     * they ask for, which the scorer weighs only for senior asks in catalogued specialist areas
+     * (a GDPR post asking three years of legal advice, or a security post asking architecture
+     * experience with no year count, still scores on its labels).
      */
     private Predicate<JsonNode> clearMismatches(String profile) {
         Set<String> ownField = profile.equals(COMMS) ? COMMS_FIELD : ENGINEER_FIELD;
