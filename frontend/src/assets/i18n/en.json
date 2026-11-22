@@ -18,6 +18,9 @@
       "usedIt": "Used it",
       "notMine": "Not mine",
       "later": "Later",
+      "likelyHeld": "You have {{held}}. Do you also have {{skill}}?",
+      "yesAdd": "Yes, add it",
+      "no": "No",
       "added": "{{name}} added to your profile",
       "failed": "Could not save that — try again"
     },

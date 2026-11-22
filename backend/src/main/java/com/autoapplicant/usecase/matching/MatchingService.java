@@ -160,12 +160,15 @@ public class MatchingService implements GetRecommendationsUseCase {
             // than per candidate.
             Map<UUID, Integer> steerAdjustments = buildSteerAdjustments(feedback);
 
-            return candidateIds.stream()
+            List<Job> eligible = candidateIds.stream()
                     .map(jobMap::get)
                     .filter(Objects::nonNull)
                     .filter(job -> passesHardConstraints(job, prefs))
                     .limit(limit * 2L)
-                    .map(job -> buildMatchResult(job, userId, matchProfile, feedbackMap,
+                    .toList();
+            MatchProfile scored = matchProfileLoader.againstPostings(matchProfile, eligible);
+            return eligible.stream()
+                    .map(job -> buildMatchResult(job, userId, scored, feedbackMap,
                             steerAdjustments, prefs))
                     .sorted(Comparator.comparingInt(MatchResult::totalScore).reversed())
                     .limit(limit)

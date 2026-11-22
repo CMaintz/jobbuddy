@@ -16,7 +16,9 @@ import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.RequirementTier;
 import com.autoapplicant.domain.matching.MatchLabel;
 import com.autoapplicant.domain.matching.MatchResult;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.ProfileSkill;
+import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.user.Education;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
@@ -25,6 +27,7 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
 import com.autoapplicant.port.out.user.EducationRepositoryPort;
@@ -67,6 +70,12 @@ import org.springframework.context.annotation.Import;
  * that reads the text is held to the same bar. Each row still online when #338 came along also
  * carries its frozen requirements (degrees, certifications), so the hard-requirement gate is
  * measured on the wording real postings use.
+ *
+ * <p>Asks answered by meaning (#350) are scored from frozen label similarities
+ * ({@code skill-similarity.json}) and each profile's frozen suggested skills, both described in
+ * their fixtures. The thresholds were again chosen on the tuning rows and the holdout rows
+ * scored once afterwards. Every table prints the score on main ({@code main-scores.json})
+ * beside it.
  */
 @Import({SkillCanonicalizer.class, SkillTaxonomyPersistenceAdapter.class})
 class MatchScoreEvalTest extends PostgresIntegrationTest {
@@ -162,6 +171,52 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 .isEqualTo(MatchLabel.EXCELLENT);
     }
 
+    @Test
+    void most_of_her_good_fits_score_higher_than_on_main() throws IOException {
+        Map<String, Integer> scores = scores(COMMS);
+        JsonNode main = mainScores(COMMS);
+        List<String> good = idsWhere(p -> fit(p, COMMS).equals(GOOD));
+        long risen = good.stream().filter(id -> scores.get(id) > main.get(id).asInt()).count();
+
+        assertThat(risen * 2).isGreaterThanOrEqualTo(good.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {COMMS, ENGINEER})
+    void no_good_or_plausible_fit_scores_below_main(String profile) throws IOException {
+        Map<String, Integer> scores = scores(profile);
+        JsonNode main = mainScores(profile);
+
+        assertThat(idsWhere(p -> !fit(p, profile).equals(MISMATCH))).allSatisfy(id ->
+                assertThat(scores.get(id)).as(id).isGreaterThanOrEqualTo(main.get(id).asInt()));
+    }
+
+    /** Main's highest clear mismatch across both profiles is the ceiling for every one now. */
+    @Test
+    void no_clear_mismatch_rises_above_mains_highest() throws IOException {
+        int mainHighest = 0;
+        int highest = 0;
+        for (String profile : List.of(COMMS, ENGINEER)) {
+            JsonNode main = mainScores(profile);
+            Map<String, Integer> scores = scores(profile);
+            for (String id : idsWhere(clearMismatches(profile))) {
+                mainHighest = Math.max(mainHighest, main.get(id).asInt());
+                highest = Math.max(highest, scores.get(id));
+            }
+        }
+
+        assertThat(highest).isLessThanOrEqualTo(mainHighest);
+    }
+
+    @Test
+    void a_communications_fit_reaches_the_top_band() throws IOException {
+        Map<String, Integer> scores = scores(COMMS);
+
+        assertThat(MatchLabel.fromScore(highest(scores,
+                p -> fit(p, COMMS).equals(GOOD) && p.get("kind").asText().equals("comms"))))
+                .isEqualTo(MatchLabel.EXCELLENT);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {COMMS, ENGINEER})
     void no_mismatch_reaches_the_top_band(String profile) throws IOException {
@@ -204,20 +259,32 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         return posting.get("fit").get(profile).asText();
     }
 
+    /** Each posting's score on main before #350, frozen in {@code main-scores.json}. */
+    private JsonNode mainScores(String profile) throws IOException {
+        return fixture("main-scores.json").get("scores").get(profile);
+    }
+
+    private List<String> idsWhere(Predicate<JsonNode> which) {
+        List<String> out = new ArrayList<>();
+        postings.forEach(p -> {
+            if (which.test(p)) out.add(p.get("id").asText());
+        });
+        return out;
+    }
+
+    /** The scores, printed beside each posting's score on main. */
     private Map<String, Integer> scores(String profileKey) throws IOException {
-        Map<String, Integer> scores = scoresFor(profileKey);
-        StringBuilder table = new StringBuilder(System.lineSeparator())
-                .append(profileKey).append(": fit | score | posting").append(System.lineSeparator());
-        postings.forEach(p -> table.append(fit(p, profileKey)).append(" | ")
+        JsonNode main = mainScores(profileKey);
+        Map<String, Integer> scores = new LinkedHashMap<>();
+        resultsFor(profileKey).forEach((id, result) -> scores.put(id, result.totalScore()));
+        StringBuilder table = new StringBuilder(System.lineSeparator()).append(profileKey)
+                .append(": set | fit | main | score | posting").append(System.lineSeparator());
+        postings.forEach(p -> table.append(p.get("set").asText()).append(" | ")
+                .append(fit(p, profileKey)).append(" | ")
+                .append(main.get(p.get("id").asText()).asInt()).append(" | ")
                 .append(scores.get(p.get("id").asText())).append(" | ")
                 .append(p.get("id").asText()).append(System.lineSeparator()));
         System.out.println(table);
-        return scores;
-    }
-
-    private Map<String, Integer> scoresFor(String profileKey) throws IOException {
-        Map<String, Integer> scores = new LinkedHashMap<>();
-        resultsFor(profileKey).forEach((id, result) -> scores.put(id, result.totalScore()));
         return scores;
     }
 
@@ -239,13 +306,19 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         return byPosting;
     }
 
-    private MatchingService serviceFor(UUID userId, JsonNode profile, List<Job> jobs) {
+    private MatchingService serviceFor(UUID userId, JsonNode profile, List<Job> jobs)
+            throws IOException {
         ProfileRepositoryPort profiles = mock(ProfileRepositoryPort.class);
         when(profiles.findByUserId(userId)).thenReturn(Optional.of(new Profile(UUID.randomUUID(),
                 userId, profile.get("headline").asText(), profile.get("summary").asText(),
                 null, List.of(), List.of(), null, null, null, null, null, null, null)));
         ProfileSkillRepositoryPort skills = mock(ProfileSkillRepositoryPort.class);
         when(skills.findByUserId(userId)).thenReturn(skillRows(userId, profile.get("skills")));
+        ParsedSkillSuggestionRepositoryPort suggested =
+                mock(ParsedSkillSuggestionRepositoryPort.class);
+        when(suggested.findByUserId(userId))
+                .thenReturn(suggestionRows(userId, profile.get("suggested")));
+        SkillSimilarity similarity = frozenSimilarity();
         EducationRepositoryPort education = mock(EducationRepositoryPort.class);
         when(education.findByUserId(userId))
                 .thenReturn(educationRows(userId, profile.get("education")));
@@ -260,8 +333,24 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 mock(PreferencesRepositoryPort.class), ai, mock(IgnoredJobRepositoryPort.class),
                 mock(RecommendationFeedbackRepositoryPort.class),
                 mock(ProfileEmbeddingRepositoryPort.class), mock(ApplicationRepositoryPort.class),
-                new MatchProfileLoader(canonicalizer, skills, education,
-                        mock(CertificationRepositoryPort.class)));
+                new MatchProfileLoader(canonicalizer, new MatchProfileLoader.Sources(skills,
+                        suggested, education, mock(CertificationRepositoryPort.class)),
+                        labels -> similarity));
+    }
+
+    /** Similarities as text-embedding-3-small measured them, frozen so the eval stays offline. */
+    private SkillSimilarity frozenSimilarity() throws IOException {
+        JsonNode pairs = fixture("skill-similarity.json").get("pairs");
+        return (ask, skill) -> pairs.path(SkillNames.normalize(ask))
+                .path(SkillNames.normalize(skill)).asDouble(0);
+    }
+
+    private static List<ParsedSkillSuggestion> suggestionRows(UUID userId, JsonNode rows) {
+        List<ParsedSkillSuggestion> out = new ArrayList<>();
+        rows.forEach(r -> out.add(new ParsedSkillSuggestion(UUID.randomUUID(), userId,
+                r.get("skill").asText(), SkillNames.normalize(r.get("skill").asText()),
+                r.get("because").asText(), ParsedSkillSuggestion.Source.ADJACENT)));
+        return out;
     }
 
     private static List<ProfileSkill> skillRows(UUID userId, JsonNode names) {

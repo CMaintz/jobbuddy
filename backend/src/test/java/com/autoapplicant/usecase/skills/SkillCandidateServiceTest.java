@@ -1,31 +1,30 @@
 package com.autoapplicant.usecase.skills;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillCandidate;
 import com.autoapplicant.domain.skill.SkillConfirmation;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class SkillCandidateServiceTest {
 
@@ -260,6 +259,29 @@ class SkillCandidateServiceTest {
         SkillCandidate scrum = candidates.stream().filter(c -> c.name().equals("Scrum")).findFirst().orElseThrow();
         assertThat(scrum.source()).isEqualTo(SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED);
         assertThat(scrum.evidence()).isEqualTo("Ran fortnightly retrospectives and groomed the backlog");
+    }
+
+    @Test
+    void aLikelyHeldSkillIsAskedAboutByTheHeldSkillItFollowsFrom() {
+        profileWith("Kampagneplanlægning");
+        parsedSuggestions.add(new ParsedSkillSuggestion(null, USER, "Content marketing",
+                "content marketing", "Kampagneplanlægning", ParsedSkillSuggestion.Source.ADJACENT));
+
+        SkillCandidate candidate = service.suggest(USER, 10).getFirst();
+
+        assertThat(candidate.source()).isEqualTo(SkillCandidate.SkillCandidateSource.LIKELY_HELD);
+        assertThat(candidate.relatedSkills()).containsExactly("Kampagneplanlægning");
+        assertThat(candidate.evidence()).isNull();
+    }
+
+    @Test
+    void likelyHeldQuestionsAreNotCutAsUndemandedNoise() {
+        for (int i = 0; i < 7; i++) {
+            parsedSuggestions.add(new ParsedSkillSuggestion(null, USER, "Skill " + i,
+                    "skill " + i, "Held", ParsedSkillSuggestion.Source.ADJACENT));
+        }
+
+        assertThat(service.suggest(USER, 10)).hasSize(7);
     }
 
     @Test

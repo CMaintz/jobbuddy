@@ -5,10 +5,10 @@ import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.usecase.common.KeywordMatcher;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.ToDoubleFunction;
@@ -34,12 +34,17 @@ import java.util.stream.Collectors;
  * into the top band.
  *
  * <p>Evidence per ask: a skill the profile holds counts in full (half for a weak one, see
- * {@link #buildProficiencyCredit}); a related one ({@link CompoundHeads}) or one the profile
- * names in its own headline or summary counts half, but all of that loose evidence together is
- * capped at {@value #MAX_RELATED_EVIDENCE}, so it can lift a fit the profile's own skills already
- * show and never make one on its own. A demanded skill weighs more than a welcome one, and both
- * more than an ask the posting did not tier. Missing demands still cost, scaled by the share
- * missing and capped, so a long list of labels nobody holds cannot zero a good fit.
+ * {@link #buildProficiencyCredit}). One it very likely answers without holding it, by spelling,
+ * by meaning or by a suggestion the user has not confirmed yet, earns partial credit
+ * ({@link LooseCredit}), but all of that loose evidence together is capped, so it can lift a fit
+ * the profile's own skills already show and never make one on its own. The cap is
+ * {@value #BASE_RELATED_EVIDENCE}, and each point of held evidence widens it by
+ * {@value #RELATED_PER_HELD} up to {@value #MAX_RELATED_EVIDENCE}: a posting the profile shares
+ * nothing with gets only the base, while one its own skills already answer can also show the
+ * adjacent asks it covers, which a flat cap spends on its spelling matches alone. A demanded
+ * skill weighs more than a welcome one, and both more than an ask the posting did not tier.
+ * Missing demands still cost, scaled by the share missing and capped, so a long list of labels
+ * nobody holds cannot zero a good fit.
  */
 final class SkillFitScorer {
 
@@ -49,12 +54,15 @@ final class SkillFitScorer {
     /** Share of required asks answered below which no bonus is earned. */
     private static final double BONUS_FROM_COVERAGE = 0.5;
     private static final double FULL_EVIDENCE = 2.5;
-    private static final double MAX_RELATED_EVIDENCE = 1.0;
+    private static final double BASE_RELATED_EVIDENCE = 1.0;
+    private static final double RELATED_PER_HELD = 0.5;
+    private static final double MAX_RELATED_EVIDENCE = 1.5;
     private static final double REQUIRED_WEIGHT = 1.0;
     private static final double PREFERRED_WEIGHT = 0.75;
     private static final double UNTIERED_WEIGHT = 0.5;
-    private static final double RELATED_CREDIT = 0.5;
     private static final int MAX_MISSING_REQUIRED_PENALTY = 8;
+    /** Credit at which an ask no longer counts as missing: a related skill's. */
+    private static final double ANSWERED = LooseCredit.RELATED_CREDIT;
     private static final int REASON_LIMIT = 4;
 
     // A skill listed at BEGINNER and never used in production is not the same evidence as one
@@ -69,38 +77,40 @@ final class SkillFitScorer {
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     /** What one ask earns: full credit for a held skill, or loose credit for a related one. */
-    private record Credit(double exact, double related) {
-        static final Credit NONE = new Credit(0, 0);
-
-        boolean isNone() {
-            return exact == 0 && related == 0;
-        }
-    }
+    private record Credit(double exact, double related) {}
 
     private final SkillCanonicalizer canonicalizer;
-    private final List<String> heldLabels;
-    private final List<String> heldHeads;
+    /** Labels a posting's text is searched for when it was never enriched. */
+    private final List<String> searchLabels;
     /** Canonical skill key to credit; a held skill with no recorded depth gets full credit. */
     private final Map<String, Double> held;
-    private final String ownWords;
+    private final LooseCredit loose;
 
-    private SkillFitScorer(SkillCanonicalizer canonicalizer, List<String> heldLabels,
-                           Map<String, Double> held, String ownWords) {
+    private SkillFitScorer(SkillCanonicalizer canonicalizer, List<String> searchLabels,
+                           Map<String, Double> held, LooseCredit loose) {
         this.canonicalizer = canonicalizer;
-        this.heldLabels = heldLabels;
-        this.heldHeads = heldLabels.stream().map(CompoundHeads::headOf).distinct().toList();
+        this.searchLabels = searchLabels;
         this.held = held;
-        this.ownWords = ownWords;
+        this.loose = loose;
     }
 
+    /**
+     * @param suggested  skills proposed to the user and not yet confirmed; loose credit only
+     * @param similarity how close two labels are in meaning, {@link SkillSimilarity#NONE} if
+     *                   that is unknown
+     */
     static SkillFitScorer forProfile(SkillCanonicalizer canonicalizer, Profile profile,
-                                     List<ProfileSkill> skills) {
-        List<String> labels = skills.stream().map(ProfileSkill::skillName)
-                .filter(Objects::nonNull).filter(s -> !s.isBlank()).toList();
-        String ownWords = normalized(Objects.toString(profile.headline(), "") + " "
-                + Objects.toString(profile.summary(), ""));
-        return new SkillFitScorer(canonicalizer, labels,
-                buildProficiencyCredit(canonicalizer, skills), ownWords);
+                                     List<ProfileSkill> skills, List<String> suggested,
+                                     SkillSimilarity similarity) {
+        MatchSkills labels = new MatchSkills(skills.stream().map(ProfileSkill::skillName)
+                .filter(Objects::nonNull).filter(s -> !s.isBlank()).toList(), suggested);
+        String ownWords = Objects.toString(profile.headline(), "") + " "
+                + Objects.toString(profile.summary(), "");
+        List<String> searchLabels = new ArrayList<>(labels.held());
+        searchLabels.addAll(labels.suggested());
+        return new SkillFitScorer(canonicalizer, List.copyOf(searchLabels),
+                buildProficiencyCredit(canonicalizer, skills),
+                new LooseCredit(canonicalizer, labels, ownWords, similarity));
     }
 
     /** The skill fit for {@code job}, appending what it found to {@code reasons}. */
@@ -111,15 +121,21 @@ final class SkillFitScorer {
         }
         Map<String, Credit> credits = new HashMap<>();
         asks.all().forEach(ask -> credits.computeIfAbsent(ask, this::creditFor));
-        double evidence = weighted(asks, credits, Credit::exact)
-                + Math.min(weighted(asks, credits, Credit::related), MAX_RELATED_EVIDENCE);
-        double strength = Math.min(evidence / FULL_EVIDENCE, 1.0);
+        double strength = Math.min(evidence(asks, credits) / FULL_EVIDENCE, 1.0);
         int score = (int) Math.round(strength * EVIDENCE_SCORE
                         + coverageBonus(strength, asks.required(), credits))
                 - (int) Math.round(MAX_MISSING_REQUIRED_PENALTY
                         * missingShare(asks.required(), credits));
         explain(asks, credits, reasons);
         return Math.max(0, Math.min(score, MAX_SCORE));
+    }
+
+    /** Held evidence plus loose evidence, the loose part capped by how much is held. */
+    private static double evidence(PostingAsks asks, Map<String, Credit> credits) {
+        double heldEvidence = weighted(asks, credits, Credit::exact);
+        double looseCap = Math.min(BASE_RELATED_EVIDENCE + RELATED_PER_HELD * heldEvidence,
+                MAX_RELATED_EVIDENCE);
+        return heldEvidence + Math.min(weighted(asks, credits, Credit::related), looseCap);
     }
 
     private static double weighted(PostingAsks asks, Map<String, Credit> credits,
@@ -137,44 +153,20 @@ final class SkillFitScorer {
     private Credit creditFor(String ask) {
         Double exact = held.get(canonicalizer.canonical(ask));
         if (exact != null) return new Credit(exact, 0);
-        return isRelated(ask) || isInOwnWords(ask) ? new Credit(0, RELATED_CREDIT) : Credit.NONE;
-    }
-
-    private boolean isRelated(String ask) {
-        String head = CompoundHeads.headOf(ask);
-        return heldHeads.stream().anyMatch(heldHead -> CompoundHeads.related(head, heldHead));
-    }
-
-    private boolean isInOwnWords(String ask) {
-        return canonicalizer.surfaceForms(ask).stream()
-                .anyMatch(form -> containsPhrase(ownWords, normalized(form)));
+        return new Credit(0, loose.of(ask));
     }
 
     /**
-     * Whole-phrase containment by plain search. The profile's own words are checked against every
-     * distinct ask of every posting, and compiling a pattern per ask would churn the shared
-     * {@link KeywordMatcher} cache for every other caller.
+     * Share of required asks left unanswered; a posting that tiers nothing misses none. A held or
+     * related skill answers an ask fully, weaker loose credit only in part: a faint likeness to a
+     * suggested skill must not wipe a whole miss off a posting the profile does not fit.
      */
-    private static boolean containsPhrase(String text, String phrase) {
-        if (phrase.isEmpty()) return false;
-        for (int at = text.indexOf(phrase); at >= 0; at = text.indexOf(phrase, at + 1)) {
-            int end = at + phrase.length();
-            boolean startOk = at == 0 || !Character.isLetterOrDigit(text.charAt(at - 1));
-            boolean endOk = end == text.length() || !Character.isLetterOrDigit(text.charAt(end));
-            if (startOk && endOk) return true;
-        }
-        return false;
-    }
-
-    private static String normalized(String text) {
-        return WHITESPACE.matcher(text.toLowerCase(Locale.ROOT)).replaceAll(" ").strip();
-    }
-
-    /** Share of required asks with no evidence at all; a posting that tiers nothing misses none. */
     private static double missingShare(List<String> required, Map<String, Credit> credits) {
         if (required.isEmpty()) return 0;
-        long missing = required.stream().filter(ask -> credits.get(ask).isNone()).count();
-        return missing / (double) required.size();
+        double missing = required.stream().map(credits::get)
+                .mapToDouble(c -> 1 - Math.min(1, Math.max(c.exact(), c.related()) / ANSWERED))
+                .sum();
+        return missing / required.size();
     }
 
     /**
@@ -196,7 +188,8 @@ final class SkillFitScorer {
 
     /**
      * A posting that was never enriched has no ask lists at all, so it would score nothing for
-     * anyone. The profile's own skills that its text names stand in for them. Only the label as
+     * anyone. The profile's own skills that its text names stand in for them, suggested ones
+     * included at their loose credit. Only the label as
      * the user wrote it is searched, not taxonomy aliases: a one-word alias such as "presse"
      * turns up in the page chrome of every crawled posting. Share buttons are dropped for the
      * same reason.
@@ -206,7 +199,7 @@ final class SkillFitScorer {
                         + Objects.toString(job.descriptionClean(), "")).split("\n"))
                 .filter(line -> !isShareButton(line))
                 .collect(Collectors.joining("\n"));
-        return heldLabels.stream().filter(label -> KeywordMatcher.contains(text, label)).toList();
+        return searchLabels.stream().filter(label -> KeywordMatcher.contains(text, label)).toList();
     }
 
     private static boolean isShareButton(String line) {
