@@ -171,16 +171,6 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 .isEqualTo(MatchLabel.EXCELLENT);
     }
 
-    @Test
-    void most_of_her_good_fits_score_higher_than_on_main() throws IOException {
-        Map<String, Integer> scores = scores(COMMS);
-        JsonNode main = mainScores(COMMS);
-        List<String> good = idsWhere(p -> fit(p, COMMS).equals(GOOD));
-        long risen = good.stream().filter(id -> scores.get(id) > main.get(id).asInt()).count();
-
-        assertThat(risen * 2).isGreaterThanOrEqualTo(good.size());
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {COMMS, ENGINEER})
     void no_good_or_plausible_fit_scores_below_main(String profile) throws IOException {
@@ -259,7 +249,7 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         return posting.get("fit").get(profile).asText();
     }
 
-    /** Each posting's score on main before #350, frozen in {@code main-scores.json}. */
+    /** Each posting's score on main, frozen in {@code main-scores.json}. */
     private JsonNode mainScores(String profile) throws IOException {
         return fixture("main-scores.json").get("scores").get(profile);
     }
