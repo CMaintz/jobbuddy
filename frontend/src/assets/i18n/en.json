@@ -209,10 +209,10 @@
       "saved": "Saved to pipeline",
       "preparing": "Preparing application",
       "applied": "Applied",
-      "recruiterContact": "Recruiter contact",
+      "recruiterContact": "First contact",
       "interview": "Interview stage",
-      "technicalTest": "Technical test",
-      "finalRound": "Final round",
+      "technicalTest": "Task/test",
+      "finalRound": "Final interview",
       "offer": "Offer received",
       "rejected": "Rejected",
       "archived": "Archived"
@@ -222,6 +222,7 @@
       "today": "today",
       "tomorrow": "tomorrow",
       "interview": "Job interview",
+      "interviewAt": "Job interview at {{time}}",
       "followUp": "Follow up",
       "applyDeadline": "Apply before the deadline",
       "noReply": "No reply yet — send a follow-up",
@@ -1552,13 +1553,17 @@
       "saved": "Saved",
       "preparing": "Preparing",
       "applied": "Applied",
-      "screen": "Screen",
+      "screen": "First contact",
       "interview": "Interview",
-      "technical": "Technical",
-      "final": "Final",
+      "technical": "Task/test",
+      "final": "Final interview",
       "offer": "Offer",
       "rejected": "Rejected",
       "archived": "Archived"
+    },
+    "column": {
+      "inProgress": "In progress",
+      "closed": "Closed"
     },
     "changeStatus": "Change status"
   },
