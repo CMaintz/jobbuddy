@@ -88,15 +88,16 @@ public class ChatPlanPersistenceAdapter implements ChatPlanRepositoryPort {
     }
 
     @Override
-    public void finish(UUID itemId, PlanFailure failure, Instant at) {
+    public void finish(UUID itemId, PlanFailure failure, UUID resultApplicationId, Instant at) {
         PlanItem.State state = failure == null ? PlanItem.State.DONE : PlanItem.State.FAILED;
-        items.finish(itemId, state.name(), failure == null ? null : failure.name(), at);
+        items.finish(itemId, state.name(), failure == null ? null : failure.name(),
+                resultApplicationId, at);
     }
 
     private static PlanItem toDomain(ChatPlanItemEntity e) {
         return new PlanItem(e.getId(), PlanItem.Kind.valueOf(e.getKind()), e.getDetails(),
                 PlanItem.State.valueOf(e.getState()),
                 e.getFailure() == null ? null : PlanFailure.valueOf(e.getFailure()),
-                e.getDecidedAt(), e.getFinishedAt());
+                e.getResultApplicationId(), e.getDecidedAt(), e.getFinishedAt());
     }
 }

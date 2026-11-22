@@ -36,17 +36,20 @@ final class PlanChecks {
     private final JobRepositoryPort jobs;
     private final ApplicationRepositoryPort applications;
     private final Clock clock;
+    private final DocumentChecks documents;
 
     PlanChecks(JobRepositoryPort jobs, ApplicationRepositoryPort applications, Clock clock) {
         this.jobs = jobs;
         this.applications = applications;
         this.clock = clock;
+        this.documents = new DocumentChecks(applications);
     }
 
     /** What the card will say, from the database; refused when the change cannot happen. */
     Details details(UUID userId, ProposedChange change) {
         return switch (change.kind()) {
             case SAVE_POSTING, IGNORE_POSTING -> postingDetails(change.postingId());
+            case GENERATE_DOCUMENTS -> documentDetails(userId, change.postingId());
             case UPDATE_STATUS -> statusDetails(userId, change);
             case LOG_INTERVIEW -> interviewDetails(userId, change);
         };
@@ -58,6 +61,9 @@ final class PlanChecks {
         return switch (item.kind()) {
             case SAVE_POSTING, IGNORE_POSTING -> jobs.findById(d.postingId()).isPresent()
                     ? Optional.empty() : Optional.of(PlanFailure.POSTING_GONE);
+            case GENERATE_DOCUMENTS -> jobs.findById(d.postingId())
+                    .map(job -> documents.staleness(userId, job))
+                    .orElse(Optional.of(PlanFailure.POSTING_GONE));
             case UPDATE_STATUS -> applicationStaleness(userId, d,
                     app -> app.status() == d.fromStatus());
             case LOG_INTERVIEW -> applicationStaleness(userId, d,
@@ -75,10 +81,22 @@ final class PlanChecks {
     }
 
     private Details postingDetails(UUID postingId) {
-        Job job = jobs.findById(require(postingId, "posting_id"))
+        Job job = posting(postingId);
+        return Details.posting(job.id(), job.title(), job.companyName());
+    }
+
+    private Details documentDetails(UUID userId, UUID postingId) {
+        Job job = posting(postingId);
+        documents.refusal(userId, job).ifPresent(why -> {
+            throw new ProposalRefusedException(why);
+        });
+        return Details.posting(job.id(), job.title(), job.companyName());
+    }
+
+    private Job posting(UUID postingId) {
+        return jobs.findById(require(postingId, "posting_id"))
                 .orElseThrow(() -> new ProposalRefusedException(
                         "No such posting; use a posting id returned by the other tools"));
-        return Details.posting(job.id(), job.title(), job.companyName());
     }
 
     private Details statusDetails(UUID userId, ProposedChange change) {

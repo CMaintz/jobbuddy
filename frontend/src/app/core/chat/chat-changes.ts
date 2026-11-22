@@ -9,6 +9,7 @@ const AREA_OF: Record<PlanItem['kind'], Area> = {
   IGNORE_POSTING: 'savedPostings',
   UPDATE_STATUS: 'applications',
   LOG_INTERVIEW: 'applications',
+  GENERATE_DOCUMENTS: 'applications',
 };
 
 /**

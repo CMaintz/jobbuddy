@@ -26,8 +26,12 @@ public interface ChatPlanRepositoryPort {
      */
     boolean move(UUID itemId, PlanItem.State from, PlanItem.State to, Instant at);
 
-    /** Ends a running item: done when {@code failure} is null, failed otherwise. */
-    void finish(UUID itemId, PlanFailure failure, Instant at);
+    /**
+     * Ends a running item: done when {@code failure} is null, failed otherwise.
+     *
+     * @param resultApplicationId where its documents landed, or null
+     */
+    void finish(UUID itemId, PlanFailure failure, UUID resultApplicationId, Instant at);
 
     /**
      * Ends every item still running that went running before {@code decidedBefore} as failed

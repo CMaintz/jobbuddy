@@ -2,6 +2,8 @@ package com.autoapplicant.adapter.chatplan;
 
 import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.domain.chat.PlanFailure;
+import com.autoapplicant.domain.chat.PlanItem;
+import com.autoapplicant.domain.document.GenerationSettings;
 import com.autoapplicant.port.in.chat.DecideChatPlanUseCase;
 import com.autoapplicant.port.in.chat.DecideChatPlanUseCase.Claim;
 import java.util.UUID;
@@ -23,24 +25,42 @@ public class ChatPlanApproval {
 
     private final DecideChatPlanUseCase decisions;
     private final PlanItemRunner runner;
+    private final DocumentQueue documents;
 
-    public ChatPlanApproval(DecideChatPlanUseCase decisions, PlanItemRunner runner) {
+    public ChatPlanApproval(DecideChatPlanUseCase decisions, PlanItemRunner runner,
+                            DocumentQueue documents) {
         this.decisions = decisions;
         this.runner = runner;
+        this.documents = documents;
     }
 
     /**
      * Runs the item if this call is the one that approves it, and returns the plan as it now
-     * stands. A repeated or late click gets the plan back unchanged.
+     * stands. A repeated or late click gets the plan back unchanged. Documents are queued and the
+     * item stays running until they are written.
      *
+     * @param settings her generation settings in the app, used only for documents
      * @throws com.autoapplicant.domain.common.NotFoundException the plan is not hers
      */
-    public ChatPlan approve(UUID userId, UUID planId, UUID itemId) {
+    public ChatPlan approve(UUID userId, UUID planId, UUID itemId,
+                            GenerationSettings settings) {
         Claim claim = decisions.claim(userId, planId, itemId);
         if (!(claim instanceof Claim.Approved approved)) {
             return claim.plan();
         }
+        if (approved.item().kind() == PlanItem.Kind.GENERATE_DOCUMENTS) {
+            documents.enqueue(userId, planId, approved.item(), settings);
+            return claim.plan();
+        }
         return decisions.finish(userId, planId, itemId, run(userId, approved));
+    }
+
+    /** Approves every item still pending, in order, as if she had clicked each. */
+    public ChatPlan approvePending(UUID userId, UUID planId, GenerationSettings settings) {
+        decisions.plan(userId, planId).items().stream()
+                .filter(PlanItem::isPending)
+                .forEach(item -> approve(userId, planId, item.id(), settings));
+        return decisions.plan(userId, planId);
     }
 
     /**

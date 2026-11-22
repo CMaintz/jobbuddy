@@ -2151,7 +2151,8 @@
         "SAVE_POSTING": "Gem opslaget",
         "IGNORE_POSTING": "Skjul opslaget",
         "UPDATE_STATUS": "Skift status på ansøgningen",
-        "LOG_INTERVIEW": "Notér jobsamtale"
+        "LOG_INTERVIEW": "Notér jobsamtale",
+        "GENERATE_DOCUMENTS": "Skriv CV og ansøgning"
       },
       "statusMove": "Fra {{from}} til {{to}}",
       "interviewAt": "Samtale {{when}}",
@@ -2173,7 +2174,13 @@
       },
       "replaces": "I stedet for {{when}}",
       "ignoreNote": "Det fjernes også fra dine gemte opslag.",
-      "notSent": "Din beslutning nåede ikke frem. Prøv igen."
+      "notSent": "Din beslutning nåede ikke frem. Prøv igen.",
+      "waitingCount": "{{count}} forslag venter",
+      "approveAll": "Godkend alle",
+      "rejectAll": "Afvis alle",
+      "writing": "Står i kø eller skrives nu. Hvert opslag tager et par minutter.",
+      "openDocuments": "Åbn og gennemse",
+      "writeFailed": "CV og ansøgning kunne ikke skrives færdigt. Et CV kan allerede ligge på ansøgningen, så tjek den i appen, og prøv ellers igen fra chatten."
     }
   },
   "queue": {

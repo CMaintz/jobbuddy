@@ -66,10 +66,13 @@ export class ChatStore {
     this.activeId.set(chatId);
     if (this.threads()[chatId]?.streaming) return;
     this.api.messages(chatId).subscribe({
-      next: transcript => this.update(chatId, t => ({
-        ...t, messages: transcript.messages, contextLost: transcript.contextLost, error: null,
-        plans: byId(transcript.plans ?? []),
-      })),
+      next: transcript => {
+        this.update(chatId, t => ({
+          ...t, messages: transcript.messages, contextLost: transcript.contextLost, error: null,
+          plans: byId(transcript.plans ?? []),
+        }));
+        transcript.plans?.forEach(plan => this.decisions.watch(plan, fresh => this.keepPlan(chatId, fresh)));
+      },
       error: () => this.update(chatId, t => ({ ...t, error: 'FAILED' })),
     });
   }
@@ -104,19 +107,11 @@ export class ChatStore {
     return this.thread().plans[planId] ?? null;
   }
 
-  approve(planId: string, itemId: string): void {
-    this.decide('approve', planId, itemId);
-  }
-
-  reject(planId: string, itemId: string): void {
-    this.decide('reject', planId, itemId);
-  }
-
-  /** Only a pending item is sent; the server is the final guard against a second run. */
-  private decide(decision: Decision, planId: string, itemId: string): void {
+  /** A null item decides every item still waiting in the plan. */
+  decide(decision: Decision, planId: string, itemId: string | null): void {
     const chatId = this.activeId();
-    const item = this.plan(planId)?.items.find(i => i.id === itemId);
-    if (!chatId || item?.state !== 'PENDING') return;
+    const waiting = this.plan(planId)?.items.some(i => i.state === 'PENDING' && (itemId === null || i.id === itemId));
+    if (!chatId || !waiting) return;
     this.decisions.send(decision, planId, itemId, plan => this.keepPlan(chatId, plan));
   }
 
@@ -124,6 +119,7 @@ export class ChatStore {
     const before = this.threads()[chatId]?.plans[plan.id];
     this.update(chatId, t => ({ ...t, plans: { ...t.plans, [plan.id]: plan } }));
     this.changes.noteDone(before, plan);
+    this.decisions.watch(plan, fresh => this.keepPlan(chatId, fresh));
   }
 
   rename(chatId: string, title: string): void {

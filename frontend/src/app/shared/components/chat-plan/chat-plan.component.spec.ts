@@ -2,12 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { Router, provideRouter } from '@angular/router';
 import { ChatPlanComponent } from './chat-plan.component';
 import { ChatStore } from '../../../core/chat/chat.store';
 import { ChatPlan, PlanItem } from '../../../core/models/chat.model';
 
 const ITEM: PlanItem = {
-  id: 'i1', kind: 'IGNORE_POSTING', state: 'PENDING', failure: null, decidedAt: null, finishedAt: null,
+  id: 'i1', kind: 'IGNORE_POSTING', state: 'PENDING', failure: null, resultApplicationId: null,
+  decidedAt: null, finishedAt: null,
   details: {
     postingId: 'j1', applicationId: null, title: 'Rådgiver', company: 'Arla', fromStatus: null,
     toStatus: null, interviewBefore: null, interviewAt: null,
@@ -20,7 +22,7 @@ describe('ChatPlanComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ChatPlanComponent, TranslateModule.forRoot()],
-      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     backend = TestBed.inject(HttpTestingController);
   });
@@ -46,6 +48,26 @@ describe('ChatPlanComponent', () => {
 
     const sent = backend.expectOne(r => r.url === '/api/v1/chats/plans/p1/items/i1/approve');
     expect(sent.request.method).toBe('POST');
+  });
+
+  it('approves every waiting posting of a batch with one click', () => {
+    const card = render({ id: 'p1', createdAt: '2026-11-22T10:00:00Z', items: [
+      { ...ITEM, kind: 'GENERATE_DOCUMENTS' }, { ...ITEM, id: 'i2', kind: 'GENERATE_DOCUMENTS' }] });
+
+    card.querySelector<HTMLButtonElement>('[data-plan-approve-all]')!.click();
+
+    const sent = backend.expectOne(r => r.url === '/api/v1/chats/plans/p1/approve');
+    expect(sent.request.method).toBe('POST');
+  });
+
+  it('opens written documents in the application review, not anywhere else', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const card = render({ id: 'p1', createdAt: '2026-11-22T10:00:00Z', items: [
+      { ...ITEM, kind: 'GENERATE_DOCUMENTS', state: 'DONE', resultApplicationId: 'a1' }] });
+
+    card.querySelector<HTMLButtonElement>('[data-plan-open-documents]')!.click();
+
+    expect(navigate).toHaveBeenCalledWith(['/applications', 'a1', 'pack'], { queryParams: { jobId: 'j1' } });
   });
 
   it('offers no buttons on a proposal she has already decided', () => {

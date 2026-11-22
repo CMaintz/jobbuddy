@@ -40,5 +40,13 @@ class ChatAdapterBoundaryTest {
                     "com.autoapplicant.port.in.application.UpdateApplicationStatusUseCase")
             .orShould().dependOnClassesThat().haveFullyQualifiedName(
                     "com.autoapplicant.port.in.application.UpdateApplicationDatesUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.application.CreateApplicationUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.document.GenerateTailoredCvUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.ai.GenerateDocumentUseCase")
             .because("only her click in the app carries out a change the chat proposed");
 }

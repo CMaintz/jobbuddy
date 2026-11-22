@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpEventType, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChatStore } from './chat.store';
@@ -193,9 +193,9 @@ describe('ChatStore', () => {
   it('sends her approval once however often she clicks, and shows how it went', () => {
     proposeOnePlan();
 
-    store.approve('p1', 'i1');
-    store.approve('p1', 'i1');
-    store.reject('p1', 'i1');
+    store.decide('approve', 'p1', 'i1');
+    store.decide('approve', 'p1', 'i1');
+    store.decide('reject', 'p1', 'i1');
 
     backend.expectOne(r => r.method === 'POST' && r.url === APPROVE).flush(DONE_PLAN);
     backend.expectNone(r => r.url.includes('/plans/'));
@@ -209,7 +209,7 @@ describe('ChatStore', () => {
     proposeOnePlan();
     expect(saved).not.toHaveBeenCalled();
 
-    store.approve('p1', 'i1');
+    store.decide('approve', 'p1', 'i1');
     backend.expectOne(APPROVE).flush(DONE_PLAN);
 
     expect(saved).toHaveBeenCalledTimes(1);
@@ -218,7 +218,7 @@ describe('ChatStore', () => {
   it('lets her try again when her decision did not reach the app', () => {
     proposeOnePlan();
 
-    store.approve('p1', 'i1');
+    store.decide('approve', 'p1', 'i1');
     backend.expectOne(APPROVE).flush(null, { status: 0, statusText: 'Unknown Error' });
 
     expect(store.plan('p1')?.items[0].state).toBe('PENDING');
@@ -237,6 +237,37 @@ describe('ChatStore', () => {
 
     expect(store.plan('p1')?.items[0].state).toBe('DONE');
   });
+
+  it('approves with her own generation settings, as quick apply does', () => {
+    localStorage.setItem('jb-gen-defaults', JSON.stringify({ length: 'Short', cvTemplate: 'classic', voice: 'Formal', lang: 'Dansk' }));
+    proposeOnePlan();
+
+    store.decide('approve', 'p1', 'i1');
+
+    const sent = backend.expectOne(APPROVE);
+    expect(sent.request.body).toEqual({
+      lengthPreference: 'SHORT', cvTemplate: 'classic', voice: 'Formal', language: 'Dansk',
+    });
+    sent.flush(DONE_PLAN);
+    localStorage.removeItem('jb-gen-defaults');
+  });
+
+  it('asks again about documents being written until they are done', fakeAsync(() => {
+    const running = { ...PENDING_PLAN, items: [{ ...PENDING_PLAN.items[0], kind: 'GENERATE_DOCUMENTS', state: 'RUNNING' }] };
+    const written = { ...running, items: [{ ...running.items[0], state: 'DONE', resultApplicationId: 'a1' }] };
+    proposeOnePlan();
+    store.decide('approve', 'p1', 'i1');
+    backend.expectOne(APPROVE).flush(running);
+
+    tick(5000);
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/plans/p1').flush(running);
+    tick(5000);
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/plans/p1').flush(written);
+    tick(5000);
+
+    backend.expectNone('/api/v1/chats/plans/p1');
+    expect(store.plan('p1')?.items[0].resultApplicationId).toBe('a1');
+  }));
 
   it('turns the chat off when this backend has none', () => {
     store.load();

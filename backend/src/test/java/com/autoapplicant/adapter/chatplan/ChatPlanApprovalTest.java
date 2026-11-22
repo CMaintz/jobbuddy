@@ -3,7 +3,9 @@ package com.autoapplicant.adapter.chatplan;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -19,6 +21,7 @@ import com.autoapplicant.domain.chat.PlanItem.State;
 import com.autoapplicant.domain.chat.ProposalRefusedException;
 import com.autoapplicant.domain.chat.ProposedChange;
 import com.autoapplicant.domain.common.NotFoundException;
+import com.autoapplicant.domain.document.GenerationSettings;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.GetApplicationByIdUseCase;
 import com.autoapplicant.port.in.application.UpdateApplicationDatesUseCase;
@@ -35,6 +38,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +54,8 @@ class ChatPlanApprovalTest {
 
     private static final Instant NOW = Instant.parse("2026-11-22T10:00:00Z");
     private static final LocalDate DEADLINE = LocalDate.of(2026, 12, 1);
+    private static final String POSTING_TEXT =
+            "Vi søger en rådgiver, der kan skrive klart til borgerne og planlægge kampagner.";
     private static final LocalDateTime INTERVIEW = LocalDateTime.of(2026, 12, 3, 10, 0);
 
     private final InMemoryChatPlans plans = new InMemoryChatPlans();
@@ -63,8 +70,13 @@ class ChatPlanApprovalTest {
     private final UpdateApplicationStatusUseCase updateStatus = mock(UpdateApplicationStatusUseCase.class);
     private final UpdateApplicationDatesUseCase updateDates = mock(UpdateApplicationDatesUseCase.class);
     private final GetApplicationByIdUseCase getApplication = mock(GetApplicationByIdUseCase.class);
+    private final DocumentGeneration generation = mock(DocumentGeneration.class);
+    private final ApplicationForPosting applicationFor = mock(ApplicationForPosting.class);
+    /** Holds queued document runs until a test lets them go, as the background thread would. */
+    private final List<Runnable> queued = new ArrayList<>();
     private final ChatPlanApproval approval = new ChatPlanApproval(service, new PlanItemRunner(
-            saveJob, ignoreJob, updateStatus, updateDates, getApplication));
+            saveJob, ignoreJob, updateStatus, updateDates, getApplication),
+            new DocumentQueue(service, generation, applicationFor, queued::add));
 
     private final UUID her = UUID.randomUUID();
     private final UUID someoneElse = UUID.randomUUID();
@@ -77,7 +89,8 @@ class ChatPlanApprovalTest {
         when(chats.findById(chatId)).thenReturn(Optional.of(
                 new Chat(chatId, her, UUID.randomUUID(), null, NOW, NOW)));
         when(jobs.findById(postingId)).thenReturn(Optional.of(
-                Job.builder().id(postingId).title("Rådgiver").companyName("Kommunen").build()));
+                Job.builder().id(postingId).title("Rådgiver").companyName("Kommunen")
+                        .descriptionClean(POSTING_TEXT).build()));
         givenHerApplicationIs(ApplicationStatus.APPLIED, null);
     }
 
@@ -132,7 +145,8 @@ class ChatPlanApprovalTest {
     void someone_else_cannot_approve_or_reject_her_proposal() {
         ChatPlan plan = proposeSave();
 
-        assertThatThrownBy(() -> approval.approve(someoneElse, plan.id(), only(plan).id()))
+        assertThatThrownBy(() -> approval.approve(someoneElse, plan.id(), only(plan).id(),
+                GenerationSettings.DEFAULTS))
                 .isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> service.reject(someoneElse, plan.id(), only(plan).id()))
                 .isInstanceOf(NotFoundException.class);
@@ -271,13 +285,113 @@ class ChatPlanApprovalTest {
         assertThat(only(plans.findById(plan.id()).orElseThrow()).state()).isEqualTo(State.RUNNING);
     }
 
+    @Test
+    void approving_documents_answers_at_once_and_writes_them_afterwards_exactly_once() {
+        when(applicationFor.find(her, postingId)).thenReturn(applicationId);
+        ChatPlan plan = proposeDocuments(postingId);
+
+        ChatPlan answered = approve(plan);
+        approve(plan);
+
+        assertThat(only(answered).state()).isEqualTo(State.RUNNING);
+        verifyNoInteractions(generation);
+        queued.forEach(Runnable::run);
+        verify(generation, times(1)).write(eq(her), eq(postingId), any());
+        PlanItem done = only(plans.findById(plan.id()).orElseThrow());
+        assertThat(done.state()).isEqualTo(State.DONE);
+        assertThat(done.resultApplicationId()).isEqualTo(applicationId);
+    }
+
+    @Test
+    void approving_a_whole_batch_writes_each_waiting_posting_once_and_skips_one_she_rejected() {
+        UUID second = UUID.randomUUID();
+        UUID third = UUID.randomUUID();
+        givenPosting(second);
+        givenPosting(third);
+        ChatPlan plan = proposeDocuments(postingId, second, third);
+        service.reject(her, plan.id(), plan.items().get(1).id());
+
+        GenerationSettings shortOnes = new GenerationSettings("SHORT", null, null, null);
+        approval.approvePending(her, plan.id(), shortOnes);
+        approval.approvePending(her, plan.id(), GenerationSettings.DEFAULTS);
+        queued.forEach(Runnable::run);
+
+        verify(generation).write(her, postingId, shortOnes);
+        verify(generation).write(her, third, shortOnes);
+        verify(generation, never()).write(eq(her), eq(second), any());
+    }
+
+    @Test
+    void documents_that_failed_partway_are_failed_but_still_point_at_the_application() {
+        when(applicationFor.find(her, postingId)).thenReturn(applicationId);
+        org.mockito.Mockito.doThrow(new IllegalStateException("timeout"))
+                .when(generation).write(any(), any(), any());
+        ChatPlan plan = proposeDocuments(postingId);
+
+        approve(plan);
+        queued.forEach(Runnable::run);
+
+        PlanItem after = only(plans.findById(plan.id()).orElseThrow());
+        assertThat(after.failure()).isEqualTo(PlanFailure.FAILED);
+        assertThat(after.resultApplicationId()).isEqualTo(applicationId);
+    }
+
+    @Test
+    void documents_are_not_proposed_for_a_posting_with_no_text_to_tailor_to() {
+        UUID bare = UUID.randomUUID();
+        when(jobs.findById(bare)).thenReturn(Optional.of(
+                Job.builder().id(bare).title("Opslag").companyName("Firma").build()));
+
+        assertThatThrownBy(() -> proposeDocuments(bare)).isInstanceOf(ProposalRefusedException.class);
+    }
+
+    @Test
+    void documents_are_not_written_onto_an_application_she_has_already_sent() {
+        ChatPlan plan = proposeDocuments(postingId);
+        Application sent = new Application(applicationId, her, postingId, ApplicationStatus.APPLIED,
+                null, null, null, null, null, null, null, null, null, null, null, NOW, NOW, null,
+                null, DEADLINE, null);
+        when(applications.findByUserId(her)).thenReturn(List.of(sent));
+
+        ChatPlan after = approve(plan);
+
+        assertThat(only(after).failure()).isEqualTo(PlanFailure.CHANGED_SINCE);
+        assertThatThrownBy(() -> proposeDocuments(postingId)).isInstanceOf(ProposalRefusedException.class);
+        verifyNoInteractions(generation);
+    }
+
+    @Test
+    void rejecting_a_whole_batch_rejects_only_what_still_waits() {
+        UUID second = UUID.randomUUID();
+        givenPosting(second);
+        ChatPlan plan = proposeDocuments(postingId, second);
+        approval.approve(her, plan.id(), plan.items().get(0).id(), GenerationSettings.DEFAULTS);
+
+        ChatPlan after = service.rejectPending(her, plan.id());
+
+        assertThat(after.items()).extracting(PlanItem::state)
+                .containsExactly(State.RUNNING, State.REJECTED);
+    }
+
+    private ChatPlan proposeDocuments(UUID... postings) {
+        return service.propose(her, chatId, Arrays.stream(postings)
+                .map(id -> ProposedChange.posting(PlanItem.Kind.GENERATE_DOCUMENTS, id))
+                .toList());
+    }
+
+    private void givenPosting(UUID id) {
+        when(jobs.findById(id)).thenReturn(Optional.of(
+                Job.builder().id(id).title("Opslag").companyName("Firma").descriptionClean(POSTING_TEXT)
+                        .build()));
+    }
+
     private ChatPlan proposeSave() {
         return service.propose(her, chatId,
                 List.of(ProposedChange.posting(PlanItem.Kind.SAVE_POSTING, postingId)));
     }
 
     private ChatPlan approve(ChatPlan plan) {
-        return approval.approve(her, plan.id(), only(plan).id());
+        return approval.approve(her, plan.id(), only(plan).id(), GenerationSettings.DEFAULTS);
     }
 
     private static PlanItem only(ChatPlan plan) {

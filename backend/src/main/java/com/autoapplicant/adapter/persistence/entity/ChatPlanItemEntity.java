@@ -40,6 +40,9 @@ public class ChatPlanItemEntity {
     @Column(name = "failure")
     private String failure;
 
+    @Column(name = "result_application_id")
+    private UUID resultApplicationId;
+
     @Column(name = "decided_at")
     private Instant decidedAt;
 
@@ -58,6 +61,7 @@ public class ChatPlanItemEntity {
     public String getState() { return state; }
     public void setState(String state) { this.state = state; }
     public String getFailure() { return failure; }
+    public UUID getResultApplicationId() { return resultApplicationId; }
     public Instant getDecidedAt() { return decidedAt; }
     public Instant getFinishedAt() { return finishedAt; }
 }
