@@ -745,7 +745,8 @@
       "recheck": "Check again",
       "rechecking": "Checking...",
       "exportAnyway": "Download anyway",
-      "recheckFailed": "The check could not run. Try again in a moment."
+      "recheckFailed": "The check could not run. Try again in a moment.",
+      "cannotRecheck": "This letter can't be checked again, because it isn't tied to a posting with text."
     },
     "evidence": {
       "heading": "Thin on evidence",

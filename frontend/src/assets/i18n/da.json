@@ -745,7 +745,8 @@
       "recheck": "Tjek igen",
       "rechecking": "Tjekker...",
       "exportAnyway": "Hent alligevel",
-      "recheckFailed": "Tjekket kunne ikke gennemføres. Prøv igen om lidt."
+      "recheckFailed": "Tjekket kunne ikke gennemføres. Prøv igen om lidt.",
+      "cannotRecheck": "Ansøgningen kan ikke tjekkes igen, fordi den ikke hænger sammen med et opslag med tekst."
     },
     "evidence": {
       "heading": "Tynd på dokumentation",

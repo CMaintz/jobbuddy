@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.GeneratedDocument;
+import com.autoapplicant.domain.document.structured.LetterGateNoVerdictException;
 import com.autoapplicant.domain.document.structured.LetterGatePoint;
 import com.autoapplicant.domain.document.structured.LetterGateResult;
 import com.autoapplicant.domain.document.structured.LetterGateStop;
@@ -59,12 +60,16 @@ class LetterRecheckServiceTest {
 
     /** A stored letter edited since the gate failed it, so its review is stale. */
     private UUID editedLetter(UUID jobId) throws Exception {
+        return editedLetter(jobId, EDITED);
+    }
+
+    private UUID editedLetter(UUID jobId, String body) throws Exception {
         LetterReview stale = LetterReview.of(NEEDS,
                 new LetterGateResult(LetterGateVerdict.FAILED, List.of(), 3, LetterGateStop.OUT_OF_ROUNDS), GATED)
-                .checkedAgainst(EDITED);
+                .checkedAgainst(body);
         StructuredDocument letter = new StructuredDocument(null, DocumentType.COVER_LETTER, "ATS", "classic",
-                null, null, List.of(), EDITED, null, stale);
-        return rows.save(new GeneratedDocument(null, USER, null, jobId, DocumentType.COVER_LETTER, EDITED,
+                null, null, List.of(), body, null, stale);
+        return rows.save(new GeneratedDocument(null, USER, null, jobId, DocumentType.COVER_LETTER, body,
                 json.writeValueAsString(letter), "classic", "ATS", null, null, "manual-edit", null,
                 Instant.now())).id();
     }
@@ -130,5 +135,39 @@ class LetterRecheckServiceTest {
                 .withThrowableOfType(ExecutionException.class)
                 .withCauseInstanceOf(IllegalStateException.class);
         assertThat(stored(id).letterReview().stale()).isTrue();
+    }
+
+    @Test
+    void aRecheckWithNoVerdictKeepsTheStoredVerdict() throws Exception {
+        // Bug: a provider outage is stored as the letter's verdict, so the failed points the user
+        // was fixing disappear and the letter shows "no verdict" as if that were news about it.
+        when(gate.judge(any(), any())).thenReturn(new LetterGateResult(LetterGateVerdict.NOT_COMPLETED,
+                List.of(), 0, LetterGateStop.NO_VERDICT));
+        UUID id = editedLetter(JOB_ID);
+        String before = rows.rows.get(id).structuredContent();
+
+        assertThat(service.recheck(USER, id))
+                .failsWithin(Duration.ofSeconds(1))
+                .withThrowableOfType(ExecutionException.class)
+                .withCauseInstanceOf(LetterGateNoVerdictException.class);
+        assertThat(rows.rows.get(id).structuredContent()).isEqualTo(before);
+    }
+
+    @Test
+    void anEditedLetterIsJudgedAsTextWithItsParagraphs() throws Exception {
+        // Bug: the editor's HTML goes to the gate as-is, so its quotes come back with tags and
+        // "&amp;", and the per-paragraph count of point 14 sees one paragraph or none.
+        String html = "<p>Jeres chauffører &amp; revisorer skal følge reglerne.</p>"
+                + "<p>Jeg sikrer, at <strong>revisionen</strong> ikke finder huller.</p>";
+        String text = "Jeres chauffører & revisorer skal følge reglerne.\n\n"
+                +"Jeg sikrer, at revisionen ikke finder huller.";
+        when(gate.judge(eq(text), any())).thenReturn(PASSED);
+        UUID id = editedLetter(JOB_ID, html);
+
+        service.recheck(USER, id).join();
+
+        assertThat(stored(id).letterReview().gate().verdict()).isEqualTo(LetterGateVerdict.PASSED);
+        assertThat(stored(id).letterReview().stale()).isFalse();
+        assertThat(stored(id).bodyContent()).isEqualTo(html);
     }
 }

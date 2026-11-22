@@ -1,7 +1,9 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.GeneratedDocument;
+import com.autoapplicant.domain.document.structured.LetterGateNoVerdictException;
 import com.autoapplicant.domain.document.structured.LetterGateResult;
+import com.autoapplicant.domain.document.structured.LetterGateVerdict;
 import com.autoapplicant.domain.document.structured.LetterReview;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.job.Job;
@@ -52,16 +54,30 @@ public class LetterRecheckService implements RecheckLetterUseCase {
     private StructuredDocument judgeAndStore(UUID userId, UUID generatedDocumentId) {
         GeneratedDocument row = documents.findByIdAndUserId(generatedDocumentId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Generated document not found"));
-        String type = row.documentType() != null ? row.documentType().name() : null;
-        if (!PromptCompositionBuilder.isProseLetter(type)) {
-            throw new IllegalStateException("Only a letter can be checked");
-        }
+        String type = letterType(row);
         Job job = postingOf(row);
         StructuredDocument letter = structured(row);
         String body = letter.bodyContent() != null && !letter.bodyContent().isBlank()
                 ? letter.bodyContent() : row.content();
-        LetterGateResult verdict = gate.judge(body, new LetterBrief(type, job.descriptionClean(), null, job.country()));
+        LetterGateResult verdict = judge(body, new LetterBrief(type, job.descriptionClean(), null, job.country()));
         return writer.replaceLetterReview(row, letter, LetterReview.of(needsOf(letter), verdict, body));
+    }
+
+    private static String letterType(GeneratedDocument row) {
+        String type = row.documentType() != null ? row.documentType().name() : null;
+        if (!PromptCompositionBuilder.isProseLetter(type)) {
+            throw new IllegalStateException("Only a letter can be checked");
+        }
+        return type;
+    }
+
+    /** The gate's verdict on {@code body} read as text; never "no verdict", which it throws instead. */
+    private LetterGateResult judge(String body, LetterBrief brief) {
+        LetterGateResult verdict = gate.judge(LetterBodyText.plain(body), brief);
+        if (verdict.verdict() == LetterGateVerdict.NOT_COMPLETED) {
+            throw new LetterGateNoVerdictException();
+        }
+        return verdict;
     }
 
     private Job postingOf(GeneratedDocument row) {

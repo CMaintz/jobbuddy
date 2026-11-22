@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.domain.document.structured.LetterGateNoVerdictException;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.port.in.document.RecheckLetterUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,7 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +40,8 @@ public class LetterGateController {
     @Operation(summary = "Check a saved letter against its posting again and store the verdict")
     @ApiResponses({
             @ApiResponse(responseCode = "400", description = "Document not found for this user"),
-            @ApiResponse(responseCode = "409", description = "Not a letter written to a posting")
+            @ApiResponse(responseCode = "409", description = "Not a letter written to a posting"),
+            @ApiResponse(responseCode = "503", description = "The gate gave no verdict; the stored one is kept")
     })
     @PostMapping("/{id}/letter-gate")
     public DeferredResult<ResponseEntity<StructuredDocument>> recheckLetter(@PathVariable UUID id) {
@@ -53,5 +57,10 @@ public class LetterGateController {
                     return null;
                 });
         return result;
+    }
+
+    @ExceptionHandler(LetterGateNoVerdictException.class)
+    public ResponseEntity<String> noVerdict(LetterGateNoVerdictException e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
     }
 }

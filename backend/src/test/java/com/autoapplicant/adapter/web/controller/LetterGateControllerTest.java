@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.domain.document.structured.LetterGateNoVerdictException;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.document.RecheckLetterUseCase;
@@ -56,5 +57,12 @@ class LetterGateControllerTest {
     void someoneElsesLetterAnswersBadRequest() throws Exception {
         // Bug: as above, an unknown or foreign document id turns into a 500 instead of a 400.
         recheckFailingWith(new IllegalArgumentException("not found")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aRecheckWithNoVerdictAnswersServiceUnavailable() throws Exception {
+        // Bug: the outage reaches the client as a 500 with no way to tell it from a broken
+        // request, or as a 200 carrying "no verdict" that the page stores over the failed points.
+        recheckFailingWith(new LetterGateNoVerdictException()).andExpect(status().isServiceUnavailable());
     }
 }

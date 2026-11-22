@@ -13,7 +13,9 @@ public interface RecheckLetterUseCase {
      *
      * @return the stored letter with its new review; completes with {@link IllegalArgumentException}
      *     when the document is not the user's, and with {@link IllegalStateException} when it is not
-     *     a letter written to a posting, which leaves the gate nothing to judge it against
+     *     a letter written to a posting, which leaves the gate nothing to judge it against; and with
+     *     {@link com.autoapplicant.domain.document.structured.LetterGateNoVerdictException}, leaving
+     *     the stored verdict as it was, when the gate gives no verdict
      */
     CompletableFuture<StructuredDocument> recheck(UUID userId, UUID generatedDocumentId);
 }

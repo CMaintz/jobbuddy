@@ -21,6 +21,7 @@ import { PageBudget, pageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
 import { htmlTextContent } from '../../shared/utils/sanitize-html';
 import { Observable, tap, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -85,6 +86,11 @@ export class ApplicationOutputComponent implements OnInit {
   copied = signal(false);
   editing = signal(false);
   editDirty = signal(false);
+  /**
+   * Letters whose shown text is ahead of the server: an accepted refinement or an edit not yet
+   * reloaded. Their stored review cannot describe that text, even after a failed save.
+   */
+  private unsavedDocIds = signal<ReadonlySet<string>>(new Set());
   savingEdit = signal(false);
   originalText = signal('');
   refinedText = signal('');
@@ -295,6 +301,7 @@ export class ApplicationOutputComponent implements OnInit {
         // newest first so activeDoc picks the latest version per type
         this.documents.set([...docs].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        this.unsavedDocIds.set(new Set());
         // If the requested format has no document but another does, switch to it
         if (!this.activeDoc()) {
           const withDoc = this.formats.find(f => this.docCountForFormat(f.key) > 0);
@@ -341,6 +348,7 @@ export class ApplicationOutputComponent implements OnInit {
     if (!doc) return;
     this.documents.update(docs => docs.map(d =>
       d.id === doc.id ? { ...d, content: html } : d));
+    this.markUnsaved(doc.id);
     this.editDirty.set(true);
   }
 
@@ -419,6 +427,7 @@ export class ApplicationOutputComponent implements OnInit {
     // Update locally so the paper reflects the accepted text immediately
     this.documents.update(docs => docs.map(d =>
       d.id === doc.id ? { ...d, content: refined } : d));
+    this.markUnsaved(doc.id);
     this.originalText.set('');
     this.refinedText.set('');
     this.reviewCritique.set([]);
@@ -451,11 +460,26 @@ export class ApplicationOutputComponent implements OnInit {
   /** The gate's standing on the text an export would contain now. */
   exportCheck = computed<LetterCheckState>(() => {
     const doc = this.activeDoc();
-    return doc ? letterCheckState(doc, this.editDirty()) : 'notApplicable';
+    return doc ? letterCheckState(doc, this.hasUnsavedText(doc)) : 'notApplicable';
   });
 
-  /** The server judges the saved text against the posting, so unsaved edits or no job rule it out. */
-  canRecheck = computed<boolean>(() => !!this.activeDoc()?.jobId && !this.editDirty());
+  /**
+   * The server judges the saved, structured text against the posting's description, so unsaved
+   * text, a legacy row without structure or a job without a description rule it out.
+   */
+  canRecheck = computed<boolean>(() => {
+    const doc = this.activeDoc();
+    return !!doc?.jobId && !!doc.structuredContent && !!this.job()?.descriptionClean?.trim()
+      && !this.hasUnsavedText(doc);
+  });
+
+  private hasUnsavedText(doc: GeneratedDocument): boolean {
+    return this.editDirty() || this.unsavedDocIds().has(doc.id);
+  }
+
+  private markUnsaved(id: string): void {
+    this.unsavedDocIds.update(ids => new Set([...ids, id]));
+  }
 
   readonly exportGuard = new LetterExportGuard(
     () => this.exportCheck(),
@@ -469,7 +493,8 @@ export class ApplicationOutputComponent implements OnInit {
     return this.aiApi.recheckLetter(doc.id).pipe(tap({
       next: checked => this.documents.update(docs => docs.map(d =>
         d.id === doc.id ? { ...d, structuredContent: storedForm(checked) } : d)),
-      error: this.notify.onError('output.exportCheck.recheckFailed'),
+      error: (err: unknown) => this.notify.error(err instanceof HttpErrorResponse && err.status === 409
+        ? 'output.exportCheck.cannotRecheck' : 'output.exportCheck.recheckFailed'),
     }));
   }
 
