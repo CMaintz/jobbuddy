@@ -6,7 +6,7 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbPillComponent, PILL_CLASS, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 import { StatusPickerComponent } from '../../shared/components/status-picker/status-picker.component';
 import { NotifyService } from '../../shared/services/notify.service';
@@ -44,12 +44,6 @@ function kanbanColumn(key: KanbanColumnKey, label: string, tone: PillTone): Kanb
   return { key, label, tone, grouped: statuses.length > 1 };
 }
 
-interface StageConfig {
-  key: ApplicationStatus;
-  label: string;
-  tone: 'neutral' | 'accent' | 'success' | 'info' | 'danger' | 'violet';
-}
-
 @Component({
   selector: 'app-pipeline',
   imports: [
@@ -69,17 +63,13 @@ export class PipelineComponent implements OnInit {
   applications: Application[] = [];
   loading = true;
   view = signal<'table' | 'kanban'>('table');
-  activeFilters = signal<Set<ApplicationStatus>>(new Set());
+  /**
+   * Columns picked in the chips above the board. Both the table and the board filter on them, by
+   * column rather than raw status, so a chip always selects exactly what its column shows.
+   */
+  activeFilters = signal<ReadonlySet<KanbanColumnKey>>(new Set());
   search = signal('');
-
-  stages: StageConfig[] = [
-    { key: 'SAVED', label: 'pipeline.stage.saved', tone: 'neutral' },
-    { key: 'APPLIED', label: 'pipeline.stage.applied', tone: 'info' },
-    { key: 'RECRUITER_CONTACT', label: 'pipeline.stage.screen', tone: 'violet' },
-    { key: 'INTERVIEW', label: 'pipeline.stage.interview', tone: 'accent' },
-    { key: 'OFFER', label: 'pipeline.stage.offer', tone: 'success' },
-    { key: 'REJECTED', label: 'pipeline.stage.rejected', tone: 'danger' },
-  ];
+  protected readonly pillClass = PILL_CLASS;
 
   kanbanColumns: KanbanColumn[] = [
     kanbanColumn('saved', 'pipeline.stage.saved', 'neutral'),
@@ -125,22 +115,22 @@ export class PipelineComponent implements OnInit {
     this.pendingIds.set(ids);
   }
 
-  toggleStageFilter(stage: ApplicationStatus): void {
+  toggleColumnFilter(column: KanbanColumnKey): void {
     const current = new Set(this.activeFilters());
-    if (current.has(stage)) current.delete(stage);
-    else current.add(stage);
+    if (current.has(column)) current.delete(column);
+    else current.add(column);
     this.activeFilters.set(current);
   }
 
   filteredApplications(): Application[] {
     const filters = this.activeFilters();
-    let apps = this.searchedApplications();
-    if (filters.size > 0) apps = apps.filter(a => filters.has(a.status));
-    return apps;
+    const apps = this.searchedApplications();
+    return filters.size === 0 ? apps : apps.filter(a => filters.has(KANBAN_COLUMN_OF[a.status]));
   }
 
-  countByStage(stage: ApplicationStatus): number {
-    return this.searchedApplications().filter(a => a.status === stage).length;
+  shownColumns(): KanbanColumn[] {
+    const filters = this.activeFilters();
+    return filters.size === 0 ? this.kanbanColumns : this.kanbanColumns.filter(c => filters.has(c.key));
   }
 
   appsForColumn(column: KanbanColumnKey): Application[] {

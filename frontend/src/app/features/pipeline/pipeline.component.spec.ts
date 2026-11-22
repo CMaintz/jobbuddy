@@ -139,4 +139,56 @@ describe('PipelineComponent status change', () => {
     expect(savedColumn.querySelectorAll('a').length).toBe(2);
     expect(savedColumn.textContent).toContain('Kommunikationsmedarbejder');
   });
+
+  function filterChip(labelKey: string): HTMLButtonElement {
+    const chips = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'));
+    return chips.find(chip => chip.textContent!.includes(labelKey))!;
+  }
+
+  function oneOfEach(...statuses: ApplicationStatus[]): void {
+    fixture.componentInstance.applications = statuses.map(status => ({
+      ...saved, id: status, status, jobTitle: `Job ${status}`,
+    }));
+    fixture.detectChanges();
+  }
+
+  it('counts each filter chip by what its board column holds', () => {
+    oneOfEach('SAVED', 'PREPARING', 'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST',
+      'FINAL_ROUND', 'OFFER', 'REJECTED', 'ARCHIVED');
+
+    const counts = Object.fromEntries(['pipeline.stage.saved', 'pipeline.stage.applied',
+      'pipeline.column.inProgress', 'pipeline.stage.offer', 'pipeline.column.closed']
+      .map(key => [key, filterChip(key)?.textContent?.replace(key, '').trim()]));
+
+    expect(counts).toEqual({
+      'pipeline.stage.saved': '2', 'pipeline.stage.applied': '1', 'pipeline.column.inProgress': '4',
+      'pipeline.stage.offer': '1', 'pipeline.column.closed': '2',
+    });
+  });
+
+  it('filters the table to every status of the picked column', () => {
+    oneOfEach('SAVED', 'PREPARING', 'APPLIED');
+
+    filterChip('pipeline.stage.saved').click();
+    fixture.detectChanges();
+
+    const rows = Array.from((fixture.nativeElement as HTMLElement)
+      .querySelectorAll<HTMLElement>('[data-testid="pipeline-row"]')).map(row => row.textContent);
+    expect(rows.length).toBe(2);
+    expect(rows.join()).not.toContain('Job APPLIED');
+    expect(filterChip('pipeline.stage.saved').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('filters the board to the picked column', () => {
+    oneOfEach('PREPARING', 'APPLIED', 'OFFER');
+    fixture.componentInstance.view.set('kanban');
+    fixture.detectChanges();
+
+    filterChip('pipeline.stage.applied').click();
+    fixture.detectChanges();
+
+    const columns = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-testid="kanban-column"]');
+    expect(columns.length).toBe(1);
+    expect(columns[0].textContent).toContain('Job APPLIED');
+  });
 });
