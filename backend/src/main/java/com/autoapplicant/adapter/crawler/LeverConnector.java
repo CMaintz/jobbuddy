@@ -52,6 +52,9 @@ public class LeverConnector extends AbstractJobSourceConnector {
         for (String company : companies) {
             if (count >= targetJobs) break;
             String url = String.format(API_BASE, company);
+            // The postings API carries no company name; the slug stays in the URL and the
+            // posting ids, the configured name is what the company is filed under.
+            String employer = appProperties.getLever().getDisplayNames().getOrDefault(company, company);
             try {
                 Thread.sleep(config.delayMs());
                 String json = fetchWithRetry(url, 3);
@@ -91,7 +94,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
                         }
                     }
 
-                    String content = buildContent(title, company, location, team, commitment,
+                    String content = buildContent(title, employer, location, team, commitment,
                             descPlain.isBlank() ? Jsoup.parse(descHtml).text() : descPlain,
                             listsText.toString(), hostedUrl);
 
@@ -105,9 +108,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
                             List.of(),
                             null,
                             null,
-                            // The postings API carries no company, so the configured slug is
-                            // the only name there is.
-                            company,
+                            employer,
                             null,
                             null,
                             null

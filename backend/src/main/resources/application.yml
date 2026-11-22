@@ -251,6 +251,10 @@ app:
     companies:
       # Copenhagen
       - veo               # Veo Technologies, Copenhagen — sports cameras
+    # The name each board's employer is filed under. Without one the slug is used, and "veo"
+    # never lines up with "Veo Technologies" from Jobindex.
+    display-names:
+      veo: Veo Technologies
   teamtailor:
     # Format: {company}.teamtailor.com — verify at https://{slug}.teamtailor.com/jobs before adding.
     career-page-urls:
