@@ -40,7 +40,8 @@ public class LetterGateController {
     @Operation(summary = "Check a saved letter against its posting again and store the verdict")
     @ApiResponses({
             @ApiResponse(responseCode = "400", description = "Document not found for this user"),
-            @ApiResponse(responseCode = "409", description = "Not a letter written to a posting"),
+            @ApiResponse(responseCode = "409", description = "Not a letter written to a posting, or (code "
+                    + "LETTER_CHANGED_DURING_CHECK) the letter was edited while it was being checked"),
             @ApiResponse(responseCode = "503", description = "The gate gave no verdict; the stored one is kept")
     })
     @PostMapping("/{id}/letter-gate")

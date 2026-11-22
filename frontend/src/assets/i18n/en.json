@@ -750,7 +750,8 @@
       "rechecking": "Checking...",
       "exportAnyway": "Download anyway",
       "recheckFailed": "The check could not run. Try again in a moment.",
-      "cannotRecheck": "This letter can't be checked again, because it isn't tied to a posting with text."
+      "cannotRecheck": "This letter can't be checked again, because it isn't tied to a posting with text.",
+      "changedDuringCheck": "The letter was edited while the gate checked it, so the result was not saved. Check it again."
     },
     "evidence": {
       "heading": "Thin on evidence",

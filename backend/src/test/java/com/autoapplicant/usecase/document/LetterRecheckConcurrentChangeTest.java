@@ -11,6 +11,7 @@ import com.autoapplicant.adapter.persistence.adapter.ApplicationPersistenceAdapt
 import com.autoapplicant.adapter.persistence.adapter.DocumentPersistenceAdapter;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.GeneratedDocument;
+import com.autoapplicant.domain.document.structured.LetterChangedDuringCheckException;
 import com.autoapplicant.domain.document.structured.LetterGateResult;
 import com.autoapplicant.domain.document.structured.LetterGateStop;
 import com.autoapplicant.domain.document.structured.LetterGateVerdict;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -117,13 +119,40 @@ class LetterRecheckConcurrentChangeTest extends PostgresIntegrationTest {
 
         assertThat(recheck.recheck(userId, letterId)).failsWithin(Duration.ZERO)
                 .withThrowableOfType(ExecutionException.class)
-                .withCauseInstanceOf(IllegalStateException.class);
+                .withCauseInstanceOf(LetterChangedDuringCheckException.class);
 
         StructuredDocument stored = json.readValue(jdbc.queryForObject(
                 "SELECT structured_content FROM generated_documents WHERE id = ?", String.class, letterId),
                 StructuredDocument.class);
         assertThat(stored.bodyContent()).isEqualTo(edited);
         assertThat(stored.letterReview().gate().verdict()).isEqualTo(LetterGateVerdict.FAILED);
+    }
+
+    @Test
+    void anOverlappingRecheckOfTheSameTextStillStoresItsVerdict() throws Exception {
+        // Bug: the second check's write finds the first one's review in place and calls the
+        // unchanged letter "changed", so a retry or a second tab gets a conflict.
+        GeneratedDocumentWriter writer = new GeneratedDocumentWriter(documents, json);
+        LetterRecheckService recheck = new LetterRecheckService(documents, jobs, gate, writer, json);
+        UUID letterId = staleLetter();
+        LetterGateResult failed = new LetterGateResult(LetterGateVerdict.FAILED, List.of(), 1, null);
+        AtomicBoolean firstCall = new AtomicBoolean(true);
+        when(gate.judge(any(), any())).thenAnswer(call -> {
+            if (firstCall.getAndSet(false)) {
+                recheck.recheck(userId, letterId).join();
+                return failed;
+            }
+            return new LetterGateResult(LetterGateVerdict.PASSED, List.of(), 0, null);
+        });
+
+        StructuredDocument returned = recheck.recheck(userId, letterId).join();
+
+        LetterReview stored = json.readValue(jdbc.queryForObject(
+                "SELECT structured_content FROM generated_documents WHERE id = ?", String.class, letterId),
+                StructuredDocument.class).letterReview();
+        assertThat(stored.gate()).isEqualTo(failed);
+        assertThat(stored.stale()).isFalse();
+        assertThat(returned.letterReview().gate()).isEqualTo(failed);
     }
 
     /** A saved letter whose review judged other text, so it shows as stale and wants a recheck. */

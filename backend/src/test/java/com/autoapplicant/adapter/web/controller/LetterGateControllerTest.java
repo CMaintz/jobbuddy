@@ -4,10 +4,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
+import com.autoapplicant.domain.document.structured.LetterChangedDuringCheckException;
 import com.autoapplicant.domain.document.structured.LetterGateNoVerdictException;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
@@ -64,5 +66,14 @@ class LetterGateControllerTest {
         // Bug: the outage reaches the client as a 500 with no way to tell it from a broken
         // request, or as a 200 carrying "no verdict" that the page stores over the failed points.
         recheckFailingWith(new LetterGateNoVerdictException()).andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void aLetterEditedDuringTheCheckAnswersConflictWithItsCode() throws Exception {
+        // Bug: the conflict carries no code, so the page tells the user this letter can never be
+        // checked when checking it again would work.
+        recheckFailingWith(new LetterChangedDuringCheckException())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(LetterChangedDuringCheckException.CODE));
     }
 }
