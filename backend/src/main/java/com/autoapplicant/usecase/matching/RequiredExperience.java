@@ -20,9 +20,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Specialist experience a posting demands that a work history clearly cannot meet: years of
- * security architecture, incident response, SOC work, penetration testing or software
- * development.
+ * Senior specialist experience a posting demands that a work history clearly cannot meet: four
+ * or more years of security architecture, SOC work, penetration testing or software development.
  *
  * <p>Skill labels cannot see this either. A comms profile with a GRC course shares most of a
  * technical security post's labels ("Sikkerhedsarkitektur", "Risikovurdering", "NIS2"), so
@@ -32,8 +31,12 @@ import java.util.stream.Stream;
  * <ul>
  *   <li>Only REQUIRED asks the enrichment kinds as EXPERIENCE and that say "erfaring",
  *       "experience" or similar count. "Kendskab til" is knowledge, which a course can give.
+ *   <li>Only asks for {@link #SENIOR_YEARS} years or more count. Plain "erfaring med" or "2 års
+ *       erfaring" is a normal ask that a graduate applies to on education alone.
  *   <li>Only areas in {@link #AREAS} count. "Erfaring med intern kommunikation" names nothing
- *       a work history can be checked against with any confidence.
+ *       a work history can be checked against with any confidence. Incident response is left
+ *       out like generic IT-sikkerhed: it is part of a GRC and crisis-comms field, learnt on
+ *       courses rather than in a job title.
  *   <li>An ask that leaves a way in ("gerne", "en fordel", "eller lignende", "fx") counts as
  *       met, as for credentials. So does one naming an alternative outside the catalogue.
  *   <li>Any hands-on technical role meets an area's ask without naming the area: an engineer
@@ -45,6 +48,9 @@ import java.util.stream.Stream;
  * </ul>
  */
 final class RequiredExperience {
+
+    /** The fewest years asked that make an ask senior enough to put a post out of reach. */
+    private static final int SENIOR_YEARS = 4;
 
     private static final int FLAGS = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
             | Pattern.UNICODE_CHARACTER_CLASS;
@@ -119,8 +125,6 @@ final class RequiredExperience {
     private static final List<Area> AREAS = List.of(
             area("sikkerhedsarkitektur|security architecture",
                     "erfaring med sikkerhedsarkitektur"),
-            area("incident response|håndtering af (it-)?sikkerhedshændelser",
-                    "erfaring med incident response"),
             area(SOC + "|security operations cent", "erfaring fra et SOC"),
             area("penetrationstest|penetration test|\\bpentest", "erfaring med penetrationstest"),
             new Area(Pattern.compile(DEVELOPED_SOFTWARE, FLAGS),
@@ -152,35 +156,37 @@ final class RequiredExperience {
                 .filter(Objects::nonNull)
                 .filter(text -> EXPERIENCE_WORDING.matcher(text).find())
                 .filter(text -> !HardRequirements.leavesAWayIn(text))
+                .filter(text -> yearsAsked(text).orElse(0) >= SENIOR_YEARS)
                 .map(this::unmetBy)
                 .flatMap(Optional::stream)
                 .findFirst();
     }
 
-    /** The reason {@code ask} is out of reach: every alternative it names is an area lacked. */
+    /**
+     * The reason {@code ask}, a senior ask, is out of reach: every alternative it names is an
+     * area lacked.
+     */
     private Optional<String> unmetBy(String ask) {
+        int years = yearsAsked(ask).orElseThrow();
         List<Optional<Area>> named = Arrays.stream(ALTERNATIVES.split(ask))
                 .filter(part -> !part.isBlank())
                 .map(RequiredExperience::areaNamedIn)
                 .toList();
         // An alternative outside the catalogue leaves a way in.
         if (named.stream().anyMatch(Optional::isEmpty)) return Optional.empty();
-        OptionalInt years = yearsAsked(ask);
         List<Area> areas = named.stream().flatMap(Optional::stream).distinct().toList();
         if (areas.stream().anyMatch(area -> meets(area, years))) return Optional.empty();
-        String prefix = years.isPresent() ? years.getAsInt() + " års " : "";
-        return Optional.of("Kræver " + prefix + areas.get(0).phrase());
+        return Optional.of("Kræver " + years + " års " + areas.get(0).phrase());
     }
 
-    private boolean meets(Area area, OptionalInt years) {
+    private boolean meets(Area area, int years) {
         List<WorkExperience> related = history.stream().filter(role -> relates(role, area))
                 .toList();
         if (related.isEmpty()) return false;
-        if (years.isEmpty()) return true;
         if (related.stream().anyMatch(role -> role.startDate() == null)) return true;
         long months = related.stream().mapToLong(this::months).sum();
-        // Half the years asked, in months: 3 years is met from 18 months.
-        return months * 2 >= years.getAsInt() * 12L;
+        // Half the years asked, in months: 4 years is met from 24 months.
+        return months * 2 >= years * 12L;
     }
 
     private static boolean relates(WorkExperience role, Area area) {

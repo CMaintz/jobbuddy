@@ -110,14 +110,6 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     private static final Set<String> LAW_DEGREE_POSTS = Set.of(
             "jurist-med-fokus-paa-informationssikkerh", "compliance-og-gdpr-specialist-hos-forsyn");
 
-    /**
-     * Posts inside the comms profile's own field that require hands-on technical security
-     * experience: defining security architecture, and incident response in a SOC. Their labels
-     * overlap her GRC course; only her work history rules them out.
-     */
-    private static final Set<String> TECHNICAL_SECURITY_POSTS = Set.of(
-            "vil-du-vaere-med-til-at-saette-retningen", "cybersikkerhedsspecialist-til-kritisk-in");
-
     /** The day the eval scores on, so the profiles' current roles don't grow with the calendar. */
     private static final Clock SCORED_ON = Clock.fixed(
             LocalDate.of(2026, 6, 1).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
@@ -184,19 +176,6 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         LAW_DEGREE_POSTS.forEach(id -> {
             assertThat(results.get(id).matchLabel()).as(id).isEqualTo(MatchLabel.WEAK);
             assertThat(results.get(id).matchReasons()).as(id).first().isEqualTo("Kræver cand.jur.");
-        });
-    }
-
-    @Test
-    void a_technical_security_post_falls_below_strong_for_the_comms_profile_and_says_why()
-            throws IOException {
-        Map<String, MatchResult> results = resultsFor(COMMS);
-
-        TECHNICAL_SECURITY_POSTS.forEach(id -> {
-            assertThat(results.get(id).matchLabel()).as(id)
-                    .isIn(MatchLabel.MODERATE, MatchLabel.WEAK);
-            assertThat(results.get(id).matchReasons()).as(id).first().asString()
-                    .startsWith(OUT_OF_REACH).contains("erfaring");
         });
     }
 
@@ -275,8 +254,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     /**
      * A posting outside the profile's own field and labelled a mismatch. Mismatches inside the
      * field are left out: they share a GRC profile's skill labels and differ in the experience
-     * they ask for, which the scorer weighs only for catalogued specialist areas (a GDPR post
-     * asking three years of legal advice still scores on its labels).
+     * they ask for, which the scorer weighs only for senior asks in catalogued specialist areas
+     * (a GDPR post asking three years of legal advice, or a security post asking architecture
+     * experience with no year count, still scores on its labels).
      */
     private Predicate<JsonNode> clearMismatches(String profile) {
         Set<String> ownField = profile.equals(COMMS) ? COMMS_FIELD : ENGINEER_FIELD;

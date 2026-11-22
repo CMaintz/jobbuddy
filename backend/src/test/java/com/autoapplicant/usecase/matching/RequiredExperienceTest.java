@@ -34,34 +34,69 @@ class RequiredExperienceTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            Erfaring med at definere krav til sikkerhedsarkitektur, der understøtter forretningen | Kræver erfaring med sikkerhedsarkitektur
-            Erfaring med håndtering af sikkerhedshændelser (Incident Response)                    | Kræver erfaring med incident response
-            Du har erfaring fra en SOC                                                             | Kræver erfaring fra et SOC
-            Solid erfaring med penetrationstest                                                    | Kræver erfaring med penetrationstest
-            Mindst 3 års erfaring med penetrationstest                                             | Kræver 3 års erfaring med penetrationstest
-            3+ years of experience in security architecture                                        | Kræver 3 års erfaring med sikkerhedsarkitektur
-            Minimum fem års erfaring som softwareudvikler                                          | Kræver 5 års erfaring som softwareudvikler
+            5 års erfaring med at definere krav til sikkerhedsarkitektur | Kræver 5 års erfaring med sikkerhedsarkitektur
+            Du har mindst 4 års erfaring fra en SOC                      | Kræver 4 års erfaring fra et SOC
+            Mindst 4 års erfaring med penetrationstest                   | Kræver 4 års erfaring med penetrationstest
+            4+ years of experience in security architecture              | Kræver 4 års erfaring med sikkerhedsarkitektur
+            Minimum fem års erfaring som softwareudvikler                | Kræver 5 års erfaring som softwareudvikler
             """)
-    void a_specialist_ask_a_history_without_any_technical_role_cannot_meet_is_unmet(
+    void a_senior_specialist_ask_a_history_without_any_technical_role_cannot_meet_is_unmet(
             String ask, String reason) {
         RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
 
         assertThat(gate.unmet(posting(required(ask)))).contains(reason);
     }
 
+    /**
+     * Asking for experience is normal, and a graduate applies to a junior ask on education
+     * alone. Only a senior ask can put a post out of reach.
+     */
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            Erfaring med penetrationstest er en fordel
-            Gerne erfaring med incident response
-            Experience with security architecture is nice to have
-            Erfaring med overvågning af sikkerhedshændelser i et SOC eller lignende miljø
-            Erfaring med fx sikkerhedsarkitektur eller cloud
-            Erfaring med penetrationstest eller kommunikation
+            Erfaring med at definere krav til sikkerhedsarkitektur, der understøtter forretningen
+            Du har erfaring fra en SOC
+            Solid erfaring med penetrationstest
+            Erfaring med softwareudvikling
+            Flere års erfaring med softwareudvikling
+            2 års erfaring med sikkerhedsarkitektur
+            Mindst 3 års erfaring som softwareudvikler
+            3+ years of experience in security architecture
+            """)
+    void an_ask_for_no_or_under_four_years_is_met(String ask) {
+        RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
+
+        assertThat(gate.unmet(posting(required(ask)))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            Mindst 5 års erfaring med penetrationstest er en fordel
+            Gerne 5 års erfaring fra et SOC
+            5+ years of experience with security architecture is nice to have
+            5 års erfaring med overvågning af sikkerhedshændelser i et SOC eller lignende miljø
+            5 års erfaring med fx sikkerhedsarkitektur eller cloud
+            5 års erfaring med penetrationstest eller kommunikation
             Cirka 5-8 års erfaring med strategisk intern kommunikation
-            Mindst 3 års erfaring med GDPR-rådgivning og juridisk sparring
-            Kendskab til sikkerhedsarkitektur
+            Mindst 5 års erfaring med GDPR-rådgivning og juridisk sparring
+            5 års kendskab til sikkerhedsarkitektur
             """)
     void an_ask_that_is_soft_open_or_outside_the_catalogue_is_met(String ask) {
+        RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
+
+        assertThat(gate.unmet(posting(required(ask)))).isEmpty();
+    }
+
+    /**
+     * Incident response is part of a GRC and crisis-comms field, and sits on a course or skill
+     * list rather than a job title, so a comms history may well have done it.
+     */
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            Mindst 5 års erfaring med incident response
+            5 års erfaring med håndtering af sikkerhedshændelser (Incident Response)
+            Mindst fem års erfaring med håndtering af it-sikkerhedshændelser
+            """)
+    void an_incident_response_ask_is_met_by_a_comms_history(String ask) {
         RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
 
         assertThat(gate.unmet(posting(required(ask)))).isEmpty();
@@ -70,10 +105,10 @@ class RequiredExperienceTest {
     /** Working beside developers, or in their team, is not being one. */
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            Erfaring med at arbejde tæt sammen med softwareudviklere
-            Experience working in a software development team
-            Erfaring fra et softwareudviklingsteam
-            Erfaring fra det soc. område
+            5 års erfaring med at arbejde tæt sammen med softwareudviklere
+            5+ years of experience working in a software development team
+            5 års erfaring fra et softwareudviklingsteam
+            5 års erfaring fra det soc. område
             """)
     void an_ask_where_the_area_is_a_collaborator_or_lookalike_is_met(String ask) {
         RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
@@ -83,10 +118,10 @@ class RequiredExperienceTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            Mindst 3 års erfaring som softwareudvikler     | Kræver 3 års erfaring som softwareudvikler
-            Erfaring med softwareudvikling                 | Kræver erfaring som softwareudvikler
-            Erfaring med at udvikle software               | Kræver erfaring som softwareudvikler
-            Experience as a software engineer              | Kræver erfaring som softwareudvikler
+            Mindst 4 års erfaring som softwareudvikler     | Kræver 4 års erfaring som softwareudvikler
+            4 års erfaring med softwareudvikling           | Kræver 4 års erfaring som softwareudvikler
+            Fire års erfaring med at udvikle software      | Kræver 4 års erfaring som softwareudvikler
+            4+ years of experience as a software engineer  | Kræver 4 års erfaring som softwareudvikler
             """)
     void an_ask_to_have_developed_software_is_unmet_by_a_comms_history(String ask,
                                                                        String reason) {
@@ -110,17 +145,17 @@ class RequiredExperienceTest {
         RequiredExperience gate = RequiredExperience.forHistory(List.of(
                 role(title, "", LocalDate.of(2020, 1, 1), null, true)), TODAY);
 
-        assertThat(gate.unmet(posting(required("Erfaring med agil softwareudvikling"))))
+        assertThat(gate.unmet(posting(required("Mindst 4 års erfaring med agil softwareudvikling"))))
                 .isEmpty();
     }
 
     /** An education ask is checked against the degree, never against the work history. */
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            Uddannelsesmæssig baggrund i softwareudvikling | EDUCATION
-            Uddannelsesmæssig baggrund i softwareudvikling | EXPERIENCE
-            Erfaring med softwareudvikling                 | EDUCATION
-            Erfaring med softwareudvikling                 | SKILL
+            5 års uddannelsesmæssig baggrund i softwareudvikling | EDUCATION
+            5 års uddannelsesmæssig baggrund i softwareudvikling | EXPERIENCE
+            5 års erfaring med softwareudvikling                 | EDUCATION
+            5 års erfaring med softwareudvikling                 | SKILL
             """)
     void an_ask_that_is_not_an_experience_ask_is_left_to_other_checks(String ask,
                                                                      RequirementKind kind) {
@@ -134,21 +169,20 @@ class RequiredExperienceTest {
     @Test
     void an_ask_the_posting_only_prefers_is_met() {
         RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
-        JobRequirement preferred = new JobRequirement("Erfaring med penetrationstest",
+        JobRequirement preferred = new JobRequirement("Mindst 5 års erfaring med penetrationstest",
                 RequirementTier.PREFERRED, RequirementKind.EXPERIENCE, null);
 
         assertThat(gate.unmet(posting(preferred))).isEmpty();
     }
 
     /**
-     * An engineer moving into security may well define security architecture or handle
-     * incidents; nothing in the history says otherwise, so the ask stays open to them.
+     * An engineer moving into security may well define security architecture or work in a SOC;
+     * nothing in the history says otherwise, so the ask stays open to them.
      */
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            Erfaring med at definere krav til sikkerhedsarkitektur
-            Erfaring med håndtering af sikkerhedshændelser (Incident Response)
-            Du har erfaring fra en SOC
+            Mindst 5 års erfaring med at definere krav til sikkerhedsarkitektur
+            Du har mindst 5 års erfaring fra en SOC
             """)
     void any_technical_role_leaves_a_security_ask_open(String ask) {
         RequiredExperience gate = RequiredExperience.forHistory(List.of(
@@ -164,7 +198,7 @@ class RequiredExperienceTest {
                 role("Konsulent", "Penetrationstest af kunders webapplikationer",
                         LocalDate.of(2023, 1, 1), null, true)), TODAY);
 
-        assertThat(gate.unmet(posting(required("Mindst 3 års erfaring med penetrationstest"))))
+        assertThat(gate.unmet(posting(required("Mindst 6 års erfaring med penetrationstest"))))
                 .isEmpty();
     }
 
@@ -172,8 +206,8 @@ class RequiredExperienceTest {
     @CsvSource(delimiter = '|', textBlock = """
             2024-06-01 | 2026-06-01 | false | 4 |
             2023-06-01 | 2025-06-01 | false | 5 | Kræver 5 års erfaring som softwareudvikler
-            2025-06-01 |            | true  | 2 |
-            2025-06-01 |            | true  | 3 | Kræver 3 års erfaring som softwareudvikler
+            2024-06-01 |            | true  | 4 |
+            2025-06-01 |            | true  | 4 | Kræver 4 års erfaring som softwareudvikler
             """)
     void a_related_role_meets_a_years_ask_from_half_the_years_on(LocalDate start, LocalDate end,
                                                                  boolean current, int years,
@@ -210,7 +244,8 @@ class RequiredExperienceTest {
     void a_profile_with_no_work_history_is_unknown_not_lacking() {
         RequiredExperience gate = RequiredExperience.forHistory(List.of(), TODAY);
 
-        assertThat(gate.unmet(posting(required("Erfaring med penetrationstest")))).isEmpty();
+        assertThat(gate.unmet(posting(required("Mindst 5 års erfaring med penetrationstest"))))
+                .isEmpty();
     }
 
     private static WorkExperience role(String title, String description, LocalDate start,
