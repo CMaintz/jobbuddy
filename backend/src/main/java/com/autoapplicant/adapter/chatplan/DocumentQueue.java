@@ -26,12 +26,15 @@ public class DocumentQueue {
 
     private final DecideChatPlanUseCase decisions;
     private final DocumentGeneration generation;
+    private final ApplicationForPosting applications;
     private final Executor executor;
 
     public DocumentQueue(DecideChatPlanUseCase decisions, DocumentGeneration generation,
+                         ApplicationForPosting applications,
                          @Qualifier("chatPlanExecutor") Executor executor) {
         this.decisions = decisions;
         this.generation = generation;
+        this.applications = applications;
         this.executor = executor;
     }
 
@@ -55,7 +58,7 @@ public class DocumentQueue {
         UUID applicationId = null;
         PlanFailure failure = PlanFailure.FAILED;
         try {
-            applicationId = generation.applicationFor(userId, postingId);
+            applicationId = applications.find(userId, postingId);
             generation.write(userId, postingId, settings);
             failure = null;
         } catch (RuntimeException e) {

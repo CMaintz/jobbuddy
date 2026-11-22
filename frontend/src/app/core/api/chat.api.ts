@@ -11,6 +11,7 @@ export interface ApproveSettings {
   lengthPreference?: string;
   cvTemplate?: string;
   voice?: string;
+  language?: string;
 }
 
 @Injectable({ providedIn: 'root' })

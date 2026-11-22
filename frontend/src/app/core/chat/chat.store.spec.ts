@@ -209,7 +209,7 @@ describe('ChatStore', () => {
     proposeOnePlan();
     expect(saved).not.toHaveBeenCalled();
 
-    store.approve('p1', 'i1');
+    store.decide('approve', 'p1', 'i1');
     backend.expectOne(APPROVE).flush(DONE_PLAN);
 
     expect(saved).toHaveBeenCalledTimes(1);
@@ -239,13 +239,15 @@ describe('ChatStore', () => {
   });
 
   it('approves with her own generation settings, as quick apply does', () => {
-    localStorage.setItem('jb-gen-defaults', JSON.stringify({ length: 'Short', cvTemplate: 'classic', voice: 'Formal' }));
+    localStorage.setItem('jb-gen-defaults', JSON.stringify({ length: 'Short', cvTemplate: 'classic', voice: 'Formal', lang: 'Dansk' }));
     proposeOnePlan();
 
     store.decide('approve', 'p1', 'i1');
 
     const sent = backend.expectOne(APPROVE);
-    expect(sent.request.body).toEqual({ lengthPreference: 'SHORT', cvTemplate: 'classic', voice: 'Formal' });
+    expect(sent.request.body).toEqual({
+      lengthPreference: 'SHORT', cvTemplate: 'classic', voice: 'Formal', language: 'Dansk',
+    });
     sent.flush(DONE_PLAN);
     localStorage.removeItem('jb-gen-defaults');
   });

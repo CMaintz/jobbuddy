@@ -71,11 +71,12 @@ class ChatPlanApprovalTest {
     private final UpdateApplicationDatesUseCase updateDates = mock(UpdateApplicationDatesUseCase.class);
     private final GetApplicationByIdUseCase getApplication = mock(GetApplicationByIdUseCase.class);
     private final DocumentGeneration generation = mock(DocumentGeneration.class);
+    private final ApplicationForPosting applicationFor = mock(ApplicationForPosting.class);
     /** Holds queued document runs until a test lets them go, as the background thread would. */
     private final List<Runnable> queued = new ArrayList<>();
     private final ChatPlanApproval approval = new ChatPlanApproval(service, new PlanItemRunner(
             saveJob, ignoreJob, updateStatus, updateDates, getApplication),
-            new DocumentQueue(service, generation, queued::add));
+            new DocumentQueue(service, generation, applicationFor, queued::add));
 
     private final UUID her = UUID.randomUUID();
     private final UUID someoneElse = UUID.randomUUID();
@@ -286,7 +287,7 @@ class ChatPlanApprovalTest {
 
     @Test
     void approving_documents_answers_at_once_and_writes_them_afterwards_exactly_once() {
-        when(generation.applicationFor(her, postingId)).thenReturn(applicationId);
+        when(applicationFor.find(her, postingId)).thenReturn(applicationId);
         ChatPlan plan = proposeDocuments(postingId);
 
         ChatPlan answered = approve(plan);
@@ -310,7 +311,7 @@ class ChatPlanApprovalTest {
         ChatPlan plan = proposeDocuments(postingId, second, third);
         service.reject(her, plan.id(), plan.items().get(1).id());
 
-        GenerationSettings shortOnes = new GenerationSettings("SHORT", null, null);
+        GenerationSettings shortOnes = new GenerationSettings("SHORT", null, null, null);
         approval.approvePending(her, plan.id(), shortOnes);
         approval.approvePending(her, plan.id(), GenerationSettings.DEFAULTS);
         queued.forEach(Runnable::run);
@@ -322,7 +323,7 @@ class ChatPlanApprovalTest {
 
     @Test
     void documents_that_failed_partway_are_failed_but_still_point_at_the_application() {
-        when(generation.applicationFor(her, postingId)).thenReturn(applicationId);
+        when(applicationFor.find(her, postingId)).thenReturn(applicationId);
         org.mockito.Mockito.doThrow(new IllegalStateException("timeout"))
                 .when(generation).write(any(), any(), any());
         ChatPlan plan = proposeDocuments(postingId);

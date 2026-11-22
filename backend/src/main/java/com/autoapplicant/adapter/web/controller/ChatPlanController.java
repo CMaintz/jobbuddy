@@ -77,6 +77,7 @@ public class ChatPlanController {
     private static GenerationSettings settings(ChatRequests.Approve req) {
         return req == null
                 ? GenerationSettings.DEFAULTS
-                : new GenerationSettings(req.lengthPreference(), req.cvTemplate(), req.voice());
+                : new GenerationSettings(req.lengthPreference(), req.cvTemplate(), req.voice(),
+                        req.language());
     }
 }

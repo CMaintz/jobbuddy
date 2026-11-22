@@ -73,7 +73,12 @@ function isRunning(plan: ChatPlan): boolean {
 
 function genSettings(): ApproveSettings {
   const defaults = loadGenDefaults();
-  return { lengthPreference: defaults.length?.toUpperCase(), cvTemplate: defaults.cvTemplate, voice: defaults.voice };
+  return {
+    lengthPreference: defaults.length?.toUpperCase(),
+    cvTemplate: defaults.cvTemplate,
+    voice: defaults.voice,
+    language: defaults.lang,
+  };
 }
 
 function withId(ids: ReadonlySet<string>, id: string, present: boolean): ReadonlySet<string> {

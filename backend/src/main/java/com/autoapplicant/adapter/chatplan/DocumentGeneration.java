@@ -1,18 +1,15 @@
 package com.autoapplicant.adapter.chatplan;
 
 import com.autoapplicant.domain.ai.GenerateDocumentCommand;
-import com.autoapplicant.domain.application.Application;
-import com.autoapplicant.domain.application.ApplicationStatus;
-import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.GenerationSettings;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.port.in.ai.GenerateDocumentUseCase;
-import com.autoapplicant.port.in.application.CreateApplicationUseCase;
-import com.autoapplicant.port.in.application.GetApplicationsUseCase;
 import com.autoapplicant.port.in.document.GenerateTailoredCvUseCase;
 import com.autoapplicant.port.in.document.PersistGeneratedDocumentUseCase;
+import com.autoapplicant.port.in.job.GetJobByIdUseCase;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -22,16 +19,20 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Makes a tailored CV and a cover letter for one posting the way the app's quick apply does: on
- * her application for the posting (one is started if she has none), through the same generation
- * use cases, so the letter passes the same fact gate and both follow her length and voice. The
- * documents are saved for her to review in the app's own editor; nothing is exported or sent.
+ * Makes a tailored CV and a cover letter for one posting the way the app's quick apply does:
+ * through the same generation use cases, so the letter passes the same fact gate and both follow her length, voice and
+ * language. The documents are saved for her to review in the app's own editor; nothing is
+ * exported or sent.
  */
 @Component
 @Profile("desktop")
 public class DocumentGeneration {
 
     private static final String COVER_LETTER = "COVER_LETTER";
+    private static final String DANSK = "Dansk";
+    private static final String DANISH_PREFIX = "da";
+    private static final String DANISH = "da";
+    private static final String ENGLISH = "en";
 
     /**
      * How much longer than the letter's own deadline its result is waited for. The pipeline stops
@@ -40,30 +41,26 @@ public class DocumentGeneration {
      */
     private static final Duration SAVE_GRACE = Duration.ofMinutes(2);
 
-    private final GetApplicationsUseCase applications;
-    private final CreateApplicationUseCase createApplication;
     private final GenerateTailoredCvUseCase tailoredCv;
     private final PersistGeneratedDocumentUseCase documents;
     private final GenerateDocumentUseCase letters;
+    private final GetJobByIdUseCase jobs;
     private final Clock clock;
     private final Duration timeout;
 
-    public DocumentGeneration(GetApplicationsUseCase applications,
-                              CreateApplicationUseCase createApplication,
-                              GenerateTailoredCvUseCase tailoredCv,
+    public DocumentGeneration(GenerateTailoredCvUseCase tailoredCv,
                               PersistGeneratedDocumentUseCase documents,
                               GenerateDocumentUseCase letters,
+                              GetJobByIdUseCase jobs,
                               Clock clock,
                               @Value("${app.ai.request-timeout-seconds:1080}") long timeoutSeconds) {
-        this.applications = applications;
-        this.createApplication = createApplication;
         this.tailoredCv = tailoredCv;
         this.documents = documents;
         this.letters = letters;
+        this.jobs = jobs;
         this.clock = clock;
         this.timeout = Duration.ofSeconds(timeoutSeconds);
     }
-
 
     /**
      * Writes the CV and then the letter for the posting.
@@ -71,28 +68,26 @@ public class DocumentGeneration {
      * @throws IllegalStateException generation failed or ran past the time limit
      */
     void write(UUID userId, UUID postingId, GenerationSettings settings) {
+        String language = languageFor(postingId, settings);
         StructuredDocument cv = tailoredCv.generateTailoredCv(userId, postingId, null,
-                settings.instructions(), null, settings.cvTemplate(), null, false, null,
+                settings.instructions(), language, settings.cvTemplate(), null, false, null,
                 settings.lengthPreference());
         documents.save(userId, postingId, cv, null);
         awaitLetter(new GenerateDocumentCommand(userId, COVER_LETTER, postingId, null, null, null,
-                settings.instructions(), null, null, false, null, settings.lengthPreference(),
+                settings.instructions(), null, language, false, null, settings.lengthPreference(),
                 clock.instant().plus(timeout)));
     }
 
     /**
-     * Her application for the posting, started as PREPARING if she has none. The app allows one
-     * per posting; one past PREPARING is refused when proposed, so the documents land beside her
-     * work in progress, never on one she has sent.
+     * Quick apply's choice: Danish for a posting written in Danish, otherwise her saved default.
+     * Kept the same so her documents come out in one language wherever she makes them.
      */
-    UUID applicationFor(UUID userId, UUID postingId) {
-        return applications.getApplications(userId).stream()
-                .filter(a -> postingId.equals(a.jobId()))
-                .map(Application::id)
-                .findFirst()
-                .orElseGet(() -> createApplication.createApplication(new CreateApplicationCommand(
-                        userId, postingId, null, null, null, ApplicationStatus.PREPARING, null,
-                        null, null, null, null)).id());
+    private String languageFor(UUID postingId, GenerationSettings settings) {
+        boolean danishPosting = jobs.getJobById(postingId)
+                .map(job -> job.languages() != null && job.languages().stream()
+                        .anyMatch(l -> l.toLowerCase(Locale.ROOT).startsWith(DANISH_PREFIX)))
+                .orElse(false);
+        return danishPosting || DANSK.equals(settings.language()) ? DANISH : ENGLISH;
     }
 
     private void awaitLetter(GenerateDocumentCommand command) {
