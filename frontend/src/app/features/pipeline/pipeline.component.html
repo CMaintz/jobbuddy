@@ -15,14 +15,16 @@
         </button>
       </div>
 
-      <!-- Stage filter chips -->
+      <!-- Column filter chips mirror the board columns, so a chip's count matches its column. A picked
+           chip turns accent rather than its column's tone: two columns are neutral, and a picked
+           neutral chip would look unpicked. -->
       <div class="hidden sm:flex gap-1 ml-3 overflow-x-auto">
-        @for (stage of stages; track stage.key) {
-          <button (click)="toggleStageFilter(stage.key)"
-            [class]="'pill pill-' + (activeFilters().has(stage.key) ? stage.tone : 'neutral')"
+        @for (column of kanbanColumns; track column.key) {
+          <button (click)="toggleColumnFilter(column.key)" [attr.aria-pressed]="activeFilters().has(column.key)"
+            [class]="pillClass[activeFilters().has(column.key) ? 'accent' : 'neutral']"
             class="cursor-pointer">
-            {{ stage.label | translate }}
-            <span class="mono text-[9.5px]">{{ countByStage(stage.key) }}</span>
+            {{ column.label | translate }}
+            <span class="mono text-[9.5px]">{{ appsForColumn(column.key).length }}</span>
           </button>
         }
       </div>
@@ -104,16 +106,16 @@
       } @else {
         <!-- ═══ KANBAN VIEW ═══ -->
         <div class="flex gap-2.5 p-4 h-full items-start overflow-x-auto jb-scroll">
-          @for (stage of kanbanStages; track stage.key) {
+          @for (column of shownColumns(); track column.key) {
             <div data-testid="kanban-column" class="min-w-[240px] w-[240px] flex flex-col gap-2">
               <!-- Column header -->
               <div class="flex items-center gap-2 py-2 px-2.5">
-                <jb-pill [tone]="stage.tone">{{ stage.label | translate }}</jb-pill>
-                <span class="mono text-2xs text-jb-text-dim">{{ appsForStage(stage.key).length }}</span>
+                <jb-pill [tone]="column.tone">{{ column.label | translate }}</jb-pill>
+                <span class="mono text-2xs text-jb-text-dim">{{ appsForColumn(column.key).length }}</span>
               </div>
 
               <!-- Cards -->
-              @for (app of appsForStage(stage.key); track app.id) {
+              @for (app of appsForColumn(column.key); track app.id) {
                 <a [routerLink]="['/applications', app.id]"
                   class="card jb-liftcard p-3 cursor-pointer no-underline text-inherit">
                   <div class="flex items-center gap-2 mb-2">
@@ -127,6 +129,9 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <jb-fit-bar [value]="app.matchScore ?? 0" />
+                    @if (column.grouped) {
+                      <app-status-chip class="ml-auto" [status]="app.status" />
+                    }
                   </div>
                 </a>
               }

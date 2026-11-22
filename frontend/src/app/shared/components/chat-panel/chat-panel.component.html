@@ -1,12 +1,11 @@
 @if (store.available()) {
-  @if (!open()) {
-    <button type="button" (click)="toggle()"
-            class="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold jb-btn-primary bg-jb-accent border shadow-lg cursor-pointer"
-            [attr.aria-label]="'chat.open' | translate">
-      <jb-icon name="chat" [size]="16" />
-      <span>{{ 'chat.launcher' | translate }}</span>
-    </button>
-  } @else {
+  <!-- Hidden rather than removed while the panel is open, so he keeps his mood and reacts once. -->
+  <button type="button" (click)="toggle()" data-chat-launcher [hidden]="open()"
+          class="fixed bottom-4 right-4 z-40 p-1 rounded-xl bg-transparent border-none cursor-pointer drop-shadow-[0_6px_4px_rgba(0,0,0,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-jb-accent"
+          [attr.aria-label]="'chat.open' | translate" [title]="'chat.launcher' | translate">
+    <jb-buddy [mood]="launcherMood()" [scale]="2" [alt]="null" />
+  </button>
+  @if (open()) {
     <section class="fixed inset-y-0 right-0 z-50 flex flex-col w-full sm:w-[420px] bg-jb-surface border-l border-jb-border shadow-2xl text-jb-text"
              role="dialog" [attr.aria-label]="'chat.title' | translate">
       <header class="flex items-center gap-2 h-12 px-3 border-b border-jb-border shrink-0">
@@ -34,7 +33,10 @@
             <span>{{ 'chat.newChat' | translate }}</span>
           </button>
           @if (store.chats().length === 0) {
-            <p class="text-sm text-jb-text-mid px-1 pt-2">{{ 'chat.noChats' | translate }}</p>
+            <div class="flex flex-col items-center gap-3 pt-6 text-center">
+              <jb-buddy />
+              <p class="text-sm text-jb-text-mid px-1">{{ 'chat.noChats' | translate }}</p>
+            </div>
           } @else {
             <div class="px-1 pt-2 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'chat.yourChats' | translate }}</div>
           }
@@ -73,7 +75,10 @@
             <p class="rounded-md border border-jb-border px-3 py-2 text-xs text-jb-text-mid">{{ 'chat.contextLost' | translate }}</p>
           }
           @if (store.messages().length === 0 && !store.streaming()) {
-            <p class="text-sm text-jb-text-mid">{{ 'chat.emptyChat' | translate }}</p>
+            <div class="flex items-center gap-3">
+              <jb-buddy mood="cheer" />
+              <p class="text-sm text-jb-text-mid">{{ 'chat.emptyChat' | translate }}</p>
+            </div>
           }
           @for (message of store.messages(); track $index) {
             <div class="max-w-[88%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words"
@@ -96,7 +101,10 @@
             }
           }
           @if (store.streaming() && store.messages()[store.messages().length - 1]?.role !== 'ASSISTANT') {
-            <div class="self-start text-sm text-jb-text-dim">{{ 'chat.thinking' | translate }}</div>
+            <div class="self-start flex items-center gap-2 text-sm text-jb-text-dim">
+              <jb-buddy mood="thinking" [scale]="1" [alt]="null" />
+              <span>{{ 'chat.thinking' | translate }}</span>
+            </div>
           }
           @if (store.error(); as code) {
             <div class="rounded-md border border-jb-border-strong bg-jb-surface-3 px-3 py-2 text-sm" role="alert">

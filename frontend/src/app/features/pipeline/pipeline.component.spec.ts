@@ -3,7 +3,8 @@ import { Router, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Subject, of, throwError } from 'rxjs';
 import { ApplicationsApiService } from '../../core/api/applications.api';
-import { Application } from '../../core/models/application.model';
+import { Application, ApplicationStatus } from '../../core/models/application.model';
+import { stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 import { PipelineComponent } from './pipeline.component';
 
 describe('PipelineComponent status change', () => {
@@ -98,6 +99,37 @@ describe('PipelineComponent status change', () => {
     expect(navigate).toHaveBeenCalledWith(['/applications', 'a1']);
   });
 
+  it('puts an application of every status on the board, under its column, showing its status', () => {
+    const columnOf: Record<ApplicationStatus, string> = {
+      SAVED: 'pipeline.stage.saved', PREPARING: 'pipeline.stage.saved',
+      APPLIED: 'pipeline.stage.applied',
+      RECRUITER_CONTACT: 'pipeline.column.inProgress', INTERVIEW: 'pipeline.column.inProgress',
+      TECHNICAL_TEST: 'pipeline.column.inProgress', FINAL_ROUND: 'pipeline.column.inProgress',
+      OFFER: 'pipeline.stage.offer',
+      REJECTED: 'pipeline.column.closed', ARCHIVED: 'pipeline.column.closed',
+    };
+    const statuses = Object.keys(columnOf) as ApplicationStatus[];
+    fixture.componentInstance.applications = statuses.map(status => ({
+      ...saved, id: status, status, jobTitle: `Job ${status}`,
+    }));
+    fixture.componentInstance.view.set('kanban');
+    fixture.detectChanges();
+
+    const columns = Array.from((fixture.nativeElement as HTMLElement)
+      .querySelectorAll<HTMLElement>('[data-testid="kanban-column"]'));
+    const cards = columns.flatMap(column => Array.from(column.querySelectorAll<HTMLElement>('a'))
+      .map(card => ({ column: column.querySelector('jb-pill')!.textContent!.trim(), card })));
+
+    expect(cards.length).toBe(statuses.length);
+    for (const status of statuses) {
+      const placed = cards.find(c => c.card.textContent!.includes(`Job ${status}`));
+      expect(placed?.column).withContext(status).toBe(columnOf[status]);
+      // A column holding one status already names it; in a grouped one the card must say which.
+      const statusShown = `${placed?.column} ${placed?.card.textContent}`;
+      expect(statusShown).withContext(status).toContain(stageLabelKey(status));
+    }
+  });
+
   it('shows an application still in preparation on the board, under saved', () => {
     fixture.componentInstance.view.set('kanban');
     fixture.detectChanges();
@@ -106,5 +138,57 @@ describe('PipelineComponent status change', () => {
 
     expect(savedColumn.querySelectorAll('a').length).toBe(2);
     expect(savedColumn.textContent).toContain('Kommunikationsmedarbejder');
+  });
+
+  function filterChip(labelKey: string): HTMLButtonElement {
+    const chips = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'));
+    return chips.find(chip => chip.textContent!.includes(labelKey))!;
+  }
+
+  function oneOfEach(...statuses: ApplicationStatus[]): void {
+    fixture.componentInstance.applications = statuses.map(status => ({
+      ...saved, id: status, status, jobTitle: `Job ${status}`,
+    }));
+    fixture.detectChanges();
+  }
+
+  it('counts each filter chip by what its board column holds', () => {
+    oneOfEach('SAVED', 'PREPARING', 'APPLIED', 'RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST',
+      'FINAL_ROUND', 'OFFER', 'REJECTED', 'ARCHIVED');
+
+    const counts = Object.fromEntries(['pipeline.stage.saved', 'pipeline.stage.applied',
+      'pipeline.column.inProgress', 'pipeline.stage.offer', 'pipeline.column.closed']
+      .map(key => [key, filterChip(key)?.textContent?.replace(key, '').trim()]));
+
+    expect(counts).toEqual({
+      'pipeline.stage.saved': '2', 'pipeline.stage.applied': '1', 'pipeline.column.inProgress': '4',
+      'pipeline.stage.offer': '1', 'pipeline.column.closed': '2',
+    });
+  });
+
+  it('filters the table to every status of the picked column', () => {
+    oneOfEach('SAVED', 'PREPARING', 'APPLIED');
+
+    filterChip('pipeline.stage.saved').click();
+    fixture.detectChanges();
+
+    const rows = Array.from((fixture.nativeElement as HTMLElement)
+      .querySelectorAll<HTMLElement>('[data-testid="pipeline-row"]')).map(row => row.textContent);
+    expect(rows.length).toBe(2);
+    expect(rows.join()).not.toContain('Job APPLIED');
+    expect(filterChip('pipeline.stage.saved').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('filters the board to the picked column', () => {
+    oneOfEach('PREPARING', 'APPLIED', 'OFFER');
+    fixture.componentInstance.view.set('kanban');
+    fixture.detectChanges();
+
+    filterChip('pipeline.stage.applied').click();
+    fixture.detectChanges();
+
+    const columns = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-testid="kanban-column"]');
+    expect(columns.length).toBe(1);
+    expect(columns[0].textContent).toContain('Job APPLIED');
   });
 });

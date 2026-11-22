@@ -200,6 +200,15 @@ public class DocumentFactGuard {
      * supported by the source.
      */
     public FactAudit audit(String generatedText, String sourceText) {
+        return audit(generatedText, sourceText, EmployerPosting.NONE);
+    }
+
+    /**
+     * As {@link #audit(String, String)}, but a figure the document quotes from {@code posting}
+     * about the employer is not a claim to check (see {@link PostingFigures}). A null or blank
+     * posting exempts nothing.
+     */
+    public FactAudit audit(String generatedText, String sourceText, EmployerPosting posting) {
         if (generatedText == null || generatedText.isBlank()) return new FactAudit(List.of(), List.of());
         String source = sourceText == null ? "" : sourceText;
         Set<String> allowed = new java.util.LinkedHashSet<>(metricClaims(source));
@@ -208,13 +217,14 @@ public class DocumentFactGuard {
                 .map(DocumentFactGuard::numberOf)
                 .filter(java.util.Objects::nonNull)
                 .collect(java.util.stream.Collectors.toSet());
+        Set<String> quotedFromPosting = PostingFigures.quotedAboutEmployer(generatedText, posting);
 
         List<String> invented = new ArrayList<>();
         List<String> unverified = new ArrayList<>();
         // Compare on the normalized form, but report the document's own spelling: a user who wrote
         // "50k users" should not be told that "50000 users" is unsupported.
         metricClaimsWithSpelling(generatedText).forEach((claim, asWritten) -> {
-            if (allowed.contains(claim)) return;
+            if (allowed.contains(claim) || quotedFromPosting.contains(claim)) return;
             String number = numberOf(claim);
             // The number is in the profile but counting something else: most often the model
             // renamed the noun. Report it, but not as a fabrication.
@@ -320,6 +330,13 @@ public class DocumentFactGuard {
 
     static Set<String> metricClaims(String text) {
         return metricClaimsWithSpelling(text).keySet();
+    }
+
+    /** Only the "&lt;number&gt; &lt;metric-noun&gt;" claims, normalized as {@link #metricClaims} does. */
+    static Set<String> countClaims(String text) {
+        Map<String, String> claims = new java.util.LinkedHashMap<>();
+        addCountClaims(claims, foldNumberWords(stripMarkup(text)));
+        return claims.keySet();
     }
 
     /**
@@ -484,7 +501,7 @@ public class DocumentFactGuard {
             "has", "for", "at", "it", "this", "that", "as", "by");
     private static final Pattern WORD = Pattern.compile("\\p{L}+", Pattern.UNICODE_CHARACTER_CLASS);
 
-    private static boolean readsAsDanish(String text) {
+    static boolean readsAsDanish(String text) {
         int danish = 0;
         int english = 0;
         Matcher m = WORD.matcher(text);

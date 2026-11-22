@@ -16,6 +16,9 @@ interface Thread {
 
 const EMPTY: Thread = { messages: [], streaming: false, error: null, contextLost: false };
 
+/** The latest turn across all her chats: what the launcher shows while the panel is shut. */
+export type TurnState = 'none' | 'running' | 'answered' | 'failed';
+
 @Injectable({ providedIn: 'root' })
 export class ChatStore {
   private api = inject(ChatApiService);
@@ -30,6 +33,9 @@ export class ChatStore {
   readonly streaming = computed(() => this.thread().streaming);
   readonly error = computed(() => this.thread().error);
   readonly contextLost = computed(() => this.thread().contextLost);
+  private readonly lastTurn = signal<Exclude<TurnState, 'running'>>('none');
+  readonly turn = computed<TurnState>(() =>
+    Object.values(this.threads()).some(t => t.streaming) ? 'running' : this.lastTurn());
 
   load(): void {
     this.api.list().subscribe({
@@ -130,7 +136,9 @@ export class ChatStore {
     this.update(chatId, t => ({
       ...t, streaming: false, contextLost: false, error: failure ?? t.error,
     }));
-    if (!failure && !this.threads()[chatId]?.error) {
+    const failed = !!this.threads()[chatId]?.error;
+    this.lastTurn.set(failed ? 'failed' : 'answered');
+    if (!failed) {
       this.api.list().subscribe(chats => this.chats.set(chats));
     }
   }

@@ -6,6 +6,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of, switchMap, catchError, map, tap, forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
+import { BuddyWaitComponent } from '../../shared/components/buddy/buddy-wait.component';
 import { PromptExplainerComponent, chosenPrompt } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { AiApiService, GenerateDocumentRequest } from '../../core/api/ai.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -70,6 +72,7 @@ interface ApplyDraft {
 @Component({
   selector: 'app-apply',
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    BuddyComponent, BuddyWaitComponent,
     PromptExplainerComponent],
   templateUrl: './apply.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
