@@ -23,6 +23,7 @@ import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.c
 import { buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
 import { NotifyService } from '../../shared/services/notify.service';
 import { QueueItem, nudgeQueueItem } from './nudge-queue-item';
+import { NudgeQueueRowComponent } from './nudge-queue-row.component';
 
 const HEATMAP_WEEKS = 14;
 
@@ -74,6 +75,7 @@ interface SavedPreview {
   imports: [
     RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
     StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,
+    NudgeQueueRowComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './dashboard.component.html'

@@ -61,6 +61,21 @@ final class CompoundHeads {
         return longer.startsWith(shorter) || longer.endsWith(shorter);
     }
 
+    /**
+     * Whether two labels end on the same generic head word, as "Leverandørvurdering" and
+     * "Risikovurdering" do. Their embeddings sit close for the shared word alone, so meaning
+     * credit is refused for such a pair just as spelling credit is.
+     */
+    static boolean shareGenericHead(String labelA, String labelB) {
+        String generic = genericEnding(headOf(labelA));
+        return !generic.isEmpty() && generic.equals(genericEnding(headOf(labelB)));
+    }
+
+    private static String genericEnding(String head) {
+        return GENERIC_HEADS.stream().filter(head::endsWith)
+                .max(java.util.Comparator.comparingInt(String::length)).orElse("");
+    }
+
     private static String stem(String word) {
         for (String ending : ENDINGS) {
             if (word.endsWith(ending) && word.length() - ending.length() >= MIN_HEAD) {

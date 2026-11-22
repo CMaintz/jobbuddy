@@ -17,7 +17,7 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
-import { PageBudget, pageBudget } from '../../shared/page-budget';
+import { ExportedPageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
 import { htmlTextContent } from '../../shared/utils/sanitize-html';
 import { Observable, tap, throwError } from 'rxjs';
@@ -68,7 +68,8 @@ export class ApplicationOutputComponent implements OnInit {
   loading = signal(true);
   downloading = signal(false);
   /** Page count of the last PDF the user downloaded, against the one-page letter budget. */
-  exportedPages = signal<PageBudget | null>(null);
+  readonly exportedPages = new ExportedPageBudget('letter', computed(() =>
+    [this.template(), this.activeDoc()?.id, this.activeDoc()?.content].join('\n')));
   loadError = signal('');
   application = signal<Application | null>(null);
   documents = signal<GeneratedDocument[]>([]);
@@ -507,8 +508,7 @@ export class ApplicationOutputComponent implements OnInit {
     const paperEl = this.paper?.el.nativeElement;
     if (!paperEl || this.downloading() || this.editing()) return;
     this.downloading.set(true);
-    this.pdfExport.download(paperEl, this.exportFilename())
-      .then(pages => this.exportedPages.set(pageBudget('letter', pages)))
+    this.exportedPages.track(this.pdfExport.download(paperEl, this.exportFilename()))
       .finally(() => this.downloading.set(false));
   }
 
@@ -521,14 +521,13 @@ export class ApplicationOutputComponent implements OnInit {
     if (!this.activeDoc() || this.downloading()) return;
     this.downloading.set(true);
     const id = this.identity();
-    this.atsPdf.downloadLetter({
+    this.exportedPages.track(this.atsPdf.downloadLetter({
       name: id.name,
       headline: id.headline,
       contactLine: [id.email, id.phone, id.location].filter(Boolean).join('  ·  ') || undefined,
       paragraphs: this.plainText().split(/\n{2,}/).map(p => p.trim()).filter(Boolean),
       filename: `${this.exportFilename()} (ATS)`,
-    }).then(pages => this.exportedPages.set(pageBudget('letter', pages)))
-      .finally(() => this.downloading.set(false));
+    })).finally(() => this.downloading.set(false));
   }
 
   private exportFilename(): string {

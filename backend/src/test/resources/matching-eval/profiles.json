@@ -1,5 +1,5 @@
 {
- "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only.",
+ "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only. suggested is what AdjacentSkillPrompt returned for each profile's skills alone (claude-cli, sonnet), frozen before any posting was scored with it and not edited.",
  "profiles": {
   "comms-grc": {
    "headline": "Kommunikationsmedarbejder | Marketing og informationssikkerhed",
@@ -29,6 +29,40 @@
     {
      "degree": "Kandidat",
      "field": "Kommunikation"
+    }
+   ],
+   "suggested": [
+    {
+     "skill": "Målgruppeanalyse",
+     "because": "Kampagneplanlægning"
+    },
+    {
+     "skill": "Mediekontakt",
+     "because": "Pressearbejde"
+    },
+    {
+     "skill": "Pressemeddelelser",
+     "because": "Pressearbejde"
+    },
+    {
+     "skill": "Søgeordsanalyse",
+     "because": "SEO"
+    },
+    {
+     "skill": "Kommunikationsplanlægning",
+     "because": "Intern kommunikation"
+    },
+    {
+     "skill": "Informationssikkerhed",
+     "because": "ISO 27001"
+    },
+    {
+     "skill": "Kundekommunikation",
+     "because": "Kundesucces"
+    },
+    {
+     "skill": "Dokumentation",
+     "because": "Risikovurdering"
     }
    ]
   },
@@ -63,6 +97,40 @@
     {
      "degree": "Master",
      "field": "Computer Science"
+    }
+   ],
+   "suggested": [
+    {
+     "skill": "Unit testing",
+     "because": "Java"
+    },
+    {
+     "skill": "Version control",
+     "because": "CI/CD"
+    },
+    {
+     "skill": "Object-oriented programming",
+     "because": "Java"
+    },
+    {
+     "skill": "API design",
+     "because": "REST APIs"
+    },
+    {
+     "skill": "JavaScript",
+     "because": "TypeScript"
+    },
+    {
+     "skill": "Database design",
+     "because": "PostgreSQL"
+    },
+    {
+     "skill": "Agile development",
+     "because": "Scrum"
+    },
+    {
+     "skill": "Containerization",
+     "because": "Docker"
     }
    ]
   }

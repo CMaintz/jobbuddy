@@ -20,6 +20,10 @@ run = "npm test"
 description = "The desktop oracle: lint and tests, a few seconds"
 run = ["mise run lint", "mise run test"]
 
+[tasks.sync-buddy]
+description = "Copy Buddy's sprites from brand/buddy-sprites/out (or the path given) into the repo"
+run = "node scripts/sync-buddy.mjs"
+
 [tasks.build]
 description = "Backend jar, Angular build, pinned JRE and Electron binary, staged for the app"
 depends = ["install"]

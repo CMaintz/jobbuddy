@@ -18,6 +18,9 @@
       "usedIt": "Har brugt det",
       "notMine": "Ikke mig",
       "later": "Senere",
+      "likelyHeld": "Du har {{held}}. Har du også {{skill}}?",
+      "yesAdd": "Ja, tilføj",
+      "no": "Nej",
       "added": "{{name}} tilføjet til din profil",
       "failed": "Kunne ikke gemme — prøv igen"
     },
@@ -209,10 +212,10 @@
       "saved": "Gemt til pipeline",
       "preparing": "Forbereder ansøgning",
       "applied": "Ansøgt",
-      "recruiterContact": "Rekrutteringskontakt",
+      "recruiterContact": "Første kontakt",
       "interview": "Samtalefase",
-      "technicalTest": "Teknisk test",
-      "finalRound": "Sidste runde",
+      "technicalTest": "Opgave/test",
+      "finalRound": "Sidste samtale",
       "offer": "Tilbud modtaget",
       "rejected": "Afvist",
       "archived": "Arkiveret"
@@ -222,6 +225,7 @@
       "today": "i dag",
       "tomorrow": "i morgen",
       "interview": "Jobsamtale",
+      "interviewAt": "Jobsamtale kl. {{time}}",
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
       "noReply": "Intet svar endnu — send en opfølgning",
@@ -1563,13 +1567,17 @@
       "saved": "Gemt",
       "preparing": "Forbereder",
       "applied": "Ansøgt",
-      "screen": "Screening",
+      "screen": "Første kontakt",
       "interview": "Samtale",
-      "technical": "Teknisk",
-      "final": "Sidste",
+      "technical": "Opgave/test",
+      "final": "Sidste samtale",
       "offer": "Tilbud",
       "rejected": "Afvist",
       "archived": "Arkiveret"
+    },
+    "column": {
+      "inProgress": "I proces",
+      "closed": "Afsluttet"
     },
     "changeStatus": "Skift status"
   },
@@ -2145,5 +2153,13 @@
     "next": "Næste",
     "apply": "Start ansøgning",
     "end": "Afslut gennemgangen"
+  },
+  "buddy": {
+    "alt": "Buddy, JobBuddys axolotl",
+    "wait": {
+      "cvTitle": "Buddy skræddersyr dit CV",
+      "cvDetail": "Han læser opslaget og vælger det fra din profil, der passer bedst.",
+      "import": "Buddy læser dit CV og sorterer det i sektioner."
+    }
   }
 }

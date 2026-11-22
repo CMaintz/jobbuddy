@@ -15,6 +15,7 @@ import com.autoapplicant.domain.common.CvParseException.Reason;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfileSavedEvent;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
 import com.autoapplicant.usecase.skills.ImpliedSkillQueue;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ParseCvServiceTest {
@@ -38,6 +40,7 @@ class ParseCvServiceTest {
     @Mock ParsedCvContactWriter writer;
     @Mock ImpliedSkillQueue     impliedSkills;
     @Mock ProfileSkillIngestion skillIngestion;
+    @Mock ApplicationEventPublisher events;
 
     ParseCvService service;
     UUID userId = UUID.randomUUID();
@@ -45,7 +48,7 @@ class ParseCvServiceTest {
     @BeforeEach
     void setUp() {
         service = new ParseCvService(aiProvider, new ObjectMapper(), writer,
-                impliedSkills, skillIngestion);
+                impliedSkills, skillIngestion, events);
     }
 
     @Test
@@ -77,6 +80,15 @@ class ParseCvServiceTest {
         verify(skillIngestion).ingest(userId, List.of("Java", "Spring", "Docker"));
         verify(impliedSkills).queue(eq(userId), any(), eq(List.of("Java", "Spring", "Docker")),
                 eq(ParsedSkillSuggestion.Source.CV_PARSE));
+    }
+
+    @Test
+    void an_import_announces_the_changed_profile_so_its_skills_get_questions() {
+        when(aiProvider.generate(any(), any())).thenReturn("{\"skills\":[\"Pressearbejde\"]}");
+
+        service.parseCvText(userId, "raw");
+
+        verify(events).publishEvent(new ProfileSavedEvent(userId));
     }
 
     @Test
@@ -166,8 +178,8 @@ class ParseCvServiceTest {
         };
         String cv = "Jane Doe. Kommunikationsmedarbejder hos Region Hovedstaden 2019-2024";
 
-        new ParseCvService(provider, new ObjectMapper(), writer, impliedSkills, skillIngestion)
-                .parseCvText(userId, cv);
+        new ParseCvService(provider, new ObjectMapper(), writer, impliedSkills, skillIngestion,
+                events).parseCvText(userId, cv);
 
         assertThat(delivered).singleElement().asString().contains(cv);
     }

@@ -44,3 +44,9 @@ settings-gradle.lockfile
 
 # Generated on demand for osv-scanner audits; resolution is not committed.
 backend/gradle.lockfile
+
+# Per-branch ship state written by foundry-ship-pr; tracking it leaks one PR's body into the next.
+.foundry/pr-body.md
+.foundry/pr-url
+.foundry/pr-watch.log
+.foundry/.ship-open-pr
