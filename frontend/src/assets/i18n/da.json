@@ -18,6 +18,9 @@
       "usedIt": "Har brugt det",
       "notMine": "Ikke mig",
       "later": "Senere",
+      "likelyHeld": "Du har {{held}}. Har du også {{skill}}?",
+      "yesAdd": "Ja, tilføj",
+      "no": "Nej",
       "added": "{{name}} tilføjet til din profil",
       "failed": "Kunne ikke gemme — prøv igen"
     },

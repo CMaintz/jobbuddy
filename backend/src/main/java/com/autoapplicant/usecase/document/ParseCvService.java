@@ -5,6 +5,7 @@ import com.autoapplicant.domain.common.CvParseException.Reason;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.ProfileSavedEvent;
 import com.autoapplicant.port.in.document.ParseCvUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.ai.AiOperations;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -85,15 +87,18 @@ public class ParseCvService implements ParseCvUseCase {
     private final ParsedCvContactWriter contactWriter;
     private final ImpliedSkillQueue impliedSkills;
     private final ProfileSkillIngestion skillIngestion;
+    private final ApplicationEventPublisher events;
 
     public ParseCvService(@Qualifier("generationAiProvider") ChatProviderPort aiProvider,
                           ObjectMapper objectMapper, ParsedCvContactWriter contactWriter,
-                          ImpliedSkillQueue impliedSkills, ProfileSkillIngestion skillIngestion) {
+                          ImpliedSkillQueue impliedSkills, ProfileSkillIngestion skillIngestion,
+                          ApplicationEventPublisher events) {
         this.aiProvider = aiProvider;
         this.objectMapper = objectMapper;
         this.contactWriter = contactWriter;
         this.impliedSkills = impliedSkills;
         this.skillIngestion = skillIngestion;
+        this.events = events;
     }
 
     /**
@@ -111,6 +116,9 @@ public class ParseCvService implements ParseCvUseCase {
         JsonNode node = toJson(askAi(rawCvText));
         contactWriter.write(userId, node);
         captureCvSkills(userId, node);
+        // The import has changed the profile's skills even if the preview is never applied, so
+        // whatever follows a profile save (its embedding, adjacent-skill questions) follows this.
+        events.publishEvent(new ProfileSavedEvent(userId));
         return new Profile(
                 null, userId,
                 ParsedCvFields.textOrNull(node, "headline"),

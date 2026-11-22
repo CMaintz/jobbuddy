@@ -20,6 +20,7 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
@@ -55,6 +56,7 @@ class MatchingServiceTest {
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
     @Mock EducationRepositoryPort educationRepo;
     @Mock CertificationRepositoryPort certificationRepo;
+    @Mock ParsedSkillSuggestionRepositoryPort suggestionRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
@@ -65,8 +67,10 @@ class MatchingServiceTest {
         // exactly as before. Alias folding has its own dedicated test.
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
                 aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
-                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo), profileSkillRepo,
-                        educationRepo, certificationRepo));
+                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo),
+                        new MatchProfileLoader.Sources(profileSkillRepo, suggestionRepo,
+                                educationRepo, certificationRepo),
+                        labels -> SkillSimilarity.NONE));
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────
