@@ -39,6 +39,10 @@ class RequiredExperienceTest {
             Mindst 4 års erfaring med penetrationstest                   | Kræver 4 års erfaring med penetrationstest
             4+ years of experience in security architecture              | Kræver 4 års erfaring med sikkerhedsarkitektur
             Minimum fem års erfaring som softwareudvikler                | Kræver 5 års erfaring som softwareudvikler
+            4 or more years of experience as a software engineer         | Kræver 4 års erfaring som softwareudvikler
+            4 eller flere års erfaring med penetrationstest              | Kræver 4 års erfaring med penetrationstest
+            4-årig erfaring som softwareudvikler                         | Kræver 4 års erfaring som softwareudvikler
+            At least four (4) years of experience in security architecture | Kræver 4 års erfaring med sikkerhedsarkitektur
             """)
     void a_senior_specialist_ask_a_history_without_any_technical_role_cannot_meet_is_unmet(
             String ask, String reason) {
@@ -61,6 +65,12 @@ class RequiredExperienceTest {
             2 års erfaring med sikkerhedsarkitektur
             Mindst 3 års erfaring som softwareudvikler
             3+ years of experience in security architecture
+            3\u20135 års erfaring med sikkerhedsarkitektur
+            2\u20134 års erfaring fra et SOC
+            3 til 5 års erfaring som softwareudvikler
+            3 to 5 years of experience in security architecture
+            Tre-fem års erfaring med penetrationstest
+            3-5+ years of experience as a software engineer
             """)
     void an_ask_for_no_or_under_four_years_is_met(String ask) {
         RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);

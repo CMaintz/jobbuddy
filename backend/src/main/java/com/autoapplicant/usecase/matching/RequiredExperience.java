@@ -110,10 +110,21 @@ final class RequiredExperience {
             Map.entry("eight", 8), Map.entry("ni", 9), Map.entry("nine", 9),
             Map.entry("ti", 10), Map.entry("ten", 10));
 
-    /** "3 års", "3+ years", "5-8 års", "fem års": the lowest number of years asked. */
+    /** A year count in digits or words. */
+    private static final String NUMBER =
+            "(?:\\d{1,2}|(?:" + String.join("|", NUMBER_WORDS.keySet()) + ")\\b)";
+
+    /**
+     * The lowest number of years asked: "3 års", "3+ years", "fem års", "4-årig", "four (4)
+     * years", "4 or more years", and a range written with a hyphen, an en or em dash, "til" or
+     * "to" ("5-8 års", "3 til 5 års"). The range must be read whole: matching from its upper
+     * bound would let a 3 to 5 years ask cap as a senior one.
+     */
     private static final Pattern YEARS = Pattern.compile(
-            "\\b(\\d{1,2}|" + String.join("|", NUMBER_WORDS.keySet())
-                    + ")\\s*\\+?\\s*(?:-\\s*\\d{1,2}\\s*)?(?:års|år|years?)\\b",
+            "\\b(" + NUMBER + ")\\s*(?:\\(\\s*\\d{1,2}\\s*\\)\\s*)?\\+?\\s*"
+                    + "(?:(?:[-\\u2013\\u2014]|\\btil\\b|\\bto\\b)\\s*" + NUMBER + "\\s*\\+?\\s*"
+                    + "|(?:or more|eller flere|eller mere)\\s+)?"
+                    + "(?:-?årig|års|år|years?)\\b",
             FLAGS);
 
     /**
@@ -168,15 +179,23 @@ final class RequiredExperience {
      */
     private Optional<String> unmetBy(String ask) {
         int years = yearsAsked(ask).orElseThrow();
-        List<Optional<Area>> named = Arrays.stream(ALTERNATIVES.split(ask))
-                .filter(part -> !part.isBlank())
-                .map(RequiredExperience::areaNamedIn)
-                .toList();
+        List<Optional<Area>> named = alternativesIn(ask);
         // An alternative outside the catalogue leaves a way in.
         if (named.stream().anyMatch(Optional::isEmpty)) return Optional.empty();
         List<Area> areas = named.stream().flatMap(Optional::stream).distinct().toList();
         if (areas.stream().anyMatch(area -> meets(area, years))) return Optional.empty();
         return Optional.of("Kræver " + years + " års " + areas.get(0).phrase());
+    }
+
+    /** The area each alternative in {@code ask} names, empty for one outside the catalogue. */
+    private static List<Optional<Area>> alternativesIn(String ask) {
+        // The year count goes first: "4 or more years" and "4 eller flere års" offer no
+        // alternative, but would split into a part naming nothing and leave a way in.
+        String areasAsked = YEARS.matcher(ask).replaceFirst(" ");
+        return Arrays.stream(ALTERNATIVES.split(areasAsked))
+                .filter(part -> !part.isBlank())
+                .map(RequiredExperience::areaNamedIn)
+                .toList();
     }
 
     private boolean meets(Area area, int years) {
