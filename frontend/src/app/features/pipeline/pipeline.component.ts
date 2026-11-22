@@ -6,7 +6,7 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { JbPillComponent, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
+import { JbPillComponent, PILL_CLASS, PillTone } from '../../shared/components/jb-pill/jb-pill.component';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 import { StatusPickerComponent } from '../../shared/components/status-picker/status-picker.component';
 import { NotifyService } from '../../shared/services/notify.service';
@@ -71,6 +71,7 @@ export class PipelineComponent implements OnInit {
   view = signal<'table' | 'kanban'>('table');
   activeFilters = signal<Set<ApplicationStatus>>(new Set());
   search = signal('');
+  protected readonly pillClass = PILL_CLASS;
 
   stages: StageConfig[] = [
     { key: 'SAVED', label: 'pipeline.stage.saved', tone: 'neutral' },

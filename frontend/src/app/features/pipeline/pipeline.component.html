@@ -19,7 +19,7 @@
       <div class="hidden sm:flex gap-1 ml-3 overflow-x-auto">
         @for (stage of stages; track stage.key) {
           <button (click)="toggleStageFilter(stage.key)"
-            [class]="'pill pill-' + (activeFilters().has(stage.key) ? stage.tone : 'neutral')"
+            [class]="pillClass[activeFilters().has(stage.key) ? stage.tone : 'neutral']"
             class="cursor-pointer">
             {{ stage.label | translate }}
             <span class="mono text-[9.5px]">{{ countByStage(stage.key) }}</span>
