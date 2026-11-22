@@ -62,7 +62,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
         GetPostingTool.class, GetProfileTool.class, ListApplicationsTool.class,
         UpcomingDatesTool.class, ListSavedPostingsTool.class, OpenInAppTool.class,
         StepThroughPostingsTool.class, ProposePostingTools.Save.class,
-        ProposePostingTools.Ignore.class, ProposeStatusChangeTool.class, ProposeInterviewTool.class})
+        ProposePostingTools.Ignore.class, ProposeStatusChangeTool.class, ProposeInterviewTool.class,
+        ProposeDocumentsTool.class})
 class McpSecurityTest {
 
     /** Plain words, so the secret scanner does not read it as a leaked key. */

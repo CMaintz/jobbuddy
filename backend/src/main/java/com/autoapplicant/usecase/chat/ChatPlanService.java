@@ -69,7 +69,7 @@ public class ChatPlanService implements ProposeChatPlanUseCase, DecideChatPlanUs
         }
         Optional<PlanFailure> stale = checks.staleness(userId, item);
         if (stale.isPresent()) {
-            plans.finish(itemId, stale.get(), clock.instant());
+            plans.finish(itemId, stale.get(), null, clock.instant());
             return new Claim.Settled(owned(userId, planId));
         }
         return new Claim.Approved(owned(userId, planId), item);
@@ -84,8 +84,33 @@ public class ChatPlanService implements ProposeChatPlanUseCase, DecideChatPlanUs
 
     @Override
     public ChatPlan finish(UUID userId, UUID planId, UUID itemId, PlanFailure failure) {
+        return end(userId, planId, itemId, failure, null);
+    }
+
+    @Override
+    public ChatPlan finishDocuments(UUID userId, UUID planId, UUID itemId, UUID applicationId,
+                                    PlanFailure failure) {
+        return end(userId, planId, itemId, failure, applicationId);
+    }
+
+    @Override
+    public ChatPlan rejectPending(UUID userId, UUID planId) {
+        owned(userId, planId).items().stream()
+                .filter(PlanItem::isPending)
+                .forEach(i -> plans.move(i.id(), PlanItem.State.PENDING, PlanItem.State.REJECTED,
+                        clock.instant()));
+        return owned(userId, planId);
+    }
+
+    @Override
+    public ChatPlan plan(UUID userId, UUID planId) {
+        return owned(userId, planId);
+    }
+
+    private ChatPlan end(UUID userId, UUID planId, UUID itemId, PlanFailure failure,
+                         UUID applicationId) {
         if (ownedItem(userId, planId, itemId).state() == PlanItem.State.RUNNING) {
-            plans.finish(itemId, failure, clock.instant());
+            plans.finish(itemId, failure, applicationId, clock.instant());
         }
         return owned(userId, planId);
     }

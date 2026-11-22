@@ -23,7 +23,7 @@ public final class InMemoryChatPlans implements ChatPlanRepositoryPort {
         UUID id = UUID.randomUUID();
         List<PlanItem> items = plan.items().stream()
                 .map(i -> new PlanItem(UUID.randomUUID(), i.kind(), i.details(), i.state(),
-                        i.failure(), i.decidedAt(), i.finishedAt()))
+                        i.failure(), i.resultApplicationId(), i.decidedAt(), i.finishedAt()))
                 .toList();
         ChatPlan stored = new ChatPlan(id, plan.userId(), plan.chatId(), plan.createdAt(), items);
         plans.put(id, stored);
@@ -47,23 +47,24 @@ public final class InMemoryChatPlans implements ChatPlanRepositoryPort {
                 .filter(i -> i.state() == PlanItem.State.RUNNING)
                 .map(PlanItem::id)
                 .toList();
-        running.forEach(id -> finish(id, failure, at));
+        running.forEach(id -> finish(id, failure, null, at));
         return running.size();
     }
 
     @Override
     public synchronized boolean move(UUID itemId, PlanItem.State from, PlanItem.State to, Instant at) {
         return update(itemId, i -> i.state() == from
-                ? new PlanItem(i.id(), i.kind(), i.details(), to, null, at, null)
+                ? new PlanItem(i.id(), i.kind(), i.details(), to, null, null, at, null)
                 : null);
     }
 
     @Override
-    public synchronized void finish(UUID itemId, PlanFailure failure, Instant at) {
+    public synchronized void finish(UUID itemId, PlanFailure failure, UUID resultApplicationId,
+                                    Instant at) {
         update(itemId, i -> i.state() == PlanItem.State.RUNNING
                 ? new PlanItem(i.id(), i.kind(), i.details(),
                         failure == null ? PlanItem.State.DONE : PlanItem.State.FAILED, failure,
-                        i.decidedAt(), at)
+                        resultApplicationId, i.decidedAt(), at)
                 : null);
     }
 

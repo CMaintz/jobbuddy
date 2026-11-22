@@ -48,6 +48,8 @@ public class PlanItemRunner {
             // Null notes: the app keeps hers, and the model has no say in them.
             case UPDATE_STATUS -> updateStatus.updateStatus(d.applicationId(), userId, d.toStatus(), null);
             case LOG_INTERVIEW -> logInterview(userId, d);
+            case GENERATE_DOCUMENTS -> throw new UnsupportedOperationException(
+                    "Documents are written in the background by DocumentQueue");
         }
     }
 

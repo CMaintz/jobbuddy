@@ -2139,7 +2139,8 @@
         "SAVE_POSTING": "Save the posting",
         "IGNORE_POSTING": "Hide the posting",
         "UPDATE_STATUS": "Change the application status",
-        "LOG_INTERVIEW": "Note an interview"
+        "LOG_INTERVIEW": "Note an interview",
+        "GENERATE_DOCUMENTS": "Write a CV and cover letter"
       },
       "statusMove": "From {{from}} to {{to}}",
       "interviewAt": "Interview {{when}}",
@@ -2161,7 +2162,13 @@
       },
       "replaces": "Instead of {{when}}",
       "ignoreNote": "It is also removed from your saved postings.",
-      "notSent": "Your decision did not reach the app. Try again."
+      "notSent": "Your decision did not reach the app. Try again.",
+      "waitingCount": "{{count}} proposals waiting",
+      "approveAll": "Approve all",
+      "rejectAll": "Reject all",
+      "writing": "Queued or being written now. Each posting takes a few minutes.",
+      "openDocuments": "Open and review",
+      "writeFailed": "The CV and cover letter could not be finished. A CV may already be on the application, so check it in the app, or try again from the chat."
     }
   },
   "queue": {

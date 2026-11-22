@@ -20,7 +20,7 @@ export interface ChatAction {
   postings: ChatActionPosting[];
 }
 
-type PlanItemKind = 'SAVE_POSTING' | 'IGNORE_POSTING' | 'UPDATE_STATUS' | 'LOG_INTERVIEW';
+type PlanItemKind = 'SAVE_POSTING' | 'IGNORE_POSTING' | 'UPDATE_STATUS' | 'LOG_INTERVIEW' | 'GENERATE_DOCUMENTS';
 
 type PlanItemState = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | 'REJECTED';
 
@@ -50,6 +50,8 @@ export interface PlanItem {
   details: PlanItemDetails;
   state: PlanItemState;
   failure: PlanFailure | null;
+  /** Where its CV and letter were written, once a GENERATE_DOCUMENTS item is done. */
+  resultApplicationId: string | null;
   decidedAt: string | null;
   finishedAt: string | null;
 }

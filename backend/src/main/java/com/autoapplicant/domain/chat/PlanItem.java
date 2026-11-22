@@ -12,11 +12,13 @@ import java.util.UUID;
  *
  * @param details what it changes, as checked when it was proposed
  * @param failure why it did not run or did not finish; null unless {@code FAILED}
+ * @param resultApplicationId the application its documents were written for, once
+ *     {@code GENERATE_DOCUMENTS} is done; null otherwise
  * @param decidedAt when she approved or rejected it
  * @param finishedAt when it was done or failed
  */
 public record PlanItem(UUID id, Kind kind, Details details, State state, PlanFailure failure,
-                       Instant decidedAt, Instant finishedAt) {
+                       UUID resultApplicationId, Instant decidedAt, Instant finishedAt) {
 
     public enum Kind {
         SAVE_POSTING,
@@ -24,7 +26,12 @@ public record PlanItem(UUID id, Kind kind, Details details, State state, PlanFai
         IGNORE_POSTING,
         UPDATE_STATUS,
         /** Sets the interview time on an application; its deadline is kept. */
-        LOG_INTERVIEW
+        LOG_INTERVIEW,
+        /**
+         * Writes a tailored CV and cover letter for the posting, on her application for it, for
+         * her to review in the app. Runs for minutes, so it finishes in the background.
+         */
+        GENERATE_DOCUMENTS
     }
 
     public enum State { PENDING, RUNNING, DONE, FAILED, REJECTED }
@@ -47,7 +54,7 @@ public record PlanItem(UUID id, Kind kind, Details details, State state, PlanFai
     }
 
     public static PlanItem proposed(UUID id, Kind kind, Details details) {
-        return new PlanItem(id, kind, details, State.PENDING, null, null, null);
+        return new PlanItem(id, kind, details, State.PENDING, null, null, null, null);
     }
 
     public boolean isPending() {

@@ -6,6 +6,13 @@ import { SseParser } from '../chat/sse-parser';
 
 const BASE = '/api/v1/chats';
 
+/** Her generation settings, sent with an approval so the chat's documents follow them. */
+export interface ApproveSettings {
+  lengthPreference?: string;
+  cvTemplate?: string;
+  voice?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatApiService {
   private http = inject(HttpClient);
@@ -30,9 +37,15 @@ export class ChatApiService {
     return this.http.get<ChatTranscript>(`${BASE}/${chatId}/messages`);
   }
 
-  /** Approves or rejects one proposed change; the plan as it now stands. */
-  decide(planId: string, itemId: string, decision: 'approve' | 'reject'): Observable<ChatPlan> {
-    return this.http.post<ChatPlan>(`${BASE}/plans/${planId}/items/${itemId}/${decision}`, null);
+  /** Approves or rejects one proposed change, or with no item every waiting one; the plan as it now stands. */
+  decide(planId: string, itemId: string | null, decision: 'approve' | 'reject',
+    settings?: ApproveSettings): Observable<ChatPlan> {
+    const target = itemId ? `${BASE}/plans/${planId}/items/${itemId}` : `${BASE}/plans/${planId}`;
+    return this.http.post<ChatPlan>(`${target}/${decision}`, settings ?? null);
+  }
+
+  plan(planId: string): Observable<ChatPlan> {
+    return this.http.get<ChatPlan>(`${BASE}/plans/${planId}`);
   }
 
   stop(chatId: string): Observable<void> {

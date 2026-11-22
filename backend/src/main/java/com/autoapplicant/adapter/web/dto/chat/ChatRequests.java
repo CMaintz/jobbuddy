@@ -8,4 +8,10 @@ public final class ChatRequests {
     public record Rename(String title) {}
 
     public record Message(String text) {}
+
+    /**
+     * Her generation settings from the app, sent with an approval so documents follow them as
+     * quick apply does. Any may be missing.
+     */
+    public record Approve(String lengthPreference, String cvTemplate, String voice) {}
 }

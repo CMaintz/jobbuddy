@@ -58,6 +58,20 @@ class McpProposalToolsTest {
     }
 
     @Test
+    void documents_for_several_postings_are_one_plan_with_each_posting_once() throws Exception {
+        UUID other = UUID.randomUUID();
+        when(f.proposals.propose(any(), any(), anyList())).thenReturn(stored);
+
+        f.call(f.grantFor(her), "propose_tailored_documents",
+                "{\"posting_ids\":[\"" + posting + "\",\"" + other + "\",\"" + posting + "\"]}");
+
+        verify(f.proposals).propose(her, f.chatId, List.of(
+                ProposedChange.posting(PlanItem.Kind.GENERATE_DOCUMENTS, posting),
+                ProposedChange.posting(PlanItem.Kind.GENERATE_DOCUMENTS, other)));
+        assertThat(f.proposed).containsExactly(stored);
+    }
+
+    @Test
     void arguments_outside_the_schema_are_refused_before_anything_is_stored() throws Exception {
         JsonNode badStatus = f.call(f.grantFor(her), "propose_status_change",
                 "{\"application_id\":\"" + application + "\",\"status\":\"HIRED; DROP\"}");

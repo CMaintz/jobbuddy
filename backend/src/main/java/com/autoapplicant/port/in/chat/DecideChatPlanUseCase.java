@@ -26,6 +26,19 @@ public interface DecideChatPlanUseCase {
     /** Records how a claimed item ran: done when {@code failure} is null. */
     ChatPlan finish(UUID userId, UUID planId, UUID itemId, PlanFailure failure);
 
+    /**
+     * Records how a claimed documents item ran, with the application they were written for:
+     * done when {@code failure} is null. Either may be null.
+     */
+    ChatPlan finishDocuments(UUID userId, UUID planId, UUID itemId, UUID applicationId,
+                             PlanFailure failure);
+
+    /** Rejects every item still pending; decided ones are left as they are. */
+    ChatPlan rejectPending(UUID userId, UUID planId);
+
+    /** The plan as it stands now, for a card waiting on a running item. */
+    ChatPlan plan(UUID userId, UUID planId);
+
     sealed interface Claim {
 
         ChatPlan plan();

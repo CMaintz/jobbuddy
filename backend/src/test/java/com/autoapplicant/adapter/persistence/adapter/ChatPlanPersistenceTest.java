@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.chat.Chat;
@@ -50,6 +51,7 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
     @Autowired JdbcTemplate jdbc;
 
     private Chat chat;
+    private UUID job;
 
     @BeforeEach
     void givenAChat() {
@@ -73,6 +75,21 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
         ChatPlan read = plans.findById(stored.id()).orElseThrow();
         assertThat(read.items()).extracting(PlanItem::details).containsExactly(details, status);
         assertThat(read.items()).extracting(PlanItem::state).containsOnly(State.PENDING);
+    }
+
+    @Test
+    void written_documents_keep_the_application_they_landed_on() {
+        ChatPlan plan = plans.create(plan(PlanItem.proposed(null, PlanItem.Kind.GENERATE_DOCUMENTS,
+                PlanItem.Details.posting(UUID.randomUUID(), "Rådgiver", "Kommunen"))));
+        UUID item = plan.items().get(0).id();
+        UUID application = herApplication();
+
+        plans.move(item, State.PENDING, State.RUNNING, AT);
+        plans.finish(item, null, application, AT.plusSeconds(60));
+
+        PlanItem read = plans.findById(plan.id()).orElseThrow().items().get(0);
+        assertThat(read.state()).isEqualTo(State.DONE);
+        assertThat(read.resultApplicationId()).isEqualTo(application);
     }
 
     @Test
@@ -119,8 +136,8 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
         UUID item = plan.items().get(0).id();
 
         plans.move(item, State.PENDING, State.RUNNING, AT);
-        plans.finish(item, PlanFailure.POSTING_GONE, AT.plusSeconds(1));
-        plans.finish(item, null, AT.plusSeconds(2));
+        plans.finish(item, PlanFailure.POSTING_GONE, null, AT.plusSeconds(1));
+        plans.finish(item, null, null, AT.plusSeconds(2));
 
         PlanItem read = plans.findById(plan.id()).orElseThrow().items().get(0);
         assertThat(read.state()).isEqualTo(State.FAILED);
@@ -146,6 +163,16 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
     @AfterEach
     void deleteHerAndAllOfHers() {
         jdbc.update("DELETE FROM users WHERE id = ?", chat.userId());
+        if (job != null) {
+            jdbc.update("DELETE FROM jobs WHERE id = ?", job);
+        }
+    }
+
+    /** A real application, since the result column must point at one. */
+    private UUID herApplication() {
+        job = new JobRows(jdbc).insert("Rådgiver", "Vi søger en rådgiver.", AT);
+        return jdbc.queryForObject("INSERT INTO applications (user_id, job_id, status)"
+                + " VALUES (?, ?, 'PREPARING') RETURNING id", UUID.class, chat.userId(), job);
     }
 
     private ChatPlan plan(PlanItem... items) {

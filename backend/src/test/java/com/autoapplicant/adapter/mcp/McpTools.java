@@ -20,6 +20,7 @@ final class McpTools {
                 new ProposePostingTools.Save(f.proposals),
                 new ProposePostingTools.Ignore(f.proposals),
                 new ProposeStatusChangeTool(f.proposals),
-                new ProposeInterviewTool(f.proposals));
+                new ProposeInterviewTool(f.proposals),
+                new ProposeDocumentsTool(f.proposals));
     }
 }
