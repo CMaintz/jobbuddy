@@ -1,8 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChatApiService } from '../api/chat.api';
+import { Decision, PlanDecisions } from './plan-decisions';
 import {
-  ChatFailureCode, ChatMessage, ChatStreamEvent, ChatSummary,
+  ChatFailureCode, ChatMessage, ChatPlan, ChatStreamEvent, ChatSummary,
 } from '../models/chat.model';
 
 const NOT_FOUND = 404;
@@ -12,9 +13,11 @@ interface Thread {
   streaming: boolean;
   error: ChatFailureCode | null;
   contextLost: boolean;
+  /** The plans its answers proposed, by id, as the server last reported them. */
+  plans: Record<string, ChatPlan>;
 }
 
-const EMPTY: Thread = { messages: [], streaming: false, error: null, contextLost: false };
+const EMPTY: Thread = { messages: [], streaming: false, error: null, contextLost: false, plans: {} };
 
 /** The latest turn across all her chats: what the launcher shows while the panel is shut. */
 export type TurnState = 'none' | 'running' | 'answered' | 'failed';
@@ -22,6 +25,7 @@ export type TurnState = 'none' | 'running' | 'answered' | 'failed';
 @Injectable({ providedIn: 'root' })
 export class ChatStore {
   private api = inject(ChatApiService);
+  private decisions = inject(PlanDecisions);
   private readonly threads = signal<Record<string, Thread>>({});
 
   readonly available = signal<boolean | null>(null);
@@ -62,6 +66,7 @@ export class ChatStore {
     this.api.messages(chatId).subscribe({
       next: transcript => this.update(chatId, t => ({
         ...t, messages: transcript.messages, contextLost: transcript.contextLost, error: null,
+        plans: byId(transcript.plans ?? []),
       })),
       error: () => this.update(chatId, t => ({ ...t, error: 'FAILED' })),
     });
@@ -93,6 +98,30 @@ export class ChatStore {
     if (chatId && this.threads()[chatId]?.streaming) this.api.stop(chatId).subscribe();
   }
 
+  plan(planId: string): ChatPlan | null {
+    return this.thread().plans[planId] ?? null;
+  }
+
+  approve(planId: string, itemId: string): void {
+    this.decide('approve', planId, itemId);
+  }
+
+  reject(planId: string, itemId: string): void {
+    this.decide('reject', planId, itemId);
+  }
+
+  /** Only a pending item is sent; the server is the final guard against a second run. */
+  private decide(decision: Decision, planId: string, itemId: string): void {
+    const chatId = this.activeId();
+    const item = this.plan(planId)?.items.find(i => i.id === itemId);
+    if (!chatId || item?.state !== 'PENDING') return;
+    this.decisions.send(decision, planId, itemId, plan => this.keepPlan(chatId, plan));
+  }
+
+  private keepPlan(chatId: string, plan: ChatPlan): void {
+    this.update(chatId, t => ({ ...t, plans: { ...t.plans, [plan.id]: plan } }));
+  }
+
   rename(chatId: string, title: string): void {
     this.api.rename(chatId, title).subscribe(renamed =>
       this.chats.update(chats => chats.map(c => (c.id === renamed.id ? renamed : c))));
@@ -113,6 +142,10 @@ export class ChatStore {
         break;
       case 'action':
         this.updateAnswer(chatId, answer => ({ ...answer, actions: [...(answer.actions ?? []), event.action] }));
+        break;
+      case 'plan':
+        this.keepPlan(chatId, event.plan);
+        this.updateAnswer(chatId, answer => ({ ...answer, planIds: [...(answer.planIds ?? []), event.plan.id] }));
         break;
       case 'error':
         this.update(chatId, t => ({ ...t, error: event.code }));
@@ -146,6 +179,10 @@ export class ChatStore {
   private update(chatId: string, change: (thread: Thread) => Thread): void {
     this.threads.update(all => ({ ...all, [chatId]: change(all[chatId] ?? EMPTY) }));
   }
+}
+
+function byId(plans: ChatPlan[]): Record<string, ChatPlan> {
+  return Object.fromEntries(plans.map(p => [p.id, p]));
 }
 
 function codeOf(err: HttpErrorResponse): ChatFailureCode {

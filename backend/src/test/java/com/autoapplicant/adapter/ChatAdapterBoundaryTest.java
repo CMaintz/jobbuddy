@@ -20,4 +20,25 @@ class ChatAdapterBoundaryTest {
             .that().resideInAPackage("com.autoapplicant.adapter.ai..")
             .should().dependOnClassesThat().resideInAPackage("com.autoapplicant.adapter.mcp..")
             .because("the agent reaches tools through port.out.chat.ChatToolsPort");
+
+    /**
+     * Posting text reaches the model, so nothing the model can call may change her data. Her
+     * approval runs changes from adapter.chatplan, which only her own request to the app reaches.
+     */
+    @ArchTest
+    static final ArchRule the_model_cannot_reach_what_changes_her_data = noClasses()
+            .that().resideInAnyPackage("com.autoapplicant.adapter.mcp..",
+                    "com.autoapplicant.adapter.ai..")
+            .should().dependOnClassesThat().resideInAPackage("com.autoapplicant.adapter.chatplan..")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.chat.DecideChatPlanUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.job.SaveJobUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.job.IgnoreJobUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.application.UpdateApplicationStatusUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.application.UpdateApplicationDatesUseCase")
+            .because("only her click in the app carries out a change the chat proposed");
 }

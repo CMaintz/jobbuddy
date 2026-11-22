@@ -1,9 +1,7 @@
 package com.autoapplicant.adapter.mcp;
 
-import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.port.out.chat.ChatToolsPort;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -24,8 +22,8 @@ public class McpChatTools implements ChatToolsPort {
     }
 
     @Override
-    public ToolSession open(UUID userId, Consumer<ChatAction> actions) {
-        String token = grants.issue(userId, actions);
+    public ToolSession open(UUID userId, UUID chatId, Offers offers) {
+        String token = grants.issue(userId, chatId, offers);
         return new ToolSession("http://127.0.0.1:" + port() + McpTokenFilter.PATH, token,
                 server.toolNames(), () -> grants.revoke(token));
     }

@@ -10,6 +10,7 @@ import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
 import com.autoapplicant.domain.chat.ChatMessage;
 import com.autoapplicant.domain.chat.ChatMessage.Role;
+import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.domain.chat.ChatRejectedException;
 import com.autoapplicant.domain.common.NotFoundException;
 import java.time.Clock;
@@ -177,6 +178,17 @@ class ChatTurnServiceTest {
         agent.last().events().accept(new ChatEvent.Completed());
 
         assertThat(chats.findMessages(chat.id()).get(1).actions()).containsExactly(pipeline);
+    }
+
+    @Test
+    void a_plan_proposed_without_any_words_is_still_kept_with_the_answer() {
+        Chat chat = newChat(her);
+        ChatPlan plan = new ChatPlan(UUID.randomUUID(), her, chat.id(), Instant.now(), List.of());
+        turns.send(her, chat.id(), "Gem opslaget", received::add);
+        agent.last().events().accept(new ChatEvent.Proposed(plan));
+        agent.last().events().accept(new ChatEvent.Stopped());
+
+        assertThat(chats.findMessages(chat.id()).get(1).planIds()).containsExactly(plan.id());
     }
 
     @Test

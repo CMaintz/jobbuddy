@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpEventType, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChatStore } from './chat.store';
+import { PlanDecisions } from './plan-decisions';
 import { ChatSummary } from '../models/chat.model';
 
 const CHAT: ChatSummary = {
@@ -156,6 +157,72 @@ describe('ChatStore', () => {
     backend.expectOne('/api/v1/chats/c1/messages').flush('event:error\ndata:{"code":"NOT_LOGGED_IN"}\n\n');
 
     expect(store.turn()).toBe('failed');
+  });
+
+  const PENDING_PLAN = {
+    id: 'p1', createdAt: CHAT.createdAt,
+    items: [{
+      id: 'i1', kind: 'SAVE_POSTING', state: 'PENDING', failure: null, decidedAt: null, finishedAt: null,
+      details: {
+        postingId: 'j1', applicationId: null, title: 'Rådgiver', company: 'Arla', fromStatus: null,
+        toStatus: null, interviewBefore: null, interviewAt: null,
+      },
+    }],
+  };
+  const DONE_PLAN = { ...PENDING_PLAN, items: [{ ...PENDING_PLAN.items[0], state: 'DONE' }] };
+  const APPROVE = '/api/v1/chats/plans/p1/items/i1/approve';
+
+  function proposeOnePlan(): void {
+    openNewChat();
+    store.send('Gem opslaget');
+    backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages').flush(
+      'event:delta\ndata:{"text":"Skal jeg gemme det?"}\n\n'
+      + `event:plan\ndata:${JSON.stringify({ plan: PENDING_PLAN })}\n\n`
+      + 'event:done\ndata:{}\n\n');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
+  }
+
+  it('shows a proposed change with the answer it came with, waiting for her', () => {
+    proposeOnePlan();
+
+    expect(store.messages()[1].planIds).toEqual(['p1']);
+    expect(store.plan('p1')?.items[0].state).toBe('PENDING');
+  });
+
+  it('sends her approval once however often she clicks, and shows how it went', () => {
+    proposeOnePlan();
+
+    store.approve('p1', 'i1');
+    store.approve('p1', 'i1');
+    store.reject('p1', 'i1');
+
+    backend.expectOne(r => r.method === 'POST' && r.url === APPROVE).flush(DONE_PLAN);
+    backend.expectNone(r => r.url.includes('/plans/'));
+    expect(store.plan('p1')?.items[0].state).toBe('DONE');
+    expect(TestBed.inject(PlanDecisions).deciding('i1')).toBeFalse();
+  });
+
+  it('lets her try again when her decision did not reach the app', () => {
+    proposeOnePlan();
+
+    store.approve('p1', 'i1');
+    backend.expectOne(APPROVE).flush(null, { status: 0, statusText: 'Unknown Error' });
+
+    expect(store.plan('p1')?.items[0].state).toBe('PENDING');
+    expect(TestBed.inject(PlanDecisions).deciding('i1')).toBeFalse();
+    expect(TestBed.inject(PlanDecisions).failed('i1')).toBeTrue();
+    expect(store.error()).toBeNull();
+  });
+
+  it('shows how she decided on a proposal when she opens the chat again', () => {
+    store.open('c1');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/c1/messages').flush({
+      messages: [{ role: 'ASSISTANT', text: 'Skal jeg gemme det?', at: CHAT.createdAt, planIds: ['p1'] }],
+      contextLost: false,
+      plans: [DONE_PLAN],
+    });
+
+    expect(store.plan('p1')?.items[0].state).toBe('DONE');
   });
 
   it('turns the chat off when this backend has none', () => {

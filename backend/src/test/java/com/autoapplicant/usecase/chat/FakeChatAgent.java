@@ -23,7 +23,7 @@ final class FakeChatAgent implements ChatAgentPort {
     ChatEvent failImmediately;
 
     @Override
-    public RunningTurn start(UUID userId, UUID sessionId, String message,
+    public RunningTurn start(UUID userId, UUID chatId, UUID sessionId, String message,
                              Consumer<ChatEvent> events) {
         turns.add(new Turn(userId, sessionId, message, events));
         sessions.add(sessionId);

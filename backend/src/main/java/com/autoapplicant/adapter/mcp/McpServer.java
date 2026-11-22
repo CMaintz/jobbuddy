@@ -37,6 +37,10 @@ public class McpServer {
     private static final Map<String, Object> READ_ONLY = Map.of(
             "readOnlyHint", true, "destructiveHint", false, "openWorldHint", false);
 
+    /** Stores a proposal and nothing else; her approval in the app is what changes her data. */
+    private static final Map<String, Object> PROPOSES = Map.of(
+            "readOnlyHint", false, "destructiveHint", false, "openWorldHint", false);
+
     private final Map<String, McpTool> tools;
     private final ObjectMapper json;
 
@@ -77,7 +81,8 @@ public class McpServer {
 
     private static Map<String, Object> describe(McpTool tool) {
         return Map.of("name", tool.name(), "description", tool.description(),
-                "inputSchema", tool.inputSchema(), "annotations", READ_ONLY);
+                "inputSchema", tool.inputSchema(),
+                "annotations", tool.readOnly() ? READ_ONLY : PROPOSES);
     }
 
     private JsonNode call(JsonNode id, JsonNode params, McpGrant grant) {

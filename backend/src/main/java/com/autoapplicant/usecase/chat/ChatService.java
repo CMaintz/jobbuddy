@@ -2,15 +2,20 @@ package com.autoapplicant.usecase.chat;
 
 import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.domain.chat.ChatTranscript;
 import com.autoapplicant.port.in.chat.ManageChatsUseCase;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
+import com.autoapplicant.port.out.chat.ChatPlanRepositoryPort;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,14 +31,16 @@ public class ChatService implements ManageChatsUseCase {
     private final Clock clock;
     private final ChatTurns running;
     private final ChatActions actions;
+    private final ChatPlanRepositoryPort plans;
 
     public ChatService(ChatRepositoryPort chats, ChatAgentPort agent, Clock clock,
-                       ChatTurns running, JobRepositoryPort jobs) {
+                       ChatTurns running, JobRepositoryPort jobs, ChatPlanRepositoryPort plans) {
         this.chats = chats;
         this.agent = agent;
         this.clock = clock;
         this.running = running;
         this.actions = new ChatActions(jobs);
+        this.plans = plans;
     }
 
     @Override
@@ -73,7 +80,18 @@ public class ChatService implements ManageChatsUseCase {
         List<ChatMessage> messages = chats.findMessages(chat.id()).stream()
                 .map(this::withCheckedActions)
                 .toList();
-        return new ChatTranscript(messages, !messages.isEmpty() && !agent.hasSession(chat.sessionId()));
+        return new ChatTranscript(messages, !messages.isEmpty() && !agent.hasSession(chat.sessionId()),
+                plansOf(userId, messages));
+    }
+
+    /** Read as they stand now, so a card shows what she decided and how it went. */
+    private List<ChatPlan> plansOf(UUID userId, List<ChatMessage> messages) {
+        Set<UUID> ids = messages.stream()
+                .flatMap(m -> m.planIds().stream())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return plans.findByIds(ids).stream()
+                .filter(plan -> plan.userId().equals(userId))
+                .toList();
     }
 
     /** Buttons are checked again on every read: a posting may have gone since it was offered. */

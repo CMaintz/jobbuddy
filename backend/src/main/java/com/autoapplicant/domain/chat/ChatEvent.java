@@ -1,8 +1,8 @@
 package com.autoapplicant.domain.chat;
 
 /**
- * What a running chat turn reports, in order: any number of {@link Delta}s and {@link Action}s,
- * then exactly one of
+ * What a running chat turn reports, in order: any number of {@link Delta}s, {@link Action}s and
+ * {@link Proposed}s, then exactly one of
  * {@link Completed}, {@link Stopped} or {@link Failed}.
  */
 public sealed interface ChatEvent {
@@ -13,6 +13,9 @@ public sealed interface ChatEvent {
     /** A button the chat offers her, already checked by the server. */
     record Action(ChatAction action) implements ChatEvent {}
 
+    /** Changes the chat proposed, stored and waiting for her to approve or reject them. */
+    record Proposed(ChatPlan plan) implements ChatEvent {}
+
     record Completed() implements ChatEvent {}
 
     /** The user stopped the turn, or her connection went away. */
@@ -22,6 +25,6 @@ public sealed interface ChatEvent {
 
     /** True for the event that ends a turn. */
     default boolean isTerminal() {
-        return !(this instanceof Delta || this instanceof Action);
+        return !(this instanceof Delta || this instanceof Action || this instanceof Proposed);
     }
 }

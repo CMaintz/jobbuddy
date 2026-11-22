@@ -160,7 +160,7 @@ class ChatControllerTest {
     void the_messages_say_when_the_conversation_lost_its_context() throws Exception {
         when(chats.messages(local.id(), chatId)).thenReturn(new ChatTranscript(List.of(
                 new ChatMessage(ChatMessage.Role.USER, "Hej", Instant.parse("2026-11-21T10:00:00Z"))),
-                true));
+                true, List.of()));
 
         mvc.perform(get("/api/v1/chats/" + chatId + "/messages").header(TOKEN_HEADER, TOKEN))
                 .andExpect(status().isOk())

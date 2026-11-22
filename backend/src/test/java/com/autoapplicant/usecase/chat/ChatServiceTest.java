@@ -9,7 +9,9 @@ import com.autoapplicant.domain.chat.Chat;
 import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatMessage;
+import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.domain.chat.ChatTranscript;
+import com.autoapplicant.domain.chat.PlanItem;
 import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -29,8 +31,9 @@ class ChatServiceTest {
     private final FakeChatAgent agent = new FakeChatAgent();
     private final ChatTurns running = new ChatTurns(2);
     private final JobRepositoryPort jobs = mock(JobRepositoryPort.class);
+    private final InMemoryChatPlans plans = new InMemoryChatPlans();
     private final ChatService service =
-            new ChatService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running, jobs);
+            new ChatService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running, jobs, plans);
     private final ChatTurnService turns =
             new ChatTurnService(chats, agent, Clock.fixed(NOW, ZoneOffset.UTC), running);
     private final UUID her = UUID.randomUUID();
@@ -60,10 +63,26 @@ class ChatServiceTest {
         chats.appendMessage(chat.id(), hello);
         agent.sessions.add(chat.sessionId());
 
-        assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), false));
+        assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), false, List.of()));
 
         agent.sessions.remove(chat.sessionId());
-        assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), true));
+        assertThat(service.messages(her, chat.id())).isEqualTo(new ChatTranscript(List.of(hello), true, List.of()));
+    }
+
+    @Test
+    void a_proposal_shows_how_she_decided_on_it_when_the_chat_is_opened_again() {
+        Chat chat = service.create(her);
+        ChatPlan plan = plans.create(new ChatPlan(null, her, chat.id(), NOW, List.of(
+                PlanItem.proposed(null, PlanItem.Kind.SAVE_POSTING,
+                        PlanItem.Details.posting(UUID.randomUUID(), "Rådgiver", "Kommunen")))));
+        chats.appendMessage(chat.id(), new ChatMessage(ChatMessage.Role.ASSISTANT, "Skal jeg gemme det?",
+                NOW, List.of(), List.of(plan.id())));
+        plans.move(plan.items().get(0).id(), PlanItem.State.PENDING, PlanItem.State.REJECTED, NOW);
+
+        ChatTranscript transcript = service.messages(her, chat.id());
+
+        assertThat(transcript.plans()).singleElement().satisfies(p ->
+                assertThat(p.items().get(0).state()).isEqualTo(PlanItem.State.REJECTED));
     }
 
     @Test

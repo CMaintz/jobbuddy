@@ -41,6 +41,10 @@ public class ChatMessageEntity {
     @Column(name = "actions", columnDefinition = "jsonb", nullable = false)
     private List<ChatAction> actions = new ArrayList<>();
 
+    @Type(JsonType.class)
+    @Column(name = "plan_ids", columnDefinition = "jsonb", nullable = false)
+    private List<UUID> planIds = new ArrayList<>();
+
     public UUID getId() { return id; }
     public UUID getChatId() { return chatId; }
     public void setChatId(UUID chatId) { this.chatId = chatId; }
@@ -54,4 +58,6 @@ public class ChatMessageEntity {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public List<ChatAction> getActions() { return actions; }
     public void setActions(List<ChatAction> actions) { this.actions = new ArrayList<>(actions); }
+    public List<UUID> getPlanIds() { return planIds; }
+    public void setPlanIds(List<UUID> planIds) { this.planIds = new ArrayList<>(planIds); }
 }

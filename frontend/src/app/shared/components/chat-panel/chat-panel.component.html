@@ -99,6 +99,11 @@
                 }
               </div>
             }
+            @for (planId of message.planIds ?? []; track planId) {
+              @if (store.plan(planId); as plan) {
+                <jb-chat-plan [plan]="plan" />
+              }
+            }
           }
           @if (store.streaming() && store.messages()[store.messages().length - 1]?.role !== 'ASSISTANT') {
             <div class="self-start flex items-center gap-2 text-sm text-jb-text-dim">
