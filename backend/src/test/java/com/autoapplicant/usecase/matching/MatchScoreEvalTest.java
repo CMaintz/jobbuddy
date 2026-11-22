@@ -21,6 +21,7 @@ import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillNames;
 import com.autoapplicant.domain.user.Education;
 import com.autoapplicant.domain.user.Profile;
+import com.autoapplicant.domain.user.WorkExperience;
 import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
@@ -34,11 +35,15 @@ import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -72,7 +77,8 @@ import org.springframework.context.annotation.Import;
  * three postings with no ask lists and their crawled page text, chrome included, so the fallback
  * that reads the text is held to the same bar. Each row still online when #338 came along also
  * carries its frozen requirements (degrees, certifications), so the hard-requirement gate is
- * measured on the wording real postings use.
+ * measured on the wording real postings use. Each profile also carries an invented dated work
+ * history (#346), written before scoring, so specialist experience asks are measured the same way.
  *
  * <p>Asks answered by meaning (#350) are scored from frozen label similarities
  * ({@code skill-similarity.json}) and each profile's frozen suggested skills, both described in
@@ -103,6 +109,18 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
      */
     private static final Set<String> LAW_DEGREE_POSTS = Set.of(
             "jurist-med-fokus-paa-informationssikkerh", "compliance-og-gdpr-specialist-hos-forsyn");
+
+    /**
+     * Posts inside the comms profile's own field that require hands-on technical security
+     * experience: defining security architecture, and incident response in a SOC. Their labels
+     * overlap her GRC course; only her work history rules them out.
+     */
+    private static final Set<String> TECHNICAL_SECURITY_POSTS = Set.of(
+            "vil-du-vaere-med-til-at-saette-retningen", "cybersikkerhedsspecialist-til-kritisk-in");
+
+    /** The day the eval scores on, so the profiles' current roles don't grow with the calendar. */
+    private static final Clock SCORED_ON = Clock.fixed(
+            LocalDate.of(2026, 6, 1).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
     @Autowired SkillCanonicalizer canonicalizer;
 
@@ -166,6 +184,19 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         LAW_DEGREE_POSTS.forEach(id -> {
             assertThat(results.get(id).matchLabel()).as(id).isEqualTo(MatchLabel.WEAK);
             assertThat(results.get(id).matchReasons()).as(id).first().isEqualTo("Kræver cand.jur.");
+        });
+    }
+
+    @Test
+    void a_technical_security_post_falls_below_strong_for_the_comms_profile_and_says_why()
+            throws IOException {
+        Map<String, MatchResult> results = resultsFor(COMMS);
+
+        TECHNICAL_SECURITY_POSTS.forEach(id -> {
+            assertThat(results.get(id).matchLabel()).as(id)
+                    .isIn(MatchLabel.MODERATE, MatchLabel.WEAK);
+            assertThat(results.get(id).matchReasons()).as(id).first().asString()
+                    .startsWith(OUT_OF_REACH).contains("erfaring");
         });
     }
 
@@ -243,8 +274,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
 
     /**
      * A posting outside the profile's own field and labelled a mismatch. Mismatches inside the
-     * field are left out: a technical security post or a SOC post shares a GRC profile's skill
-     * labels and differs in the experience it asks for, which the scorer does not weigh.
+     * field are left out: they share a GRC profile's skill labels and differ in the experience
+     * they ask for, which the scorer weighs only for catalogued specialist areas (a GDPR post
+     * asking three years of legal advice still scores on its labels).
      */
     private Predicate<JsonNode> clearMismatches(String profile) {
         Set<String> ownField = profile.equals(COMMS) ? COMMS_FIELD : ENGINEER_FIELD;
@@ -335,6 +367,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         EducationRepositoryPort education = mock(EducationRepositoryPort.class);
         when(education.findByUserId(userId))
                 .thenReturn(educationRows(userId, profile.get("education")));
+        WorkExperienceRepositoryPort experience = mock(WorkExperienceRepositoryPort.class);
+        when(experience.findByUserId(userId))
+                .thenReturn(experienceRows(userId, profile.get("experience")));
         EmbeddingProviderPort ai = mock(EmbeddingProviderPort.class);
         when(ai.embed(anyString())).thenReturn(new float[] {1f});
         JobEmbeddingRepositoryPort embeddings = mock(JobEmbeddingRepositoryPort.class);
@@ -347,8 +382,8 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 mock(RecommendationFeedbackRepositoryPort.class),
                 mock(ProfileEmbeddingRepositoryPort.class), mock(ApplicationRepositoryPort.class),
                 new MatchProfileLoader(canonicalizer, new MatchProfileLoader.Sources(skills,
-                        suggested, education, mock(CertificationRepositoryPort.class)),
-                        labels -> frozenSimilarity(pairs, labels)));
+                        suggested, education, mock(CertificationRepositoryPort.class), experience),
+                        labels -> frozenSimilarity(pairs, labels), SCORED_ON));
     }
 
     /**
@@ -387,6 +422,16 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
         rows.forEach(e -> out.add(new Education(UUID.randomUUID(), userId, null,
                 e.get("degree").asText(), e.get("field").asText(), null, null, null, null, 0,
                 null, null, List.of())));
+        return out;
+    }
+
+    private static List<WorkExperience> experienceRows(UUID userId, JsonNode rows) {
+        List<WorkExperience> out = new ArrayList<>();
+        rows.forEach(e -> out.add(new WorkExperience(UUID.randomUUID(), userId,
+                e.get("company").asText(), e.get("title").asText(), null,
+                e.get("description").asText(), LocalDate.parse(e.get("start").asText()),
+                e.get("end").isNull() ? null : LocalDate.parse(e.get("end").asText()),
+                e.get("end").isNull(), List.of(), List.of(), 0, null, null, List.of())));
         return out;
     }
 

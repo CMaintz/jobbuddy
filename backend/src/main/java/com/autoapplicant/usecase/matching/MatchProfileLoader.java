@@ -8,18 +8,20 @@ import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
 import com.autoapplicant.port.out.user.EducationRepositoryPort;
+import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  * Loads what a match score reads about one user, once per feed: their skills, the suggested
- * skills they have not answered yet, and the education and certifications that decide whether a
- * posting's hard requirements are within reach.
+ * skills they have not answered yet, and the education, certifications and work history that
+ * decide whether a posting's hard requirements are within reach.
  */
 @Component
 public class MatchProfileLoader {
@@ -29,32 +31,26 @@ public class MatchProfileLoader {
      * skills are kept apart from {@code skills}: they are not the user's account of themselves.
      */
     record MatchProfile(Profile profile, List<ProfileSkill> skills, List<String> suggested,
-                        SkillFitScorer skillFit, HardRequirements hardRequirements) {}
+                        SkillFitScorer skillFit, HardRequirements hardRequirements,
+                        RequiredExperience requiredExperience) {}
 
     /** The repositories a match profile is read from. */
+    @Component
     record Sources(ProfileSkillRepositoryPort skills, ParsedSkillSuggestionRepositoryPort suggested,
-                   EducationRepositoryPort education, CertificationRepositoryPort certifications) {}
+                   EducationRepositoryPort education, CertificationRepositoryPort certifications,
+                   WorkExperienceRepositoryPort workExperience) {}
 
     private final SkillCanonicalizer canonicalizer;
     private final Sources sources;
     private final SkillSimilaritySource similarity;
-
-    @Autowired
-    public MatchProfileLoader(SkillCanonicalizer canonicalizer,
-                              ProfileSkillRepositoryPort skillRepo,
-                              ParsedSkillSuggestionRepositoryPort suggestionRepo,
-                              EducationRepositoryPort educationRepo,
-                              CertificationRepositoryPort certificationRepo,
-                              SkillLabelEmbeddings embeddings) {
-        this(canonicalizer, new Sources(skillRepo, suggestionRepo, educationRepo,
-                certificationRepo), embeddings);
-    }
+    private final Clock clock;
 
     MatchProfileLoader(SkillCanonicalizer canonicalizer, Sources sources,
-                       SkillSimilaritySource similarity) {
+                       SkillSimilaritySource similarity, Clock clock) {
         this.canonicalizer = canonicalizer;
         this.sources = sources;
         this.similarity = similarity;
+        this.clock = clock;
     }
 
     /** The profile scored on spelling alone, until {@link #againstPostings} knows the asks. */
@@ -67,7 +63,10 @@ public class MatchProfileLoader {
                         SkillSimilarity.NONE),
                 HardRequirements.forProfile(profile, skills,
                         sources.education().findByUserId(profile.userId()),
-                        sources.certifications().findByUserId(profile.userId())));
+                        sources.certifications().findByUserId(profile.userId())),
+                RequiredExperience.forHistory(
+                        sources.workExperience().findByUserId(profile.userId()),
+                        LocalDate.now(clock)));
     }
 
     /**
@@ -84,7 +83,7 @@ public class MatchProfileLoader {
         return new MatchProfile(loaded.profile(), loaded.skills(), loaded.suggested(),
                 SkillFitScorer.forProfile(canonicalizer, loaded.profile(), loaded.skills(),
                         loaded.suggested(), known),
-                loaded.hardRequirements());
+                loaded.hardRequirements(), loaded.requiredExperience());
     }
 
     private static Stream<String> asksOf(Job job) {

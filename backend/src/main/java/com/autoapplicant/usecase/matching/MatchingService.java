@@ -73,8 +73,10 @@ public class MatchingService implements GetRecommendationsUseCase {
     private static final int BASE_SCORE          = 25;
 
     /**
-     * The most a posting can score when it demands a credential the profile clearly lacks: no
-     * better than one that shares nothing with the profile, whatever its skills or boosts say.
+     * The most a posting can score when it demands a credential or specialist experience the
+     * profile clearly lacks: no better than one that shares nothing with the profile, whatever its
+     * skills or boosts say. A ceiling rather than a deduction, because the skill score it would
+     * deduct from is the label overlap that made the posting look like a fit in the first place.
      */
     private static final int OUT_OF_REACH_CEILING = BASE_SCORE;
 
@@ -415,7 +417,8 @@ public class MatchingService implements GetRecommendationsUseCase {
         // ── Final score ──────────────────────────────────────────────────────
         // Base 25 + skill fit (0-65) + pref bonuses (variable) + behavioral
         int total = Math.min(Math.max(BASE_SCORE + skillScore + prefScore + behavioralBoost, 0), 100);
-        Optional<String> outOfReach = matchProfile.hardRequirements().unmet(job);
+        Optional<String> outOfReach = matchProfile.hardRequirements().unmet(job)
+                .or(() -> matchProfile.requiredExperience().unmet(job));
         if (outOfReach.isPresent()) {
             total = Math.min(total, OUT_OF_REACH_CEILING);
             // First, because the feed shows only the first two reasons.
