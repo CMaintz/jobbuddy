@@ -49,10 +49,29 @@ class TaxonomyNameCreditTest {
                 .isGreaterThan(scorer.score(unrelated, new ArrayList<>()));
     }
 
+    /**
+     * "Presse" is an alias of Public Relations, but as a head word it starts factory skills
+     * ("Presseoperatør") as often as press ones.
+     */
+    @Test
+    void a_one_word_alias_relates_no_ask_by_its_spelling() {
+        MatchProfileLoader loader = loaderFor("Pressearbejde");
+        MatchProfileLoader.MatchProfile loaded = loader.load(profile);
+        Job factory = required("Presseoperatør");
+        Job unrelated = required("Bogholderi");
+
+        SkillFitScorer scorer = loader.againstPostings(loaded, List.of(factory, unrelated))
+                .skillFit();
+
+        assertThat(scorer.score(factory, new ArrayList<>()))
+                .isEqualTo(scorer.score(unrelated, new ArrayList<>()));
+    }
+
     private MatchProfileLoader loaderFor(String held) {
         SkillTaxonomyRepositoryPort taxonomy = mock(SkillTaxonomyRepositoryPort.class);
         when(taxonomy.findAll()).thenReturn(List.of(new SkillTaxonomy(UUID.randomUUID(),
-                "Public Relations", "public relations", null, "Domain", List.of(DANISH_NAME))));
+                "Public Relations", "public relations", null, "Domain",
+                List.of("presse", DANISH_NAME))));
         ProfileSkillRepositoryPort skills = mock(ProfileSkillRepositoryPort.class);
         when(skills.findByUserId(userId)).thenReturn(List.of(new ProfileSkill(UUID.randomUUID(),
                 userId, held, null, null, null, false, 0, null)));

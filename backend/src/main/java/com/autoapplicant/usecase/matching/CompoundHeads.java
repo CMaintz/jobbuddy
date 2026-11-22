@@ -1,10 +1,11 @@
 package com.autoapplicant.usecase.matching;
 
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Whether two skill labels name related skills although their spellings differ, by comparing
@@ -23,7 +24,7 @@ import java.util.stream.Stream;
  *   <li>Only the last word is compared, so "Intern audit" and "Intern kommunikation" stay apart.
  *   <li>A hyphen does not split a word, so "IT-sikkerhed" does not end on "sikkerhed" and say
  *       something about "Sikkerhedsgodkendelse".
- *   <li>A shared head shorter than {@value #MIN_HEAD} letters, or one of {@link #GENERIC_HEADS},
+ *   <li>A shared head shorter than {@value #MIN_HEAD} letters, or one of {@link #GENERIC_WORDS},
  *       relates nothing: "SQL" is not answered by "PostgreSQL", and "Risk management" is not
  *       "Project management".
  * </ul>
@@ -39,19 +40,32 @@ final class CompoundHeads {
     private static final String[] ENDINGS = {"erne", "ene", "er", "e", "s"};
 
     /**
-     * Head words that end skills from unrelated fields, so sharing one says nothing. Stored
-     * stemmed, as {@link #headOf} returns a head: unstemmed, "service" would never meet the
-     * "servic" of "Kundeservice". A held skill is also compared under its taxonomy names, so English ones
-     * count here as well: "Public Relations" says nothing about "Relationsopbygning", nor "NIS2
-     * directive" about "CER directive". Declared after {@link #ENDINGS}, which stemming reads.
+     * Words that end skills from unrelated fields, so sharing one says nothing. A held skill is
+     * also compared under its taxonomy names, so English ones count here as well: "Public
+     * Relations" says nothing about "Relationsopbygning", nor "NIS2 directive" about "CER
+     * directive".
      */
-    private static final Set<String> GENERIC_HEADS = Stream.of(
+    private static final List<String> GENERIC_WORDS = List.of(
             "management", "development", "security", "analytics", "analysis", "review",
             "engineering", "design", "operations", "support", "testing", "planning", "service",
-            "services", "solutions", "architecture", "administration", "processing",
-            "optimization", "integration", "automation", "assessment", "relations", "directive",
-            "arbejde", "vurdering", "sikkerhed", "styring", "analyse")
-            .map(CompoundHeads::stem).collect(Collectors.toUnmodifiableSet());
+            "solutions", "architecture", "administration", "processing", "optimization",
+            "integration", "automation", "assessment", "relations", "directive",
+            "arbejde", "vurdering", "sikkerhed", "styring", "analyse");
+
+    /**
+     * A head that is a generic word on its own, in any inflection ("Service" and "Services"),
+     * keyed to that word so both forms count as the same one.
+     */
+    private static final Map<String, String> GENERIC_ALONE = genericAlone();
+
+    /**
+     * Generic words that also make a compound's ending generic ("Leverandørvurdering"). Only
+     * those stemming leaves as they are: "arbejde", "analyse" and "service" end too many real
+     * Danish skills ("Pressearbejde" and "Mediearbejde", "Markedsanalyse" and
+     * "Målgruppeanalyse") whose closeness in meaning is real.
+     */
+    private static final List<String> GENERIC_ENDINGS =
+            GENERIC_WORDS.stream().filter(word -> stem(word).equals(word)).toList();
 
     private CompoundHeads() {}
 
@@ -66,7 +80,7 @@ final class CompoundHeads {
         boolean aIsShorter = headA.length() <= headB.length();
         String shorter = aIsShorter ? headA : headB;
         String longer = aIsShorter ? headB : headA;
-        if (shorter.length() < MIN_HEAD || GENERIC_HEADS.contains(shorter)) return false;
+        if (shorter.length() < MIN_HEAD || GENERIC_ALONE.containsKey(shorter)) return false;
         return longer.startsWith(shorter) || longer.endsWith(shorter);
     }
 
@@ -81,8 +95,18 @@ final class CompoundHeads {
     }
 
     private static String genericEnding(String head) {
-        return GENERIC_HEADS.stream().filter(head::endsWith)
-                .max(java.util.Comparator.comparingInt(String::length)).orElse("");
+        if (GENERIC_ALONE.containsKey(head)) return GENERIC_ALONE.get(head);
+        return GENERIC_ENDINGS.stream().filter(head::endsWith)
+                .max(Comparator.comparingInt(String::length)).orElse("");
+    }
+
+    private static Map<String, String> genericAlone() {
+        Map<String, String> alone = new HashMap<>();
+        GENERIC_WORDS.forEach(word -> {
+            alone.put(word, word);
+            alone.put(stem(word), word);
+        });
+        return Map.copyOf(alone);
     }
 
     private static String stem(String word) {

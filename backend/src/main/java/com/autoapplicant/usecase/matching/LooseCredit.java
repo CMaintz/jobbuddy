@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Partial credit for an ask the profile does not hold outright but very likely answers.
@@ -54,7 +55,9 @@ final class LooseCredit {
                 SkillSimilarity similarity) {
         this.canonicalizer = canonicalizer;
         this.heldLabels = comparedForms(skills.held(), canonicalizer);
-        this.heldHeads = heldLabels.stream().map(CompoundHeads::headOf).distinct().toList();
+        this.heldHeads = Stream.concat(skills.held().stream(),
+                        heldLabels.stream().filter(LooseCredit::isPhrase))
+                .map(CompoundHeads::headOf).distinct().toList();
         this.suggestedLabels = comparedForms(skills.suggested(), canonicalizer);
         this.suggestedKeys = skills.suggested().stream().map(canonicalizer::canonical)
                 .collect(Collectors.toUnmodifiableSet());
@@ -73,6 +76,15 @@ final class LooseCredit {
     static List<String> comparedForms(List<String> labels, SkillCanonicalizer canonicalizer) {
         return labels.stream().flatMap(label -> canonicalizer.surfaceForms(label).stream())
                 .distinct().toList();
+    }
+
+    /**
+     * Whether a taxonomy name is a phrase, whose last word names its field ("Intern
+     * kommunikation"). A one-word alias is often only a stem ("presse"), which starts factory
+     * skills ("Presseoperatør") as readily as press ones, so it relates asks by meaning alone.
+     */
+    private static boolean isPhrase(String label) {
+        return WHITESPACE.split(label.strip()).length > 1;
     }
 
     /** The loose credit for an ask the profile does not hold, 0 when nothing vouches for it. */
