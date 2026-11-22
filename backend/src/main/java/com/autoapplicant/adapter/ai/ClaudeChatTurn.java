@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.ai;
 import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.domain.chat.ChatFailure;
+import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.port.out.chat.ChatAgentPort;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -69,6 +70,14 @@ final class ClaudeChatTurn implements ChatAgentPort.RunningTurn {
      */
     void offer(ChatAction action) {
         emit(new ChatEvent.Action(action));
+    }
+
+    /**
+     * Shows her a stored proposal, in order with the answer's text. One stored after the turn has
+     * ended is not shown and stays waiting with nothing to approve it from; it changes nothing.
+     */
+    void propose(ChatPlan plan) {
+        emit(new ChatEvent.Proposed(plan));
     }
 
     /** Feeds the message, relays the output and watches the clock, each on its own thread. */

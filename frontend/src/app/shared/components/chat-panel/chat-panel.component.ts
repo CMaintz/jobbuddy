@@ -10,6 +10,7 @@ import { PostingQueue } from '../../../core/chat/posting-queue';
 import { ChatAction, ChatSummary } from '../../../core/models/chat.model';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { ChatTextComponent } from '../chat-text/chat-text.component';
+import { ChatPlanComponent } from '../chat-plan/chat-plan.component';
 import { BuddyComponent } from '../buddy/buddy.component';
 import { BuddyMood } from '../buddy/buddy-sprites';
 
@@ -23,7 +24,9 @@ const LAUNCHER_MOODS: Record<TurnState, BuddyMood> = {
 
 @Component({
   selector: 'jb-chat-panel',
-  imports: [DatePipe, FormsModule, TranslateModule, JbIconComponent, ChatTextComponent, BuddyComponent],
+  imports: [
+    DatePipe, FormsModule, TranslateModule, JbIconComponent, ChatTextComponent, ChatPlanComponent, BuddyComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chat-panel.component.html',
 })

@@ -39,20 +39,20 @@ class ClaudeChatAgentTest {
 
     @Test
     void a_new_chat_starts_its_session_and_a_used_one_resumes_it() throws Exception {
-        String firstTurn = answerText(agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, session, "Hej", events::add));
+        String firstTurn = answerText(agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, UUID.randomUUID(), session, "Hej", events::add));
         assertThat(firstTurn).contains("--session-id " + session).doesNotContain("--resume");
 
         Path transcript = claudeConfig.resolve("projects").resolve("C--some-chat-dir");
         Files.createDirectories(transcript);
         Files.writeString(transcript.resolve(session + ".jsonl"), "{}\n");
 
-        String secondTurn = answerText(agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, session, "Igen", events::add));
+        String secondTurn = answerText(agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, UUID.randomUUID(), session, "Igen", events::add));
         assertThat(secondTurn).contains("--resume " + session).doesNotContain("--session-id");
     }
 
     @Test
     void the_agent_runs_isolated_with_the_message_on_stdin() throws Exception {
-        String args = answerText(agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, session, "Mit spørgsmål", events::add));
+        String args = answerText(agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, UUID.randomUUID(), session, "Mit spørgsmål", events::add));
 
         assertThat(args).contains("--tools= ", "--strict-mcp-config", "--setting-sources= ",
                 "--disable-slash-commands", "--permission-mode dontAsk", "--model sonnet",
@@ -65,7 +65,7 @@ class ClaudeChatAgentTest {
     void pieces_of_the_answer_arrive_while_the_agent_is_still_writing() throws Exception {
         Path go = appData.resolve("go");
         agent(GENEROUS, FakeClaudeChat.STREAM_AFTER_GO, go.toString())
-                .start(USER, session, "Hej", events::add);
+                .start(USER, UUID.randomUUID(), session, "Hej", events::add);
 
         assertThat(next()).isEqualTo(new ChatEvent.Delta(FakeClaudeChat.FIRST_PIECE));
         Files.createFile(go);
@@ -76,7 +76,7 @@ class ClaudeChatAgentTest {
     @Test
     void the_turn_ends_only_once_the_agent_has_exited() throws Exception {
         Set<ProcessHandle> already = children();
-        agent(GENEROUS, FakeClaudeChat.RESULT_THEN_LINGER).start(USER, session, "Hej", events::add);
+        agent(GENEROUS, FakeClaudeChat.RESULT_THEN_LINGER).start(USER, UUID.randomUUID(), session, "Hej", events::add);
         assertThat(next()).isInstanceOf(ChatEvent.Delta.class);
         Set<ProcessHandle> agent = children();
         agent.removeAll(already);
@@ -88,7 +88,7 @@ class ClaudeChatAgentTest {
 
     @Test
     void a_listener_that_throws_does_not_kill_the_relay_and_the_turn_still_ends() throws Exception {
-        agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, session, "Hej", event -> {
+        agent(GENEROUS, FakeClaudeChat.ECHO_ARGS).start(USER, UUID.randomUUID(), session, "Hej", event -> {
             events.add(event);
             if (event instanceof ChatEvent.Delta) {
                 throw new IllegalStateException("the chat was deleted");
@@ -103,7 +103,7 @@ class ClaudeChatAgentTest {
     void stop_kills_the_agent_and_ends_the_turn_as_stopped() throws Exception {
         Set<ProcessHandle> already = children();
         ChatAgentPort.RunningTurn turn = agent(GENEROUS, FakeClaudeChat.HANG_AFTER_DELTA)
-                .start(USER, session, "Hej", events::add);
+                .start(USER, UUID.randomUUID(), session, "Hej", events::add);
         assertThat(next()).isInstanceOf(ChatEvent.Delta.class);
         Set<ProcessHandle> agent = children();
         agent.removeAll(already);
@@ -117,7 +117,7 @@ class ClaudeChatAgentTest {
 
     @Test
     void an_agent_that_dies_mid_answer_fails_the_turn() throws Exception {
-        agent(GENEROUS, FakeClaudeChat.DIE_MID_STREAM).start(USER, session, "Hej", events::add);
+        agent(GENEROUS, FakeClaudeChat.DIE_MID_STREAM).start(USER, UUID.randomUUID(), session, "Hej", events::add);
 
         assertThat(next()).isInstanceOf(ChatEvent.Delta.class);
         assertThat(next()).isEqualTo(new ChatEvent.Failed(ChatFailure.FAILED));
@@ -125,7 +125,7 @@ class ClaudeChatAgentTest {
 
     @Test
     void a_turn_that_runs_too_long_is_killed_as_a_timeout() throws Exception {
-        agent(SHORT, FakeClaudeChat.HANG_AFTER_DELTA).start(USER, session, "Hej", events::add);
+        agent(SHORT, FakeClaudeChat.HANG_AFTER_DELTA).start(USER, UUID.randomUUID(), session, "Hej", events::add);
 
         assertThat(next()).isInstanceOf(ChatEvent.Delta.class);
         assertThat(next()).isEqualTo(new ChatEvent.Failed(ChatFailure.TIMEOUT));
@@ -134,7 +134,7 @@ class ClaudeChatAgentTest {
     @Test
     void a_missing_claude_is_reported_as_such() throws Exception {
         new ClaudeChatAgent(settings(List.of("no-such-claude-cli-for-tests"), GENEROUS))
-                .start(USER, session, "Hej", events::add);
+                .start(USER, UUID.randomUUID(), session, "Hej", events::add);
 
         assertThat(next()).isEqualTo(new ChatEvent.Failed(ChatFailure.CLAUDE_MISSING));
     }

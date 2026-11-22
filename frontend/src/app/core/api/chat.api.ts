@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ChatStreamEvent, ChatSummary, ChatTranscript } from '../models/chat.model';
+import { ChatPlan, ChatStreamEvent, ChatSummary, ChatTranscript } from '../models/chat.model';
 import { SseParser } from '../chat/sse-parser';
 
 const BASE = '/api/v1/chats';
@@ -28,6 +28,11 @@ export class ChatApiService {
 
   messages(chatId: string): Observable<ChatTranscript> {
     return this.http.get<ChatTranscript>(`${BASE}/${chatId}/messages`);
+  }
+
+  /** Approves or rejects one proposed change; the plan as it now stands. */
+  decide(planId: string, itemId: string, decision: 'approve' | 'reject'): Observable<ChatPlan> {
+    return this.http.post<ChatPlan>(`${BASE}/plans/${planId}/items/${itemId}/${decision}`, null);
   }
 
   stop(chatId: string): Observable<void> {

@@ -1,6 +1,8 @@
 package com.autoapplicant.adapter.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +13,9 @@ import java.util.UUID;
  * what the schema promises is refused with a message for the model, never coerced.
  */
 final class McpArgs {
+
+    /** {@code 2026-12-03T10:00:00.000000000} and a little to spare. */
+    private static final int DATE_TIME_LENGTH = 40;
 
     private McpArgs() {}
 
@@ -51,6 +56,17 @@ final class McpArgs {
         return ids;
     }
 
+    /** A local date and time such as {@code 2026-12-03T10:00}, with no zone, as she says it. */
+    static LocalDateTime dateTime(JsonNode args, String name) {
+        String value = text(args, name, DATE_TIME_LENGTH)
+                .orElseThrow(() -> new McpToolException(name + " is required"));
+        try {
+            return LocalDateTime.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new McpToolException(name + " must be a date and time like 2026-12-03T10:00");
+        }
+    }
+
     /** One of {@code allowed}, matched without regard to case. */
     static Optional<String> choice(JsonNode args, String name, List<String> allowed) {
         return text(args, name, Integer.MAX_VALUE).map(value -> allowed.stream()
@@ -63,7 +79,7 @@ final class McpArgs {
         try {
             return UUID.fromString(value);
         } catch (IllegalArgumentException e) {
-            throw new McpToolException(name + " must be posting ids as returned by the tools");
+            throw new McpToolException(name + " must be ids as returned by the tools");
         }
     }
 }

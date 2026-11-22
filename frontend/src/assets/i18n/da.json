@@ -2145,6 +2145,35 @@
       "START_APPLICATION": "Start ansøgning",
       "SHOW_PIPELINE": "Vis pipeline",
       "STEP_THROUGH": "Gennemgå de {{count}} opslag ét ad gangen"
+    },
+    "plan": {
+      "kinds": {
+        "SAVE_POSTING": "Gem opslaget",
+        "IGNORE_POSTING": "Skjul opslaget",
+        "UPDATE_STATUS": "Skift status på ansøgningen",
+        "LOG_INTERVIEW": "Notér jobsamtale"
+      },
+      "statusMove": "Fra {{from}} til {{to}}",
+      "interviewAt": "Samtale {{when}}",
+      "waiting": "Intet ændres, før du godkender.",
+      "approve": "Godkend",
+      "reject": "Afvis",
+      "states": {
+        "RUNNING": "I gang ...",
+        "DONE": "Godkendt og udført",
+        "REJECTED": "Afvist. Intet er ændret."
+      },
+      "failures": {
+        "POSTING_GONE": "Kunne ikke udføres: opslaget findes ikke længere.",
+        "APPLICATION_GONE": "Kunne ikke udføres: ansøgningen findes ikke længere.",
+        "CHANGED_SINCE": "Kunne ikke udføres: ansøgningen er ændret, siden forslaget blev lavet. Bed chatten om et nyt forslag.",
+        "NOT_ALLOWED": "Kunne ikke udføres: appen tillader ikke den ændring længere.",
+        "INTERRUPTED": "Appen lukkede, mens det blev udført. Tjek i appen, om det nåede at ske.",
+        "FAILED": "Noget gik galt. Tjek i appen, om det skete, og prøv ellers igen fra chatten."
+      },
+      "replaces": "I stedet for {{when}}",
+      "ignoreNote": "Det fjernes også fra dine gemte opslag.",
+      "notSent": "Din beslutning nåede ikke frem. Prøv igen."
     }
   },
   "queue": {

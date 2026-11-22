@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Map;
 
 /**
- * One tool of JobBuddy's MCP server. Tools only read, as the grant's user, or offer a checked
- * button; none changes anything (writing tools are #316).
+ * One tool of JobBuddy's MCP server. Tools read, as the grant's user, offer a checked button, or
+ * propose a change for her to approve. None changes her data: a proposal is stored and waits for
+ * her click in the app, which no tool can give.
  */
 public interface McpTool {
 
@@ -16,6 +17,11 @@ public interface McpTool {
 
     /** JSON Schema of the arguments. */
     Map<String, Object> inputSchema();
+
+    /** False for a tool that stores something, even if only a proposal. */
+    default boolean readOnly() {
+        return true;
+    }
 
     /**
      * The tool's answer, serialised to JSON for the model.

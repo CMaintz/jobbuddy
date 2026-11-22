@@ -29,7 +29,7 @@ abstract class ActionTool implements McpTool {
         ChatAction checked = resolver.resolve(asked.kind(), asked.postingIds())
                 .orElseThrow(() -> new McpToolException("No such posting, or not that many;"
                         + " use ids returned by the other tools"));
-        grant.actions().accept(checked);
+        grant.offers().actions().accept(checked);
         return Map.of("shown", true, "note", OFFERED);
     }
 }

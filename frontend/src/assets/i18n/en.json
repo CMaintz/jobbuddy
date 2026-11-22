@@ -2145,6 +2145,35 @@
       "START_APPLICATION": "Start an application",
       "SHOW_PIPELINE": "Show the pipeline",
       "STEP_THROUGH": "Go through the {{count}} postings one at a time"
+    },
+    "plan": {
+      "kinds": {
+        "SAVE_POSTING": "Save the posting",
+        "IGNORE_POSTING": "Hide the posting",
+        "UPDATE_STATUS": "Change the application status",
+        "LOG_INTERVIEW": "Note an interview"
+      },
+      "statusMove": "From {{from}} to {{to}}",
+      "interviewAt": "Interview {{when}}",
+      "waiting": "Nothing changes until you approve.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "states": {
+        "RUNNING": "Working ...",
+        "DONE": "Approved and done",
+        "REJECTED": "Rejected. Nothing changed."
+      },
+      "failures": {
+        "POSTING_GONE": "Could not be done: the posting no longer exists.",
+        "APPLICATION_GONE": "Could not be done: the application no longer exists.",
+        "CHANGED_SINCE": "Could not be done: the application changed after this was proposed. Ask the chat for a new proposal.",
+        "NOT_ALLOWED": "Could not be done: the app no longer allows that change.",
+        "INTERRUPTED": "The app closed while this ran. Check in the app whether it happened.",
+        "FAILED": "Something went wrong. Check in the app whether it happened, and otherwise try again from the chat."
+      },
+      "replaces": "Instead of {{when}}",
+      "ignoreNote": "It is also removed from your saved postings.",
+      "notSent": "Your decision did not reach the app. Try again."
     }
   },
   "queue": {

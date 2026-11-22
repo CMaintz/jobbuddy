@@ -54,7 +54,7 @@ public class ChatTurnService implements ChatTurnUseCase {
             String prompt = promptFor(chat, text);
             chats.save(named(chat, text).touchedAt(clock.instant()));
             chats.appendMessage(chatId, new ChatMessage(ChatMessage.Role.USER, text, clock.instant()));
-            turn.attach(agent.start(userId, chat.sessionId(), prompt,
+            turn.attach(agent.start(userId, chatId, chat.sessionId(), prompt,
                     new AnswerRecorder(chats, chatId, clock, turn.releasingOnEnd(events))));
         } catch (RuntimeException e) {
             turn.release();

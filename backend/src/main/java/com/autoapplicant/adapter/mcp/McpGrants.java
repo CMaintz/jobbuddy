@@ -1,6 +1,6 @@
 package com.autoapplicant.adapter.mcp;
 
-import com.autoapplicant.domain.chat.ChatAction;
+import com.autoapplicant.port.out.chat.ChatToolsPort.Offers;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -32,11 +31,11 @@ public class McpGrants {
     /** Keyed by the token's digest, so the map's own lookups do not compare the token itself. */
     private final Map<String, McpGrant> grants = new ConcurrentHashMap<>();
 
-    public String issue(UUID userId, Consumer<ChatAction> actions) {
+    public String issue(UUID userId, UUID chatId, Offers offers) {
         byte[] bytes = new byte[TOKEN_BYTES];
         random.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        grants.put(digest(token), new McpGrant(userId, actions));
+        grants.put(digest(token), new McpGrant(userId, chatId, offers));
         return token;
     }
 

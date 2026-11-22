@@ -89,7 +89,7 @@ public class ClaudeChatAgent implements ChatAgentPort {
 
     /** The turn's tool access ends with the turn, so a leaked token is worth nothing after it. */
     @Override
-    public RunningTurn start(UUID userId, UUID sessionId, String message,
+    public RunningTurn start(UUID userId, UUID chatId, UUID sessionId, String message,
                              Consumer<ChatEvent> events) {
         AtomicReference<Runnable> closeTools = new AtomicReference<>(() -> { });
         ClaudeChatTurn turn = new ClaudeChatTurn(event -> {
@@ -99,7 +99,8 @@ public class ClaudeChatAgent implements ChatAgentPort {
             events.accept(event);
         });
         Optional<ToolSession> session = Optional.ofNullable(tools)
-                .map(access -> access.open(userId, turn::offer));
+                .map(access -> access.open(userId, chatId,
+                        new ChatToolsPort.Offers(turn::offer, turn::propose)));
         session.ifPresent(s -> closeTools.set(s.close()));
         launch(turn, sessionId, message, session);
         return turn;

@@ -5,8 +5,10 @@ import static org.mockito.Mockito.mock;
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.chat.ChatAction;
+import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.GetApplicationsUseCase;
+import com.autoapplicant.port.in.chat.ProposeChatPlanUseCase;
 import com.autoapplicant.port.in.chat.ResolveChatActionUseCase;
 import com.autoapplicant.port.in.job.GetIgnoredJobsUseCase;
 import com.autoapplicant.port.in.job.GetJobByIdUseCase;
@@ -15,6 +17,7 @@ import com.autoapplicant.port.in.job.GetSavedJobsUseCase;
 import com.autoapplicant.port.in.job.SearchJobsUseCase;
 import com.autoapplicant.port.in.job.SemanticSearchJobsUseCase;
 import com.autoapplicant.port.in.user.GetAiCareerProfileUseCase;
+import com.autoapplicant.port.out.chat.ChatToolsPort.Offers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** The MCP server with every tool, over mocked read use cases. */
+/** The MCP server with every tool, over mocked read and propose use cases. */
 final class McpFixture {
 
     static final Instant NOW = Instant.parse("2026-11-21T10:00:00Z");
@@ -41,16 +44,23 @@ final class McpFixture {
     final GetIgnoredJobsUseCase ignored = mock(GetIgnoredJobsUseCase.class);
     final GetAiCareerProfileUseCase profile = mock(GetAiCareerProfileUseCase.class);
     final ResolveChatActionUseCase resolver = mock(ResolveChatActionUseCase.class);
+    final ProposeChatPlanUseCase proposals = mock(ProposeChatPlanUseCase.class);
     final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
     final ObjectMapper json = new ObjectMapper();
     final McpServer server = new McpServer(McpTools.all(this), json);
 
+    /** The chat every grant's turn belongs to. */
+    final UUID chatId = UUID.randomUUID();
+
     /** Buttons each user's turn was offered. */
     final List<ChatAction> offered = new ArrayList<>();
 
+    /** Plans each user's turn was shown. */
+    final List<ChatPlan> proposed = new ArrayList<>();
+
     McpGrant grantFor(UUID userId) {
-        return new McpGrant(userId, offered::add);
+        return new McpGrant(userId, chatId, new Offers(offered::add, proposed::add));
     }
 
     /** The tool's result, parsed; fails the test on a protocol error. */

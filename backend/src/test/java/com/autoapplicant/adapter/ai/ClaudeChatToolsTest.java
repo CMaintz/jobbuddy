@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.autoapplicant.domain.chat.ChatAction;
 import com.autoapplicant.domain.chat.ChatEvent;
 import com.autoapplicant.port.out.chat.ChatToolsPort;
+import com.autoapplicant.port.out.chat.ChatToolsPort.Offers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -36,7 +37,7 @@ class ClaudeChatToolsTest {
     @Test
     void the_turn_gets_only_jobbuddys_tools_and_its_token_only_through_the_environment()
             throws Exception {
-        String args = answer(agent(FakeClaudeChat.ECHO_ARGS).start(her, UUID.randomUUID(), "Hej",
+        String args = answer(agent(FakeClaudeChat.ECHO_ARGS).start(her, UUID.randomUUID(), UUID.randomUUID(), "Hej",
                 events::add));
         String argv = args.substring(0, args.indexOf('|'));
         Path config = appData.resolve("chat").resolve("mcp.json");
@@ -52,7 +53,7 @@ class ClaudeChatToolsTest {
 
     @Test
     void the_token_dies_with_the_turn() throws Exception {
-        answer(agent(FakeClaudeChat.ECHO_ARGS).start(her, UUID.randomUUID(), "Hej", events::add));
+        answer(agent(FakeClaudeChat.ECHO_ARGS).start(her, UUID.randomUUID(), UUID.randomUUID(), "Hej", events::add));
 
         assertThat(tools.closed).isTrue();
     }
@@ -61,7 +62,7 @@ class ClaudeChatToolsTest {
     void a_button_reaches_her_during_the_turn_and_never_after_it() throws Exception {
         Path go = appData.resolve("go");
         agent(FakeClaudeChat.STREAM_AFTER_GO, go.toString())
-                .start(her, UUID.randomUUID(), "Hej", events::add);
+                .start(her, UUID.randomUUID(), UUID.randomUUID(), "Hej", events::add);
         assertThat(next()).isInstanceOf(ChatEvent.Delta.class);
 
         tools.offer.accept(PIPELINE);
@@ -107,9 +108,9 @@ class ClaudeChatToolsTest {
         }
 
         @Override
-        public ToolSession open(UUID userId, Consumer<ChatAction> actions) {
+        public ToolSession open(UUID userId, UUID chatId, Offers offers) {
             openedFor.add(userId);
-            offer = actions;
+            offer = offers.actions();
             return new ToolSession("http://127.0.0.1:18080/mcp", token,
                     List.of("search_postings", "open_in_app"), () -> closed = true);
         }
