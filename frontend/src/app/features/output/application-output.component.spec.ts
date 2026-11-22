@@ -12,6 +12,7 @@ import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { PdfExportService } from '../resume-builder/services/pdf-export.service';
 import { ApplicationOutputComponent } from './application-output.component';
 import { LetterPaperComponent } from './letter-paper.component';
+import { LetterExportWarningComponent } from './letter-export-warning.component';
 
 describe('ApplicationOutputComponent page budget', () => {
   let fixture: ComponentFixture<ApplicationOutputComponent>;
@@ -46,8 +47,15 @@ describe('ApplicationOutputComponent page budget', () => {
     return el?.textContent?.trim() ?? '';
   }
 
+  /**
+   * Downloads the letter the way the user does. It has never passed the letter gate, so the export
+   * warning holds the download until she picks "download anyway".
+   */
   async function exportLetter(): Promise<void> {
     fixture.componentInstance.downloadAtsPdf();
+    fixture.detectChanges();
+    fixture.debugElement.query(By.directive(LetterExportWarningComponent))
+      .componentInstance.exportAnyway.emit();
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -60,6 +68,7 @@ describe('ApplicationOutputComponent page budget', () => {
 
   it('hides the warning once the letter is edited, since it described the old file', async () => {
     await exportLetter();
+    expect(warning()).toContain('pageBudget.letter.over');
 
     editLetter('<p>Én kortere tekst.</p>');
 
@@ -68,6 +77,7 @@ describe('ApplicationOutputComponent page budget', () => {
 
   it('hides the warning when another letter design is picked, which reflows the page', async () => {
     await exportLetter();
+    expect(warning()).toContain('pageBudget.letter.over');
 
     fixture.componentInstance.template.set('classic');
     fixture.detectChanges();
