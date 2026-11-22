@@ -2,6 +2,7 @@ package com.autoapplicant.usecase.matching;
 
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobRequirement;
+import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.user.WorkExperience;
 import java.time.LocalDate;
@@ -29,8 +30,8 @@ import java.util.stream.Stream;
  *
  * <p>This only ever lowers a score, so anything unclear counts as met:
  * <ul>
- *   <li>Only REQUIRED asks that say "erfaring", "experience" or similar count. "Kendskab til"
- *       is knowledge, which a course can give.
+ *   <li>Only REQUIRED asks the enrichment kinds as EXPERIENCE and that say "erfaring",
+ *       "experience" or similar count. "Kendskab til" is knowledge, which a course can give.
  *   <li>Only areas in {@link #AREAS} count. "Erfaring med intern kommunikation" names nothing
  *       a work history can be checked against with any confidence.
  *   <li>An ask that leaves a way in ("gerne", "en fordel", "eller lignende", "fx") counts as
@@ -48,10 +49,17 @@ final class RequiredExperience {
     private static final int FLAGS = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
             | Pattern.UNICODE_CHARACTER_CLASS;
 
+    /**
+     * Wording that makes an ask about experience. "Baggrund" and "background" are left out: on
+     * their own they as often mean an education ("uddannelsesmæssig baggrund").
+     */
     private static final Pattern EXPERIENCE_WORDING = Pattern.compile(
-            "erfaring|erfaren|experience|experienced|baggrund|background|track record"
+            "erfaring|erfaren|experience|experienced|track record"
                     + "|har arbejdet|have worked|has worked",
             FLAGS);
+
+    /** "SOC" as a name, not the Danish abbreviation "soc." ("det soc. område"). */
+    private static final String SOC = "\\bsoc\\b(?!\\.)";
 
     /**
      * Alternatives inside one ask. Unlike the credential gate, commas don't count: an experience
@@ -60,15 +68,32 @@ final class RequiredExperience {
     private static final Pattern ALTERNATIVES = Pattern.compile("\\beller\\b|\\bor\\b|/", FLAGS);
 
     /**
-     * A title that is hands-on technical work. Read on titles only: a comms role describing
-     * "awareness-kampagner med it-afdelingen" is not a technical role.
+     * A title that is technical work or works inside software delivery. Read on titles only: a
+     * comms role describing "awareness-kampagner med it-afdelingen" is not a technical role.
      */
     private static final Pattern TECHNICAL_ROLE = Pattern.compile(
             "udvikler|developer|engineer|ingeniør|programmør|programmer|arkitekt|architect"
-                    + "|devops|\\bsre\\b|\\bit-|\\bit\\b|sikkerhed|security|cyber|\\bsoc\\b"
+                    + "|devops|\\bsre\\b|\\bit-|\\bit\\b|sikkerhed|security|cyber|" + SOC
                     + "|pentest|systemadministrat|sysadmin|netværk|network|infrastruktur"
-                    + "|infrastructure",
+                    + "|infrastructure|product owner|scrum master|tech lead|\\bqa\\b|tester"
+                    + "|\\bux\\b|data scientist",
             FLAGS);
+
+    /**
+     * Software development as the subject of an ask: having been a developer, or having developed
+     * software. Working beside developers ("sammen med softwareudviklere") or in their team
+     * ("softwareudviklingsteam", "in a software development team") is not, and must not cap a
+     * comms or product profile.
+     */
+    private static final String DEVELOPED_SOFTWARE =
+            "\\b(?:som|as an?)\\s+(?:\\w+\\s+){0,2}?"
+                    + "(?:software|system|web|backend|frontend|full-?stack)?-?\\s?"
+                    + "(?:udvikler|developer|engineer|programmør|programmer)\\b"
+                    + "|\\b(?:med|with|in)\\s+(?:\\w+\\s+)?"
+                    + "(?:softwareudvikling|software-?\\s?development)\\b"
+                    + "(?!\\s*(?:team|miljø|afdeling|organisation|company|environment"
+                    + "|department))"
+                    + "|at udvikle software|developing software";
 
     private static final Map<String, Integer> NUMBER_WORDS = Map.ofEntries(
             Map.entry("en", 1), Map.entry("et", 1), Map.entry("one", 1),
@@ -85,18 +110,22 @@ final class RequiredExperience {
                     + ")\\s*\\+?\\s*(?:-\\s*\\d{1,2}\\s*)?(?:års|år|years?)\\b",
             FLAGS);
 
-    /** One specialist area: how an ask names it, and the experience phrase in its reason. */
-    private record Area(Pattern named, String phrase) {}
+    /**
+     * One specialist area: how an ask names it, what a role that did it mentions, and the
+     * experience phrase in its reason.
+     */
+    private record Area(Pattern named, Pattern held, String phrase) {}
 
     private static final List<Area> AREAS = List.of(
             area("sikkerhedsarkitektur|security architecture",
                     "erfaring med sikkerhedsarkitektur"),
             area("incident response|håndtering af (it-)?sikkerhedshændelser",
                     "erfaring med incident response"),
-            area("\\bsoc\\b|security operations cent", "erfaring fra et SOC"),
+            area(SOC + "|security operations cent", "erfaring fra et SOC"),
             area("penetrationstest|penetration test|\\bpentest", "erfaring med penetrationstest"),
-            area("softwareudvikl|software(-| )?(udvikl|develop|engineer)"
-                    + "|(backend|frontend|full-?stack|web)(-| )?(udvikl|develop)",
+            new Area(Pattern.compile(DEVELOPED_SOFTWARE, FLAGS),
+                    Pattern.compile("softwareudvikl|software(-| )?(udvikl|develop|engineer)"
+                            + "|(backend|frontend|full-?stack|web)(-| )?(udvikl|develop)", FLAGS),
                     "erfaring som softwareudvikler"));
 
     private final List<WorkExperience> history;
@@ -116,6 +145,9 @@ final class RequiredExperience {
         if (job.requirements() == null || history.isEmpty()) return Optional.empty();
         return job.requirements().stream()
                 .filter(JobRequirement::isRequired)
+                // Degree and skill asks are judged elsewhere. Read against a work history, a
+                // degree in software would cap every graduate who has not worked as a developer.
+                .filter(ask -> ask.kind() == RequirementKind.EXPERIENCE)
                 .map(JobRequirement::text)
                 .filter(Objects::nonNull)
                 .filter(text -> EXPERIENCE_WORDING.matcher(text).find())
@@ -153,7 +185,7 @@ final class RequiredExperience {
 
     private static boolean relates(WorkExperience role, Area area) {
         if (role.title() != null && TECHNICAL_ROLE.matcher(role.title()).find()) return true;
-        return area.named().matcher(textOf(role)).find();
+        return area.held().matcher(textOf(role)).find();
     }
 
     private long months(WorkExperience role) {
@@ -183,6 +215,7 @@ final class RequiredExperience {
     }
 
     private static Area area(String named, String phrase) {
-        return new Area(Pattern.compile(named, FLAGS), phrase);
+        Pattern pattern = Pattern.compile(named, FLAGS);
+        return new Area(pattern, pattern, phrase);
     }
 }

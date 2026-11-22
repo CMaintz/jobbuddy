@@ -67,6 +67,70 @@ class RequiredExperienceTest {
         assertThat(gate.unmet(posting(required(ask)))).isEmpty();
     }
 
+    /** Working beside developers, or in their team, is not being one. */
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            Erfaring med at arbejde tæt sammen med softwareudviklere
+            Experience working in a software development team
+            Erfaring fra et softwareudviklingsteam
+            Erfaring fra det soc. område
+            """)
+    void an_ask_where_the_area_is_a_collaborator_or_lookalike_is_met(String ask) {
+        RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
+
+        assertThat(gate.unmet(posting(required(ask)))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            Mindst 3 års erfaring som softwareudvikler     | Kræver 3 års erfaring som softwareudvikler
+            Erfaring med softwareudvikling                 | Kræver erfaring som softwareudvikler
+            Erfaring med at udvikle software               | Kræver erfaring som softwareudvikler
+            Experience as a software engineer              | Kræver erfaring som softwareudvikler
+            """)
+    void an_ask_to_have_developed_software_is_unmet_by_a_comms_history(String ask,
+                                                                       String reason) {
+        RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
+
+        assertThat(gate.unmet(posting(required(ask)))).contains(reason);
+    }
+
+    /** Roles that work inside software delivery may well meet a development ask. */
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            Product Owner
+            Scrum Master
+            Tech Lead
+            QA Tester
+            UX Designer
+            Data Scientist
+            IT-projektleder
+            """)
+    void a_role_inside_software_delivery_meets_a_development_ask(String title) {
+        RequiredExperience gate = RequiredExperience.forHistory(List.of(
+                role(title, "", LocalDate.of(2020, 1, 1), null, true)), TODAY);
+
+        assertThat(gate.unmet(posting(required("Erfaring med agil softwareudvikling"))))
+                .isEmpty();
+    }
+
+    /** An education ask is checked against the degree, never against the work history. */
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            Uddannelsesmæssig baggrund i softwareudvikling | EDUCATION
+            Uddannelsesmæssig baggrund i softwareudvikling | EXPERIENCE
+            Erfaring med softwareudvikling                 | EDUCATION
+            Erfaring med softwareudvikling                 | SKILL
+            """)
+    void an_ask_that_is_not_an_experience_ask_is_left_to_other_checks(String ask,
+                                                                     RequirementKind kind) {
+        RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
+        JobRequirement requirement = new JobRequirement(ask, RequirementTier.REQUIRED, kind,
+                null);
+
+        assertThat(gate.unmet(posting(requirement))).isEmpty();
+    }
+
     @Test
     void an_ask_the_posting_only_prefers_is_met() {
         RequiredExperience gate = RequiredExperience.forHistory(COMMS_HISTORY, TODAY);
