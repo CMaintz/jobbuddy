@@ -12,9 +12,9 @@
           to: (stageLabelKey(item.details.toStatus) | translate) } }}</span>
       }
       @if (item.kind === 'LOG_INTERVIEW' && item.details.interviewAt) {
-        <span class="text-xs">{{ 'chat.plan.interviewAt' | translate: { when: (item.details.interviewAt | date: 'd. MMMM y, HH:mm') } }}</span>
+        <span class="text-xs">{{ 'chat.plan.interviewAt' | translate: { when: (item.details.interviewAt | date: 'dd.MM.y HH:mm') } }}</span>
         @if (item.details.interviewBefore) {
-          <span class="text-xs">{{ 'chat.plan.replaces' | translate: { when: (item.details.interviewBefore | date: 'd. MMMM y, HH:mm') } }}</span>
+          <span class="text-xs">{{ 'chat.plan.replaces' | translate: { when: (item.details.interviewBefore | date: 'dd.MM.y HH:mm') } }}</span>
         }
       }
       @if (item.kind === 'IGNORE_POSTING' && item.state === 'PENDING') {

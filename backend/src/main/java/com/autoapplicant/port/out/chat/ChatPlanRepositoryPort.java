@@ -29,6 +29,9 @@ public interface ChatPlanRepositoryPort {
     /** Ends a running item: done when {@code failure} is null, failed otherwise. */
     void finish(UUID itemId, PlanFailure failure, Instant at);
 
-    /** Ends every running item as failed for {@code failure}; how many there were. */
-    int failAllRunning(PlanFailure failure, Instant at);
+    /**
+     * Ends every item still running that went running before {@code decidedBefore} as failed
+     * for {@code failure}; how many there were.
+     */
+    int failRunning(PlanFailure failure, Instant decidedBefore, Instant at);
 }

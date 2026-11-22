@@ -254,11 +254,21 @@ class ChatPlanApprovalTest {
         ChatPlan plan = proposeSave();
         plans.move(only(plan).id(), State.PENDING, State.RUNNING, NOW);
 
-        service.recoverInterrupted();
+        service.recoverInterrupted(NOW.plusSeconds(1));
 
         PlanItem after = only(plans.findById(plan.id()).orElseThrow());
         assertThat(after.state()).isEqualTo(State.FAILED);
         assertThat(after.failure()).isEqualTo(PlanFailure.INTERRUPTED);
+    }
+
+    @Test
+    void a_change_approved_by_this_run_before_the_sweep_is_not_marked_interrupted() {
+        ChatPlan plan = proposeSave();
+        plans.move(only(plan).id(), State.PENDING, State.RUNNING, NOW);
+
+        service.recoverInterrupted(NOW.minusSeconds(1));
+
+        assertThat(only(plans.findById(plan.id()).orElseThrow()).state()).isEqualTo(State.RUNNING);
     }
 
     private ChatPlan proposeSave() {
