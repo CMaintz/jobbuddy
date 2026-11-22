@@ -71,16 +71,24 @@ export class BuddyComponent {
   private readonly zone = inject(NgZone);
   private player?: BuddyPlayer<BuddyClip>;
   private playing?: BuddyMood;
+  /** Set once the reduced-motion pose is up; before that the sprite may not be rendered yet. */
+  private still = false;
 
   constructor() {
     afterNextRender(() => this.start());
     effect(() => this.react(this.mood()));
+    // The player reads scale() on every frame; the still pose is painted once, so it needs a nudge.
+    effect(() => {
+      const scale = this.scale();
+      if (this.still) paint(this.sprite().nativeElement, STILL, 0, scale);
+    });
     inject(DestroyRef).onDestroy(() => this.player?.stop());
   }
 
   private start(): void {
     const el = this.sprite().nativeElement;
     if (this.reducedMotion()) {
+      this.still = true;
       paint(el, STILL, 0, this.scale());
       return;
     }

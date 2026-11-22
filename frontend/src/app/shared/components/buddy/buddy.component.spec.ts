@@ -43,6 +43,15 @@ describe('BuddyComponent', () => {
     expect(host.style.height).toBe(`${resolveClip('idle').height * SCALE}px`);
   });
 
+  it('repaints the still frame at a new scale under reduced motion', () => {
+    const { fixture, sprite } = render(true);
+    fixture.componentRef.setInput('scale', 3);
+    fixture.detectChanges();
+    const idle = resolveClip('idle');
+    expect(sprite.style.width).toBe(`${idle.width * 3}px`);
+    expect(sprite.style.backgroundSize).toBe(`${idle.sheetWidth * 3}px ${idle.sheetHeight * 3}px`);
+  });
+
   it('is labelled in the page language, and hidden when a labelled button already names him', () => {
     const { fixture } = render(true);
     const sprite = fixture.nativeElement.querySelector('span') as HTMLElement;
