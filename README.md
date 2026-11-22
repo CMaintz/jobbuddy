@@ -148,6 +148,10 @@ The installer's exe has Electron's fuses set: no `ELECTRON_RUN_AS_NODE`, no `NOD
 
 **Updating.** There is no auto-update: it needs a code-signing certificate and a release feed, and we have neither. To update, build the new installer and run it over the old install. Her connection, data and logs live outside the install folder, so they are kept. The installer is unsigned, so Windows SmartScreen asks once per new version: "Flere oplysninger", then "Kør alligevel".
 
+### Buddy, the mascot
+
+Buddy the axolotl keeps her company through the long waits: he idles on the chat button, looks around while the AI works, waves when an answer lands and shakes his head when something fails. He is the author's own pixel art from his `brand/buddy-sprites` generator, used here as the project's mascot. `node desktop/scripts/sync-buddy.mjs [out dir] [manifest] [atlas]` (or `mise run sync-buddy` in `desktop/`) copies the generated manifest and sprite atlas into `frontend/` and `desktop/ui/`, and writes the plain-CSS version the desktop shell's pages use. Which clips play in which mood is a preference list in `frontend/src/app/shared/components/buddy/buddy-sprites.ts` (and `MOODS` in the sync script for the shell), so a newly generated clip takes over on the next sync. An outfit is its own output folder: sync `out/office` to dress him.
+
 ## Tests
 
 ```bash

@@ -5,6 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../jb-button/jb-button.component';
+import { BuddyWaitComponent } from '../buddy/buddy-wait.component';
 import { SkillsApiService } from '../../../core/api/skills.api';
 import { AiApiService } from '../../../core/api/ai.api';
 
@@ -40,7 +41,7 @@ interface ParsedCvResponse {
  */
 @Component({
   selector: 'jb-cv-import-panel',
-  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, BuddyWaitComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cv-import-panel.component.html',
 })

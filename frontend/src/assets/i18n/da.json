@@ -2139,5 +2139,13 @@
     "next": "Næste",
     "apply": "Start ansøgning",
     "end": "Afslut gennemgangen"
+  },
+  "buddy": {
+    "alt": "Buddy, JobBuddys axolotl",
+    "wait": {
+      "cvTitle": "Buddy skræddersyr dit CV",
+      "cvDetail": "Han læser opslaget og vælger det fra din profil, der passer bedst.",
+      "import": "Buddy læser dit CV og sorterer det i sektioner."
+    }
   }
 }
