@@ -45,13 +45,23 @@ public class GeneratedDocumentWriter {
     /**
      * Stores {@code review} on the existing row in place of the one it has. Unlike {@link #save},
      * which keeps the stored verdict, this can clear a stale one, so {@code review} must judge the
-     * body in {@code document}.
+     * body in {@code document}, which was read from {@code existing}.
+     *
+     * <p>{@code existing} can be minutes old by now, since the gate call sits between the read and
+     * this write. So only the structured content is written, and only while it is still the one
+     * read: a link or other column set meanwhile stays, and a letter edited meanwhile is not given
+     * a verdict on text the gate never saw.
+     *
+     * @throws IllegalStateException when the letter changed or went away since {@code existing}
      */
     public StructuredDocument replaceLetterReview(GeneratedDocument existing, StructuredDocument document,
                                                   LetterReview review) {
         StructuredDocument reviewed = document.withLetterReview(review);
-        GeneratedDocument saved = documents.save(revised(existing, null, reviewed, existing.modelUsed()));
-        return withGeneratedDocumentId(reviewed, saved.id());
+        if (!documents.replaceStructuredContent(existing.id(), existing.userId(), existing.structuredContent(),
+                structuredJson(withGeneratedDocumentId(reviewed, null)))) {
+            throw new IllegalStateException("This letter changed while it was being checked");
+        }
+        return withGeneratedDocumentId(reviewed, existing.id());
     }
 
     /**
