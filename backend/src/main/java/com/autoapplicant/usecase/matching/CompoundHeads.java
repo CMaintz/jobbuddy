@@ -3,6 +3,8 @@ package com.autoapplicant.usecase.matching;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Whether two skill labels name related skills although their spellings differ, by comparing
@@ -31,18 +33,25 @@ final class CompoundHeads {
     /** Shorter than this, a head is too generic to say two skills are related. */
     static final int MIN_HEAD = 6;
 
-    /** Head words that end skills from unrelated fields, so sharing one says nothing. */
-    private static final Set<String> GENERIC_HEADS = Set.of(
-            "management", "development", "security", "analytics", "analysis", "review",
-            "engineering", "design", "operations", "support", "testing", "planning", "service",
-            "services", "solutions", "architecture", "administration", "processing",
-            "optimization", "integration", "automation",
-            "arbejde", "vurdering", "sikkerhed", "styring");
-
     private static final Pattern WORD_BREAK = Pattern.compile("[^\\p{L}\\p{N}-]+");
 
     /** Danish plural and linking endings, longest first, so "nyhedsbreve" meets "nyhedsbrevs". */
     private static final String[] ENDINGS = {"erne", "ene", "er", "e", "s"};
+
+    /**
+     * Head words that end skills from unrelated fields, so sharing one says nothing. Stored
+     * stemmed, as {@link #headOf} returns a head: unstemmed, "service" would never meet the
+     * "servic" of "Kundeservice". A held skill is also compared under its taxonomy names, so English ones
+     * count here as well: "Public Relations" says nothing about "Relationsopbygning", nor "NIS2
+     * directive" about "CER directive". Declared after {@link #ENDINGS}, which stemming reads.
+     */
+    private static final Set<String> GENERIC_HEADS = Stream.of(
+            "management", "development", "security", "analytics", "analysis", "review",
+            "engineering", "design", "operations", "support", "testing", "planning", "service",
+            "services", "solutions", "architecture", "administration", "processing",
+            "optimization", "integration", "automation", "assessment", "relations", "directive",
+            "arbejde", "vurdering", "sikkerhed", "styring", "analyse")
+            .map(CompoundHeads::stem).collect(Collectors.toUnmodifiableSet());
 
     private CompoundHeads() {}
 

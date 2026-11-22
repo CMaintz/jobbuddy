@@ -1,5 +1,5 @@
 {
- "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only. suggested is what AdjacentSkillPrompt returned for each profile's skills alone (claude-cli, sonnet), frozen before any posting was scored with it and not edited.",
+ "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only. suggested is what AdjacentSkillPrompt returned for each profile's skills alone (claude-cli, sonnet), frozen before any posting was scored with it and not edited. comms-grc-en is comms-grc as a real CV import stores it: each skill with a taxonomy row under that row's English master name, the rest as written.",
  "profiles": {
   "comms-grc": {
    "headline": "Kommunikationsmedarbejder | Marketing og informationssikkerhed",
@@ -131,6 +131,71 @@
     {
      "skill": "Containerization",
      "because": "Docker"
+    }
+   ]
+  },
+  "comms-grc-en": {
+   "headline": "Kommunikationsmedarbejder | Marketing og informationssikkerhed",
+   "summary": "Kommunikationsmedarbejder med erfaring fra kampagner, presse, SEO-indhold og nyhedsbreve. Cand.mag. i kommunikation. Har taget et kursus i informationssikkerhed og GRC (NIS2, ISO 27001, risikovurdering, awareness og beredskab) og søger stillinger, hvor kommunikation og informationssikkerhed mødes.",
+   "skills": [
+    "Kampagneplanlægning",
+    "Public Relations",
+    "SEO",
+    "Content Marketing",
+    "Nyhedsbreve",
+    "Social Media",
+    "Internal Communication",
+    "Kundesucces",
+    "Stakeholderhåndtering",
+    "Projektkoordinering",
+    "Copywriting",
+    "NIS2",
+    "ISO 27001",
+    "Risk Assessment",
+    "Security Awareness",
+    "Business Continuity",
+    "Mailchimp",
+    "Canva",
+    "WordPress"
+   ],
+   "education": [
+    {
+     "degree": "Kandidat",
+     "field": "Kommunikation"
+    }
+   ],
+   "suggested": [
+    {
+     "skill": "Målgruppeanalyse",
+     "because": "Kampagneplanlægning"
+    },
+    {
+     "skill": "Mediekontakt",
+     "because": "Pressearbejde"
+    },
+    {
+     "skill": "Pressemeddelelser",
+     "because": "Pressearbejde"
+    },
+    {
+     "skill": "Søgeordsanalyse",
+     "because": "SEO"
+    },
+    {
+     "skill": "Kommunikationsplanlægning",
+     "because": "Intern kommunikation"
+    },
+    {
+     "skill": "Informationssikkerhed",
+     "because": "ISO 27001"
+    },
+    {
+     "skill": "Kundekommunikation",
+     "because": "Kundesucces"
+    },
+    {
+     "skill": "Dokumentation",
+     "because": "Risikovurdering"
     }
    ]
   }
