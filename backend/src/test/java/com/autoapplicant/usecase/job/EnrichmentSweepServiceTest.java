@@ -112,4 +112,21 @@ class EnrichmentSweepServiceTest {
                 argThat(cutoff -> !cutoff.isBefore(before.minusSeconds(5))
                         && !cutoff.isAfter(before.plusSeconds(5))), any());
     }
+
+    @Test
+    void a_provider_error_in_batched_mode_reports_the_batch_as_attempted_not_as_an_empty_queue() {
+        // Bug: the stopped batch counts as zero postings, so the caller reads "queue empty",
+        // stops cleanly and the enrich CLI exits 0 while the provider is down.
+        BatchedEnrichment batched = mock(BatchedEnrichment.class);
+        when(batched.enrich(any(), anyInt(), anyInt())).thenReturn(new BatchedEnrichment.Result(3, 0, 0, 0, true));
+        EnrichmentSweepService batching = new EnrichmentSweepService(jobRepo, enrichJob, batched,
+                mock(com.autoapplicant.port.out.user.PreferencesRepositoryPort.class),
+                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMinutes(5), 0L, 1, 10));
+        queue(job(null), job(null), job(null));
+
+        SweepResult result = batching.sweep(10);
+
+        assertThat(result.total()).isEqualTo(3);
+        assertThat(result.succeeded()).isZero();
+    }
 }
