@@ -131,12 +131,17 @@ final class HardRequirements {
                 !education.isEmpty() || !certifications.isEmpty(), educationText, profileText);
     }
 
+    /** True when an ask's wording leaves a way in, so it is not a hard requirement at all. */
+    static boolean leavesAWayIn(String ask) {
+        return OPEN_ENDED.matcher(ask).find();
+    }
+
     /** Why {@code job} is out of reach for this profile, or empty when nothing clearly is. */
     Optional<String> unmet(Job job) {
         if (job.requirements() == null) return Optional.empty();
         return job.requirements().stream()
                 .filter(JobRequirement::isRequired)
-                .filter(ask -> ask.text() != null && !OPEN_ENDED.matcher(ask.text()).find())
+                .filter(ask -> ask.text() != null && !leavesAWayIn(ask.text()))
                 .map(this::unmetBy)
                 .flatMap(Optional::stream)
                 .findFirst();

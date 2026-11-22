@@ -1,5 +1,5 @@
 {
- "source": "Each posting's total score on main after #350 (commit bf512fe5, the adjacent-skill scorer), from MatchScoreEvalTest with these fixtures. A score only moves when the scorer changes on purpose; rewrite this file then, and say why in the commit.",
+ "source": "Each posting's total score on main after #372 (commit 3894ff52, English taxonomy names), from MatchScoreEvalTest with these fixtures. A score only moves when the scorer changes on purpose; rewrite this file then, and say why in the commit.",
  "scores": {
   "comms-grc": {
    "kommunikationsmedarbejder": 76,
@@ -34,7 +34,7 @@
    "sikkerheds-og-risikokoordinator": 72,
    "konsulent-til-governance-risk-compliance": 72,
    "gdpr-konsulent-til-konsulentvirksomhed-i": 33,
-   "security-compliance-governance-specialis": 64,
+   "security-compliance-governance-specialis": 72,
    "software-developer-xci": 25,
    "platformsudvikler-til-platformteam-med-f": 27,
    "partner-til-employer-branding-og-ledelse": 68,
@@ -46,8 +46,8 @@
    "it-revisor-eller-compliancekonsulent": 48,
    "paedagog-til-vuggestue": 25,
    "ejendomsmaegler-til-estate-varde-vaer-me": 25,
-   "frontend-software-developer-xci": 25,
-   "cloud-engineer-til-danmarks-eksport-og-i": 25,
+   "frontend-software-developer-xci": 29,
+   "cloud-engineer-til-danmarks-eksport-og-i": 29,
    "jn-data-cloud-service-architect": 25,
    "erfaren-softwareudvikler-til-forsyningsk": 25,
    "kommunikationsmedarbejder-unenriched": 39,

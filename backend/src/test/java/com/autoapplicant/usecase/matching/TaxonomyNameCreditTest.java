@@ -14,7 +14,9 @@ import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
 import com.autoapplicant.port.out.user.EducationRepositoryPort;
+import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -78,8 +80,9 @@ class TaxonomyNameCreditTest {
         return new MatchProfileLoader(new SkillCanonicalizer(taxonomy),
                 new MatchProfileLoader.Sources(skills,
                         mock(ParsedSkillSuggestionRepositoryPort.class),
-                        mock(EducationRepositoryPort.class), mock(CertificationRepositoryPort.class)),
-                TaxonomyNameCreditTest::embeddedOnly);
+                        mock(EducationRepositoryPort.class), mock(CertificationRepositoryPort.class),
+                        mock(WorkExperienceRepositoryPort.class)),
+                TaxonomyNameCreditTest::embeddedOnly, Clock.systemUTC());
     }
 
     /** Like the real embeddings: a label nobody handed over for embedding has no vector. */

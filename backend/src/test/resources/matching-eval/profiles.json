@@ -1,5 +1,5 @@
 {
- "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only. suggested is what AdjacentSkillPrompt returned for each profile's skills alone (claude-cli, sonnet), frozen before any posting was scored with it and not edited. comms-grc-en is comms-grc as a real CV import stores it: each skill with a taxonomy row under that row's English master name, the rest as written.",
+ "source": "Invented profiles, not real people: anonymised CV texts parsed by ParseCvService's prompt with the claude-cli provider, then generalised by hand. skills are the parsed skills plus technologies, as ProfileSkillIngestion stores them. education is one invented row per profile, degree level and field only. experience is an invented dated work history written from each profile's summary before any posting was scored with it; end null means current, and the eval scores as of 2026-06-01. suggested is what AdjacentSkillPrompt returned for each profile's skills alone (claude-cli, sonnet), frozen before any posting was scored with it and not edited. comms-grc-en is comms-grc as a real CV import stores it: each skill with a taxonomy row under that row's English master name, the rest as written.",
  "profiles": {
   "comms-grc": {
    "headline": "Kommunikationsmedarbejder | Marketing og informationssikkerhed",
@@ -29,6 +29,22 @@
     {
      "degree": "Kandidat",
      "field": "Kommunikation"
+    }
+   ],
+   "experience": [
+    {
+     "title": "Kommunikationsmedarbejder",
+     "company": "Eksempel Kommune",
+     "description": "Kampagner, presse og nyhedsbreve. Awareness-kampagner om informationssikkerhed sammen med it-afdelingen.",
+     "start": "2019-08-01",
+     "end": "2023-01-31"
+    },
+    {
+     "title": "Kommunikationskonsulent",
+     "company": "Eksempel Forening",
+     "description": "SEO-indhold, nyhedsbreve, sociale medier og pressehåndtering.",
+     "start": "2023-02-01",
+     "end": null
     }
    ],
    "suggested": [
@@ -99,6 +115,22 @@
      "field": "Computer Science"
     }
    ],
+   "experience": [
+    {
+     "title": "Software Developer",
+     "company": "Example Logistics",
+     "description": "Java backends and Angular frontends for a logistics platform.",
+     "start": "2014-09-01",
+     "end": "2018-12-31"
+    },
+    {
+     "title": "Senior Software Engineer",
+     "company": "Example Platforms",
+     "description": "Backend APIs in Java and Spring Boot with React frontends, deployed on Kubernetes in Azure and AWS.",
+     "start": "2019-01-01",
+     "end": null
+    }
+   ],
    "suggested": [
     {
      "skill": "Unit testing",
@@ -162,6 +194,22 @@
     {
      "degree": "Kandidat",
      "field": "Kommunikation"
+    }
+   ],
+   "experience": [
+    {
+     "title": "Kommunikationsmedarbejder",
+     "company": "Eksempel Kommune",
+     "description": "Kampagner, presse og nyhedsbreve. Awareness-kampagner om informationssikkerhed sammen med it-afdelingen.",
+     "start": "2019-08-01",
+     "end": "2023-01-31"
+    },
+    {
+     "title": "Kommunikationskonsulent",
+     "company": "Eksempel Forening",
+     "description": "SEO-indhold, nyhedsbreve, sociale medier og pressehåndtering.",
+     "start": "2023-02-01",
+     "end": null
     }
    ],
    "suggested": [

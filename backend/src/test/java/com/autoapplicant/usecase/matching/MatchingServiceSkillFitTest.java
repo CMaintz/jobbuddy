@@ -29,7 +29,9 @@ import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,6 +64,7 @@ class MatchingServiceSkillFitTest {
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
     @Mock EducationRepositoryPort educationRepo;
     @Mock CertificationRepositoryPort certificationRepo;
+    @Mock WorkExperienceRepositoryPort workExperienceRepo;
     @Mock ParsedSkillSuggestionRepositoryPort suggestionRepo;
 
     MatchingService service;
@@ -73,8 +76,8 @@ class MatchingServiceSkillFitTest {
                 aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
                 new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo),
                         new MatchProfileLoader.Sources(profileSkillRepo, suggestionRepo,
-                                educationRepo, certificationRepo),
-                        labels -> SkillSimilarity.NONE));
+                                educationRepo, certificationRepo, workExperienceRepo),
+                        labels -> SkillSimilarity.NONE, Clock.systemUTC()));
     }
 
     @Test
