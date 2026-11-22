@@ -108,6 +108,10 @@ pending. With them set but without the stored provider's key, the run fails at s
 the missing secret. The repository variable `CRAWLER_REF` (a tag or branch, default `main`) picks
 the code the crawl is built from; set it to the release the desktop app runs.
 
+GitHub switches off scheduled workflows in a public repository after 60 days without commits.
+The crawl then stops without failing and the postings slowly go stale; re-enable it under
+Actions > Crawl, or push any commit.
+
 ### Backups
 
 - **Supabase's own:** Pro and higher plans get a daily backup, kept 7 days on Pro. Restore under
@@ -151,7 +155,7 @@ turn its Data API off as above.
 
 > **After wiping volumes (`aac down -v`), the database is completely empty until the backend
 > runs Flyway migrations on startup. Run `aac-backend` or `aac up -d` at least once before
-> trying to query anything — otherwise `\dt` will return "did not find any relations".
+> trying to query anything; otherwise `\dt` will return "did not find any relations".
 
 ## Open a psql shell
 

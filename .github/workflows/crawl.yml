@@ -91,7 +91,7 @@ jobs:
 
       # Java comes from the checked-out ref's mise.toml. Installing only java still runs that
       # config's postinstall hook (PMD and a gate script), which the crawl does not use.
-      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5
+      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
         if: steps.setup.outputs.ready == 'true'
         with:
           version: "2026.9.4"
