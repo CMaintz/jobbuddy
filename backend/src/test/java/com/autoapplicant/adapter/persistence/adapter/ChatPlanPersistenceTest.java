@@ -93,15 +93,19 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void after_a_restart_only_running_items_are_marked_interrupted() {
-        ChatPlan plan = plans.create(plan(savePosting(), savePosting()));
-        UUID running = plan.items().get(0).id();
-        plans.move(running, State.PENDING, State.RUNNING, AT);
+    void after_a_restart_only_items_left_running_by_the_last_run_are_marked_interrupted() {
+        ChatPlan plan = plans.create(plan(savePosting(), savePosting(), savePosting()));
+        UUID cutOff = plan.items().get(0).id();
+        UUID approvedSinceStart = plan.items().get(2).id();
+        Instant started = AT.plusSeconds(10);
+        plans.move(cutOff, State.PENDING, State.RUNNING, AT);
+        plans.move(approvedSinceStart, State.PENDING, State.RUNNING, started.plusSeconds(1));
 
-        plans.failAllRunning(PlanFailure.INTERRUPTED, AT.plusSeconds(5));
+        plans.failRunning(PlanFailure.INTERRUPTED, started, started.plusSeconds(5));
 
         ChatPlan read = plans.findById(plan.id()).orElseThrow();
-        assertThat(read.items()).extracting(PlanItem::state).containsExactly(State.FAILED, State.PENDING);
+        assertThat(read.items()).extracting(PlanItem::state)
+                .containsExactly(State.FAILED, State.PENDING, State.RUNNING);
         assertThat(read.items().get(0).failure()).isEqualTo(PlanFailure.INTERRUPTED);
     }
 

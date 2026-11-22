@@ -14,6 +14,7 @@ import com.autoapplicant.port.out.chat.ChatPlanRepositoryPort;
 import com.autoapplicant.port.out.chat.ChatRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -116,8 +117,8 @@ public class ChatPlanService implements ProposeChatPlanUseCase, DecideChatPlanUs
     }
 
     @Override
-    public int recoverInterrupted() {
-        return plans.failAllRunning(PlanFailure.INTERRUPTED, clock.instant());
+    public int recoverInterrupted(Instant startedAt) {
+        return plans.failRunning(PlanFailure.INTERRUPTED, startedAt, clock.instant());
     }
 
     private PlanItem ownedItem(UUID userId, UUID planId, UUID itemId) {

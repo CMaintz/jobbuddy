@@ -78,8 +78,8 @@ public class ChatPlanPersistenceAdapter implements ChatPlanRepositoryPort {
     }
 
     @Override
-    public int failAllRunning(PlanFailure failure, Instant at) {
-        return items.failAllRunning(failure.name(), at);
+    public int failRunning(PlanFailure failure, Instant decidedBefore, Instant at) {
+        return items.failRunning(failure.name(), decidedBefore, at);
     }
 
     @Override

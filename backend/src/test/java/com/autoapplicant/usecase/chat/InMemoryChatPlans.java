@@ -41,10 +41,10 @@ public final class InMemoryChatPlans implements ChatPlanRepositoryPort {
     }
 
     @Override
-    public synchronized int failAllRunning(PlanFailure failure, Instant at) {
+    public synchronized int failRunning(PlanFailure failure, Instant decidedBefore, Instant at) {
         List<UUID> running = plans.values().stream()
                 .flatMap(p -> p.items().stream())
-                .filter(i -> i.state() == PlanItem.State.RUNNING)
+                .filter(i -> i.state() == PlanItem.State.RUNNING && i.decidedAt().isBefore(decidedBefore))
                 .map(PlanItem::id)
                 .toList();
         running.forEach(id -> finish(id, failure, null, at));

@@ -35,6 +35,7 @@ public interface ChatPlanItemJpaRepository extends JpaRepository<ChatPlanItemEnt
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query("UPDATE ChatPlanItemEntity i SET i.state = 'FAILED', i.failure = :failure,"
-            + " i.finishedAt = :at WHERE i.state = 'RUNNING'")
-    int failAllRunning(@Param("failure") String failure, @Param("at") Instant at);
+            + " i.finishedAt = :at WHERE i.state = 'RUNNING' AND i.decidedAt < :decidedBefore")
+    int failRunning(@Param("failure") String failure,
+                    @Param("decidedBefore") Instant decidedBefore, @Param("at") Instant at);
 }

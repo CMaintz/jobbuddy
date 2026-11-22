@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChatApiService } from '../api/chat.api';
 import { Decision, PlanDecisions } from './plan-decisions';
+import { ChatChanges } from './chat-changes';
 import {
   ChatFailureCode, ChatMessage, ChatPlan, ChatStreamEvent, ChatSummary,
 } from '../models/chat.model';
@@ -26,6 +27,7 @@ export type TurnState = 'none' | 'running' | 'answered' | 'failed';
 export class ChatStore {
   private api = inject(ChatApiService);
   private decisions = inject(PlanDecisions);
+  private changes = inject(ChatChanges);
   private readonly threads = signal<Record<string, Thread>>({});
 
   readonly available = signal<boolean | null>(null);
@@ -114,7 +116,9 @@ export class ChatStore {
   }
 
   private keepPlan(chatId: string, plan: ChatPlan): void {
+    const before = this.threads()[chatId]?.plans[plan.id];
     this.update(chatId, t => ({ ...t, plans: { ...t.plans, [plan.id]: plan } }));
+    this.changes.noteDone(before, plan);
     this.decisions.watch(plan, fresh => this.keepPlan(chatId, fresh));
   }
 

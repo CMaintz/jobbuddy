@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 
 /** The proposing tools turn the model's arguments into typed changes for her chat and her turn. */
@@ -84,6 +85,17 @@ class McpProposalToolsTest {
                 .allSatisfy(r -> assertThat(r.get("isError").asBoolean()).isTrue());
         verify(f.proposals, never()).propose(any(), any(), anyList());
         assertThat(f.proposed).isEmpty();
+    }
+
+    @Test
+    void the_model_is_told_which_status_moves_the_app_allows() throws Exception {
+        JsonNode tools = f.rpc(f.grantFor(her), "tools/list", "{}").get("result").get("tools");
+        String description = StreamSupport.stream(tools.spliterator(), false)
+                .filter(t -> t.get("name").asText().equals("propose_status_change"))
+                .findFirst().orElseThrow().get("description").asText();
+
+        assertThat(description).contains("RECRUITER_CONTACT: INTERVIEW, REJECTED, ARCHIVED")
+                .contains("REJECTED: none");
     }
 
     @Test

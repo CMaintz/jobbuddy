@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApplicationsApiService } from '../../core/api/applications.api';
+import { ChatChanges } from '../../core/chat/chat-changes';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
@@ -59,6 +61,8 @@ export class PipelineComponent implements OnInit {
   private translate = inject(TranslateService);
   private router = inject(Router);
   private notify = inject(NotifyService);
+  private chatChanges = inject(ChatChanges);
+  private destroyRef = inject(DestroyRef);
 
   applications: Application[] = [];
   loading = true;
@@ -80,6 +84,11 @@ export class PipelineComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.load();
+    this.chatChanges.applications.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
+  }
+
+  private load(): void {
     this.api.getAll().subscribe({
       next: (apps) => { this.applications = apps; this.loading = false; },
       error: () => this.loading = false

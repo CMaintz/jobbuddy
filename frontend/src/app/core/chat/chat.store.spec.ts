@@ -3,6 +3,7 @@ import { HttpEventType, provideHttpClient, withXhr } from '@angular/common/http'
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChatStore } from './chat.store';
 import { PlanDecisions } from './plan-decisions';
+import { ChatChanges } from './chat-changes';
 import { ChatSummary } from '../models/chat.model';
 
 const CHAT: ChatSummary = {
@@ -200,6 +201,18 @@ describe('ChatStore', () => {
     backend.expectNone(r => r.url.includes('/plans/'));
     expect(store.plan('p1')?.items[0].state).toBe('DONE');
     expect(TestBed.inject(PlanDecisions).deciding('i1')).toBeFalse();
+  });
+
+  it('tells the other screens when an approved change is done, and only then', () => {
+    const saved = jasmine.createSpy('saved');
+    TestBed.inject(ChatChanges).savedPostings.subscribe(saved);
+    proposeOnePlan();
+    expect(saved).not.toHaveBeenCalled();
+
+    store.approve('p1', 'i1');
+    backend.expectOne(APPROVE).flush(DONE_PLAN);
+
+    expect(saved).toHaveBeenCalledTimes(1);
   });
 
   it('lets her try again when her decision did not reach the app', () => {
