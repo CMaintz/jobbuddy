@@ -783,7 +783,7 @@
   },
   "front-celebrate": {
     "sheet": "front-celebrate-sheet.png",
-    "frame_width": 38,
+    "frame_width": 37,
     "frame_height": 59,
     "frames": 12,
     "durations_ms": [
@@ -801,7 +801,7 @@
       90
     ],
     "offset": [
-      1,
+      0,
       10
     ],
     "atlas_y": 1153
