@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
@@ -27,6 +28,8 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers(disabledWithoutDocker = true)
 class SupabaseGrantsMigrationTest {
 
+    private static final List<String> API_ROLES = List.of("anon", "authenticated");
+
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
             DockerImageName.parse("pgvector/pgvector:pg16").asCompatibleSubstituteFor("postgres"));
 
@@ -37,32 +40,50 @@ class SupabaseGrantsMigrationTest {
     }
 
     @Test
-    void the_anon_role_can_read_neither_existing_nor_later_tables() throws SQLException {
+    void the_api_roles_can_use_neither_existing_nor_later_tables_or_functions() throws SQLException {
         JdbcTemplate admin = new JdbcTemplate(adminDatabase());
         DataSource db = freshDatabase();
         JdbcTemplate jdbc = new JdbcTemplate(db);
-        admin.execute("CREATE ROLE anon NOLOGIN");
+        for (String role : API_ROLES) {
+            admin.execute("CREATE ROLE " + role + " NOLOGIN");
+        }
         try {
             // What Supabase sets up for the role that migrates, before any JobBuddy table exists.
-            jdbc.execute("GRANT USAGE ON SCHEMA public TO anon");
-            jdbc.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon");
-            jdbc.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon");
+            for (String role : API_ROLES) {
+                jdbc.execute("GRANT USAGE ON SCHEMA public TO " + role);
+                jdbc.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO " + role);
+                jdbc.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO " + role);
+                jdbc.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO " + role);
+            }
 
             migrate(db);
             jdbc.execute("CREATE TABLE added_after_migrating (id int)");
+            jdbc.execute("CREATE FUNCTION added_after_migrating() RETURNS int"
+                    + " LANGUAGE sql SECURITY DEFINER AS 'SELECT 1'");
 
-            // Bug: without the revoke, the anon key reads every table through the Data API.
-            assertThat(canSelect(jdbc, "public.jobs")).isFalse();
-            assertThat(jdbc.queryForObject(
-                    "SELECT count(*) FROM information_schema.role_table_grants WHERE grantee = 'anon'",
-                    Integer.class)).isZero();
-            // Bug: revoking only what exists leaves the default grant, so the next migration's
-            // table is readable again.
-            assertThat(canSelect(jdbc, "public.added_after_migrating")).isFalse();
+            for (String role : API_ROLES) {
+                // Bug: without the revoke, the anon key reads every table through the Data API.
+                assertThat(canSelect(jdbc, role, "public.jobs")).as(role).isFalse();
+                assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM information_schema.role_table_grants WHERE grantee = ?",
+                        Integer.class, role)).as(role).isZero();
+                // Bug: revoking only what exists leaves the default grant, so the next migration's
+                // table is readable again.
+                assertThat(canSelect(jdbc, role, "public.added_after_migrating")).as(role).isFalse();
+                // Bug: a later SECURITY DEFINER function granted to the role is callable over RPC
+                // and runs with the owner's rights. Counts the role's own grant only: EXECUTE
+                // through PUBLIC is Postgres's default and outside what this migration changes.
+                assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM pg_proc p, aclexplode(p.proacl) a"
+                                + " WHERE p.proname = 'added_after_migrating' AND a.grantee = ?::regrole",
+                        Integer.class, role)).as(role).isZero();
+            }
         } finally {
-            // Leaves the cluster without the role for the plain-Postgres case, whatever the order.
-            jdbc.execute("DROP OWNED BY anon");
-            admin.execute("DROP ROLE anon");
+            // Leaves the cluster without the roles for the plain-Postgres case, whatever the order.
+            for (String role : API_ROLES) {
+                jdbc.execute("DROP OWNED BY " + role);
+                admin.execute("DROP ROLE " + role);
+            }
         }
     }
 
@@ -82,9 +103,9 @@ class SupabaseGrantsMigrationTest {
                 "SELECT count(*) FROM flyway_schema_history WHERE NOT success", Integer.class)).isZero();
     }
 
-    private static boolean canSelect(JdbcTemplate jdbc, String table) {
+    private static boolean canSelect(JdbcTemplate jdbc, String role, String table) {
         return Boolean.TRUE.equals(jdbc.queryForObject(
-                "SELECT has_table_privilege('anon', ?, 'SELECT')", Boolean.class, table));
+                "SELECT has_table_privilege(?, ?, 'SELECT')", Boolean.class, role, table));
     }
 
     private static void migrate(DataSource db) {

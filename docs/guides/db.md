@@ -16,9 +16,9 @@ development uses the Docker Postgres in the [cheatsheet](#local-postgres-cheatsh
    `has_table_privilege('anon', 'public.jobs', 'SELECT')` was true after migrating to `V047`),
    so with the Data API on, anyone holding the project's anon key could read her profile and
    applications.
-   `V049` revokes those grants from `anon` and `authenticated` on every table and sequence, and
-   for tables later migrations create, so data stays closed even if the Data API is turned back
-   on. Keep it off anyway: the revoke is a second line, not a reason to expose the API.
+   `V049` revokes those grants from `anon` and `authenticated` on every table, sequence and
+   function, and for those later migrations create, so data stays closed even if the Data API is
+   turned back on. Keep it off anyway: the revoke is a second line, not a reason to expose the API.
 
 Free projects that see no activity for a week are paused; restore one from the dashboard.
 
