@@ -1,19 +1,29 @@
 import {
-  ChangeDetectionStrategy, Component, ElementRef, OnInit, effect, inject, signal, viewChild,
+  ChangeDetectionStrategy, Component, ElementRef, OnInit, computed, effect, inject, signal, viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { ChatStore } from '../../../core/chat/chat.store';
+import { ChatStore, TurnState } from '../../../core/chat/chat.store';
 import { PostingQueue } from '../../../core/chat/posting-queue';
 import { ChatAction, ChatSummary } from '../../../core/models/chat.model';
 import { JbIconComponent } from '../jb-icon/jb-icon.component';
 import { ChatTextComponent } from '../chat-text/chat-text.component';
+import { BuddyComponent } from '../buddy/buddy.component';
+import { BuddyMood } from '../buddy/buddy-sprites';
+
+/** Buddy on the launcher: he thinks while a turn runs, then waves or shakes his head at how it ended. */
+const LAUNCHER_MOODS: Record<TurnState, BuddyMood> = {
+  none: 'idle',
+  running: 'thinking',
+  answered: 'cheer',
+  failed: 'error',
+};
 
 @Component({
   selector: 'jb-chat-panel',
-  imports: [DatePipe, FormsModule, TranslateModule, JbIconComponent, ChatTextComponent],
+  imports: [DatePipe, FormsModule, TranslateModule, JbIconComponent, ChatTextComponent, BuddyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chat-panel.component.html',
 })
@@ -28,6 +38,7 @@ export class ChatPanelComponent implements OnInit {
   readonly draft = signal('');
   readonly renamingId = signal<string | null>(null);
   readonly renameDraft = signal('');
+  readonly launcherMood = computed(() => LAUNCHER_MOODS[this.store.turn()]);
 
   constructor() {
     effect(() => {

@@ -136,6 +136,28 @@ describe('ChatStore', () => {
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
   });
 
+  it('counts a turn as running while it runs in a chat she has left', () => {
+    openNewChat();
+    store.send('Hej');
+    const turn = backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages');
+    expect(store.turn()).toBe('running');
+
+    store.closeChat();
+    expect(store.turn()).toBe('running');
+
+    turn.flush('event:delta\ndata:{"text":"Svar"}\n\nevent:done\ndata:{}\n\n');
+    backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
+    expect(store.turn()).toBe('answered');
+  });
+
+  it('ends a turn whose stream reported an error as failed, not answered', () => {
+    openNewChat();
+    store.send('Hej');
+    backend.expectOne('/api/v1/chats/c1/messages').flush('event:error\ndata:{"code":"NOT_LOGGED_IN"}\n\n');
+
+    expect(store.turn()).toBe('failed');
+  });
+
   it('turns the chat off when this backend has none', () => {
     store.load();
     backend.expectOne('/api/v1/chats').flush(null, { status: 404, statusText: 'Not Found' });
