@@ -9,6 +9,9 @@ import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-drop
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { LetterPaperComponent } from './letter-paper.component';
 import { LetterGateReportComponent } from './letter-gate-report.component';
+import { LetterExportWarningComponent } from './letter-export-warning.component';
+import { ExportKind, LetterExportGuard } from './letter-export-guard';
+import { LetterCheckState, letterCheckState } from './letter-export-check';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -17,6 +20,7 @@ import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { PageBudget, pageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
 import { htmlTextContent } from '../../shared/utils/sanitize-html';
+import { Observable, tap, throwError } from 'rxjs';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -26,12 +30,21 @@ import { DocumentApiService } from '../../core/api/document.api';
 import { FORMAT_TO_DOC_TYPE, FormatKey, LETTER_TEMPLATES, LetterTemplate, WORD_TARGETS } from './letter-templates';
 import { NotifyService } from '../../shared/services/notify.service';
 
+/**
+ * The re-check answers with the row's id inside the document. Stored content never carries it, and
+ * a save that does overwrites that row instead of saving the edit as a new version.
+ */
+function storedForm(document: StructuredDocument): string {
+  return JSON.stringify({ ...document, generatedDocumentId: undefined });
+}
+
 @Component({
   selector: 'app-application-output',
   imports: [
     CommonModule, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
     JbDropdownComponent, DiffViewerComponent, LetterPaperComponent, PageBudgetWarningComponent,
     LetterGateReportComponent,
+    LetterExportWarningComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-output.component.html',
@@ -435,8 +448,37 @@ export class ApplicationOutputComponent implements OnInit {
     };
   }
 
+  /** The gate's standing on the text an export would contain now. */
+  exportCheck = computed<LetterCheckState>(() => {
+    const doc = this.activeDoc();
+    return doc ? letterCheckState(doc, this.editDirty()) : 'notApplicable';
+  });
+
+  /** The server judges the saved text against the posting, so unsaved edits or no job rule it out. */
+  canRecheck = computed<boolean>(() => !!this.activeDoc()?.jobId && !this.editDirty());
+
+  readonly exportGuard = new LetterExportGuard(
+    () => this.exportCheck(),
+    (kind: ExportKind) => (kind === 'designed' ? this.exportDesigned() : this.exportAts()),
+    () => this.recheckActiveLetter(),
+  );
+
+  private recheckActiveLetter(): Observable<StructuredDocument> {
+    const doc = this.activeDoc();
+    if (!doc) return throwError(() => new Error('No letter to check'));
+    return this.aiApi.recheckLetter(doc.id).pipe(tap({
+      next: checked => this.documents.update(docs => docs.map(d =>
+        d.id === doc.id ? { ...d, structuredContent: storedForm(checked) } : d)),
+      error: this.notify.onError('output.exportCheck.recheckFailed'),
+    }));
+  }
+
   /** Pixel-perfect capture of the styled letter (image-based). */
   downloadPdf(): void {
+    this.exportGuard.request('designed');
+  }
+
+  private exportDesigned(): void {
     const paperEl = this.paper?.el.nativeElement;
     if (!paperEl || this.downloading() || this.editing()) return;
     this.downloading.set(true);
@@ -447,6 +489,10 @@ export class ApplicationOutputComponent implements OnInit {
 
   /** Text-based letter PDF — selectable text, safe for ATS parsers. */
   downloadAtsPdf(): void {
+    this.exportGuard.request('ats');
+  }
+
+  private exportAts(): void {
     if (!this.activeDoc() || this.downloading()) return;
     this.downloading.set(true);
     const id = this.identity();

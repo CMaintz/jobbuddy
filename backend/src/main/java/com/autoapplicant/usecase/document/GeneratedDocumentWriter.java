@@ -43,6 +43,18 @@ public class GeneratedDocumentWriter {
     }
 
     /**
+     * Stores {@code review} on the existing row in place of the one it has. Unlike {@link #save},
+     * which keeps the stored verdict, this can clear a stale one, so {@code review} must judge the
+     * body in {@code document}.
+     */
+    public StructuredDocument replaceLetterReview(GeneratedDocument existing, StructuredDocument document,
+                                                  LetterReview review) {
+        StructuredDocument reviewed = document.withLetterReview(review);
+        GeneratedDocument saved = documents.save(revised(existing, null, reviewed, existing.modelUsed()));
+        return withGeneratedDocumentId(reviewed, saved.id());
+    }
+
+    /**
      * A new row's review, marked stale once the text differs from what the gate judged. The editor
      * saves an edit as a new row carrying the old structure, so this is where an edited letter's
      * verdict stops claiming to describe it.

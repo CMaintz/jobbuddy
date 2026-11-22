@@ -361,3 +361,10 @@
         }
       </div>
     </ng-template>
+
+    @if (exportGuard.pending()) {
+      <app-letter-export-warning [state]="exportCheck()" [structuredContent]="activeDoc()?.structuredContent"
+        [canRecheck]="canRecheck()" [rechecking]="exportGuard.rechecking()"
+        (recheck)="exportGuard.recheck()" (exportAnyway)="exportGuard.exportAnyway()"
+        (cancelled)="exportGuard.cancel()" />
+    }
