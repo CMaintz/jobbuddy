@@ -20,12 +20,11 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.common.KeywordMatcher;
-import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import com.autoapplicant.usecase.matching.MatchProfileLoader.MatchProfile;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,6 +72,12 @@ public class MatchingService implements GetRecommendationsUseCase {
     // score it identically, which shifts the whole list rather than ordering it.
     private static final int BASE_SCORE          = 25;
 
+    /**
+     * The most a posting can score when it demands a credential the profile clearly lacks: no
+     * better than one that shares nothing with the profile, whatever its skills or boosts say.
+     */
+    private static final int OUT_OF_REACH_CEILING = BASE_SCORE;
+
     /** Retrieval multiplier. Raised when a hard filter will discard most of what comes back. */
     private static final int CANDIDATE_MULTIPLIER          = 5;
     private static final int FILTERED_CANDIDATE_MULTIPLIER = 15;
@@ -85,9 +90,8 @@ public class MatchingService implements GetRecommendationsUseCase {
     private final IgnoredJobRepositoryPort ignoredJobRepo;
     private final RecommendationFeedbackRepositoryPort feedbackRepo;
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
-    private final ProfileSkillRepositoryPort profileSkillRepo;
     private final ApplicationRepositoryPort applicationRepo;
-    private final SkillCanonicalizer skillCanonicalizer;
+    private final MatchProfileLoader matchProfileLoader;
 
     public MatchingService(JobEmbeddingRepositoryPort embeddingRepo,
                            JobRepositoryPort jobRepo,
@@ -97,9 +101,8 @@ public class MatchingService implements GetRecommendationsUseCase {
                            IgnoredJobRepositoryPort ignoredJobRepo,
                            RecommendationFeedbackRepositoryPort feedbackRepo,
                            ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
-                           ProfileSkillRepositoryPort profileSkillRepo,
                            ApplicationRepositoryPort applicationRepo,
-                           SkillCanonicalizer skillCanonicalizer) {
+                           MatchProfileLoader matchProfileLoader) {
         this.embeddingRepo = embeddingRepo;
         this.jobRepo = jobRepo;
         this.profileRepo = profileRepo;
@@ -108,9 +111,8 @@ public class MatchingService implements GetRecommendationsUseCase {
         this.ignoredJobRepo = ignoredJobRepo;
         this.feedbackRepo = feedbackRepo;
         this.profileEmbeddingRepo = profileEmbeddingRepo;
-        this.profileSkillRepo = profileSkillRepo;
         this.applicationRepo = applicationRepo;
-        this.skillCanonicalizer = skillCanonicalizer;
+        this.matchProfileLoader = matchProfileLoader;
     }
 
     @Override
@@ -121,8 +123,8 @@ public class MatchingService implements GetRecommendationsUseCase {
 
             // One load of the profile's skills, feeding the embedding text, the fit scoring and
             // the proficiency weighting alike — they are the same skills.
-            List<ProfileSkill> profileSkillRows = profileSkillRepo.findByUserId(userId);
-            String profileText = buildProfileText(profile, profileSkillRows);
+            MatchProfile matchProfile = matchProfileLoader.load(profile);
+            String profileText = buildProfileText(profile, matchProfile.skills());
             if (profileText.isBlank()) return List.of();
 
             UserPreferences prefs = prefsRepo.findByUserId(userId).orElse(null);
@@ -153,8 +155,6 @@ public class MatchingService implements GetRecommendationsUseCase {
             Map<UUID, Job> jobMap = jobRepo.findByIds(candidateIds).stream()
                     .collect(Collectors.toMap(Job::id, j -> j));
 
-            SkillFitScorer skillFit = SkillFitScorer.forProfile(skillCanonicalizer, profile,
-                    profileSkillRows);
             // "More like this" is a statement about a kind of job, so it has to reach jobs the
             // user has not seen. This resolves each steer signal to its neighbours once, rather
             // than per candidate.
@@ -165,7 +165,7 @@ public class MatchingService implements GetRecommendationsUseCase {
                     .filter(Objects::nonNull)
                     .filter(job -> passesHardConstraints(job, prefs))
                     .limit(limit * 2L)
-                    .map(job -> buildMatchResult(job, userId, skillFit, feedbackMap,
+                    .map(job -> buildMatchResult(job, userId, matchProfile, feedbackMap,
                             steerAdjustments, prefs))
                     .sorted(Comparator.comparingInt(MatchResult::totalScore).reversed())
                     .limit(limit)
@@ -270,14 +270,14 @@ public class MatchingService implements GetRecommendationsUseCase {
     // ── Score building ────────────────────────────────────────────────────────
 
     private MatchResult buildMatchResult(Job job, UUID userId,
-                                         SkillFitScorer skillFit,
+                                         MatchProfile matchProfile,
                                          Map<UUID, FeedbackType> feedbackMap,
                                          Map<UUID, Integer> steerAdjustments,
                                          UserPreferences prefs) {
         List<String> reasons = new ArrayList<>();
 
-        // ── Skill fit (0-55) ─────────────────────────────────────────────────
-        int skillScore = skillFit.score(job, reasons);
+        // ── Skill fit (0-65) ─────────────────────────────────────────────────
+        int skillScore = matchProfile.skillFit().score(job, reasons);
 
         // ── Preference bonuses ───────────────────────────────────────────────
         int prefScore = 0;
@@ -410,8 +410,14 @@ public class MatchingService implements GetRecommendationsUseCase {
         }
 
         // ── Final score ──────────────────────────────────────────────────────
-        // Base 25 + skill fit (0-55) + pref bonuses (variable) + behavioral
+        // Base 25 + skill fit (0-65) + pref bonuses (variable) + behavioral
         int total = Math.min(Math.max(BASE_SCORE + skillScore + prefScore + behavioralBoost, 0), 100);
+        Optional<String> outOfReach = matchProfile.hardRequirements().unmet(job);
+        if (outOfReach.isPresent()) {
+            total = Math.min(total, OUT_OF_REACH_CEILING);
+            // First, because the feed shows only the first two reasons.
+            reasons.add(0, outOfReach.get());
+        }
 
         double semanticScore  = skillScore / (double) SkillFitScorer.MAX_SCORE;
         double behavioralScore = (behavioralBoost + 20) / 40.0; // normalise to 0-1

@@ -222,6 +222,7 @@
       "today": "i dag",
       "tomorrow": "i morgen",
       "interview": "Jobsamtale",
+      "interviewAt": "Jobsamtale kl. {{time}}",
       "followUp": "Følg op",
       "applyDeadline": "Ansøg inden fristen",
       "noReply": "Intet svar endnu — send en opfølgning",
@@ -1559,6 +1560,10 @@
       "offer": "Tilbud",
       "rejected": "Afvist",
       "archived": "Arkiveret"
+    },
+    "column": {
+      "inProgress": "I proces",
+      "closed": "Afsluttet"
     },
     "changeStatus": "Skift status"
   },

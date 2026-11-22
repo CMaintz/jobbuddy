@@ -3,6 +3,8 @@ import { Nudge } from '../../core/api/nudges.api';
 export interface QueueItem {
   time: string;
   what: string;
+  /** Values for placeholders in the `what` translation. */
+  whatParams?: Record<string, string>;
   detail: string;
   tag: string;
   tone: 'accent' | 'info' | 'danger' | 'neutral' | 'violet' | 'success';
@@ -58,12 +60,18 @@ export function nudgeQueueItem(n: Nudge, detail: string): QueueItem {
   };
 }
 
-/** The backend only sends interviews for today or tomorrow, so the date is one of the two. */
+/**
+ * The backend only sends interviews for today or tomorrow, so the date is one of the two. The day
+ * stays in the narrow time column and the clock time goes on the title line, where it fits.
+ */
 function interviewItem(n: Nudge, detail: string): QueueItem {
   const today = n.deadline === localIsoDate(new Date());
   return {
     time: today ? 'dashboard.queue.today' : 'dashboard.queue.tomorrow',
-    what: 'dashboard.queue.interview',
+    // The backend sends "10:00:00"; nobody reads seconds on an interview time.
+    ...(n.time
+      ? { what: 'dashboard.queue.interviewAt', whatParams: { time: n.time.slice(0, 5) } }
+      : { what: 'dashboard.queue.interview' }),
     detail,
     tag: 'dashboard.tag.interview',
     tone: 'accent',

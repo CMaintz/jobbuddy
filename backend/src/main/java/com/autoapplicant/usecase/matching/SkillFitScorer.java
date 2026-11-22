@@ -23,8 +23,15 @@ import java.util.stream.Collectors;
  * profile holds as a skill. Scoring the share of that list a profile covers, with a penalty per
  * miss, puts every real posting near zero for every profile: a developer holding four of nine
  * asks lands where a nurse posting does. A handful of real matches is what tells a good fit from
- * a bad one, so {@value #FULL_EVIDENCE} points of evidence earn the whole budget. The constants
- * are held to real postings by {@code MatchScoreEvalTest}.
+ * a bad one, so {@value #FULL_EVIDENCE} points of evidence earn the {@value #EVIDENCE_SCORE}
+ * points that evidence can give. The constants are held to real postings by
+ * {@code MatchScoreEvalTest}.
+ *
+ * <p>Evidence alone tops out where a fit and a near miss look alike: a technical security post
+ * hands a GRC profile as much evidence as a GRC post does. What sets the best fits apart is that
+ * they answer most of what the posting demands, so answering more than half of the required asks
+ * earns up to {@value #MAX_COVERAGE_BONUS} more, scaled by the evidence, and that is the only way
+ * into the top band.
  *
  * <p>Evidence per ask: a skill the profile holds counts in full (half for a weak one, see
  * {@link #buildProficiencyCredit}); a related one ({@link CompoundHeads}) or one the profile
@@ -36,7 +43,11 @@ import java.util.stream.Collectors;
  */
 final class SkillFitScorer {
 
-    static final int MAX_SCORE = 55;
+    private static final int EVIDENCE_SCORE = 55;
+    private static final int MAX_COVERAGE_BONUS = 10;
+    static final int MAX_SCORE = EVIDENCE_SCORE + MAX_COVERAGE_BONUS;
+    /** Share of required asks answered below which no bonus is earned. */
+    private static final double BONUS_FROM_COVERAGE = 0.5;
     private static final double FULL_EVIDENCE = 2.5;
     private static final double MAX_RELATED_EVIDENCE = 1.0;
     private static final double REQUIRED_WEIGHT = 1.0;
@@ -102,8 +113,11 @@ final class SkillFitScorer {
         asks.all().forEach(ask -> credits.computeIfAbsent(ask, this::creditFor));
         double evidence = weighted(asks, credits, Credit::exact)
                 + Math.min(weighted(asks, credits, Credit::related), MAX_RELATED_EVIDENCE);
-        int score = (int) Math.round(Math.min(evidence / FULL_EVIDENCE, 1.0) * MAX_SCORE)
-                - missingRequiredPenalty(asks.required(), credits);
+        double strength = Math.min(evidence / FULL_EVIDENCE, 1.0);
+        int score = (int) Math.round(strength * EVIDENCE_SCORE
+                        + coverageBonus(strength, asks.required(), credits))
+                - (int) Math.round(MAX_MISSING_REQUIRED_PENALTY
+                        * missingShare(asks.required(), credits));
         explain(asks, credits, reasons);
         return Math.max(0, Math.min(score, MAX_SCORE));
     }
@@ -156,10 +170,28 @@ final class SkillFitScorer {
         return WHITESPACE.matcher(text.toLowerCase(Locale.ROOT)).replaceAll(" ").strip();
     }
 
-    private int missingRequiredPenalty(List<String> required, Map<String, Credit> credits) {
+    /** Share of required asks with no evidence at all; a posting that tiers nothing misses none. */
+    private static double missingShare(List<String> required, Map<String, Credit> credits) {
         if (required.isEmpty()) return 0;
         long missing = required.stream().filter(ask -> credits.get(ask).isNone()).count();
-        return (int) Math.round(MAX_MISSING_REQUIRED_PENALTY * missing / (double) required.size());
+        return missing / (double) required.size();
+    }
+
+    /**
+     * Nothing until more than half of the required asks are answered, the whole bonus when all
+     * are. A posting that tiers nothing earns none: there is no list of demands to answer.
+     *
+     * <p>An ask is answered by its credit, so a related skill answers half of one. Counting it in
+     * full put a technical security post, read by a GRC profile, on the edge of the top band.
+     */
+    private static double coverageBonus(double strength, List<String> required,
+                                        Map<String, Credit> credits) {
+        if (required.isEmpty()) return 0;
+        double answered = required.stream().map(credits::get)
+                .mapToDouble(c -> Math.max(c.exact(), c.related())).sum() / required.size();
+        if (answered <= BONUS_FROM_COVERAGE) return 0;
+        return MAX_COVERAGE_BONUS * strength
+                * (answered - BONUS_FROM_COVERAGE) / (1 - BONUS_FROM_COVERAGE);
     }
 
     /**

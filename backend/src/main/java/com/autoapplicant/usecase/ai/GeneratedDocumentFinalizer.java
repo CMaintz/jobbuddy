@@ -38,9 +38,10 @@ public class GeneratedDocumentFinalizer {
     public StructuredDocument finalizeDocument(GenerateDocumentCommand cmd, GenerationInputs in,
                                                String body, LetterReview letterReview, String modelName) {
         // Deterministic backstops (fact gate + retracted claims + filler), shared with the CV path.
-        // The findings ride along into the ATS report so the user sees them.
-        ContentGuardFindings guardFindings =
-                contentGuards.verify(cmd.userId(), body, in.contactFreeJson(), cmd.documentType());
+        // The findings ride along into the ATS report so the user sees them. The posting goes in
+        // because a needs-based letter quotes its figures back at the employer.
+        ContentGuardFindings guardFindings = contentGuards.verify(
+                cmd.userId(), body, in.contactFreeJson(), in.employerPosting(), cmd.documentType());
         // Keyword coverage is measured downstream against the delivered text and the posting's own
         // tiered asks — the model is no longer asked to grade itself.
         StructuredDocument doc = applicationDocuments.assemble(
