@@ -1,6 +1,7 @@
 package com.autoapplicant.usecase.document;
 
 import com.autoapplicant.domain.document.GeneratedDocument;
+import com.autoapplicant.domain.document.structured.LetterChangedDuringCheckException;
 import com.autoapplicant.domain.document.structured.LetterReview;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
@@ -45,13 +46,52 @@ public class GeneratedDocumentWriter {
     /**
      * Stores {@code review} on the existing row in place of the one it has. Unlike {@link #save},
      * which keeps the stored verdict, this can clear a stale one, so {@code review} must judge the
-     * body in {@code document}.
+     * body in {@code document}, which was read from {@code existing}.
+     *
+     * <p>{@code existing} can be minutes old by now, since the gate call sits between the read and
+     * this write. So only the structured content is written, and only while it is still the one
+     * read: a link or other column set meanwhile stays, and a letter edited meanwhile is not given
+     * a verdict on text the gate never saw. When the structure changed but the text did not, as
+     * when an overlapping check of the same letter stored its review first, the write is tried
+     * once more against the fresh copy, since this verdict still describes that text.
+     *
+     * @throws LetterChangedDuringCheckException when the letter's text changed since {@code existing}
+     * @throws IllegalArgumentException when the letter is gone
      */
     public StructuredDocument replaceLetterReview(GeneratedDocument existing, StructuredDocument document,
                                                   LetterReview review) {
-        StructuredDocument reviewed = document.withLetterReview(review);
-        GeneratedDocument saved = documents.save(revised(existing, null, reviewed, existing.modelUsed()));
-        return withGeneratedDocumentId(reviewed, saved.id());
+        if (replaced(existing, document, review)) {
+            return withGeneratedDocumentId(document.withLetterReview(review), existing.id());
+        }
+        GeneratedDocument fresh = findOwned(existing.userId(), existing.id());
+        StructuredDocument freshDocument = readable(fresh);
+        if (freshDocument == null || review.checkedAgainst(judgedBody(fresh, freshDocument)).stale()
+                || !replaced(fresh, freshDocument, review)) {
+            throw new LetterChangedDuringCheckException();
+        }
+        return withGeneratedDocumentId(freshDocument.withLetterReview(review), fresh.id());
+    }
+
+    private boolean replaced(GeneratedDocument row, StructuredDocument document, LetterReview review) {
+        return documents.replaceStructuredContent(row.id(), row.userId(), row.structuredContent(),
+                structuredJson(withGeneratedDocumentId(document.withLetterReview(review), null)));
+    }
+
+    /** The text the recheck hands the gate: the structured body, or the plain content without one. */
+    private static String judgedBody(GeneratedDocument row, StructuredDocument document) {
+        return document.bodyContent() != null && !document.bodyContent().isBlank()
+                ? document.bodyContent() : row.content();
+    }
+
+    private StructuredDocument readable(GeneratedDocument row) {
+        if (row.structuredContent() == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(row.structuredContent(), StructuredDocument.class);
+        } catch (JsonProcessingException unreadable) {
+            return null;
+        }
     }
 
     /**

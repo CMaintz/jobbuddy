@@ -750,7 +750,8 @@
       "rechecking": "Tjekker...",
       "exportAnyway": "Hent alligevel",
       "recheckFailed": "Tjekket kunne ikke gennemføres. Prøv igen om lidt.",
-      "cannotRecheck": "Ansøgningen kan ikke tjekkes igen, fordi den ikke hænger sammen med et opslag med tekst."
+      "cannotRecheck": "Ansøgningen kan ikke tjekkes igen, fordi den ikke hænger sammen med et opslag med tekst.",
+      "changedDuringCheck": "Ansøgningen blev rettet, mens porten tjekkede den, så resultatet er ikke gemt. Tjek den igen."
     },
     "evidence": {
       "heading": "Tynd på dokumentation",

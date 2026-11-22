@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,18 @@ class GeneratedDocumentWriterLetterReviewTest {
         @Override
         public List<GeneratedDocument> findRecentByUserIdAndType(UUID userId, String documentType, int limit) {
             return List.of();
+        }
+
+        @Override
+        public boolean replaceStructuredContent(UUID id, UUID userId, String expected, String replacement) {
+            GeneratedDocument d = findByIdAndUserId(id, userId).orElse(null);
+            if (d == null || !Objects.equals(d.structuredContent(), expected)) {
+                return false;
+            }
+            rows.put(id, new GeneratedDocument(id, d.userId(), d.applicationId(), d.jobId(), d.documentType(),
+                    d.content(), replacement, d.templateId(), d.exportMode(), d.promptTemplateId(),
+                    d.cvVersionId(), d.modelUsed(), d.tokensUsed(), d.createdAt()));
+            return true;
         }
     }
 

@@ -122,4 +122,18 @@ describe('ApplicationOutputComponent export check', () => {
 
     expect(TestBed.inject(NotifyService).notice()?.message).toBe('output.exportCheck.cannotRecheck');
   });
+
+  it('says the letter changed during the check instead of calling it uncheckable', () => {
+    // Bug: every 409 reads as "not tied to a posting", so a letter edited while the gate ran
+    // tells the user it can never be checked when checking again would work.
+    ai.recheckLetter.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 409, error: { status: 409, code: 'LETTER_CHANGED_DURING_CHECK' },
+    })));
+    const page = open(letter(failed));
+    page.downloadAtsPdf();
+
+    page.exportGuard.recheck();
+
+    expect(TestBed.inject(NotifyService).notice()?.message).toBe('output.exportCheck.changedDuringCheck');
+  });
 });

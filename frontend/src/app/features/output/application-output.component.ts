@@ -21,7 +21,7 @@ import { ExportedPageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
 import { htmlTextContent } from '../../shared/utils/sanitize-html';
 import { Observable, tap, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
@@ -37,6 +37,21 @@ import { NotifyService } from '../../shared/services/notify.service';
  */
 function storedForm(document: StructuredDocument): string {
   return JSON.stringify({ ...document, generatedDocumentId: undefined });
+}
+
+/** Matches LetterChangedDuringCheckException.CODE on the server. */
+const LETTER_CHANGED_DURING_CHECK = 'LETTER_CHANGED_DURING_CHECK';
+
+/**
+ * A 409 is either a letter that can never be checked or one edited while the gate ran; only the
+ * second is worth checking again, so the two must not share a message.
+ */
+function recheckErrorKey(err: unknown): string {
+  if (!(err instanceof HttpErrorResponse) || err.status !== HttpStatusCode.Conflict) {
+    return 'output.exportCheck.recheckFailed';
+  }
+  return err.error?.code === LETTER_CHANGED_DURING_CHECK
+    ? 'output.exportCheck.changedDuringCheck' : 'output.exportCheck.cannotRecheck';
 }
 
 @Component({
@@ -494,8 +509,7 @@ export class ApplicationOutputComponent implements OnInit {
     return this.aiApi.recheckLetter(doc.id).pipe(tap({
       next: checked => this.documents.update(docs => docs.map(d =>
         d.id === doc.id ? { ...d, structuredContent: storedForm(checked) } : d)),
-      error: (err: unknown) => this.notify.error(err instanceof HttpErrorResponse && err.status === 409
-        ? 'output.exportCheck.cannotRecheck' : 'output.exportCheck.recheckFailed'),
+      error: (err: unknown) => this.notify.error(recheckErrorKey(err)),
     }));
   }
 

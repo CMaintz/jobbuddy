@@ -5,6 +5,7 @@ import com.autoapplicant.domain.chat.ChatRejectedException;
 import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
+import com.autoapplicant.domain.document.structured.LetterChangedDuringCheckException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -36,6 +37,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccountExistsException.class)
     public ResponseEntity<ApiError> handleAccountExists(AccountExistsException ex, WebRequest req) {
         return error(HttpStatus.CONFLICT, AccountExistsException.CODE, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(LetterChangedDuringCheckException.class)
+    public ResponseEntity<ApiError> handleLetterChanged(LetterChangedDuringCheckException ex, WebRequest req) {
+        return error(HttpStatus.CONFLICT, LetterChangedDuringCheckException.CODE, ex.getMessage(), req);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
