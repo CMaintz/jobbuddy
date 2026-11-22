@@ -110,6 +110,14 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     private static final Set<String> LAW_DEGREE_POSTS = Set.of(
             "jurist-med-fokus-paa-informationssikkerh", "compliance-og-gdpr-specialist-hos-forsyn");
 
+    /**
+     * Posts inside the comms profile's own field that require hands-on security experience
+     * (security architecture, incident response) with no year count. Asking for experience is
+     * normal, so only a senior ask may rule a post out; these score on their labels.
+     */
+    private static final Set<String> JUNIOR_SECURITY_ASK_POSTS = Set.of(
+            "vil-du-vaere-med-til-at-saette-retningen", "cybersikkerhedsspecialist-til-kritisk-in");
+
     /** The day the eval scores on, so the profiles' current roles don't grow with the calendar. */
     private static final Clock SCORED_ON = Clock.fixed(
             LocalDate.of(2026, 6, 1).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
@@ -177,6 +185,15 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
             assertThat(results.get(id).matchLabel()).as(id).isEqualTo(MatchLabel.WEAK);
             assertThat(results.get(id).matchReasons()).as(id).first().isEqualTo("Kræver cand.jur.");
         });
+    }
+
+    @Test
+    void a_security_post_asking_experience_without_years_is_not_ruled_out_for_the_comms_profile()
+            throws IOException {
+        Map<String, MatchResult> results = resultsFor(COMMS);
+
+        JUNIOR_SECURITY_ASK_POSTS.forEach(id -> assertThat(results.get(id).matchReasons()).as(id)
+                .noneMatch(reason -> reason.startsWith(OUT_OF_REACH)));
     }
 
     @ParameterizedTest
