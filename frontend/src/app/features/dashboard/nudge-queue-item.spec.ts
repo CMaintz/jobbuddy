@@ -9,11 +9,11 @@ describe('nudgeQueueItem', () => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  function interview(date: string): Nudge {
+  function interview(date: string, time: string | null = null): Nudge {
     return {
       type: 'INTERVIEW_SOON', applicationId: 'a1', jobId: null, outreachId: null, reminderId: null,
       jobTitle: 'Kommunikationsmedarbejder', companyName: 'Acme A/S', deadline: date,
-      daysSinceApplied: null, note: null, time: '10:00:00',
+      daysSinceApplied: null, note: null, time,
     };
   }
 
@@ -31,5 +31,27 @@ describe('nudgeQueueItem', () => {
     expect(item.what).toBe('dashboard.queue.interview');
     expect(item.time).toBe('dashboard.queue.tomorrow');
     expect(item.hot).toBeFalse();
+  });
+
+  it('puts the interview time on an interview today, to the minute', () => {
+    const item = nudgeQueueItem(interview(isoDate(0), '10:00:00'), 'Acme A/S');
+
+    expect(item.what).toBe('dashboard.queue.interviewAt');
+    expect(item.whatParams).toEqual({ time: '10:00' });
+  });
+
+  it('puts the interview time on an interview tomorrow', () => {
+    const item = nudgeQueueItem(interview(isoDate(1), '14:30:00'), 'Acme A/S');
+
+    expect(item.time).toBe('dashboard.queue.tomorrow');
+    expect(item.what).toBe('dashboard.queue.interviewAt');
+    expect(item.whatParams).toEqual({ time: '14:30' });
+  });
+
+  it('leaves the time out when the interview has none, rather than show an empty clock', () => {
+    const item = nudgeQueueItem(interview(isoDate(0), null), 'Acme A/S');
+
+    expect(item.what).toBe('dashboard.queue.interview');
+    expect(item.whatParams).toBeUndefined();
   });
 });
