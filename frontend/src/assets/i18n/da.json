@@ -1555,8 +1555,8 @@
       "applied": "Ansøgt",
       "screen": "Screening",
       "interview": "Samtale",
-      "technical": "Teknisk",
-      "final": "Sidste",
+      "technical": "Opgave/test",
+      "final": "Sidste samtale",
       "offer": "Tilbud",
       "rejected": "Afvist",
       "archived": "Arkiveret"

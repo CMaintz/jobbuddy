@@ -1555,8 +1555,8 @@
       "applied": "Applied",
       "screen": "Screen",
       "interview": "Interview",
-      "technical": "Technical",
-      "final": "Final",
+      "technical": "Task/test",
+      "final": "Final interview",
       "offer": "Offer",
       "rejected": "Rejected",
       "archived": "Archived"
