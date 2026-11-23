@@ -19,9 +19,9 @@ permissions:
 
 jobs:
   changes:
-    uses: CMaintz/foundry/.github/workflows/changes.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
+    uses: CMaintz/foundry/.github/workflows/changes.yml@e71482dfb5914417d9675f1be1c6dd34699d0922 # v2.14.0
     with:
-      packages: "backend frontend extension"
+      packages: "backend frontend extension desktop"
       # Builds nothing for these; any other root-level file rebuilds everything (fail-safe).
       ignore_globs: |
         *.md
@@ -38,7 +38,7 @@ jobs:
     name: Backend gate
     needs: changes
     if: contains(fromJSON(needs.changes.outputs.changes), 'backend')
-    uses: CMaintz/foundry/.github/workflows/gate.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
+    uses: CMaintz/foundry/.github/workflows/gate.yml@e71482dfb5914417d9675f1be1c6dd34699d0922 # v2.14.0
     with:
       stack: java
       working_directory: backend
@@ -48,15 +48,39 @@ jobs:
     name: Frontend gate
     needs: changes
     if: contains(fromJSON(needs.changes.outputs.changes), 'frontend')
-    uses: CMaintz/foundry/.github/workflows/gate.yml@0b0275720481eb4c064562dc65b85d292204398a # v2.11.0
+    uses: CMaintz/foundry/.github/workflows/gate.yml@e71482dfb5914417d9675f1be1c6dd34699d0922 # v2.14.0
     with:
       stack: ts
       working_directory: frontend
 
+  # Not on the foundry facade: its ts stack also runs typecheck and audit, which this
+  # plain-CommonJS package has no verbs for. Same verbs as `mise run gate` in desktop/.
+  # Linux, like the other gates: the tests are plain Node and take Windows paths as data.
+  desktop:
+    name: Desktop gate
+    needs: changes
+    # csp.test.js checks frontend/src/index.html, so a frontend change can break it too.
+    if: >-
+      contains(fromJSON(needs.changes.outputs.changes), 'desktop') ||
+      contains(fromJSON(needs.changes.outputs.changes), 'frontend')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      # The unit tests never start Electron; its ~100 MB binary is only for build and start.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5
+        with:
+          version: "2026.9.4"
+      - run: mise run gate
+
   # The one required check: skipped packages are fine, failed or cancelled aren't.
   gate-ok:
     name: gate-ok
-    needs: [changes, backend, frontend]
+    needs: [changes, backend, frontend, desktop]
     if: always()
     runs-on: ubuntu-latest
     steps:
