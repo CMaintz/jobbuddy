@@ -1,20 +1,17 @@
 import {
   Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy,
-  AfterViewInit, Output, SimpleChanges, ViewChild, signal,
+  OnInit, Output, SimpleChanges, ViewChild, signal,
   ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { Editor, Extension } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import TextStyle from '@tiptap/extension-text-style';
-import { Color } from '@tiptap/extension-color';
-import TextAlign from '@tiptap/extension-text-align';
-import FontFamily from '@tiptap/extension-font-family';
+import { StarterKit } from '@tiptap/starter-kit';
+import { Color, FontFamily, TextStyle } from '@tiptap/extension-text-style';
+import { TextAlign } from '@tiptap/extension-text-align';
 import { FONT_FAMILIES } from '../data/font-families';
 
-/** Minimal font-size mark on top of TextStyle (TipTap v2 has no first-party one). */
+/** Minimal font-size mark on top of TextStyle; stored values stay plain `font-size` styles. */
 const FontSize = Extension.create({
   name: 'fontSize',
   addOptions() {
@@ -115,7 +112,7 @@ const FONT_SIZES = ['10px', '11px', '12px', '13px', '14px', '16px', '18px', '21p
     }
   `],
 })
-export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class RichTextEditorComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('editorHost', { static: true }) editorHost!: ElementRef<HTMLElement>;
 
   @Input() value = '';
@@ -133,12 +130,17 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
   private timer: ReturnType<typeof setTimeout> | null = null;
   private lastEmitted = '';
 
-  ngAfterViewInit(): void {
+  // Built before the first check (the host is a static query), so loading formatted content does
+  // not flip the toolbar's active states after Angular has already rendered them (NG0100).
+  ngOnInit(): void {
     this.editor = new Editor({
       element: this.editorHost.nativeElement,
       extensions: [
-        StarterKit.configure({ heading: false, codeBlock: false, blockquote: false, horizontalRule: false }),
-        Underline,
+        // v3's StarterKit bundles Underline (used by the toolbar) and Link (not offered here,
+        // and auto-linking would change saved CV HTML), so Link stays off.
+        StarterKit.configure({
+          heading: false, codeBlock: false, blockquote: false, horizontalRule: false, link: false,
+        }),
         TextStyle,
         Color,
         FontFamily,
@@ -158,7 +160,7 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
       const incoming = toHtml(this.value);
       // Only reset content for external changes, not our own emissions echoed back
       if (this.value !== this.lastEmitted && incoming !== this.editor.getHTML()) {
-        this.editor.commands.setContent(incoming, false);
+        this.editor.commands.setContent(incoming, { emitUpdate: false });
       }
     }
   }
