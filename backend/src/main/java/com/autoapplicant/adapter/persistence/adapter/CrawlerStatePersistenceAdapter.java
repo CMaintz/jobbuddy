@@ -4,11 +4,10 @@ import com.autoapplicant.adapter.persistence.entity.CrawlerStateEntity;
 import com.autoapplicant.adapter.persistence.repository.CrawlerStateJpaRepository;
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
 
 @Component
 public class CrawlerStatePersistenceAdapter implements CrawlerStateRepositoryPort {
@@ -31,6 +30,12 @@ public class CrawlerStatePersistenceAdapter implements CrawlerStateRepositoryPor
         e.setLastError(state.lastError());
         e.setRunning(state.isRunning());
         return toDomain(repo.save(e));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void heartbeat(String source, java.time.Instant at) {
+        repo.heartbeat(source, at);
     }
 
     @Override

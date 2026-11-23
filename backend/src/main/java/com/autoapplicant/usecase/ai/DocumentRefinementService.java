@@ -10,6 +10,7 @@ import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.document.AiResponseParser;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.CvSectionTemplates;
+import com.autoapplicant.usecase.document.EmployerPosting;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.GenerationGuardrails;
 import java.util.List;
@@ -71,7 +72,8 @@ public class DocumentRefinementService implements RefineDocumentUseCase {
             String refined = AiResponseParser.sanitize(aiProvider.generate(composition, AiOperations.DOCUMENT_REFINE));
 
             // Same backstops as generation: an edit can introduce a fabrication just as easily.
-            contentGuards.verify(request.userId(), refined, contactFreeJson, "REFINEMENT");
+            contentGuards.verify(
+                    request.userId(), refined, contactFreeJson, quotablePosting(request), "REFINEMENT");
 
             return CompletableFuture.completedFuture(
                     new RefineDocumentResult(refined, aiProvider.chatModelName()));
@@ -79,6 +81,15 @@ public class DocumentRefinementService implements RefineDocumentUseCase {
             log.error("Document refinement failed: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    /**
+     * The posting a refined letter may quote about the employer. A CV section's bullets name no
+     * subject, so a refined section gets none, as a generated CV does.
+     */
+    private static EmployerPosting quotablePosting(RefineDocumentRequest request) {
+        return request.sectionKey() == null
+                ? EmployerPosting.of(request.jobDescription()) : EmployerPosting.NONE;
     }
 
     /** The editor persona, the untrusted-input guard, and the resolved output language. */

@@ -1,8 +1,11 @@
 package com.autoapplicant.usecase.document;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class DocumentFactGuardTest {
 
@@ -130,5 +133,80 @@ class DocumentFactGuardTest {
         // period-grouped document vs comma-grouped source describe the same number
         assertThat(guard.audit("Reached 16.181 users", SOURCE).clean()).isTrue();
         assertThat(guard.audit("Reached 16 181 users", SOURCE).clean()).isTrue();
+    }
+
+    private static final String COMMS_SOURCE = String.join(" ",
+            "Grew the LinkedIn page to 12,000 followers.",
+            "Ran 8 campaigns with 450,000 impressions.");
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Vi voksede til 10.000 følgere på LinkedIn.   | 10.000 følgere",
+            "Jeg stod for 25 kampagner om året.           | 25 kampagner",
+            "Opslagene fik 900.000 visninger.             | 900.000 visninger",
+            "Nyhedsbrevet fik 3.000 nye abonnenter.       | 3.000 abonnenter",
+            "We grew the page to 10,000 followers.        | 10,000 followers",
+            "I ran 25 campaigns a year.                   | 25 campaigns",
+            "The posts reached 900,000 impressions.       | 900,000 impressions",
+            "The newsletter gained 3,000 subscribers.     | 3,000 subscribers",
+            "The campaign generated 400 leads.            | 400 leads"})
+    void anInventedCommsCountIsCaught(String sentence, String claim) {
+        assertThat(guard.audit(sentence, COMMS_SOURCE).inventedMetrics()).containsExactly(claim);
+    }
+
+    @Test
+    void supportedCommsCountsPassInEitherLanguageBesideAnInventedOne() {
+        DocumentFactGuard.FactAudit english = guard.audit(
+                "I grew the page to 12,000 followers across 8 campaigns and 40 posts.",
+                COMMS_SOURCE);
+        assertThat(english.inventedMetrics()).containsExactly("40 posts");
+        assertThat(english.unverifiedMetrics()).isEmpty();
+
+        // The profile is English and the letter Danish: the same figures, translated.
+        DocumentFactGuard.FactAudit danish = guard.audit(
+                "Jeg voksede siden til 12.000 følgere gennem 8 kampagner med 450.000 visninger "
+                        + "og 40 opslag.", COMMS_SOURCE);
+        assertThat(danish.inventedMetrics()).containsExactly("40 opslag");
+        assertThat(danish.unverifiedMetrics()).isEmpty();
+    }
+
+    @Test
+    void theEnglishPrepositionToIsNotTheDanishNumberTwo() {
+        assertThat(guard.audit("I presented the strategy to employees and to customers.",
+                COMMS_SOURCE).clean()).isTrue();
+        // Danish "to" before a Danish noun is still the number two.
+        assertThat(guard.audit("Jeg ledte to medarbejdere.", COMMS_SOURCE).inventedMetrics())
+                .containsExactly("2 medarbejdere");
+        // Other Danish number words are not English words, so they still count any noun,
+        // including the English loan nouns Danish tech text uses.
+        assertThat(guard.audit("I led 3 teams.", "Ledte tre teams.").clean()).isTrue();
+        assertThat(guard.audit("I moved 3 services.", "Migrerede tre services.").clean()).isTrue();
+    }
+
+    @Test
+    void aCountBelongsToTheNearestNounNotOneFurtherAlong() {
+        // "reach", "leads" and "posts" are also verbs; a later one must not steal the count.
+        assertThat(guard.audit("I ran 8 campaigns to reach new audiences and generate leads.",
+                COMMS_SOURCE).clean()).isTrue();
+        assertThat(guard.audit("Jeg kørte 8 kampagner for at skabe leads.", COMMS_SOURCE).clean())
+                .isTrue();
+    }
+
+    @Test
+    void danishToAndFireStillCountASharedNounInDanishText() {
+        assertThat(guard.audit("Jeg ledte to teams.", COMMS_SOURCE).inventedMetrics())
+                .containsExactly("2 teams");
+        assertThat(guard.audit("Jeg har ledet fire teams.", COMMS_SOURCE).inventedMetrics())
+                .containsExactly("4 teams");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "We went from 3 channels to reach 1,000 users.",
+            "Since 2020 the team leads every release.",
+            "In 2021 I shared my views on the strategy.",
+            "In 2023 our posts reach a wide audience."})
+    void aVerbOrAYearIsNotReadAsACount(String sentence) {
+        assertThat(guard.audit(sentence, COMMS_SOURCE + " Reached 1,000 users.").clean()).isTrue();
     }
 }

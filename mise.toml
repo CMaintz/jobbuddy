@@ -5,6 +5,8 @@
 # gate; `mise run gate` locally runs everything. The extension is static JS/HTML
 # with no build, so it has no gate verbs: CI checks only its file size, and its unit
 # tests run locally through `extension:test` (node's built-in runner, no npm install).
+# The desktop shell (desktop:*) has only lint and test: it is plain CommonJS with
+# no type step, and its packaging verbs run on Windows only.
 
 [tools]
 java = "21"
@@ -170,6 +172,40 @@ description = "Extension unit tests on node's built-in test runner"
 dir = "extension"
 run = 'node --test "test/*.test.js"'
 
+# ---- desktop (Electron shell, plain Node) ----------------------------------
+# desktop/mise.toml is the source of truth (it's what CI runs), so these delegate to it
+# the same way backend:* does.
+
+[tasks."desktop:lint"]
+description = "ESLint on the desktop shell"
+dir = "desktop"
+run = "mise run lint"
+
+[tasks."desktop:test"]
+description = "Desktop unit tests on plain Node: no Electron binary, no network"
+dir = "desktop"
+run = "mise run test"
+
+[tasks."desktop:gate"]
+description = "The desktop oracle: lint and tests"
+dir = "desktop"
+run = "mise run gate"
+
+[tasks."desktop:build"]
+description = "Backend jar, Angular build, JRE and Electron staged for the desktop app (Windows)"
+dir = "desktop"
+run = "mise run build"
+
+[tasks."desktop:start"]
+description = "Run the desktop app from the checkout (after desktop:build)"
+dir = "desktop"
+run = "mise run start"
+
+[tasks."desktop:package"]
+description = "Windows x64 NSIS installer in desktop/dist (unsigned)"
+dir = "desktop"
+run = "mise run package"
+
 # ---- aggregate --------------------------------------------------------------
 # Top-level verbs run every package's, so the six-verb contract holds at the root
 # too (`mise run typecheck` etc.), not just per package. Sequential — no `depends`.
@@ -180,7 +216,7 @@ run = ["mise run backend:fix", "mise run frontend:fix"]
 
 [tasks.lint]
 description = "Lint every package"
-run = ["mise run backend:lint", "mise run frontend:lint"]
+run = ["mise run backend:lint", "mise run frontend:lint", "mise run desktop:lint"]
 
 [tasks.typecheck]
 description = "Type-check every package"
@@ -188,7 +224,7 @@ run = ["mise run backend:typecheck", "mise run frontend:typecheck"]
 
 [tasks.test]
 description = "Test every package"
-run = ["mise run backend:test", "mise run frontend:test"]
+run = ["mise run backend:test", "mise run frontend:test", "mise run desktop:test"]
 
 [tasks.audit]
 description = "Audit every package"
@@ -196,4 +232,4 @@ run = ["mise run backend:audit", "mise run frontend:audit"]
 
 [tasks.gate]
 description = "The oracle — every package's gate. Sequential, no `depends` (parallel, unordered)."
-run = ["mise run backend:gate", "mise run frontend:gate"]
+run = ["mise run backend:gate", "mise run frontend:gate", "mise run desktop:gate"]

@@ -1,4 +1,4 @@
-import { resumeDataToAts, structuredDocToAts } from './ats-pdf.service';
+import { AtsPdfService, resumeDataToAts, structuredDocToAts } from './ats-pdf.service';
 import { INITIAL_RESUME_DATA, INITIAL_SETTINGS, ResumeData, ResumeSettings }
   from '../../features/resume-builder/models/resume-builder.models';
 import { StructuredDocument } from '../../core/models/structured-document.model';
@@ -83,5 +83,35 @@ describe('structuredDocToAts', () => {
   it('falls back to a placeholder name rather than rendering an empty header', () => {
     const nameless = { ...doc, identity: {} } as unknown as StructuredDocument;
     expect(structuredDocToAts(nameless).name).toBe('Curriculum Vitae');
+  });
+});
+
+describe('AtsPdfService page count', () => {
+  const PARAGRAPH = 'Jeg leder kommunikation og compliance-arbejde for kunder og kolleger. '.repeat(6);
+  let service: AtsPdfService;
+  let plugins: Record<string, unknown>;
+
+  // jsPDF copies its API plugins over each new document, so this stands in for the file download.
+  beforeEach(async () => {
+    const { jsPDF } = await import('jspdf');
+    plugins = jsPDF.API as unknown as Record<string, unknown>;
+    plugins['save'] = () => undefined;
+    service = new AtsPdfService();
+  });
+
+  afterEach(() => delete plugins['save']);
+
+  function letter(paragraphs: number): Promise<number> {
+    return service.downloadLetter({
+      name: 'Test Person', paragraphs: Array(paragraphs).fill(PARAGRAPH), filename: 'letter',
+    });
+  }
+
+  it('reports one page for a short letter', async () => {
+    expect(await letter(3)).toBe(1);
+  });
+
+  it('reports every page of a letter that spills over', async () => {
+    expect(await letter(12)).toBe(2);
   });
 });
