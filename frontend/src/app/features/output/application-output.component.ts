@@ -62,7 +62,7 @@ function recheckErrorKey(err: unknown): string {
     LetterGateReportComponent,
     LetterExportWarningComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {

@@ -27,7 +27,7 @@ import { ExportedPageBudget } from '../../../shared/page-budget';
     ExecutiveLayoutComponent,
     CreativeLayoutComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './resume-preview.component.html',
 })
 export class ResumePreviewComponent {

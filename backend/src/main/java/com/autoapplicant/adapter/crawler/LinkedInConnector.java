@@ -259,10 +259,10 @@ public class LinkedInConnector extends AbstractJobSourceConnector {
 
     // ── Parsing ──────────────────────────────────────────────────────────────────
 
-    private record JobCard(String id, String title, String company, String location,
+    record JobCard(String id, String title, String company, String location,
                            String url, Instant postedAt) {}
 
-    private List<JobCard> parseCards(String html) {
+    List<JobCard> parseCards(String html) {
         List<JobCard> cards = new ArrayList<>();
         Document doc = Jsoup.parse(html);
         for (Element card : doc.select("[data-entity-urn*=jobPosting]")) {
@@ -294,7 +294,7 @@ public class LinkedInConnector extends AbstractJobSourceConnector {
      * fields in a normalised HTML doc (title in {@code <title>}/{@code <h1>}) so the shared
      * {@code IngestionPipeline}/{@code TextCleaningService} extract the title and body cleanly.
      */
-    private RawJobData toRawJobData(JobCard card, String detailHtml) {
+    RawJobData toRawJobData(JobCard card, String detailHtml) {
         Document doc = Jsoup.parse(detailHtml);
 
         String title = firstNonBlank(

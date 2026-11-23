@@ -19,7 +19,7 @@ interface Step {
 @Component({
   selector: 'app-onboarding',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, CvImportPanelComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.component.html'
 })
 export class OnboardingComponent {
