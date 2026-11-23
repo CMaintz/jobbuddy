@@ -2,6 +2,8 @@ package com.autoapplicant.adapter.persistence.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -60,6 +62,12 @@ public class ApplicationEntity {
     @Column(name = "outcome_lessons", columnDefinition = "text")
     private String outcomeLessons;
 
+    @Column(name = "deadline")
+    private LocalDate deadline;
+
+    @Column(name = "interview_at")
+    private LocalDateTime interviewAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -69,6 +77,10 @@ public class ApplicationEntity {
     @PrePersist void prePersist() { createdAt = updatedAt = Instant.now(); }
     @PreUpdate void preUpdate() { updatedAt = Instant.now(); }
 
+    public LocalDate getDeadline() { return deadline; }
+    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
+    public LocalDateTime getInterviewAt() { return interviewAt; }
+    public void setInterviewAt(LocalDateTime interviewAt) { this.interviewAt = interviewAt; }
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getUserId() { return userId; }

@@ -53,7 +53,8 @@ public class ApplicationDocumentAssembler {
                 new DocumentRenderOptions(render.showProfileImage(), DocumentTemplates.resolveTheme(render.theme())),
                 List.of(),
                 content != null ? content : "",
-                atsReport(content, jobKeywords, exportMode, findings));
+                atsReport(content, jobKeywords, exportMode, findings),
+                null);
     }
 
     private AtsReport atsReport(String content, JobKeywords jobKeywords, String exportMode,

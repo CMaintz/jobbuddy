@@ -40,7 +40,7 @@ class JobPersistenceAdapterFeedTest extends PostgresIntegrationTest {
         jobs.insert("Closed", "c", NOW, false, null);
         ignore(userId, ignored);
 
-        List<UUID> feed = adapter.findActiveNotIgnoredBy(userId, 0, PAGE_SIZE).stream()
+        List<UUID> feed = adapter.findActiveNotIgnoredBy(userId, List.of(), 0, PAGE_SIZE).stream()
                 .map(Job::id).toList();
 
         assertThat(feed).containsExactly(kept);
@@ -55,7 +55,7 @@ class JobPersistenceAdapterFeedTest extends PostgresIntegrationTest {
         ignore(userId, ignoredActive);
         ignore(userId, ignoredClosed);
 
-        assertThat(adapter.countActiveNotIgnoredBy(userId)).isEqualTo(2);
+        assertThat(adapter.countActiveNotIgnoredBy(userId, List.of())).isEqualTo(2);
     }
 
     @Test
@@ -63,9 +63,22 @@ class JobPersistenceAdapterFeedTest extends PostgresIntegrationTest {
         UUID job = jobs.insert("Kept", "k", NOW);
         ignore(insertUser(), job);
 
-        assertThat(adapter.countActiveNotIgnoredBy(userId)).isEqualTo(1);
-        assertThat(adapter.findActiveNotIgnoredBy(userId, 0, PAGE_SIZE)).extracting(Job::id)
+        assertThat(adapter.countActiveNotIgnoredBy(userId, List.of())).isEqualTo(1);
+        assertThat(adapter.findActiveNotIgnoredBy(userId, List.of(), 0, PAGE_SIZE)).extracting(Job::id)
                 .containsExactly(job);
+    }
+
+    @Test
+    void a_skipped_category_is_left_out_of_the_page_and_the_count() {
+        // Bug: the exclusion is applied to the page but not the count (or the reverse), so the
+        // pager promises postings that never arrive; or it is not applied at all.
+        UUID kept = jobs.insert("Kept", "k", NOW, true, "SOFTWARE_IT");
+        UUID uncategorised = jobs.insert("Uncategorised", "u", NOW);
+        jobs.insert("Sales", "s", NOW, true, "SALES");
+
+        assertThat(adapter.findActiveNotIgnoredBy(userId, List.of("SALES"), 0, PAGE_SIZE))
+                .extracting(Job::id).containsExactlyInAnyOrder(kept, uncategorised);
+        assertThat(adapter.countActiveNotIgnoredBy(userId, List.of("SALES"))).isEqualTo(2);
     }
 
     private UUID insertUser() {

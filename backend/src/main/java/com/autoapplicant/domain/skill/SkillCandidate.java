@@ -45,6 +45,12 @@ public record SkillCandidate(
          * than written straight into the profile: it is the parser's reading, not the document's
          * statement.
          */
-        DOCUMENT_INFERRED
+        DOCUMENT_INFERRED,
+        /**
+         * Proposed by the AI as very likely held, given one skill the user does hold, which is
+         * the candidate's single related skill. Put to the user as "you have X, do you also have
+         * this?".
+         */
+        LIKELY_HELD
     }
 }

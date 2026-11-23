@@ -1,6 +1,8 @@
 package com.autoapplicant.domain.application;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record Application(
@@ -24,12 +26,16 @@ public record Application(
         /** Feedback received from the company (rejection reasons, interviewer comments). */
         String outcomeFeedback,
         /** What to do differently next time — fed back into future generations. */
-        String outcomeLessons
+        String outcomeLessons,
+        /** The user's own application deadline, which the crawled posting often lacks. */
+        LocalDate deadline,
+        /** Interview time as the user typed it, with no zone, so reminders repeat it unchanged. */
+        LocalDateTime interviewAt
 ) {
 
     /**
      * A builder pre-populated from this application — the canonical way to update a few fields
-     * (status, recruiter info, outcome) without re-listing all 19 in a {@code new Application(...)}.
+     * (status, recruiter info, outcome, dates) without re-listing all 21 in a {@code new Application(...)}.
      * Business logic (transition rules, appliedAt) stays in the use case; this only removes the copy.
      */
     public Builder toBuilder() {
@@ -40,7 +46,8 @@ public record Application(
                 .recruiterMessage(recruiterMessage).recruiterReply(recruiterReply)
                 .cvVersionId(cvVersionId).promptTemplateId(promptTemplateId).matchScore(matchScore)
                 .notes(notes).createdAt(createdAt).updatedAt(updatedAt)
-                .outcomeFeedback(outcomeFeedback).outcomeLessons(outcomeLessons);
+                .outcomeFeedback(outcomeFeedback).outcomeLessons(outcomeLessons)
+                .deadline(deadline).interviewAt(interviewAt);
     }
 
     public static final class Builder {
@@ -63,6 +70,8 @@ public record Application(
         private Instant updatedAt;
         private String outcomeFeedback;
         private String outcomeLessons;
+        private LocalDate deadline;
+        private LocalDateTime interviewAt;
 
         public Builder id(UUID v) { this.id = v; return this; }
         public Builder userId(UUID v) { this.userId = v; return this; }
@@ -83,11 +92,14 @@ public record Application(
         public Builder updatedAt(Instant v) { this.updatedAt = v; return this; }
         public Builder outcomeFeedback(String v) { this.outcomeFeedback = v; return this; }
         public Builder outcomeLessons(String v) { this.outcomeLessons = v; return this; }
+        public Builder deadline(LocalDate v) { this.deadline = v; return this; }
+        public Builder interviewAt(LocalDateTime v) { this.interviewAt = v; return this; }
 
         public Application build() {
             return new Application(id, userId, jobId, status, appliedAt, recruiterName, recruiterEmail,
                     coverLetterText, applicationText, recruiterMessage, recruiterReply, cvVersionId,
-                    promptTemplateId, matchScore, notes, createdAt, updatedAt, outcomeFeedback, outcomeLessons);
+                    promptTemplateId, matchScore, notes, createdAt, updatedAt, outcomeFeedback, outcomeLessons,
+                    deadline, interviewAt);
         }
     }
 }

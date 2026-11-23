@@ -5,7 +5,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
-import { StatusChipComponent, stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
+import { stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
+import { StatusPickerComponent } from '../../shared/components/status-picker/status-picker.component';
+import { NotifyService } from '../../shared/services/notify.service';
+import { ApplicationDatesComponent } from './application-dates.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { FitBarComponent } from '../../shared/components/fit-bar/fit-bar.component';
 import { ApplicationsApiService, ApplicationTimelineEntry } from '../../core/api/applications.api';
@@ -16,7 +19,7 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
   selector: 'app-application-detail',
   imports: [
     CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
-    StatusChipComponent, CompanyMarkComponent, FitBarComponent,
+    StatusPickerComponent, ApplicationDatesComponent, CompanyMarkComponent, FitBarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-detail.component.html'
@@ -24,6 +27,7 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
 export class ApplicationDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private api = inject(ApplicationsApiService);
+  private notify = inject(NotifyService);
 
   app: Application | null = null;
   loading = true;
@@ -71,6 +75,26 @@ export class ApplicationDetailComponent implements OnInit {
     if (entry.toStatus === 'REJECTED') return 'var(--jb-danger)';
     if (entry.toStatus === 'OFFER') return 'var(--jb-success)';
     return 'var(--jb-accent-2)';
+  }
+
+  statusPending = signal(false);
+
+  changeStatus(status: ApplicationStatus): void {
+    const app = this.app;
+    if (!app) return;
+    this.statusPending.set(true);
+    this.api.updateStatus(app.id, status).subscribe({
+      next: updated => {
+        this.app = updated;
+        this.statusPending.set(false);
+        // The move is a new step on the timeline, so reload it rather than show a stale one.
+        this.api.timeline(app.id).subscribe(events => this.timeline.set(events));
+      },
+      error: () => {
+        this.statusPending.set(false);
+        this.notify.error('notify.actionFailed');
+      },
+    });
   }
 
   /** Outcome capture makes sense once the application has actually gone out. */

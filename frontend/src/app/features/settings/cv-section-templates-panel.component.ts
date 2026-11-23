@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { CV_SECTION_KEYS, CvSectionKey, templatesForSection } from '../../core/models/cv-section-category';
 import { PromptTemplate } from '../../core/models/prompt-template.model';
@@ -45,6 +46,8 @@ export function makeDefault(api: PromptApiService, template: PromptTemplate): Ob
 })
 export class CvSectionTemplatesPanelComponent implements OnInit {
   private promptApi = inject(PromptApiService);
+  /** The prompt library route is admin-only, so only an admin gets the link to it. */
+  readonly canBrowseLibrary = inject(AuthService).isAdmin();
 
   loading = signal(true);
   loadError = signal(false);
