@@ -11,7 +11,7 @@ import { LetterTemplate } from './letter-templates';
 @Component({
   selector: 'app-letter-paper',
   imports: [RichTextEditorComponent, RichTextPipe],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './letter-paper.component.html',
 })
 export class LetterPaperComponent {

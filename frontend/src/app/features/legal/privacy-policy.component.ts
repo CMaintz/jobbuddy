@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 @Component({
   selector: 'app-privacy-policy',
   imports: [RouterLink, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './privacy-policy.component.html',
 })
 export class PrivacyPolicyComponent {

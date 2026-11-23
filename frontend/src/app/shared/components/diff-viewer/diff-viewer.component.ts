@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
 interface DiffSegment {
@@ -9,16 +9,16 @@ interface DiffSegment {
 @Component({
   selector: 'jb-diff-viewer',
   imports: [TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './diff-viewer.component.html',
 })
 export class DiffViewerComponent {
-  @Input() before = '';
-  @Input() after = '';
+  before = input('');
+  after = input('');
 
   mode = signal<'diff' | 'revised' | 'original'>('diff');
 
-  segments = computed(() => this.computeDiff(this.before, this.after));
+  segments = computed(() => this.computeDiff(this.before(), this.after()));
 
   addCount = computed(() => this.segments().filter(s => s.type === 'add').length);
   delCount = computed(() => this.segments().filter(s => s.type === 'del').length);
