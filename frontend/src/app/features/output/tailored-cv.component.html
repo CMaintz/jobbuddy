@@ -54,11 +54,11 @@
                 }
               </div>
 
-              @if (promptTemplates.length > 0) {
+              @if (promptTemplates().length > 0) {
                 <div class="text-2xs text-jb-text-dim uppercase tracking-widest mb-1.5">{{ 'apply.prompt' | translate }}</div>
                 <select class="input mb-3" [ngModel]="selectedPromptId()" (ngModelChange)="selectedPromptId.set($event || null)">
                   <option [ngValue]="null">{{ 'apply.defaultPrompt' | translate }}</option>
-                  @for (tpl of promptTemplates; track tpl.id) {
+                  @for (tpl of promptTemplates(); track tpl.id) {
                     <option [ngValue]="tpl.id">{{ tpl.name }}</option>
                   }
                 </select>

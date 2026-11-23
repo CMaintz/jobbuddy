@@ -100,6 +100,9 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     private static final int FEED_SIZE = 100;
     private static final String OUT_OF_REACH = "Kræver ";
     private static final int HIGHEST_MISMATCH_SCORE = 76;
+    private static final String JYDSK = "marketingkoordinator-soeges-til-jydsk-ta";
+    private static final Set<String> JYDSK_TRAITS =
+            Set.of("Struktur", "Samarbejde", "Servicemindedhed", "Initiativ");
     /** How far apart two spellings of the same profile may score on one posting. */
     private static final int SAME_PROFILE_TOLERANCE = 3;
 
@@ -233,6 +236,19 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
 
         assertThat(idsWhere(p -> !fit(p, profile).equals(MISMATCH))).allSatisfy(id ->
                 assertThat(scores.get(id)).as(id).isGreaterThanOrEqualTo(main.get(id).asInt()));
+    }
+
+    /**
+     * Four of its six demands are traits, spelled as the enrichment prompt really writes them;
+     * nobody lists those as skills, so they counted as missing demands.
+     */
+    @Test
+    void a_postings_personal_traits_are_not_its_demands() throws IOException {
+        List<String> reasons = resultsFor(COMMS).get(JYDSK).matchReasons();
+
+        assertThat(reasons).anyMatch(reason -> reason.endsWith("/2 required skills covered"));
+        assertThat(reasons).filteredOn(reason -> reason.startsWith("Missing required: "))
+                .noneMatch(reason -> JYDSK_TRAITS.stream().anyMatch(reason::contains));
     }
 
     /**

@@ -14,7 +14,7 @@ import { getSocialIcon, CONTACT_ICONS } from '../../data/social-platforms';
     LucideDynamicIcon, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './modern-1col-layout.component.html',
 })
 export class Modern1ColLayoutComponent {

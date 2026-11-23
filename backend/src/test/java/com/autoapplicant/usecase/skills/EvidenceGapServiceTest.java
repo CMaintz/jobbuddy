@@ -1,5 +1,11 @@
 package com.autoapplicant.usecase.skills;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.skill.EvidenceGap;
 import com.autoapplicant.domain.skill.ProfileSkill;
@@ -7,19 +13,11 @@ import com.autoapplicant.domain.user.InterviewStory;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.InterviewStoryRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.when;
 
 class EvidenceGapServiceTest {
 
@@ -60,6 +58,12 @@ class EvidenceGapServiceTest {
                 null, List.of(tags), null, null)));
     }
 
+    private void storyBody(String situation) {
+        when(storyRepo.findByUserId(USER)).thenReturn(List.of(new InterviewStory(
+                UUID.randomUUID(), USER, "Untagged", situation, null, null, null,
+                null, List.of(), null, null)));
+    }
+
     @Test
     void aClaimedInDemandSkillWithNoStoryIsAGap() {
         claims("Kubernetes");
@@ -88,6 +92,25 @@ class EvidenceGapServiceTest {
         when(storyRepo.findByUserId(USER)).thenReturn(List.of(new InterviewStory(
                 UUID.randomUUID(), USER, "Migration", "We moved the platform to Kubernetes",
                 null, "did it", "faster deploys", null, List.of(), null, null)));
+
+        assertThat(service.evidenceGaps(USER, 5)).isEmpty();
+    }
+
+    @Test
+    void aStoryOnlyContainingTheSkillInsideAnotherWordProvesNothing() {
+        claims("Go");
+        marketAsksFor(List.of("Go"));
+        storyBody("Tuned the ranking algorithm until the results were good");
+
+        assertThat(service.evidenceGaps(USER, 5)).extracting(EvidenceGap::skillName)
+                .containsExactly("Go");
+    }
+
+    @Test
+    void aStoryNamingASymbolSkillStillProvesIt() {
+        claims("C#", ".NET");
+        marketAsksFor(List.of("C#", ".NET"));
+        storyBody("Rewrote the billing service in C# on ASP.NET");
 
         assertThat(service.evidenceGaps(USER, 5)).isEmpty();
     }

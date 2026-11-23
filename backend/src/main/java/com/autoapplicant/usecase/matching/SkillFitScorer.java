@@ -44,7 +44,8 @@ import java.util.stream.Collectors;
  * adjacent asks it covers, which a flat cap spends on its spelling matches alone. A demanded
  * skill weighs more than a welcome one, and both more than an ask the posting did not tier.
  * Missing demands still cost, scaled by the share missing and capped, so a long list of labels
- * nobody holds cannot zero a good fit.
+ * nobody holds cannot zero a good fit. Personality traits ({@link PersonalTraits}) are no asks at
+ * all: neither evidence when held nor a miss when not.
  */
 final class SkillFitScorer {
 
@@ -119,6 +120,7 @@ final class SkillFitScorer {
         if (asks.isEmpty()) {
             asks = PostingAsks.untiered(namedInText(job));
         }
+        asks = asks.without(ask -> PersonalTraits.isTrait(ask, canonicalizer));
         Map<String, Credit> credits = new HashMap<>();
         asks.all().forEach(ask -> credits.computeIfAbsent(ask, this::creditFor));
         double strength = Math.min(evidence(asks, credits) / FULL_EVIDENCE, 1.0);
