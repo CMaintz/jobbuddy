@@ -157,6 +157,6 @@ class ApplicationControllerSubResourceTest {
         return new Application(appId, userId, UUID.randomUUID(), status, null,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now(), null, null);
+                Instant.now(), Instant.now(), null, null, null, null);
     }
 }
