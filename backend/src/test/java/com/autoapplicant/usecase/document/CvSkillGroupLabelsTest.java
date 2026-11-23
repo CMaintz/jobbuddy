@@ -52,6 +52,14 @@ class CvSkillGroupLabelsTest {
     }
 
     @Test
+    void a_language_category_on_a_danish_cv_means_spoken_languages() {
+        // Nothing in the taxonomy is filed under plain "Language"; it reaches here when a person
+        // files Engelsk or Tysk under it themselves. Calling that group "Programmeringssprog"
+        // puts a programming heading over spoken languages on a non-engineer's CV.
+        assertThat(CvSkillGroupLabels.forLanguage("da").labelFor("Language")).isEqualTo("Sprog");
+    }
+
+    @Test
     void a_category_the_user_invented_is_kept_exactly_as_they_wrote_it() {
         // They chose that word for this CV; second-guessing it is worse than an odd heading.
         assertThat(CvSkillGroupLabels.forLanguage("en").labelFor("Broadcast Engineering"))

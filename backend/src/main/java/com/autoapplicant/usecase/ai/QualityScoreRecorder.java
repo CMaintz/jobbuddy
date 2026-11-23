@@ -44,7 +44,7 @@ public class QualityScoreRecorder {
         }
         try {
             QualityScore score = qualityEvaluator.evaluate(body, in.contactFreeJson(), keywordsOf(in.job()),
-                    PromptCompositionBuilder.letterWordTarget(cmd.lengthPreference()));
+                    PromptCompositionBuilder.letterWordTarget(cmd.lengthPreference()), in.employerPosting());
             log.info("Quality score for {}: {} [{}]", cmd.documentType(), score.total(),
                     score.dimensions().stream()
                             .map(d -> d.code() + "=" + d.score())

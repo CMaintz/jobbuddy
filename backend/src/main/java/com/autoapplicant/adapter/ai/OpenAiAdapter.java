@@ -20,15 +20,23 @@ public class OpenAiAdapter implements AiProviderPort {
     private final AppProperties props;
     /** Tier-resolved chat model; when set, overrides the provider's default {@code model}. */
     private final String modelOverride;
+    /** The install's stored embedding model; when set, overrides the configured one. */
+    private final String embeddingModelOverride;
 
     public OpenAiAdapter(OpenAIClient client, AppProperties props) {
         this(client, props, null);
     }
 
     public OpenAiAdapter(OpenAIClient client, AppProperties props, String modelOverride) {
+        this(client, props, modelOverride, null);
+    }
+
+    public OpenAiAdapter(OpenAIClient client, AppProperties props, String modelOverride,
+                         String embeddingModelOverride) {
         this.client = client;
         this.props = props;
         this.modelOverride = modelOverride;
+        this.embeddingModelOverride = embeddingModelOverride;
     }
 
     @Override
@@ -102,6 +110,7 @@ public class OpenAiAdapter implements AiProviderPort {
     }
 
     private String resolveEmbeddingModel() {
+        if (embeddingModelOverride != null && !embeddingModelOverride.isBlank()) return embeddingModelOverride;
         String configured = props.getOpenai().getEmbeddingModel();
         return configured != null && !configured.isBlank() ? configured : EmbeddingModel.TEXT_EMBEDDING_3_SMALL.toString();
     }

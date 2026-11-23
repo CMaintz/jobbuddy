@@ -59,7 +59,7 @@ class ApplicationPromptAssemblerTest {
 
         GenerateDocumentCommand cmd = new GenerateDocumentCommand(
                 USER, "COVER_LETTER", null, "MARKER_POSTING", null, null,
-                "MARKER_CUSTOM", "MARKER_MOTIVATION", "English", false, null, "STANDARD");
+                "MARKER_CUSTOM", "MARKER_MOTIVATION", "English", false, null, "STANDARD", null);
 
         GenerationInputs inputs = assembler.assemble(cmd);
 
@@ -77,6 +77,21 @@ class ApplicationPromptAssemblerTest {
     }
 
     @Test
+    void withNoJobItNeitherLooksUpNorGroundsACompany() {
+        when(careerProfileContext.buildJson(any())).thenReturn(PROFILE_JSON);
+        when(promptTemplateRepo.findDefaultFor(any(), any())).thenReturn(Optional.empty());
+        when(writingProfileRepo.findByUserId(any())).thenReturn(Optional.empty());
+        when(applicationRepo.findRecentOutcomeLessons(any(), anyInt())).thenReturn(List.of());
+
+        assembler.assemble(new GenerateDocumentCommand(
+                USER, "COVER_LETTER", null, "a pasted posting", null, null,
+                null, null, "English", false, null, "STANDARD", null));
+
+        verify(jobRepo, never()).findById(any());
+        verify(companyGrounding, never()).contextFor(any(), any());
+    }
+
+    @Test
     void groundsTheCompanyWithTheRequestingUsersOwnResearch() {
         UUID jobId = UUID.randomUUID();
         UUID companyId = UUID.randomUUID();
@@ -91,7 +106,7 @@ class ApplicationPromptAssemblerTest {
 
         assembler.assemble(new GenerateDocumentCommand(
                 USER, "COVER_LETTER", jobId, null, null, null,
-                null, null, "English", false, null, "STANDARD"));
+                null, null, "English", false, null, "STANDARD", null));
 
         verify(companyGrounding).contextFor(USER, companyId);
     }
