@@ -2,7 +2,7 @@
   --buddy-scale: 2;
   position: relative;
   display: block;
-  width: calc(var(--buddy-scale) * 37px);
+  width: calc(var(--buddy-scale) * 38px);
   height: calc(var(--buddy-scale) * 49px);
 }
 .buddy--x1 { --buddy-scale: 1; }
@@ -13,7 +13,7 @@
   position: absolute;
   inset: 0;
   background: url(front-atlas.png) no-repeat;
-  background-size: calc(var(--buddy-scale) * 3600px) calc(var(--buddy-scale) * 1261px);
+  background-size: calc(var(--buddy-scale) * 3648px) calc(var(--buddy-scale) * 1261px);
   background-position: 0 0;
   image-rendering: pixelated;
 }
@@ -22,113 +22,113 @@
 }
 @keyframes buddy-loading {
   0% { background-position: 0 0; }
-  0.891% { background-position: calc(var(--buddy-scale) * -37px) 0; }
-  1.783% { background-position: calc(var(--buddy-scale) * -74px) 0; }
-  2.674% { background-position: calc(var(--buddy-scale) * -111px) 0; }
-  3.565% { background-position: calc(var(--buddy-scale) * -148px) 0; }
-  4.456% { background-position: calc(var(--buddy-scale) * -185px) 0; }
-  5.348% { background-position: calc(var(--buddy-scale) * -222px) 0; }
-  6.239% { background-position: calc(var(--buddy-scale) * -259px) 0; }
-  7.13% { background-position: calc(var(--buddy-scale) * -296px) 0; }
-  8.021% { background-position: calc(var(--buddy-scale) * -333px) 0; }
-  8.913% { background-position: calc(var(--buddy-scale) * -370px) 0; }
-  9.804% { background-position: calc(var(--buddy-scale) * -407px) 0; }
-  10.695% { background-position: calc(var(--buddy-scale) * -444px) 0; }
-  11.586% { background-position: calc(var(--buddy-scale) * -481px) 0; }
-  12.478% { background-position: calc(var(--buddy-scale) * -518px) 0; }
-  13.369% { background-position: calc(var(--buddy-scale) * -555px) 0; }
-  14.26% { background-position: calc(var(--buddy-scale) * -592px) 0; }
-  15.152% { background-position: calc(var(--buddy-scale) * -629px) 0; }
-  16.043% { background-position: calc(var(--buddy-scale) * -666px) 0; }
-  16.934% { background-position: calc(var(--buddy-scale) * -703px) 0; }
-  17.825% { background-position: calc(var(--buddy-scale) * -740px) 0; }
-  18.717% { background-position: calc(var(--buddy-scale) * -777px) 0; }
-  19.608% { background-position: calc(var(--buddy-scale) * -814px) 0; }
-  20.499% { background-position: calc(var(--buddy-scale) * -851px) 0; }
-  21.39% { background-position: calc(var(--buddy-scale) * -888px) 0; }
-  22.282% { background-position: calc(var(--buddy-scale) * -925px) 0; }
-  23.173% { background-position: calc(var(--buddy-scale) * -962px) 0; }
-  24.064% { background-position: calc(var(--buddy-scale) * -999px) 0; }
-  24.955% { background-position: calc(var(--buddy-scale) * -1036px) 0; }
-  25.847% { background-position: calc(var(--buddy-scale) * -1073px) 0; }
-  26.738% { background-position: calc(var(--buddy-scale) * -1110px) 0; }
-  27.629% { background-position: calc(var(--buddy-scale) * -1147px) 0; }
-  28.52% { background-position: calc(var(--buddy-scale) * -1184px) 0; }
-  29.412% { background-position: calc(var(--buddy-scale) * -1221px) 0; }
-  30.303% { background-position: calc(var(--buddy-scale) * -1258px) 0; }
-  31.194% { background-position: calc(var(--buddy-scale) * -1295px) 0; }
-  32.086% { background-position: calc(var(--buddy-scale) * -1332px) 0; }
-  32.977% { background-position: calc(var(--buddy-scale) * -1369px) 0; }
-  33.868% { background-position: calc(var(--buddy-scale) * -1406px) 0; }
-  34.759% { background-position: calc(var(--buddy-scale) * -1443px) 0; }
-  35.651% { background-position: calc(var(--buddy-scale) * -1480px) 0; }
-  36.542% { background-position: calc(var(--buddy-scale) * -1517px) 0; }
-  37.433% { background-position: calc(var(--buddy-scale) * -1554px) 0; }
-  38.324% { background-position: calc(var(--buddy-scale) * -1591px) 0; }
-  39.216% { background-position: calc(var(--buddy-scale) * -1628px) 0; }
-  40.107% { background-position: calc(var(--buddy-scale) * -1665px) 0; }
-  40.998% { background-position: calc(var(--buddy-scale) * -1702px) 0; }
-  41.889% { background-position: calc(var(--buddy-scale) * -1739px) 0; }
+  0.891% { background-position: calc(var(--buddy-scale) * -38px) 0; }
+  1.783% { background-position: calc(var(--buddy-scale) * -76px) 0; }
+  2.674% { background-position: calc(var(--buddy-scale) * -114px) 0; }
+  3.565% { background-position: calc(var(--buddy-scale) * -152px) 0; }
+  4.456% { background-position: calc(var(--buddy-scale) * -190px) 0; }
+  5.348% { background-position: calc(var(--buddy-scale) * -228px) 0; }
+  6.239% { background-position: calc(var(--buddy-scale) * -266px) 0; }
+  7.13% { background-position: calc(var(--buddy-scale) * -304px) 0; }
+  8.021% { background-position: calc(var(--buddy-scale) * -342px) 0; }
+  8.913% { background-position: calc(var(--buddy-scale) * -380px) 0; }
+  9.804% { background-position: calc(var(--buddy-scale) * -418px) 0; }
+  10.695% { background-position: calc(var(--buddy-scale) * -456px) 0; }
+  11.586% { background-position: calc(var(--buddy-scale) * -494px) 0; }
+  12.478% { background-position: calc(var(--buddy-scale) * -532px) 0; }
+  13.369% { background-position: calc(var(--buddy-scale) * -570px) 0; }
+  14.26% { background-position: calc(var(--buddy-scale) * -608px) 0; }
+  15.152% { background-position: calc(var(--buddy-scale) * -646px) 0; }
+  16.043% { background-position: calc(var(--buddy-scale) * -684px) 0; }
+  16.934% { background-position: calc(var(--buddy-scale) * -722px) 0; }
+  17.825% { background-position: calc(var(--buddy-scale) * -760px) 0; }
+  18.717% { background-position: calc(var(--buddy-scale) * -798px) 0; }
+  19.608% { background-position: calc(var(--buddy-scale) * -836px) 0; }
+  20.499% { background-position: calc(var(--buddy-scale) * -874px) 0; }
+  21.39% { background-position: calc(var(--buddy-scale) * -912px) 0; }
+  22.282% { background-position: calc(var(--buddy-scale) * -950px) 0; }
+  23.173% { background-position: calc(var(--buddy-scale) * -988px) 0; }
+  24.064% { background-position: calc(var(--buddy-scale) * -1026px) 0; }
+  24.955% { background-position: calc(var(--buddy-scale) * -1064px) 0; }
+  25.847% { background-position: calc(var(--buddy-scale) * -1102px) 0; }
+  26.738% { background-position: calc(var(--buddy-scale) * -1140px) 0; }
+  27.629% { background-position: calc(var(--buddy-scale) * -1178px) 0; }
+  28.52% { background-position: calc(var(--buddy-scale) * -1216px) 0; }
+  29.412% { background-position: calc(var(--buddy-scale) * -1254px) 0; }
+  30.303% { background-position: calc(var(--buddy-scale) * -1292px) 0; }
+  31.194% { background-position: calc(var(--buddy-scale) * -1330px) 0; }
+  32.086% { background-position: calc(var(--buddy-scale) * -1368px) 0; }
+  32.977% { background-position: calc(var(--buddy-scale) * -1406px) 0; }
+  33.868% { background-position: calc(var(--buddy-scale) * -1444px) 0; }
+  34.759% { background-position: calc(var(--buddy-scale) * -1482px) 0; }
+  35.651% { background-position: calc(var(--buddy-scale) * -1520px) 0; }
+  36.542% { background-position: calc(var(--buddy-scale) * -1558px) 0; }
+  37.433% { background-position: calc(var(--buddy-scale) * -1596px) 0; }
+  38.324% { background-position: calc(var(--buddy-scale) * -1634px) 0; }
+  39.216% { background-position: calc(var(--buddy-scale) * -1672px) 0; }
+  40.107% { background-position: calc(var(--buddy-scale) * -1710px) 0; }
+  40.998% { background-position: calc(var(--buddy-scale) * -1748px) 0; }
+  41.889% { background-position: calc(var(--buddy-scale) * -1786px) 0; }
   42.781% { background-position: 0 calc(var(--buddy-scale) * -49px); }
   43.761% { background-position: 0 0; }
-  44.652% { background-position: calc(var(--buddy-scale) * -37px) 0; }
-  45.544% { background-position: calc(var(--buddy-scale) * -74px) 0; }
-  46.435% { background-position: calc(var(--buddy-scale) * -111px) 0; }
-  47.326% { background-position: calc(var(--buddy-scale) * -148px) 0; }
-  48.217% { background-position: calc(var(--buddy-scale) * -185px) 0; }
-  49.109% { background-position: calc(var(--buddy-scale) * -222px) 0; }
-  50% { background-position: calc(var(--buddy-scale) * -259px) 0; }
-  50.891% { background-position: calc(var(--buddy-scale) * -296px) 0; }
-  51.783% { background-position: calc(var(--buddy-scale) * -333px) 0; }
-  52.674% { background-position: calc(var(--buddy-scale) * -370px) 0; }
-  53.565% { background-position: calc(var(--buddy-scale) * -407px) 0; }
-  54.456% { background-position: calc(var(--buddy-scale) * -444px) 0; }
-  55.348% { background-position: calc(var(--buddy-scale) * -481px) 0; }
-  56.239% { background-position: calc(var(--buddy-scale) * -518px) 0; }
-  57.13% { background-position: calc(var(--buddy-scale) * -555px) 0; }
-  58.021% { background-position: calc(var(--buddy-scale) * -592px) 0; }
-  58.913% { background-position: calc(var(--buddy-scale) * -629px) 0; }
-  59.804% { background-position: calc(var(--buddy-scale) * -666px) 0; }
-  60.695% { background-position: calc(var(--buddy-scale) * -703px) 0; }
-  61.586% { background-position: calc(var(--buddy-scale) * -740px) 0; }
-  62.478% { background-position: calc(var(--buddy-scale) * -777px) 0; }
-  63.369% { background-position: calc(var(--buddy-scale) * -814px) 0; }
-  64.26% { background-position: calc(var(--buddy-scale) * -851px) 0; }
-  65.152% { background-position: calc(var(--buddy-scale) * -888px) 0; }
-  66.043% { background-position: calc(var(--buddy-scale) * -925px) 0; }
-  66.934% { background-position: calc(var(--buddy-scale) * -962px) 0; }
-  67.825% { background-position: calc(var(--buddy-scale) * -999px) 0; }
-  68.717% { background-position: calc(var(--buddy-scale) * -1036px) 0; }
-  69.608% { background-position: calc(var(--buddy-scale) * -1073px) 0; }
-  70.499% { background-position: calc(var(--buddy-scale) * -1110px) 0; }
-  71.39% { background-position: calc(var(--buddy-scale) * -1147px) 0; }
-  72.282% { background-position: calc(var(--buddy-scale) * -1184px) 0; }
-  73.173% { background-position: calc(var(--buddy-scale) * -1221px) 0; }
-  74.064% { background-position: calc(var(--buddy-scale) * -1258px) 0; }
-  74.955% { background-position: calc(var(--buddy-scale) * -1295px) 0; }
-  75.847% { background-position: calc(var(--buddy-scale) * -1332px) 0; }
-  76.738% { background-position: calc(var(--buddy-scale) * -1369px) 0; }
-  77.629% { background-position: calc(var(--buddy-scale) * -1406px) 0; }
-  78.52% { background-position: calc(var(--buddy-scale) * -1443px) 0; }
-  79.412% { background-position: calc(var(--buddy-scale) * -1480px) 0; }
-  80.303% { background-position: calc(var(--buddy-scale) * -1517px) 0; }
-  81.194% { background-position: calc(var(--buddy-scale) * -1554px) 0; }
-  82.086% { background-position: calc(var(--buddy-scale) * -1591px) 0; }
-  82.977% { background-position: calc(var(--buddy-scale) * -1628px) 0; }
-  83.868% { background-position: calc(var(--buddy-scale) * -1665px) 0; }
-  84.759% { background-position: calc(var(--buddy-scale) * -1702px) 0; }
-  85.651% { background-position: calc(var(--buddy-scale) * -1739px) 0; }
+  44.652% { background-position: calc(var(--buddy-scale) * -38px) 0; }
+  45.544% { background-position: calc(var(--buddy-scale) * -76px) 0; }
+  46.435% { background-position: calc(var(--buddy-scale) * -114px) 0; }
+  47.326% { background-position: calc(var(--buddy-scale) * -152px) 0; }
+  48.217% { background-position: calc(var(--buddy-scale) * -190px) 0; }
+  49.109% { background-position: calc(var(--buddy-scale) * -228px) 0; }
+  50% { background-position: calc(var(--buddy-scale) * -266px) 0; }
+  50.891% { background-position: calc(var(--buddy-scale) * -304px) 0; }
+  51.783% { background-position: calc(var(--buddy-scale) * -342px) 0; }
+  52.674% { background-position: calc(var(--buddy-scale) * -380px) 0; }
+  53.565% { background-position: calc(var(--buddy-scale) * -418px) 0; }
+  54.456% { background-position: calc(var(--buddy-scale) * -456px) 0; }
+  55.348% { background-position: calc(var(--buddy-scale) * -494px) 0; }
+  56.239% { background-position: calc(var(--buddy-scale) * -532px) 0; }
+  57.13% { background-position: calc(var(--buddy-scale) * -570px) 0; }
+  58.021% { background-position: calc(var(--buddy-scale) * -608px) 0; }
+  58.913% { background-position: calc(var(--buddy-scale) * -646px) 0; }
+  59.804% { background-position: calc(var(--buddy-scale) * -684px) 0; }
+  60.695% { background-position: calc(var(--buddy-scale) * -722px) 0; }
+  61.586% { background-position: calc(var(--buddy-scale) * -760px) 0; }
+  62.478% { background-position: calc(var(--buddy-scale) * -798px) 0; }
+  63.369% { background-position: calc(var(--buddy-scale) * -836px) 0; }
+  64.26% { background-position: calc(var(--buddy-scale) * -874px) 0; }
+  65.152% { background-position: calc(var(--buddy-scale) * -912px) 0; }
+  66.043% { background-position: calc(var(--buddy-scale) * -950px) 0; }
+  66.934% { background-position: calc(var(--buddy-scale) * -988px) 0; }
+  67.825% { background-position: calc(var(--buddy-scale) * -1026px) 0; }
+  68.717% { background-position: calc(var(--buddy-scale) * -1064px) 0; }
+  69.608% { background-position: calc(var(--buddy-scale) * -1102px) 0; }
+  70.499% { background-position: calc(var(--buddy-scale) * -1140px) 0; }
+  71.39% { background-position: calc(var(--buddy-scale) * -1178px) 0; }
+  72.282% { background-position: calc(var(--buddy-scale) * -1216px) 0; }
+  73.173% { background-position: calc(var(--buddy-scale) * -1254px) 0; }
+  74.064% { background-position: calc(var(--buddy-scale) * -1292px) 0; }
+  74.955% { background-position: calc(var(--buddy-scale) * -1330px) 0; }
+  75.847% { background-position: calc(var(--buddy-scale) * -1368px) 0; }
+  76.738% { background-position: calc(var(--buddy-scale) * -1406px) 0; }
+  77.629% { background-position: calc(var(--buddy-scale) * -1444px) 0; }
+  78.52% { background-position: calc(var(--buddy-scale) * -1482px) 0; }
+  79.412% { background-position: calc(var(--buddy-scale) * -1520px) 0; }
+  80.303% { background-position: calc(var(--buddy-scale) * -1558px) 0; }
+  81.194% { background-position: calc(var(--buddy-scale) * -1596px) 0; }
+  82.086% { background-position: calc(var(--buddy-scale) * -1634px) 0; }
+  82.977% { background-position: calc(var(--buddy-scale) * -1672px) 0; }
+  83.868% { background-position: calc(var(--buddy-scale) * -1710px) 0; }
+  84.759% { background-position: calc(var(--buddy-scale) * -1748px) 0; }
+  85.651% { background-position: calc(var(--buddy-scale) * -1786px) 0; }
   86.542% { background-position: 0 calc(var(--buddy-scale) * -147px); }
-  87.344% { background-position: calc(var(--buddy-scale) * -37px) calc(var(--buddy-scale) * -147px); }
-  88.146% { background-position: calc(var(--buddy-scale) * -74px) calc(var(--buddy-scale) * -147px); }
-  90.107% { background-position: calc(var(--buddy-scale) * -111px) calc(var(--buddy-scale) * -147px); }
-  92.068% { background-position: calc(var(--buddy-scale) * -148px) calc(var(--buddy-scale) * -147px); }
-  92.87% { background-position: calc(var(--buddy-scale) * -185px) calc(var(--buddy-scale) * -147px); }
-  93.672% { background-position: calc(var(--buddy-scale) * -222px) calc(var(--buddy-scale) * -147px); }
-  94.474% { background-position: calc(var(--buddy-scale) * -259px) calc(var(--buddy-scale) * -147px); }
-  96.435% { background-position: calc(var(--buddy-scale) * -296px) calc(var(--buddy-scale) * -147px); }
-  98.396% { background-position: calc(var(--buddy-scale) * -333px) calc(var(--buddy-scale) * -147px); }
-  99.198% { background-position: calc(var(--buddy-scale) * -370px) calc(var(--buddy-scale) * -147px); }
+  87.344% { background-position: calc(var(--buddy-scale) * -38px) calc(var(--buddy-scale) * -147px); }
+  88.146% { background-position: calc(var(--buddy-scale) * -76px) calc(var(--buddy-scale) * -147px); }
+  90.107% { background-position: calc(var(--buddy-scale) * -114px) calc(var(--buddy-scale) * -147px); }
+  92.068% { background-position: calc(var(--buddy-scale) * -152px) calc(var(--buddy-scale) * -147px); }
+  92.87% { background-position: calc(var(--buddy-scale) * -190px) calc(var(--buddy-scale) * -147px); }
+  93.672% { background-position: calc(var(--buddy-scale) * -228px) calc(var(--buddy-scale) * -147px); }
+  94.474% { background-position: calc(var(--buddy-scale) * -266px) calc(var(--buddy-scale) * -147px); }
+  96.435% { background-position: calc(var(--buddy-scale) * -304px) calc(var(--buddy-scale) * -147px); }
+  98.396% { background-position: calc(var(--buddy-scale) * -342px) calc(var(--buddy-scale) * -147px); }
+  99.198% { background-position: calc(var(--buddy-scale) * -380px) calc(var(--buddy-scale) * -147px); }
 }
 @keyframes buddy-loading-bob {
   0% { transform: translateY(0); }
@@ -244,73 +244,73 @@
 .buddy--loading .buddy__sprite { animation: buddy-loading 11220ms step-end infinite, buddy-loading-bob 11220ms linear infinite; }
 @keyframes buddy-error-enter {
   0% { background-position: 0 calc(var(--buddy-scale) * -1212px); }
-  3.659% { background-position: calc(var(--buddy-scale) * -37px) calc(var(--buddy-scale) * -1212px); }
-  9.35% { background-position: calc(var(--buddy-scale) * -74px) calc(var(--buddy-scale) * -1212px); }
-  13.008% { background-position: calc(var(--buddy-scale) * -111px) calc(var(--buddy-scale) * -1212px); }
-  21.138% { background-position: calc(var(--buddy-scale) * -148px) calc(var(--buddy-scale) * -1212px); }
-  27.642% { background-position: calc(var(--buddy-scale) * -185px) calc(var(--buddy-scale) * -1212px); }
-  34.146% { background-position: calc(var(--buddy-scale) * -222px) calc(var(--buddy-scale) * -1212px); }
-  42.276% { background-position: calc(var(--buddy-scale) * -259px) calc(var(--buddy-scale) * -1212px); }
-  46.341% { background-position: calc(var(--buddy-scale) * -296px) calc(var(--buddy-scale) * -1212px); }
+  3.659% { background-position: calc(var(--buddy-scale) * -38px) calc(var(--buddy-scale) * -1212px); }
+  9.35% { background-position: calc(var(--buddy-scale) * -76px) calc(var(--buddy-scale) * -1212px); }
+  13.008% { background-position: calc(var(--buddy-scale) * -114px) calc(var(--buddy-scale) * -1212px); }
+  21.138% { background-position: calc(var(--buddy-scale) * -152px) calc(var(--buddy-scale) * -1212px); }
+  27.642% { background-position: calc(var(--buddy-scale) * -190px) calc(var(--buddy-scale) * -1212px); }
+  34.146% { background-position: calc(var(--buddy-scale) * -228px) calc(var(--buddy-scale) * -1212px); }
+  42.276% { background-position: calc(var(--buddy-scale) * -266px) calc(var(--buddy-scale) * -1212px); }
+  46.341% { background-position: calc(var(--buddy-scale) * -304px) calc(var(--buddy-scale) * -1212px); }
   50% { background-position: 0 calc(var(--buddy-scale) * -1212px); }
-  53.659% { background-position: calc(var(--buddy-scale) * -37px) calc(var(--buddy-scale) * -1212px); }
-  59.35% { background-position: calc(var(--buddy-scale) * -74px) calc(var(--buddy-scale) * -1212px); }
-  63.008% { background-position: calc(var(--buddy-scale) * -111px) calc(var(--buddy-scale) * -1212px); }
-  71.138% { background-position: calc(var(--buddy-scale) * -148px) calc(var(--buddy-scale) * -1212px); }
-  77.642% { background-position: calc(var(--buddy-scale) * -185px) calc(var(--buddy-scale) * -1212px); }
-  84.146% { background-position: calc(var(--buddy-scale) * -222px) calc(var(--buddy-scale) * -1212px); }
-  92.276% { background-position: calc(var(--buddy-scale) * -259px) calc(var(--buddy-scale) * -1212px); }
-  96.341% { background-position: calc(var(--buddy-scale) * -296px) calc(var(--buddy-scale) * -1212px); }
+  53.659% { background-position: calc(var(--buddy-scale) * -38px) calc(var(--buddy-scale) * -1212px); }
+  59.35% { background-position: calc(var(--buddy-scale) * -76px) calc(var(--buddy-scale) * -1212px); }
+  63.008% { background-position: calc(var(--buddy-scale) * -114px) calc(var(--buddy-scale) * -1212px); }
+  71.138% { background-position: calc(var(--buddy-scale) * -152px) calc(var(--buddy-scale) * -1212px); }
+  77.642% { background-position: calc(var(--buddy-scale) * -190px) calc(var(--buddy-scale) * -1212px); }
+  84.146% { background-position: calc(var(--buddy-scale) * -228px) calc(var(--buddy-scale) * -1212px); }
+  92.276% { background-position: calc(var(--buddy-scale) * -266px) calc(var(--buddy-scale) * -1212px); }
+  96.341% { background-position: calc(var(--buddy-scale) * -304px) calc(var(--buddy-scale) * -1212px); }
 }
 @keyframes buddy-error {
   0% { background-position: 0 0; }
-  2.037% { background-position: calc(var(--buddy-scale) * -37px) 0; }
-  4.073% { background-position: calc(var(--buddy-scale) * -74px) 0; }
-  6.11% { background-position: calc(var(--buddy-scale) * -111px) 0; }
-  8.147% { background-position: calc(var(--buddy-scale) * -148px) 0; }
-  10.183% { background-position: calc(var(--buddy-scale) * -185px) 0; }
-  12.22% { background-position: calc(var(--buddy-scale) * -222px) 0; }
-  14.257% { background-position: calc(var(--buddy-scale) * -259px) 0; }
-  16.293% { background-position: calc(var(--buddy-scale) * -296px) 0; }
-  18.33% { background-position: calc(var(--buddy-scale) * -333px) 0; }
-  20.367% { background-position: calc(var(--buddy-scale) * -370px) 0; }
-  22.403% { background-position: calc(var(--buddy-scale) * -407px) 0; }
-  24.44% { background-position: calc(var(--buddy-scale) * -444px) 0; }
-  26.477% { background-position: calc(var(--buddy-scale) * -481px) 0; }
-  28.513% { background-position: calc(var(--buddy-scale) * -518px) 0; }
-  30.55% { background-position: calc(var(--buddy-scale) * -555px) 0; }
-  32.587% { background-position: calc(var(--buddy-scale) * -592px) 0; }
-  34.623% { background-position: calc(var(--buddy-scale) * -629px) 0; }
-  36.66% { background-position: calc(var(--buddy-scale) * -666px) 0; }
-  38.697% { background-position: calc(var(--buddy-scale) * -703px) 0; }
-  40.733% { background-position: calc(var(--buddy-scale) * -740px) 0; }
-  42.77% { background-position: calc(var(--buddy-scale) * -777px) 0; }
-  44.807% { background-position: calc(var(--buddy-scale) * -814px) 0; }
-  46.843% { background-position: calc(var(--buddy-scale) * -851px) 0; }
-  48.88% { background-position: calc(var(--buddy-scale) * -888px) 0; }
-  50.916% { background-position: calc(var(--buddy-scale) * -925px) 0; }
-  52.953% { background-position: calc(var(--buddy-scale) * -962px) 0; }
-  54.99% { background-position: calc(var(--buddy-scale) * -999px) 0; }
-  57.026% { background-position: calc(var(--buddy-scale) * -1036px) 0; }
-  59.063% { background-position: calc(var(--buddy-scale) * -1073px) 0; }
-  61.1% { background-position: calc(var(--buddy-scale) * -1110px) 0; }
-  63.136% { background-position: calc(var(--buddy-scale) * -1147px) 0; }
-  65.173% { background-position: calc(var(--buddy-scale) * -1184px) 0; }
-  67.21% { background-position: calc(var(--buddy-scale) * -1221px) 0; }
-  69.246% { background-position: calc(var(--buddy-scale) * -1258px) 0; }
-  71.283% { background-position: calc(var(--buddy-scale) * -1295px) 0; }
-  73.32% { background-position: calc(var(--buddy-scale) * -1332px) 0; }
-  75.356% { background-position: calc(var(--buddy-scale) * -1369px) 0; }
-  77.393% { background-position: calc(var(--buddy-scale) * -1406px) 0; }
-  79.43% { background-position: calc(var(--buddy-scale) * -1443px) 0; }
-  81.466% { background-position: calc(var(--buddy-scale) * -1480px) 0; }
-  83.503% { background-position: calc(var(--buddy-scale) * -1517px) 0; }
-  85.54% { background-position: calc(var(--buddy-scale) * -1554px) 0; }
-  87.576% { background-position: calc(var(--buddy-scale) * -1591px) 0; }
-  89.613% { background-position: calc(var(--buddy-scale) * -1628px) 0; }
-  91.65% { background-position: calc(var(--buddy-scale) * -1665px) 0; }
-  93.686% { background-position: calc(var(--buddy-scale) * -1702px) 0; }
-  95.723% { background-position: calc(var(--buddy-scale) * -1739px) 0; }
+  2.037% { background-position: calc(var(--buddy-scale) * -38px) 0; }
+  4.073% { background-position: calc(var(--buddy-scale) * -76px) 0; }
+  6.11% { background-position: calc(var(--buddy-scale) * -114px) 0; }
+  8.147% { background-position: calc(var(--buddy-scale) * -152px) 0; }
+  10.183% { background-position: calc(var(--buddy-scale) * -190px) 0; }
+  12.22% { background-position: calc(var(--buddy-scale) * -228px) 0; }
+  14.257% { background-position: calc(var(--buddy-scale) * -266px) 0; }
+  16.293% { background-position: calc(var(--buddy-scale) * -304px) 0; }
+  18.33% { background-position: calc(var(--buddy-scale) * -342px) 0; }
+  20.367% { background-position: calc(var(--buddy-scale) * -380px) 0; }
+  22.403% { background-position: calc(var(--buddy-scale) * -418px) 0; }
+  24.44% { background-position: calc(var(--buddy-scale) * -456px) 0; }
+  26.477% { background-position: calc(var(--buddy-scale) * -494px) 0; }
+  28.513% { background-position: calc(var(--buddy-scale) * -532px) 0; }
+  30.55% { background-position: calc(var(--buddy-scale) * -570px) 0; }
+  32.587% { background-position: calc(var(--buddy-scale) * -608px) 0; }
+  34.623% { background-position: calc(var(--buddy-scale) * -646px) 0; }
+  36.66% { background-position: calc(var(--buddy-scale) * -684px) 0; }
+  38.697% { background-position: calc(var(--buddy-scale) * -722px) 0; }
+  40.733% { background-position: calc(var(--buddy-scale) * -760px) 0; }
+  42.77% { background-position: calc(var(--buddy-scale) * -798px) 0; }
+  44.807% { background-position: calc(var(--buddy-scale) * -836px) 0; }
+  46.843% { background-position: calc(var(--buddy-scale) * -874px) 0; }
+  48.88% { background-position: calc(var(--buddy-scale) * -912px) 0; }
+  50.916% { background-position: calc(var(--buddy-scale) * -950px) 0; }
+  52.953% { background-position: calc(var(--buddy-scale) * -988px) 0; }
+  54.99% { background-position: calc(var(--buddy-scale) * -1026px) 0; }
+  57.026% { background-position: calc(var(--buddy-scale) * -1064px) 0; }
+  59.063% { background-position: calc(var(--buddy-scale) * -1102px) 0; }
+  61.1% { background-position: calc(var(--buddy-scale) * -1140px) 0; }
+  63.136% { background-position: calc(var(--buddy-scale) * -1178px) 0; }
+  65.173% { background-position: calc(var(--buddy-scale) * -1216px) 0; }
+  67.21% { background-position: calc(var(--buddy-scale) * -1254px) 0; }
+  69.246% { background-position: calc(var(--buddy-scale) * -1292px) 0; }
+  71.283% { background-position: calc(var(--buddy-scale) * -1330px) 0; }
+  73.32% { background-position: calc(var(--buddy-scale) * -1368px) 0; }
+  75.356% { background-position: calc(var(--buddy-scale) * -1406px) 0; }
+  77.393% { background-position: calc(var(--buddy-scale) * -1444px) 0; }
+  79.43% { background-position: calc(var(--buddy-scale) * -1482px) 0; }
+  81.466% { background-position: calc(var(--buddy-scale) * -1520px) 0; }
+  83.503% { background-position: calc(var(--buddy-scale) * -1558px) 0; }
+  85.54% { background-position: calc(var(--buddy-scale) * -1596px) 0; }
+  87.576% { background-position: calc(var(--buddy-scale) * -1634px) 0; }
+  89.613% { background-position: calc(var(--buddy-scale) * -1672px) 0; }
+  91.65% { background-position: calc(var(--buddy-scale) * -1710px) 0; }
+  93.686% { background-position: calc(var(--buddy-scale) * -1748px) 0; }
+  95.723% { background-position: calc(var(--buddy-scale) * -1786px) 0; }
   97.76% { background-position: 0 calc(var(--buddy-scale) * -49px); }
 }
 @keyframes buddy-error-bob {
