@@ -164,10 +164,7 @@ describe('ChatStore', () => {
     id: 'p1', createdAt: CHAT.createdAt,
     items: [{
       id: 'i1', kind: 'SAVE_POSTING', state: 'PENDING', failure: null, decidedAt: null, finishedAt: null,
-      details: {
-        postingId: 'j1', applicationId: null, title: 'Rådgiver', company: 'Arla', fromStatus: null,
-        toStatus: null, interviewBefore: null, interviewAt: null,
-      },
+      details: { postingId: 'j1', title: 'Rådgiver', company: 'Arla' },
     }],
   };
   const DONE_PLAN = { ...PENDING_PLAN, items: [{ ...PENDING_PLAN.items[0], state: 'DONE' }] };

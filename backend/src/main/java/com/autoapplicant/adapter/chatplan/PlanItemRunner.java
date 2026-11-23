@@ -41,20 +41,33 @@ public class PlanItemRunner {
      * @throws IllegalStateException the app refuses the change
      */
     void run(UUID userId, PlanItem item) {
-        PlanItem.Details d = item.details();
-        switch (item.kind()) {
-            case SAVE_POSTING -> saveJob.saveJob(userId, d.postingId());
-            case IGNORE_POSTING -> ignoreJob.ignoreJob(userId, d.postingId(), null);
+        switch (item.details()) {
+            case PlanItem.Details.Posting p -> posting(userId, item.kind(), p.postingId());
             // Null notes: the app keeps hers, and the model has no say in them.
-            case UPDATE_STATUS -> updateStatus.updateStatus(d.applicationId(), userId, d.toStatus(), null);
-            case LOG_INTERVIEW -> logInterview(userId, d);
-            case GENERATE_DOCUMENTS -> throw new UnsupportedOperationException(
-                    "Documents are written in the background by DocumentQueue");
+            case PlanItem.Details.StatusMove s ->
+                    updateStatus.updateStatus(s.applicationId(), userId, s.toStatus(), null);
+            case PlanItem.Details.Interview i -> logInterview(userId, i);
+            case PlanItem.Details.Documents d -> throw new UnsupportedOperationException(
+                    "Documents for posting " + d.postingId()
+                            + " are written in the background by DocumentQueue");
+        }
+    }
+
+    /**
+     * Names every kind, with no default, so a new kind given posting details fails to compile
+     * here instead of quietly saving the posting.
+     */
+    private void posting(UUID userId, PlanItem.Kind kind, UUID postingId) {
+        switch (kind) {
+            case SAVE_POSTING -> saveJob.saveJob(userId, postingId);
+            case IGNORE_POSTING -> ignoreJob.ignoreJob(userId, postingId, null);
+            case UPDATE_STATUS, LOG_INTERVIEW, GENERATE_DOCUMENTS ->
+                    throw new UnsupportedOperationException(kind + " is not made from posting details");
         }
     }
 
     /** The app replaces both dates at once, so her deadline is read now and written back. */
-    private void logInterview(UUID userId, PlanItem.Details d) {
+    private void logInterview(UUID userId, PlanItem.Details.Interview d) {
         Application app = applications.getApplicationById(d.applicationId(), userId)
                 .orElseThrow(() -> new IllegalArgumentException("Application not found"));
         updateDates.updateDates(app.id(), userId, app.deadline(), d.interviewAt());

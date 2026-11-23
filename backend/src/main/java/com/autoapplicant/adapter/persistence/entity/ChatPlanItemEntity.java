@@ -1,6 +1,6 @@
 package com.autoapplicant.adapter.persistence.entity;
 
-import com.autoapplicant.domain.chat.PlanItem;
+import com.autoapplicant.domain.application.ApplicationStatus;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.hibernate.annotations.Type;
 
@@ -32,7 +33,7 @@ public class ChatPlanItemEntity {
 
     @Type(JsonType.class)
     @Column(name = "details", columnDefinition = "jsonb", nullable = false, updatable = false)
-    private PlanItem.Details details;
+    private DetailsJson details;
 
     @Column(name = "state", nullable = false)
     private String state;
@@ -56,12 +57,21 @@ public class ChatPlanItemEntity {
     public void setPosition(int position) { this.position = position; }
     public String getKind() { return kind; }
     public void setKind(String kind) { this.kind = kind; }
-    public PlanItem.Details getDetails() { return details; }
-    public void setDetails(PlanItem.Details details) { this.details = details; }
+    public DetailsJson getDetails() { return details; }
+    public void setDetails(DetailsJson details) { this.details = details; }
     public String getState() { return state; }
     public void setState(String state) { this.state = state; }
     public String getFailure() { return failure; }
     public UUID getResultApplicationId() { return resultApplicationId; }
     public Instant getDecidedAt() { return decidedAt; }
     public Instant getFinishedAt() { return finishedAt; }
+
+    /**
+     * The details column: every kind's fields in one flat object, unused ones null, with no type
+     * tag; the row's kind says which fields are set. Stored rows have exactly this shape, so it
+     * must not change without a migration.
+     */
+    public record DetailsJson(UUID postingId, UUID applicationId, String title, String company,
+                              ApplicationStatus fromStatus, ApplicationStatus toStatus,
+                              LocalDateTime interviewBefore, LocalDateTime interviewAt) {}
 }
