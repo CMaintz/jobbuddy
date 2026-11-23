@@ -11,8 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,6 +25,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class TypstRendererAdapter implements DocumentRendererPort {
+
+    private static final Logger log = LoggerFactory.getLogger(TypstRendererAdapter.class);
 
     private static final String PDF_FILE = "document.pdf";
     /** Typst numbers the pages; zero padding keeps name order equal to page order. */
@@ -40,7 +45,31 @@ public class TypstRendererAdapter implements DocumentRendererPort {
 
     @Override
     public RenderedPdf renderPdf(StructuredDocument document) {
-        try (TypstWorkspace workspace = prepare(document)) {
+        return withPhotoFallback(document, photo -> pdf(document, photo));
+    }
+
+    @Override
+    public List<byte[]> renderSvgPages(StructuredDocument document) {
+        return withPhotoFallback(document, photo -> svgPages(document, photo));
+    }
+
+    /**
+     * A photo can pass the format check and still be undecodable (a truncated upload), which
+     * fails the whole compile. The photo is the one input the user cannot see is broken, so
+     * the document is rendered again without it rather than not at all.
+     */
+    private <T> T withPhotoFallback(StructuredDocument document, Function<Boolean, T> render) {
+        try {
+            return render.apply(true);
+        } catch (DocumentRenderException e) {
+            if (!photoShown(document)) throw e;
+            log.warn("Typst could not render the document with its photo; rendering it without");
+            return render.apply(false);
+        }
+    }
+
+    private RenderedPdf pdf(StructuredDocument document, boolean withPhoto) {
+        try (TypstWorkspace workspace = prepare(document, withPhoto)) {
             Path output = workspace.outputDir().resolve(PDF_FILE);
             compiler.compile(workspace, Format.PDF, output);
             byte[] pdf = Files.readAllBytes(output);
@@ -50,9 +79,8 @@ public class TypstRendererAdapter implements DocumentRendererPort {
         }
     }
 
-    @Override
-    public List<byte[]> renderSvgPages(StructuredDocument document) {
-        try (TypstWorkspace workspace = prepare(document)) {
+    private List<byte[]> svgPages(StructuredDocument document, boolean withPhoto) {
+        try (TypstWorkspace workspace = prepare(document, withPhoto)) {
             compiler.compile(workspace, Format.SVG, workspace.outputDir().resolve(SVG_PAGE_PATTERN));
             return readPages(workspace.outputDir());
         } catch (IOException e) {
@@ -61,11 +89,13 @@ public class TypstRendererAdapter implements DocumentRendererPort {
     }
 
     /** A workspace with the template, the document data and its image (when shown) in place. */
-    private TypstWorkspace prepare(StructuredDocument document) throws IOException {
+    private TypstWorkspace prepare(StructuredDocument document, boolean withPhoto) throws IOException {
         TypstWorkspace workspace = TypstWorkspace.create();
         try {
             Files.writeString(workspace.mainFile(), assets.template(), StandardCharsets.UTF_8);
-            String photo = stagePhoto(document, workspace.root());
+            String photo = withPhoto && photoShown(document)
+                    ? images.stage(document.identity().profileImageUrl(), workspace.root()).orElse(null)
+                    : null;
             json.writeValue(workspace.dataFile().toFile(), TypstDocumentData.from(document, photo));
             return workspace;
         } catch (IOException | RuntimeException e) {
@@ -74,13 +104,11 @@ public class TypstRendererAdapter implements DocumentRendererPort {
         }
     }
 
-    private String stagePhoto(StructuredDocument document, Path root) throws IOException {
-        boolean shown = TypstDocumentData.isDesigned(document)
+    private static boolean photoShown(StructuredDocument document) {
+        return TypstDocumentData.isDesigned(document)
                 && document.options() != null
                 && document.options().showProfileImage()
                 && document.identity() != null;
-        if (!shown) return null;
-        return images.stage(document.identity().profileImageUrl(), root).orElse(null);
     }
 
     private static List<byte[]> readPages(Path outputDir) throws IOException {
