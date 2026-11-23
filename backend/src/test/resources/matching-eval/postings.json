@@ -1,0 +1,4265 @@
+{
+ "source": "Real Danish postings from Jobindex, November 2026, run through EnrichmentPrompt and JobEnrichmentService.applyEnrichment with the claude-cli provider (sonnet). fit is a human label per profile written before scoring: G good fit, P plausible, M mismatch. The scorer's constants were chosen on the tuning rows; the holdout rows were labelled and scored after that. requirements were added later (#338) without touching the ask lists: the same postings were found again on Jobindex, their pages read as plain text, and run through EnrichmentPrompt's text, rebuilt outside the app, with the claude-cli provider (sonnet); only the requirements list was kept, with dashes written as hyphens. Two rows could not be found again and have no requirements, and the unenriched rows have none by design. The unenriched rows are three of the same postings with no ask lists and their page text as crawled, page chrome included, to measure the fallback that reads the text instead.",
+ "postings": [
+  {
+   "id": "kommunikationsmedarbejder",
+   "title": "Kommunikationsmedarbejder",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "CMS-systemer",
+    "Nyhedsbrevsværktøjer"
+   ],
+   "skills": [
+    "Skriftlig formidling",
+    "Faglig formidling",
+    "Digital kommunikation",
+    "Sociale medier",
+    "Visuel kommunikation",
+    "Målgruppeforståelse",
+    "Foto- og videoproduktion",
+    "Samarbejde",
+    "Selvstændighed",
+    "Struktur"
+   ],
+   "requiredSkills": [
+    "CMS-systemer",
+    "Nyhedsbrevsværktøjer",
+    "Skriftlig formidling",
+    "Faglig formidling",
+    "Digital kommunikation",
+    "Sociale medier",
+    "Målgruppeforståelse",
+    "Selvstændighed",
+    "Samarbejde",
+    "Visuel kommunikation"
+   ],
+   "preferredSkills": [
+    "Foto- og videoproduktion"
+   ],
+   "requirements": [
+    {
+     "text": "Kørekort og egen bil er et krav",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Relevant kommunikationsuddannelse",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Erfaring med formidling og medier",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Skal kunne se sig selv formidle kirkens budskaber (erfaring fra kirken er ikke nødvendig)",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Opsøgende og relationsskabende",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan planlægge, udføre og følge op på opgaver og ansvarsområder",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Overholde tydelige deadlines for publicering",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Fleksibel og god til at styre sin arbejdstid",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Må forvente at transportere sig rundt i provstiet",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "dynamisk-kommunikationsmedarbejder-til-k",
+   "title": "Dynamisk kommunikationsmedarbejder til Københavns Domkirke",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Journalistik",
+    "Kommunikation",
+    "Visuel kommunikation",
+    "Grafisk arbejde",
+    "Filmredigering",
+    "Projektledelse",
+    "Kommunikationsstrategi",
+    "Samarbejde",
+    "Prioritering",
+    "Selvstændighed"
+   ],
+   "requiredSkills": [
+    "Kommunikation",
+    "Visuel kommunikation",
+    "Projektledelse",
+    "Samarbejde",
+    "Prioritering",
+    "Selvstændighed"
+   ],
+   "preferredSkills": [
+    "Grafisk arbejde",
+    "Filmredigering"
+   ],
+   "requirements": [
+    {
+     "text": "Du har relevant uddannelse (fx cand.mag., cand.comm., journalist).",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Du er en skarp kommunikatør og kan producere relevant og fængende indhold, både digitalt og på papir.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du arbejder ubesværet med visuelle redskaber.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du har erfaring med projektledelse, kan arbejde selvstændigt og evner at prioritere i de mange opgaver.",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du kan både lytte og tage lederskab.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du er socialt anlagt, god til at etablere samarbejdsrelationer og trives med en omskiftelig hverdag, hvor aften- og weekendarbejde hører med.",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Solid baggrund inden for journalistik og/eller kommunikation",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med visuel kommunikation, grafisk arbejde og filmredigering, eller et rigtig godt øje og lyst til at lære håndværket",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kirkelig erfaring er en klar fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du interesserer dig for kirkens liv og tænker innovativt og samarbejdsorienteret",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "kommunikationskonsulent-med-flair-for-di",
+   "title": "Kommunikationskonsulent med flair for digital markedsføring og data",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "Mailchimp",
+    "Meta-annoncering",
+    "AI",
+    "A/B-test",
+    "Webanalyse"
+   ],
+   "skills": [
+    "Digital markedsføring",
+    "E-mailmarketing",
+    "Marketing automation",
+    "Segmentering",
+    "Kampagneoptimering",
+    "Sociale medier",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Digital markedsføring",
+    "Marketing automation",
+    "Segmentering",
+    "Mailchimp",
+    "AI",
+    "Sociale medier",
+    "A/B-test",
+    "Webanalyse"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Du forstår digital markedsføring og sammenhængen mellem medlemsdata, segmentering og automatiserede mailflows",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du sætter dig hurtigt ind i nye systemer, fx Mailchimp",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du bruger allerede AI og kan hjælpe os med at udnytte mulighederne i forhold til fx tekst, video, segmentering, prioritering og planlægning",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du kender til sociale medier og bruger data til kampagneoptimering, fx gennem A/B-test og webanalyse",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Din baggrund kan være inden for kommunikation eller marketing",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Indsigt i eller erfaring fra en anden medlems- eller interesseorganisation",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du opsøger kollegernes viden, beder om sparring og hjælper",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Arbejdssted i foreningens sekretariat i Valby, 30 timer om ugen",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "marketingkoordinator-soeges-til-jydsk-ta",
+   "title": "Marketingkoordinator søges til Jydsk Tagteknik A/S i Østjylland - 30 timer om ugen",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Koordinering",
+    "Planlægning",
+    "Korrekturlæsning",
+    "Struktur",
+    "Samarbejde",
+    "Servicemindedhed",
+    "Initiativ",
+    "Dansk skriftlig formulering"
+   ],
+   "requiredSkills": [
+    "Koordinering",
+    "Struktur",
+    "Korrekturlæsning",
+    "Samarbejde",
+    "Servicemindedhed",
+    "Initiativ"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Har et godt organisatorisk overblik og arbejder struktureret",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er grundig og har øje for selv de små detaljer",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er god til at koordinere flere opgaver på samme tid",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan formulere dig sikkert og korrekt på dansk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Tager initiativ og ikke er bange for at tage fat",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er serviceminded og god til at samarbejde med forskellige mennesker",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har en praktisk tilgang og finder løsninger frem for problemer",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Har arbejdet med marketing, kommunikation eller koordinering tidligere",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kendskab til digitale marketingværktøjer, grafiske formater og produktion af marketingmateriale",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring fra bygge- eller håndværksbranchen",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "marketingkoordinator-til-bygma-gruppen-j",
+   "title": "Marketingkoordinator til Bygma Gruppen Joboplysninger",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Marketingkoordinering",
+    "Projektledelse",
+    "Kampagnestyring",
+    "Dataanalyse",
+    "Rapportering",
+    "Korrektur",
+    "Sociale medier",
+    "E-mailmarketing",
+    "Struktureret arbejdsform",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Marketingkoordinering",
+    "Projektledelse",
+    "Struktureret arbejdsform",
+    "Korrektur",
+    "Rapportering"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Relevant uddannelsesmæssig baggrund inden for marketing eller digital marketing",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Har erfaring med marketing koordinering, projektledelse eller lignende opgaver",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Arbejder struktureret og systematisk og har naturligt styr på deadlines og opfølgning",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er kvalitetsbevidst og har et skarpt øje for detaljer og korrektur",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan drive opgaver selvstændigt og tager ansvar for at følge dem helt til dørs",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Har en god digital forståelse og interesse for sociale medier, e-mailmarketing og digitale kampagner",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har flair for at omsætte resultater til overskuelige rapporter og præsentationer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er udadvendt, initiativrig, nysgerrig og trives med samarbejde på tværs af organisationen",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "konsulent-til-kommunikation-og-projekter",
+   "title": "Konsulent til kommunikation og projekter",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "SharePoint",
+    "InDesign",
+    "Photoshop"
+   ],
+   "skills": [
+    "Intern kommunikation",
+    "Projektkoordinering",
+    "Kommunikationsstrategi",
+    "Organisationsforståelse",
+    "Organisationsudvikling",
+    "Forandringsprocesser",
+    "Relationsopbygning",
+    "Skriftlig og mundtlig kommunikation"
+   ],
+   "requiredSkills": [
+    "SharePoint",
+    "Intern kommunikation",
+    "Projektkoordinering",
+    "Kommunikationsstrategi",
+    "Skriftlig og mundtlig kommunikation"
+   ],
+   "preferredSkills": [
+    "InDesign",
+    "Photoshop",
+    "Organisationsudvikling",
+    "Forandringsprocesser"
+   ],
+   "requirements": [
+    {
+     "text": "Et par års erfaring som kommunikationsprofil",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har en relevant videregående uddannelse inden for kommunikation",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Har erfaring med intern kommunikation, gerne med kendskab til uddannelsessektoren",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kan udvikle og omsætte kommunikationsstrategier til konkrete indsatser, der skaber værdi i hverdagen",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan beherske de væsentligste funktioner i Sharepoint",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Gerne kendskab til fx InDesign og/eller Photoshop",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har erfaring med projektkoordinering og trives med at drive processer fremad",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har god organisationsforståelse",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Gerne indsigt i organisationsudvikling og forandringsprocesser",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kommunikerer klart, præcist og engagerende - både skriftligt og mundtligt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er god til at skabe relationer, inddrage forskellige perspektiver og opbygge samarbejde på tværs af fagligheder og organisatoriske niveauer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Initiativrig, struktureret og vedholdende; arbejder selvstændigt og bevarer overblikket",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "agramkow-fluid-systems-a-s-customer-succ",
+   "title": "AGRAMKOW Fluid Systems A/S - Customer Success Manager",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "SALES",
+   "technologies": [
+    "PLIS Factory",
+    "MES",
+    "ERP",
+    "SQL",
+    "Web APIs",
+    "OPC UA",
+    "Power BI",
+    "Tableau"
+   ],
+   "skills": [
+    "Customer Success",
+    "Kunderelationer",
+    "Træning",
+    "Upselling",
+    "Cross-selling",
+    "Account Management",
+    "Kommerciel forståelse",
+    "LEAN",
+    "Kommunikation"
+   ],
+   "requiredSkills": [
+    "Customer Success",
+    "Kommerciel forståelse"
+   ],
+   "preferredSkills": [
+    "MES",
+    "ERP",
+    "SQL",
+    "Web APIs",
+    "OPC UA",
+    "Power BI",
+    "Tableau",
+    "LEAN"
+   ]
+  },
+  {
+   "id": "sem-specialist-til-auxo-i-aarhus",
+   "title": "SEM-specialist til Auxo i Aarhus",
+   "kind": "comms",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [
+    "Google Ads"
+   ],
+   "skills": [
+    "SEO",
+    "SEM",
+    "Søgeordsanalyse",
+    "Kundekontakt",
+    "Rapportering",
+    "Analyse",
+    "Overblik"
+   ],
+   "requiredSkills": [
+    "SEO",
+    "Google Ads",
+    "Kundekontakt"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Praktisk erfaring med både SEO og Google Ads og kan selvstændigt tage ansvar for en kundeportefølje",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kan holde overblik over flere kunder og indsatser ad gangen og følger dine opgaver til dørs",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives med kundekontakt og kan forklare dine anbefalinger, så kunden forstår, hvad de betyder for deres forretning",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Taler og skriver flydende dansk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Erfaring fra bureau er en fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "informationssikkerhedskonsulent",
+   "title": "Informationssikkerhedskonsulent",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Informationssikkerhed",
+    "ISO 27001",
+    "NIS2",
+    "GDPR",
+    "Beredskabsøvelser",
+    "Awareness",
+    "Politikker og procedurer",
+    "Dokumentation",
+    "Rådgivning",
+    "Selvstændighed",
+    "Struktureret arbejdsform",
+    "Forretningsforståelse"
+   ],
+   "requiredSkills": [
+    "Informationssikkerhed"
+   ],
+   "preferredSkills": [
+    "ISO 27001",
+    "NIS2",
+    "GDPR"
+   ],
+   "requirements": [
+    {
+     "text": "God forståelse for informationssikkerhed og lyst til at arbejde med området",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan gøre komplekse krav forståelige og hjælpe kolleger med at se, hvad kravene betyder i deres hverdag",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Tager initiativ, arbejder selvstændigt og struktureret og har styr på opgaver og deadlines",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Skriver klart og præcist og kan udarbejde og holde dokumentation ajour",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Inddrager kolleger og skaber fælles ejerskab til de løsninger vi vælger",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "God forretningsforståelse og kan se sammenhængen mellem informationssikkerhed og styrelsens opgaver",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Ved, hvornår du skal lytte, rådgive eller stå fast",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med informationssikkerhed og et godt kendskab til ISO27001 er en fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Viden om NIS2 og GDPR er en fordel",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "grc-konsulent-med-fokus-paa-informations",
+   "title": "GRC-konsulent med fokus på informationssikkerhed og kritisk infrastruktur",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GRC",
+    "Intern audit",
+    "Compliance",
+    "Risikostyring",
+    "ISO 27001",
+    "NIS 2",
+    "ISO 27004/27005",
+    "Kontrolmiljøer",
+    "Rapportering til ledelse",
+    "Analytisk tæft",
+    "Kommunikation"
+   ],
+   "requiredSkills": [
+    "GRC",
+    "Intern audit",
+    "Compliance",
+    "Risikostyring"
+   ],
+   "preferredSkills": [
+    "ISO 27001",
+    "NIS 2",
+    "ISO 27004/27005",
+    "Kontrolmiljøer",
+    "Rapportering til ledelse"
+   ],
+   "requirements": [
+    {
+     "text": "relevant videregående uddannelse inden for eksempelvis jura, revision, informationssikkerhed, IT, risk management eller compliance (alternativt tilsvarende kompetencer gennem praktisk erfaring)",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "3+ års erfaring med GRC, informationssikkerhed, intern audit, compliance eller risikostyring",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "praktisk kendskab til ISO 27001, NIS 2 og reguleringen af kritisk infrastruktur",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "kendskab til ISO 27004/27005",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "erfaring med at planlægge og gennemføre audits, reviews eller kontrolaktiviteter",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "forståelse for opbygning og drift af interne kontrolmiljøer",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "evne til at omsætte regulatoriske og tekniske problemstillinger til klare budskaber",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "erfaring med rapportering til ledelse, revisionsudvalg eller andre governancefora",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "gode skriftlige og mundtlige kommunikationsevner på dansk og engelsk",
+     "tier": "PREFERRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "relevante certificeringer",
+     "tier": "PREFERRED",
+     "kind": "CERTIFICATION"
+    },
+    {
+     "text": "er eller kan sikkerhedsgodkendes til niveau HEM",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "arbejder struktureret og analytisk og kan bevare overblikket i et område med mange interessenter og afhængigheder",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "kan både udfordre og samarbejde og fastholde krav og deadlines på en konstruktiv måde",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "compliancespecialist-med-ansvar-for-gdpr",
+   "title": "Compliancespecialist med ansvar for GDPR og AI",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GDPR",
+    "AI-forordningen",
+    "Compliance",
+    "Cybersikkerhed",
+    "Informationssikkerhed",
+    "Risikovurdering",
+    "Projektledelse",
+    "Governance",
+    "Analytisk tilgang",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "GDPR",
+    "AI-forordningen",
+    "Cybersikkerhed",
+    "Compliance",
+    "Projektledelse"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Du har en relevant uddannelse",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "erfaring med compliance, regulering og implementering",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "har erfaring med AI, GDPR og cybersikkerhed",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "kan analysere kompleks lovgivning og omsætte den til konkrete krav, processer og arbejdsgange",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "har en stærk analytisk tilgang og god teknologiforståelse og kan arbejde i krydsfeltet mellem jura, teknologi og organisation",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "har erfaring med projektledelse og kan skabe struktur, fremdrift og overblik i opgaver med forskellige fagligheder og interessenter",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "arbejder selvstændigt og har blik for opfølgning, dokumentation og afslutning",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "har gode kommunikations- og samarbejdsevner",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "karriere-og-ledige-stillinger-i-greve-ko",
+   "title": "Karriere og ledige stillinger i Greve Kommune",
+   "kind": "kommune",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "FM3"
+   ],
+   "skills": [
+    "Beredskab",
+    "Brandsikkerhed",
+    "BR18",
+    "Risikostyring",
+    "Beredskabsplaner",
+    "Koordinering",
+    "Rådgivning",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Beredskab",
+    "Brandsikkerhed",
+    "BR18"
+   ]
+  },
+  {
+   "id": "vil-du-vaere-med-til-at-saette-retningen",
+   "title": "Vil du være med til at sætte retningen for informationssikkerheden i en samfundskritisk organisation?",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "Microsoft 365",
+    "Azure"
+   ],
+   "skills": [
+    "Informationssikkerhed",
+    "Sikkerhedsarkitektur",
+    "Risikovurdering",
+    "NIS2",
+    "ISO 27001",
+    "Statens tekniske minimumskrav",
+    "Zero trust",
+    "Identitets- og adgangsstyring",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Sikkerhedsarkitektur",
+    "Microsoft 365",
+    "Azure",
+    "Risikovurdering",
+    "ISO 27001",
+    "NIS2",
+    "Kommunikation",
+    "Samarbejde"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "En relevant uddannelse",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Erfaring med at definere krav til sikkerhedsarkitektur, der understøtter både forretningens behov og et højt sikkerhedsniveau",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kan bidrage til sikre robuste løsninger inden for Microsoft 365, Azure, identitets- og adgangsstyring samt cloud- og endpoint-sikkerhed",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan fastsætte tekniske sikkerhedskrav og gennemføre risikobaserede vurderinger af it-systemer, projekter og arkitekturer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan videreudvikle organisatoriske og tekniske sikkerhedsforanstaltninger i overensstemmelse med ISO 27001, NIS2 og statens tekniske minimumskrav",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Evnen til at følge opgaverne til dørs",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Gode kommunikations- og samarbejdsevner",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du bliver sikkerhedsgodkendt af PET umiddelbart efter ansættelsen og kan opretholde den gennem ansættelsesforholdet",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Du ejer ikke aktier, anparter, andele eller lignende i en lægemiddel- og/eller medicovirksomhed",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "cybersikkerhedsspecialist-til-kritisk-in",
+   "title": "Cybersikkerhedsspecialist til kritisk infrastruktur",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [],
+   "skills": [
+    "IT-sikkerhed",
+    "Cybersikkerhed",
+    "Incident Response",
+    "SOC",
+    "Risikovurdering",
+    "Sårbarhedsanalyse",
+    "Endpoint-sikkerhed",
+    "Logning og monitorering",
+    "OT-sikkerhed",
+    "Log management",
+    "Automatisering",
+    "Sårbarhedsscanning",
+    "Hardening"
+   ],
+   "requiredSkills": [
+    "IT-sikkerhed",
+    "Incident Response",
+    "SOC",
+    "Risikovurdering",
+    "Sårbarhedsanalyse",
+    "Endpoint-sikkerhed",
+    "Logning og monitorering"
+   ],
+   "preferredSkills": [
+    "OT-sikkerhed",
+    "Log management",
+    "Automatisering",
+    "Sårbarhedsscanning"
+   ],
+   "requirements": [
+    {
+     "text": "Erfaring inden for IT-sikkerhed eller cybersikkerhed",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med håndtering af sikkerhedshændelser (Incident Response)",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med overvågning og analyse af sikkerhedshændelser i et SOC eller lignende miljø",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med risikovurderinger og sårbarhedsanalyser",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Indsigt i Endpoint-sikkerhed og Logning og monitorering",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med sikkerhed på OT, log management, automatisering og sårbarhedsscanning",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kan blive sikkerhedsgodkendt og opretholde sikkerhedsgodkendelsen gennem hele ansættelsen",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Deltagelse i turnus i håndtering af kritiske sikkerhedsalarmer uden for almindelig arbejdstid",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Holder sig løbende opdateret på udviklingen inden for cybersikkerhed",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "jurist-med-fokus-paa-informationssikkerh",
+   "title": "Jurist med fokus på informationssikkerhed til ledelsessekretariatet i Midt- og Vestjyllands Politi Joboplysninger",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "LEGAL",
+   "technologies": [],
+   "skills": [
+    "Juridisk sagsbehandling",
+    "Databeskyttelse",
+    "GDPR",
+    "NIS2",
+    "ISO 27001",
+    "Informationssikkerhed",
+    "Awareness",
+    "Samarbejde",
+    "Kommunikation",
+    "Selvstændighed"
+   ],
+   "requiredSkills": [
+    "Juridisk sagsbehandling",
+    "GDPR",
+    "NIS2",
+    "Samarbejde",
+    "Kommunikation",
+    "Selvstændighed"
+   ],
+   "preferredSkills": [
+    "ISO 27001"
+   ],
+   "requirements": [
+    {
+     "text": "cand.jur. eller cand.merc.jur.",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "et solidt juridisk fundament og evne til hurtigt at sætte sig ind i nye problemstillinger",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "viden om eller erfaring med databeskyttelsesret/GDPR, NIS2",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "kendskab til ISO 27001",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "kan arbejde selvstændigt, tage ansvar og udvise høj personlig og faglig integritet",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "gode samarbejdsevner og evne til at bygge bro mellem faglige behov og sikkerhedsmæssige krav",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "kommunikerer klart og let forståeligt, både skriftligt og mundtligt",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "kan blive sikkerhedsgodkendt og opretholde godkendelsen gennem hele ansættelsen",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "java-architect-twoday-denmark",
+   "title": "Java Architect - Twoday Denmark",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Java"
+   ],
+   "skills": [
+    "Software architecture",
+    "Integrations",
+    "APIs",
+    "Technical guidance",
+    "Collaboration"
+   ],
+   "requiredSkills": [
+    "Java",
+    "Software architecture",
+    "Integrations",
+    "APIs"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "A strong background as a Java developer, with substantial hands-on experience before moving into architecture",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Experience designing software architecture for complex systems",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Able to engage with Java implementation and guide development teams on technical decisions",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience with integrations and APIs",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Fluent Danish",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Able to work full time onsite in Greater Copenhagen",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "backend-developer-foss-iqx",
+   "title": "Backend Developer - FOSS IQX",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "relabel": "engineer G to P before scoring changes: Requires C#, .NET and MS SQL Server; the engineer CV is Java and TypeScript.",
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "C#",
+    ".NET",
+    "MS SQL Server",
+    "SQL",
+    "Azure",
+    "Snowflake",
+    "SAP",
+    "Salesforce",
+    "Azure DevOps",
+    "OpenAPI",
+    "Infrastructure as Code",
+    "Web APIs"
+   ],
+   "skills": [
+    "TDD",
+    "Clean code",
+    "Design patterns",
+    "Agile",
+    "DevOps mindset",
+    "Communication",
+    "Teamwork",
+    "Performance optimization"
+   ],
+   "requiredSkills": [
+    "C#",
+    ".NET",
+    "SQL",
+    "Azure",
+    "TDD",
+    "Clean code",
+    "Design patterns"
+   ],
+   "preferredSkills": [
+    "Azure DevOps",
+    "Web APIs",
+    "OpenAPI",
+    "Snowflake",
+    "Agile"
+   ],
+   "requirements": [
+    {
+     "text": "5+ years of proven track record as a strong backend developer in C#/.NET environment",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Experience in database development, management (SQL) and queries performance troubleshooting",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Proven experience in MS Azure",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Designing and developing using TDD, strong commitment to covering code by Unit and Integration tests",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Clean code and design patterns",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Full professional proficiency in English, written and spoken",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Proven experience in MS Azure Devops [Strong advantage]",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Solid experience with client/server development or similar architectures including development of robust Web APIs",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Reading and writing OpenAPI specifications",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience with data lake solutions on azure and data analytics tools like Snowfake",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Knowledge of Agile development",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "You are a team player and know the difference between working in a team and working as a team",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "You have a can-do attitude - not afraid to solve tasks outside of your specialty and believe testing is an integrated part of a good solution",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Having DevOps mindset",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Good communication skills, team-player attitude",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "full-stack-udvikler-til-habeo",
+   "title": "Full-stack-udvikler til Habeo",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Vite",
+    "PostgreSQL",
+    "Supabase",
+    "SQL",
+    "Deno",
+    "Microsoft Graph",
+    "Amazon SES",
+    "GatewayAPI",
+    "Scrive",
+    "Slack",
+    "Datafordeleren",
+    "MCP",
+    "OAuth",
+    "PKCE",
+    "Claude",
+    "Claude Code",
+    "Codex",
+    "Astro",
+    "Netlify",
+    "Vitest",
+    "GitHub"
+   ],
+   "skills": [
+    "Datamodellering",
+    "API-design",
+    "Sikkerhed",
+    "AI-værktøjer",
+    "Ansvarlighed",
+    "Sans for detaljer",
+    "Kommunikation",
+    "Samarbejde",
+    "Dansk"
+   ],
+   "requiredSkills": [
+    "TypeScript",
+    "JavaScript",
+    "Dansk"
+   ],
+   "preferredSkills": [
+    "React",
+    "SQL",
+    "PostgreSQL",
+    "Datamodellering",
+    "API-design",
+    "Sikkerhed",
+    "AI-værktøjer"
+   ],
+   "requirements": [
+    {
+     "text": "Har erfaring med TypeScript eller JavaScript",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "gerne React, SQL og PostgreSQL",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har forståelse for datamodellering, API'er og sikkerhed - eller lyst til at blive rigtig god til det",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er nysgerrig på AI og allerede bruger AI-værktøjer, når du koder",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Tager ansvar og følger dine opgaver helt til dørs - også når det driller",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Har sans for detaljer og for, hvordan software føles for den, der bruger den",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kommunikerer klart og spørger, når noget er uklart",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Taler og skriver dansk - systemet og brugerne er danske",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Er en god kollega og bidrager til den gode stemning",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "ai-udvikler-ai-engineer-til-krifa",
+   "title": "AI-udvikler / AI Engineer til Krifa",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "relabel": "engineer G to P before scoring changes: Requires RAG, prompt engineering and AI agents, none of which the engineer CV shows.",
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Python",
+    "C#",
+    "TypeScript",
+    "RAG",
+    "GitHub Copilot",
+    "Claude Code",
+    "Azure",
+    "CI/CD",
+    "LLM API'er"
+   ],
+   "skills": [
+    "Prompt engineering",
+    "AI-agenter",
+    "Softwarearkitektur",
+    "API-first design",
+    "Versionsstyring",
+    "Automatiserede test",
+    "Code review",
+    "Kravspecifikation",
+    "Informationssikkerhed",
+    "Databeskyttelse",
+    "Ansvarlig AI",
+    "Kommunikation"
+   ],
+   "requiredSkills": [
+    "RAG",
+    "Prompt engineering",
+    "AI-agenter",
+    "Softwarearkitektur",
+    "Versionsstyring",
+    "Automatiserede test",
+    "Code review",
+    "CI/CD",
+    "Kravspecifikation",
+    "Databeskyttelse"
+   ],
+   "preferredSkills": [
+    "Azure",
+    "Ansvarlig AI"
+   ],
+   "requirements": [
+    {
+     "text": "Du har flere års erfaring med softwareudvikling, fx i Python, C#, TypeScript eller lignende.",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du har praktisk erfaring med at udvikle løsninger baseret på store sprogmodeller, fx via API'er, RAG og prompt engineering.",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du har erfaring med AI-agenter og med integration til systemer og datakilder.",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du har erfaring med softwarearkitektur og modulært design, fx API-first og genbrugelige komponenter.",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du bruger AI-kodeværktøjer som GitHub Copilot, Claude Code eller lignende og forstår både deres styrker og begrænsninger.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du arbejder med god udviklingspraksis, fx versionsstyring, automatiserede test, code review og CI/CD.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du kan skrive præcise krav og specifikationer, som både mennesker og AI kan arbejde ud fra.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du har forståelse for sikkerhed og databeskyttelse i AI-løsninger.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med Azure",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med evaluering og monitorering af AI-løsninger i drift",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til EU's AI-forordning og principperne for ansvarlig AI",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring fra en organisation med mange medlemmer eller kunder og høje krav til servicekvalitet",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du kan forklare tekniske muligheder og begrænsninger, så de giver mening for kolleger uden samme tekniske baggrund.",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "fe-soeger-devops-data-science-profiler",
+   "title": "FE søger DevOps & Data Science Profiler",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Python",
+    "Kubernetes",
+    "PySpark",
+    "Linux",
+    "GitLab",
+    "Java",
+    "Docker"
+   ],
+   "skills": [
+    "DevOps",
+    "Data science",
+    "Big Data",
+    "Agil softwareudvikling",
+    "Analytisk tænkning",
+    "Samarbejde",
+    "Selvstændighed",
+    "Nysgerrighed"
+   ],
+   "requiredSkills": [
+    "Samarbejde",
+    "Selvstændighed"
+   ],
+   "preferredSkills": [
+    "Python",
+    "Kubernetes",
+    "PySpark",
+    "Linux",
+    "GitLab",
+    "Java",
+    "Docker"
+   ],
+   "requirements": [
+    {
+     "text": "Du har en uddannelse eller erfaring, der har rustet dig til at behandle store datasæt - eller som DevOps i et team som arbejdede med store mængder data",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du tænker analytisk og kan applikere det på data",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du er villig til, og i stand til, selvstændigt at lære at mestre nye teknologier",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Du trives godt med at samarbejde, tage ansvar og kunne løse opgaver selvstændigt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du er holdspiller og god til at udveksle idéer med dine kolleger",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Det er et krav, at du kan sikkerhedsgodkendes og opretholde sikkerhedsgodkendelsen under hele din ansættelse",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Pligt til kortvarig udsendelse til udlandet",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Erfaring med Python, Kubernetes, (Py)Spark, rodet data, Linux administration, GitLab, Java, Docker er et plus",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Interesse for og viden om f.eks. geopolitik, efterforskning eller militær efterretning er en fordel",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "senior-data-engineer",
+   "title": "Senior Data Engineer",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "DATA_ANALYTICS",
+   "technologies": [
+    "SQL",
+    "Microsoft Fabric",
+    "Databricks",
+    "Git",
+    "Azure DevOps",
+    "Microsoft"
+   ],
+   "skills": [
+    "Data Engineering",
+    "Datamodellering",
+    "Databaseoptimering",
+    "ETL/ELT",
+    "Integrationer",
+    "Kundedialog",
+    "Workshopfacilitering",
+    "Rådgivning"
+   ],
+   "requiredSkills": [
+    "SQL",
+    "Datamodellering",
+    "Databaseoptimering",
+    "Data Engineering",
+    "ETL/ELT",
+    "Git",
+    "Azure DevOps",
+    "Microsoft Fabric",
+    "Databricks"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Solid erfaring med data engineering",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med Microsoft Fabric, Azure Data Platforme eller tilsvarende cloudbaserede datamiljøer",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Stærk i SQL",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Praktisk erfaring med Python",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har arbejdet med CI/CD, DevOps-processer og moderne data engineering-principper",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kommunikerer flydende på dansk og engelsk, både skriftligt og mundtligt",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Arbejder selvstændigt og tager ansvar for egne løsninger",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Motiveres af både teknisk fordybelse og dialog med kunder og kolleger",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "sap-abap-udviklere-erfarne-og-senior-s-4",
+   "title": "SAP/ABAP-udviklere (erfarne og senior) - S/4HANA",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "ABAP",
+    "SAP S/4HANA",
+    "SAP ECC",
+    "ABAP Objects",
+    "ABAP Cloud",
+    "RAP/CDS",
+    "Fiori/UI5",
+    "SAP BTP",
+    "SAP HCM",
+    "Java",
+    "CI/CD",
+    "ATC"
+   ],
+   "skills": [
+    "Kodegennemgang",
+    "Teknisk dokumentation",
+    "Test",
+    "Kommunikation",
+    "Samarbejde",
+    "Faglig vejledning",
+    "Leverandørvurdering"
+   ],
+   "requiredSkills": [
+    "ABAP",
+    "Kommunikation"
+   ],
+   "preferredSkills": [
+    "ABAP Objects",
+    "ABAP Cloud",
+    "RAP/CDS",
+    "Fiori/UI5",
+    "SAP BTP",
+    "SAP HCM",
+    "Java",
+    "CI/CD"
+   ],
+   "requirements": [
+    {
+     "text": "Solid erfaring med ABAP",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring som SAP/ABAP-udvikler i komplekse løsninger",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med analyse og forbedring af eksisterende kode",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kan omsætte forretningsmæssige og tekniske behov til vedligeholdelig kode",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan vurdere, om en leverance holder teknisk og lever op til det aftalte",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives med både selv at udvikle og samarbejde om løsninger på tværs af fagligheder",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kommunikerer tydeligt med arkitekter, leverandører, forretning og kolleger",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Åben over for AI-understøttet udvikling og kan kombinere nye værktøjer med faglig kontrol",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Til seniorniveau: kan sætte faglig retning, strukturere arbejdspakker og guide andre",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Behersker dansk og engelsk i skrift og tale",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Gerne erfaring med ABAP Objects",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til moderne SAP-teknologier som ABAP Cloud, RAP/CDS, Fiori/UI5 og SAP BTP",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med SAP HCM eller løn",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har været med på en ECC- til S/4HANA-rejse",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har arbejdet med automatiske tests, versionsstyring, CI/CD eller leverandøraccept",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kendskab til BTP, Fiori eller Java",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "microsoft-365-og-azure-konsulent",
+   "title": "Microsoft 365- og Azure-konsulent",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "P"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Microsoft 365",
+    "Azure",
+    "Intune",
+    "Entra ID",
+    "Exchange Online",
+    "Teams",
+    "SharePoint",
+    "Microsoft Defender",
+    "MFA",
+    "Conditional Access"
+   ],
+   "skills": [
+    "Modern Workplace",
+    "IT-sikkerhed",
+    "Rådgivning",
+    "Kundekontakt",
+    "Fejlsøgning",
+    "Implementering og migrering",
+    "Struktureret arbejdsform"
+   ],
+   "requiredSkills": [
+    "Microsoft 365",
+    "Azure",
+    "Modern Workplace",
+    "Intune",
+    "IT-sikkerhed",
+    "Kundekontakt"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Har solid praktisk erfaring med Microsoft 365 og Microsoft Azure",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har arbejdet med implementering, migrering og drift af cloud-løsninger",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har erfaring med Modern Workplace, Intune og identitetsstyring",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har en god forståelse for IT-sikkerhed og Microsofts sikkerhedsteknologier",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives med kundekontakt og kan omsætte tekniske løsninger til god rådgivning",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Arbejder struktureret, tager ansvar og følger dine opgaver til dørs",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er nysgerrig på ny teknologi og har lyst til at udvikle dine kompetencer",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kommunikerer professionelt på både dansk og engelsk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Microsoft-certificeringer inden for Microsoft 365 eller Azure er en fordel, men ikke et krav",
+     "tier": "PREFERRED",
+     "kind": "CERTIFICATION"
+    }
+   ]
+  },
+  {
+   "id": "erfaren-sygeplejerske-soeges-til-almen-p",
+   "title": "Erfaren sygeplejerske søges til almen praksis",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "HEALTHCARE",
+   "technologies": [],
+   "skills": [
+    "Selvstændigt ansvar",
+    "Klinisk blik",
+    "Patientkontakt",
+    "Samarbejde",
+    "Overblik"
+   ],
+   "requiredSkills": [
+    "Selvstændigt ansvar",
+    "Klinisk blik"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Er en erfaren sygeplejerske",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring fra almen praksis er en fordel, men ikke et krav",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Trives med selvstændigt ansvar",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har et godt klinisk blik og kan bevare overblikket i en hverdag, hvor opgaverne varierer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Møder patienterne venligt og professionelt og bidrager positivt til samarbejdet i klinikken",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "lagermedarbejder",
+   "title": "Lagermedarbejder",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "OPERATIONS_LOGISTICS",
+   "technologies": [
+    "Business Central"
+   ],
+   "skills": [
+    "Struktureret",
+    "Selvstændighed",
+    "Kvalitetsbevidsthed",
+    "Teamwork",
+    "Fleksibilitet"
+   ],
+   "requiredSkills": [
+    "Struktureret",
+    "Selvstændighed",
+    "Kvalitetsbevidsthed"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Trives med fysisk arbejde og en aktiv arbejdsdag",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kan arbejde effektivt og struktureret - også når der er travlt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er ansvarsbevidst og mødestabil",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan samarbejde med kollegaer, men også arbejde selvstændigt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Taler og forstår dansk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Erfaring fra lagerarbejde er en fordel, men ikke et krav",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "toemrer-soeges-snarest",
+   "title": "Tømrer søges snarest",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "ENGINEERING",
+   "technologies": [],
+   "skills": [
+    "Bygningsforståelse",
+    "Kundekommunikation",
+    "Selvstændighed",
+    "Teamwork",
+    "Fleksibilitet",
+    "Skadeservice",
+    "Skimmelhåndtering"
+   ],
+   "requiredSkills": [
+    "Bygningsforståelse",
+    "Kundekommunikation",
+    "Selvstændighed",
+    "Teamwork",
+    "Fleksibilitet"
+   ],
+   "preferredSkills": [
+    "Skadeservice",
+    "Skimmelhåndtering"
+   ],
+   "requirements": [
+    {
+     "text": "Tømrer/snedker-uddannelse",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Har en god bygningsforståelse",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan arbejde selvstændigt, men også i teams",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan tale med kunder og kollegaer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er en kvalitetsbevidst og fleksibel medarbejder, som sætter en ære i dit arbejde",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er stabil og punktlig med et godt humør, og kan lide at omgås mennesker",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "God til at samarbejde med både kontor og alle dine kollegaer i marken",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Fleksibel i forhold til arbejdstid, herunder længere arbejdsdage og akut udkald aften/weekend efter vagtplan",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kan tale og forstå dansk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Kan fremvise straffeattest samt børneattest",
+     "tier": "REQUIRED",
+     "kind": "CERTIFICATION"
+    },
+    {
+     "text": "Erfaring med skadesservice, såsom sod/brand, kloak og vandskader (ikke krav) - oplæring finder sted",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med skimmel (ikke krav) - oplæring finder sted",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "erfaren-bogholder-til-central-rolle-i-in",
+   "title": "Erfaren bogholder til central rolle i international produktionsvirksomhed",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "FINANCE",
+   "technologies": [
+    "Excel",
+    "Navision"
+   ],
+   "skills": [
+    "Bogholderi",
+    "Fakturering",
+    "Debitor- og kreditorhåndtering",
+    "Afstemninger",
+    "Struktur",
+    "Detaljeorientering",
+    "Samarbejde",
+    "Import/eksport"
+   ],
+   "requiredSkills": [
+    "Bogholderi",
+    "Excel",
+    "Navision",
+    "Struktur",
+    "Detaljeorientering",
+    "Samarbejde"
+   ],
+   "preferredSkills": [
+    "Import/eksport"
+   ],
+   "requirements": [
+    {
+     "text": "Du har solid erfaring fra en lignende rolle inden for bogholderi eller regnskab",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du har gerne erfaring fra en produktionsvirksomhed med import/eksport",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Du arbejder struktureret og følger dine opgaver til dørs",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du har sans for detaljer og tager ansvar for kvaliteten i dit arbejde",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du trives i samarbejde med andre og bidrager til en god stemning i teamet",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du er fortrolig med Excel og Navision - og lærer hurtigt nye systemer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Fortrolig med Navision",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du kommunikerer ubesværet på dansk og engelsk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    }
+   ]
+  },
+  {
+   "id": "logopaed-til-ppr-i-taarnby-kommune-taarn",
+   "title": "Logopæd til PPR i Tårnby kommune - Tårnby Kommune",
+   "kind": "mismatch",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "HEALTHCARE",
+   "technologies": [],
+   "skills": [
+    "Logopædi",
+    "Konsultativ vejledning",
+    "Tværfagligt samarbejde",
+    "Struktur",
+    "Selvstændig opgaveløsning",
+    "Sproglig vurdering"
+   ],
+   "requiredSkills": [
+    "Logopædi",
+    "Konsultativ vejledning",
+    "Tværfagligt samarbejde",
+    "Struktur",
+    "Selvstændig opgaveløsning"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Er uddannet logopæd (cand.mag. i audiologopædi, pædagogisk diplomuddannelse i logopædi eller lignende uddannelse)",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Har interesse for børn med sproglige, tale-, kommunikative- og/eller læringsmæssige vanskeligheder",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Har erfaring med børn i dagtilbud og skole",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har lyst til at arbejde konsultativt med de voksne omkring barnet",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har lyst til at engagere dig i den tværfaglige opgaveløsning i distriktsteamet",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er struktureret og omhyggelig i din opgaveløsning",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives med selvstændig opgaveløsning, herunder planlægning og koordinering af egen tid",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er positiv i dit møde med andre mennesker",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Interesse for logopædisk bistand til børn med dyspraktiske vanskeligheder i kombination med opgaveløsning indenfor almenområdet",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Tilfredsstillende straffeattest og børneattest samt referencer",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "digitaliseringskonsulent-til-digitaliser",
+   "title": "Digitaliseringskonsulent til Digitalisering & Informationssikkerhed",
+   "kind": "kommune",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Informationssikkerhed",
+    "GDPR",
+    "AI",
+    "Risikovurdering",
+    "DPIA",
+    "Procesoptimering",
+    "Compliance",
+    "Analytiske evner",
+    "Skriftlig formidling",
+    "Samarbejde",
+    "Teknisk forståelse"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "GDPR",
+    "Informationssikkerhed",
+    "Teknisk forståelse"
+   ],
+   "requirements": [
+    {
+     "text": "Du har formentlig en akademisk baggrund",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Evnen til at arbejde metodisk, følge opgaver til dørs og sikre høj kvalitet",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Analytiske evner og skriftlig skarphed",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Teknisk forståelse",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til GDPR og informationssikkerhed eller interesse for at opbygge kompetencer inden for området",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Lyst til at tilegne dig ny og kompleks viden og kunne formidle den i øjenhøjde til ledere og medarbejdere",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kørekort",
+     "tier": "REQUIRED",
+     "kind": "CERTIFICATION"
+    },
+    {
+     "text": "Straffeattest",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Dokumentation for relevant uddannelse vedlægges ansøgningen",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    }
+   ]
+  },
+  {
+   "id": "sikkerheds-og-risikokoordinator",
+   "title": "Sikkerheds- og risikokoordinator",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "NIS2",
+    "CER",
+    "Risikostyring",
+    "Informationssikkerhed",
+    "Beredskab",
+    "Compliance",
+    "Awareness",
+    "Koordinering",
+    "Dokumentation",
+    "Facilitering"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "NIS2",
+    "CER",
+    "Risikostyring"
+   ],
+   "requirements": [
+    {
+     "text": "Du har en videregående uddannelse, der giver dig et godt fundament",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Det er en fordel, hvis du har erfaring med risikostyring og/eller sikkerhed fra en forsynings- eller industrivirksomhed",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Standarder som NIS2, CER eller lignende rammeværk er en naturlig del af din hverdag",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du arbejder struktureret og metodisk med risici og compliance",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du kan skabe fremdrift, involvering og fælles ejerskab på tværs i en driftsorienteret organisation",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du kan oversætte krav og risici til konkrete handlinger",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du er ukompliceret og positiv af natur og kan lide at arbejde med mennesker med forskellige baggrunde, holdninger og ideer",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "konsulent-til-governance-risk-compliance",
+   "title": "Konsulent til Governance, Risk & Compliance i BDO Risk Assurance",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GRC",
+    "NIS2",
+    "GDPR",
+    "AI Act",
+    "AI Governance",
+    "ISO 27001/27002",
+    "CIS 18",
+    "NIST CSF",
+    "Risikostyring",
+    "Informationssikkerhed",
+    "Kundekontakt",
+    "Analytiske evner",
+    "Kommunikation",
+    "ISAE 3000",
+    "ISAE 3402",
+    "IT-revision"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "GDPR",
+    "NIS2",
+    "AI Act",
+    "ISO 27001/27002",
+    "CIS 18",
+    "NIST CSF",
+    "Risikostyring",
+    "Informationssikkerhed"
+   ],
+   "requirements": [
+    {
+     "text": "Relevant uddannelsesbaggrund inden for IT, sikkerhed eller compliance, fx jurist, cand.merc.(IT) eller professionsbachelor i informationssikkerhed",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Har lyst til at arbejde med governance, risiko, compliance og regulering",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er analytisk og god til at skabe struktur i komplekse problemstillinger",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan kommunikere klart og gøre komplekse problemstillinger forståelige",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives med kundekontakt og har lyst til at arbejde tæt sammen med forskellige typer organisationer",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Tager ansvar for dine opgaver og værdsætter faglig sparring og samarbejde",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har interesse for, hvordan teknologi, regulering og forretning påvirker hinanden",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Erfaring med GDPR, NIS2, AI Act, ISO 27001/27002, CIS 18, NIST CSF, risikostyring eller informationssikkerhed er en fordel, men ikke et krav",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "gdpr-konsulent-til-konsulentvirksomhed-i",
+   "title": "GDPR-konsulent til konsulentvirksomhed i vækst",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "GapPortalen"
+   ],
+   "skills": [
+    "GDPR",
+    "Databeskyttelse",
+    "Rådgivning",
+    "Informationssikkerhed",
+    "Dokumentation",
+    "Kundeservice",
+    "Projektstyring",
+    "Undervisning",
+    "DPO"
+   ],
+   "requiredSkills": [
+    "GDPR"
+   ],
+   "preferredSkills": [
+    "DPO"
+   ],
+   "requirements": [
+    {
+     "text": "En relevant videregående uddannelse, f.eks. cand.merc.jur eller cand.jur.",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Mindst 3 års erfaring med GDPR-rådgivning og juridisk sparring, som du har hentet fra den private, offentlige eller rådgivende sektor",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Evnen til at oversætte tung teori til jordnære, operationelle løsninger for kunden",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Flair for brug af digitale complianceløsninger",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Erfaring med udarbejdelse af politikker, procedurer, dokumentation, skabeloner mv.",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Indsigt i, hvordan informationssikkerhed påvirker håndteringen af GDPR",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Interesse for at anvende AI-værktøjer til at optimere opgaver og arbejdsmetoder",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Arbejdet med DPO-opgaver, hvilket vil være en stor fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Naturlig autoritet og en fleksibel, serviceminded og selvstændig indstilling",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Stærk kommerciel forståelse og blik for mersalg",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "security-compliance-governance-specialis",
+   "title": "Security Compliance & Governance Specialist",
+   "kind": "grc",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Regulatory compliance",
+    "NIS2",
+    "AI Act",
+    "CER directive",
+    "Cyber Resilience Act",
+    "GDPR",
+    "ISO 27001",
+    "Information security governance",
+    "IT risk",
+    "Policy development",
+    "Written communication",
+    "Stakeholder management",
+    "Gap analysis"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "NIS2",
+    "AI Act",
+    "GDPR",
+    "ISO 27001",
+    "Policy development",
+    "Written communication"
+   ],
+   "requirements": [
+    {
+     "text": "You have worked with several parts of the field, for example regulatory compliance, information security governance, IT risk or cyber security governance",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Educational background in information security, risk management, business administration or business law",
+     "tier": "PREFERRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Ability to understand technical regulation and operationalise it in a large technology environment",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Familiar with regulations and frameworks such as NIS2, the AI Act, GDPR and ISO 27001",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Understand how regulatory requirements connect to technical and operational controls",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience with developing policies, guidelines or governance frameworks will be an advantage",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Written communication is central to the role, and experience in communicating to senior management is a strength",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Enjoy working flexibly, are proactive and have a diplomatic mind that gets collaboration moving",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Work physically from the office four days a week in Hedehusene",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Include your CV and a cover letter explaining why you find the role motivating",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "software-developer-xci",
+   "title": "Software Developer - XCI",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Java",
+    "Spring Boot",
+    "PostgreSQL",
+    "Elasticsearch",
+    "Apache Kafka",
+    "Apache Flink",
+    "Template engines"
+   ],
+   "skills": [
+    "Microservices",
+    "Big data processing",
+    "Software architecture",
+    "Clean code",
+    "Knowledge sharing",
+    "Collaboration"
+   ],
+   "requiredSkills": [
+    "Java",
+    "Spring Boot",
+    "Microservices",
+    "Big data processing",
+    "PostgreSQL",
+    "Elasticsearch",
+    "Apache Kafka",
+    "Software architecture",
+    "Clean code"
+   ],
+   "preferredSkills": [
+    "Apache Flink",
+    "Template engines"
+   ],
+   "requirements": [
+    {
+     "text": "Have several years of experience with Java development.",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Have experience designing and developing Java/Spring Boot microservices.",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Have a solid understanding of big data flows and data processing.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Have experience with PostgreSQL, Elasticsearch and Apache Kafka.",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Comfortable contributing to architecture and technical solution design.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Write clean, structured and maintainable code.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Enjoy collaborating with colleagues across teams and sharing your knowledge.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Are curious about new technologies and continuously look for ways to improve.",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Communicate effectively in English, both written and spoken.",
+     "tier": "PREFERRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Previous experience working within an intelligence organization, law enforcement or national security environment.",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "An understanding of intelligence operations, workflows and the challenges faced by intelligence professionals.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience developing software solutions for intelligence, investigation or other security-sensitive domains.",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Experience with Apache Flink.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience working with template engines.",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Interest in emerging AI technologies, including Agentic AI.",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "platformsudvikler-til-platformteam-med-f",
+   "title": "Platformsudvikler til platformteam med fokus på at understøtte fremtidens digitale energimarked",
+   "kind": "eng",
+   "set": "tuning",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Microsoft Azure",
+    "Terraform",
+    "GitHub Actions",
+    "Databricks",
+    ".NET",
+    "Python",
+    "Shell scripting",
+    "CI/CD"
+   ],
+   "skills": [
+    "Platform Engineering",
+    "Agile",
+    "Cloud infrastructure",
+    "Containerization",
+    "IT security",
+    "Facilitation",
+    "Knowledge sharing"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Platform Engineering",
+    "Agile",
+    "IT security",
+    "Cloud infrastructure",
+    "Containerization",
+    "Facilitation"
+   ],
+   "requirements": [
+    {
+     "text": "it-relevant uddannelse på datamatiker-, bachelor- eller kandidatniveau",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Ideelt nogle års erfaring med Platform Engineering",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med eller en stærk interesse for Platform Engineering",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Interesse i og fokus på it-sikkerhed, skalering af cloud-systemer, infrastruktur, pipelines og containerization af workloads",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Motiveres af at skabe de bedst mulige rammer for udviklerne",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Trives i en faciliterende rolle med mange involverede parter",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Har arbejdet efter agile principper",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Evne og motivation for at sætte sig ind i nye teknologier",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Baggrundstjek forud for ansættelse og én gang årligt er en forudsætning for ansættelse",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "partner-til-employer-branding-og-ledelse",
+   "title": "Partner til Employer Branding og ledelseskommunikation",
+   "kind": "comms",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Employer branding",
+    "Ledelseskommunikation",
+    "Intern kommunikation",
+    "Strategisk kommunikation",
+    "Projektledelse",
+    "Rådgivning af ledere",
+    "Bureausamarbejde",
+    "Dataanalyse",
+    "Interessenthåndtering",
+    "Dansk",
+    "Engelsk"
+   ],
+   "requiredSkills": [
+    "Employer branding",
+    "Ledelseskommunikation",
+    "Intern kommunikation",
+    "Rådgivning af ledere",
+    "Projektledelse",
+    "Bureausamarbejde",
+    "Dansk",
+    "Engelsk"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Relevant kandidatuddannelse inden for kommunikation, organisation eller lignende",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Cirka 5-8 års erfaring med strategisk intern kommunikation, ledelseskommunikation, employer branding og/eller virksomhedskommunikation",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med at rådgive ledere - gerne på direktørniveau - og omsætte strategi og komplekse dagsordener til klar kommunikation",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kan drive projekter med mange interessenter og eksterne bureauer fra planlægning og prioritering til levering og opfølgning",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Strategisk og analytisk tilgang og bruger data og feedback til at vurdere og forbedre indsatser",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan skabe enkle rammer for ansvar, beslutninger og opfølgning, som understøtter arbejdet frem for at gøre det tungere",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kan balancere langsigtede indsatser med aktuelle ledelses- og kommunikationsbehov",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Formidler sikkert og præcist på både dansk og engelsk",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Erfaring fra komplekse organisationer eller infrastruktur-, drifts-, teknik- eller myndighedsnære miljøer er en fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "vil-du-vaere-med-til-at-understoette-den",
+   "title": "Vil du være med til at understøtte den øverste ledelse i Østjyllands Politi? Joboplysninger",
+   "kind": "comms",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "OTHER",
+   "technologies": [],
+   "skills": [
+    "Kalenderstyring",
+    "Mødeplanlægning",
+    "Referatskrivning",
+    "Eventkoordinering",
+    "Organisatorisk forståelse",
+    "Initiativ",
+    "Struktur og overblik",
+    "Skriftlig kommunikation",
+    "Mundtlig kommunikation",
+    "Serviceorientering",
+    "Diskretion",
+    "Visuel formidling"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Kalenderstyring",
+    "Mødeplanlægning",
+    "Referatskrivning",
+    "Eventkoordinering",
+    "Organisatorisk forståelse",
+    "Initiativ",
+    "Struktur og overblik",
+    "Skriftlig kommunikation",
+    "Mundtlig kommunikation",
+    "Serviceorientering",
+    "Diskretion",
+    "Visuel formidling"
+   ],
+   "requirements": [
+    {
+     "text": "Erfaring med administrative opgaver, gerne fra funktion tæt på ledelsen i en større organisation eller virksomhed",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Er initiativrig og kan se opgaver og behov, før andre behøver at gøre dig opmærksom på dem",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har et godt overblik og kan prioritere, også når flere opgaver kræver din opmærksomhed samtidig",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er løsningsorienteret, fleksibel og god til at finde praktiske løsninger på både små og store udfordringer",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Har en god organisatorisk forståelse og kan navigere i en organisation med mange forskellige fagligheder, funktioner og interesser",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kommunikerer klart og professionelt, både mundtligt og skriftligt",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har en naturlig sans for service og samarbejde og møder andre med hjælpsomhed og godt humør",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har en naturlig interesse for at udnytte digitale værktøjer effektivt samt fortrolighed med visuel formidling af budskaber",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Udviser diskretion og god dømmekraft i arbejdet med fortrolige oplysninger og ledelsesrelaterede opgaver",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Engageret i og bidrager til at skabe en god arbejdsplads",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "europabevaegelsen-soeger-presse-og-kommu",
+   "title": "Europabevægelsen søger presse- og kommunikationspraktikant!",
+   "kind": "comms",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [
+    "Pressearbejde",
+    "Digital kommunikation",
+    "SoMe",
+    "Videoproduktion",
+    "Debatindlæg og pressemeddelelser",
+    "Politisk forståelse",
+    "Kreativ formidling",
+    "Struktur"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Struktur",
+    "Politisk forståelse",
+    "Kreativ formidling"
+   ],
+   "requirements": [
+    {
+     "text": "Er struktureret og selvkørende",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kender til EU og/eller har en god politisk forståelse",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Skarp på tasterne og vild med kreativ formidling",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er udadvendt og kan tale til og med mange forskellige mennesker",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har lyst til at lære men også bringe egne erfaringer og kompetencer i spil",
+     "tier": "PREFERRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Varierende arbejdstid, særligt i forbindelse med aktiviteter udenfor almindelig arbejdstid",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "studentermedhjaelper-til-gdpr-compliance",
+   "title": "Studentermedhjælper til GDPR, compliance og informationssikkerhed - Danske Spil",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GDPR",
+    "Compliance",
+    "Informationssikkerhed",
+    "ISO 27001",
+    "Awareness-træning",
+    "Databehandleraftaler",
+    "Konsekvensanalyser",
+    "Interne audits",
+    "Kommunikation",
+    "Struktur",
+    "Samarbejde",
+    "Initiativ"
+   ],
+   "requiredSkills": [
+    "Kommunikation",
+    "Struktur",
+    "Samarbejde",
+    "Initiativ"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Du er i gang med en videregående uddannelse",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Interesse for GDPR, compliance eller informationssikkerhed",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du opbygger gode relationer til kolleger på tværs af organisationen",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du kommunikerer klart og tager gerne dialogen direkte, når det bringer opgaven videre",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du arbejder struktureret og følger selv op, så opgaver bliver afsluttet",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du tager selvstændigt initiativ og spørger, når du har brug for sparring",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Du samarbejder godt og bidrager aktivt til holdets fælles resultater",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Straffeattest skal indhentes og uploades i rekrutteringssystemet inden 1. samtale",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "crossbridge-energy-a-s-security-coordina",
+   "title": "Crossbridge Energy A/S - Security Coordinator",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "Security",
+    "Fysisk sikring",
+    "Beredskab",
+    "ISPS",
+    "Compliance",
+    "Security awareness",
+    "Koordinering",
+    "Risikovurdering",
+    "Kommunikation"
+   ],
+   "requiredSkills": [],
+   "preferredSkills": [
+    "Security",
+    "Fysisk sikring",
+    "Beredskab",
+    "Compliance",
+    "ISPS"
+   ],
+   "requirements": [
+    {
+     "text": "Erfaring med security, fysisk sikkerhed, beredskab, compliance eller et beslægtet område",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring fra en større organisation, industri- eller energivirksomhed eller anden virksomhed med høje krav til sikkerhed og dokumentation",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kendskab til relevant lovgivning og myndighedskrav, herunder bekendtgørelse 260 (Styrket Beredskab) i oliesektoren",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til havnesikring og ISPS",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Arbejder struktureret og systematisk med sans for koordinering og opfølgning",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan skabe overblik over flere sideløbende opgaver og følge aftaler og deadlines til dørs",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives med samarbejde på tværs af fagområder og organisatoriske niveauer",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan kommunikere krav, procedurer og sikkerhedsmæssige forhold klart og forståeligt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Initiativrig, ansvarsbevidst og løsningsorienteret; kan arbejde selvstændigt",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kan sikkerhedsgodkendes til hemmeligt niveau og opretholde denne under hele ansættelsen",
+     "tier": "REQUIRED",
+     "kind": "CERTIFICATION"
+    }
+   ]
+  },
+  {
+   "id": "compliance-og-gdpr-specialist-hos-forsyn",
+   "title": "Compliance- og GDPR-specialist hos Forsyningsservice A/S",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [],
+   "skills": [
+    "GDPR",
+    "NIS2",
+    "CER-direktivet",
+    "AI-forordningen",
+    "Compliance",
+    "Informationssikkerhed",
+    "Risikovurdering",
+    "Rådgivning",
+    "ISO-standarder",
+    "Ledelsessystemer",
+    "Projektledelse",
+    "Formidling",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "GDPR",
+    "Compliance",
+    "Formidling",
+    "Samarbejde"
+   ],
+   "preferredSkills": [
+    "ISO-standarder",
+    "Ledelsessystemer",
+    "NIS2",
+    "AI-forordningen",
+    "CER-direktivet"
+   ],
+   "requirements": [
+    {
+     "text": "Uddannet cand.jur. eller cand.merc.jur.",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "5-8 års erfaring fra en lignende stilling eller som ekstern auditor",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Solid viden om og praktisk erfaring med GDPR samt et stærkt blik for, hvordan compliance omsættes til praksis",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Interesse for databeskyttelsesretlig regulering og relaterede områder som NIS2, AI-forordningen og CER-direktivet",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med ISO-standarder og ledelsessystemer er en klar fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Konsulent-gen og trives i rollen som både sparringspartner, formidler og udførende",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Naturlig evne til at samarbejde på tværs af fagligheder og organisationer og kan formidle juridisk og kommerciel kompleksitet klart og tydeligt, både skriftligt og mundtligt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Handlingsorienteret og fokuseret på at skabe fremdrift og komme i mål med opgaverne",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Ikke bange for at smøge ærmerne op og tage del i de mere praktiske opgaver",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Erfaring med digitalisering eller AI er en fordel",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Holdspiller, der bidrager til et motiverende og engageret arbejdsmiljø",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Gyldigt kørekort",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kan motiveres af, at en del af arbejdet foregår hos samarbejdspartnere i det midt- og nordjyske",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "it-revisor-eller-compliancekonsulent",
+   "title": "IT-Revisor eller Compliancekonsulent",
+   "kind": "grc",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "P",
+    "engineer": "M"
+   },
+   "jobCategory": "GRC_COMPLIANCE",
+   "technologies": [
+    "ISO 27001",
+    "FODA"
+   ],
+   "skills": [
+    "IT-revision",
+    "Risikostyring",
+    "Informationssikkerhed",
+    "Dokumentation",
+    "Compliance",
+    "Analytisk sans",
+    "Formidling",
+    "Offentlig forvaltning"
+   ],
+   "requiredSkills": [
+    "Dokumentation",
+    "Analytisk sans",
+    "Formidling"
+   ],
+   "preferredSkills": [
+    "Offentlig forvaltning",
+    "Informationssikkerhed",
+    "IT-revision"
+   ],
+   "requirements": [
+    {
+     "text": "Har forståelse eller interesse for cybertrusler, sikkerhedskontroller og risikostyring",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan arbejde struktureret med dokumentation og procesbeskrivelser",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er analytisk, detaljeorienteret og god til at skabe overblik",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan formidle komplekse problemstillinger til både ledelse og medarbejdere",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Relevant uddannelsesmæssig baggrund inden for IT eller videregående uddannelse inden for IT, informationssikkerhed, revision, økonomi eller ledelse",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Behersker både grønlandsk og dansk i skrift og tale, men det er ikke et krav",
+     "tier": "PREFERRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Erfaring fra offentlig forvaltning",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kendskab til informationssikkerhed i større organisationer",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med IT-revision er en fordel, men ikke et krav",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    }
+   ]
+  },
+  {
+   "id": "paedagog-til-vuggestue",
+   "title": "Pædagog til vuggestue",
+   "kind": "mismatch",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "EDUCATION",
+   "technologies": [],
+   "skills": [
+    "ICDP",
+    "Tryghedscirklen",
+    "Forældresamarbejde",
+    "Samarbejde",
+    "Empati",
+    "Omstillingsparathed",
+    "Legebaseret læring"
+   ],
+   "requiredSkills": [
+    "Forældresamarbejde",
+    "Samarbejde",
+    "Omstillingsparathed"
+   ],
+   "preferredSkills": [
+    "ICDP",
+    "Tryghedscirklen"
+   ],
+   "requirements": [
+    {
+     "text": "Uddannet pædagog",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Er fagligt velfunderet og finder mening i arbejdet med at etablere lege- og læringsmiljøer",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er optaget af børneperspektivet og børnegruppens behov og interesser, når der skal organiseres aktiviteter og hverdagsrutiner",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Arbejder med børn ud fra et ressourceperspektiv med fokus på børnene og fællesskabets styrker og potentiale",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Møder børn, forældre og kolleger anerkendende, empatisk og humoristisk",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er nærværende og tydelig i sin relation til børn og voksne og kan skabe en tryg og forudsigelig hverdag",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kan holde fokus på kerneopgaven, gerne med et strejf af humor",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Er omstillingsparat, initiativrig og fleksibel i en ofte travl og uforudsigelig hverdag",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har kendskab til ICDP og tryghedscirkelen eller lyst til uddannelse heri",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Vægter det gode forældresamarbejde, hvor du tager ansvaret for samarbejdet",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er en holdspiller, der evner at indgå i et positivt, ligeværdigt og tillidsfuldt samarbejde med kolleger",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er bevidst om legens betydning for børns trivsel og udvikling og deltager i børneinitieret leg",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "ejendomsmaegler-til-estate-varde-vaer-me",
+   "title": "Ejendomsmægler til Estate Varde - vær med til at udvikle forretningen",
+   "kind": "mismatch",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "SALES",
+   "technologies": [],
+   "skills": [
+    "Boligsalg",
+    "Salgsvurdering",
+    "Kommissionering",
+    "Forhandling",
+    "Kreditvurdering",
+    "Relationsopbygning",
+    "Markedsføring",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Boligsalg",
+    "Salgsvurdering",
+    "Kommissionering",
+    "Forhandling",
+    "Relationsopbygning",
+    "Samarbejde"
+   ],
+   "preferredSkills": [],
+   "requirements": [
+    {
+     "text": "Er uddannet ejendomsmægler",
+     "tier": "REQUIRED",
+     "kind": "EDUCATION"
+    },
+    {
+     "text": "Har minimum to års erfaring med salg og formidling af fast ejendom",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har et godt kendskab til boligmarkedet i Varde og omegn",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan håndtere vurderinger, kommissioneringer og salg selvstændigt",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er salgsorienteret og god til at skabe relationer til kunder",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Bidrager positivt til samarbejdet og tager ansvar for fælles resultater",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har kørekort og egen bil til rådighed",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Indstillet på fremvisninger uden for kontorets åbningstid og i weekender",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "frontend-software-developer-xci",
+   "title": "Frontend Software Developer - XCI",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "React",
+    "JavaScript",
+    "TypeScript",
+    "Storybook",
+    "HTML5",
+    "CSS",
+    "SASS",
+    "SCSS",
+    "Node.js",
+    "MCP"
+   ],
+   "skills": [
+    "UX principles",
+    "Responsive design",
+    "Component libraries",
+    "Frontend architecture",
+    "Code quality",
+    "Code review",
+    "Automated testing",
+    "Performance optimization",
+    "Agentic AI",
+    "Collaboration",
+    "English communication"
+   ],
+   "requiredSkills": [
+    "React",
+    "JavaScript",
+    "TypeScript",
+    "Storybook",
+    "HTML5",
+    "CSS",
+    "SASS",
+    "SCSS",
+    "Component libraries",
+    "UX principles",
+    "Responsive design",
+    "Frontend architecture",
+    "English communication"
+   ],
+   "preferredSkills": [
+    "Node.js",
+    "Performance optimization",
+    "Automated testing",
+    "Agentic AI",
+    "MCP"
+   ],
+   "requirements": [
+    {
+     "text": "3-5 years of experience with React development",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Strong knowledge of JavaScript (ES6+) and TypeScript",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience with Storybook or similar tools",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Solid skills in HTML5, CSS, SASS or SCSS",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience building and maintaining reusable UI components and component libraries",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "An understanding of usability, UX principles and responsive design",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience working with complex applications and data-heavy interfaces",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "A good understanding of frontend architecture, code quality and maintainability",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "The ability to communicate and collaborate effectively in English",
+     "tier": "PREFERRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Experience with Node.js and the wider React/JavaScript ecosystem",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Knowledge of browser compatibility and frontend performance optimization",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience with quality assurance and automated testing",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience contributing to the design and evolution of frontend architecture",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Experience working with AI technologies, including Agentic AI, and integrating AI-powered features into user interfaces",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Familiarity with MCP and integrating applications with MCP-based services or tools",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Experience from an intelligence organization or law enforcement organization",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Must be able to obtain a security clearance and present a clean criminal record",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "cloud-engineer-til-danmarks-eksport-og-i",
+   "title": "Cloud Engineer til Danmarks Eksport- og Investeringsfond",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Azure",
+    "Terraform",
+    "Bicep",
+    "Azure DevOps",
+    "GitHub Actions",
+    "Microsoft Entra ID",
+    "Azure Policy",
+    "Azure API Management",
+    "OpenTelemetry",
+    "Microsoft Defender for Cloud",
+    "Kubernetes",
+    "Nutanix",
+    "Log Analytics",
+    "KQL",
+    "Azure Monitor",
+    "Service Bus",
+    "RabbitMQ",
+    "Grafana"
+   ],
+   "skills": [
+    "Platform engineering",
+    "Infrastructure as Code",
+    "CI/CD",
+    "Vendor management",
+    "Automation",
+    "Cloud security",
+    "Communication",
+    "Ownership"
+   ],
+   "requiredSkills": [
+    "Azure",
+    "Platform engineering",
+    "Infrastructure as Code",
+    "CI/CD",
+    "Microsoft Entra ID",
+    "Vendor management",
+    "Communication",
+    "Ownership"
+   ],
+   "preferredSkills": [
+    "Azure Policy",
+    "Log Analytics",
+    "KQL",
+    "Azure Monitor",
+    "Azure API Management",
+    "Service Bus",
+    "RabbitMQ",
+    "OpenTelemetry",
+    "Grafana",
+    "Kubernetes",
+    "Microsoft Defender for Cloud"
+   ],
+   "requirements": [
+    {
+     "text": "Praktisk erfaring med Microsoft Azure og en stærk interesse for cloud-platforme og platform engineering",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med Infrastructure as Code, fx Terraform eller Bicep",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Har arbejdet med CI/CD-pipelines, gerne i Azure DevOps eller GitHub Actions",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Praktisk erfaring med Microsoft Entra ID, herunder managed identities og grupper",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan arbejde videre i løsninger, som andre har bygget, og kan stille tydelige krav til eksterne leverandører",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Arbejder struktureret, tager ejerskab og kan omsætte tekniske behov til robuste og genanvendelige løsninger",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kommunikerer klart og kan samarbejde med både udviklere, drift, sikkerhedsspecialister og eksterne konsulenter",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Erfaring med hybride miljøer med både cloud og eget datacenter",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med landing zones, Azure Policy og RBAC i større Azure-opsætninger",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med IaC-moduler udviklet til genbrug og selvbetjening",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med Log Analytics, KQL, Azure Monitor, alert rules og dashboards",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med Azure-netværk, herunder private endpoints, DNS og peering",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med Microsoft Defender for Cloud og vurdering og prioritering af sikkerhedsfund",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med Azure API Management samt Service Bus, RabbitMQ eller tilsvarende beskedteknologier",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Erfaring med OpenTelemetry, Grafana eller Kubernetes i drift",
+     "tier": "PREFERRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Straffeattest skal fremvises ved ansættelse",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "jn-data-cloud-service-architect",
+   "title": "JN DATA - Cloud Service Architect",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Azure",
+    "Infrastructure as Code"
+   ],
+   "skills": [
+    "Cloud architecture",
+    "DevOps",
+    "CI/CD",
+    "Cloud security",
+    "Governance",
+    "Compliance",
+    "Test automation",
+    "Hybrid cloud",
+    "Collaboration",
+    "English"
+   ],
+   "requiredSkills": [
+    "Azure",
+    "DevOps",
+    "Infrastructure as Code",
+    "CI/CD",
+    "Governance",
+    "Compliance",
+    "Collaboration"
+   ],
+   "preferredSkills": [
+    "Test automation",
+    "Hybrid cloud"
+   ],
+   "requirements": [
+    {
+     "text": "Solid og bred erfaring med Microsoft Azure",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Har arbejdet med DevOps, Infrastructure as Code og CI/CD-pipelines",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "Kender til sikkerhed, governance og compliance i cloudmiljøer, f.eks. ISO 27001, NIST eller CIS",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Trives i samarbejdet med både udviklere, drift, arkitekter og ledelse",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Arbejder struktureret og følger beslutninger og aftaler til dørs",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kan gå ned i tekniske detaljer uden at miste blikket for den overordnede arkitektur",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Behersker engelsk på professionelt niveau",
+     "tier": "REQUIRED",
+     "kind": "LANGUAGE"
+    },
+    {
+     "text": "Villighed til rejseaktivitet (Danmark og Warszawa)",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kendskab til teststrategier og testautomatisering i cloudprojekter",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til hybrid cloud, integration med on-premise miljøer eller automatisering af sikkerhedskontroller og governance",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    }
+   ]
+  },
+  {
+   "id": "erfaren-softwareudvikler-til-forsyningsk",
+   "title": "Erfaren softwareudvikler til forsyningskritisk integrationsplatform",
+   "kind": "eng",
+   "set": "holdout",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [
+    "Kafka",
+    "Kubernetes",
+    "Helm",
+    "CI/CD",
+    "Infrastructure as Code",
+    "Strimzi",
+    "MirrorMaker2",
+    "Azure DevOps",
+    "SeaWeedFS",
+    "Grafana",
+    "Loki",
+    "Alloy",
+    "Prometheus",
+    "C#"
+   ],
+   "skills": [
+    "Scrum",
+    "Agile",
+    "Videndeling",
+    "Samarbejde"
+   ],
+   "requiredSkills": [
+    "Kafka",
+    "Kubernetes",
+    "Helm",
+    "CI/CD",
+    "Infrastructure as Code"
+   ],
+   "preferredSkills": [
+    "Strimzi",
+    "MirrorMaker2",
+    "Azure DevOps",
+    "SeaWeedFS",
+    "Grafana",
+    "Loki",
+    "Alloy",
+    "Prometheus",
+    "C#",
+    "Agile"
+   ],
+   "requirements": [
+    {
+     "text": "mindst 5 års erfaring som softwareudvikler",
+     "tier": "REQUIRED",
+     "kind": "EXPERIENCE"
+    },
+    {
+     "text": "interesse for at arbejde i et agilt setup, hvor vi anvender Scrum",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kafka",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kubernetes",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Helm",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "CI/CD",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Infrastructure as Code (IaC)",
+     "tier": "REQUIRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Er god til at sætte dig ind i nye teknologier og problemstillinger",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Trives i et team, hvor man lærer af hinanden og deler viden og erfaring",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    },
+    {
+     "text": "Kendskab til Strimzi og MirrorMaker2",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til Azure DevOps",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til SeaWeedFS",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til Grafana, herunder Loki og Alloy",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til Prometheus",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til C#",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kendskab til agile processer",
+     "tier": "PREFERRED",
+     "kind": "SKILL"
+    },
+    {
+     "text": "Kunne opnå og opretholde sikkerhedsgodkendelse",
+     "tier": "REQUIRED",
+     "kind": "CERTIFICATION"
+    },
+    {
+     "text": "Baggrundstjek foreneligt med ansættelse i Energinet, gennemføres årligt",
+     "tier": "REQUIRED",
+     "kind": "OTHER"
+    }
+   ]
+  },
+  {
+   "id": "kommunikationsmedarbejder-unenriched",
+   "title": "Kommunikationsmedarbejder",
+   "kind": "comms",
+   "set": "unenriched",
+   "fit": {
+    "comms-grc": "G",
+    "engineer": "M"
+   },
+   "jobCategory": "MARKETING",
+   "technologies": [],
+   "skills": [],
+   "requiredSkills": [],
+   "preferredSkills": [],
+   "description": "Gå til sidens indhold\n36.700 job i dag\nFor jobsøgere\nFor arbejdsgivere\nDA\nEN\nLog ind\nOpret profil\nJobsøgning\nSøg job\nVælg mellem flere søgekriterier\nDin side\nSkab overblik over din jobsøgning\nJobagent\nFå nye job direkte i din indbakke\nProfil\nOpret din profil og bliv headhuntet\nJobannoncearkiv\nFind inspiration i udløbne jobopslag\nFå en jobvejleder\nBliv afklaret i din jobsøgning\nJobs For Ukraine\nHjælper ukrainske flygtninge med at få job\nArbejdspladser\nSe virksomhedsprofiler\nFå viden om din næste arbejdsplads\nEvaluér arbejdsplads\nHvordan er din arbejdsplads?\nElevplads\nSe virksomheder med elevpladser\nGraduate program\nSe virksomheder med Graduate Programmer\nTest dig selv\nTjek din løn\nHvad tjener andre som dig?\nJobglædetest\nHvordan er din jobglæde?\nPersontypetest\nKender du dine styrker?\nStresstest\nMål dit stressniveau\nTalenttest\nFind dine arbejdstalenter\nGuides\nAnsøgninger\nSådan skriver du en god ansøgning\nCV\nFå de bedste tips til dit CV\nJobsamtale\nGør et godt indtryk til samtalen\nLønforhandling\nStå stærkt til lønforhandlingen\nOpsigelse\nBrug denne guide og kom godt videre\nUopfordret ansøgning\nSådan søger du uopfordret\nBliv headhuntet\nSådan bliver du headhuntet\nJobagent\nFå en bedre Jobagent\nAI i arbejdslivet\nFå inspiration til hverdag og karriere\nDit første job\nVærktøjer og tips til dit nye arbejdsliv\nJobglæde\nSæt jobglæde på agendaen\nKurser\n6 ugers jobrettet uddannelse\nOpgrader dine kompetencer\nJobsøgningskursus\nSkab struktur i din jobsøgning\nForedrag\nGode råd til dig, der søger nyt job\nJobindex Kurser\nLedig? Find det rigtige kursus for dig\nFor arbejdsgivere\nTilmeld dig Jobindex\nSwitch to English\nLog ind\nOpret profil\nFor jobsøgere\nLog ind som jobsøger\nFor arbejdsgivere\nLog ind som arbejdsgiver\nSøg job\nProfil\nGemte job\nMere\nOverblik\nJobagent\nAnsøgninger\nHenvendelser\nDokumenter\nVirksomheder\nRåd og vejledning\nIndstillinger\nGem job\nDel\nAnsøg\nKommunikationsmedarbejder\nKomiteen for Sundhedsoplysning\nKøbenhavn Ø\nEr du en solid kommunikationshåndværker, der også kan tænke strategisk?\nKan du omsætte gode historier og faglige resultater til knivskarpt indhold på forskellige kommunikationskanaler? Og trives du i en hverdag, hvor du både arbejder strategisk og selv producerer indhold?\nSå er du måske vores nye kommunikationsmedarbejder.\nVi søger en engageret og alsidig kommunikationsmedarbejder, som kan understøtte vores aktiviteter, styrke vores synlighed og formidle de mange stærke historier, der opstår i mødet mellem frivillige, borgere, og samarbejdspartnere.\nOm stillingen\nSom kommunikationsmedarbejder får du en central rolle i enheden Mestring og Empowerment i Komiteen for Sundhedsoplysning. Enheden udvikler, skalerer og understøtter mestringsforløb i hele landet til mange forskellige målgrupper inden for sundheds-, social-, beskæftigelses-, familie-, skole- og uddannelsesområdet. Du bliver ansvarlig for at planlægge, udvikle og producere skriftlig/visuel kommunikation på tværs af vores platforme og til mange forskellige målgrupper.\nDu bliver desuden den kommunikationsfaglige sparringspartner for flere projektteams og kommer til at samarbejde tæt med ledelse, projektledere, frivillige undervisere og eksterne samarbejdspartnere om at omsætte faglige indsatser og resultater til relevant kommunikation.\nDine opgaver\nDu kommer blandt andet til at:\nProducere projektunderstøttende kommunikation i samarbejde med ledelse og projektteams, fx:\nnyheder, artikler, cases, pressemeddelelser, hjemmesideindhold\nindhold til sociale medier\nproduktion af fotos og korte videoer til digitale platforme\nVedligeholde og videreudvikle hjemmesider\nProducere grafisk materiale, der både kan bruges digitalt og analogt\nUnderstøtte arrangementer, konferencer og netværksaktiviteter\nEvaluere virkningen/kvaliteten af kommunikationsindsatser\nVi forestiller os, at du\nHar en relevant uddannelse inden for kommunikation, journalistik, marketing eller lignende og har mindst 3 års erfaring\nEr en stærk skriftlig formidler, også i forhold til faglig formidling\nKan omsætte faglig viden, evalueringer, metoder og projektresultater til levende og målrettet kommunikation\nKan sætte dig tilstrækkeligt ind i faglige områder til at kunne levere solid kommunikation\nHar erfaring med hjemmesider, sociale medier og digital kommunikation\nHar erfaring med CMS-systemer og nyhedsbrevsværktøjer\nHar blik for målgrupper og ved, hvordan kommunikation tilpasses forskellige kanaler\nKan arbejde selvstændigt og tage ansvar for egne opgaver\nEr god til at skabe relationer og samarbejde på tværs af fagligheder\nHar flair for visuel kommunikation\nVi lægger desuden vægt på, at du er struktureret, initiativrig, kreativ, ansvarsbevidst, kan bevare overblikket i en travl hverdag og kan få dine opgaver ført sikkert i mål til tiden.\nDet er en fordel, men ikke et krav, hvis du har erfaring med kommunikation inden for sundhedsområdet eller beslægtede områder. Erfaring med foto- og videoproduktion er også et plus.\nVi tilbyder\nEn meningsfuld stilling, hvor du bidrager til bedre sundhed, livskvalitet og stærkere fællesskaber i det danske samfund\nStor indflydelse på udviklingen af enhedens kommunikation\nEn varieret hverdag med mange kontaktflader\nEngagerede kolleger og samarbejdspartnere\nFleksibilitet og høj grad af selvstændighed\nEt uformelt arbejdsmiljø med fokus på samarbejde, fællesskab og høj faglighed\nKomiteen for Sundhedsoplysning er en sygdomsbekæmpende, almennyttig forening. Komiteens hovedaktiviteter er projektudvikling, efteruddannelse af sundhedsprofessionelle, partnerskaber, udvikling og skalering af indsatser samt udgivelse og distribution af sundhedsoplysende materialer. Vi er en organisation med godt 40 engagerede medarbejdere, der tilsammen repræsenterer forskellige fagligheder, især inden for sundhed, læring, kommunikation og psykologi. Komiteen har til huse på Østerbro, København.\nPraktiske oplysninger\nDer er tale om en fuldtidsstilling. Tiltrædelse hurtigst muligt og senest d. 1. februar 2027.\nSpørgsmål vedrørende stillingen rettes til Enhedschef [navn] på [telefon]/ [e-mail] eller Teamleder [navn] på [telefon]/ [e-mail]\nSend din ansøgning og CV på e-mail til [e-mail] senest d. 26. november . Skriv ”Kommunikation” i emnefeltet.\nAnsættelsessamtaler afholdes d. 7. og 8. december 2026. Eventuelle 2. samtaler vil blive afholdt den 10. og 11. december 2026.\nVi glæder os til at høre fra dig!\nAnsøg\nGem job\nDel\nAnsøg\n195 følgere\nFølger Følg\nKomiteen for Sundhedsoplysning\n2 jobannoncer\nOm virksomheden\nClassensgade 71, 5. sal, 2100 København Ø\nVigtige datoer\nIndrykket:\n6. november 2026\nAnsøgningsfrist:\n26. november 2026\nVirksomheden tilbyder\nAnsættelsestype:\nFastansættelse\nHjemmearbejde:\nIkke oplyst\nUgentlig arbejdstid:\nFuldtid\nVil du også følge virksomheden?\nVil du følge virksomheden?\n× Luk\nHvad sker der, når du følger en virksomhed?\nDu viser virksomheden, at du er interesseret i at arbejde hos dem. Når virksomheden har et job, der matcher din profil, vil du blive foreslået som kandidat (dog kun, hvis dit din profil er sat til, at du gerne vil kontaktes).\nLæs mere\nTip:\nOpdater din profil, så du fremstår bedst muligt\nTjek, at din profil er sat til ‘Vil gerne kontaktes’\nUnder privatlivsindstillinger kan du skjule særlige dele af din profil\nOpret CV\nSæt CV online\nOpdater CV\nVis kun interesse for job\nFølg virksomheden\nVil du vise interesse for dette job?\n× Luk\nHvad sker der, når du viser interesse for et job?\nDu viser virksomheden, at du er interesseret i jobbet. Virksomheden kan derefter kontakte dig, hvis du i din profil har givet tilladelse til at blive kontaktet.\nLæs mere\nTip: Opdater din profil og vis, at du vil kontaktes med job.\nVis ikke igen\nAnnuller\nVis interesse\nVis interesse for job\n× Luk\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og opret dit CV - det tager kun 5 minutter.\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og sæt dit CV online.\nLæs mere om interessevisning her .\nLuk\nOpret CV\nRet CV\nFor jobsøgere\nDin side\nEvaluer din arbejdsplads\nSe evalueringer\nOpret profil\nApps til jobsøgning\nKaares Klumme\nAnsøgningsmaskinen\nSupport for jobsøgere\nFor arbejdsgivere\nDin kundeside\nIndryk annonce\nJobannoncering\nRekruttering\nEmployer branding\nInternational\nSe virksomhedsprofil\nSupport for arbejdsgivere\nOm Jobindex\nOm Jobindex\nJob hos Jobindex\nFor investorer\nGennemsigtighedsrapporter\nPresse\n#JobsForUkraine\nModtag nyheder\nFor jobsøgere\nFor arbejdsgivere\nHent job-apps\nFølg os\n© Jobindex A/S, Carl Jacobsens Vej 29-31, 2500 Valby, Tlf. 38 32 33 55 , CVR-nr. 21367087\nBetingelser og persondatapolitik\nHandelsbetingelser\nGDPR\nCookiepolitik ( ret samtykke )\nBaseret på 400 evalueringer\nAnsvarlig brug af dine oplysninger\n×\nJobindex ønsker at tilbyde en service, der giver dig den bedste oplevelse. Til dette ønsker vi at bruge cookies og personoplysninger til statistik og markedsføring. Vi indsamler oplysninger om din enhed, tidspunkt, besøgte sider og din IP-adresse. Jobindex bruger egne cookies og cookies fra samarbejdspartnere. Vi og vores samarbejdspartnere opbevarer og/eller tilgår oplysninger på din enhed med henblik på at vise tilpassede annoncer og annoncemåling, tilpasset indhold, indholdsmåling, målgruppeindsigter og produktudvikling.\nLæs mere om Jobindex' brug af cookies og om vores behandling af personoplysninger .\nOplysningerne indsamles kun med dit samtykke, som til hver en tid kan ændres ved at klikke på \" Cookiepolitik \" nederst på siden.\nNødvendige\nStatistik\nMarkedsføring\nAfvis\nAccepter valgte\nAccepter alle"
+  },
+  {
+   "id": "software-developer-xci-unenriched",
+   "title": "Software Developer - XCI",
+   "kind": "eng",
+   "set": "unenriched",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "G"
+   },
+   "jobCategory": "SOFTWARE_IT",
+   "technologies": [],
+   "skills": [],
+   "requiredSkills": [],
+   "preferredSkills": [],
+   "description": "Skip to main content\nThis website uses cookies to ensure you get the best experience.\nXCI and our selected partners use cookies and similar technologies (together “cookies”) that are necessary to present this website, and to ensure you get the best experience of it.\nIf you consent to it, we will also use cookies for analytics purposes.\nSee our Cookie Policy to read more about the cookies we set.\nYou can withdraw and manage your consent at any time, by clicking “Manage cookies” at the bottom of each website page.\nAccept all cookies\nDecline all non-necessary cookies\nCookie preferences\nSelect which cookies you accept\nOn this site, we always set cookies that are strictly necessary, meaning they are necessary for the site to function properly.\nIf you consent to it, we will also set other types of cookies. You can provide or withdraw your consent to the different types of cookies using the toggles below. You can change or withdraw your consent at any time, by clicking the link “Manage Cookies”, that is always available at the bottom of the site.\nTo learn more about what the different types of cookies do, how your data is used when they are set etc, see our Cookie Policy .\nStrictly necessary\nThese cookies are necessary to make the site work properly, and are always set when you visit the site.\nVendors\nTeamtailor\nAnalytics\nThese cookies collect information to help us understand how the site is being used.\nVendors\nTeamtailor\nAccept these cookies\nDecline all non-necessary cookies\nxci.dk\nShare page\nFacebook\nX\nLinkedIn\nMail\nDevelopment\n·\nCopenhagen, Aalborg\nSoftware Developer\nBuild the technology behind intelligence operations. Develop scalable solutions that help intelligence professionals process complex data, gain valuable insights and protect society.\nApply for this job\nJoin a rapidly growing technology company with an important purpose: Developing software that helps prevent and fight crime.\nAt XCI, we develop advanced software solutions for police authorities, intelligence services and other organizations working to protect society. Our solutions support intelligence professionals and investigators in handling complex information, identifying patterns and turning large volumes of data into valuable insights.\nWe are looking for an experienced Software Developer with strong Java skills and an interest in big data processing to join our team. You will help develop the technologies that enable intelligence services and national security organizations to process and analyze complex data flows, supporting their important work in protecting society.\nWe are looking for candidates to join our teams at either of our two locations in Aalborg or Copenhagen.\nDevelop technology that supports intelligence operations\nYou will work on advanced software solutions designed to support intelligence and national security organizations. Your primary focus will be developing and maintaining scalable, high-quality software systems that handle large data flows and enable advanced analytics.\nYou will work with complex technical challenges where performance, reliability and scalability are essential. Your work will contribute to solutions that help intelligence professionals process and make sense of large amounts of information, providing them with the technological capabilities they need in their daily operations.\nYou will join a dedicated and experienced team where technical expertise, knowledge sharing and collaboration are highly valued. You will have significant influence over your own tasks and the opportunity to contribute to architecture and technical decisions.\nThis is an opportunity to combine your passion for software development with technology that has a meaningful impact on society.\nKey responsibilities\nSoftware Development: Design, develop and maintain high-quality software using Java and Spring Boot, including microservices.\nBig Data Processing: Develop scalable solutions for processing, handling and analyzing large and complex data flows.\nIntelligence Solutions: Contribute to software capabilities that support intelligence professionals and national security organizations in their operational work.\nArchitecture & Solution Design: Take part in defining and driving architecture and technical solutions, ensuring scalability, performance and maintainability.\nData Technologies: Work with technologies such as PostgreSQL, Elasticsearch and Apache Kafka to build robust data-driven solutions.\nCross-functional Collaboration: Collaborate with colleagues across Engineering and Development, combining different technologies and competencies to create effective solutions.\nContinuous Improvement: Contribute to improving our software, development practices and technical solutions through knowledge sharing and collaboration.\nAbout you\nAs an experienced Software Developer with a strong background in Java and data processing, you enjoy tackling complex technical challenges and developing robust software solutions that handle large volumes of data.\nTaking pride in writing clean, structured and maintainable code, you are motivated by contributing to architectural decisions and finding the right technical solutions. Curiosity drives you to explore new technologies and share knowledge with colleagues.\nWith an interest in emerging AI technologies, including Agentic AI, you are keen to explore how they can be applied to complex software systems. You recognise the importance of combining AI capabilities with human expertise, ensuring that technology supports rather than replaces human judgement.\nBeyond the technical aspects, you are motivated by the purpose behind the products you develop. Understanding how technology supports intelligence professionals and contributes to a safer society gives your work meaning.\nWe imagine that you:\nHave several years of experience with Java development.\nHave experience designing and developing Java/Spring Boot microservices.\nHave a solid understanding of big data flows and data processing.\nHave experience with PostgreSQL, Elasticsearch and Apache Kafka.\nComfortable contributing to architecture and technical solution design.\nWrite clean, structured and maintainable code.\nEnjoy collaborating with colleagues across teams and sharing your knowledge.\nAre curious about new technologies and continuously look for ways to improve.\nCommunicate effectively in English, both written and spoken.\nIt would be an advantage if you also have:\nPrevious experience working within an intelligence organization, law enforcement or national security environment.\nAn understanding of intelligence operations, workflows and the challenges faced by intelligence professionals.\nExperience developing software solutions for intelligence, investigation or other security-sensitive domains.\nExperience with Apache Flink.\nExperience working with template engines.\nMost importantly, you bring strong technical skills, curiosity and an interest in developing software that supports important work within intelligence and national security.\nYou do not need to tick every box. We believe in continuous learning and professional development, and we are interested in what you can bring to the team and how you would like to grow with us.\nBe part of the XCI team\nYou will join a growing team of more than 170 experts who share XCI's mission of protecting society against criminal threats.\nOur customer projects are never \"mission impossible\", but they always carry personal meaning and, for many of us, even feel like a childhood dream come true.\nAt XCI, you will work with highly skilled and motivated colleagues in an informal and collaborative environment. Our culture is built around \"freedom under responsibility\", giving you flexibility, trust and the opportunity to take ownership of your work.\nWe place great importance on employee development and offer opportunities for on-the-job learning, internal training, as well as external courses and certifications.\nInterested in making a difference?\nIf you have any questions about the position, you are welcome to contact the Development Manager responsible for the team.\nWe conduct interviews on an ongoing basis and will close the recruitment process as soon as we find the right candidate.\nWe look forward to hearing from you!\nDue to GDPR, applications can only be submitted via the link.\nAll employees at XCI must be able to obtain a security clearance. We will therefore ask you to present a clean criminal record during the recruitment process.\nDepartment\nDevelopment\nLocations\nCopenhagen, Aalborg\nContact\n[navn]\nHead of People & Culture\n-\nAdministration\nApply for this job\nDevelopment\n·\nCopenhagen, Aalborg\nSoftware Developer\nBuild the technology behind intelligence operations. Develop scalable solutions that help intelligence professionals process complex data, gain valuable insights and protect society.\nLoading application form\nClose modal\nCareer site\nData & privacy\nManage cookies\nxci.dk\nLinkedIn\nEmployee login\nCandidate Connect login\nApplicant tracking system\nby Teamtailor"
+  },
+  {
+   "id": "lagermedarbejder-unenriched",
+   "title": "Lagermedarbejder",
+   "kind": "mismatch",
+   "set": "unenriched",
+   "fit": {
+    "comms-grc": "M",
+    "engineer": "M"
+   },
+   "jobCategory": "OPERATIONS_LOGISTICS",
+   "technologies": [],
+   "skills": [],
+   "requiredSkills": [],
+   "preferredSkills": [],
+   "description": "Gå til sidens indhold\n36.700 job i dag\nFor jobsøgere\nFor arbejdsgivere\nDA\nEN\nLog ind\nOpret profil\nJobsøgning\nSøg job\nVælg mellem flere søgekriterier\nDin side\nSkab overblik over din jobsøgning\nJobagent\nFå nye job direkte i din indbakke\nProfil\nOpret din profil og bliv headhuntet\nJobannoncearkiv\nFind inspiration i udløbne jobopslag\nFå en jobvejleder\nBliv afklaret i din jobsøgning\nJobs For Ukraine\nHjælper ukrainske flygtninge med at få job\nArbejdspladser\nSe virksomhedsprofiler\nFå viden om din næste arbejdsplads\nEvaluér arbejdsplads\nHvordan er din arbejdsplads?\nElevplads\nSe virksomheder med elevpladser\nGraduate program\nSe virksomheder med Graduate Programmer\nTest dig selv\nTjek din løn\nHvad tjener andre som dig?\nJobglædetest\nHvordan er din jobglæde?\nPersontypetest\nKender du dine styrker?\nStresstest\nMål dit stressniveau\nTalenttest\nFind dine arbejdstalenter\nGuides\nAnsøgninger\nSådan skriver du en god ansøgning\nCV\nFå de bedste tips til dit CV\nJobsamtale\nGør et godt indtryk til samtalen\nLønforhandling\nStå stærkt til lønforhandlingen\nOpsigelse\nBrug denne guide og kom godt videre\nUopfordret ansøgning\nSådan søger du uopfordret\nBliv headhuntet\nSådan bliver du headhuntet\nJobagent\nFå en bedre Jobagent\nAI i arbejdslivet\nFå inspiration til hverdag og karriere\nDit første job\nVærktøjer og tips til dit nye arbejdsliv\nJobglæde\nSæt jobglæde på agendaen\nKurser\n6 ugers jobrettet uddannelse\nOpgrader dine kompetencer\nJobsøgningskursus\nSkab struktur i din jobsøgning\nForedrag\nGode råd til dig, der søger nyt job\nJobindex Kurser\nLedig? Find det rigtige kursus for dig\nFor arbejdsgivere\nTilmeld dig Jobindex\nSwitch to English\nLog ind\nOpret profil\nFor jobsøgere\nLog ind som jobsøger\nFor arbejdsgivere\nLog ind som arbejdsgiver\nSøg job\nProfil\nGemte job\nMere\nOverblik\nJobagent\nAnsøgninger\nHenvendelser\nDokumenter\nVirksomheder\nRåd og vejledning\nIndstillinger\nGem job\nDel\nAnsøg\nLagermedarbejder\nBoii\nAlbertslund\nKom og vær en del af et engageret lagerteam, hvor du selvstændigt løser opgaver hver dag. Vi søger en struktureret og driftssikker lagermedarbejder, som kan bidrage til den daglige drift og sammen med kollegerne sikre, at lageret kører optimalt.\nOm stillingen\nI samarbejde med lagerteamet har du ansvar for en række centrale lageropgaver, herunder modtagelse af varer, plukning, forsendelse og kørsel. Du arbejder i et team, hvor vi vægter samarbejde, struktur og kvalitet. Den primære arbejdstid er kl. 09.00-17.00 på hverdage, men det kan variere, og det er vigtigt for os, at du er fleksibel.\nDine opgaver er blandt andet:\nModtagelse og kontrol af varer fra leverandører\nRegistrering og håndtering af varer i vores system (Business Central)\nPlukning og pakning af ordrer til webshop og butikker\nForsendelsesklargøring og returhåndtering\nLageroptælling og vedligeholdelse af lagerstatus\nKørsel med varevogn til leveringer (B-kørekort påkrævet)\nDin profil\nDu har erfaring fra lagerarbejde og arbejder struktureret, selvstændigt og kvalitetsbevidst\nDu har et gyldigt B-kørekort\nTruckkørekort er en stor fordel\nDu trives med både fysisk og logistisk arbejde\nDu tager gerne ansvar for dine opgaver, men arbejder som en del af et team\nPraktisk\nArbejdssted: Albertslund\nTiltrædelse: Hurtigst muligt\nArbejdstid: 37 timer ugentligt\nLøn: Efter kvalifikationer. Lønnen udbetales hver 14. dag.\nSådan ansøger du\nSend din ansøgning og CV til [navn] via QuickApply-knappen “Ansøg”. Vi behandler ansøgninger løbende og lukker rekrutteringen, når den rette kandidat er fundet.\nJobbet søges via QuickApply på Jobindex.\nAnsøg\nGem job\nDel\nAnsøg\n11 følgere\nFølger Følg\nBoii\n2 jobannoncer\nOm virksomheden\nWebshop, Roholmsvej 8, 2620 Albertslund\nVigtige datoer\nIndrykket:\n18. november 2026\nAnsøgningsfrist:\nSnarest muligt\nVirksomheden tilbyder\nAnsættelsestype:\nFastansættelse\nHjemmearbejde:\nTilbydes ikke\nUgentlig arbejdstid:\nFuldtid\nVil du også følge virksomheden?\nVil du følge virksomheden?\n× Luk\nHvad sker der, når du følger en virksomhed?\nDu viser virksomheden, at du er interesseret i at arbejde hos dem. Når virksomheden har et job, der matcher din profil, vil du blive foreslået som kandidat (dog kun, hvis dit din profil er sat til, at du gerne vil kontaktes).\nLæs mere\nTip:\nOpdater din profil, så du fremstår bedst muligt\nTjek, at din profil er sat til ‘Vil gerne kontaktes’\nUnder privatlivsindstillinger kan du skjule særlige dele af din profil\nOpret CV\nSæt CV online\nOpdater CV\nVis kun interesse for job\nFølg virksomheden\nVil du vise interesse for dette job?\n× Luk\nHvad sker der, når du viser interesse for et job?\nDu viser virksomheden, at du er interesseret i jobbet. Virksomheden kan derefter kontakte dig, hvis du i din profil har givet tilladelse til at blive kontaktet.\nLæs mere\nTip: Opdater din profil og vis, at du vil kontaktes med job.\nVis ikke igen\nAnnuller\nVis interesse\nVis interesse for job\n× Luk\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og opret dit CV - det tager kun 5 minutter.\nFor at vise interesse skal du have et online CV. Klik på knappen nedenfor og sæt dit CV online.\nLæs mere om interessevisning her .\nLuk\nOpret CV\nRet CV\nFor jobsøgere\nDin side\nEvaluer din arbejdsplads\nSe evalueringer\nOpret profil\nApps til jobsøgning\nKaares Klumme\nAnsøgningsmaskinen\nSupport for jobsøgere\nFor arbejdsgivere\nDin kundeside\nIndryk annonce\nJobannoncering\nRekruttering\nEmployer branding\nInternational\nSe virksomhedsprofil\nSupport for arbejdsgivere\nOm Jobindex\nOm Jobindex\nJob hos Jobindex\nFor investorer\nGennemsigtighedsrapporter\nPresse\n#JobsForUkraine\nModtag nyheder\nFor jobsøgere\nFor arbejdsgivere\nHent job-apps\nFølg os\n© Jobindex A/S, Carl Jacobsens Vej 29-31, 2500 Valby, Tlf. 38 32 33 55 , CVR-nr. 21367087\nBetingelser og persondatapolitik\nHandelsbetingelser\nGDPR\nCookiepolitik ( ret samtykke )\nBaseret på 400 evalueringer\nAnsvarlig brug af dine oplysninger\n×\nJobindex ønsker at tilbyde en service, der giver dig den bedste oplevelse. Til dette ønsker vi at bruge cookies og personoplysninger til statistik og markedsføring. Vi indsamler oplysninger om din enhed, tidspunkt, besøgte sider og din IP-adresse. Jobindex bruger egne cookies og cookies fra samarbejdspartnere. Vi og vores samarbejdspartnere opbevarer og/eller tilgår oplysninger på din enhed med henblik på at vise tilpassede annoncer og annoncemåling, tilpasset indhold, indholdsmåling, målgruppeindsigter og produktudvikling.\nLæs mere om Jobindex' brug af cookies og om vores behandling af personoplysninger .\nOplysningerne indsamles kun med dit samtykke, som til hver en tid kan ændres ved at klikke på \" Cookiepolitik \" nederst på siden.\nNødvendige\nStatistik\nMarkedsføring\nAfvis\nAccepter valgte\nAccepter alle"
+  }
+ ]
+}

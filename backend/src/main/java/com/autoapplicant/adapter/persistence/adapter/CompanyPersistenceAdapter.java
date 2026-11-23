@@ -3,6 +3,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 import com.autoapplicant.adapter.persistence.entity.CompanyEntity;
 import com.autoapplicant.adapter.persistence.repository.CompanyJpaRepository;
 import com.autoapplicant.domain.company.Company;
+import com.autoapplicant.domain.company.CompanyNames;
 import com.autoapplicant.domain.company.CompanySize;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import java.util.List;
@@ -32,15 +33,34 @@ public class CompanyPersistenceAdapter implements CompanyRepositoryPort {
     }
 
 
+    /**
+     * An exact name wins; otherwise the oldest company that {@link CompanyNames} takes to be the
+     * same employer, so a Lever slug and a Jobindex name land on one row.
+     */
     @Override
     public Company findOrCreate(String name) {
         return repo.findByNameIgnoreCase(name)
+                .or(() -> sameEmployer(name))
                 .map(this::toDomain)
                 .orElseGet(() -> {
                     CompanyEntity e = new CompanyEntity();
                     e.setName(name);
                     return toDomain(repo.save(e));
                 });
+    }
+
+    private Optional<CompanyEntity> sameEmployer(String name) {
+        String key = CompanyNames.matchKey(name);
+        if (key.isEmpty()) {
+            return Optional.empty();
+        }
+        return repo.findByPlainNamePrefix(likePrefix(CompanyNames.firstWord(name))).stream()
+                .filter(candidate -> CompanyNames.matchKey(candidate.getName()).equals(key))
+                .findFirst();
+    }
+
+    private static String likePrefix(String literal) {
+        return literal.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     @Override

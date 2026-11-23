@@ -1,5 +1,6 @@
 package com.autoapplicant.usecase.crawler;
 
+import com.autoapplicant.domain.crawler.CrawlRunReport;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.in.crawler.TriggerCrawlUseCase;
 import com.autoapplicant.port.out.crawler.CrawlOrchestrationPort;
@@ -35,22 +36,22 @@ public class CrawlManagementService implements TriggerCrawlUseCase {
     }
 
     @Override
-    public void triggerAllSync() {
-        orchestrator.runAllSync();
+    public CrawlRunReport triggerAllSync() {
+        return orchestrator.runAllSync();
     }
 
     @Override
-    public void triggerAllSyncForce() {
-        orchestrator.runAllSyncForce();
+    public CrawlRunReport triggerAllSyncForce() {
+        return orchestrator.runAllSyncForce();
     }
 
     @Override
-    public void triggerSourceSync(JobSource source) {
-        orchestrator.runSourceSync(source);
+    public CrawlRunReport triggerSourceSync(JobSource source) {
+        return orchestrator.runSourceSync(source);
     }
 
     @Override
-    public void triggerSourceSyncForce(JobSource source) {
-        orchestrator.runSourceSyncForce(source);
+    public CrawlRunReport triggerSourceSyncForce(JobSource source) {
+        return orchestrator.runSourceSyncForce(source);
     }
 }

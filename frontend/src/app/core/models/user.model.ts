@@ -34,6 +34,11 @@ export interface UserPreferences {
   preferredEmploymentTypes: string[];
   preferredSeniority: string[];
   preferredIndustries: string[];
+  /** Job categories left out of the feed, matching and enrichment. */
+  excludedCategories: string[];
+  /** Where enrichment looks for postings; null means the default (8260 Viby J, 85 km). */
+  /** home is a postcode, place name or kommune, as typed. */
+  enrichmentArea: { home: string; radiusKm: number } | null;
   salaryMin: number | null;
   salaryMax: number | null;
   maxCommuteKm: number | null;

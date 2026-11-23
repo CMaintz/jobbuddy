@@ -3,20 +3,22 @@ package com.autoapplicant.adapter.persistence.adapter;
 import com.autoapplicant.adapter.persistence.entity.ProfileEmbeddingEntity;
 import com.autoapplicant.adapter.persistence.repository.ProfileEmbeddingJpaRepository;
 import com.autoapplicant.domain.user.ProfileEmbedding;
+import com.autoapplicant.port.in.ai.ResolveEmbeddingChoiceUseCase;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class ProfileEmbeddingPersistenceAdapter implements ProfileEmbeddingRepositoryPort {
 
     private final ProfileEmbeddingJpaRepository repo;
+    private final ResolveEmbeddingChoiceUseCase activeChoice;
 
-    public ProfileEmbeddingPersistenceAdapter(ProfileEmbeddingJpaRepository repo) {
+    public ProfileEmbeddingPersistenceAdapter(ProfileEmbeddingJpaRepository repo, ResolveEmbeddingChoiceUseCase activeChoice) {
         this.repo = repo;
+        this.activeChoice = activeChoice;
     }
 
     @Override
@@ -30,9 +32,14 @@ public class ProfileEmbeddingPersistenceAdapter implements ProfileEmbeddingRepos
         return toDomain(saved);
     }
 
+    /**
+     * Empty when her stored vector is from another model than the install's: matching then
+     * recomputes it with the current model, and saving replaces the old one.
+     */
     @Override
     public Optional<ProfileEmbedding> findByUserId(UUID userId) {
-        return repo.findByUserId(userId).map(this::toDomain);
+        String model = activeChoice.currentChoice().model();
+        return repo.findByUserId(userId).filter(e -> model.equals(e.getModel())).map(this::toDomain);
     }
 
     @Override

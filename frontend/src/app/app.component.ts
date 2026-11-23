@@ -8,30 +8,22 @@ import { LanguageService } from './core/language.service';
 import { JbIconComponent } from './shared/components/jb-icon/jb-icon.component';
 import { StreakBadgeComponent } from './shared/components/streak-badge/streak-badge.component';
 import { JbToastComponent } from './shared/components/jb-toast/jb-toast.component';
+import { ChatPanelComponent } from './shared/components/chat-panel/chat-panel.component';
+import { PostingQueueBarComponent } from './shared/components/posting-queue-bar/posting-queue-bar.component';
 import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
+import { UiLanguageSyncService } from './core/ui-language-sync.service';
 import { filter } from 'rxjs';
+import { NavItem, visibleNav } from './app-nav';
 
 /** Routes rendered without the app shell. An unverified user on /verify-email cannot use the app yet. */
 const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
-
-interface NavItem {
-  id: string;
-  label: string;
-  icon: string;
-  route: string;
-  kbd?: string;
-  badge?: string;
-  count?: number;
-  accent?: boolean;
-  hot?: boolean;
-}
 
 @Component({
   selector: 'app-root',
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
-    JbToastComponent,
+    JbToastComponent, ChatPanelComponent, PostingQueueBarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app.component.html'
@@ -43,6 +35,7 @@ export class AppComponent implements OnInit {
   notify = inject(NotifyService);
   private router = inject(Router);
   private streak = inject(ActivityStreakService);
+  private languageSync = inject(UiLanguageSyncService);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
 
@@ -64,24 +57,27 @@ export class AppComponent implements OnInit {
     { id: 'interviews', label: 'nav.interviews', icon: 'briefcase', route: '/interviews' },
   ];
 
-  libraryNav: NavItem[] = [
+  private readonly allLibraryNav: NavItem[] = [
     { id: 'master',       label: 'nav.masterCv',    icon: 'doc',       route: '/cv' },
     { id: 'applications', label: 'nav.applications', icon: 'layers',   route: '/applications' },
     { id: 'documents',    label: 'nav.documents',   icon: 'clipboard', route: '/documents' },
     { id: 'saved',        label: 'nav.savedRoles',  icon: 'bookmark',  route: '/jobs/saved' },
-    { id: 'prompts',      label: 'nav.prompts',     icon: 'lightbulb', route: '/prompts' },
+    { id: 'prompts',      label: 'nav.prompts',     icon: 'lightbulb', route: '/prompts', adminOnly: true },
     { id: 'resume',       label: 'nav.cvBuilder',   icon: 'edit',      route: '/resume-builder' },
     { id: 'analysis',     label: 'nav.cvAnalysis',  icon: 'target',    route: '/analysis' },
     { id: 'analytics',    label: 'nav.analytics',   icon: 'chart-up',  route: '/analytics' },
     { id: 'companies',    label: 'nav.companies',   icon: 'building',  route: '/companies' },
   ];
 
+  libraryNav: NavItem[] = visibleNav(this.allLibraryNav, undefined);
 
   ngOnInit(): void {
+    this.languageSync.start();
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.currentUserEmail = user?.email || '';
       this.currentUserName = user?.email?.split('@')[0] ?? '';
       this.signedIn = !!user;
+      this.libraryNav = visibleNav(this.allLibraryNav, user?.role);
       if (user) this.streak.refresh();
       else this.streak.clear();
       if (user && !user.onboardingComplete && !this.router.url.startsWith('/onboarding')) {

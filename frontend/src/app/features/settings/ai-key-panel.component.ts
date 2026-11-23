@@ -3,11 +3,16 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
 import { AiApiService, AiCredentialStatus } from '../../core/api/ai.api';
+import { AuthService } from '../../core/auth/auth.service';
 
 /**
  * Bring your own generation key. With none stored, generation runs on whatever the
  * server is configured with — on a personal install that is the local CLI agent, so
  * leaving this empty keeps the terminal path.
+ *
+ * Provider, key and model are operator setup that a job seeker cannot act on, so only an admin
+ * gets the form. A job seeker who stored a key earlier still sees that it is there and can remove
+ * it; hiding it would leave their key stored with no way to see or delete it.
  */
 @Component({
   selector: 'app-ai-key-panel',
@@ -18,6 +23,7 @@ import { AiApiService, AiCredentialStatus } from '../../core/api/ai.api';
 export class AiKeyPanelComponent implements OnInit {
   private api = inject(AiApiService);
   private cdr = inject(ChangeDetectorRef);
+  readonly isAdmin = inject(AuthService).isAdmin();
 
   status = signal<AiCredentialStatus | null>(null);
   loading = signal(true);
