@@ -46,7 +46,8 @@ const CONTENT_W = PAGE_W - MARGIN * 2;
 @Injectable({ providedIn: 'root' })
 export class AtsPdfService {
 
-  async downloadResume(model: AtsResumeModel, filename: string): Promise<void> {
+  /** Saves the CV and resolves to its page count, so the caller can hold it to the page budget. */
+  async downloadResume(model: AtsResumeModel, filename: string): Promise<number> {
     const doc = await this.newDoc();
     let y = MARGIN;
 
@@ -86,12 +87,14 @@ export class AtsPdfService {
     }
 
     doc.save(`${filename}.pdf`);
+    return doc.getNumberOfPages();
   }
 
+  /** Saves the letter and resolves to its page count, so the caller can hold it to the page budget. */
   async downloadLetter(opts: {
     name?: string; headline?: string; contactLine?: string;
     paragraphs: string[]; filename: string;
-  }): Promise<void> {
+  }): Promise<number> {
     const doc = await this.newDoc();
     let y = MARGIN;
 
@@ -105,6 +108,7 @@ export class AtsPdfService {
       y += 3.5;
     }
     doc.save(`${opts.filename}.pdf`);
+    return doc.getNumberOfPages();
   }
 
   // ── Layout primitives ─────────────────────────────────────────

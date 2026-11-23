@@ -173,7 +173,7 @@ class JobControllerTest {
 
     @Test
     void semantic_search_and_similar_clamp_limit() throws Exception {
-        when(semanticSearch.semanticSearch("java", 100)).thenReturn(List.of());
+        when(semanticSearch.semanticSearch(userId, "java", 100)).thenReturn(List.of());
         when(getSimilarJobs.getSimilarJobs(jobId, 1)).thenReturn(List.of());
 
         mvc.perform(get("/api/v1/jobs/search/semantic").param("q", "java").param("limit", "500"))
@@ -181,7 +181,7 @@ class JobControllerTest {
         mvc.perform(get("/api/v1/jobs/{id}/similar", jobId).param("limit", "0"))
                 .andExpect(status().isOk());
 
-        verify(semanticSearch).semanticSearch("java", 100);
+        verify(semanticSearch).semanticSearch(userId, "java", 100);
         verify(getSimilarJobs).getSimilarJobs(jobId, 1);
     }
 

@@ -1,8 +1,11 @@
 package com.autoapplicant.adapter.web;
 
+import com.autoapplicant.domain.chat.ChatFailure;
+import com.autoapplicant.domain.chat.ChatRejectedException;
 import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
+import com.autoapplicant.domain.document.structured.LetterChangedDuringCheckException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -36,6 +39,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, AccountExistsException.CODE, ex.getMessage(), req);
     }
 
+    @ExceptionHandler(LetterChangedDuringCheckException.class)
+    public ResponseEntity<ApiError> handleLetterChanged(LetterChangedDuringCheckException ex, WebRequest req) {
+        return error(HttpStatus.CONFLICT, LetterChangedDuringCheckException.CODE, ex.getMessage(), req);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException ex, WebRequest req) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
@@ -60,6 +68,15 @@ public class GlobalExceptionHandler {
                 ? HttpStatus.SERVICE_UNAVAILABLE
                 : HttpStatus.UNPROCESSABLE_ENTITY;
         return error(status, ex.reason().name(), ex.getMessage(), req);
+    }
+
+    /** A busy chat waits for its own answer (409); too many busy chats wait for any (429). */
+    @ExceptionHandler(ChatRejectedException.class)
+    public ResponseEntity<ApiError> handleChatRejected(ChatRejectedException ex, WebRequest req) {
+        HttpStatus status = ex.failure() == ChatFailure.TOO_MANY_CHATS
+                ? HttpStatus.TOO_MANY_REQUESTS
+                : HttpStatus.CONFLICT;
+        return error(status, ex.failure().name(), ex.getMessage(), req);
     }
 
     @ExceptionHandler({SecurityException.class, AccessDeniedException.class})

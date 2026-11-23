@@ -9,7 +9,9 @@
   buries the first.
 -->
 <configuration>
-    <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+    <!-- LOG_DIR still wins, so existing deployments that set it are unaffected. -->
+    <springProperty name="APP_DATA_DIR" source="app.data-dir" defaultValue="."/>
+    <property name="LOG_DIR" value="${LOG_DIR:-${APP_DATA_DIR}/logs}"/>
     <property name="PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

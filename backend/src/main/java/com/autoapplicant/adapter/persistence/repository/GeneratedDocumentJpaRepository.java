@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface GeneratedDocumentJpaRepository extends JpaRepository<GeneratedDocumentEntity, UUID> {
     List<GeneratedDocumentEntity> findByApplicationId(UUID applicationId);
@@ -19,4 +21,11 @@ public interface GeneratedDocumentJpaRepository extends JpaRepository<GeneratedD
 
     @Query("SELECT e.createdAt FROM GeneratedDocumentEntity e WHERE e.userId = :userId AND e.createdAt >= :since")
     List<Instant> findCreatedAtSince(UUID userId, Instant since);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE GeneratedDocumentEntity e SET e.structuredContent = :replacement
+            WHERE e.id = :id AND e.userId = :userId AND e.structuredContent = :expected""")
+    int replaceStructuredContent(@Param("id") UUID id, @Param("userId") UUID userId,
+                                 @Param("expected") String expected, @Param("replacement") String replacement);
 }

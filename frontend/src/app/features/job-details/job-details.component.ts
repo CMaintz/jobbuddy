@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +32,7 @@ const STAGE_FLOW: ApplicationStatus[] = ['SAVED', 'APPLIED', 'RECRUITER_CONTACT'
 })
 export class JobDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
   private notify = inject(NotifyService);
   private router = inject(Router);
   private jobsApi = inject(JobsApiService);
@@ -96,14 +98,19 @@ export class JobDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.loading = false; return; }
-    this.load(id);
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const id = params.get('id');
+      if (!id) { this.loading = false; return; }
+      this.show(id);
+    });
   }
 
-  /** Navigating between jobs reuses this component — reset and reload manually. */
   openSimilar(id: string): void {
     this.router.navigate(['/jobs', id]);
+  }
+
+  /** Navigating between jobs reuses this component, so each new id resets and reloads it. */
+  private show(id: string): void {
     this.loading = true;
     this.job = null;
     this.application = null;
