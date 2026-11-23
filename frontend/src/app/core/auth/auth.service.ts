@@ -42,15 +42,16 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUser());
   currentUser$ = this.currentUserSubject.asObservable();
 
-  private readonly firebaseSignedIn = signal(!!auth.currentUser);
+  private readonly firebaseSignedIn = signal(this.desktop || !!auth.currentUser);
   /**
-   * Firebase's sign-in state for templates. isAuthenticated() reads the SDK directly, which an
-   * OnPush view cannot see change, notably when a persisted session is restored after page load.
+   * isAuthenticated() as a signal for templates. isAuthenticated() reads the SDK directly, which
+   * an OnPush view cannot see change, notably when a persisted session is restored after page
+   * load. Always true in the desktop app, which has no Firebase session.
    */
   readonly signedIn = this.firebaseSignedIn.asReadonly();
 
   constructor() {
-    onAuthStateChanged(auth, user => this.firebaseSignedIn.set(!!user));
+    onAuthStateChanged(auth, user => this.firebaseSignedIn.set(this.desktop || !!user));
   }
 
   /**
