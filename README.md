@@ -102,10 +102,55 @@ AI provider and feature toggles (optional, with defaults):
 - `AI_CLI_MODEL`: Claude model for the default command, passed as `--model` (default `sonnet`, so generation does not run on the user's own default model). Not applied to `codex` or to an `AI_CLI_COMMAND` override.
 - `AI_CLI_MODEL_LABEL`: model name recorded in the usage log and on saved documents. Blank uses the pinned model, or `cli-agent` when the app does not choose one.
 - `AI_CLI_TIMEOUT_SECONDS`: limit per local-agent call (default `120`).
-- `AI_REQUEST_TIMEOUT_SECONDS`: how long an AI request waits before answering 504 (default `390`: company research, generation and review are up to three CLI calls).
+- `AI_REQUEST_TIMEOUT_SECONDS`: how long an AI request waits before answering 504 (default `1080`: a cover letter is company research, generation, review and a first gate verdict of up to two calls, then up to three gate rounds of up to three calls each; the default fits one full round with every call at the CLI limit, and the gate starts a round only if it can finish before this deadline).
+- `LETTER_GATE_MAX_ROUNDS`: how many times a letter the gate fails is rewritten and gated again before the remaining fails are shown (default `3`).
 - `AUTO_REVIEW_ENABLED`: the reviewer critique/revise pass after generation (default `true`; each pass is one extra LLM call).
 - `FACT_GUARD_ENABLED` / `FACT_GUARD_MODE`: the fact gate on generated metrics (`warn` by default, or `block`).
 - `LINKEDIN_SCRAPER_ENABLED`, `LINKEDIN_LOCATIONS`: the LinkedIn connector (see `app.linkedin.*` in `application.yml`).
+- `APP_DATA_DIR`: writable directory for uploads and logs (default: the working directory). `LOG_DIR` still overrides the log location on its own.
+
+### Desktop profile
+
+`--spring.profiles.active=desktop` runs the backend on the user's own PC for one user, started by the desktop shell. It needs no Firebase project:
+
+- There is one local user (`local@jobbuddy.invalid`, role `USER`), created on first start.
+- The server listens on `127.0.0.1` only. Every request, `/uploads` and `/actuator/health` included, must come from loopback and carry the shell's per-launch token in an `X-JobBuddy-Token` header. Anything else gets 403.
+- CORS admits only the shell's origin.
+- A scheduled workflow crawls every source except LinkedIn, and also checks posting URLs and expires stale postings, so those schedules are off here. LinkedIn planning and crawling stay on: the keyword plans need the user's Claude login, and LinkedIn is gentler on a residential IP. The enrichment and embedding sweeps and the reminders also run.
+
+The desktop app also has a chat, reachable from every page, that runs on the user's own `claude` login. Each chat is one Claude Code session in `APP_DATA_DIR/chat`, run with no user or project settings, no built-in tools, no slash commands and the pinned model (`AI_CLI_MODEL`, default `sonnet`). JobBuddy keeps its own copy of each chat's messages in the database and shows that; Claude Code also keeps a session file under its own config folder, which deleting a chat deletes too. When Claude Code has cleaned up an old session, the chat says so and continues from a short recap of the kept messages. `CHAT_MAX_CONCURRENT_TURNS` (default 2) and `CHAT_TURN_TIMEOUT_SECONDS` (default 300) bound how much of the subscription it can take.
+
+The chat reads her JobBuddy data through the backend's own MCP server at `/mcp` (read tools: posting search with her match score, one posting, her profile, applications, coming dates, saved and ignored postings). It cannot change anything itself. It can offer buttons (open a posting, start an application, show the pipeline, step through several postings), which the server checks and she clicks. It can also propose a change (save or hide a posting, move an application to another status, note an interview time, or write a tailored CV and cover letter for one or more postings): the proposal is checked against her data, stored (`chat_plans`), and shown as a card with Godkend and Afvis. Only her click, on an endpoint behind the desktop token, runs it, through the same use cases the app's screens use, after checking again that it is still hers and that nothing it was based on has changed. Each item records when it was proposed and decided and how it ended, and an item cut off by a shutdown is marked interrupted at the next start. Documents are written one posting at a time in the background, through the same generation, fact gate and length setting as quick apply, and land on her application for the posting for her to review and export herself; nothing is sent. `/mcp` has its own filter chain: loopback only, and only with a token issued for one running chat turn, which opens nothing else and dies with the turn. The desktop token is not accepted there and never reaches `claude`; the turn token reaches it only as an environment variable that the MCP config refers to by name. Posting text is untrusted, so tools hand it over as data inside a JSON field.
+
+Environment:
+
+- `JOBBUDDY_DESKTOP_TOKEN` (required): a random secret of at least 32 characters, generated by the shell for each launch. The app refuses to start without it.
+- `DESKTOP_SHELL_ORIGIN`: the origin the shell's UI is served from (default `app://jobbuddy`).
+- `APP_DATA_DIR`: defaults to `%LOCALAPPDATA%\JobBuddy`, since the install folder is not writable.
+- `GENERATION_AI_PROVIDER` and `ENRICHMENT_CHAT_AI_PROVIDER` default to `claude-cli`. Embeddings still need `OPENAI_API_KEY` (or `GEMINI_API_KEY` with `ENRICHMENT_AI_PROVIDER=gemini`).
+- **One embedding model per install.** The provider she picks in the desktop setup (`ENRICHMENT_AI_PROVIDER` from the shell) is stored in the `embedding_choice` table at startup. The scheduled crawl and every other process embed with the stored choice and ignore their own `ENRICHMENT_AI_PROVIDER`, which applies only while nothing is stored. Gemini is asked for 1536 dimensions, to match the `vector(1536)` columns. A switch keeps every vector and queues the postings that have none for the new model; search and matching read only the stored model's vectors. Without the stored provider's key, the crawl fails before crawling and the desktop app says which key is missing.
+- `DB_URL`, `DB_USER`, `DB_PASS`: the install's own database.
+- `SERVER_PORT`: the shell passes `0`, so the OS picks a free port as the server binds it. Once it takes requests, the backend prints `JOBBUDDY_DESKTOP_READY port=<n>` on stdout, and the shell connects only to that port. No other process can write to the child's stdout, so a process that grabbed a port first never gets the token.
+
+### Desktop app (Windows)
+
+`desktop/` is the Electron shell around the desktop profile: one installer with a bundled Temurin JRE, the backend jar and the Angular build.
+
+- **Starting:** it checks that `claude` is installed and logged in and that Git for Windows is there, and shows each fix in plain Danish. On first run it asks for the database connection and the embeddings key, and stores them encrypted with Electron `safeStorage` (Windows DPAPI) in `%APPDATA%\JobBuddy`. Then it starts the backend with a fresh token and loads the UI from `app://jobbuddy`. The shell adds `X-JobBuddy-Token` to requests for the backend's exact origin only.
+- **Running:** closing the window keeps JobBuddy in the tray ("Åbn", "Start med Windows", "Afslut"), so enrichment, LinkedIn and reminders keep running. Due reminders appear as Windows notifications. "Afslut" kills the backend's whole process tree, and the backend also stops by itself when its stdin closes, so a crashed shell leaves no JVM behind. A start at Windows login runs the backend even when a check fails, and says so from the tray.
+- **Checks and restarts** read PATH from the registry, not the shell's own environment, so Git or Claude Code installed while JobBuddy runs is found by "Tjek igen" and "Start igen".
+- **The window:** the UI, fonts included, is served from the app itself under a Content-Security-Policy that allows scripts only from the app and requests only to the backend. Every web permission is denied except clipboard writes from the app (its copy buttons). Mail and phone links open in her own programs; nothing else leaves the window. The installed app has no DevTools and no menu.
+- **If it breaks:** a crash shows a Danish error screen with the log path, `%LOCALAPPDATA%\JobBuddy\logs\desktop-backend.log`.
+
+Build on Windows from `desktop/` with `mise run package`. It writes `desktop/dist/JobBuddy-Setup-<version>.exe`, a one-click installer for the current user only, so it never asks for administrator rights. `mise run build` followed by `mise run start` (also in `desktop/`) runs it from the checkout.
+
+The installer's exe has Electron's fuses set: no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, no `--inspect`, and the app loads only from its asar. The package task reads the fuses back and fails if any is off. The installed app also exits when started with `--remote-debugging-port` or `--remote-debugging-pipe`, which no fuse covers. To debug, run it from the checkout with `mise run start` in `desktop/`.
+
+**Updating.** There is no auto-update: it needs a code-signing certificate and a release feed, and we have neither. To update, build the new installer and run it over the old install. Her connection, data and logs live outside the install folder, so they are kept. The installer is unsigned, so Windows SmartScreen asks once per new version: "Flere oplysninger", then "Kør alligevel".
+
+### Buddy, the mascot
+
+Buddy the axolotl keeps her company through the long waits: he idles on the chat button, looks around while the AI works, waves when an answer lands and shakes his head when something fails. He is the author's own pixel art from his `brand/buddy-sprites` generator, used here as the project's mascot. `node desktop/scripts/sync-buddy.mjs [out dir] [manifest] [atlas]` (or `mise run sync-buddy` in `desktop/`) copies the generated manifest and sprite atlas into `frontend/` and `desktop/ui/`, and writes the plain-CSS version the desktop shell's pages use. Which clips play in which mood is a preference list in `frontend/src/app/shared/components/buddy/buddy-sprites.ts` (and `MOODS` in the sync script for the shell), so a newly generated clip takes over on the next sync. An outfit is its own output folder: sync `out/office` to dress him.
 
 ## Tests
 

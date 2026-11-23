@@ -39,6 +39,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -84,7 +85,7 @@ public class AiController {
                         @Qualifier("userAiTaskExecutor")
                         java.util.concurrent.Executor userAiExecutor,
                         SecurityContextHelper secCtx,
-                        @Value("${app.ai.request-timeout-seconds:390}") long requestTimeoutSeconds) {
+                        @Value("${app.ai.request-timeout-seconds:1080}") long requestTimeoutSeconds) {
         this.analyze = analyze;
         this.parseCv = parseCv;
         this.refine = refine;
@@ -188,7 +189,8 @@ public class AiController {
                         req.targetLanguage(),
                         Boolean.TRUE.equals(req.showProfileImage()),
                         req.theme() != null ? req.theme().toTheme() : null,
-                        req.lengthPreference()))
+                        req.lengthPreference(),
+                        Instant.now().plusMillis(requestTimeoutMillis)))
                 .thenAccept(r -> result.setResult(ResponseEntity.ok(r)))
                 .exceptionally(e -> {
                     result.setErrorResult(e);

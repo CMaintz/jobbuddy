@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 /** Computed "needs attention" item — not stored, recomputed by the backend on request. */
 export interface Nudge {
-  type: 'DEADLINE_SOON' | 'FOLLOW_UP' | 'REMINDER_DUE' | 'OUTREACH_FOLLOW_UP';
+  type: 'DEADLINE_SOON' | 'FOLLOW_UP' | 'REMINDER_DUE' | 'OUTREACH_FOLLOW_UP' | 'INTERVIEW_SOON';
   applicationId: string | null;
   jobId: string | null;
   /** OUTREACH_FOLLOW_UP only: the tracked outreach that is due. */
@@ -19,6 +19,8 @@ export interface Nudge {
   daysSinceApplied: number | null;
   /** REMINDER_DUE: the user's own note. OUTREACH_FOLLOW_UP: who to contact. */
   note: string | null;
+  /** INTERVIEW_SOON only: the interview's local time, ISO (e.g. "10:00:00"). */
+  time: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

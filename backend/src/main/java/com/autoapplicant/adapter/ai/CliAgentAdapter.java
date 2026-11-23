@@ -38,12 +38,24 @@ public class CliAgentAdapter implements ChatProviderPort {
     private final String provider;
     private final String command;
     private final String modelLabel;
+    /** Null means {@code app.ai.cli.timeout-seconds}. */
+    private final Duration timeout;
 
     /**
      * {@code provider} picks the default command line when {@code app.ai.cli.command} is blank,
      * and which CLI's auth variables the agent inherits.
      */
     public CliAgentAdapter(AppProperties props, String provider) {
+        this(props, provider, null);
+    }
+
+    /**
+     * As {@link #CliAgentAdapter(AppProperties, String)}, with a timeout of its own instead of
+     * {@code app.ai.cli.timeout-seconds}: a batch of postings takes far longer than the single
+     * generation call the shared value is sized for. Null keeps the shared value.
+     */
+    public CliAgentAdapter(AppProperties props, String provider, Duration timeout) {
+        this.timeout = timeout;
         this.props = props;
         this.provider = provider;
         AppProperties.Cli cli = props.getAi().getCli();
@@ -70,7 +82,7 @@ public class CliAgentAdapter implements ChatProviderPort {
     }
 
     private String run(PromptComposition composition, boolean jsonObject) {
-        int timeoutSeconds = props.getAi().getCli().getTimeoutSeconds();
+        long timeoutSeconds = timeout != null ? timeout.toSeconds() : props.getAi().getCli().getTimeoutSeconds();
         String prompt = buildPrompt(composition, jsonObject);
         Path workDir = newWorkDir();
         try {

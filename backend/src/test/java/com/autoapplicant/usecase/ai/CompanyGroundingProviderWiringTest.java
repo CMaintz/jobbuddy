@@ -4,12 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.ai.AiCompletion;
 import com.autoapplicant.domain.company.Company;
-import com.autoapplicant.port.out.ai.AiProviderPort;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
+import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.company.CompanyRepositoryPort;
 import com.autoapplicant.port.out.company.CompanyResearchRepositoryPort;
 import com.autoapplicant.port.out.web.WebPageFetchPort;
@@ -38,8 +39,9 @@ class CompanyGroundingProviderWiringTest {
     @MockitoBean CompanyResearchRepositoryPort researchRepo;
     @MockitoBean WebPageFetchPort webFetch;
     // Real default methods, so whichever convenience method the service calls reaches complete().
-    @MockitoBean(name = "enrichmentAiProvider", answers = Answers.CALLS_REAL_METHODS)
-    AiProviderPort embeddingsProvider;
+    // The install's one embedding-only key. Grounding is a chat job and must never reach for it.
+    @MockitoBean(name = "embeddingProvider")
+    EmbeddingProviderPort embeddingsProvider;
 
     @MockitoBean(name = "enrichmentChatProvider", answers = Answers.CALLS_REAL_METHODS)
     ChatProviderPort chatProvider;
@@ -53,12 +55,11 @@ class CompanyGroundingProviderWiringTest {
         when(companyRepo.findFacts(COMPANY_ID)).thenReturn(Optional.empty());
         when(companyRepo.findById(COMPANY_ID)).thenReturn(Optional.of(company));
         when(webFetch.fetchText("https://acme.example")).thenReturn(Optional.of("Acme builds payroll"));
-        when(embeddingsProvider.complete(any(), anyBoolean(), anyString()))
-                .thenThrow(new IllegalStateException("401: no API key configured"));
         when(chatProvider.complete(any(), anyBoolean(), anyString()))
                 .thenReturn(AiCompletion.untracked(FACTS, "sonnet"));
 
         assertThat(grounding.contextFor(UUID.randomUUID(), COMPANY_ID).facts())
                 .isEqualTo(FACTS);
+        verifyNoInteractions(embeddingsProvider);
     }
 }
