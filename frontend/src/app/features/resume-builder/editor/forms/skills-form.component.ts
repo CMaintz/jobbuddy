@@ -7,7 +7,7 @@ import { ResumeSkill } from '../../models/resume-builder.models';
 @Component({
   selector: 'app-skills-form',
   imports: [FormsModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './skills-form.component.html',
 })
 export class SkillsFormComponent {

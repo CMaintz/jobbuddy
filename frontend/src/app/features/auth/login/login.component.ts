@@ -9,7 +9,7 @@ export type ResetStatus = 'idle' | 'sending' | 'sent' | 'needEmail' | 'tooManyRe
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
@@ -22,13 +22,13 @@ export class LoginComponent {
     password: ['', Validators.required]
   });
 
-  error = '';
-  loading = false;
+  error = signal('');
+  loading = signal(false);
 
   submit(): void {
     if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
     const { email, password } = this.form.value;
     this.authService.login(email!, password!).subscribe({
       next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
@@ -37,8 +37,8 @@ export class LoginComponent {
           this.router.navigate(['/verify-email']);
           return;
         }
-        this.error = this.friendlyError(e?.code);
-        this.loading = false;
+        this.error.set(this.friendlyError(e?.code));
+        this.loading.set(false);
       }
     });
   }
