@@ -37,6 +37,6 @@ describe('JobDetailsComponent', () => {
     params.next(convertToParamMap({ id: 'b' }));
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.job?.id).toBe('b');
+    expect(fixture.componentInstance.job()?.id).toBe('b');
   });
 });
