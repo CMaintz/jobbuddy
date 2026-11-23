@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -92,6 +93,18 @@ class TypstResumeRenderTest {
         RenderedPdf pdf = TypstFixtures.adapter().renderPdf(design);
 
         assertThat(flowed(TypstFixtures.text(pdf.bytes()))).contains(NAME);
+    }
+
+    /** Bug caught: a heading the client did not send aborts the compile, so the export is a 500. */
+    @Test
+    void aDesignWithoutHeadingsStillRenders() throws IOException {
+        ResumeDesign d = ResumeDesigns.danish("executive");
+        ResumeDesign noHeadings = new ResumeDesign(d.layout(), d.pageSize(), d.theme(), d.photo(), d.showSkillLevel(),
+                Map.of(), d.person(), d.summary(), d.experience(), d.education(), d.projects(), d.skillGroups(),
+                d.languages(), d.certifications(), d.strengths(), d.socials(), d.customSections(), d.mainOrder(),
+                d.sideOrder(), d.hidden(), d.sectionStyles());
+
+        assertThat(flowed(TypstFixtures.text(TypstFixtures.adapter().renderPdf(noHeadings).bytes()))).contains(NAME, ROLE);
     }
 
     /** Bug caught: the builder's photo is never staged, so a designed CV loses it. */

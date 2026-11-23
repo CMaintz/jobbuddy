@@ -142,7 +142,10 @@ record TypstResumeData(
                 TypstRichText.parse(e.description()), texts(e.skills()));
     }
 
-    /** Headings come from the client's translations, so they are plain text like any other field. */
+    /**
+     * Headings come from the client's translations, so they are plain text like any other field.
+     * A missing one prints as nothing (resume.typ's heading-text), never fails the compile.
+     */
     private static Map<String, String> labels(Map<String, String> labels) {
         Map<String, String> out = new LinkedHashMap<>();
         if (labels != null) labels.forEach((key, value) -> out.put(key, text(value)));

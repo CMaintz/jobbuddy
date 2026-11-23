@@ -9,7 +9,8 @@
 #let theme = doc.theme
 #let accent = rgb(theme.color)
 #let ink = rgb(theme.text)
-#let labels = doc.labels
+// A heading the client did not send prints as nothing rather than failing the compile.
+#let heading-text(key) = doc.labels.at(key, default: "")
 #let person = doc.person
 #let styles = doc.sectionStyles
 
@@ -114,7 +115,7 @@
 }
 
 #let dates(e) = if present(e.start) or present(e.end) {
-  [#e.at("start", default: "") – #e.at("end", default: "")]
+  [#e.at("start", default: "") - #e.at("end", default: "")]
 }
 
 #let row(left, right) = grid(columns: (1fr, auto), column-gutter: px(8), left, right)
@@ -133,18 +134,20 @@
     stack(spacing: px(6), ..rows)
   }))
 
-#let skill-chips(k, fill, border, chip-fill: none, radius: 999pt) = stack(spacing: px(8),
+#let skill-chips(k, fill, border, chip-fill: none, radius: 999pt, category: auto) = stack(spacing: px(8),
   ..doc.skillGroups.map(g => {
     let parts = ()
-    if g.category != none { parts.push(text(size: fs(10, k: k), weight: "semibold", fill: border, upper(g.category))) }
+    let category-fill = if category == auto { border } else { category }
+    if g.category != none { parts.push(text(size: fs(10, k: k), weight: "semibold", fill: category-fill, upper(g.category))) }
     parts.push(g.skills.map(s => box(inset: (x: px(8), y: px(2)), radius: radius, stroke: 0.75pt + border,
       fill: chip-fill, text(size: fs(12, k: k), fill: fill, s.name))).join(h(px(8))))
     stack(spacing: px(6), ..parts)
   }))
 
-#let custom-sections(heading-fn, k: 1) = for cs in doc.custom {
+#let custom-sections(heading-fn) = for cs in doc.custom {
+  let k = k-of("custom")
   block(above: gap, below: 0pt, styled("custom", {
-    heading-fn(cs.heading)
+    block(sticky: true, heading-fn(cs.heading))
     if cs.body.len() > 0 { text(size: fs(14, k: k), fill: tone(92), rich(cs.body)) }
     if cs.items.len() > 0 { set text(size: fs(12, k: k), fill: tone(92)); list(..cs.items) }
   }))
@@ -154,10 +157,10 @@
 
 // classic: main column (65%) with a bordered header, tinted sidebar (35%) on the right.
 #let classic() = {
-  let h2(t, k: 1) = block(below: px(8), stroke: (bottom: 0.75pt + accent), inset: (bottom: px(3)), width: 100%,
+  let h2(t, k: 1) = block(sticky: true, below: px(8), stroke: (bottom: 0.75pt + accent), inset: (bottom: px(3)), width: 100%,
     text(size: fs(12.8, k: k), weight: "bold", fill: accent, tracking: 0.08em, upper(t)))
-  let side-h(t, k: 1) = block(below: px(6), text(size: fs(11.2, k: k), weight: "bold", fill: accent, tracking: 0.08em, upper(t)))
-  let entry(e, k, title-key: "title") = block(breakable: false, {
+  let side-h(t, k: 1) = block(sticky: true, below: px(6), text(size: fs(11.2, k: k), weight: "bold", fill: accent, tracking: 0.08em, upper(t)))
+  let entry(e, k, title-key: "title") = block({
     row(stack(spacing: px(2), text(size: fs(14, k: k), weight: "semibold", e.title),
         text(size: fs(12, k: k), fill: tone(62), e.subtitle + if present(e.at("location", default: none)) { " · " + e.location } else { "" })),
       text(size: fs(12, k: k), fill: tone(48), dates(e)))
@@ -166,10 +169,10 @@
   })
   let main(id) = {
     let k = k-of(id)
-    if id == "summary" and doc.summary.len() > 0 { styled(id, { h2(labels.summary, k: k); text(size: fs(14, k: k), fill: tone(92), rich(doc.summary)) }) }
-    else if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.experience, k: k); stack(spacing: px(16), ..doc.experience.map(e => entry(e, k))) }) }
-    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(labels.education, k: k); stack(spacing: px(12), ..doc.education.map(e => entry(e, k))) }) }
-    else if id == "projects" and doc.projects.len() > 0 { styled(id, { h2(labels.projects, k: k); stack(spacing: px(12), ..doc.projects.map(p => block(breakable: false, {
+    if id == "summary" and doc.summary.len() > 0 { styled(id, { h2(heading-text("summary"), k: k); text(size: fs(14, k: k), fill: tone(92), rich(doc.summary)) }) }
+    else if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(heading-text("experience"), k: k); stack(spacing: px(16), ..doc.experience.map(e => entry(e, k))) }) }
+    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(heading-text("education"), k: k); stack(spacing: px(12), ..doc.education.map(e => entry(e, k))) }) }
+    else if id == "projects" and doc.projects.len() > 0 { styled(id, { h2(heading-text("projects"), k: k); stack(spacing: px(12), ..doc.projects.map(p => block({
       row(text(size: fs(14, k: k), weight: "semibold", p.title), text(size: fs(12, k: k), fill: tone(48), p.date))
       if p.description.len() > 0 { v(px(4)); text(size: fs(12, k: k), fill: tone(78), rich(p.description)) }
       chips(p.skills, k: k)
@@ -177,16 +180,16 @@
   }
   let side(id) = {
     let k = k-of(id)
-    if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { side-h(labels.skills, k: k); skill-list(k, tone(92), tone(62), accent, rgb("#d1d5db")) }) }
-    else if id == "languages" and doc.languages.len() > 0 { styled(id, { side-h(labels.languages, k: k); stack(spacing: px(4), ..doc.languages.map(l => row(text(size: fs(12, k: k), fill: tone(92), l.name), text(size: fs(12, k: k), fill: tone(48), l.proficiency)))) }) }
-    else if id == "certifications" and doc.certifications.len() > 0 { styled(id, { side-h(labels.certifications, k: k); stack(spacing: px(8), ..doc.certifications.map(c => stack(spacing: px(2),
+    if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { side-h(heading-text("skills"), k: k); skill-list(k, tone(92), tone(62), accent, rgb("#d1d5db")) }) }
+    else if id == "languages" and doc.languages.len() > 0 { styled(id, { side-h(heading-text("languages"), k: k); stack(spacing: px(4), ..doc.languages.map(l => row(text(size: fs(12, k: k), fill: tone(92), l.name), text(size: fs(12, k: k), fill: tone(48), l.proficiency)))) }) }
+    else if id == "certifications" and doc.certifications.len() > 0 { styled(id, { side-h(heading-text("certifications"), k: k); stack(spacing: px(8), ..doc.certifications.map(c => stack(spacing: px(2),
       text(size: fs(12, k: k), weight: "medium", fill: tone(92), c.name),
       ..if present(c.issuer) { (text(size: fs(12, k: k), fill: tone(48), c.issuer),) } else { () },
       ..if present(c.date) { (text(size: fs(12, k: k), fill: tone(48), c.date),) } else { () }))) }) }
-    else if id == "strengths" and doc.strengths.len() > 0 { styled(id, { side-h(labels.strengths, k: k); stack(spacing: px(8), ..doc.strengths.map(s => stack(spacing: px(2),
+    else if id == "strengths" and doc.strengths.len() > 0 { styled(id, { side-h(heading-text("strengths"), k: k); stack(spacing: px(8), ..doc.strengths.map(s => stack(spacing: px(2),
       text(size: fs(12, k: k), weight: "semibold", fill: tone(92))[#box(baseline: -20%, circle(radius: px(2.5), fill: accent)) #s.title],
       ..if present(s.description) { (text(size: fs(12, k: k), fill: tone(48), s.description),) } else { () }))) }) }
-    else if id == "socials" and doc.socials.len() > 0 { styled(id, { side-h(labels.links, k: k); stack(spacing: px(6), ..doc.socials.map(s => text(size: fs(12, k: k), fill: tone(78), s.label))) }) }
+    else if id == "socials" and doc.socials.len() > 0 { styled(id, { side-h(heading-text("links"), k: k); stack(spacing: px(6), ..doc.socials.map(s => text(size: fs(12, k: k), fill: tone(78), s.label))) }) }
   }
   set page(background: page-fill(accent.transparentize(92%), 35%, dx: 65%))
   grid(columns: (65%, 35%),
@@ -208,27 +211,27 @@
 
 // modern-2col: solid theme sidebar (35%) on the left, main column (65%).
 #let modern-2col() = {
-  let side-h(t) = block(below: px(8), text(size: fs(12), weight: "bold", fill: white.transparentize(40%), tracking: 0.1em, upper(t)))
-  let h2(t, k: 1) = block(below: px(12), text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
+  let side-h(t) = block(sticky: true, below: px(8), text(size: fs(12), weight: "bold", fill: white.transparentize(40%), tracking: 0.1em, upper(t)))
+  let h2(t, k: 1) = block(sticky: true, below: px(12), text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
   let on = white.transparentize(10%)
   let main(id) = {
     let k = k-of(id)
-    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.experience, k: k); stack(spacing: px(16), ..doc.experience.map(e => block(breakable: false, {
+    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(heading-text("experience"), k: k); stack(spacing: px(16), ..doc.experience.map(e => block({
       row(stack(spacing: px(2), text(size: fs(14, k: k), weight: "semibold", e.title), text(size: fs(12, k: k), fill: tone(62), e.subtitle)), text(size: fs(12, k: k), fill: tone(48), dates(e)))
       if e.description.len() > 0 { v(px(4)); text(size: fs(12, k: k), fill: tone(78), rich(e.description)) }
       chips(e.skills, k: k)
     }))) }) }
-    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(labels.education, k: k); stack(spacing: px(12), ..doc.education.map(e => block(breakable: false, {
+    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(heading-text("education"), k: k); stack(spacing: px(12), ..doc.education.map(e => block({
       row(text(size: fs(14, k: k), weight: "semibold", e.title), text(size: fs(12, k: k), fill: tone(48), e.start))
       text(size: fs(12, k: k), fill: tone(62), e.subtitle)
       chips(e.skills, k: k)
     }))) }) }
-    else if id == "projects" and doc.projects.len() > 0 { styled(id, { h2(labels.projects, k: k); stack(spacing: px(12), ..doc.projects.map(p => block(breakable: false, {
+    else if id == "projects" and doc.projects.len() > 0 { styled(id, { h2(heading-text("projects"), k: k); stack(spacing: px(12), ..doc.projects.map(p => block({
       row(text(size: fs(14, k: k), weight: "semibold", p.title), text(size: fs(12, k: k), fill: tone(48), p.date))
       if p.description.len() > 0 { v(px(4)); text(size: fs(12, k: k), fill: tone(78), rich(p.description)) }
       chips(p.skills, k: k)
     }))) }) }
-    else if id == "certifications" and doc.certifications.len() > 0 { styled(id, { h2(labels.certifications, k: k); stack(spacing: px(6), ..doc.certifications.map(c => stack(spacing: px(2),
+    else if id == "certifications" and doc.certifications.len() > 0 { styled(id, { h2(heading-text("certifications"), k: k); stack(spacing: px(6), ..doc.certifications.map(c => stack(spacing: px(2),
       text(size: fs(14, k: k), weight: "medium", c.name),
       ..if present(c.issuer) { (text(size: fs(12, k: k), fill: tone(62), c.issuer + " · " + c.date),) } else { () }))) }) }
   }
@@ -240,14 +243,14 @@
       if doc.photo.path != none { parts.push(align(center, photo(96, extra: 1.5pt + white.transparentize(70%)))) }
       parts.push({ text(size: fs(24), weight: "bold", person.name); if present(person.title) { linebreak(); text(size: fs(14), fill: white.transparentize(25%), person.title) } })
       if present(person.email) or present(person.phone) or present(person.location) {
-        parts.push({ side-h(labels.contact); stack(spacing: px(6), ..("email", "phone", "location").filter(c => present(person.at(c))).map(c =>
+        parts.push({ side-h(heading-text("contact")); stack(spacing: px(6), ..("email", "phone", "location").filter(c => present(person.at(c))).map(c =>
           text(size: fs(12), fill: on)[#icon(c, white.transparentize(30%)) #h(px(4)) #person.at(c)])) })
       }
-      if doc.skillGroups.len() > 0 { parts.push({ side-h(labels.skills); skill-list(1, on, white.transparentize(30%), white.transparentize(10%), white.transparentize(75%), dot-size: 6) }) }
-      if doc.languages.len() > 0 { parts.push({ side-h(labels.languages); stack(spacing: px(2), ..doc.languages.map(l => row(text(size: fs(12), fill: on, l.name), text(size: fs(12), fill: white.transparentize(40%), l.proficiency)))) }) }
-      if doc.strengths.len() > 0 { parts.push({ side-h(labels.strengths); stack(spacing: px(6), ..doc.strengths.map(s => stack(spacing: px(2), text(size: fs(12), weight: "semibold", s.title),
+      if doc.skillGroups.len() > 0 { parts.push({ side-h(heading-text("skills")); skill-list(1, on, white.transparentize(30%), white.transparentize(10%), white.transparentize(75%), dot-size: 6) }) }
+      if doc.languages.len() > 0 { parts.push({ side-h(heading-text("languages")); stack(spacing: px(2), ..doc.languages.map(l => row(text(size: fs(12), fill: on, l.name), text(size: fs(12), fill: white.transparentize(40%), l.proficiency)))) }) }
+      if doc.strengths.len() > 0 { parts.push({ side-h(heading-text("strengths")); stack(spacing: px(6), ..doc.strengths.map(s => stack(spacing: px(2), text(size: fs(12), weight: "semibold", s.title),
         ..if present(s.description) { (text(size: fs(12), fill: white.transparentize(40%), s.description),) } else { () }))) }) }
-      if doc.socials.len() > 0 { parts.push({ side-h(labels.links); stack(spacing: px(4), ..doc.socials.map(s => text(size: fs(12), fill: on, s.label))) }) }
+      if doc.socials.len() > 0 { parts.push({ side-h(heading-text("links")); stack(spacing: px(4), ..doc.socials.map(s => text(size: fs(12), fill: on, s.label))) }) }
       stack(spacing: px(20), ..parts)
     }),
     block(inset: px(32), width: 100%, {
@@ -259,10 +262,10 @@
 
 // modern (one column): bordered header with photo, ruled section headings, chip skills.
 #let modern-1col() = {
-  let h2(t, k: 1) = block(below: px(12), width: 100%, stroke: (bottom: 0.75pt + accent), inset: (bottom: px(4)),
+  let h2(t, k: 1) = block(sticky: true, below: px(12), width: 100%, stroke: (bottom: 0.75pt + accent), inset: (bottom: px(4)),
     text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
-  let small-h(t, k: 1) = block(below: px(8), text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
-  let entry(e, k) = block(breakable: false, {
+  let small-h(t, k: 1) = block(sticky: true, below: px(8), text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
+  let entry(e, k) = block({
     row(text(size: fs(14, k: k), weight: "semibold", e.title), text(size: fs(12, k: k), fill: tone(48), dates(e)))
     text(size: fs(12, k: k), fill: tone(62), e.subtitle + if present(e.at("location", default: none)) { " · " + e.location } else { "" })
     if e.at("description", default: ()).len() > 0 { v(px(4)); text(size: fs(12, k: k), fill: tone(78), rich(e.description)) }
@@ -270,11 +273,11 @@
   })
   let sec(id) = {
     let k = k-of(id)
-    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.experience, k: k); stack(spacing: px(16), ..doc.experience.map(e => entry(e, k))) }) }
-    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(labels.education, k: k); stack(spacing: px(12), ..doc.education.map(e => entry(e, k))) }) }
-    else if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(labels.skills, k: k); skill-chips(k, accent, accent) }) }
-    else if id == "languages" and doc.languages.len() > 0 { styled(id, { small-h(labels.languages, k: k); stack(spacing: px(2), ..doc.languages.map(l => row(text(size: fs(12, k: k), l.name), text(size: fs(12, k: k), fill: tone(48), l.proficiency)))) }) }
-    else if id == "certifications" and doc.certifications.len() > 0 { styled(id, { small-h(labels.certifications, k: k); stack(spacing: px(2), ..doc.certifications.map(c => text(size: fs(12, k: k), weight: "medium", c.name))) }) }
+    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(heading-text("experience"), k: k); stack(spacing: px(16), ..doc.experience.map(e => entry(e, k))) }) }
+    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(heading-text("education"), k: k); stack(spacing: px(12), ..doc.education.map(e => entry(e, k))) }) }
+    else if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(heading-text("skills"), k: k); skill-chips(k, accent, accent) }) }
+    else if id == "languages" and doc.languages.len() > 0 { styled(id, { small-h(heading-text("languages"), k: k); stack(spacing: px(2), ..doc.languages.map(l => row(text(size: fs(12, k: k), l.name), text(size: fs(12, k: k), fill: tone(48), l.proficiency)))) }) }
+    else if id == "certifications" and doc.certifications.len() > 0 { styled(id, { small-h(heading-text("certifications"), k: k); stack(spacing: px(2), ..doc.certifications.map(c => text(size: fs(12, k: k), weight: "medium", c.name))) }) }
   }
   block(inset: px(40), width: 100%, {
     block(width: 100%, stroke: (bottom: 2.25pt + accent), inset: (bottom: px(24)), below: px(24),
@@ -286,10 +289,10 @@
         else if doc.photo.placement == "right" { grid(columns: (1fr, auto), column-gutter: px(24), align: horizon, identity, photo(80)) }
         else { grid(columns: (auto, 1fr), column-gutter: px(24), align: horizon, photo(80), identity) }
       })
-    if doc.summary.len() > 0 { block(below: px(24), text(size: fs(14), fill: tone(92), rich(doc.summary))) }
-    stack(spacing: px(24), ..arrange(("experience", "education", "skills")).map(sec).filter(b => b != none))
+    if doc.summary.len() > 0 { block(below: gap, text(size: fs(14), fill: tone(92), rich(doc.summary))) }
+    stack(spacing: gap, ..arrange(("experience", "education", "skills")).map(sec).filter(b => b != none))
     let pair = arrange(("languages", "certifications")).map(sec).filter(b => b != none)
-    if pair.len() > 0 { v(px(24)); grid(columns: (1fr, 1fr), column-gutter: px(24), ..pair) }
+    if pair.len() > 0 { v(gap); grid(columns: (1fr, 1fr), column-gutter: px(24), ..pair) }
     custom-sections(t => block(below: px(12), width: 100%, stroke: (bottom: 0.75pt + accent), inset: (bottom: px(4)),
       text(size: fs(12), weight: "bold", fill: accent, tracking: 0.1em, upper(t))))
   })
@@ -298,19 +301,19 @@
 // minimal: light type, a date gutter and a ruled summary. Headings keep the 0.1em tracking of
 // the other layouts: wider letter-spacing makes PDF text extraction read them as single letters.
 #let minimal() = {
-  let h2(t, k: 1) = block(below: px(16), text(size: fs(12, k: k), fill: tone(48), tracking: 0.1em, upper(t)))
+  let h2(t, k: 1) = block(sticky: true, below: px(16), text(size: fs(12, k: k), fill: tone(48), tracking: 0.1em, upper(t)))
   let sec(id) = {
     let k = k-of(id)
-    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.experience, k: k); stack(spacing: px(16), ..doc.experience.map(e => block(breakable: false,
+    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(heading-text("experience"), k: k); stack(spacing: px(16), ..doc.experience.map(e => block(
       grid(columns: (px(96), 1fr), column-gutter: px(16), align(right, text(size: fs(12, k: k), fill: tone(34), e.start)), {
         text(size: fs(14, k: k), weight: "medium", e.title); linebreak(); text(size: fs(12, k: k), fill: tone(48), e.subtitle)
         if e.description.len() > 0 { v(px(4)); text(size: fs(12, k: k), fill: tone(62), rich(e.description)) }
         chips(e.skills, k: k)
       })))) }) }
-    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(labels.education, k: k); stack(spacing: px(8), ..doc.education.map(e =>
+    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(heading-text("education"), k: k); stack(spacing: px(8), ..doc.education.map(e =>
       grid(columns: (px(96), 1fr), column-gutter: px(16), align(right, text(size: fs(12, k: k), fill: tone(34), e.start)), {
         text(size: fs(14, k: k), weight: "medium", e.title); linebreak(); text(size: fs(12, k: k), fill: tone(48), e.subtitle) }))) }) }
-    else if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(labels.skills, k: k); skill-chips(k, tone(78), rgb("#e5e7eb"), chip-fill: rgb("#f9fafb"), radius: px(4)) }) }
+    else if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(heading-text("skills"), k: k); skill-chips(k, tone(78), rgb("#e5e7eb"), chip-fill: rgb("#f9fafb"), radius: px(4), category: tone(48)) }) }
   }
   block(inset: px(48), width: 100%, {
     set text(fill: tone(100))
@@ -319,30 +322,30 @@
       if present(person.title) { linebreak(); text(size: fs(16), weight: "light", fill: tone(48), person.title) }
       v(px(12)); contacts(tone(48), tone(48), gap: 16, socials: false)
     })
-    if doc.summary.len() > 0 { block(below: px(28), stroke: (left: 1.5pt + accent), inset: (left: px(16)), text(size: fs(14), weight: "light", fill: tone(78), rich(doc.summary))) }
-    stack(spacing: px(28), ..arrange(("experience", "education", "skills")).map(sec).filter(b => b != none))
+    if doc.summary.len() > 0 { block(below: gap, stroke: (left: 1.5pt + accent), inset: (left: px(16)), text(size: fs(14), weight: "light", fill: tone(78), rich(doc.summary))) }
+    stack(spacing: gap, ..arrange(("experience", "education", "skills")).map(sec).filter(b => b != none))
     custom-sections(t => block(below: px(12), text(size: fs(12), fill: tone(48), tracking: 0.1em, upper(t))))
   })
 }
 
 // executive: full-width theme band, ruled headings, education and skills side by side.
 #let executive() = {
-  let h2(t, k: 1, rule: 0.75pt, below: 12) = block(below: px(below), width: 100%, stroke: (bottom: rule + accent), inset: (bottom: px(8)),
+  let h2(t, k: 1, rule: 0.75pt, below: 12) = block(sticky: true, below: px(below), width: 100%, stroke: (bottom: rule + accent), inset: (bottom: px(8)),
     text(size: fs(14, k: k), weight: "semibold", fill: accent, tracking: 0.1em, upper(t)))
   let sec(id) = {
     let k = k-of(id)
-    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.professionalExperience, k: k, rule: 1.5pt, below: 16); stack(spacing: px(20), ..doc.experience.map(e => block(breakable: false, {
+    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(heading-text("professionalExperience"), k: k, rule: 1.5pt, below: 16); stack(spacing: px(20), ..doc.experience.map(e => block({
       row(stack(spacing: px(2), text(size: fs(14, k: k), weight: "semibold", e.title),
           text(size: fs(12, k: k), fill: tone(62), e.subtitle + if present(e.location) { " · " + e.location } else { "" })),
         text(size: fs(12, k: k), fill: tone(48), dates(e)))
       if e.description.len() > 0 { v(px(6)); text(size: fs(12, k: k), fill: tone(78), rich(e.description)) }
       chips(e.skills, k: k)
     }))) }) }
-    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(labels.education, k: k); stack(spacing: px(8), ..doc.education.map(e => stack(spacing: px(2),
+    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(heading-text("education"), k: k); stack(spacing: px(8), ..doc.education.map(e => stack(spacing: px(2),
       text(size: fs(14, k: k), weight: "medium", e.title), text(size: fs(12, k: k), fill: tone(62), e.subtitle)))) }) }
-    else if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(labels.coreSkills, k: k); skill-chips(k, accent, accent, radius: px(4)) }) }
+    else if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(heading-text("coreSkills"), k: k); skill-chips(k, accent, accent, radius: px(4)) }) }
   }
-  block(width: 100%, fill: accent, inset: px(32), {
+  block(width: 100%, fill: accent, inset: px(32), styled("header", {
     set text(fill: white)
     let identity = stack(spacing: px(4), text(size: fs(30), weight: "semibold", tracking: 0.03em, person.name),
       text(size: fs(16), fill: white.transparentize(20%), person.title))
@@ -350,11 +353,11 @@
     else if doc.photo.placement == "left" { grid(columns: (auto, 1fr), column-gutter: px(24), align: bottom, photo(80, extra: 1.5pt + white.transparentize(70%)), identity) }
     else { grid(columns: (1fr, auto), align: bottom, identity, photo(80, extra: 1.5pt + white.transparentize(70%))) }
     v(px(16)); contacts(white.transparentize(25%), white, gap: 20)
-  })
+  }))
   block(inset: (x: px(40), top: px(32), bottom: px(40)), width: 100%, {
-    if doc.summary.len() > 0 { block(below: px(24), stroke: (left: 3pt + accent), inset: (left: px(16)), text(size: fs(14), fill: tone(78), rich(doc.summary))) }
+    if doc.summary.len() > 0 { block(below: gap, stroke: (left: 3pt + accent), inset: (left: px(16)), text(size: fs(14), fill: tone(78), rich(doc.summary))) }
     let order = arrange(("experience", "education", "skills"))
-    if "experience" in order { block(below: px(24), sec("experience")) }
+    if "experience" in order { block(below: gap, sec("experience")) }
     let pair = order.filter(id => id != "experience").map(sec).filter(b => b != none)
     if pair.len() > 0 { grid(columns: (1fr, 1fr), column-gutter: px(24), ..pair) }
     custom-sections(t => block(below: px(16), width: 100%, stroke: (bottom: 1.5pt + accent), inset: (bottom: px(8)),
@@ -364,34 +367,34 @@
 
 // creative: top accent bar, centred identity in a left column (40%), ruled entries on the right.
 #let creative() = {
-  let h2(t, k: 1) = block(below: px(10), text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
+  let h2(t, k: 1) = block(sticky: true, below: px(10), text(size: fs(12, k: k), weight: "bold", fill: accent, tracking: 0.1em, upper(t)))
   let side(id) = {
     let k = k-of(id)
-    if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(labels.skills, k: k); stack(spacing: px(6), ..doc.skillGroups.map(g => stack(spacing: px(6),
+    if id == "skills" and doc.skillGroups.len() > 0 { styled(id, { h2(heading-text("skills"), k: k); stack(spacing: px(6), ..doc.skillGroups.map(g => stack(spacing: px(6),
       ..if g.category != none { (text(size: fs(10, k: k), weight: "semibold", fill: accent, upper(g.category)),) } else { () },
       ..g.skills.map(s => stack(spacing: px(2), text(size: fs(12, k: k), fill: tone(92), s.name),
         ..if doc.showSkillLevel and s.level != none { (grid(columns: (1fr,) * 5, column-gutter: px(2),
           ..range(1, 6).map(d => rect(width: 100%, height: px(4), radius: 99pt, fill: if d <= s.level { accent } else { rgb("#e5e7eb") }))),) } else { () }))))) }) }
-    else if id == "languages" and doc.languages.len() > 0 { styled(id, { h2(labels.languages, k: k); stack(spacing: px(2), ..doc.languages.map(l => row(text(size: fs(12, k: k), l.name), text(size: fs(12, k: k), fill: tone(48), l.proficiency)))) }) }
-    else if id == "socials" and doc.socials.len() > 0 { styled(id, { h2(labels.links, k: k); stack(spacing: px(4), ..doc.socials.map(s => text(size: fs(12, k: k), fill: tone(78), s.label))) }) }
+    else if id == "languages" and doc.languages.len() > 0 { styled(id, { h2(heading-text("languages"), k: k); stack(spacing: px(2), ..doc.languages.map(l => row(text(size: fs(12, k: k), l.name), text(size: fs(12, k: k), fill: tone(48), l.proficiency)))) }) }
+    else if id == "socials" and doc.socials.len() > 0 { styled(id, { h2(heading-text("links"), k: k); stack(spacing: px(4), ..doc.socials.map(s => text(size: fs(12, k: k), fill: tone(78), s.label))) }) }
   }
   let main(id) = {
     let k = k-of(id)
-    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.experience, k: k); stack(spacing: px(16), ..doc.experience.map(e => block(breakable: false,
+    if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(heading-text("experience"), k: k); stack(spacing: px(16), ..doc.experience.map(e => block(
       stroke: (left: 1.5pt + accent.transparentize(62%)), inset: (left: px(12)), {
         row(text(size: fs(14, k: k), weight: "semibold", e.title), text(size: fs(12, k: k), fill: tone(48), dates(e)))
         text(size: fs(12, k: k), fill: tone(48), e.subtitle)
         if e.description.len() > 0 { v(px(4)); text(size: fs(12, k: k), fill: tone(62), rich(e.description)) }
         chips(e.skills, k: k)
       }))) }) }
-    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(labels.education, k: k); stack(spacing: px(8), ..doc.education.map(e => stack(spacing: px(2),
+    else if id == "education" and doc.education.len() > 0 { styled(id, { h2(heading-text("education"), k: k); stack(spacing: px(8), ..doc.education.map(e => stack(spacing: px(2),
       text(size: fs(14, k: k), weight: "medium", e.title), text(size: fs(12, k: k), fill: tone(48), e.subtitle)))) }) }
-    else if id == "projects" and doc.projects.len() > 0 { styled(id, { h2(labels.projects, k: k); stack(spacing: px(12), ..doc.projects.map(p => block(breakable: false, {
+    else if id == "projects" and doc.projects.len() > 0 { styled(id, { h2(heading-text("projects"), k: k); stack(spacing: px(12), ..doc.projects.map(p => block({
       text(size: fs(14, k: k), weight: "semibold", p.title)
       if p.description.len() > 0 { text(size: fs(12, k: k), fill: tone(62), rich(p.description)) }
       chips(p.skills, k: k)
     }))) }) }
-    else if id == "strengths" and doc.strengths.len() > 0 { styled(id, { h2(labels.strengths, k: k); grid(columns: (1fr, 1fr), gutter: px(8),
+    else if id == "strengths" and doc.strengths.len() > 0 { styled(id, { h2(heading-text("strengths"), k: k); grid(columns: (1fr, 1fr), gutter: px(8),
       ..doc.strengths.map(s => block(width: 100%, inset: px(8), radius: px(8), stroke: 0.75pt + rgb("#f3f4f6"), fill: rgb("#f9fafb"), {
         text(size: fs(12, k: k), weight: "semibold", fill: tone(92))[#box(baseline: -20%, circle(radius: px(2.5), fill: accent)) #s.title]
         if present(s.description) { linebreak(); text(size: fs(12, k: k), fill: tone(48), s.description) }
@@ -407,8 +410,8 @@
         if present(person.title) { linebreak(); text(size: fs(14), fill: tone(48), person.title) }
       })
       v(px(16)); line(length: 100%, stroke: 0.75pt + rgb("#f3f4f6")); v(px(16))
-      stack(spacing: px(6), ..("email", "phone", "location").filter(c => present(person.at(c))).map(c =>
-        text(size: fs(12), fill: tone(62))[#icon(c, accent) #h(px(4)) #person.at(c)]))
+      styled("header", stack(spacing: px(6), ..("email", "phone", "location").filter(c => present(person.at(c))).map(c =>
+        text(size: fs(12, k: k-of("header")), fill: tone(62))[#icon(c, accent) #h(px(4)) #person.at(c)])))
       v(gap)
       column(("skills", "languages", "socials"), side)
     }),
