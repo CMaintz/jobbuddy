@@ -80,12 +80,12 @@ export class ApplicationDetailComponent implements OnInit {
   statusPending = signal(false);
 
   changeStatus(status: ApplicationStatus): void {
-    const app = this.app;
+    const app = this.app();
     if (!app) return;
     this.statusPending.set(true);
     this.api.updateStatus(app.id, status).subscribe({
       next: updated => {
-        this.app = updated;
+        this.app.set(updated);
         this.statusPending.set(false);
         // The move is a new step on the timeline, so reload it rather than show a stale one.
         this.api.timeline(app.id).subscribe(events => this.timeline.set(events));
