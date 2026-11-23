@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.crawler;
 
+import com.autoapplicant.domain.crawler.CrawlRunReport;
 import com.autoapplicant.domain.crawler.CrawlerState;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
@@ -8,6 +9,7 @@ import com.autoapplicant.port.out.crawler.CrawlerStateRepositoryPort;
 import com.autoapplicant.port.out.crawler.JobSourceConnectorPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +41,18 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
     private final JobRepositoryPort jobRepository;
     private final CrawlerStateRepositoryPort crawlerStateRepo;
     private final Executor crawlerTaskExecutor;
+    private final java.time.Duration heartbeatEvery;
+
+    /**
+     * One daemon thread for every crawl's heartbeat: a beat is a single small UPDATE, and a
+     * daemon thread never keeps a finished one-shot run from exiting.
+     */
+    private static final java.util.concurrent.ScheduledExecutorService HEARTBEATS =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "crawl-heartbeat");
+                thread.setDaemon(true);
+                return thread;
+            });
 
     /**
      * Sources with a crawl in progress in this JVM. Two crawls of one source race each other's
@@ -53,11 +67,26 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                                 JobRepositoryPort jobRepository,
                                 CrawlerStateRepositoryPort crawlerStateRepo,
                                 Executor crawlerTaskExecutor) {
+        this(connectors, ingestionPipeline, jobRepository, crawlerStateRepo, crawlerTaskExecutor,
+                java.time.Duration.ofHours(2));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public CrawlerOrchestrator(List<JobSourceConnectorPort> connectors,
+                                IngestionPipeline ingestionPipeline,
+                                JobRepositoryPort jobRepository,
+                                CrawlerStateRepositoryPort crawlerStateRepo,
+                                Executor crawlerTaskExecutor,
+                                @org.springframework.beans.factory.annotation.Value("${app.crawler.stale-running-after:PT2H}")
+                                java.time.Duration staleRunningAfter) {
         this.connectors = connectors;
         this.ingestionPipeline = ingestionPipeline;
         this.jobRepository = jobRepository;
         this.crawlerStateRepo = crawlerStateRepo;
         this.crawlerTaskExecutor = crawlerTaskExecutor;
+        // Four beats per stale window, so one late or failed beat never makes a live crawl
+        // look abandoned to a process that starts meanwhile.
+        this.heartbeatEvery = staleRunningAfter.dividedBy(4);
     }
 
     /**
@@ -130,20 +159,22 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
         runConnectorInternal(connector, true);
     }
 
-    private void runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
+    /** @return true when the crawl ran and recorded an error; a skipped crawl is not a failure */
+    private boolean runConnectorInternal(JobSourceConnectorPort connector, boolean force) {
         String sourceName = connector.getSource().name();
         if (!inFlight.add(sourceName)) {
             log.warn("Skipping crawl of {}: a crawl of that source is already running", sourceName);
-            return;
+            return false;
         }
         try {
-            crawl(connector, force);
+            return crawl(connector, force) != null;
         } finally {
             inFlight.remove(sourceName);
         }
     }
 
-    private void crawl(JobSourceConnectorPort connector, boolean force) {
+    /** @return the error the crawl recorded in crawler_state, or null when it finished cleanly */
+    private String crawl(JobSourceConnectorPort connector, boolean force) {
         String sourceName = connector.getSource().name();
         // Four numbers, because one was hiding three different things. A connector that
         // re-emits everything (Greenhouse) and one that skips what it recognises (Teamtailor)
@@ -161,6 +192,7 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
         crawlerStateRepo.save(new CrawlerState(
                 sourceName, 0, startedAt, null, 0, 0, null, true, Instant.now()));
 
+        java.util.concurrent.ScheduledFuture<?> heartbeat = startHeartbeat(sourceName);
         String error = null;
         try {
             log.info("Crawling source: {} (force={})", connector.getSource(), force);
@@ -197,11 +229,13 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     knownSkipped.get(), failed.get(), crossListed.get());
         } catch (Exception e) {
             log.error("Crawl failed for {}: {}", connector.getSource(), e.getMessage(), e);
-            error = e.getMessage();
+            // Some exceptions carry no message; a null here would record the crawl as clean.
+            error = e.getMessage() != null ? e.getMessage() : e.toString();
         } catch (Error e) {
             error = e.toString();
             throw e;
         } finally {
+            heartbeat.cancel(false);
             // Mark the crawl finished, whatever happened, so the running flag never outlives it.
             // jobsFound is everything the source showed us; jobsIngested is what was actually
             // new. They were the same number before, which made a re-crawl of unchanged
@@ -210,6 +244,22 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                     sourceName, 0, startedAt, Instant.now(),
                     emitted.get() + knownSkipped.get(), ingestedNew.get(),
                     error, false, Instant.now()));
+        }
+        return error;
+    }
+
+    private java.util.concurrent.ScheduledFuture<?> startHeartbeat(String sourceName) {
+        long everyMillis = Math.max(1, heartbeatEvery.toMillis());
+        return HEARTBEATS.scheduleAtFixedRate(() -> beat(sourceName),
+                everyMillis, everyMillis, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+    /** A failed beat is only logged: the crawl itself must not stop over its flag. */
+    private void beat(String sourceName) {
+        try {
+            crawlerStateRepo.heartbeat(sourceName, Instant.now());
+        } catch (RuntimeException e) {
+            log.warn("Crawl heartbeat for {} failed: {}", sourceName, e.getMessage());
         }
     }
 
@@ -236,36 +286,57 @@ public class CrawlerOrchestrator implements CrawlOrchestrationPort {
                 CompletableFuture.runAsync(() -> runConnectorForce(connector), crawlerTaskExecutor));
     }
 
-    /** Synchronous variants used by the CLI runner — blocks until all connectors finish. */
-    public void runAllSync() {
+    /** Synchronous variants used by the CLI runner: they block until all connectors finish. */
+    @Override
+    public CrawlRunReport runAllSync() {
         List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting synchronous crawl for {} sources", scheduled.size());
-        scheduled.forEach(this::runConnector);
+        CrawlRunReport report = runEachSync(scheduled, false);
         log.info("All sources finished.");
+        return report;
     }
 
-    public void runSourceSync(JobSource source) {
-        connectors.stream()
-                .filter(c -> c.getSource() == source)
-                .findFirst()
-                .ifPresentOrElse(
-                        this::runConnector,
-                        () -> log.warn("No connector found for source: {}", source));
+    @Override
+    public CrawlRunReport runSourceSync(JobSource source) {
+        return runOneSync(source, false);
     }
 
-    public void runAllSyncForce() {
+    @Override
+    public CrawlRunReport runAllSyncForce() {
         List<JobSourceConnectorPort> scheduled = scheduledConnectors();
         log.info("Starting synchronous force crawl for {} sources", scheduled.size());
-        scheduled.forEach(this::runConnectorForce);
+        CrawlRunReport report = runEachSync(scheduled, true);
         log.info("All sources finished (force mode).");
+        return report;
     }
 
-    public void runSourceSyncForce(JobSource source) {
-        connectors.stream()
+    @Override
+    public CrawlRunReport runSourceSyncForce(JobSource source) {
+        return runOneSync(source, true);
+    }
+
+    private CrawlRunReport runEachSync(List<JobSourceConnectorPort> toRun, boolean force) {
+        List<JobSource> failed = new ArrayList<>();
+        for (JobSourceConnectorPort connector : toRun) {
+            if (runConnectorInternal(connector, force)) {
+                failed.add(connector.getSource());
+            }
+        }
+        return new CrawlRunReport(failed);
+    }
+
+    /**
+     * A source that was asked for by name but has no connector (disabled, or not configured)
+     * counts as failed: the caller asked for a crawl and none happened.
+     */
+    private CrawlRunReport runOneSync(JobSource source, boolean force) {
+        return connectors.stream()
                 .filter(c -> c.getSource() == source)
                 .findFirst()
-                .ifPresentOrElse(
-                        this::runConnectorForce,
-                        () -> log.warn("No connector found for source: {}", source));
+                .map(connector -> runEachSync(List.of(connector), force))
+                .orElseGet(() -> {
+                    log.warn("No connector found for source: {}", source);
+                    return new CrawlRunReport(List.of(source));
+                });
     }
 }

@@ -9,6 +9,7 @@ import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { Application } from '../../core/models/application.model';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
 
 const TYPE_LABELS: Record<string, string> = {
   CV: 'documents.type.cv',
@@ -39,8 +40,8 @@ interface DocRow {
 
 @Component({
   selector: 'app-documents',
-  imports: [TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent, BuddyComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.component.html'
 })
 export class DocumentsComponent implements OnInit {

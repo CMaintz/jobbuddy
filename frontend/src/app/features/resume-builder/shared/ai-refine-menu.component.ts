@@ -32,7 +32,7 @@ const SECTION_STYLE_INSTRUCTION = 'Rewrite this text following the section guida
   imports: [FormsModule, TranslateModule, DiffViewerComponent, PromptExplainerComponent],
   templateUrl: './ai-refine-menu.component.html',
   styleUrls: ['./ai-refine-menu.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AiRefineMenuComponent {
   private aiApi = inject(AiApiService);
@@ -60,7 +60,7 @@ export class AiRefineMenuComponent {
   sectionTemplates = signal<PromptTemplate[]>([]);
   /** The style whose explanation is expanded; null keeps the popover compact. */
   explainedId = signal<string | null>(null);
-  customAsk = '';
+  customAsk = signal('');
 
   toggleOpen(): void {
     const opening = !this.open();
@@ -95,7 +95,7 @@ export class AiRefineMenuComponent {
       next: resp => {
         this.busy.set(false);
         this.preview.set(resp.refinedContent);
-        this.customAsk = '';
+        this.customAsk.set('');
       },
       error: () => {
         this.busy.set(false);

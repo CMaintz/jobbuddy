@@ -23,5 +23,13 @@ public record ParsedSkillSuggestion(
         String evidence,
         Source source) {
 
-    public enum Source { CV_PARSE, LINKEDIN_PARSE }
+    public enum Source {
+        CV_PARSE,
+        LINKEDIN_PARSE,
+        /**
+         * Proposed by the AI as likely held, given a skill the user does hold. The evidence is
+         * that held skill's name, which the question to the user quotes.
+         */
+        ADJACENT
+    }
 }

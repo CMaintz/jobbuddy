@@ -2,8 +2,8 @@
     <div class="min-h-screen flex items-center justify-center">
       <div class="card w-full max-w-md">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ 'auth.login.title' | translate }}</h1>
-        @if (error) {
-          <div class="bg-red-50 text-red-700 rounded-md p-3 mb-4 text-sm">{{ error | translate }}</div>
+        @if (error()) {
+          <div class="bg-red-50 text-red-700 rounded-md p-3 mb-4 text-sm">{{ error() | translate }}</div>
         }
         <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
           <div>
@@ -13,9 +13,29 @@
           <div>
             <label class="label">{{ 'auth.password' | translate }}</label>
             <input type="password" formControlName="password" class="input" placeholder="••••••••" />
+            <button type="button" (click)="sendPasswordReset()" [disabled]="resetStatus() === 'sending'"
+                class="mt-1 text-sm text-blue-600 hover:underline">
+              {{ 'auth.login.forgotPassword' | translate }}
+            </button>
           </div>
-          <button type="submit" [disabled]="form.invalid || loading" class="btn-primary w-full">
-            {{ (loading ? 'auth.login.signingIn' : 'auth.login.signIn') | translate }}
+          @switch (resetStatus()) {
+            @case ('sent') {
+              <p class="bg-green-50 text-green-700 rounded-md p-3 text-sm">
+                {{ 'auth.reset.sent' | translate: { email: form.controls.email.value } }}
+              </p>
+            }
+            @case ('needEmail') {
+              <p class="text-sm text-gray-600">{{ 'auth.reset.needEmail' | translate }}</p>
+            }
+            @case ('tooManyRequests') {
+              <p class="bg-red-50 text-red-700 rounded-md p-3 text-sm">{{ 'auth.error.tooManyRequests' | translate }}</p>
+            }
+            @case ('failed') {
+              <p class="bg-red-50 text-red-700 rounded-md p-3 text-sm">{{ 'auth.reset.failed' | translate }}</p>
+            }
+          }
+          <button type="submit" [disabled]="form.invalid || loading()" class="btn-primary w-full">
+            {{ (loading() ? 'auth.login.signingIn' : 'auth.login.signIn') | translate }}
           </button>
         </form>
         <div class="mt-4 relative">

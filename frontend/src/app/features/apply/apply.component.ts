@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, effect, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, effect, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -6,6 +6,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of, switchMap, catchError, map, tap, forkJoin } from 'rxjs';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
+import { BuddyWaitComponent } from '../../shared/components/buddy/buddy-wait.component';
 import { PromptExplainerComponent, chosenPrompt } from '../../shared/components/prompt-explainer/prompt-explainer.component';
 import { AiApiService, GenerateDocumentRequest } from '../../core/api/ai.api';
 import { JobsApiService } from '../../core/api/jobs.api';
@@ -70,9 +72,10 @@ interface ApplyDraft {
 @Component({
   selector: 'app-apply',
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
+    BuddyComponent, BuddyWaitComponent,
     PromptExplainerComponent],
   templateUrl: './apply.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./apply.component.css']
 })
 export class ApplyComponent implements OnInit {
@@ -83,6 +86,7 @@ export class ApplyComponent implements OnInit {
   private promptApi = inject(PromptApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   phase = signal<'input' | 'generating'>('input');
   private busy = signal(false);
@@ -101,17 +105,17 @@ export class ApplyComponent implements OnInit {
   /** Existing in-progress application for the preset job — offer to resume instead of regenerating */
   resumableApp = signal<Application | null>(null);
 
-  promptTemplates: PromptTemplate[] = [];
+  promptTemplates = signal<PromptTemplate[]>([]);
 
   /** Templates matching the selected format's category, plus GENERAL ones. */
   get relevantPromptTemplates(): PromptTemplate[] {
     const category = FORMAT_TO_PROMPT_CATEGORY[this.selectedFormat()];
-    return this.promptTemplates.filter(t =>
+    return this.promptTemplates().filter(t =>
       !t.category || t.category === 'GENERAL' || t.category === category).sort(byPreference);
   }
 
   get explainedPrompt(): PromptTemplate | undefined {
-    return chosenPrompt(this.promptTemplates, this.selectedPromptId(),
+    return chosenPrompt(this.promptTemplates(), this.selectedPromptId(),
       FORMAT_TO_PROMPT_CATEGORY[this.selectedFormat()]);
   }
 
@@ -222,7 +226,7 @@ export class ApplyComponent implements OnInit {
     if (this.languages.includes(defaults.lang)) this.selectedLanguage.set(defaults.lang);
 
     this.promptApi.getAll().subscribe({
-      next: templates => this.promptTemplates = templates,
+      next: templates => this.promptTemplates.set(templates),
       error: this.notify.onError('notify.loadFailed')
     });
 
@@ -285,6 +289,8 @@ export class ApplyComponent implements OnInit {
         this.role = job.title ?? '';
         this.location = job.location ?? '';
         this.jd = job.descriptionClean ?? '';
+        // These are ngModel fields, so they are plain properties rather than signals.
+        this.cdr.markForCheck();
         this.mode.set('manual');
         // Danish job listing? Default output language to Dansk
         if (job.languages?.some(l => l.toLowerCase().startsWith('da'))) this.selectedLanguage.set('Dansk');

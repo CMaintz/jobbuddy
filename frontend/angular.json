@@ -30,6 +30,7 @@
               "src/assets"
             ],
             "styles": [
+              "src/styles/fonts.css",
               "src/styles.css",
               "src/styles/effects.css",
               "src/styles/document-render.css",
@@ -69,6 +70,16 @@
                   "with": "src/environments/environment.local.ts"
                 }
               ]
+            },
+            "desktop": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              }
             }
           },
           "defaultConfiguration": "production"
@@ -104,6 +115,7 @@
               "src/assets"
             ],
             "styles": [
+              "src/styles/fonts.css",
               "src/styles.css",
               "src/styles/effects.css",
               "src/styles/document-render.css",
