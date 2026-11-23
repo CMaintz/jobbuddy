@@ -93,7 +93,6 @@ dependencies {
     // Utilities
     implementation(libs.jsoup)
     implementation(libs.pdfbox)
-    implementation(libs.openhtmltopdf.pdfbox)
 
     // Test
     testImplementation(libs.spring.boot.starter.test)

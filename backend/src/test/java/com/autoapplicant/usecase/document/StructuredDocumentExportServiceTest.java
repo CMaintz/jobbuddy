@@ -58,7 +58,7 @@ class StructuredDocumentExportServiceTest {
     }
 
     private static StructuredDocument document(DocumentType type) {
-        return new StructuredDocument(null, type, "ATS", "ats-classic", null, null, List.of(), "", null);
+        return new StructuredDocument(null, type, "ATS", "ats-classic", null, null, List.of(), "", null, null);
     }
 
     private record FixedPageRenderer(int pages) implements DocumentRendererPort {

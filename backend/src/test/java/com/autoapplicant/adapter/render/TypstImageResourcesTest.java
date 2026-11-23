@@ -2,7 +2,6 @@ package com.autoapplicant.adapter.render;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.autoapplicant.adapter.pdf.PdfTestImages;
 import com.autoapplicant.port.out.document.DocumentRendererPort.RenderedPdf;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;

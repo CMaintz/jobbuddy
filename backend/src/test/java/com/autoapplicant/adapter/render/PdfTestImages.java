@@ -1,4 +1,4 @@
-package com.autoapplicant.adapter.pdf;
+package com.autoapplicant.adapter.render;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -10,18 +10,18 @@ import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 /** Writes a tiny PNG and counts the images a rendered PDF actually embedded. */
-public final class PdfTestImages {
+final class PdfTestImages {
 
     private static final int SIZE = 8;
 
     private PdfTestImages() {}
 
-    public static Path writePng(Path file) throws IOException {
+    static Path writePng(Path file) throws IOException {
         ImageIO.write(new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_RGB), "png", file.toFile());
         return file;
     }
 
-    public static int imagesOnFirstPage(byte[] pdf) throws IOException {
+    static int imagesOnFirstPage(byte[] pdf) throws IOException {
         try (PDDocument document = PDDocument.load(pdf)) {
             PDResources resources = document.getPage(0).getResources();
             int images = 0;

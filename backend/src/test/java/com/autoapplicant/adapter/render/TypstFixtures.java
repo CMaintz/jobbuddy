@@ -69,19 +69,19 @@ final class TypstFixtures {
                 new DocumentRenderOptions(false, theme),
                 List.of(new StructuredDocumentSection("exp", "experience", EXPERIENCE, null, List.of(role)),
                         new StructuredDocumentSection("skills", "skills", SKILLS, null, List.of(skill))),
-                null, null);
+                null, null, null);
     }
 
     /** A designed CV that shows the profile photo, so the image reference is staged. */
     static StructuredDocument designedCvWithPhoto(String photoUrl) {
         return new StructuredDocument(null, DocumentType.CV, "DESIGNED", "modern-sidebar",
                 identity(NAME, photoUrl), new DocumentRenderOptions(true, DocumentTheme.defaults()),
-                List.of(), null, null);
+                List.of(), null, null, null);
     }
 
     static StructuredDocument letter(String body) {
         return new StructuredDocument(null, DocumentType.COVER_LETTER, "ATS", "ats-letter",
-                identity(NAME, null), DocumentRenderOptions.defaults(), List.of(), body, null);
+                identity(NAME, null), DocumentRenderOptions.defaults(), List.of(), body, null, null);
     }
 
     static DocumentIdentity identity(String name, String photoUrl) {

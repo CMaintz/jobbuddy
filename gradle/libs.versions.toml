@@ -12,7 +12,6 @@ testcontainers = "1.21.4"
 archunit = "1.5.1"
 flyway = "10.10.0"
 pdfbox = "2.0.27"
-openhtmltopdf = "1.0.10"
 
 [libraries]
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
@@ -39,7 +38,6 @@ spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-te
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 h2 = { module = "com.h2database:h2" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
-openhtmltopdf-pdfbox = { module = "com.openhtmltopdf:openhtmltopdf-pdfbox", version.ref = "openhtmltopdf" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
