@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -111,7 +111,7 @@ interface StyleSnapshot {
     DiffViewerComponent, AiUsagePanelComponent, AiKeyPanelComponent, SkillTaxonomyPanelComponent,
     CvSectionTemplatesPanelComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
@@ -126,6 +126,8 @@ export class SettingsComponent implements OnInit {
   private aiApi = inject(AiApiService);
   private templatesApi = inject(StructuredDocumentTemplatesApiService);
   private translate = inject(TranslateService);
+  // The settings form binds plain fields through ngModel; callbacks that refill them mark the view.
+  private cdr = inject(ChangeDetectorRef);
 
   /** CV templates available for the Quick-apply default picker. */
   cvTemplates = signal<DocumentTemplateOption[]>([]);
@@ -187,6 +189,7 @@ export class SettingsComponent implements OnInit {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
       this.userEmail = u?.email ?? '';
       this.sections = settingsSectionsFor(u?.role);
+      this.cdr.markForCheck();
     });
     // After the role is known, so a link to an admin-only section still opens it for an admin.
     const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
@@ -209,6 +212,7 @@ export class SettingsComponent implements OnInit {
           || prefs.preferredRemoteTypes.includes('REMOTE');
         this.weeklyGoal = prefs.weeklyApplicationGoal ?? 5;
         this.digestEmail = prefs.notificationEnabled && prefs.notificationFrequency === 'WEEKLY';
+        this.cdr.markForCheck();
         this.loading.set(false);
       },
       error: () => {
@@ -227,6 +231,7 @@ export class SettingsComponent implements OnInit {
         this.styleDonts = wp.donts ?? [];
         this.styleStructure = wp.structureNotes ?? '';
         this.analyzedAt.set(wp.lastAnalyzedAt);
+        this.cdr.markForCheck();
       },
       error: this.notify.onError('notify.loadFailed')
     });
@@ -316,6 +321,7 @@ export class SettingsComponent implements OnInit {
         this.styleDirty = false;
         this.analyzedAt.set(saved.lastAnalyzedAt);
         this.analysisBaseline = null;
+        this.cdr.markForCheck();
       },
       error: () => this.notify.error('settings.toast.styleSaveFailed')
     });
@@ -365,6 +371,7 @@ export class SettingsComponent implements OnInit {
         this.analyzing.set(false);
         this.showAnalyze.set(false);
         this.applyProposal(proposal);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.analyzing.set(false);
