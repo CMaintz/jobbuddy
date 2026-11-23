@@ -3,15 +3,15 @@
       <div class="card w-full max-w-md">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ 'auth.register.title' | translate }}</h1>
 
-        @if (success) {
+        @if (success()) {
           <div class="bg-green-50 border border-green-200 text-green-800 rounded-md p-4 text-sm">
             <strong>{{ 'auth.register.checkInbox' | translate }}</strong><br>
-            {{ 'auth.register.sentTo' | translate:{ email: registeredEmail } }}
+            {{ 'auth.register.sentTo' | translate:{ email: registeredEmail() } }}
             {{ 'auth.register.activateThen' | translate }} <a routerLink="/login" class="underline">{{ 'auth.register.signInLink' | translate }}</a>.
           </div>
         } @else {
-          @if (error) {
-            <div class="bg-red-50 text-red-700 rounded-md p-3 mb-4 text-sm">{{ error | translate }}</div>
+          @if (error()) {
+            <div class="bg-red-50 text-red-700 rounded-md p-3 mb-4 text-sm">{{ error() | translate }}</div>
           }
           <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
             <div>
@@ -32,8 +32,8 @@
                 <p class="text-red-600 text-xs mt-1">{{ 'auth.register.mismatch' | translate }}</p>
               }
             </div>
-            <button type="submit" [disabled]="form.invalid || loading" class="btn-primary w-full">
-              {{ (loading ? 'auth.register.creating' : 'auth.register.create') | translate }}
+            <button type="submit" [disabled]="form.invalid || loading()" class="btn-primary w-full">
+              {{ (loading() ? 'auth.register.creating' : 'auth.register.create') | translate }}
             </button>
           </form>
           <div class="mt-4 relative">
