@@ -1,8 +1,8 @@
 package com.autoapplicant.usecase.document;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 class MarketConventionsTest {
 
@@ -40,7 +40,7 @@ class MarketConventionsTest {
     @Test
     void everySurfaceHasDanishRules() {
         MarketConventions.Market denmark = MarketConventions.Market.DENMARK;
-        assertThat(MarketConventions.outreachRules(denmark)).contains("du");
+        assertThat(MarketConventions.outreachRules(denmark)).contains("Informal \"du\"");
         assertThat(MarketConventions.interviewRules(denmark)).contains("Flat hierarchy");
         assertThat(MarketConventions.jobReadingRules(denmark))
                 .contains("du skal")            // the requirement phrasing

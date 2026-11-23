@@ -76,9 +76,17 @@ public class DocumentReviewer {
         this.objectMapper = objectMapper;
     }
 
-    /** The stable inputs of a review — who, what document, and the posting/language it targets. */
+    /**
+     * The stable inputs of a review: who, what document, the posting and language it targets, and
+     * for a letter the employer needs it was written from (empty when there are none).
+     */
     public record ReviewContext(UUID userId, String documentType, String jobDescription,
-                                String targetLanguage, String jobCountry) {}
+                                String targetLanguage, String jobCountry, List<String> needs) {
+
+        public ReviewContext {
+            needs = needs != null ? List.copyOf(needs) : List.of();
+        }
+    }
 
     /** Carrier for one reviewer pass: the revised draft and what the reviewer changed or flagged. */
     public record ReviewOutcome(String revised, List<String> critique) {}
@@ -127,12 +135,25 @@ public class DocumentReviewer {
                 compositionBuilder.buildStyleMemory(writingProfile),
                 guardrails.honestyRules(),
                 guardrails.marketRules(),
+                letterRulesBlock(ctx),
                 flaggedPhrasesBlock(flaggedPhrases),
                 guardrails.clicheBlock());
         StringBuilder sb = new StringBuilder();
         sections.forEach(section -> appendBlock(sb, section));
         sb.append(REVIEW_JSON_INSTRUCTION);
         return sb.toString();
+    }
+
+    /**
+     * For a prose letter, the rules and needs it was written from: without them the reviewer
+     * reshapes the letter around the posting's keywords and the gate fails what the drafter got right.
+     */
+    private static String letterRulesBlock(ReviewContext ctx) {
+        if (!PromptCompositionBuilder.isProseLetter(ctx.documentType())) {
+            return "";
+        }
+        String needs = LetterRules.needsBlock(ctx.needs());
+        return needs.isEmpty() ? LetterRules.BLOCK : LetterRules.BLOCK + "\n\n" + needs;
     }
 
     private static String draftBlock(ReviewContext ctx, String content) {

@@ -1,0 +1,53 @@
+{
+  "points": [
+    {
+      "point": 1,
+      "employerSentences": 0,
+      "totalSentences": 8,
+      "passed": false,
+      "quotes": [
+        "Hos Dansk Fragt arbejdede jeg fra 2019 til 2022 som kommunikationskonsulent, hvor jeg skrev nyhedsbreve og intranettekster.",
+        "Derefter tog jeg en diplomuddannelse i informationssikkerhed.",
+        "I 2023 blev jeg ansat i Region Midt som GDPR-koordinator, hvor jeg udarbejdede procedurer og gennemførte 40 risikovurderinger.",
+        "Jeg bestod med topkarakter.",
+        "Jeg glæder mig til at fortælle mere om min erfaring."
+      ],
+      "reason": "0 af 8 sætninger handler om Nordvej Transport og virksomhedens udbytte. Hele teksten er skrevet med ansøgeren som subjekt (jeg/min) fra første sætning. Virksomheden, dens NIS2-frist, revisionens kritik, de 680 chauffører og 14 terminaler nævnes ikke. Kravet om mindst halvdelen er langt fra opfyldt."
+    },
+    {
+      "point": 8,
+      "passed": false,
+      "quotes": [
+        "Hos Dansk Fragt arbejdede jeg fra 2019 til 2022 som kommunikationskonsulent, hvor jeg skrev nyhedsbreve og intranettekster.",
+        "I 2023 blev jeg ansat i Region Midt som GDPR-koordinator, hvor jeg udarbejdede procedurer og gennemførte 40 risikovurderinger.",
+        "Som GDPR-koordinator holdt jeg også kurser for 300 medarbejdere og rapporterede til direktionen hvert kvartal.",
+        "Jeg var med til at forberede regionen på NIS2 og deltog i en ISO 27001-certificering.",
+        "På kurset i ISO 27001 lærte jeg at bygge et ledelsessystem op fra bunden."
+      ],
+      "reason": "Ansøgningen er CV'et omskrevet i datid. Der er ingen sætning om, hvad ansøgeren vil bidrage med hos Nordvej Transport, fx dokumentationshullet efter revisionen eller NIS2-arbejdet næste år. Den eneste fremadrettede sætning er den afsluttende høflighedsfrase. Alle passagerne ovenfor skal vendes mod Nordvejs behov."
+    },
+    {
+      "point": 13,
+      "passed": true,
+      "quotes": [],
+      "reason": "Ingen sætning nævner tre eller flere af opslagets opgaver/krav, og ingen opremser opslagets punkter ordret eller genfortæller stillingen. De sætninger, der berører opslagets emner (GDPR-procedurer, risikovurderinger, kvartalsrapportering, kurser), nævner højst to og er skrevet som ansøgerens tidligere erfaring, ikke som gengivelse af opslaget. Punktet består, men det er en svag sejr, da teksten ikke engang tager fat i opslaget."
+    },
+    {
+      "point": 14,
+      "pastTenseApplicantSentencesPerParagraph": [3, 2, 2, 0],
+      "paragraphsOpeningWithApplicantInPast": 3,
+      "passed": false,
+      "quotes": [
+        "Hos Dansk Fragt arbejdede jeg fra 2019 til 2022 som kommunikationskonsulent, hvor jeg skrev nyhedsbreve og intranettekster.",
+        "Derefter tog jeg en diplomuddannelse i informationssikkerhed.",
+        "I 2023 blev jeg ansat i Region Midt som GDPR-koordinator, hvor jeg udarbejdede procedurer og gennemførte 40 risikovurderinger.",
+        "Som GDPR-koordinator holdt jeg også kurser for 300 medarbejdere og rapporterede til direktionen hvert kvartal.",
+        "Jeg var med til at forberede regionen på NIS2 og deltog i en ISO 27001-certificering.",
+        "På kurset i ISO 27001 lærte jeg at bygge et ledelsessystem op fra bunden.",
+        "Jeg bestod med topkarakter."
+      ],
+      "reason": "Tre af fire afsnit har mere end én datidssætning om ansøgeren (3, 2 og 2). Tre afsnit åbner med ansøgeren i datid ('Hos Dansk Fragt arbejdede jeg', 'Som GDPR-koordinator holdt jeg', 'På kurset i ISO 27001 lærte jeg') i stedet for arbejdsgiverens behov. Alle syv sætninger kunne flyttes uændret ind i et CV, og ingen er skrevet som bevis for en påstand om, hvad Nordvej kan få ud af ansøgeren."
+    }
+  ],
+  "verdict": "PORT: DUMPET"
+}

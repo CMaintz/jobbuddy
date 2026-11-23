@@ -51,7 +51,10 @@ final class CvSkillGroupLabels {
 
     private static final Map<String, String> DANISH = Map.ofEntries(
             Map.entry("programming language", "Programmeringssprog"),
-            Map.entry("language", "Programmeringssprog"),
+            // Programming languages have their own category, so plain "language" is one a person
+            // typed for the languages they speak. Reading it as code put "Programmeringssprog"
+            // over Engelsk and Tysk on a non-engineer's CV.
+            Map.entry("language", "Sprog"),
             Map.entry("framework", "Frameworks"),
             Map.entry("library", "Biblioteker"),
             Map.entry("database", "Databaser"),

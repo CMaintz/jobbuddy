@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -7,36 +8,45 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbPillComponent } from '../../shared/components/jb-pill/jb-pill.component';
 import { CompanyMarkComponent } from '../../shared/components/company-mark/company-mark.component';
 import { JobsApiService } from '../../core/api/jobs.api';
+import { ChatChanges } from '../../core/chat/chat-changes';
 import { Job } from '../../core/models/job.model';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
 
 @Component({
   selector: 'app-saved-roles',
   imports: [
     JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, CompanyMarkComponent,
+    JbPillComponent, CompanyMarkComponent, BuddyComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './saved-roles.component.html'
 })
 export class SavedRolesComponent implements OnInit {
   private jobsApi = inject(JobsApiService);
+  private chatChanges = inject(ChatChanges);
+  private destroyRef = inject(DestroyRef);
 
-  savedJobs: Job[] = [];
-  loading = true;
+  savedJobs = signal<Job[]>([]);
+  loading = signal(true);
 
   ngOnInit(): void {
+    this.load();
+    this.chatChanges.savedPostings.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
+  }
+
+  private load(): void {
     this.jobsApi.getSaved().subscribe({
-      next: (jobs) => { this.savedJobs = jobs; this.loading = false; },
-      error: () => this.loading = false
+      next: (jobs) => { this.savedJobs.set(jobs); this.loading.set(false); },
+      error: () => this.loading.set(false)
     });
   }
 
   remove(job: Job, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.savedJobs = this.savedJobs.filter(j => j.id !== job.id);
+    this.savedJobs.update(jobs => jobs.filter(j => j.id !== job.id));
     this.jobsApi.unsave(job.id).subscribe({
-      error: () => this.savedJobs = [...this.savedJobs, job]
+      error: () => this.savedJobs.update(jobs => [...jobs, job])
     });
   }
 }

@@ -15,7 +15,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
     LucideDynamicIcon, TranslateModule, SkillChipListComponent, RichTextPipe,
     SectionTypographyDirective, ResumePhotoDirective,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './modern-2col-layout.component.html',
 })
 export class Modern2ColLayoutComponent {
