@@ -20,7 +20,7 @@ export const PILL_CLASS: Record<PillTone, string> = {
 @Component({
   selector: 'jb-pill',
   templateUrl: './jb-pill.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./jb-pill.component.css']
 })
 export class JbPillComponent {

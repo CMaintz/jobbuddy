@@ -4,7 +4,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
   selector: 'jb-segmented',
   imports: [],
   templateUrl: './jb-segmented.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./jb-segmented.component.css']
 })
 export class JbSegmentedComponent {

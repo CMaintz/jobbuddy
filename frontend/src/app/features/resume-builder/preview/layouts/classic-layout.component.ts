@@ -16,7 +16,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
     SectionTypographyDirective, ResumePhotoDirective,
   ],
   templateUrl: './classic-layout.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./classic-layout.component.css'],
 })
 export class ClassicLayoutComponent {
