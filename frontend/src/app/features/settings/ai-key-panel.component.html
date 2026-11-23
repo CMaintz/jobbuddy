@@ -1,3 +1,4 @@
+@if (isAdmin) {
 <div class="py-3.5 border-b border-jb-border-faint">
   <div class="text-base font-medium">{{ 'settings.aiKey.title' | translate }}</div>
   <div class="text-xs text-jb-text-dim mt-[1px] leading-[1.55]">{{ 'settings.aiKey.desc' | translate }}</div>
@@ -51,3 +52,16 @@
     }
   }
 </div>
+} @else if (status()?.configured) {
+<div class="py-3.5 border-b border-jb-border-faint flex items-center gap-3">
+  <div class="flex-1">
+    <div class="text-base font-medium">{{ 'settings.aiKey.storedTitle' | translate }}</div>
+    <div class="text-xs text-jb-text-dim mt-[1px] leading-[1.55]">{{ 'settings.aiKey.storedDesc' | translate }}</div>
+    @if (error()) {
+      <div class="text-sm text-jb-danger mt-1">{{ error() | translate }}</div>
+    }
+  </div>
+  <button type="button" data-testid="remove-stored-key" class="text-sm text-jb-danger hover:underline"
+      [disabled]="saving()" (click)="clear()">{{ 'settings.aiKey.storedRemove' | translate }}</button>
+</div>
+}

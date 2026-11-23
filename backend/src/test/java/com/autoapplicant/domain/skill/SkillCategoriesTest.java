@@ -1,8 +1,8 @@
 package com.autoapplicant.domain.skill;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * The skills-versus-technologies split used to be two stored columns. It is derived from the
@@ -24,6 +24,13 @@ class SkillCategoriesTest {
         assertThat(SkillCategories.isTechnical("Soft Skill")).isFalse();
         assertThat(SkillCategories.isTechnical("Methodology")).isFalse();
         assertThat(SkillCategories.isTechnical("Domain")).isFalse();
+    }
+
+    @Test
+    void a_spoken_language_category_is_not_a_technology() {
+        // A "Language" group holds the languages someone speaks; counting it technical sends
+        // Engelsk to the model as a technology. Programming languages have their own category.
+        assertThat(SkillCategories.isTechnical("Language")).isFalse();
     }
 
     @Test

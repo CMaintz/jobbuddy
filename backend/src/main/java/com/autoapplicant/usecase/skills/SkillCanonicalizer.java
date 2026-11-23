@@ -38,6 +38,13 @@ public class SkillCanonicalizer {
 
     /** normalised label → canonical key (a row's normalised name). */
     private volatile Map<String, String> forwardMap;
+
+    /**
+     * Labels that only mean a skill in their exact spelling. Taxonomy aliases are lowercased and
+     * also searched as words in a CV, so "SoMe" there would become "some" and match every English
+     * CV. Only an exact label (a posting skill or a profile chip) is folded here.
+     */
+    private static final Map<String, String> CASE_SENSITIVE_LABELS = Map.of("SoMe", "social media");
     /** canonical key → the raw forms worth searching a document for (name + aliases). */
     private volatile Map<String, List<String>> groupMap;
 
@@ -51,6 +58,9 @@ public class SkillCanonicalizer {
      * themselves, so nothing is ever silently merged onto the wrong skill.
      */
     public String canonical(String label) {
+        if (label != null && CASE_SENSITIVE_LABELS.containsKey(label.strip())) {
+            return CASE_SENSITIVE_LABELS.get(label.strip());
+        }
         String normalized = SkillNames.normalize(label);
         if (normalized.isEmpty()) return normalized;
         return forward().getOrDefault(normalized, normalized);

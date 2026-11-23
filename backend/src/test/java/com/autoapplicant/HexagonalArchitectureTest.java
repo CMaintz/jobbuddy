@@ -73,6 +73,48 @@ class HexagonalArchitectureTest {
             .should().implement(JavaClass.Predicates.resideInAPackage(PORT_OUT))
             .because("port.out is what the application needs from infrastructure; adapters provide it");
 
+    /**
+     * The suggestion queue holds skills the user has not confirmed. Matching may give them a
+     * little credit; anything that writes a CV or letter, or checks one for invented facts, must
+     * never read them as the user's own account. A new reader is a decision, made here.
+     */
+    @ArchTest
+    static final ArchRule only_the_suggestion_flow_and_matching_read_unconfirmed_skills = noClasses()
+            .that().doNotHaveFullyQualifiedName("com.autoapplicant.usecase.skills.ImpliedSkillQueue")
+            .and().doNotHaveFullyQualifiedName("com.autoapplicant.usecase.skills.SkillCandidateService")
+            .and().doNotHaveFullyQualifiedName("com.autoapplicant.usecase.skills.AdjacentSkillSuggester")
+            .and().doNotHaveFullyQualifiedName("com.autoapplicant.usecase.matching.MatchProfileLoader")
+            .and().doNotHaveFullyQualifiedName(
+                    "com.autoapplicant.usecase.matching.MatchProfileLoader$Sources")
+            .and().resideOutsideOfPackage("com.autoapplicant.adapter.persistence..")
+            .should().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort")
+            .because("unconfirmed skills are never evidence for a document or the fact gate");
+
+    /**
+     * The same invariant one step out: generation, review, interview prep, the chat's tools and
+     * the fact gate must not reach unconfirmed skills through the use case or types that carry
+     * them either. ParseCvService is the one exception: it files the CV's inferences, never
+     * reads them back.
+     */
+    @ArchTest
+    static final ArchRule document_code_never_sees_unconfirmed_skills = noClasses()
+            .that().resideInAnyPackage("com.autoapplicant.usecase.document..",
+                    "com.autoapplicant.usecase.ai..", "com.autoapplicant.usecase.interview..",
+                    "com.autoapplicant.usecase.eval..", "com.autoapplicant.usecase.chat..",
+                    "com.autoapplicant.adapter.mcp..")
+            .and().doNotHaveFullyQualifiedName(
+                    "com.autoapplicant.usecase.document.ParseCvService")
+            .should().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.domain.skill.SkillCandidate")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.domain.skill.ParsedSkillSuggestion")
+            .orShould().dependOnClassesThat().haveFullyQualifiedName(
+                    "com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort")
+            .because("unconfirmed skills are never evidence for a document or the fact gate");
+
     @ArchTest
     static final ArchRule adapters_call_use_cases_through_inbound_ports = noClasses()
             .that().resideInAPackage(ADAPTER)

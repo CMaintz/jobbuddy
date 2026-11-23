@@ -15,7 +15,10 @@ import org.springframework.util.AntPathMatcher;
  * <p>Deliberately not listed: endpoints that read cached embeddings (recommendations,
  * dashboard, analytics, similar jobs; a missing profile embedding is computed once and cached),
  * the profile update, whose embedding refresh runs off the request and is coalesced per user,
- * and outreach / company research, which are tracking CRUD with no model call.
+ * and outreach / company research, which are tracking CRUD with no model call. Approving the
+ * chat's proposals is not listed either: documents it approves are written one at a time by
+ * {@code DocumentQueue}, which bounds them better than a request count, since one approval may
+ * queue several postings and most approvals make no model call at all.
  */
 final class AiRateLimitedEndpoints {
 

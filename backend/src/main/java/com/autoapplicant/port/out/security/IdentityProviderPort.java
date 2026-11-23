@@ -15,4 +15,11 @@ public interface IdentityProviderPort {
    *     holds the email
    */
   void provisionVerifiedAccount(String uid, String email, String displayName);
+
+  /**
+   * Deletes the provider account {@code uid}.
+   *
+   * @throws IllegalStateException when the provider refuses or cannot be reached
+   */
+  void deleteAccount(String uid);
 }
