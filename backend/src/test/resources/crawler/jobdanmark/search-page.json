@@ -1,0 +1,64 @@
+{
+  "currentPage": 1,
+  "totalItems": 14516,
+  "itemsPrPage": 30,
+  "totalPages": 484,
+  "items": [
+    {
+      "title": "Afdelingsleder til den sikrede døgninstitution Egely i Nørre Åby, med primært ansvarsområde for sikret afdeling",
+      "companyName": "Egely, Sikret afdeling",
+      "companyLogo": {
+        "key": "00000000-0000-0000-0000-000000000001",
+        "url": "/media/giieyov2/region-syddanmark-logo_cmyk1.png",
+        "focalPoint": null
+      },
+      "companyLogoSvgMarkup": null,
+      "overlayColor": "#FFFFFF26",
+      "companyAddress": "Søndergaardsvej 9, 5580 Nørre Aaby",
+      "jobTypes": [
+        "fuldtid"
+      ],
+      "boostJob": true,
+      "publishedDate": "30-10-2026",
+      "applicationDeadline": "11-11-2026",
+      "url": "/job/afdelingsleder-til-den-sikrede-doegninstitution-egely-i-noerre-aaby-med-primaert-ansvarsomraade-for-sikret-afdeling",
+      "coverImage": {
+        "key": "00000000-0000-0000-0000-000000000002",
+        "url": "/media/c2lps0cx/virksomhedsbilleder-umbraco-format-1.png",
+        "focalPoint": {
+          "top": 0.3111110432942708,
+          "left": 0.49041666666666667
+        }
+      },
+      "silhouetteLogo": false
+    },
+    {
+      "title": "Ejendomsfunktionær med erfaring inden for grøn vedligeholdelse til Møllevænget & Storgaarden",
+      "companyName": "Boligorganisationen Møllevænget & Storgaarden",
+      "companyLogo": {
+        "key": "00000000-0000-0000-0000-000000000003",
+        "url": "/media/tgpj02em/read-500x500px-randersboliglogo-2-bl-med-store-blade.jpg",
+        "focalPoint": null
+      },
+      "companyLogoSvgMarkup": null,
+      "overlayColor": "#E9E7E712",
+      "companyAddress": "Marsvej 1, 8960 Randers SØ",
+      "jobTypes": [
+        "fuldtid"
+      ],
+      "boostJob": true,
+      "publishedDate": "29-10-2026",
+      "applicationDeadline": null,
+      "url": "/job/ejendomsfunktionaer-med-erfaring-inden-for-groen-vedligeholdelse-til-moellevaenget-storgaarden",
+      "coverImage": {
+        "key": "00000000-0000-0000-0000-000000000004",
+        "url": "/media/maypalv2/1.jpg",
+        "focalPoint": {
+          "top": 0.476098756090814,
+          "left": 0.5260512216904829
+        }
+      },
+      "silhouetteLogo": false
+    }
+  ]
+}
