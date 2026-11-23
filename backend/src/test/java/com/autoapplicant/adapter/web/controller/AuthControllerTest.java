@@ -46,7 +46,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-@WebMvcTest(controllers = AuthController.class)
+@WebMvcTest(controllers = {AuthController.class, LinkedInAuthController.class})
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
@@ -57,7 +57,7 @@ class AuthControllerTest {
             """;
 
     @Autowired MockMvc mvc;
-    @Autowired AuthController controller;
+    @Autowired LinkedInAuthController linkedInController;
 
     @MockitoBean GetUserProfileUseCase       getUserProfileUseCase;
     @MockitoBean ResolveLinkedInUserUseCase  resolveLinkedInUser;
@@ -77,9 +77,9 @@ class AuthControllerTest {
         linkedInConfig.setClientId("client-id-1");
         linkedInConfig.setClientSecret("client-secret-1");
         when(appProperties.getLinkedin()).thenReturn(linkedInConfig);
-        // The controller builds its own RestTemplate; binding the mock server to that instance is
+        // The LinkedIn controller builds its own RestTemplate; binding the mock server to that instance is
         // the only way to stand in for LinkedIn without changing production wiring.
-        RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(controller, "restTemplate");
+        RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(linkedInController, "restTemplate");
         linkedIn = MockRestServiceServer.bindTo(restTemplate).build();
     }
 
