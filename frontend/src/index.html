@@ -1,16 +1,19 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="da" class="dark">
 <head>
   <meta charset="utf-8">
   <title>Jobbuddy</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/buddy/buddy.css">
 </head>
 <body>
-  <app-root></app-root>
+  <!-- Shown until Angular boots and replaces it; plain CSS, since no script has run yet. -->
+  <app-root>
+    <div class="jb-boot">
+      <span class="buddy buddy--x3 buddy--loading" role="img" aria-label="Buddy, JobBuddys axolotl. JobBuddy starter."><span class="buddy__sprite"></span></span>
+    </div>
+  </app-root>
 </body>
 </html>

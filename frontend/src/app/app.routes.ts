@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { onboardingGuard } from './core/auth/onboarding.guard';
+import { adminGuard } from './core/auth/admin.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -108,6 +109,7 @@ export const routes: Routes = [
       // Prompts
       {
         path: 'prompts',
+        canActivate: [adminGuard],
         loadComponent: () => import('./features/prompts/prompts-library.component').then(m => m.PromptsLibraryComponent)
       },
 

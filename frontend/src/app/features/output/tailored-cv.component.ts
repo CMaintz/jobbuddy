@@ -17,6 +17,7 @@ import { structuredDocToResumeData, structuredDocToLayout } from '../resume-buil
 import { INITIAL_SETTINGS, ResumeDraft } from '../resume-builder/models/resume-builder.models';
 import { loadGenDefaults } from '../settings/settings.component';
 import { NotifyService } from '../../shared/services/notify.service';
+import { BuddyWaitComponent } from '../../shared/components/buddy/buddy-wait.component';
 
 const TAILOR_PROMPTS = [
   'tailoredCv.tailor.depth',
@@ -33,7 +34,8 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent],
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent,
+    BuddyWaitComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './tailored-cv.component.html',
 })

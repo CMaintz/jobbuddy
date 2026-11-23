@@ -7,7 +7,7 @@ import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.domain.user.ProfileSavedEvent;
 import com.autoapplicant.domain.user.Project;
 import com.autoapplicant.domain.user.WorkExperience;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.CertificationRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
@@ -56,7 +56,7 @@ public class ProfileEmbeddingUpdater {
     private final WorkExperienceRepositoryPort workExpRepo;
     private final ProjectRepositoryPort projectRepo;
     private final CertificationRepositoryPort certRepo;
-    private final AiProviderPort aiProvider;
+    private final EmbeddingProviderPort aiProvider;
     private final ProfileSkillRepositoryPort profileSkillRepo;
 
     public ProfileEmbeddingUpdater(ProfileRepositoryPort profileRepo,
@@ -64,7 +64,7 @@ public class ProfileEmbeddingUpdater {
                                    WorkExperienceRepositoryPort workExpRepo,
                                    ProjectRepositoryPort projectRepo,
                                    CertificationRepositoryPort certRepo,
-                                   @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
+                                   @Qualifier("embeddingProvider") EmbeddingProviderPort aiProvider,
                                    ProfileSkillRepositoryPort profileSkillRepo) {
         this.profileRepo = profileRepo;
         this.profileEmbeddingRepo = profileEmbeddingRepo;

@@ -6,11 +6,10 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.List;
+import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches job listings from Lever ATS job boards.
@@ -20,7 +19,7 @@ import java.util.List;
  *
  * Companies are configured via app.lever.companies.
  * The company slug is the one in Lever job URLs:
- *   https://jobs.lever.co/dixa  →  slug = "dixa"
+ *   https://jobs.lever.co/veo  →  slug = "veo"
  */
 @Component
 public class LeverConnector extends AbstractJobSourceConnector {
@@ -53,6 +52,9 @@ public class LeverConnector extends AbstractJobSourceConnector {
         for (String company : companies) {
             if (count >= targetJobs) break;
             String url = String.format(API_BASE, company);
+            // The postings API carries no company name; the slug stays in the URL and the
+            // posting ids, the configured name is what the company is filed under.
+            String employer = appProperties.getLever().getDisplayNames().getOrDefault(company, company);
             try {
                 Thread.sleep(config.delayMs());
                 String json = fetchWithRetry(url, 3);
@@ -92,7 +94,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
                         }
                     }
 
-                    String content = buildContent(title, company, location, team, commitment,
+                    String content = buildContent(title, employer, location, team, commitment,
                             descPlain.isBlank() ? Jsoup.parse(descHtml).text() : descPlain,
                             listsText.toString(), hostedUrl);
 
@@ -104,6 +106,11 @@ public class LeverConnector extends AbstractJobSourceConnector {
                             posting.toString(),
                             Instant.now(),
                             List.of(),
+                            null,
+                            null,
+                            employer,
+                            null,
+                            null,
                             null
                     ));
                     count++;

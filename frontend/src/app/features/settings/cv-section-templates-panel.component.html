@@ -2,7 +2,9 @@
   <div class="text-base font-medium">{{ 'settings.sectionPrompts.heading' | translate }}</div>
   <div class="text-xs text-jb-text-dim mt-0.5 mb-3 leading-[1.55]">
     {{ 'settings.sectionPrompts.intro' | translate }}
-    <a routerLink="/prompts" class="text-jb-accent-2 underline">{{ 'settings.sectionPrompts.browseLibrary' | translate }}</a>
+    @if (canBrowseLibrary) {
+      <a routerLink="/prompts" class="text-jb-accent-2 underline">{{ 'settings.sectionPrompts.browseLibrary' | translate }}</a>
+    }
   </div>
   @if (loadError()) {
     <div class="text-xs text-jb-danger">{{ 'settings.sectionPrompts.loadFailed' | translate }}</div>

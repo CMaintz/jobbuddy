@@ -2,13 +2,12 @@ package com.autoapplicant.adapter.persistence.mapper;
 
 import com.autoapplicant.adapter.persistence.entity.JobEntity;
 import com.autoapplicant.domain.job.*;
-
+import com.autoapplicant.domain.job.JobRequirement;
+import com.autoapplicant.domain.job.RequirementKind;
+import com.autoapplicant.domain.job.RequirementTier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import com.autoapplicant.domain.job.RequirementTier;
-import com.autoapplicant.domain.job.RequirementKind;
-import com.autoapplicant.domain.job.JobRequirement;
 
 public final class JobMapper {
 
@@ -57,6 +56,49 @@ public final class JobMapper {
                 toList(e.getPreferredSkills()),
                 toRequirements(e.getRequirements())
         );
+    }
+
+    /**
+     * Copies what enrichment produced from {@code from} onto {@code to}, the row as it stands
+     * now. Extracted fields are enrichment's own and replace what is there. Fields enrichment
+     * only fills in when the crawler left them empty are filled against the current row, not
+     * the one enrichment read: the crawl may have set them (a deadline) during the AI call.
+     */
+    public static void copyEnrichmentFields(JobEntity from, JobEntity to) {
+        to.setDescriptionClean(from.getDescriptionClean());
+        to.setTechnologies(from.getTechnologies());
+        to.setSkills(from.getSkills());
+        to.setRequiredSkills(from.getRequiredSkills());
+        to.setPreferredSkills(from.getPreferredSkills());
+        to.setRequirements(from.getRequirements());
+        to.setAiSummary(from.getAiSummary());
+        to.setAiTags(from.getAiTags());
+        to.setAiSeniorityEstimate(from.getAiSeniorityEstimate());
+        fillGaps(from, to);
+    }
+
+    private static void fillGaps(JobEntity from, JobEntity to) {
+        to.setShortDescription(firstNonNull(to.getShortDescription(), from.getShortDescription()));
+        to.setEmploymentType(firstNonNull(to.getEmploymentType(), from.getEmploymentType()));
+        to.setRemoteType(firstNonNull(to.getRemoteType(), from.getRemoteType()));
+        to.setMunicipality(firstNonNull(to.getMunicipality(), from.getMunicipality()));
+        to.setSalaryMin(firstNonNull(to.getSalaryMin(), from.getSalaryMin()));
+        to.setSalaryMax(firstNonNull(to.getSalaryMax(), from.getSalaryMax()));
+        to.setCurrency(firstNonNull(to.getCurrency(), from.getCurrency()));
+        to.setApplicationDeadline(firstNonNull(to.getApplicationDeadline(), from.getApplicationDeadline()));
+        if (to.getJobCategory() == null || JobCategory.OTHER.name().equals(to.getJobCategory())) {
+            to.setJobCategory(from.getJobCategory());
+        }
+        if (to.getContactName() == null && to.getContactEmail() == null && to.getContactPhone() == null) {
+            to.setContactName(from.getContactName());
+            to.setContactTitle(from.getContactTitle());
+            to.setContactEmail(from.getContactEmail());
+            to.setContactPhone(from.getContactPhone());
+        }
+    }
+
+    private static <T> T firstNonNull(T current, T produced) {
+        return current != null ? current : produced;
     }
 
     public static JobEntity toEntity(Job d) {
