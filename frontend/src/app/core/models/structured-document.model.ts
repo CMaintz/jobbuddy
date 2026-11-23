@@ -67,6 +67,35 @@ export interface StructuredDocument {
   sections: StructuredDocumentSection[];
   bodyContent?: string;
   atsReport?: AtsReport;
+  /** Present on a gated letter: the needs it was written from and the gate's verdict. */
+  letterReview?: LetterReview;
+}
+
+/** One checklist point of the letter gate (writing guide KORREKTUR 1, 8, 13 or 14). */
+export interface LetterGatePoint {
+  point: number;
+  passed: boolean;
+  quotes: string[];
+  reason?: string;
+}
+
+type LetterGateStop =
+  'OUT_OF_ROUNDS' | 'OUT_OF_TIME' | 'REWRITE_FAILED' | 'NO_VERDICT' | 'REWRITE_NOT_JUDGED';
+
+export interface LetterGateResult {
+  verdict: 'PASSED' | 'FAILED' | 'NOT_COMPLETED';
+  points: LetterGatePoint[];
+  rounds: number;
+  stop?: LetterGateStop | null;
+}
+
+export interface LetterReview {
+  needs: string[];
+  /** Null for a letter written without a posting: it has needs but nothing to gate against. */
+  gate: LetterGateResult | null;
+  gatedBodyFingerprint?: string;
+  /** True once the letter has been edited since the gate judged it. */
+  stale: boolean;
 }
 
 export interface DocumentRenderOptions {

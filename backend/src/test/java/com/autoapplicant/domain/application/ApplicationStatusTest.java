@@ -19,7 +19,8 @@ class ApplicationStatusTest {
     // narrowing one.
     static Stream<Arguments> allowedTransitions() {
         return Stream.of(
-                Arguments.of(SAVED, EnumSet.of(PREPARING, ARCHIVED)),
+                // SAVED goes straight to APPLIED too: recording a same-day application is one move.
+                Arguments.of(SAVED, EnumSet.of(PREPARING, APPLIED, ARCHIVED)),
                 Arguments.of(PREPARING, EnumSet.of(APPLIED, SAVED, ARCHIVED)),
                 Arguments.of(APPLIED, EnumSet.of(RECRUITER_CONTACT, REJECTED, ARCHIVED)),
                 Arguments.of(RECRUITER_CONTACT, EnumSet.of(INTERVIEW, REJECTED, ARCHIVED)),

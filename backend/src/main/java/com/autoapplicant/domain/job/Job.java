@@ -64,6 +64,14 @@ public record Job(
         List<JobRequirement> requirements
 ) {
 
+    /**
+     * The text a posting's search vector is made from. A vector made from any other text is
+     * stale, so a change here means the posting has to be embedded again.
+     */
+    public String embeddingText() {
+        return (title != null ? title : "") + " " + (descriptionClean != null ? descriptionClean : "");
+    }
+
     /** A fresh builder. Prefer {@link #toBuilder()} for copy-with-changes. */
     public static Builder builder() {
         return new Builder();

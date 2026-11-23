@@ -96,35 +96,51 @@
       } @else {
         <div class="flex flex-col gap-2">
           @for (c of candidates(); track c.name) {
-            <div class="card p-3.5 flex flex-col gap-2">
-              <div class="flex items-center gap-2">
-                <span class="text-base font-medium">{{ c.name }}</span>
-                @if (c.marketFrequency > 0) {
-                  <span class="text-xs text-jb-accent">{{ 'careerProfile.skills.inPostings' | translate:{ count: c.marketFrequency } }}</span>
+            @if (c.source === 'LIKELY_HELD') {
+              <div class="card p-3.5 flex flex-col gap-2" data-testid="likely-held">
+                <div class="text-base">
+                  {{ 'careerProfile.skills.likelyHeld' | translate:{ held: c.relatedSkills[0], skill: c.name } }}
+                </div>
+                <div class="flex flex-wrap gap-2 mt-0.5">
+                  <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
+                    data-testid="likely-held-yes" (click)="answer(c, 'YES')">{{ 'careerProfile.skills.yesAdd' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-transparent border border-jb-border rounded-md text-jb-text-dim text-xs cursor-pointer"
+                    data-testid="likely-held-no" (click)="answer(c, 'NO')">{{ 'careerProfile.skills.no' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-transparent border-none text-jb-text-dim text-xs cursor-pointer"
+                    (click)="answer(c, 'SKIP')">{{ 'careerProfile.skills.later' | translate }}</button>
+                </div>
+              </div>
+            } @else {
+              <div class="card p-3.5 flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-medium">{{ c.name }}</span>
+                  @if (c.marketFrequency > 0) {
+                    <span class="text-xs text-jb-accent">{{ 'careerProfile.skills.inPostings' | translate:{ count: c.marketFrequency } }}</span>
+                  }
+                </div>
+                @if (c.evidence) {
+                  <div class="text-xs text-jb-text-dim border-l-2 border-jb-accent-border pl-2.5 italic">
+                    {{ 'careerProfile.skills.fromYourCv' | translate }}
+                    <span class="not-italic">&ldquo;{{ c.evidence }}&rdquo;</span>
+                  </div>
                 }
-              </div>
-              @if (c.evidence) {
-                <div class="text-xs text-jb-text-dim border-l-2 border-jb-accent-border pl-2.5 italic">
-                  {{ 'careerProfile.skills.fromYourCv' | translate }}
-                  <span class="not-italic">&ldquo;{{ c.evidence }}&rdquo;</span>
+                @if (c.relatedSkills.length) {
+                  <div class="text-xs text-jb-text-dim">
+                    {{ 'careerProfile.skills.relatedTo' | translate:{ skills: c.relatedSkills.join(', ') } }}
+                  </div>
+                }
+                <div class="flex flex-wrap gap-2 mt-0.5">
+                  <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
+                    (click)="answer(c, 'YES', true)">{{ 'careerProfile.skills.usedInProduction' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs cursor-pointer"
+                    (click)="answer(c, 'YES', false)">{{ 'careerProfile.skills.usedIt' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-transparent border border-jb-border rounded-md text-jb-text-dim text-xs cursor-pointer"
+                    (click)="answer(c, 'NO')">{{ 'careerProfile.skills.notMine' | translate }}</button>
+                  <button class="px-2.5 py-[5px] bg-transparent border-none text-jb-text-dim text-xs cursor-pointer"
+                    (click)="answer(c, 'SKIP')">{{ 'careerProfile.skills.later' | translate }}</button>
                 </div>
-              }
-              @if (c.relatedSkills.length) {
-                <div class="text-xs text-jb-text-dim">
-                  {{ 'careerProfile.skills.relatedTo' | translate:{ skills: c.relatedSkills.join(', ') } }}
-                </div>
-              }
-              <div class="flex flex-wrap gap-2 mt-0.5">
-                <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-accent-border rounded-md text-jb-text text-xs cursor-pointer"
-                  (click)="answer(c, 'YES', true)">{{ 'careerProfile.skills.usedInProduction' | translate }}</button>
-                <button class="px-2.5 py-[5px] bg-jb-surface-2 border border-jb-border rounded-md text-jb-text-mid text-xs cursor-pointer"
-                  (click)="answer(c, 'YES', false)">{{ 'careerProfile.skills.usedIt' | translate }}</button>
-                <button class="px-2.5 py-[5px] bg-transparent border border-jb-border rounded-md text-jb-text-dim text-xs cursor-pointer"
-                  (click)="answer(c, 'NO')">{{ 'careerProfile.skills.notMine' | translate }}</button>
-                <button class="px-2.5 py-[5px] bg-transparent border-none text-jb-text-dim text-xs cursor-pointer"
-                  (click)="answer(c, 'SKIP')">{{ 'careerProfile.skills.later' | translate }}</button>
               </div>
-            </div>
+            }
           }
         </div>
       }

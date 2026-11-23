@@ -1,0 +1,9 @@
+Third-party data bundled with JobBuddy
+
+Danish postal codes and their coordinates
+  File:    backend/src/main/resources/geo/dk-postal-places.tsv
+  Source:  GeoNames postal code dump, https://download.geonames.org/export/zip/DK.zip
+  Credit:  GeoNames, https://www.geonames.org/
+  Licence: Creative Commons Attribution 4.0, https://creativecommons.org/licenses/by/4.0/
+  Changes: postcodes below 1000 (PO boxes, abroad) removed; columns reduced to postcode,
+           place, municipality, latitude and longitude.
