@@ -34,7 +34,7 @@ class WeeklyDigestServiceTest {
     private void weeklyUserExcluding(String negativeSignal) {
         UserPreferences prefs = new UserPreferences(UUID.randomUUID(), USER, null, null, null,
                 List.of(negativeSignal), null, null, null, null, null, null, null, null,
-                true, "WEEKLY", null, null, null);
+                true, "WEEKLY", null, null, null, List.of(), null);
         when(preferencesRepo.findAllWithNotificationsEnabled()).thenReturn(List.of(prefs));
         when(userRepo.findById(USER)).thenReturn(Optional.of(new User(USER, "a@example.com",
                 null, null, null, UserRole.USER, true, true, null, null)));
