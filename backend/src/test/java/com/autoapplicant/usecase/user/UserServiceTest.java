@@ -105,7 +105,7 @@ class UserServiceTest {
         UserPreferences payload = new UserPreferences(UUID.randomUUID(), UUID.randomUUID(),
                 List.of("Copenhagen"), List.of("Frederiksberg"), List.of("Kotlin"), List.of("On-call"),
                 List.of("Initech"), List.of("REMOTE"), List.of("FULL_TIME"), List.of("SENIOR"),
-                List.of("Fintech"), 600000, 800000, 25, true, "DAILY", 4, CREATED, CREATED);
+                List.of("Fintech"), 600000, 800000, 25, true, "DAILY", 4, CREATED, CREATED, List.of(), null);
         when(prefsRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UserPreferences saved = service.updatePreferences(userId, payload);

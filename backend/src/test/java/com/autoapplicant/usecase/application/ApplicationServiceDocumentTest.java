@@ -199,6 +199,6 @@ class ApplicationServiceDocumentTest {
         return new Application(appId, userId, jobId, status, appliedAt,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now(), null, null);
+                Instant.now(), Instant.now(), null, null, null, null);
     }
 }

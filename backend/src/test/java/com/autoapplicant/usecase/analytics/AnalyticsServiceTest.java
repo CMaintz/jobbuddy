@@ -87,7 +87,7 @@ class AnalyticsServiceTest {
     void the_weekly_trend_falls_back_to_the_creation_date_and_ignores_saved_roles() {
         Application noAppliedAt = new Application(UUID.randomUUID(), USER, null, PREPARING, null,
                 null, null, null, null, null, null, null, null, null, null,
-                daysAgo(2), daysAgo(2), null, null);
+                daysAgo(2), daysAgo(2), null, null, null, null);
         givenApplications(
                 applied(APPLIED, daysAgo(1)),
                 applied(APPLIED, daysAgo(1)),
@@ -168,7 +168,7 @@ class AnalyticsServiceTest {
     private static Application applied(ApplicationStatus status, Instant appliedAt) {
         return new Application(UUID.randomUUID(), USER, null, status, appliedAt,
                 null, null, null, null, null, null, null, null, null, null,
-                appliedAt, appliedAt, null, null);
+                appliedAt, appliedAt, null, null, null, null);
     }
 
     private static Application forJob(UUID jobId) {
