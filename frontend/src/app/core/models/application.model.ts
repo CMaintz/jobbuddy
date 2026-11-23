@@ -22,6 +22,12 @@ export interface Application {
   outcomeLessons?: string;
   jobTitle?: string;
   jobCompanyName?: string;
+  /** The user's own application deadline, `YYYY-MM-DD`. */
+  deadline?: string | null;
+  /** Interview time as the user typed it, local wall-clock `YYYY-MM-DDTHH:mm[:ss]` with no zone. */
+  interviewAt?: string | null;
+  /** The statuses the server accepts as the next move; empty once the application is closed. */
+  nextStatuses?: ApplicationStatus[];
   createdAt: string;
   updatedAt: string;
 }

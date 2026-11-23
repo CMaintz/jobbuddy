@@ -3,21 +3,21 @@ package com.autoapplicant.usecase.job;
 import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.UrlProbeOutcome;
+import com.autoapplicant.port.in.job.CheckJobUrlsUseCase;
 import com.autoapplicant.port.in.job.ReportJobInactiveUseCase;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.job.JobUrlProbePort;
 import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Detects taken-down job postings by probing their URLs.
@@ -33,7 +33,7 @@ import java.util.UUID;
  * quotes such wording doesn't kill the posting on a single sighting.
  */
 @Service
-public class JobUrlCheckService implements ReportJobInactiveUseCase {
+public class JobUrlCheckService implements ReportJobInactiveUseCase, CheckJobUrlsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(JobUrlCheckService.class);
 
@@ -78,8 +78,13 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
     @Scheduled(cron = "${app.job.url-check.cron:0 30 */6 * * *}")
     public void checkJobUrls() {
         if (!enabled) return;
+        checkDueUrls(runsPerDay);
+    }
+
+    @Override
+    public void checkDueUrls(int runsPerDay) {
         Instant cutoff = Instant.now().minus(Duration.ofDays(recheckDays));
-        List<Job> candidates = jobRepo.findUrlCheckCandidates(cutoff, effectiveBatchSize());
+        List<Job> candidates = jobRepo.findUrlCheckCandidates(cutoff, effectiveBatchSize(runsPerDay));
         if (candidates.isEmpty()) return;
 
         int deactivated = 0;
@@ -129,7 +134,7 @@ public class JobUrlCheckService implements ReportJobInactiveUseCase {
      * wholesale. The batch is now derived from the corpus instead, and capped so a runaway count
      * cannot turn into a runaway crawl.
      */
-    private int effectiveBatchSize() {
+    private int effectiveBatchSize(int runsPerDay) {
         if (!adaptiveBatch) return batchSize;
         long active = jobRepo.countActive();
         if (active <= 0) return batchSize;

@@ -12,21 +12,32 @@ class CliAgentCommandsTest {
         assertThat(new AppProperties.Cli().getCommand()).isBlank();
     }
 
+    // --setting-sources= keeps the user's own ~/.claude (CLAUDE.md, hooks, plugins) out of the
+    // generated text; --model keeps the run off whatever default model burns their quota fastest.
     @Test
-    void claudeDefaultDisablesToolsAndMcpAndSessionTranscripts() {
-        assertThat(CliAgentProcessFactory.parseCommand(CliAgentCommands.resolve("claude-cli", "")))
+    void claudeDefaultIsSandboxedIsolatedFromUserSettingsAndPinnedToAModel() {
+        assertThat(CliAgentProcessFactory.parseCommand(CliAgentCommands.resolve("claude-cli", "", "")))
                 .containsExactly(
-                        "claude", "-p", "--tools=", "--strict-mcp-config", "--no-session-persistence");
+                        "claude", "-p", "--tools=", "--strict-mcp-config", "--no-session-persistence",
+                        "--setting-sources=", "--model", "sonnet");
+    }
+
+    @Test
+    void configuredModelReplacesThePinnedDefault() {
+        assertThat(CliAgentProcessFactory.parseCommand(CliAgentCommands.resolve("claude-cli", "", "opus")))
+                .endsWith("--setting-sources=", "--model", "opus");
     }
 
     @Test
     void genericCliProviderDefaultsToSandboxedClaude() {
-        assertThat(CliAgentCommands.resolve("cli", null)).isEqualTo(CliAgentCommands.CLAUDE_DEFAULT);
+        assertThat(CliAgentCommands.resolve("cli", null, null))
+                .isEqualTo(CliAgentCommands.resolve("claude-cli", null, null));
     }
 
     @Test
     void codexDefaultRunsOutsideGitUnderReadOnlySandboxWithPromptOnStdin() {
-        assertThat(CliAgentProcessFactory.parseCommand(CliAgentCommands.resolve("codex", " ")))
+        // The model setting names a Claude model; passing it to Codex would fail every call.
+        assertThat(CliAgentProcessFactory.parseCommand(CliAgentCommands.resolve("codex", " ", "sonnet")))
                 .containsExactly(
                         "codex",
                         "exec",
@@ -40,6 +51,7 @@ class CliAgentCommandsTest {
 
     @Test
     void operatorOverrideReplacesTheDefault() {
-        assertThat(CliAgentCommands.resolve("codex", "my-agent --flag")).isEqualTo("my-agent --flag");
+        assertThat(CliAgentCommands.resolve("claude-cli", "my-agent --flag", "opus"))
+                .isEqualTo("my-agent --flag");
     }
 }

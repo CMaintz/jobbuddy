@@ -1,16 +1,16 @@
 package com.autoapplicant;
 
+import com.autoapplicant.adapter.cli.OneShotCommand;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableScheduling
 @EnableAsync
 public class AutoApplicantApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AutoApplicantApplication.class, args);
+        OneShotCommand.exitWhenFinished(
+                SpringApplication.run(AutoApplicantApplication.class, args), System::exit);
     }
 }

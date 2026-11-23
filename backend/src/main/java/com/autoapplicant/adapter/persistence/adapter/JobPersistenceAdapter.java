@@ -3,7 +3,9 @@ package com.autoapplicant.adapter.persistence.adapter;
 import com.autoapplicant.adapter.persistence.entity.JobEntity;
 import com.autoapplicant.adapter.persistence.mapper.JobMapper;
 import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
+import com.autoapplicant.domain.job.DanishPlaces;
 import com.autoapplicant.domain.job.EnrichmentStatus;
+import com.autoapplicant.domain.job.GeoArea;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobSource;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
@@ -16,9 +18,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class JobPersistenceAdapter implements JobRepositoryPort {
+
+    private static final String NO_CATEGORY = "-";
+    /** Postings placed per sweep; a backlog of thousands is placed over a few sweeps. */
+    private static final int PLACE_BACKFILL_SLICE = 2000;
 
     /**
      * Ceiling on postings pulled for the company-hiring aggregate. Generous for a personal-scale
@@ -84,6 +91,7 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     public Job save(Job job) {
         JobEntity entity = JobMapper.toEntity(job);
+        entity.setPlaces(DanishPlaces.shared().placesOfPosting(job.location(), job.title(), job.descriptionClean()));
         // URL-check state and the content fingerprint live only on the entity; carry them
         // over so crawl/enrichment re-saves don't reset them. The duplicate group is on the
         // domain but only the dedup pass sets it — preserve an existing group when the
@@ -96,9 +104,26 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
                 if (entity.getDuplicateGroupId() == null && existing.getDuplicateGroupId() != null) {
                     entity.setDuplicateGroupId(existing.getDuplicateGroupId());
                 }
+                keepEmbeddingStateUnlessTextChanged(existing, entity, job);
             });
         }
         return JobMapper.toDomain(repo.save(entity));
+    }
+
+    /**
+     * The vector belongs to the text it was made from. When enrichment trims the description of
+     * a posting that was embedded at crawl time, the fresh entity's PENDING defaults re-queue it;
+     * otherwise the embedding state is carried over, so a save that leaves the text alone does
+     * not pay for the same vector again.
+     */
+    private static void keepEmbeddingStateUnlessTextChanged(JobEntity existing, JobEntity entity, Job job) {
+        if (!JobMapper.toDomain(existing).embeddingText().equals(job.embeddingText())) {
+            return;
+        }
+        entity.setEmbeddingStatus(existing.getEmbeddingStatus());
+        entity.setEmbeddingAttempts(existing.getEmbeddingAttempts());
+        entity.setEmbeddingLastAttemptAt(existing.getEmbeddingLastAttemptAt());
+        entity.setEmbeddingLastError(existing.getEmbeddingLastError());
     }
 
     @Override
@@ -131,8 +156,9 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size) {
-        return repo.findActiveNotIgnoredBy(userId, PageRequest.of(page, size))
+    public List<Job> findActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories,
+                                            int page, int size) {
+        return repo.findActiveNotIgnoredBy(userId, notInList(excludedCategories), PageRequest.of(page, size))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
@@ -183,11 +209,7 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void refreshLastSeen(UUID jobId, Instant lastSeenAt, java.time.LocalDate applicationDeadline) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setLastSeenAt(lastSeenAt);
-            e.setApplicationDeadline(applicationDeadline);
-            repo.save(e);
-        });
+        repo.refreshLastSeen(jobId, lastSeenAt, applicationDeadline);
     }
 
     @Override
@@ -199,33 +221,22 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void markUrlAlive(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setUrlCheckFailures(0);
-            e.setLastUrlCheckAt(Instant.now());
-            e.setLastSeenAt(Instant.now()); // confirmed alive counts as "seen" for staleness expiry
-            repo.save(e);
-        });
+        repo.markUrlAlive(jobId, Instant.now());
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void markUrlCheckInconclusive(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setLastUrlCheckAt(Instant.now());
-            repo.save(e);
-        });
+        repo.markUrlCheckInconclusive(jobId, Instant.now());
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public boolean markUrlTakenDown(UUID jobId, int failureThreshold) {
-        return repo.findById(jobId).map(e -> {
-            e.setUrlCheckFailures(e.getUrlCheckFailures() + 1);
-            e.setLastUrlCheckAt(Instant.now());
-            boolean deactivate = e.getUrlCheckFailures() >= failureThreshold && e.isActive();
-            if (deactivate) e.setActive(false);
-            repo.save(e);
-            return deactivate;
-        }).orElse(false);
+        repo.countUrlCheckFailure(jobId, Instant.now());
+        return repo.deactivateAtFailureThreshold(jobId, failureThreshold) > 0;
     }
 
     @Override
@@ -247,34 +258,63 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore) {
-        return repo.findForEnrichment(maxAttempts, retryBefore, PageRequest.of(0, limit))
+    @org.springframework.transaction.annotation.Transactional
+    public List<Job> findForEnrichment(int limit, int maxAttempts, Instant retryBefore,
+                                       com.autoapplicant.domain.job.EnrichmentScope scope) {
+        placeUnplacedPendingPostings();
+        List<GeoArea> areas = scope.areas();
+        return repo.findForEnrichment(maxAttempts, retryBefore, java.time.LocalDate.now(),
+                        notInList(scope.excludedCategories()), areas.isEmpty(),
+                        sqlArray(areas, a -> a.centre().lat()), sqlArray(areas, a -> a.centre().lon()),
+                        sqlArray(areas, a -> (double) a.radiusKm()), limit)
                 .stream().map(JobMapper::toDomain).toList();
     }
 
+    /**
+     * Postings saved before places were resolved (or written straight to the table) are placed
+     * here, a slice per sweep, so the area filter sees them rather than letting them all through.
+     */
+    private void placeUnplacedPendingPostings() {
+        DanishPlaces places = DanishPlaces.shared();
+        for (JobEntity unplaced : repo.findUnplacedPending(PageRequest.of(0, PLACE_BACKFILL_SLICE))) {
+            unplaced.setPlaces(places.placesOfPosting(
+                    unplaced.getLocation(), unplaced.getTitle(), unplaced.getDescriptionClean()));
+        }
+    }
+
+    private static String sqlArray(List<GeoArea> areas, java.util.function.ToDoubleFunction<GeoArea> value) {
+        return areas.stream().map(a -> Double.toString(value.applyAsDouble(a)))
+                .collect(Collectors.joining(",", "{", "}"));
+    }
+
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void markEnriched(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setEnrichmentStatus(EnrichmentStatus.ENRICHED.name());
-            e.setEnrichmentAttempts(e.getEnrichmentAttempts() + 1);
-            e.setEnrichmentLastAttemptAt(Instant.now());
-            e.setEnrichmentLastError(null);
-            repo.save(e);
+        repo.markEnriched(jobId, Instant.now());
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void saveEnrichment(Job enriched) {
+        repo.findById(enriched.id()).ifPresent(current -> {
+            String embeddedTextBefore = JobMapper.toDomain(current).embeddingText();
+            JobMapper.copyEnrichmentFields(JobMapper.toEntity(enriched), current);
+            if (!JobMapper.toDomain(current).embeddingText().equals(embeddedTextBefore)) {
+                current.setEmbeddingStatus(com.autoapplicant.domain.job.EmbeddingStatus.PENDING.name());
+                current.setEmbeddingAttempts(0);
+                current.setEmbeddingLastAttemptAt(null);
+                current.setEmbeddingLastError(null);
+            }
         });
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts) {
-        return repo.findById(jobId).map(e -> {
-            int attempts = e.getEnrichmentAttempts() + 1;
-            boolean givingUp = attempts >= maxAttempts;
-            e.setEnrichmentAttempts(attempts);
-            e.setEnrichmentLastAttemptAt(Instant.now());
-            e.setEnrichmentLastError(truncate(reason));
-            e.setEnrichmentStatus((givingUp ? EnrichmentStatus.FAILED : EnrichmentStatus.PENDING).name());
-            repo.save(e);
-            return givingUp;
-        }).orElse(false);
+        if (repo.markEnrichmentFailed(jobId, truncate(reason), maxAttempts, Instant.now()) == 0) {
+            return false;
+        }
+        return EnrichmentStatus.FAILED.name().equals(repo.findEnrichmentStatus(jobId));
     }
 
     @Override
@@ -287,36 +327,37 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore) {
-        return repo.findForEmbedding(maxAttempts, retryBefore, PageRequest.of(0, limit))
+    public List<Job> findForEmbedding(int limit, int maxAttempts, Instant retryBefore,
+                                      boolean requireEnriched) {
+        return repo.findForEmbedding(maxAttempts, retryBefore, requireEnriched,
+                        java.time.LocalDate.now(), PageRequest.of(0, limit))
                 .stream().map(JobMapper::toDomain).toList();
     }
 
     @Override
-    public void markEmbedded(UUID jobId) {
-        repo.findById(jobId).ifPresent(e -> {
-            e.setEmbeddingStatus(com.autoapplicant.domain.job.EmbeddingStatus.EMBEDDED.name());
-            e.setEmbeddingAttempts(e.getEmbeddingAttempts() + 1);
-            e.setEmbeddingLastAttemptAt(Instant.now());
-            e.setEmbeddingLastError(null);
-            repo.save(e);
-        });
+    @org.springframework.transaction.annotation.Transactional
+    public EmbeddedMark markEmbedded(UUID jobId, String embeddedText, String model) {
+        if (repo.markEmbeddedIfCurrent(jobId, embeddedText, model, Instant.now()) > 0) {
+            return EmbeddedMark.MARKED;
+        }
+        boolean modelChanged = repo.findStoredEmbeddingModel().filter(stored -> !stored.equals(model)).isPresent();
+        return modelChanged ? EmbeddedMark.MODEL_CHANGED : EmbeddedMark.TEXT_CHANGED;
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts) {
-        return repo.findById(jobId).map(e -> {
-            int attempts = e.getEmbeddingAttempts() + 1;
-            boolean givingUp = attempts >= maxAttempts;
-            e.setEmbeddingAttempts(attempts);
-            e.setEmbeddingLastAttemptAt(Instant.now());
-            e.setEmbeddingLastError(truncate(reason));
-            e.setEmbeddingStatus((givingUp
-                    ? com.autoapplicant.domain.job.EmbeddingStatus.FAILED
-                    : com.autoapplicant.domain.job.EmbeddingStatus.PENDING).name());
-            repo.save(e);
-            return givingUp;
-        }).orElse(false);
+        if (repo.markEmbeddingFailed(jobId, truncate(reason), maxAttempts, Instant.now()) == 0) {
+            return false;
+        }
+        return com.autoapplicant.domain.job.EmbeddingStatus.FAILED.name()
+                .equals(repo.findEmbeddingStatus(jobId));
+    }
+
+    @Override
+    @Transactional
+    public int requeueEmbeddingsForModel(String model) {
+        return repo.requeueEmbeddingsForModel(model);
     }
 
     @Override
@@ -347,7 +388,15 @@ public class JobPersistenceAdapter implements JobRepositoryPort {
     }
 
     @Override
-    public long countActiveNotIgnoredBy(UUID userId) {
-        return repo.countActiveNotIgnoredBy(userId);
+    public long countActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories) {
+        return repo.countActiveNotIgnoredBy(userId, notInList(excludedCategories));
+    }
+
+    /**
+     * A NOT IN list that is never empty: an empty list renders as NOT IN (), which Postgres
+     * rejects. The placeholder matches no category, so it excludes nothing.
+     */
+    private static java.util.Collection<String> notInList(java.util.Collection<String> categories) {
+        return categories == null || categories.isEmpty() ? List.of(NO_CATEGORY) : categories;
     }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResumeStateService } from '../services/resume-state.service';
 import { PdfExportService } from '../services/pdf-export.service';
@@ -11,12 +11,15 @@ import { MinimalLayoutComponent } from './layouts/minimal-layout.component';
 import { ExecutiveLayoutComponent } from './layouts/executive-layout.component';
 import { CreativeLayoutComponent } from './layouts/creative-layout.component';
 import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
+import { PageBudgetWarningComponent } from '../../../shared/components/page-budget-warning/page-budget-warning.component';
+import { ExportedPageBudget } from '../../../shared/page-budget';
 
 @Component({
   selector: 'app-resume-preview',
   imports: [
     TranslateModule,
     JbButtonComponent,
+    PageBudgetWarningComponent,
     ClassicLayoutComponent,
     Modern1ColLayoutComponent,
     Modern2ColLayoutComponent,
@@ -34,6 +37,11 @@ export class ResumePreviewComponent {
   private pdfExport = inject(PdfExportService);
   private atsPdf = inject(AtsPdfService);
   private translate = inject(TranslateService);
+
+  /** Page count of the last PDF the user downloaded, against the two-page CV budget. */
+  readonly exportedPages = new ExportedPageBudget('cv', computed(() => [
+    this.state.resumeData(), this.state.settings(), this.state.displayPersonalInfo(),
+  ]));
 
   private static readonly FONT_SCALES: Record<string, number> = { sm: 0.85, md: 1, lg: 1.15, xl: 1.3 };
 
@@ -60,7 +68,8 @@ export class ResumePreviewComponent {
     if (!this.previewRef) return;
     // Display variant: an anonymised export must not carry the real name in its filename
     const name = this.state.displayPersonalInfo().fullName || 'resume';
-    await this.pdfExport.download(this.previewRef.nativeElement, name, this.state.settings().documentSize);
+    await this.exportedPages.track(this.pdfExport.download(
+      this.previewRef.nativeElement, name, this.state.settings().documentSize));
   }
 
   /** Text-based single-column PDF — selectable text, safe for ATS parsers. */
@@ -69,7 +78,7 @@ export class ResumePreviewComponent {
     const model = resumeDataToAts(
       { ...this.state.resumeData(), socials: this.state.displaySocials() }, pi, this.state.settings(),
       translatedAtsHeadings(key => this.translate.instant(key)));
-    await this.atsPdf.downloadResume(model, `${pi.fullName || 'resume'} - ATS`);
+    await this.exportedPages.track(this.atsPdf.downloadResume(model, `${pi.fullName || 'resume'} - ATS`));
   }
 
   async printResume(): Promise<void> {

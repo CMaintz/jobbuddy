@@ -134,7 +134,8 @@ public class CvDocumentAssembler {
                 new DocumentRenderOptions(showProfileImage, theme),
                 sections,
                 null,
-                report);
+                report,
+                null);
     }
 
     public DocumentIdentity buildIdentity(User user, Profile profile,

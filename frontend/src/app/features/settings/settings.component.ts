@@ -14,6 +14,7 @@ import { TagInputComponent } from '../../shared/components/tag-input/tag-input.c
 import { JbModalComponent } from '../../shared/components/jb-modal/jb-modal.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { AiUsagePanelComponent } from './ai-usage-panel.component';
+import { Section, SettingsSection, settingsSectionsFor } from './settings-sections';
 import { SkillTaxonomyPanelComponent } from './skill-taxonomy-panel.component';
 import { AiKeyPanelComponent } from './ai-key-panel.component';
 import { CvSectionTemplatesPanelComponent } from './cv-section-templates-panel.component';
@@ -26,8 +27,6 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
 import { NotifyService } from '../../shared/services/notify.service';
-
-type Section = 'match' | 'gen' | 'style' | 'usage' | 'account' | 'privacy' | 'taxonomy';
 
 /** Generation defaults have no backend home yet — kept client-side so the apply screen can read them. */
 export interface GenDefaults {
@@ -56,9 +55,25 @@ const INDUSTRY_OPTIONS: { key: string; label: string }[] = [
   { key: 'ENGINEERING', label: 'settings.industry.engineering' },
   { key: 'FINANCE', label: 'settings.industry.finance' },
   { key: 'MARKETING', label: 'settings.industry.marketing' },
+  { key: 'GRC_COMPLIANCE', label: 'settings.industry.grcCompliance' },
+  { key: 'LEGAL', label: 'settings.industry.legal' },
   { key: 'MANAGEMENT', label: 'settings.industry.management' },
   { key: 'CREATIVE_MEDIA', label: 'settings.industry.creativeMedia' },
 ];
+
+/** Every job category, for the list of ones she never wants to see. */
+const CATEGORY_OPTIONS: { key: string; label: string }[] = [
+  ...INDUSTRY_OPTIONS,
+  { key: 'SALES', label: 'settings.industry.sales' },
+  { key: 'HR', label: 'settings.industry.hr' },
+  { key: 'OPERATIONS_LOGISTICS', label: 'settings.industry.operationsLogistics' },
+  { key: 'CUSTOMER_SERVICE', label: 'settings.industry.customerService' },
+  { key: 'HEALTHCARE', label: 'settings.industry.healthcare' },
+  { key: 'EDUCATION', label: 'settings.industry.education' },
+];
+
+/** The area used until she sets her own; the backend applies the same default. */
+const DEFAULT_AREA = { home: '8260 Viby J', radiusKm: 85 };
 
 const SENIORITY_MAP: Record<string, string[]> = {
   'Junior': ['JUNIOR'],
@@ -104,6 +119,7 @@ export class SettingsComponent implements OnInit {
   private notify = inject(NotifyService);
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  readonly canSignOut = this.auth.canSignOut();
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private writingApi = inject(WritingProfileApiService);
@@ -125,20 +141,17 @@ export class SettingsComponent implements OnInit {
   sendingVerification = signal(false);
   sendingReset = signal(false);
 
-  sections: { key: Section; label: string; icon: string }[] = [
-    { key: 'match', label: 'settings.section.match', icon: 'target' },
-    { key: 'gen', label: 'settings.section.gen', icon: 'wand' },
-    { key: 'style', label: 'settings.section.style', icon: 'edit' },
-    { key: 'usage', label: 'settings.section.usage', icon: 'chart-up' },
-    { key: 'account', label: 'settings.section.account', icon: 'user' },
-    { key: 'privacy', label: 'settings.section.privacy', icon: 'key' },
-  ];
+  sections: SettingsSection[] = settingsSectionsFor(undefined);
 
   // Match settings (persisted as UserPreferences)
   boostKeywords: string[] = [];
   avoidKeywords: string[] = [];
   industryOptions = INDUSTRY_OPTIONS;
+  categoryOptions = CATEGORY_OPTIONS;
   industries = new Set<string>();
+  excludedCategories = new Set<string>();
+  areaHome = DEFAULT_AREA.home;
+  areaRadiusKm = DEFAULT_AREA.radiusKm;
   seniorityOptions = Object.keys(SENIORITY_MAP);
   seniority = 'Senior';
   remote = true;
@@ -171,19 +184,13 @@ export class SettingsComponent implements OnInit {
   analysisBaseline: StyleSnapshot | null = null;
 
   ngOnInit(): void {
-    const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
-    if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
-
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
       this.userEmail = u?.email ?? '';
-      // The taxonomy is shared reference data, so its review queue is an admin section —
-      // added to the nav rather than rendered and refused, which would just be a dead tab.
-      const isAdmin = u?.role === 'ADMIN';
-      const listed = this.sections.some(s => s.key === 'taxonomy');
-      if (isAdmin && !listed) {
-        this.sections = [...this.sections, { key: 'taxonomy', label: 'settings.section.taxonomy', icon: 'sparkle' }];
-      }
+      this.sections = settingsSectionsFor(u?.role);
     });
+    // After the role is known, so a link to an admin-only section still opens it for an admin.
+    const section = this.route.snapshot.queryParamMap.get('section') as Section | null;
+    if (section && this.sections.some(s => s.key === section)) this.activeSection.set(section);
     this.emailVerified = this.auth.isEmailVerified();
     this.provider = this.auth.signInProvider();
 
@@ -193,6 +200,9 @@ export class SettingsComponent implements OnInit {
         this.boostKeywords = prefs.positiveSignals ?? [];
         this.avoidKeywords = prefs.negativeSignals ?? [];
         this.industries = new Set(prefs.preferredIndustries ?? []);
+        this.excludedCategories = new Set(prefs.excludedCategories ?? []);
+        this.areaHome = prefs.enrichmentArea?.home ?? DEFAULT_AREA.home;
+        this.areaRadiusKm = prefs.enrichmentArea?.radiusKm ?? DEFAULT_AREA.radiusKm;
         this.seniority = Object.entries(SENIORITY_MAP)
           .find(([, values]) => values.some(v => (prefs.preferredSeniority ?? []).includes(v)))?.[0] ?? 'Senior';
         this.remote = (prefs.preferredRemoteTypes ?? []).length === 0
@@ -244,6 +254,13 @@ export class SettingsComponent implements OnInit {
     this.markDirty();
   }
 
+  toggleExcludedCategory(key: string): void {
+    if (this.excludedCategories.has(key)) this.excludedCategories.delete(key);
+    else this.excludedCategories.add(key);
+    this.excludedCategories = new Set(this.excludedCategories);
+    this.markDirty();
+  }
+
   save(): void {
     if (this.saving()) return;
     this.saving.set(true);
@@ -256,6 +273,8 @@ export class SettingsComponent implements OnInit {
       positiveSignals: this.boostKeywords,
       negativeSignals: this.avoidKeywords,
       preferredIndustries: [...this.industries],
+      excludedCategories: [...this.excludedCategories],
+      enrichmentArea: { home: this.areaHome.trim(), radiusKm: this.areaRadiusKm },
       preferredSeniority: SENIORITY_MAP[this.seniority] ?? [],
       preferredRemoteTypes: this.remote ? [] : ['ON_SITE', 'HYBRID'],
       weeklyApplicationGoal: this.weeklyGoal,
@@ -270,9 +289,11 @@ export class SettingsComponent implements OnInit {
         this.dirty.set(false);
         this.notify.success('settings.toast.saved');
       },
-      error: () => {
+      error: (err: { status?: number; error?: { message?: string } }) => {
         this.saving.set(false);
-        this.notify.error('settings.toast.saveFailed');
+        // A home the backend cannot place comes back as 400 with a message in plain Danish.
+        if (err?.status === 400 && err.error?.message) this.notify.errorText(err.error.message);
+        else this.notify.error('settings.toast.saveFailed');
       }
     });
 

@@ -1,8 +1,10 @@
 package com.autoapplicant.usecase.user;
 
+import com.autoapplicant.domain.job.DanishPlaces;
 import com.autoapplicant.domain.user.*;
 import com.autoapplicant.port.in.user.*;
 import com.autoapplicant.port.out.user.*;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -71,6 +73,14 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
 
     @Override
     public UserPreferences updatePreferences(UUID userId, UserPreferences preferences) {
+        requirePlaceableArea(preferences.enrichmentArea());
+        // Onboarding saves with a short payload of its own; a field it leaves out must keep
+        // what Settings saved, not be wiped.
+        UserPreferences saved = prefsRepo.findByUserId(userId).orElse(null);
+        List<String> excluded = preferences.excludedCategories() != null || saved == null
+                ? preferences.excludedCategoriesOrEmpty() : saved.excludedCategoriesOrEmpty();
+        EnrichmentArea area = preferences.enrichmentArea() != null || saved == null
+                ? preferences.enrichmentArea() : saved.enrichmentArea();
         return prefsRepo.save(new UserPreferences(null, userId,
                 preferences.preferredLocations(), preferences.preferredMunicipalities(),
                 preferences.positiveSignals(), preferences.negativeSignals(), preferences.excludedCompanies(),
@@ -79,7 +89,23 @@ public class UserService implements GetUserProfileUseCase, UpdateUserProfileUseC
                 preferences.salaryMin(), preferences.salaryMax(),
                 preferences.maxCommuteKm(),
                 preferences.notificationEnabled(), preferences.notificationFrequency(),
-                preferences.weeklyApplicationGoal(), null, null));
+                preferences.weeklyApplicationGoal(), null, null,
+                excluded, area));
+    }
+
+    /** An area the queue could not place would silently fall back to the default. */
+    private static void requirePlaceableArea(EnrichmentArea area) {
+        if (area == null) {
+            return;
+        }
+        if (DanishPlaces.shared().locate(area.home()).isEmpty()) {
+            throw new IllegalArgumentException("Vi kan ikke finde \"" + area.home()
+                    + "\". Skriv et postnummer eller et bynavn, fx 8260 Viby J.");
+        }
+        if (!area.radiusInRange()) {
+            throw new IllegalArgumentException("Afstanden skal være mellem "
+                    + EnrichmentArea.MIN_RADIUS_KM + " og " + EnrichmentArea.MAX_RADIUS_KM + " km.");
+        }
     }
 
     @Override
