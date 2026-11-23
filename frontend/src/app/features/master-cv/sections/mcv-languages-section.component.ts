@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Output, model, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbIconComponent } from '../../../shared/components/jb-icon/jb-icon.component';
 import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
 import { SpokenLanguage, LanguageProficiency } from '../../../core/models/profile-section.model';
+import { withItemPatched } from './list-edit';
 
 const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL', 'CONVERSATIONAL', 'ELEMENTARY'];
 
@@ -11,21 +12,21 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
 @Component({
   selector: 'app-mcv-languages-section',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-3">
-      @for (lang of list; track lang.id || $index) {
+      @for (lang of list(); track lang.id || $index) {
         <div class="card p-3.5">
           <div class="flex gap-2 items-start">
             <div class="flex-1 grid gap-2 grid-cols-[1fr_1.4fr]">
               <label class="flex flex-col gap-[5px]">
                 <span class="label">{{ 'masterCv.form.language' | translate }}</span>
-                <input [(ngModel)]="lang.language" class="input"
+                <input [ngModel]="lang.language" (ngModelChange)="update($index, { language: $event })" class="input"
                   [placeholder]="'masterCv.form.placeholder.language' | translate" />
               </label>
               <label class="flex flex-col gap-[5px]">
                 <span class="label">{{ 'masterCv.form.level' | translate }}</span>
-                <select [(ngModel)]="lang.proficiency" class="input">
+                <select [ngModel]="lang.proficiency" (ngModelChange)="update($index, { proficiency: $event })" class="input">
                   @for (p of proficiencies; track p) {
                     <option [value]="p">{{ ('masterCv.form.proficiency.' + p.toLowerCase()) | translate }}</option>
                   }
@@ -36,7 +37,7 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
           </div>
         </div>
       }
-      @if (list.length === 0) {
+      @if (list().length === 0) {
         <div class="p-8 text-center text-jb-text-dim text-base">{{ 'masterCv.form.noLanguages' | translate }}</div>
       }
       <jb-button small icon="plus" (clicked)="add.emit()">{{ 'masterCv.form.addLanguage' | translate }}</jb-button>
@@ -44,8 +45,12 @@ const PROFICIENCIES: LanguageProficiency[] = ['NATIVE', 'FLUENT', 'PROFESSIONAL'
   `,
 })
 export class McvLanguagesSectionComponent {
-  @Input({ required: true }) list: SpokenLanguage[] = [];
+  list = model.required<SpokenLanguage[]>();
   @Output() add = new EventEmitter<void>();
   @Output() removeAt = new EventEmitter<number>();
   proficiencies = PROFICIENCIES;
+
+  update(index: number, patch: Partial<SpokenLanguage>): void {
+    this.list.update(list => withItemPatched(list, index, patch));
+  }
 }

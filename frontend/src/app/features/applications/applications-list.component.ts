@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { JbIconComponent } from '../../shared/components/jb-icon/jb-icon.component';
@@ -19,7 +19,7 @@ import { Application, ApplicationStatus } from '../../core/models/application.mo
     JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     StatusChipComponent, CompanyMarkComponent, FitBarComponent, JbDropdownComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './applications-list.component.html'
 })
 export class ApplicationsListComponent implements OnInit {
@@ -27,41 +27,39 @@ export class ApplicationsListComponent implements OnInit {
   private aiApi = inject(AiApiService);
   private translate = inject(TranslateService);
 
-  applications: Application[] = [];
-  loading = true;
+  applications = signal<Application[]>([]);
+  loading = signal(true);
   activeFilter = signal('all');
   exporting = signal(false);
   openIds = new Set<string>();
 
-  filters: { key: string; label: string; count: number }[] = [];
-
-  ngOnInit(): void {
-    this.api.getAll().subscribe({
-      next: (apps) => {
-        this.applications = apps;
-        this.loading = false;
-        this.updateFilterCounts();
-      },
-      error: () => this.loading = false
-    });
-  }
-
-  private updateFilterCounts(): void {
-    const apps = this.applications;
-    this.filters = [
+  filters = computed(() => {
+    const apps = this.applications();
+    return [
       { key: 'all', label: 'applications.filter.all', count: apps.length },
       { key: 'active', label: 'applications.filter.active', count: apps.filter(a => !['REJECTED', 'ARCHIVED', 'SAVED'].includes(a.status)).length },
       { key: 'drafts', label: 'applications.filter.drafts', count: apps.filter(a => a.status === 'SAVED' || a.status === 'PREPARING').length },
       { key: 'closed', label: 'applications.filter.closed', count: apps.filter(a => a.status === 'REJECTED' || a.status === 'ARCHIVED').length },
     ];
+  });
+
+  ngOnInit(): void {
+    this.api.getAll().subscribe({
+      next: (apps) => {
+        this.applications.set(apps);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
   }
 
   filteredApps(): Application[] {
     const f = this.activeFilter();
-    if (f === 'active') return this.applications.filter(a => !['REJECTED', 'ARCHIVED', 'SAVED'].includes(a.status));
-    if (f === 'drafts') return this.applications.filter(a => a.status === 'SAVED' || a.status === 'PREPARING');
-    if (f === 'closed') return this.applications.filter(a => a.status === 'REJECTED' || a.status === 'ARCHIVED');
-    return this.applications;
+    const apps = this.applications();
+    if (f === 'active') return apps.filter(a => !['REJECTED', 'ARCHIVED', 'SAVED'].includes(a.status));
+    if (f === 'drafts') return apps.filter(a => a.status === 'SAVED' || a.status === 'PREPARING');
+    if (f === 'closed') return apps.filter(a => a.status === 'REJECTED' || a.status === 'ARCHIVED');
+    return apps;
   }
 
   toggleOpen(id: string): void {
@@ -87,7 +85,7 @@ export class ApplicationsListComponent implements OnInit {
   exportCsv(): void {
     const header = ['company', 'role', 'stage', 'fitScore', 'created', 'applied', 'updated', 'notes']
       .map(col => this.translate.instant(`applications.csv.${col}`));
-    const rows = this.applications.map(a => [
+    const rows = this.applications().map(a => [
       a.jobCompanyName ?? '', a.jobTitle ?? '', this.stageLabel(a.status),
       a.matchScore != null ? String(a.matchScore) : '',
       a.createdAt ?? '', a.appliedAt ?? '', a.updatedAt ?? '',
@@ -115,7 +113,7 @@ export class ApplicationsListComponent implements OnInit {
         }
         const bundle = {
           exportedAt: new Date().toISOString(),
-          applications: this.applications.map(a => ({
+          applications: this.applications().map(a => ({
             ...a,
             generatedDocuments: byJob.get(a.jobId) ?? [],
           })),
