@@ -102,7 +102,7 @@ record TypstResumeData(
                 ? design.person()
                 : new ResumeDesign.Person(null, null, null, null, null);
         return new TypstResumeData(
-                LAYOUTS.contains(design.layout()) ? design.layout() : DEFAULT_LAYOUT,
+                oneOf(design.layout(), LAYOUTS, DEFAULT_LAYOUT),
                 "Letter".equalsIgnoreCase(design.pageSize()) ? "letter" : "a4",
                 new Theme(
                         colorOr(theme.color(), DEFAULT_COLOR),
@@ -111,9 +111,9 @@ record TypstResumeData(
                         SCALE.clamp(theme.scale()),
                         LINE.clamp(theme.lineSpacing()),
                         SECTION_GAP.clamp(theme.sectionSpacing())),
-                new Photo(photoPath, SHAPES.contains(photo.shape()) ? photo.shape() : "circle",
+                new Photo(photoPath, oneOf(photo.shape(), SHAPES, "circle"),
                         photo.size() != null ? PHOTO.clamp(photo.size()) : null,
-                        PLACEMENTS.contains(photo.placement()) ? photo.placement() : null),
+                        oneOf(photo.placement(), PLACEMENTS, null)),
                 design.showSkillLevel(),
                 labels(design.labels()),
                 new Person(text(person.name()), text(person.title()), text(person.email()), text(person.phone()),
@@ -162,6 +162,11 @@ record TypstResumeData(
                     SECTION_SCALE.clamp(s.scale())));
         });
         return out;
+    }
+
+    /** {@code value} when it is one of {@code allowed}; Set.of rejects a null lookup, so check first. */
+    private static String oneOf(String value, Set<String> allowed, String fallback) {
+        return value != null && allowed.contains(value) ? value : fallback;
     }
 
     private static Integer level(Integer level) {
