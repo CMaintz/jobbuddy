@@ -53,7 +53,9 @@ class TypstCompiler {
         awaitExit(process);
         if (process.exitValue() != 0) {
             String diagnostics = diagnostics(workspace);
-            log.warn("Typst compile failed:\n{}", diagnostics);
+            // Typst quotes the offending source line, which for the data file is the whole CV;
+            // only the error line goes to the log.
+            log.warn("Typst compile failed: {}", diagnostics.lines().findFirst().orElse(""));
             throw new DocumentRenderException("Typst compile failed", diagnostics);
         }
     }
