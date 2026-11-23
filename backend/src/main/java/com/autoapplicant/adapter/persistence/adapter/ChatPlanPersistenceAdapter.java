@@ -2,11 +2,13 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.entity.ChatPlanEntity;
 import com.autoapplicant.adapter.persistence.entity.ChatPlanItemEntity;
+import com.autoapplicant.adapter.persistence.entity.ChatPlanItemEntity.DetailsJson;
 import com.autoapplicant.adapter.persistence.repository.ChatPlanItemJpaRepository;
 import com.autoapplicant.adapter.persistence.repository.ChatPlanJpaRepository;
 import com.autoapplicant.domain.chat.ChatPlan;
 import com.autoapplicant.domain.chat.PlanFailure;
 import com.autoapplicant.domain.chat.PlanItem;
+import com.autoapplicant.domain.chat.PlanItem.Details;
 import com.autoapplicant.port.out.chat.ChatPlanRepositoryPort;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -52,9 +54,33 @@ public class ChatPlanPersistenceAdapter implements ChatPlanRepositoryPort {
         row.setPlanId(planId);
         row.setPosition(position);
         row.setKind(item.kind().name());
-        row.setDetails(item.details());
+        row.setDetails(toJson(item.details()));
         row.setState(item.state().name());
         return row;
+    }
+
+    private static DetailsJson toJson(Details details) {
+        return switch (details) {
+            case Details.Posting p -> new DetailsJson(p.postingId(), null, p.title(), p.company(),
+                    null, null, null, null);
+            case Details.Documents d -> new DetailsJson(d.postingId(), null, d.title(), d.company(),
+                    null, null, null, null);
+            case Details.StatusMove s -> new DetailsJson(s.postingId(), s.applicationId(), s.title(),
+                    s.company(), s.fromStatus(), s.toStatus(), null, null);
+            case Details.Interview i -> new DetailsJson(i.postingId(), i.applicationId(), i.title(),
+                    i.company(), null, null, i.interviewBefore(), i.interviewAt());
+        };
+    }
+
+    private static Details toDomain(PlanItem.Kind kind, DetailsJson j) {
+        return switch (kind) {
+            case SAVE_POSTING, IGNORE_POSTING -> new Details.Posting(j.postingId(), j.title(), j.company());
+            case GENERATE_DOCUMENTS -> new Details.Documents(j.postingId(), j.title(), j.company());
+            case UPDATE_STATUS -> new Details.StatusMove(j.postingId(), j.applicationId(), j.title(),
+                    j.company(), j.fromStatus(), j.toStatus());
+            case LOG_INTERVIEW -> new Details.Interview(j.postingId(), j.applicationId(), j.title(),
+                    j.company(), j.interviewBefore(), j.interviewAt());
+        };
     }
 
     @Override
@@ -95,7 +121,8 @@ public class ChatPlanPersistenceAdapter implements ChatPlanRepositoryPort {
     }
 
     private static PlanItem toDomain(ChatPlanItemEntity e) {
-        return new PlanItem(e.getId(), PlanItem.Kind.valueOf(e.getKind()), e.getDetails(),
+        PlanItem.Kind kind = PlanItem.Kind.valueOf(e.getKind());
+        return new PlanItem(e.getId(), kind, toDomain(kind, e.getDetails()),
                 PlanItem.State.valueOf(e.getState()),
                 e.getFailure() == null ? null : PlanFailure.valueOf(e.getFailure()),
                 e.getResultApplicationId(), e.getDecidedAt(), e.getFinishedAt());

@@ -72,8 +72,10 @@ public class ChatPlanApproval {
             runner.run(userId, approved.item());
             return null;
         } catch (IllegalArgumentException e) {
-            return approved.item().details().applicationId() == null
-                    ? PlanFailure.POSTING_GONE : PlanFailure.APPLICATION_GONE;
+            return switch (approved.item().kind()) {
+                case SAVE_POSTING, IGNORE_POSTING, GENERATE_DOCUMENTS -> PlanFailure.POSTING_GONE;
+                case UPDATE_STATUS, LOG_INTERVIEW -> PlanFailure.APPLICATION_GONE;
+            };
         } catch (IllegalStateException e) {
             return PlanFailure.NOT_ALLOWED;
         } catch (RuntimeException e) {
