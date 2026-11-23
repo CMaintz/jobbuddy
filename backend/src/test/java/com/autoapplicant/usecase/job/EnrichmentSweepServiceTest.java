@@ -53,8 +53,11 @@ class EnrichmentSweepServiceTest {
 
     /** Short enough that a hung call ends the test quickly instead of after the real 5 minutes. */
     private EnrichmentSweepService serviceWith(int concurrency) {
-        return new EnrichmentSweepService(jobRepo, enrichJob, MAX_ATTEMPTS, Duration.ofHours(6),
-                Duration.ofMillis(50), 0L, concurrency);
+        return new EnrichmentSweepService(jobRepo, enrichJob,
+                org.mockito.Mockito.mock(BatchedEnrichment.class),
+                org.mockito.Mockito.mock(com.autoapplicant.port.out.user.PreferencesRepositoryPort.class),
+                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMillis(50), 0L,
+                        concurrency, 1));
     }
 
     private void queue(Job... jobs) {
