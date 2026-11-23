@@ -15,7 +15,7 @@ import { StructuredDocument } from '../../core/models/structured-document.model'
 import { ResumeDraftApiService } from '../resume-builder/services/resume-draft-api.service';
 import { structuredDocToResumeData, structuredDocToLayout } from '../resume-builder/services/structured-doc-mapper';
 import { INITIAL_SETTINGS, ResumeDraft } from '../resume-builder/models/resume-builder.models';
-import { loadGenDefaults } from '../settings/settings.component';
+import { loadGenDefaults } from '../../core/gen-defaults';
 import { NotifyService } from '../../shared/services/notify.service';
 import { BuddyWaitComponent } from '../../shared/components/buddy/buddy-wait.component';
 

@@ -27,26 +27,9 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { StructuredDocumentTemplatesApiService } from '../../core/api/structured-document-templates.api';
 import { DocumentTemplateOption } from '../../core/models/structured-document.model';
 import { NotifyService } from '../../shared/services/notify.service';
+import { loadGenDefaults, saveGenDefaults } from '../../core/gen-defaults';
 
-/** Generation defaults have no backend home yet — kept client-side so the apply screen can read them. */
-export interface GenDefaults {
-  voice: string;
-  lang: string;
-  length: string;
-  /** Default CV template id used by Quick apply (undefined = system default). */
-  cvTemplate?: string;
-}
-
-const GEN_DEFAULTS_KEY = 'jb-gen-defaults';
 const MIN_MATCH_KEY = 'jb-min-match';
-
-export function loadGenDefaults(): GenDefaults {
-  try {
-    return { voice: 'Warm', lang: 'English', length: 'Standard', ...JSON.parse(localStorage.getItem(GEN_DEFAULTS_KEY) ?? '{}') };
-  } catch {
-    return { voice: 'Warm', lang: 'English', length: 'Standard' };
-  }
-}
 
 const INDUSTRY_OPTIONS: { key: string; label: string }[] = [
   { key: 'SOFTWARE_IT', label: 'settings.industry.softwareIt' },
@@ -270,7 +253,7 @@ export class SettingsComponent implements OnInit {
     if (this.saving()) return;
     this.saving.set(true);
 
-    localStorage.setItem(GEN_DEFAULTS_KEY, JSON.stringify(this.gen));
+    saveGenDefaults(this.gen);
     localStorage.setItem(MIN_MATCH_KEY, `${this.minMatch}`);
 
     const payload: Partial<UserPreferences> = {

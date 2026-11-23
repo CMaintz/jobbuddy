@@ -16,7 +16,7 @@ import { PromptApiService } from '../../core/api/prompt.api';
 import { Application } from '../../core/models/application.model';
 import { Job } from '../../core/models/job.model';
 import { PromptCategory, PromptTemplate, byPreference } from '../../core/models/prompt-template.model';
-import { loadGenDefaults } from '../settings/settings.component';
+import { loadGenDefaults } from '../../core/gen-defaults';
 import { NotifyService } from '../../shared/services/notify.service';
 
 const FORMAT_TO_DOC_TYPE: Record<string, string> = {
