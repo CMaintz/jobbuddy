@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+  <title>JobBuddy</title>
+  <link rel="stylesheet" href="shell.css">
+  <link rel="stylesheet" href="buddy/buddy.css">
+</head>
+<body>
+  <main>
+    <span class="buddy buddy--x2 buddy--error mascot" role="img" aria-label="Buddy, JobBuddys axolotl, ryster på hovedet"><span class="buddy__sprite"></span></span>
+    <h1>Noget gik galt</h1>
+    <p class="lead" id="message"></p>
+    <div class="card">
+      <p>Prøv at starte JobBuddy igen. Sker det igen, så send logfilen til den, der hjælper dig med JobBuddy. Den ligger her:</p>
+      <p><code id="log"></code></p>
+      <p>Har du skiftet adgangskode til databasen, så ret forbindelsen.</p>
+    </div>
+    <div class="row">
+      <button class="primary" id="restart">Start igen</button>
+      <button id="edit">Ret forbindelsen</button>
+      <button id="logs">Åbn logmappen</button>
+      <button id="quit">Afslut</button>
+    </div>
+  </main>
+  <script src="error.js"></script>
+</body>
+</html>

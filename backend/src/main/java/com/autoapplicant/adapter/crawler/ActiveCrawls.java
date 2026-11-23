@@ -37,15 +37,16 @@ public class ActiveCrawls {
     }
 
     /**
-     * Clears every running flag on startup. No crawl can be running inside a JVM that has only
-     * just started, so any flag still set was left by a crawl the previous process never
-     * finished. This assumes a single-instance deployment: with several instances sharing the
-     * database, one starting up would clear flags another is legitimately holding.
+     * Clears running flags older than {@code stale-running-after} on startup. A fresh flag is
+     * kept even though this JVM has only just started: the database can be shared with another
+     * process (the scheduled crawl, or a second app instance) whose crawl is still live, and
+     * clearing its flag lets the enrichment and embedding sweeps start alongside that crawl.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void clearLeftoverRunningFlags() {
+        Instant now = Instant.now();
         for (CrawlerState state : crawlerStateRepo.findAll()) {
-            if (state.isRunning()) {
+            if (state.isRunning() && !state.isActivelyRunning(now, staleRunningAfter)) {
                 log.warn("Clearing running flag left over from an unfinished crawl: {}",
                         state.source());
                 crawlerStateRepo.save(state.notRunning());

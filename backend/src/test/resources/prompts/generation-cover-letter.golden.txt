@@ -47,16 +47,26 @@ The reader is a Danish recruiter or hiring manager who decides in well under a m
 The posting names Mette Hansen, afdelingsleder as the person to contact about this role. Address the letter to them by name, spelled exactly as given. Do not invent any other recipient, title, or detail about them.
 
 ## Structure
+First derive the employer's needs into "needs", then write the letter from them.
 Write it as a flowing letter (no headings, no bullet lists in the body):
-- Open with a specific hook — why THIS role at THIS company, not a generic greeting line.
-- One evidence paragraph that proves fit with a concrete, NAMED role or project from the profile and its most relevant quantified outcome — depth over a list.
-- A short company-fit paragraph connecting the candidate's direction to the employer; ground any company reference in the Verified Company Facts, or the candidate's Company Research where the facts are silent, when either is provided.
+- Open with a specific hook about the employer's situation, not a generic greeting line.
+- A short motivation: 1-2 concrete tasks the candidate looks forward to, and why.
+- A paragraph for each of the 2-3 needs the profile proves best, by the Letter Rules below. Ground any company reference in the Verified Company Facts, or the candidate's Company Research where the facts are silent, when either is provided.
 - Close with a brief, confident call to action.
 Do not invent a named recipient; a role-appropriate greeting the profile supports is fine.
 If — and only if — the profile carries an "availability" value, state it as one short             factual clause near the close (employers routinely ask, and a candidate who volunteers             it reads as someone who has thought the move through). Never invent a notice period or             start date the profile does not state.
 
+## Letter Rules
+These rules win over any other instruction about the letter's structure or proof, including the Targeting & Proof Rules: the profile supplies the proof, not the structure. The letter looks forward (present and future tense); the CV looks back.
+- Write from the Employer Needs: pick the 2-3 the profile proves best and give each one paragraph; leave the rest out rather than write a paragraph without proof. Each opens with a present-tense claim about the employer or the field, not about the candidate. Then it says what they get from the candidate and how the candidate does it for them (present or future tense). It has at most ONE past-tense sentence, written as proof of the paragraph's claim ("Det ved jeg, fordi ...", "That is how I know, because ..."), never as a CV line. The paragraph ends looking forward, not in the proof.
+- At least half of the sentences are about the employer and what it gains.
+- No posting echo: never restate the posting's tasks or requirements as a list or enumeration, and never lift an enumeration from it verbatim. Taking up ONE concrete task and saying how the candidate handles it is exactly what is wanted. The posting says WHAT they need done; the letter says WHY it is hard or important for them, and what they get.
+- Never volunteer what speaks against the candidate (experience they lack, something new to them, gaps); that belongs in the interview. Never state where the posting was found, a start date or an interview date that the profile or instructions do not give.
+- No CV recap: no walk through jobs, courses or education, chronological or otherwise. A sentence that could move unchanged into the CV does not belong in the letter.
+- Motivation: name 1-2 concrete tasks the candidate looks forward to, and why. Never the posting's task list.
+
 ## Length
-Aim for about 300 words across 3–4 short paragraphs. One page maximum.
+Aim for about 300 words in short paragraphs: an opening with the motivation, two or three need paragraphs, and a close. One page maximum.
 
 ## Banned Phrases
 These phrases mark an application as filler — a Danish reader discards them on sight, and the English ones now read as machine-written. Never use them, and do not write a near-paraphrase of one either. Say the concrete thing instead.
@@ -98,8 +108,9 @@ These phrases mark an application as filler — a Danish reader discards them on
 
 Return only valid JSON matching exactly this shape:
 {
-  "body": "<full document text>",
-  "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job — omit if none"]
+  "needs": ["3-5 employer needs, each one line from the employer's side: a pain, what is at stake, or what success looks like in 1-3 years. A need is the reason the tasks exist, never a task: '680 drivers without screens must follow the rules', not 'write GDPR procedures'."],
+  "body": "<full document text, one paragraph for each of the 2-3 needs the profile proves best>",
+  "notes": ["1-3 specific observations about gaps or opportunities between the profile and this job; omit if none"]
 }
 
 ## Contact-Free Master Career Profile JSON
