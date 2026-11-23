@@ -19,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir;
 class PdfRenderingServiceSsrfTest {
 
     private static final int NOT_FOUND = 404;
+    private static final Path WORKING_DIR_UPLOADS = Path.of("uploads");
 
     private final AtomicInteger requests = new AtomicInteger();
     private HttpServer server;
@@ -41,7 +42,7 @@ class PdfRenderingServiceSsrfTest {
 
     @Test
     void templateReferencesToInternalHostsAndFilesAreNeverFetched() {
-        byte[] pdf = new PdfRenderingService().render(hostileTemplate(), "", Map.of());
+        byte[] pdf = new PdfRenderingService(new PdfResourcePolicy(WORKING_DIR_UPLOADS)).render(hostileTemplate(), "", Map.of());
 
         assertThat(pdf).isNotEmpty();
         assertThat(requests.get()).isZero();
@@ -75,7 +76,7 @@ class PdfRenderingServiceSsrfTest {
 
     @Test
     void streamGateAloneBlocksFetchesTheDefaultResolverAllows() throws Exception {
-        PdfResourcePolicy policy = new PdfResourcePolicy();
+        PdfResourcePolicy policy = new PdfResourcePolicy(WORKING_DIR_UPLOADS);
         PdfRendererBuilder resolverless = new PdfRendererBuilder()
                 .useFastMode()
                 .useProtocolsStreamImplementation(policy, PdfResourcePolicy.GUARDED_SCHEMES)
@@ -87,7 +88,7 @@ class PdfRenderingServiceSsrfTest {
 
     @Test
     void escapeCoversQuotesSoValuesCannotBreakOutOfAttributes() {
-        String escaped = new PdfRenderingService().escape("x\" onerror=\"y' <b>&");
+        String escaped = new PdfRenderingService(new PdfResourcePolicy(WORKING_DIR_UPLOADS)).escape("x\" onerror=\"y' <b>&");
 
         assertThat(escaped).isEqualTo("x&quot; onerror=&quot;y&#39; &lt;b&gt;&amp;");
     }

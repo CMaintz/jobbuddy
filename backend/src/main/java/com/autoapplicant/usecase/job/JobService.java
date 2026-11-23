@@ -3,10 +3,12 @@ package com.autoapplicant.usecase.job;
 import com.autoapplicant.domain.job.IgnoredJob;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.search.JobSearchQuery;
+import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.*;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.job.SavedJobRepositoryPort;
+import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -23,20 +25,24 @@ public class JobService implements GetJobsUseCase, GetJobByIdUseCase, SaveJobUse
     private final JobRepositoryPort jobRepo;
     private final SavedJobRepositoryPort savedJobRepo;
     private final IgnoredJobRepositoryPort ignoredJobRepo;
+    private final PreferencesRepositoryPort prefsRepo;
 
     public JobService(JobRepositoryPort jobRepo, SavedJobRepositoryPort savedJobRepo,
-                      IgnoredJobRepositoryPort ignoredJobRepo) {
+                      IgnoredJobRepositoryPort ignoredJobRepo, PreferencesRepositoryPort prefsRepo) {
         this.jobRepo = jobRepo;
         this.savedJobRepo = savedJobRepo;
         this.ignoredJobRepo = ignoredJobRepo;
+        this.prefsRepo = prefsRepo;
     }
 
     @Override
     public Page<Job> getJobs(JobSearchQuery query) {
         if (query.userId() != null) {
+            List<String> skipped = prefsRepo.findByUserId(query.userId())
+                    .map(UserPreferences::excludedCategoriesOrEmpty).orElse(List.of());
             List<Job> jobs =
-                    jobRepo.findActiveNotIgnoredBy(query.userId(), query.page(), query.size());
-            long total = jobRepo.countActiveNotIgnoredBy(query.userId());
+                    jobRepo.findActiveNotIgnoredBy(query.userId(), skipped, query.page(), query.size());
+            long total = jobRepo.countActiveNotIgnoredBy(query.userId(), skipped);
             return new PageImpl<>(jobs, PageRequest.of(query.page(), query.size()), total);
         }
         List<Job> jobs = jobRepo.findActive(query.page(), query.size());

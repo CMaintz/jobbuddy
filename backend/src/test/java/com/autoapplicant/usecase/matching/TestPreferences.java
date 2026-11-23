@@ -20,6 +20,7 @@ final class TestPreferences {
     private Integer salaryMin;
     private Integer salaryMax;
     private Integer maxCommuteKm;
+    private List<String> excludedCategories = List.of();
 
     TestPreferences(UUID userId) {
         this.userId = userId;
@@ -34,6 +35,7 @@ final class TestPreferences {
     TestPreferences employmentTypes(String... v) { employmentTypes = List.of(v); return this; }
     TestPreferences seniority(String... v) { seniority = List.of(v); return this; }
     TestPreferences industries(String... v) { industries = List.of(v); return this; }
+    TestPreferences excludedCategories(String... v) { excludedCategories = List.of(v); return this; }
     TestPreferences maxCommuteKm(int km) { maxCommuteKm = km; return this; }
 
     TestPreferences salary(int min, int max) {
@@ -46,6 +48,6 @@ final class TestPreferences {
         return new UserPreferences(UUID.randomUUID(), userId, locations, municipalities,
                 positiveSignals, negativeSignals, excludedCompanies, remoteTypes, employmentTypes,
                 seniority, industries, salaryMin, salaryMax, maxCommuteKm,
-                false, null, null, null, null);
+                false, null, null, null, null, excludedCategories, null);
     }
 }

@@ -1,6 +1,11 @@
 package com.autoapplicant.usecase.job;
 
+import com.autoapplicant.port.in.job.ExpireStaleJobsUseCase;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,18 +13,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
 /**
  * Deactivates jobs that haven't been seen by any crawler (or confirmed alive by
  * a URL probe) for a configurable number of days (default 30). Runs daily at
  * 03:00. Manual jobs are exempt — no crawler ever refreshes them.
  */
 @Service
-public class JobExpiryService {
+public class JobExpiryService implements ExpireStaleJobsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(JobExpiryService.class);
 
@@ -32,6 +32,7 @@ public class JobExpiryService {
         this.staleDays = staleDays;
     }
 
+    @Override
     @Scheduled(cron = "${app.job.expiry-cron:0 0 3 * * *}")
     @Transactional
     public void deactivateStaleJobs() {

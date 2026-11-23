@@ -8,5 +8,10 @@ import com.autoapplicant.domain.search.JobSearchResult;
  * generated column on the row itself, so writing a job is what makes it findable.
  */
 public interface JobSearchPort {
-    JobSearchResult search(JobSearchQuery query);
+    default JobSearchResult search(JobSearchQuery query) {
+        return search(query, java.util.List.of());
+    }
+
+    /** As {@link #search(JobSearchQuery)}, leaving out postings in {@code excludedCategories}. */
+    JobSearchResult search(JobSearchQuery query, java.util.Collection<String> excludedCategories);
 }

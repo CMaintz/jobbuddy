@@ -84,6 +84,15 @@ class MatchingHardFiltersTest extends MatchingServiceFixture {
     }
 
     @Test
+    void a_category_she_skips_is_not_recommended() {
+        Job sales = minimalJob(dropped).toBuilder().jobCategory(JobCategory.SALES).build();
+        Job software = minimalJob(kept).toBuilder().jobCategory(JobCategory.SOFTWARE_IT).build();
+
+        assertThat(feedFor(prefs().excludedCategories("SALES").build(), sales, software))
+                .containsExactly(kept);
+    }
+
+    @Test
     void a_job_beyond_the_commute_radius_is_dropped() {
         // Frederiksberg is about 2 km from central Copenhagen, Aarhus about 155 km.
         Job near = minimalJob(kept).toBuilder().municipality("Frederiksberg").build();

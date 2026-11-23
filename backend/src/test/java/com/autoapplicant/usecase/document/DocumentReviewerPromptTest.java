@@ -32,7 +32,7 @@ class DocumentReviewerPromptTest {
 
     @Test
     void userPromptJoinsEverySectionWithOneBlankLineThenTheJsonContract() {
-        ReviewContext ctx = new ReviewContext(null, "COVER_LETTER", "the posting", "English", "DK");
+        ReviewContext ctx = new ReviewContext(null, "COVER_LETTER", "the posting", "English", "DK", List.of());
         String user = reviewer.reviewUserPrompt(
                 ctx, "MY DRAFT", null, guardrails("HONESTY", "MARKET", "CLICHE"), List.of("synergy", "leverage"));
 
@@ -41,6 +41,7 @@ class DocumentReviewerPromptTest {
                 + "## Job Description\nthe posting\n\n"
                 + "HONESTY\n\n"
                 + "MARKET\n\n"
+                + LetterRules.BLOCK + "\n\n"
                 + "## Flagged Filler Phrases\n"
                 + "A deterministic check found these phrases in the draft. Rewrite every one of them "
                 + "into something concrete and specific to this candidate and posting — do not simply "
@@ -58,12 +59,33 @@ class DocumentReviewerPromptTest {
 
     @Test
     void blankGuardrailSectionsAndAbsentPostingAreOmittedCleanly() {
-        ReviewContext ctx = new ReviewContext(null, null, null, null, null);
+        ReviewContext ctx = new ReviewContext(null, null, null, null, null, List.of());
         String user = reviewer.reviewUserPrompt(ctx, "DRAFT", null, guardrails("", "", ""), List.of());
 
         // No job-description header, no flagged block, no blank guardrail sections — just the draft
         // (labelled "document" when the type is null) and the JSON contract, one blank line apart.
         assertThat(user).startsWith("## Draft (document)\nDRAFT\n\nReturn only valid JSON");
+    }
+
+    @Test
+    void aLetterIsReviewedByTheLetterRulesAndWrittenFromItsNeeds() {
+        // Bug: the reviewer rewrites the letter without the rules or the needs and chases the
+        // posting's keywords, undoing the structure the drafter was given before the gate sees it.
+        ReviewContext ctx = new ReviewContext(null, "COVER_LETTER", "the posting", "Danish", "DK",
+                List.of("680 chauffører uden skærm skal følge reglerne"));
+        String user = reviewer.reviewUserPrompt(ctx, "DRAFT", null, guardrails("", "", ""), List.of());
+
+        assertThat(user).contains(LetterRules.BLOCK, "## Employer Needs",
+                "680 chauffører uden skærm skal følge reglerne");
+    }
+
+    @Test
+    void aCvReviewGetsNeitherTheLetterRulesNorNeeds() {
+        // Bug: one-paragraph-per-need letter rules reshape a CV under review.
+        ReviewContext ctx = new ReviewContext(null, "CV", "the posting", "Danish", "DK", List.of("et behov"));
+        String user = reviewer.reviewUserPrompt(ctx, "DRAFT", null, guardrails("", "", ""), List.of());
+
+        assertThat(user).doesNotContain("## Letter Rules").doesNotContain("## Employer Needs");
     }
 
     @Test

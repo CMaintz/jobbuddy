@@ -20,12 +20,17 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import com.autoapplicant.port.out.user.CertificationRepositoryPort;
+import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +61,10 @@ abstract class MatchingServiceFixture {
     @Mock ProfileSkillRepositoryPort profileSkillRepo;
     @Mock ApplicationRepositoryPort applicationRepo;
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
+    @Mock EducationRepositoryPort educationRepo;
+    @Mock CertificationRepositoryPort certificationRepo;
+    @Mock WorkExperienceRepositoryPort workExperienceRepo;
+    @Mock ParsedSkillSuggestionRepositoryPort suggestionRepo;
 
     MatchingService service;
     final UUID userId = UUID.randomUUID();
@@ -65,8 +74,11 @@ abstract class MatchingServiceFixture {
         // The taxonomy is empty unless a test stubs it, so canonicalisation is plain
         // normalisation and "Java" matches only "java".
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
-                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo,
-                applicationRepo, new SkillCanonicalizer(taxonomyRepo));
+                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
+                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo),
+                        new MatchProfileLoader.Sources(profileSkillRepo, suggestionRepo,
+                                educationRepo, certificationRepo, workExperienceRepo),
+                        labels -> SkillSimilarity.NONE, Clock.systemUTC()));
     }
 
     /** A profile whose skills are stored as plain rows with no recorded proficiency. */

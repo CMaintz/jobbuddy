@@ -66,6 +66,10 @@
         </div>
       </div>
     }
+
+    @if (parsing()) {
+      <jb-buddy-wait heading="cvImport.parsingCv" detail="buddy.wait.import" [scale]="compact ? 1 : 2" />
+    }
   } @else {
     <!-- Parsed preview -->
     <div class="w-full">
