@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
+import com.autoapplicant.domain.job.EnrichmentScope;
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
 import java.time.Duration;
@@ -45,7 +46,7 @@ class JobPersistenceAdapterEnrichmentQueueTest extends PostgresIntegrationTest {
         job("ENRICHED", 1, RETRY_BEFORE.minus(Duration.ofDays(1)));
         job("FAILED", MAX_ATTEMPTS, RETRY_BEFORE.minus(Duration.ofDays(1)));
 
-        assertThat(adapter.findForEnrichment(BATCH, MAX_ATTEMPTS, RETRY_BEFORE))
+        assertThat(adapter.findForEnrichment(BATCH, MAX_ATTEMPTS, RETRY_BEFORE, EnrichmentScope.everything()))
                 .extracting(Job::id)
                 .containsExactly(neverTried, triedLongAgo);
     }
@@ -55,7 +56,7 @@ class JobPersistenceAdapterEnrichmentQueueTest extends PostgresIntegrationTest {
         UUID first = job("PENDING", 0, null);
         job("PENDING", 1, RETRY_BEFORE.minus(Duration.ofDays(1)));
 
-        assertThat(adapter.findForEnrichment(1, MAX_ATTEMPTS, RETRY_BEFORE))
+        assertThat(adapter.findForEnrichment(1, MAX_ATTEMPTS, RETRY_BEFORE, EnrichmentScope.everything()))
                 .extracting(Job::id)
                 .containsExactly(first);
     }
