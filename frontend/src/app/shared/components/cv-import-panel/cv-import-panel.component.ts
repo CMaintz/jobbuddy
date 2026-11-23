@@ -42,7 +42,7 @@ interface ParsedCvResponse {
 @Component({
   selector: 'jb-cv-import-panel',
   imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, BuddyWaitComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cv-import-panel.component.html',
 })
 export class CvImportPanelComponent {

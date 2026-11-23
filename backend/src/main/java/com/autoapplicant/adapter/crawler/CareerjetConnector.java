@@ -6,11 +6,10 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import java.time.Instant;
 import java.util.List;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Fetches Danish job listings from the Careerjet public API.
@@ -79,29 +78,9 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
                 }
 
                 for (JsonNode job : jobs) {
-                    String jobUrl   = job.path("url").asText(null);
-                    String title    = job.path("title").asText("");
-                    String company  = job.path("company").asText("");
-                    String location = job.path("locations").asText("");
-                    String desc     = job.path("description").asText("");
-                    String date     = job.path("date").asText("");
-                    String salary   = job.path("salary").asText("");
-
-                    if (jobUrl == null || jobUrl.isBlank()) continue;
-
-                    String content = buildContent(title, company, location, desc, salary, date, jobUrl);
-                    String jobId   = extractId(jobUrl);
-
-                    config.onJobFound().accept(new RawJobData(
-                            JobSource.CAREERJET,
-                            jobId,
-                            jobUrl,
-                            content,
-                            job.toString(),   // raw JSON as structured payload
-                            Instant.now(),
-                            List.of(),
-                            null
-                    ));
+                    RawJobData raw = toRawJobData(job);
+                    if (raw == null) continue;
+                    config.onJobFound().accept(raw);
                     count++;
                 }
 
@@ -122,6 +101,31 @@ public class CareerjetConnector extends AbstractJobSourceConnector {
         }
 
         log.info("Careerjet crawl complete: {} jobs collected", count);
+    }
+
+    /** Maps one search hit; null when it carries no URL, since that is its only identity. */
+    RawJobData toRawJobData(JsonNode job) {
+        String jobUrl   = job.path("url").asText(null);
+        if (jobUrl == null || jobUrl.isBlank()) return null;
+
+        String title    = job.path("title").asText("");
+        String company  = job.path("company").asText("");
+        String location = job.path("locations").asText("");
+        String desc     = job.path("description").asText("");
+        String date     = job.path("date").asText("");
+        String salary   = job.path("salary").asText("");
+
+        String content = buildContent(title, company, location, desc, salary, date, jobUrl);
+        return new RawJobData(
+                JobSource.CAREERJET,
+                extractId(jobUrl),
+                jobUrl,
+                content,
+                job.toString(),   // raw JSON as structured payload
+                Instant.now(),
+                List.of(),
+                null
+        );
     }
 
     private String buildContent(String title, String company, String location,

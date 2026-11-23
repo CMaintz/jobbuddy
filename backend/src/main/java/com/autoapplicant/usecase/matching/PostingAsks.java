@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * A posting's asks in its three tiers, each skill once. An ask that is both tiered and in the
@@ -24,6 +25,12 @@ record PostingAsks(List<String> required, List<String> preferred, List<String> u
 
     static PostingAsks untiered(List<String> asks) {
         return new PostingAsks(List.of(), List.of(), asks);
+    }
+
+    /** The same asks with every one {@code dropped} accepts left out of all three tiers. */
+    PostingAsks without(Predicate<String> dropped) {
+        return new PostingAsks(kept(required, dropped), kept(preferred, dropped),
+                kept(untiered, dropped));
     }
 
     boolean isEmpty() {
@@ -45,6 +52,10 @@ record PostingAsks(List<String> required, List<String> preferred, List<String> u
             if (!key.isEmpty() && seen.add(key)) out.add(label);
         }
         return out;
+    }
+
+    private static List<String> kept(List<String> asks, Predicate<String> dropped) {
+        return asks.stream().filter(dropped.negate()).toList();
     }
 
     private static List<String> nonNull(List<String> list) {

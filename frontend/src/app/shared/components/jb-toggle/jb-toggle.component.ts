@@ -3,7 +3,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 @Component({
   selector: 'jb-toggle',
   templateUrl: './jb-toggle.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./jb-toggle.component.css']
 })
 export class JbToggleComponent {

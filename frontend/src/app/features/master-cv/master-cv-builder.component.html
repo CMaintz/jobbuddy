@@ -38,7 +38,7 @@
     </jb-topbar>
 
 
-    @if (loading) {
+    @if (loading()) {
       <div class="p-12 text-center text-jb-text-dim">{{ 'masterCv.loadingProfile' | translate }}</div>
     } @else {
       <!-- Mobile section tabs -->
@@ -74,12 +74,12 @@
             <div class="text-2xs text-jb-text-dim tracking-[0.08em] uppercase mb-1.5">{{ 'masterCv.completeness' | translate }}</div>
             <div class="flex items-baseline gap-1">
               <div class="text-4xl font-medium tracking-tighter"
-                [style.color]="coverage >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ coverage }}</div>
+                [style.color]="coverage() >= 80 ? 'var(--jb-success)' : 'var(--jb-accent-2)'">{{ coverage() }}</div>
               <div class="text-xs text-jb-text-dim">/ 100</div>
             </div>
-            <div class="bar mt-1.5"><i [style.width]="coverage + '%'"></i></div>
+            <div class="bar mt-1.5"><i [style.width]="coverage() + '%'"></i></div>
             <div class="mt-2 text-xs text-jb-text-dim">
-              {{ (coverage >= 80 ? 'masterCv.coverageStrong' : 'masterCv.coverageWeak') | translate }}
+              {{ (coverage() >= 80 ? 'masterCv.coverageStrong' : 'masterCv.coverageWeak') | translate }}
             </div>
           </div>
         </aside>
@@ -97,8 +97,8 @@
             @if (activeSec() === 'Header') {
               <!-- Photo -->
               <div class="flex items-center gap-3 mb-4">
-                @if (privateInfo.photoUrl) {
-                  <img [src]="privateInfo.photoUrl" [alt]="'masterCv.photoAlt' | translate"
+                @if (privateInfo().photoUrl) {
+                  <img [src]="privateInfo().photoUrl" [alt]="'masterCv.photoAlt' | translate"
                     class="w-14 h-14 rounded-full object-cover border border-jb-border" />
                 } @else {
                   <div class="w-14 h-14 rounded-full flex items-center justify-center bg-jb-surface-2 border border-dashed border-jb-border-strong text-jb-text-dim text-xs">{{ 'masterCv.photo' | translate }}</div>
@@ -106,9 +106,9 @@
                 <div class="flex gap-1.5">
                   <input type="file" accept="image/*" #photoInput style="display:none;" (change)="onPhotoSelected($event)" />
                   <jb-button small (clicked)="photoInput.click()" [disabled]="uploadingPhoto()">
-                    {{ (uploadingPhoto() ? 'masterCv.uploading' : privateInfo.photoUrl ? 'masterCv.replace' : 'masterCv.uploadPhoto') | translate }}
+                    {{ (uploadingPhoto() ? 'masterCv.uploading' : privateInfo().photoUrl ? 'masterCv.replace' : 'masterCv.uploadPhoto') | translate }}
                   </jb-button>
-                  @if (privateInfo.photoUrl) {
+                  @if (privateInfo().photoUrl) {
                     <jb-button small (clicked)="recropPhoto()">{{ 'masterCv.recrop' | translate }}</jb-button>
                     <jb-button small ghost (clicked)="removePhoto()">{{ 'common.remove' | translate }}</jb-button>
                   }
@@ -119,23 +119,23 @@
               <div class="grid gap-3.5 grid-cols-[1fr_1fr]">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'onboarding.profile.fullName' | translate }}</span>
-                  <input [(ngModel)]="privateInfo.fullName" class="input" [placeholder]="'onboarding.profile.fullNamePlaceholder' | translate" />
+                  <input [ngModel]="privateInfo().fullName" (ngModelChange)="patchPrivateInfo({ fullName: $event })" class="input" [placeholder]="'onboarding.profile.fullNamePlaceholder' | translate" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'masterCv.title2' | translate }}</span>
-                  <input [(ngModel)]="profile.headline" class="input" [placeholder]="'masterCv.titlePlaceholder' | translate" />
+                  <input [ngModel]="profile().headline" (ngModelChange)="patchProfile({ headline: $event })" class="input" [placeholder]="'masterCv.titlePlaceholder' | translate" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'masterCv.contactEmail' | translate }}</span>
-                  <input [(ngModel)]="privateInfo.contactEmail" class="input mono" placeholder="you@example.com" />
+                  <input [ngModel]="privateInfo().contactEmail" (ngModelChange)="patchPrivateInfo({ contactEmail: $event })" class="input mono" placeholder="you@example.com" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'masterCv.phone' | translate }}</span>
-                  <input [(ngModel)]="privateInfo.phone" class="input mono" placeholder="+45 1234 5678" />
+                  <input [ngModel]="privateInfo().phone" (ngModelChange)="patchPrivateInfo({ phone: $event })" class="input mono" placeholder="+45 1234 5678" />
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'apply.location' | translate }}</span>
-                  <input [(ngModel)]="privateInfo.location" class="input" [placeholder]="'masterCv.locationPlaceholder' | translate" />
+                  <input [ngModel]="privateInfo().location" (ngModelChange)="patchPrivateInfo({ location: $event })" class="input" [placeholder]="'masterCv.locationPlaceholder' | translate" />
                 </label>
               </div>
               <div class="mt-3 text-xs text-jb-text-dim">
@@ -149,31 +149,31 @@
                 <div class="flex flex-col gap-[5px]">
                   <div class="flex items-center justify-between">
                     <span class="label">{{ 'masterCv.profileSummary' | translate }}</span>
-                    <app-ai-refine-menu [plainOutput]="true" [content]="profile.summary || ''"
+                    <app-ai-refine-menu [plainOutput]="true" [content]="profile().summary || ''"
                       [sectionKey]="'profile'"
-                      (refined)="profile.summary = $event; markDirty()" />
+                      (refined)="patchProfile({ summary: $event })" />
                   </div>
-                  <textarea [(ngModel)]="profile.summary" rows="6" class="input resize-y text-base leading-relaxed"
+                  <textarea [ngModel]="profile().summary" (ngModelChange)="patchProfile({ summary: $event })" rows="6" class="input resize-y text-base leading-relaxed"
                     [placeholder]="'masterCv.summaryPlaceholder' | translate"></textarea>
                   <div class="text-xs text-jb-text-dim">{{ 'masterCv.summaryHint' | translate }}</div>
                 </div>
                 <label class="flex flex-col gap-[5px] self-start">
                   <span class="label">{{ 'masterCv.yearsExp' | translate }}</span>
-                  <input [(ngModel)]="profile.yearsExperience" type="number" min="0" class="input mono w-24" placeholder="5" />
+                  <input [ngModel]="profile().yearsExperience" (ngModelChange)="patchProfile({ yearsExperience: $event })" type="number" min="0" class="input mono w-24" placeholder="5" />
                 </label>
               </div>
             }
 
             <!-- Strengths section -->
             @if (activeSec() === 'Strengths') {
-              <app-mcv-strengths-section [list]="strengthsList"
+              <app-mcv-strengths-section [(list)]="strengthsList" (listChange)="markDirty()"
                 (add)="addStrength()" (removeAt)="removeStrength($event)" />
             }
 
             <!-- Experience section -->
             @if (activeSec() === 'Experience') {
-              <app-mcv-experience-section [list]="experienceList"
-                (add)="addExperience()" (removeAt)="removeExperience($event)" (dirty)="markDirty()" />
+              <app-mcv-experience-section [(list)]="experienceList" (listChange)="markDirty()"
+                (add)="addExperience()" (removeAt)="removeExperience($event)" />
             }
 
             <!-- Skills section -->
@@ -181,12 +181,12 @@
               <div class="flex flex-col gap-4">
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'masterCv.sec.skills' | translate }}</span>
-                  <jb-tag-input [value]="skillsList" (valueChange)="onSkillsChange($event)" [placeholder]="'masterCv.addSkill' | translate" />
+                  <jb-tag-input [value]="skillsList()" (valueChange)="onSkillsChange($event)" [placeholder]="'masterCv.addSkill' | translate" />
                   <div class="text-xs text-jb-text-dim">{{ 'masterCv.skillsHint' | translate }}</div>
                 </label>
                 <label class="flex flex-col gap-[5px]">
                   <span class="label">{{ 'masterCv.interests' | translate }}</span>
-                  <jb-tag-input [value]="interestsList" (valueChange)="onInterestsChange($event)" [placeholder]="'masterCv.addInterest' | translate" />
+                  <jb-tag-input [value]="interestsList()" (valueChange)="onInterestsChange($event)" [placeholder]="'masterCv.addInterest' | translate" />
                   <div class="text-xs text-jb-text-dim">{{ 'masterCv.interestsHint' | translate }}</div>
                 </label>
               </div>
@@ -194,38 +194,38 @@
 
             <!-- Education section -->
             @if (activeSec() === 'Education') {
-              <app-mcv-education-section [list]="educationList"
+              <app-mcv-education-section [(list)]="educationList" (listChange)="markDirty()"
                 (add)="addEducation()" (removeAt)="removeEducation($event)" />
             }
 
             <!-- Projects section -->
             @if (activeSec() === 'Projects') {
-              <app-mcv-projects-section [list]="projectsList"
-                (add)="addProject()" (removeAt)="removeProject($event)" (dirty)="markDirty()" />
+              <app-mcv-projects-section [(list)]="projectsList" (listChange)="markDirty()"
+                (add)="addProject()" (removeAt)="removeProject($event)" />
             }
 
             <!-- Certifications section -->
             @if (activeSec() === 'Certifications') {
-              <app-mcv-certifications-section [list]="certificationsList"
+              <app-mcv-certifications-section [list]="certificationsList()"
                 (removeAt)="removeCertification($event)" (save)="saveCertification($event)" />
             }
 
             <!-- Languages section -->
             @if (activeSec() === 'Languages') {
-              <app-mcv-languages-section [list]="languagesList"
+              <app-mcv-languages-section [(list)]="languagesList" (listChange)="markDirty()"
                 (add)="addLanguage()" (removeAt)="removeLanguage($event)" />
             }
 
             <!-- Socials section -->
             @if (activeSec() === 'Socials') {
-              <app-mcv-socials-section [list]="socialsList"
-                (add)="addSocial()" (removeAt)="removeSocial($event)" (dirty)="markDirty()" />
+              <app-mcv-socials-section [(list)]="socialsList" (listChange)="markDirty()"
+                (add)="addSocial()" (removeAt)="removeSocial($event)" />
             }
 
             <!-- Custom sections -->
             @if (activeSec() === 'Custom') {
-              <app-mcv-custom-sections-section [list]="customSectionsList"
-                (add)="addCustomSection()" (removeAt)="removeCustomSection($event)" (changed)="markDirty()" />
+              <app-mcv-custom-sections-section [(list)]="customSectionsList" (listChange)="markDirty()"
+                (add)="addCustomSection()" (removeAt)="removeCustomSection($event)" />
             }
           </div>
         </div>
@@ -233,11 +233,11 @@
         <!-- Preview column -->
         <div class="hidden lg:flex overflow-auto p-5 justify-center jb-scroll" style="background:radial-gradient(ellipse at top,rgba(26,30,37,0.5) 0%,transparent 60%);">
           <app-master-cv-preview class="self-start w-full flex justify-center"
-            [profile]="profile" [privateInfo]="privateInfo"
-            [experience]="experienceList" [education]="educationList"
-            [projects]="projectsList" [certifications]="certificationsList"
-            [languages]="languagesList" [socials]="socialsList" [strengths]="strengthsList"
-            [skills]="skillsList" [technologies]="technologiesList" />
+            [profile]="profile()" [privateInfo]="privateInfo()"
+            [experience]="experienceList()" [education]="educationList()"
+            [projects]="projectsList()" [certifications]="certificationsList()"
+            [languages]="languagesList()" [socials]="socialsList()" [strengths]="strengthsList()"
+            [skills]="skillsList()" [technologies]="technologiesList()" />
         </div>
       </div>
     }
