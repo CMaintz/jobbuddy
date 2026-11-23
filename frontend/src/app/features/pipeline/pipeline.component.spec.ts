@@ -51,7 +51,7 @@ describe('PipelineComponent status change', () => {
 
     fixture.componentInstance.changeStatus(saved, 'APPLIED');
 
-    expect(fixture.componentInstance.applications.map(a => a.status)).toEqual(['APPLIED', 'PREPARING']);
+    expect(fixture.componentInstance.applications().map(a => a.status)).toEqual(['APPLIED', 'PREPARING']);
   });
 
   it('keeps the old status when the server refuses the move', () => {
@@ -63,7 +63,7 @@ describe('PipelineComponent status change', () => {
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.applications[0].status).toBe('PREPARING');
+    expect(fixture.componentInstance.applications()[0].status).toBe('PREPARING');
     expect(rowSelect().value).toBe('PREPARING');
   });
 
@@ -109,9 +109,9 @@ describe('PipelineComponent status change', () => {
       REJECTED: 'pipeline.column.closed', ARCHIVED: 'pipeline.column.closed',
     };
     const statuses = Object.keys(columnOf) as ApplicationStatus[];
-    fixture.componentInstance.applications = statuses.map(status => ({
+    fixture.componentInstance.applications.set(statuses.map(status => ({
       ...saved, id: status, status, jobTitle: `Job ${status}`,
-    }));
+    })));
     fixture.componentInstance.view.set('kanban');
     fixture.detectChanges();
 
@@ -146,9 +146,9 @@ describe('PipelineComponent status change', () => {
   }
 
   function oneOfEach(...statuses: ApplicationStatus[]): void {
-    fixture.componentInstance.applications = statuses.map(status => ({
+    fixture.componentInstance.applications.set(statuses.map(status => ({
       ...saved, id: status, status, jobTitle: `Job ${status}`,
-    }));
+    })));
     fixture.detectChanges();
   }
 

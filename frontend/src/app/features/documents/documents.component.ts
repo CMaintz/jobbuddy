@@ -41,7 +41,7 @@ interface DocRow {
 @Component({
   selector: 'app-documents',
   imports: [TranslateModule, JbIconComponent, JbTopbarComponent, JbPillComponent, BuddyComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.component.html'
 })
 export class DocumentsComponent implements OnInit {

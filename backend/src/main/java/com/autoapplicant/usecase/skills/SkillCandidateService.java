@@ -229,12 +229,6 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         return claimed;
     }
 
-    private static void addAll(Map<String, String> target, List<String> names) {
-        if (names == null) return;
-        names.stream().filter(n -> n != null && !n.isBlank())
-                .forEach(n -> target.put(normalize(n), n.strip()));
-    }
-
     /** How often each skill appears across the postings this user matches. */
     private Map<String, MarketMention> marketMentions(UUID userId) {
         Map<String, MarketMention> mentions = new LinkedHashMap<>();

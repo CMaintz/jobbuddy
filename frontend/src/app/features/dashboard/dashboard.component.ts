@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -77,7 +77,7 @@ interface SavedPreview {
     StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,
     NudgeQueueRowComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -89,6 +89,7 @@ export class DashboardComponent implements OnInit {
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
   private translate = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
   private activityStreak = inject(ActivityStreakService);
 
   get streak(): number {
@@ -156,6 +157,8 @@ export class DashboardComponent implements OnInit {
           hot: false,
         }));
         this.buildQueue(reminders, apps, nudges);
+        // Everything above lands in plain fields; this one load is the only async writer.
+        this.cdr.markForCheck();
       },
       error: this.notify.onError('notify.loadFailed')
     });

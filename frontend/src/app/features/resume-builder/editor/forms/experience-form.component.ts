@@ -13,7 +13,7 @@ import { MonthYearPickerComponent } from '../../shared/month-year-picker.compone
     FormsModule, TranslateModule, RichTextEditorComponent, MonthYearPickerComponent,
     AiRefineMenuComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './experience-form.component.html',
 })
 export class ExperienceFormComponent {

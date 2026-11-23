@@ -15,7 +15,7 @@ import { NotifyService } from '../../shared/services/notify.service';
 @Component({
   selector: 'app-skill-taxonomy-panel',
   imports: [FormsModule, TranslateModule, JbButtonComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './skill-taxonomy-panel.component.html'
 })
 export class SkillTaxonomyPanelComponent implements OnInit {
