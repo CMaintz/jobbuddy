@@ -20,12 +20,13 @@ const EMBEDDING_KEY_VARS = { openai: 'OPENAI_API_KEY', gemini: 'GEMINI_API_KEY' 
  * @param {object} p
  * @param {string} p.javaExe the bundled JRE's java.exe
  * @param {string} p.jarPath the Spring Boot jar
+ * @param {string} p.typstExe the bundled typst.exe the backend renders PDFs with
  * @param {string} p.token this launch's JOBBUDDY_DESKTOP_TOKEN
  * @param {string} p.dataDir APP_DATA_DIR, also the working directory
  * @param {import('./settings-store').Settings} p.settings the saved connection
  * @param {NodeJS.ProcessEnv} p.baseEnv the shell's own environment
  */
-function backendLaunch({ javaExe, jarPath, token, dataDir, settings, baseEnv }) {
+function backendLaunch({ javaExe, jarPath, typstExe, token, dataDir, settings, baseEnv }) {
   const env = { ...baseEnv };
   // The user's own shell may carry API keys for other tools; only the one she gave JobBuddy
   // decides which provider embeds.
@@ -37,6 +38,8 @@ function backendLaunch({ javaExe, jarPath, token, dataDir, settings, baseEnv }) 
     JOBBUDDY_DESKTOP_TOKEN: token,
     DESKTOP_SHELL_ORIGIN: SHELL_ORIGIN,
     APP_DATA_DIR: dataDir,
+    // Her PC has no typst on PATH, and the backend's templates need exactly the version shipped.
+    TYPST_PATH: typstExe,
     DB_URL: settings.dbUrl,
     DB_USER: settings.dbUser,
     DB_PASS: settings.dbPassword,

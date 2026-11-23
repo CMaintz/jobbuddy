@@ -20,6 +20,7 @@ function launchWith(overrides = {}) {
   return backendLaunch({
     javaExe: 'C:\\JobBuddy\\jre\\bin\\java.exe',
     jarPath: 'C:\\JobBuddy\\backend\\jobbuddy.jar',
+    typstExe: 'C:\\JobBuddy\\typst\\typst.exe',
     token: TOKEN,
     dataDir: 'C:\\Users\\her\\AppData\\Local\\JobBuddy',
     settings: SETTINGS,
@@ -40,6 +41,13 @@ test('the backend starts in the desktop profile on a port the OS picks inside th
   assert.equal(env.APP_DATA_DIR, 'C:\\Users\\her\\AppData\\Local\\JobBuddy');
   assert.equal(cwd, 'C:\\Users\\her\\AppData\\Local\\JobBuddy');
   assert.equal(env.PATH, 'C:\\Windows');
+});
+
+test('the backend renders PDFs with the Typst the app ships, not one found on her PATH', () => {
+  // Without it the backend runs `typst` from PATH, which is not there on her PC, and every
+  // designed CV and letter export fails; a stray TYPST_PATH must not pick another version.
+  const { env } = launchWith({ baseEnv: { PATH: 'C:\\Windows', TYPST_PATH: 'C:\\other\\typst.exe' } });
+  assert.equal(env.TYPST_PATH, 'C:\\JobBuddy\\typst\\typst.exe');
 });
 
 test('the saved connection reaches the backend under the names it reads', () => {

@@ -12,6 +12,7 @@ function resourcePaths(app) {
   const base = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..', 'stage');
   return {
     java: path.join(base, 'jre', 'bin', 'java.exe'),
+    typst: path.join(base, 'typst', 'typst.exe'),
     jar: path.join(base, 'backend', 'jobbuddy.jar'),
     ui: path.join(base, 'ui'),
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
