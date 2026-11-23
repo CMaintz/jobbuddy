@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
  *
  * Companies are configured via app.lever.companies.
  * The company slug is the one in Lever job URLs:
- *   https://jobs.lever.co/dixa  →  slug = "dixa"
+ *   https://jobs.lever.co/veo  →  slug = "veo"
  */
 @Component
 public class LeverConnector extends AbstractJobSourceConnector {
@@ -52,6 +52,9 @@ public class LeverConnector extends AbstractJobSourceConnector {
         for (String company : companies) {
             if (count >= targetJobs) break;
             String url = String.format(API_BASE, company);
+            // The postings API carries no company name; the slug stays in the URL and the
+            // posting ids, the configured name is what the company is filed under.
+            String employer = appProperties.getLever().getDisplayNames().getOrDefault(company, company);
             try {
                 Thread.sleep(config.delayMs());
                 String json = fetchWithRetry(url, 3);
@@ -65,7 +68,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
                 int companyCount = 0;
                 for (JsonNode posting : root) {
                     if (count >= targetJobs) break;
-                    RawJobData raw = toRawJobData(company, posting);
+                    RawJobData raw = toRawJobData(company, employer, posting);
                     if (raw == null) continue;
                     config.onJobFound().accept(raw);
                     count++;
@@ -86,7 +89,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
     }
 
     /** Maps one posting; null when it lacks the id or URL the source id and link rest on. */
-    RawJobData toRawJobData(String company, JsonNode posting) {
+    RawJobData toRawJobData(String company, String employer, JsonNode posting) {
         String id         = posting.path("id").asText(null);
         String title      = posting.path("text").asText("");
         String hostedUrl  = posting.path("hostedUrl").asText(null);
@@ -112,7 +115,7 @@ public class LeverConnector extends AbstractJobSourceConnector {
             }
         }
 
-        String content = buildContent(title, company, location, team, commitment,
+        String content = buildContent(title, employer, location, team, commitment,
                 descPlain.isBlank() ? Jsoup.parse(descHtml).text() : descPlain,
                 listsText.toString(), hostedUrl);
 
@@ -124,6 +127,11 @@ public class LeverConnector extends AbstractJobSourceConnector {
                 posting.toString(),
                 Instant.now(),
                 List.of(),
+                null,
+                null,
+                employer,
+                null,
+                null,
                 null
         );
     }

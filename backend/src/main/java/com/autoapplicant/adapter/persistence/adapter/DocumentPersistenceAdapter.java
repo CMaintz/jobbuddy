@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DocumentPersistenceAdapter implements GeneratedDocumentRepositoryPort {
@@ -52,5 +53,11 @@ public class DocumentPersistenceAdapter implements GeneratedDocumentRepositoryPo
     public List<GeneratedDocument> findRecentByUserIdAndType(UUID userId, String documentType, int limit) {
         return repo.findRecentByUserIdAndType(userId, documentType, PageRequest.of(0, limit))
                 .stream().map(DocumentMapper::toDomain).toList();
+    }
+
+    @Override
+    @Transactional
+    public boolean replaceStructuredContent(UUID id, UUID userId, String expected, String replacement) {
+        return repo.replaceStructuredContent(id, userId, expected, replacement) > 0;
     }
 }

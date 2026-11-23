@@ -16,7 +16,7 @@ class LeverConnectorTest {
     void maps_a_posting_with_its_categories_and_lists() {
         JsonNode posting = CrawlerFixtures.json("lever/postings.json").get(0);
 
-        RawJobData raw = connector.toRawJobData("veo", posting);
+        RawJobData raw = connector.toRawJobData("veo", "veo", posting);
 
         assertThat(raw.source()).isEqualTo(JobSource.LEVER);
         assertThat(raw.sourceJobId()).isEqualTo("lever-veo-7ec8c80d-37f2-488c-a45a-c5460bad5645");
@@ -37,6 +37,6 @@ class LeverConnectorTest {
         JsonNode posting = CrawlerFixtures.parseJson(
                 "{\"text\": \"Android Engineer\", \"hostedUrl\": \"https://jobs.lever.co/veo/x\"}");
 
-        assertThat(connector.toRawJobData("veo", posting)).isNull();
+        assertThat(connector.toRawJobData("veo", "veo", posting)).isNull();
     }
 }

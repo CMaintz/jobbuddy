@@ -19,9 +19,14 @@ public final class SkillCategories {
 
     private SkillCategories() {}
 
-    /** Categories naming a tool, platform or technique — as opposed to a way of working. */
+    /**
+     * Categories naming a tool, platform or technique, as opposed to a way of working.
+     *
+     * <p>Plain "language" is absent on purpose: the taxonomy files code under "Programming
+     * Language", so "Language" is a person's own label for the languages they speak.
+     */
     private static final Set<String> TECHNICAL = Set.of(
-            "programming language", "language", "framework", "library", "database", "cloud",
+            "programming language", "framework", "library", "database", "cloud",
             "devops", "tool", "api", "ai/ml", "architecture", "testing", "security");
 
     public static boolean isTechnical(String category) {

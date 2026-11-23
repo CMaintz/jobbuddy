@@ -120,7 +120,7 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
                   "gaps": ["<missing keywords, weak areas, or misalignments>", ...],
                   "suggestions": ["<concrete, actionable improvement — one per entry>", ...],
                   "dimensions": {
-                    "technicalSkills": <0-100 — required/preferred skills coverage>,
+                    "technicalSkills": <0-100 - coverage of the required/preferred skills: tools, methods and domain knowledge of the posting's own field>,
                     "experience": <0-100 — work-history domain and role-type alignment>,
                     "cultureFit": <0-100 — company culture signals vs the candidate's profile>,
                     "careerAlignment": <0-100 — growth path and motivation fit for this role>,
@@ -141,6 +141,8 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
                 posting, contradictory or unrealistic requirements, no concrete team or role detail),
                 and classify how far the advertised comp is trustworthy base pay vs variable / "up to" /
                 commission. Give 0-4 risk signals; omit the array if none.
+                "technicalSkills" covers skills of any kind, not only technical ones: score a
+                communications or compliance role on that field's skills, never on programming.
                 Score each dimension independently; do not average them yourself.
                 Be honest about gaps — never assume skills the CV does not state.
                 Give 3-6 entries per list. Every suggestion must be actionable, not generic advice.""");
@@ -152,7 +154,9 @@ public class CvAnalysisService implements AnalyzeCvUseCase {
         StringBuilder sb = new StringBuilder();
         sb.append("Analyze this CV / career profile and provide specific, actionable feedback.\n\n");
         sb.append("## CV Content\n").append(cvContent).append("\n\n");
-        sb.append("No target job given — judge the CV on general strength: clarity, quantified achievements, ATS readiness.\n");
+        sb.append("No target job given, so judge the CV on general strength: clarity, concrete "
+                + "achievements (numbers where the work has them, otherwise scope and what changed), "
+                + "ATS readiness.\n");
         sb.append("""
 
                 Respond with ONLY a JSON object in exactly this shape:

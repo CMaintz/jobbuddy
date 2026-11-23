@@ -38,7 +38,8 @@ class JobindexConnectorTest {
                 "Vil du gøre en reel forskel for børn, som har brug for tydelige, trygge og stabile "
                         + "voksne omkring sig? Specialskolen Bramsnæsvig søger");
         assertThat(raw.applicationDeadline()).isNull();
-        assertThat(raw.companyName()).isNull();
+        // Without Stash metadata the company comes from the RSS title's last ", " part.
+        assertThat(raw.companyName()).isEqualTo("Specialskolen Bramsnæsvig");
     }
 
     @Test

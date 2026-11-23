@@ -16,8 +16,18 @@ import org.testcontainers.utility.DockerImageName;
  * <p>One container for the whole run rather than one per class: Spring caches the
  * context across classes with the same config, and a per-class container would leave
  * that cached context pointing at a stopped database.
+ *
+ * <p>The flip side is that every distinct test configuration (each {@code @Import} or
+ * {@code @MockitoBean} set) is its own cached context with its own Hikari pool, and all of
+ * them stay open against this one server. At Hikari's default of ten connections held per
+ * pool, about ten such contexts exhaust Postgres's 100 and the next one fails at Flyway with
+ * "too many clients already". A small pool that idles down to one keeps the total far below
+ * that; no test here needs more than a couple of connections at once.
  */
-@DataJpaTest
+@DataJpaTest(properties = {
+        "spring.datasource.hikari.maximum-pool-size=4",
+        "spring.datasource.hikari.minimum-idle=1"
+})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers(disabledWithoutDocker = true)
 public abstract class PostgresIntegrationTest {

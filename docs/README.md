@@ -14,7 +14,7 @@ Project docs, organised by area. (Agent guidance lives in [`../CLAUDE.md`](../CL
 - [SETUP.md](guides/SETUP.md) — install, env config, deployment.
 - [COMMANDS.md](guides/COMMANDS.md) — CLI / crawl / enrichment commands.
 - [testing_strategy.md](guides/testing_strategy.md) — testing pyramid, coverage targets, quality gates.
-- [db.md](guides/db.md) — PostgreSQL cheatsheet.
+- [db.md](guides/db.md) - the Supabase database (connection, migrations, backups) and a local PostgreSQL cheatsheet.
 
 ## Product & domain — `product/`
 - [product_strategy.md](product/product_strategy.md) — vision, market, differentiators, roadmap.
