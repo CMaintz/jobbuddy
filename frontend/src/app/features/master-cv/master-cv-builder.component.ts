@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ViewChild, WritableSignal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -56,7 +56,7 @@ interface CvSection {
     McvLanguagesSectionComponent, McvSocialsSectionComponent, McvCustomSectionsSectionComponent,
     TranslateModule,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './master-cv-builder.component.html'
 })
 export class MasterCvBuilderComponent implements OnInit {
@@ -71,21 +71,23 @@ export class MasterCvBuilderComponent implements OnInit {
   private aiApi = inject(AiApiService);
   private atsPdf = inject(AtsPdfService);
 
-  loading = true;
+  loading = signal(true);
   saving = signal(false);
   dirty = signal(false);
   activeSec = signal('Header');
 
-  profile: Profile = {};
-  privateInfo: ProfilePrivateInfo = {};
-  experienceList: WorkExperience[] = [];
-  educationList: Education[] = [];
-  projectsList: Project[] = [];
-  certificationsList: Certification[] = [];
-  languagesList: SpokenLanguage[] = [];
-  socialsList: ProfileSocial[] = [];
-  strengthsList: ProfileStrength[] = [];
-  customSectionsList: CustomSection[] = [];
+  // Every edit replaces these values rather than mutating them, which is what lets the OnPush
+  // preview and section editors see a change.
+  profile = signal<Profile>({});
+  privateInfo = signal<ProfilePrivateInfo>({});
+  experienceList = signal<WorkExperience[]>([]);
+  educationList = signal<Education[]>([]);
+  projectsList = signal<Project[]>([]);
+  certificationsList = signal<Certification[]>([]);
+  languagesList = signal<SpokenLanguage[]>([]);
+  socialsList = signal<ProfileSocial[]>([]);
+  strengthsList = signal<ProfileStrength[]>([]);
+  customSectionsList = signal<CustomSection[]>([]);
 
   @ViewChild(McvCertificationsSectionComponent) certSection?: McvCertificationsSectionComponent;
 
@@ -103,45 +105,47 @@ export class MasterCvBuilderComponent implements OnInit {
    * — and whether one counts as a technology is read off that category. Two editors could no
    * longer honestly control which bucket a typed skill landed in, so there is one.
    */
-  profileSkills: ProfileSkill[] = [];
+  profileSkills = signal<ProfileSkill[]>([]);
 
-  get skillsList(): string[] { return this.profileSkills.map(s => s.skillName); }
+  skillsList = computed(() => this.profileSkills().map(s => s.skillName));
 
   /** The technical slice, for the preview. Derived from category, exactly as the backend does it. */
-  get technologiesList(): string[] {
-    return this.profileSkills
-      .filter(s => s.category && TECH_CATEGORIES.has(s.category))
-      .map(s => s.skillName);
-  }
-  get interestsList(): string[] { return this.profile.interests ?? []; }
+  technologiesList = computed(() => this.profileSkills()
+    .filter(s => s.category && TECH_CATEGORIES.has(s.category))
+    .map(s => s.skillName));
 
-  get coverage(): number {
+  interestsList = computed(() => this.profile().interests ?? []);
+
+  coverage = computed(() => {
+    const experience = this.experienceList();
     const checks = [
-      (this.profile.summary?.length ?? 0) > 60,
-      this.strengthsList.length >= 3,
-      this.experienceList.length >= 2,
-      this.skillsList.length >= 6,
-      this.educationList.length >= 1,
-      this.languagesList.length >= 1,
-      this.experienceList.some(j => (j.description?.length ?? 0) > 50),
-      this.projectsList.length >= 1,
+      (this.profile().summary?.length ?? 0) > 60,
+      this.strengthsList().length >= 3,
+      experience.length >= 2,
+      this.skillsList().length >= 6,
+      this.educationList().length >= 1,
+      this.languagesList().length >= 1,
+      experience.some(j => (j.description?.length ?? 0) > 50),
+      this.projectsList().length >= 1,
     ];
     return Math.round((checks.filter(Boolean).length / 8) * 100);
-  }
+  });
 
   sections(): CvSection[] {
+    const words = (this.profile().summary ?? '').trim().split(/\s+/).filter(Boolean).length;
+    const count = (list: unknown[]) => ({ count: `${list.length}`, empty: list.length === 0 });
     return [
       { key: 'Header', label: 'masterCv.sec.header', count: this.translate.instant('masterCv.count.fields', { n: 5 }) },
-      { key: 'Profile', label: 'masterCv.sec.profile', count: this.translate.instant('masterCv.count.words', { n: (this.profile.summary ?? '').trim().split(/\s+/).filter(Boolean).length }) },
-      { key: 'Strengths', label: 'masterCv.sec.strengths', count: `${this.strengthsList.length}` },
-      { key: 'Experience', label: 'masterCv.sec.experience', count: this.translate.instant('masterCv.count.roles', { n: this.experienceList.length }) },
-      { key: 'Skills', label: 'masterCv.sec.skills', count: `${this.skillsList.length + this.technologiesList.length}` },
-      { key: 'Education', label: 'masterCv.sec.education', count: `${this.educationList.length}` },
-      { key: 'Projects', label: 'masterCv.sec.projects', count: `${this.projectsList.length}`, empty: this.projectsList.length === 0 },
-      { key: 'Certifications', label: 'masterCv.sec.certifications', count: `${this.certificationsList.length}`, empty: this.certificationsList.length === 0 },
-      { key: 'Languages', label: 'masterCv.sec.languages', count: `${this.languagesList.length}` },
-      { key: 'Socials', label: 'masterCv.sec.socials', count: `${this.socialsList.length}`, empty: this.socialsList.length === 0 },
-      { key: 'Custom', label: 'masterCv.sec.custom', count: `${this.customSectionsList.length}`, empty: this.customSectionsList.length === 0 },
+      { key: 'Profile', label: 'masterCv.sec.profile', count: this.translate.instant('masterCv.count.words', { n: words }) },
+      { key: 'Strengths', label: 'masterCv.sec.strengths', count: `${this.strengthsList().length}` },
+      { key: 'Experience', label: 'masterCv.sec.experience', count: this.translate.instant('masterCv.count.roles', { n: this.experienceList().length }) },
+      { key: 'Skills', label: 'masterCv.sec.skills', count: `${this.skillsList().length + this.technologiesList().length}` },
+      { key: 'Education', label: 'masterCv.sec.education', count: `${this.educationList().length}` },
+      { key: 'Projects', label: 'masterCv.sec.projects', ...count(this.projectsList()) },
+      { key: 'Certifications', label: 'masterCv.sec.certifications', ...count(this.certificationsList()) },
+      { key: 'Languages', label: 'masterCv.sec.languages', count: `${this.languagesList().length}` },
+      { key: 'Socials', label: 'masterCv.sec.socials', ...count(this.socialsList()) },
+      { key: 'Custom', label: 'masterCv.sec.custom', ...count(this.customSectionsList()) },
     ];
   }
 
@@ -171,31 +175,41 @@ export class MasterCvBuilderComponent implements OnInit {
     }).subscribe({
       next: ({ full, priv, skills }) => {
         this.applyFullProfile(full);
-        this.privateInfo = priv ?? {};
-        this.profileSkills = skills;
-        this.loading = false;
+        this.privateInfo.set(priv ?? {});
+        this.profileSkills.set(skills);
+        this.loading.set(false);
       },
       error: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.notify.error('masterCv.toast.loadFailed');
       }
     });
   }
 
   private applyFullProfile(resp: FullProfileResponse): void {
-    this.profile = resp.profile ?? {};
-    this.experienceList = resp.experience || [];
-    this.educationList = resp.education || [];
-    this.projectsList = resp.projects || [];
-    this.certificationsList = resp.certifications || [];
-    this.languagesList = resp.languages || [];
-    this.socialsList = resp.socials || [];
-    this.strengthsList = resp.strengths || [];
-    this.customSectionsList = resp.customSections || [];
+    this.profile.set(resp.profile ?? {});
+    this.experienceList.set(resp.experience || []);
+    this.educationList.set(resp.education || []);
+    this.projectsList.set(resp.projects || []);
+    this.certificationsList.set(resp.certifications || []);
+    this.languagesList.set(resp.languages || []);
+    this.socialsList.set(resp.socials || []);
+    this.strengthsList.set(resp.strengths || []);
+    this.customSectionsList.set(resp.customSections || []);
   }
 
   markDirty(): void {
     this.dirty.set(true);
+  }
+
+  patchProfile(patch: Partial<Profile>): void {
+    this.profile.update(p => ({ ...p, ...patch }));
+    this.markDirty();
+  }
+
+  patchPrivateInfo(patch: Partial<ProfilePrivateInfo>): void {
+    this.privateInfo.update(p => ({ ...p, ...patch }));
+    this.markDirty();
   }
 
   // ── PDF export ────────────────────────────────────────────────
@@ -215,7 +229,7 @@ export class MasterCvBuilderComponent implements OnInit {
             translatedAtsHeadings(key => this.translate.instant(key)));
           const filename = anonymised
             ? 'master-cv-anonymised'
-            : `${this.privateInfo.fullName || 'master-cv'} - CV`;
+            : `${this.privateInfo().fullName || 'master-cv'} - CV`;
           await this.atsPdf.downloadResume(model, filename);
         } catch {
           this.notify.error('masterCv.toast.pdfFailed');
@@ -258,7 +272,8 @@ export class MasterCvBuilderComponent implements OnInit {
   }
 
   recropPhoto(): void {
-    if (this.privateInfo.photoUrl) this.cropSrc.set(this.privateInfo.photoUrl);
+    const photoUrl = this.privateInfo().photoUrl;
+    if (photoUrl) this.cropSrc.set(photoUrl);
   }
 
   onPhotoCropped(dataUrl: string): void {
@@ -268,7 +283,7 @@ export class MasterCvBuilderComponent implements OnInit {
     formData.append('file', dataUrlToBlob(dataUrl), 'photo.jpg');
     this.http.post<{ url: string }>('/api/v1/users/me/profile/photo', formData).subscribe({
       next: res => {
-        this.privateInfo.photoUrl = res.url;
+        this.privateInfo.update(p => ({ ...p, photoUrl: res.url }));
         this.uploadingPhoto.set(false);
         this.notify.success('masterCv.toast.photoUpdated');
       },
@@ -280,7 +295,7 @@ export class MasterCvBuilderComponent implements OnInit {
   }
 
   removePhoto(): void {
-    this.privateInfo.photoUrl = '';
+    this.privateInfo.update(p => ({ ...p, photoUrl: '' }));
     this.privateApi.updatePrivateInfo({ photoUrl: '' }).subscribe({
       error: () => this.notify.error('masterCv.toast.photoRemoveFailed')
     });
@@ -297,77 +312,90 @@ export class MasterCvBuilderComponent implements OnInit {
   onSkillsChange(value: string[]): void {
     const wanted = value.map(v => v.trim()).filter(v => v.length > 0);
     const wantedKeys = new Set(wanted.map(v => v.toLowerCase()));
-    const heldKeys = new Set(this.profileSkills.map(s => s.skillName.toLowerCase()));
+    const heldKeys = new Set(this.profileSkills().map(s => s.skillName.toLowerCase()));
 
     const added = wanted.filter(v => !heldKeys.has(v.toLowerCase()));
-    const removed = this.profileSkills.filter(s => !wantedKeys.has(s.skillName.toLowerCase()));
+    const removed = this.profileSkills().filter(s => !wantedKeys.has(s.skillName.toLowerCase()));
 
     const ops: Observable<unknown>[] = [
       ...added.map((name, i) => this.skillsApi.addProfileSkill({
         skillName: name,
         proficiencyLevel: 'INTERMEDIATE',
         usedInProduction: false,
-        displayOrder: this.profileSkills.length + i,
+        displayOrder: this.profileSkills().length + i,
       })),
       ...removed.filter(s => s.id).map(s => this.skillsApi.deleteProfileSkill(s.id!)),
     ];
-    if (ops.length === 0) return;
+    if (ops.length === 0) {
+      this.resetSkillsInput();
+      return;
+    }
 
     forkJoin(ops).subscribe({
       next: () => this.reloadSkills(),
-      error: () => this.notify.error('masterCv.toast.saveFailed')
+      error: () => {
+        this.resetSkillsInput();
+        this.notify.error('masterCv.toast.saveFailed');
+      }
     });
   }
 
+  /**
+   * The tag input keeps its own copy of the chips, so one that was not saved (a failed call, or a
+   * case-only duplicate of a held skill) stays visible until it is handed a new list.
+   */
+  private resetSkillsInput(): void {
+    this.profileSkills.update(skills => [...skills]);
+  }
+
   private reloadSkills(): void {
-    this.skillsApi.getProfileSkills().subscribe(skills => this.profileSkills = skills);
+    this.skillsApi.getProfileSkills().subscribe(skills => this.profileSkills.set(skills));
   }
 
   onInterestsChange(value: string[]): void {
-    this.profile.interests = value;
-    this.markDirty();
+    this.patchProfile({ interests: value });
   }
 
   // ── Add / remove list entries (persisted on Save) ─────────────
 
   addExperience(): void {
-    this.experienceList.unshift({ companyName: '', title: '', startDate: '', isCurrent: false, description: '' });
+    this.experienceList.update(l => [{ companyName: '', title: '', startDate: '', isCurrent: false, description: '' }, ...l]);
     this.markDirty();
   }
 
   addEducation(): void {
-    this.educationList.unshift({ institution: '', degree: '' });
+    this.educationList.update(l => [{ institution: '', degree: '' }, ...l]);
     this.markDirty();
   }
 
   addProject(): void {
-    this.projectsList.unshift({ name: '', description: '' });
+    this.projectsList.update(l => [{ name: '', description: '' }, ...l]);
     this.markDirty();
   }
 
   addLanguage(): void {
-    this.languagesList.push({ language: '', proficiency: 'FLUENT', displayOrder: this.languagesList.length });
+    this.languagesList.update(l => [...l, { language: '', proficiency: 'FLUENT', displayOrder: l.length }]);
     this.markDirty();
   }
 
   addSocial(): void {
-    this.socialsList.push({ platform: 'GitHub', url: '', iconKey: 'github', displayOrder: this.socialsList.length });
+    this.socialsList.update(l => [...l, { platform: 'GitHub', url: '', iconKey: 'github', displayOrder: l.length }]);
     this.markDirty();
   }
 
   addStrength(): void {
-    this.strengthsList.push({ title: '', description: '', iconKey: 'star', displayOrder: this.strengthsList.length });
+    this.strengthsList.update(l => [...l, { title: '', description: '', iconKey: 'star', displayOrder: l.length }]);
     this.markDirty();
   }
 
   addCustomSection(): void {
-    this.customSectionsList.push({ heading: '', items: [{ text: '' }] });
+    this.customSectionsList.update(l => [...l, { heading: '', items: [{ text: '' }] }]);
     this.markDirty();
   }
 
-  /** Whole-list replace on save, so removal is a local splice — no per-entry delete call. */
+  /** Whole-list replace on save, so removal is local only: no per-entry delete call. */
   removeCustomSection(i: number): void {
-    this.customSectionsList.splice(i, 1);
+    this.customSectionsList.update(l => l.filter((_, j) => j !== i));
     this.markDirty();
   }
 
@@ -388,14 +416,14 @@ export class MasterCvBuilderComponent implements OnInit {
   }
 
   private removeEntry<T extends { id?: string }>(
-    list: T[], index: number, deleteFn: (id: string) => Observable<void>,
+    list: WritableSignal<T[]>, index: number, deleteFn: (id: string) => Observable<void>,
   ): void {
-    const entry = list[index];
-    list.splice(index, 1);
+    const entry = list()[index];
+    list.update(l => l.filter((_, i) => i !== index));
     if (entry?.id) {
       deleteFn(entry.id).subscribe({
         error: () => {
-          list.splice(index, 0, entry);
+          list.update(l => [...l.slice(0, index), entry, ...l.slice(index)]);
           this.notify.error('masterCv.toast.deleteFailed');
         }
       });
@@ -406,7 +434,7 @@ export class MasterCvBuilderComponent implements OnInit {
   saveCertification(cert: Certification): void {
     this.profileApi.addCertification(cert).subscribe({
       next: saved => {
-        this.certificationsList.push(saved);
+        this.certificationsList.update(l => [...l, saved]);
         this.certSection?.reset();
       },
       error: () => this.notify.error('masterCv.toast.certFailed')
@@ -419,32 +447,34 @@ export class MasterCvBuilderComponent implements OnInit {
     if (this.saving()) return;
     this.saving.set(true);
 
+    const profile = this.profile();
+    const privateInfo = this.privateInfo();
     const ops: Observable<unknown>[] = [
       this.http.patch('/api/v1/users/me/profile', {
-        headline: this.profile.headline,
-        summary: this.profile.summary,
-        yearsExperience: this.profile.yearsExperience,
+        headline: profile.headline,
+        summary: profile.summary,
+        yearsExperience: profile.yearsExperience,
       }),
       this.privateApi.updatePrivateInfo({
-        fullName: this.privateInfo.fullName,
-        phone: this.privateInfo.phone,
-        location: this.privateInfo.location,
-        contactEmail: this.privateInfo.contactEmail,
+        fullName: privateInfo.fullName,
+        phone: privateInfo.phone,
+        location: privateInfo.location,
+        contactEmail: privateInfo.contactEmail,
       }),
-      ...this.upsertOps(this.experienceList, e => !!(e.companyName?.trim() && e.title?.trim() && e.startDate?.trim()),
+      ...this.upsertOps(this.experienceList(), e => !!(e.companyName?.trim() && e.title?.trim() && e.startDate?.trim()),
         e => this.profileApi.addExperience(e), (id, e) => this.profileApi.updateExperience(id, e)),
-      ...this.upsertOps(this.educationList, e => !!e.institution?.trim(),
+      ...this.upsertOps(this.educationList(), e => !!e.institution?.trim(),
         e => this.profileApi.addEducation(e), (id, e) => this.profileApi.updateEducation(id, e)),
-      ...this.upsertOps(this.projectsList, p => !!p.name?.trim(),
+      ...this.upsertOps(this.projectsList(), p => !!p.name?.trim(),
         p => this.profileApi.addProject(p), (id, p) => this.profileApi.updateProject(id, p)),
-      ...this.upsertOps(this.languagesList, l => !!l.language?.trim(),
+      ...this.upsertOps(this.languagesList(), l => !!l.language?.trim(),
         l => this.profileApi.addLanguage(l), (id, l) => this.profileApi.updateLanguage(id, l)),
-      ...this.upsertOps(this.socialsList, s => !!(s.platform?.trim() && s.url?.trim()),
+      ...this.upsertOps(this.socialsList(), s => !!(s.platform?.trim() && s.url?.trim()),
         s => this.socialApi.createSocial(s), (id, s) => this.socialApi.updateSocial(id, s)),
-      ...this.upsertOps(this.strengthsList, s => !!s.title?.trim(),
+      ...this.upsertOps(this.strengthsList(), s => !!s.title?.trim(),
         s => this.strengthApi.createStrength(s), (id, s) => this.strengthApi.updateStrength(id, s)),
       // Custom sections are a whole-list replace (server assigns ids, drops blanks).
-      this.profileApi.saveCustomSections(this.customSectionsList.filter(s => s.heading?.trim())),
+      this.profileApi.saveCustomSections(this.customSectionsList().filter(s => s.heading?.trim())),
     ];
 
     forkJoin(ops.length ? ops : [of(null)]).subscribe({

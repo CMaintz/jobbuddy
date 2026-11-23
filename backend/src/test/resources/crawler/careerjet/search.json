@@ -1,0 +1,28 @@
+{
+  "type": "JOBS",
+  "hits": 2,
+  "pages": 1,
+  "response_time": 0.0412,
+  "jobs": [
+    {
+      "locations": "Aarhus",
+      "site": "www.example-jobs.dk",
+      "date": "Wed, 28 Oct 2026 08:12:45 GMT",
+      "url": "https://jobviewtrack.com/en-gb/job-4a1c0e1f4b1d4207/7d4e3b0f2c1a9e8b.html",
+      "title": "Backend Developer",
+      "description": "We are looking for a backend developer with Java and Spring experience to join our platform team...",
+      "company": "Nordlys Software ApS",
+      "salary": "DKK 50,000 - 60,000 per month"
+    },
+    {
+      "locations": "Odense",
+      "site": "www.example-jobs.dk",
+      "date": "Tue, 27 Oct 2026 10:00:00 GMT",
+      "url": "",
+      "title": "Warehouse Assistant",
+      "description": "Listing whose tracking URL was not returned.",
+      "company": "Fynsk Logistik A/S",
+      "salary": ""
+    }
+  ]
+}

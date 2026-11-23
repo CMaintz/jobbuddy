@@ -6,12 +6,11 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches job listings from Greenhouse ATS job boards.
@@ -68,35 +67,9 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
                 int companyCount = 0;
                 for (JsonNode job : jobs) {
                     if (count >= targetJobs) break;
-
-                    String jobId    = job.path("id").asText(null);
-                    String title    = job.path("title").asText("");
-                    String jobUrl   = job.path("absolute_url").asText(null);
-                    String location = job.path("location").path("name").asText("");
-                    String updated  = job.path("updated_at").asText("");
-                    String rawHtml  = job.path("content").asText(""); // HTML job description
-
-                    if (jobId == null || jobUrl == null) continue;
-
-                    // Extract departments for content
-                    List<String> depts = new ArrayList<>();
-                    JsonNode depsNode = job.path("departments");
-                    if (depsNode.isArray()) {
-                        for (JsonNode d : depsNode) depts.add(d.path("name").asText(""));
-                    }
-
-                    String content = buildContent(title, company, location, rawHtml, depts, updated, jobUrl);
-
-                    config.onJobFound().accept(new RawJobData(
-                            JobSource.GREENHOUSE,
-                            "gh-" + company + "-" + jobId,
-                            jobUrl,
-                            content,
-                            job.toString(),
-                            Instant.now(),
-                            List.of(),
-                            null
-                    ));
+                    RawJobData raw = toRawJobData(company, job);
+                    if (raw == null) continue;
+                    config.onJobFound().accept(raw);
                     count++;
                     companyCount++;
                 }
@@ -112,6 +85,38 @@ public class GreenhouseConnector extends AbstractJobSourceConnector {
         }
 
         log.info("Greenhouse crawl complete: {} jobs from {} companies", count, companies.size());
+    }
+
+    /** Maps one board job; null when it lacks the id or URL the source id and link rest on. */
+    RawJobData toRawJobData(String company, JsonNode job) {
+        String jobId    = job.path("id").asText(null);
+        String title    = job.path("title").asText("");
+        String jobUrl   = job.path("absolute_url").asText(null);
+        String location = job.path("location").path("name").asText("");
+        String updated  = job.path("updated_at").asText("");
+        String rawHtml  = job.path("content").asText(""); // HTML job description
+
+        if (jobId == null || jobUrl == null) return null;
+
+        // Extract departments for content
+        List<String> depts = new ArrayList<>();
+        JsonNode depsNode = job.path("departments");
+        if (depsNode.isArray()) {
+            for (JsonNode d : depsNode) depts.add(d.path("name").asText(""));
+        }
+
+        String content = buildContent(title, company, location, rawHtml, depts, updated, jobUrl);
+
+        return new RawJobData(
+                JobSource.GREENHOUSE,
+                "gh-" + company + "-" + jobId,
+                jobUrl,
+                content,
+                job.toString(),
+                Instant.now(),
+                List.of(),
+                null
+        );
     }
 
     private String buildContent(String title, String company, String location,
