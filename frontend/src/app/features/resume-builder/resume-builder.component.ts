@@ -13,7 +13,7 @@ import { NotifyService } from '../../shared/services/notify.service';
 @Component({
   selector: 'app-resume-builder',
   imports: [TranslateModule, ResumeEditorComponent, ResumePreviewComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './resume-builder.component.html',
 })
 export class ResumeBuilderComponent implements OnInit {

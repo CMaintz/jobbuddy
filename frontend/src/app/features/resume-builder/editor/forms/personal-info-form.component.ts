@@ -13,7 +13,7 @@ import { PhotoCropDialogComponent } from '../../shared/photo-crop-dialog.compone
     FormsModule, TranslateModule, RichTextEditorComponent, PhotoCropDialogComponent,
     AiRefineMenuComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './personal-info-form.component.html',
 })
 export class PersonalInfoFormComponent {

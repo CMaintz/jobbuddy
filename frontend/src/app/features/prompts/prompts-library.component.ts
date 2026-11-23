@@ -25,7 +25,7 @@ import { NotifyService } from '../../shared/services/notify.service';
     JbPillComponent, TagInputComponent, JbModalComponent, PromptExplainerComponent,
     PromptCreateModalComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './prompts-library.component.html'
 })
 export class PromptsLibraryComponent implements OnInit {
@@ -44,14 +44,14 @@ export class PromptsLibraryComponent implements OnInit {
   promptKinds = PROMPT_KINDS;
   readonly isSectionCategory = isSectionCategory;
 
-  prompts: PromptTemplate[] = [];
+  prompts = signal<PromptTemplate[]>([]);
 
   /** Which library is on screen: the caller's own prompts, or the ones other people shared. */
   view = signal<'mine' | 'shared'>('mine');
-  sharedPrompts: PromptTemplate[] = [];
+  sharedPrompts = signal<PromptTemplate[]>([]);
   loadingShared = signal(false);
-  private myUserId = '';
-  private isAdmin = false;
+  private myUserId = signal('');
+  private isAdmin = signal(false);
 
   // Edit form (populated when editing an existing template)
   editName = '';
@@ -63,8 +63,8 @@ export class PromptsLibraryComponent implements OnInit {
 
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(u => {
-      this.myUserId = u?.id ?? '';
-      this.isAdmin = u?.role === 'ADMIN';
+      this.myUserId.set(u?.id ?? '');
+      this.isAdmin.set(u?.role === 'ADMIN');
     });
     this.load();
   }
@@ -74,12 +74,12 @@ export class PromptsLibraryComponent implements OnInit {
    * creator. Mirrors the backend rule — the gate is protection, not "is a system template".
    */
   canModify(p: PromptTemplate): boolean {
-    return p.isProtected ? this.isAdmin : p.userId === this.myUserId;
+    return p.isProtected ? this.isAdmin() : p.userId === this.myUserId();
   }
 
   /** Protected prompts offer Duplicate where a user's own offer Edit and Delete. */
   mustDuplicateToCustomise(p: PromptTemplate): boolean {
-    return p.isProtected && !this.isAdmin;
+    return p.isProtected && !this.isAdmin();
   }
 
   /** Points this prompt's category at this prompt. Never edits the app's seeded template. */
@@ -168,7 +168,7 @@ export class PromptsLibraryComponent implements OnInit {
   private load(): void {
     this.promptApi.getAll().subscribe({
       next: prompts => {
-        this.prompts = prompts;
+        this.prompts.set(prompts);
         this.loading.set(false);
       },
       error: () => {
@@ -180,10 +180,10 @@ export class PromptsLibraryComponent implements OnInit {
 
   showShared(): void {
     this.view.set('shared');
-    if (this.sharedPrompts.length || this.loadingShared()) return;
+    if (this.sharedPrompts().length || this.loadingShared()) return;
     this.loadingShared.set(true);
     this.promptApi.getPublic().subscribe({
-      next: shared => { this.sharedPrompts = shared; this.loadingShared.set(false); },
+      next: shared => { this.sharedPrompts.set(shared); this.loadingShared.set(false); },
       error: () => {
         this.loadingShared.set(false);
         this.notify.error('prompts.toast.sharedLoadFailed');
@@ -195,7 +195,7 @@ export class PromptsLibraryComponent implements OnInit {
 
   /** Sharing is per-prompt and reversible; only your own prompts can be shared. */
   canShare(p: PromptTemplate): boolean {
-    return !p.isProtected && p.userId === this.myUserId;
+    return !p.isProtected && p.userId === this.myUserId();
   }
 
   toggleShared(p: PromptTemplate): void {
@@ -206,16 +206,25 @@ export class PromptsLibraryComponent implements OnInit {
       outputConstraints: p.outputConstraints, isPublic: next, tags: p.tags,
     }).subscribe({
       next: () => {
-        p.isPublic = next;
+        this.patchPrompt(p.id, { isPublic: next });
         this.notify.success(next ? 'prompts.toast.shared' : 'prompts.toast.unshared');
       },
       error: () => this.notify.error('prompts.toast.shareFailed')
     });
   }
 
+  /** Replaces the prompt everywhere it is shown, so the list and the open modal stay in step. */
+  private patchPrompt(id: string, patch: Partial<PromptTemplate>): void {
+    const apply = (list: PromptTemplate[]) => list.map(p => p.id === id ? { ...p, ...patch } : p);
+    this.prompts.update(apply);
+    this.sharedPrompts.update(apply);
+    const open = this.openPrompt();
+    if (open?.id === id) this.openPrompt.set({ ...open, ...patch });
+  }
+
   filteredPrompts(): PromptTemplate[] {
     const kind = this.activeKind();
-    const source = this.view() === 'shared' ? this.sharedPrompts : this.prompts;
+    const source = this.view() === 'shared' ? this.sharedPrompts() : this.prompts();
     const list = kind === 'all' ? source : source.filter(p => p.category === kind);
     return [...list].sort(byPreference);
   }
@@ -223,12 +232,12 @@ export class PromptsLibraryComponent implements OnInit {
   toggleFavourite(p: PromptTemplate, event?: Event): void {
     event?.stopPropagation();
     const next = !p.favourite;
-    p.favourite = next; // optimistic
+    this.patchPrompt(p.id, { favourite: next }); // optimistic
     (next ? this.promptApi.favourite(p.id) : this.promptApi.unfavourite(p.id)).subscribe({
       // Starring a shared prompt is what adds it to your own library, so that list must refresh.
       next: () => { if (this.view() === 'shared') this.load(); },
       error: () => {
-        p.favourite = !next;
+        this.patchPrompt(p.id, { favourite: !next });
         this.notify.error('prompts.toast.favouriteFailed');
       }
     });

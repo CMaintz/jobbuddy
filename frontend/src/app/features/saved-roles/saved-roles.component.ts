@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -18,7 +18,7 @@ import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
     JbTopbarComponent, RouterLink, TranslateModule, JbIconComponent, JbButtonComponent,
     JbPillComponent, CompanyMarkComponent, BuddyComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './saved-roles.component.html'
 })
 export class SavedRolesComponent implements OnInit {
@@ -26,8 +26,8 @@ export class SavedRolesComponent implements OnInit {
   private chatChanges = inject(ChatChanges);
   private destroyRef = inject(DestroyRef);
 
-  savedJobs: Job[] = [];
-  loading = true;
+  savedJobs = signal<Job[]>([]);
+  loading = signal(true);
 
   ngOnInit(): void {
     this.load();
@@ -36,17 +36,17 @@ export class SavedRolesComponent implements OnInit {
 
   private load(): void {
     this.jobsApi.getSaved().subscribe({
-      next: (jobs) => { this.savedJobs = jobs; this.loading = false; },
-      error: () => this.loading = false
+      next: (jobs) => { this.savedJobs.set(jobs); this.loading.set(false); },
+      error: () => this.loading.set(false)
     });
   }
 
   remove(job: Job, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.savedJobs = this.savedJobs.filter(j => j.id !== job.id);
+    this.savedJobs.update(jobs => jobs.filter(j => j.id !== job.id));
     this.jobsApi.unsave(job.id).subscribe({
-      error: () => this.savedJobs = [...this.savedJobs, job]
+      error: () => this.savedJobs.update(jobs => [...jobs, job])
     });
   }
 }
