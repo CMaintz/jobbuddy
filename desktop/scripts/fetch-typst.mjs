@@ -38,7 +38,7 @@ const unpack = path.join(root, '.cache', 'typst-unpack');
 fs.rmSync(unpack, { recursive: true, force: true });
 fs.mkdirSync(unpack, { recursive: true });
 // Windows' own bsdtar reads zip; Git Bash's GNU tar, first on PATH there, does not.
-execFileSync(path.join(process.env.SystemRoot ?? 'C:\Windows', 'System32', 'tar.exe'),
+execFileSync(path.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe'),
   ['-xf', cacheZip, '-C', unpack], { stdio: 'inherit' });
 const [top] = fs.readdirSync(unpack);
 fs.rmSync(target, { recursive: true, force: true });
