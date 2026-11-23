@@ -33,7 +33,7 @@
         <div class="p-12 text-center text-jb-text-dim">{{ 'documents.loadError' | translate }}</div>
       } @else if (filteredRows().length === 0) {
         <div class="p-12 text-center">
-          <jb-icon name="doc" [size]="24" class="text-jb-text-dim" />
+          <jb-buddy />
           <div class="text-base text-jb-text-mid mt-2">{{ 'documents.emptyTitle' | translate }}</div>
           <div class="text-xs text-jb-text-dim mt-1">{{ 'documents.emptyDesc' | translate }}</div>
         </div>

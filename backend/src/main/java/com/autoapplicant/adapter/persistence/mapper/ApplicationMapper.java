@@ -16,7 +16,8 @@ public final class ApplicationMapper {
                 e.getCoverLetterText(), e.getApplicationText(), e.getRecruiterMessage(),
                 e.getRecruiterReply(), e.getCvVersionId(), e.getPromptTemplateId(), e.getMatchScore(),
                 e.getNotes(), e.getCreatedAt(), e.getUpdatedAt(),
-                e.getOutcomeFeedback(), e.getOutcomeLessons()
+                e.getOutcomeFeedback(), e.getOutcomeLessons(),
+                e.getDeadline(), e.getInterviewAt()
         );
     }
 
@@ -39,6 +40,8 @@ public final class ApplicationMapper {
         e.setNotes(d.notes());
         e.setOutcomeFeedback(d.outcomeFeedback());
         e.setOutcomeLessons(d.outcomeLessons());
+        e.setDeadline(d.deadline());
+        e.setInterviewAt(d.interviewAt());
         return e;
     }
 }

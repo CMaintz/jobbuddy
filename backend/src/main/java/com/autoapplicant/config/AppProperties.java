@@ -68,12 +68,19 @@ public class AppProperties {
          */
         private String command = "";
         private int timeoutSeconds = 120;
-        /** Label reported as the model name for provenance in saved documents. */
-        private String modelLabel = "cli-agent";
+        /** Claude model passed with {@code --model} on the default command; blank = sonnet. */
+        private String model = "";
+        /**
+         * Model name recorded in the usage log and saved documents. Blank = the model the
+         * default command pins, or "cli-agent" when the app does not choose one.
+         */
+        private String modelLabel = "";
         public String getCommand() { return command; }
         public void setCommand(String command) { this.command = command; }
         public int getTimeoutSeconds() { return timeoutSeconds; }
         public void setTimeoutSeconds(int timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
+        public String getModel() { return model; }
+        public void setModel(String model) { this.model = model; }
         public String getModelLabel() { return modelLabel; }
         public void setModelLabel(String modelLabel) { this.modelLabel = modelLabel; }
     }
@@ -146,6 +153,13 @@ public class AppProperties {
         private java.util.List<String> companies = new java.util.ArrayList<>();
         public java.util.List<String> getCompanies() { return companies; }
         public void setCompanies(java.util.List<String> companies) { this.companies = companies; }
+        /**
+         * Board slug to the employer's name. The postings API carries no company, and a bare
+         * slug ("veo") never lines up with the name other sources use for the same employer.
+         */
+        private java.util.Map<String, String> displayNames = new java.util.HashMap<>();
+        public java.util.Map<String, String> getDisplayNames() { return displayNames; }
+        public void setDisplayNames(java.util.Map<String, String> displayNames) { this.displayNames = displayNames; }
     }
 
     public static class Teamtailor {

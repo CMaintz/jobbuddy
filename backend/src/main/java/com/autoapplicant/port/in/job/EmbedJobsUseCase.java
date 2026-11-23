@@ -5,7 +5,8 @@ import com.autoapplicant.domain.job.Job;
 import java.time.Duration;
 
 /**
- * Turning enriched postings into search vectors.
+ * Turning postings into search vectors, after enrichment or, when
+ * {@code app.embedding.require-enriched} is false, straight from ingest.
  *
  * <p>Separate from enrichment on purpose. They use different models with different constraints —
  * extraction can run on a local CLI agent, embedding cannot — and an embedding-model upgrade must
