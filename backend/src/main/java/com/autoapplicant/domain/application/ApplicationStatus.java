@@ -1,6 +1,7 @@
 package com.autoapplicant.domain.application;
 
-import java.util.EnumSet;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public enum ApplicationStatus {
@@ -29,7 +30,9 @@ public enum ApplicationStatus {
 
     public boolean canTransitionTo(ApplicationStatus next) {
         return switch (this) {
-            case SAVED -> Set.of(PREPARING, ARCHIVED).contains(next);
+            // Straight to APPLIED as well: many people send the application the day they save
+            // the posting, and recording that should not take two moves.
+            case SAVED -> Set.of(PREPARING, APPLIED, ARCHIVED).contains(next);
             case PREPARING -> Set.of(APPLIED, SAVED, ARCHIVED).contains(next);
             case APPLIED -> Set.of(RECRUITER_CONTACT, REJECTED, ARCHIVED).contains(next);
             case RECRUITER_CONTACT -> Set.of(INTERVIEW, REJECTED, ARCHIVED).contains(next);
@@ -39,5 +42,10 @@ public enum ApplicationStatus {
             case OFFER -> Set.of(ARCHIVED).contains(next);
             case REJECTED, ARCHIVED -> false;
         };
+    }
+
+    /** Every status this one may move to, so a client offers only moves the server accepts. */
+    public List<ApplicationStatus> nextStatuses() {
+        return Arrays.stream(values()).filter(this::canTransitionTo).toList();
     }
 }

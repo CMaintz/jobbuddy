@@ -9,9 +9,12 @@ export interface SkillCandidate {
   category: string | null;
   /** How many of the user's matched postings name it — the reason to spend attention here. */
   marketFrequency: number;
-  /** The user's own skills it sits next to in the taxonomy. */
+  /**
+   * The user's own skills it sits next to in the taxonomy. For a LIKELY_HELD candidate, the one
+   * held skill it follows from, which the question quotes.
+   */
   relatedSkills: string[];
-  source: 'TAXONOMY_ADJACENT' | 'MARKET_DEMAND' | 'BOTH' | 'DOCUMENT_INFERRED';
+  source: 'TAXONOMY_ADJACENT' | 'MARKET_DEMAND' | 'BOTH' | 'DOCUMENT_INFERRED' | 'LIKELY_HELD';
   /**
    * For a DOCUMENT_INFERRED candidate, the line of the user's own CV or LinkedIn export that
    * implies the skill. It is what makes the suggestion answerable from memory.
