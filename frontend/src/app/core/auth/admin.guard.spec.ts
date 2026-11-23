@@ -15,13 +15,13 @@ describe('adminGuard', () => {
   }
 
   it('lets an admin in', () => {
-    expect(runGuard(true)).toBeTrue();
+    expect(runGuard(true)).toBe(true);
   });
 
   it('sends anyone else to the dashboard', () => {
     const result = runGuard(false);
 
-    expect(result instanceof UrlTree).toBeTrue();
+    expect(result instanceof UrlTree).toBe(true);
     expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/dashboard');
   });
 });

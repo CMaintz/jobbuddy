@@ -76,6 +76,6 @@ describe('BuddyPlayer', () => {
   it('stops for good when destroyed', () => {
     const player = start([], [IDLE]);
     player.stop();
-    expect(clock.idle).toBeTrue();
+    expect(clock.idle).toBe(true);
   });
 });

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { PostingQueue } from './posting-queue';
 import { ChatActionPosting } from '../models/chat.model';
+import type { MockInstance } from 'vitest';
 
 const POSTINGS: ChatActionPosting[] = [
   { id: 'a', title: 'Rådgiver', company: 'Arla' },
@@ -11,12 +12,12 @@ const POSTINGS: ChatActionPosting[] = [
 
 describe('PostingQueue', () => {
   let queue: PostingQueue;
-  let navigate: jasmine.Spy;
+  let navigate: MockInstance;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     queue = TestBed.inject(PostingQueue);
-    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
   it('opens the first posting and steps through the rest in order', () => {

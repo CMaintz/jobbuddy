@@ -73,7 +73,7 @@ describe('LetterExportGuard', () => {
 
     expect(exported).toEqual(['ats']);
     expect(guard.pending()).toBeNull();
-    expect(guard.rechecking()).toBeFalse();
+    expect(guard.rechecking()).toBe(false);
   });
 
   it('keeps holding the letter when the re-check fails it again', () => {
@@ -95,6 +95,6 @@ describe('LetterExportGuard', () => {
 
     expect(exported).toEqual([]);
     expect(guard.pending()).toBe('ats');
-    expect(guard.rechecking()).toBeFalse();
+    expect(guard.rechecking()).toBe(false);
   });
 });

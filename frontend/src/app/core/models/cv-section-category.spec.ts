@@ -25,9 +25,9 @@ describe('cv-section-category', () => {
   });
 
   it('tells section categories apart from document categories', () => {
-    expect(isSectionCategory('CV_EXPERIENCE')).toBeTrue();
-    expect(isSectionCategory('CV_TAILORING')).toBeFalse();
-    expect(isSectionCategory(undefined)).toBeFalse();
+    expect(isSectionCategory('CV_EXPERIENCE')).toBe(true);
+    expect(isSectionCategory('CV_TAILORING')).toBe(false);
+    expect(isSectionCategory(undefined)).toBe(false);
   });
 
   it("lists only the section's templates, the one in use first", () => {

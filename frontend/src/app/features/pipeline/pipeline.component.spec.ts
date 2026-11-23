@@ -6,11 +6,13 @@ import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 import { stageLabelKey } from '../../shared/components/status-chip/status-chip.component';
 import { PipelineComponent } from './pipeline.component';
+import type { MockInstance, Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
 
 describe('PipelineComponent status change', () => {
   let fixture: ComponentFixture<PipelineComponent>;
-  let api: jasmine.SpyObj<ApplicationsApiService>;
-  let navigate: jasmine.Spy;
+  let api: Mocked<ApplicationsApiService>;
+  let navigate: MockInstance;
 
   const saved: Application = {
     id: 'a1', jobId: 'j1', status: 'PREPARING', nextStatuses: ['APPLIED', 'SAVED', 'ARCHIVED'],
@@ -19,13 +21,13 @@ describe('PipelineComponent status change', () => {
   const other: Application = { ...saved, id: 'a2', jobTitle: 'Copywriter' };
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<ApplicationsApiService>('ApplicationsApiService', ['getAll', 'updateStatus']);
-    api.getAll.and.returnValue(of([saved, other]));
+    api = spyObj<ApplicationsApiService>(['getAll', 'updateStatus']);
+    api.getAll.mockReturnValue(of([saved, other]));
     TestBed.configureTestingModule({
       imports: [PipelineComponent, TranslateModule.forRoot()],
       providers: [provideRouter([]), { provide: ApplicationsApiService, useValue: api }],
     });
-    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture = TestBed.createComponent(PipelineComponent);
     fixture.detectChanges();
   });
@@ -35,7 +37,7 @@ describe('PipelineComponent status change', () => {
   }
 
   it('changes the status from the row without opening the application', () => {
-    api.updateStatus.and.returnValue(of({ ...saved, status: 'APPLIED', nextStatuses: [] }));
+    api.updateStatus.mockReturnValue(of({ ...saved, status: 'APPLIED', nextStatuses: [] }));
     const select = rowSelect();
 
     select.click();
@@ -47,7 +49,7 @@ describe('PipelineComponent status change', () => {
   });
 
   it('shows the new status on that row and leaves the others alone', () => {
-    api.updateStatus.and.returnValue(of({ ...saved, status: 'APPLIED', nextStatuses: [] }));
+    api.updateStatus.mockReturnValue(of({ ...saved, status: 'APPLIED', nextStatuses: [] }));
 
     fixture.componentInstance.changeStatus(saved, 'APPLIED');
 
@@ -55,7 +57,7 @@ describe('PipelineComponent status change', () => {
   });
 
   it('keeps the old status when the server refuses the move', () => {
-    api.updateStatus.and.returnValue(throwError(() => new Error('409')));
+    api.updateStatus.mockReturnValue(throwError(() => new Error('409')));
 
     const select = rowSelect();
 
@@ -69,19 +71,19 @@ describe('PipelineComponent status change', () => {
 
   it('holds the picked status and blocks a second pick while the server answers', () => {
     const reply = new Subject<Application>();
-    api.updateStatus.and.returnValue(reply);
+    api.updateStatus.mockReturnValue(reply);
 
     pick('APPLIED');
 
     expect(rowSelect().value).toBe('APPLIED');
-    expect(rowSelect().disabled).toBeTrue();
+    expect(rowSelect().disabled).toBe(true);
 
     reply.next({ ...saved, status: 'APPLIED', nextStatuses: ['REJECTED', 'ARCHIVED'] });
     reply.complete();
     fixture.detectChanges();
 
     expect(rowSelect().value).toBe('APPLIED');
-    expect(rowSelect().disabled).toBeFalse();
+    expect(rowSelect().disabled).toBe(false);
   });
 
   function pick(status: string): void {
@@ -123,10 +125,10 @@ describe('PipelineComponent status change', () => {
     expect(cards.length).toBe(statuses.length);
     for (const status of statuses) {
       const placed = cards.find(c => c.card.textContent!.includes(`Job ${status}`));
-      expect(placed?.column).withContext(status).toBe(columnOf[status]);
+      expect(placed?.column, status).toBe(columnOf[status]);
       // A column holding one status already names it; in a grouped one the card must say which.
       const statusShown = `${placed?.column} ${placed?.card.textContent}`;
-      expect(statusShown).withContext(status).toContain(stageLabelKey(status));
+      expect(statusShown, status).toContain(stageLabelKey(status));
     }
   });
 

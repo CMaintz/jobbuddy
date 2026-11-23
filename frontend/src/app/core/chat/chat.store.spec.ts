@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpEventType, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChatStore } from './chat.store';
@@ -39,13 +39,13 @@ describe('ChatStore', () => {
 
     progress(req, 'event:delta\ndata:{"text":"Hej "}\n\n');
     expect(store.messages().map(m => [m.role, m.text])).toEqual([['USER', 'Hej'], ['ASSISTANT', 'Hej ']]);
-    expect(store.streaming()).toBeTrue();
+    expect(store.streaming()).toBe(true);
 
     progress(req, 'event:delta\ndata:{"text":"Hej "}\n\nevent:delta\ndata:{"text":"med dig"}\n\n');
     req.flush('event:delta\ndata:{"text":"Hej "}\n\nevent:delta\ndata:{"text":"med dig"}\n\nevent:done\ndata:{}\n\n');
 
     expect(store.messages().map(m => [m.role, m.text])).toEqual([['USER', 'Hej'], ['ASSISTANT', 'Hej med dig']]);
-    expect(store.streaming()).toBeFalse();
+    expect(store.streaming()).toBe(false);
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([{ ...CHAT, title: 'Hej' }]);
     expect(store.chats()[0].title).toBe('Hej');
   });
@@ -61,7 +61,7 @@ describe('ChatStore', () => {
     progress(turn, 'event:delta\ndata:{"text":"Svar til den første"}\n\n');
 
     expect(store.messages().map(m => m.text)).toEqual(['Anden samtale']);
-    expect(store.streaming()).toBeFalse();
+    expect(store.streaming()).toBe(false);
     store.stop();
     backend.expectNone(r => r.url.endsWith('/stop'));
 
@@ -71,7 +71,7 @@ describe('ChatStore', () => {
     backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/stop').flush(null);
     turn.flush('event:stopped\ndata:{}\n\n');
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
-    expect(store.streaming()).toBeFalse();
+    expect(store.streaming()).toBe(false);
   });
 
   it('says when an old chat lost its context, until the next answer starts afresh', () => {
@@ -79,14 +79,14 @@ describe('ChatStore', () => {
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/c1/messages')
       .flush({ messages: [{ role: 'USER', text: 'Gammel besked', at: CHAT.createdAt }], contextLost: true });
     expect(store.messages().map(m => m.text)).toEqual(['Gammel besked']);
-    expect(store.contextLost()).toBeTrue();
+    expect(store.contextLost()).toBe(true);
 
     store.send('Hej igen');
     backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/messages')
       .flush('event:delta\ndata:{"text":"Hej"}\n\nevent:done\ndata:{}\n\n');
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
 
-    expect(store.contextLost()).toBeFalse();
+    expect(store.contextLost()).toBe(false);
   });
 
   it('attaches an offered button to the answer it came with', () => {
@@ -111,7 +111,7 @@ describe('ChatStore', () => {
 
     expect(store.error()).toBe('NOT_LOGGED_IN');
     expect(store.messages().map(m => m.role)).toEqual(['USER']);
-    expect(store.streaming()).toBeFalse();
+    expect(store.streaming()).toBe(false);
   });
 
   it('shows the code of a turn the server refused', () => {
@@ -121,7 +121,7 @@ describe('ChatStore', () => {
       .flush('{"status":409,"code":"CHAT_BUSY"}', { status: 409, statusText: 'Conflict' });
 
     expect(store.error()).toBe('CHAT_BUSY');
-    expect(store.streaming()).toBeFalse();
+    expect(store.streaming()).toBe(false);
   });
 
   it('asks the server to stop the running answer', () => {
@@ -133,7 +133,7 @@ describe('ChatStore', () => {
 
     backend.expectOne(r => r.method === 'POST' && r.url === '/api/v1/chats/c1/stop').flush(null);
     turn.flush('event:stopped\ndata:{}\n\n');
-    expect(store.streaming()).toBeFalse();
+    expect(store.streaming()).toBe(false);
     expect(store.error()).toBeNull();
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats').flush([CHAT]);
   });
@@ -197,11 +197,11 @@ describe('ChatStore', () => {
     backend.expectOne(r => r.method === 'POST' && r.url === APPROVE).flush(DONE_PLAN);
     backend.expectNone(r => r.url.includes('/plans/'));
     expect(store.plan('p1')?.items[0].state).toBe('DONE');
-    expect(TestBed.inject(PlanDecisions).deciding('i1')).toBeFalse();
+    expect(TestBed.inject(PlanDecisions).deciding('i1')).toBe(false);
   });
 
   it('tells the other screens when an approved change is done, and only then', () => {
-    const saved = jasmine.createSpy('saved');
+    const saved = vi.fn();
     TestBed.inject(ChatChanges).savedPostings.subscribe(saved);
     proposeOnePlan();
     expect(saved).not.toHaveBeenCalled();
@@ -219,8 +219,8 @@ describe('ChatStore', () => {
     backend.expectOne(APPROVE).flush(null, { status: 0, statusText: 'Unknown Error' });
 
     expect(store.plan('p1')?.items[0].state).toBe('PENDING');
-    expect(TestBed.inject(PlanDecisions).deciding('i1')).toBeFalse();
-    expect(TestBed.inject(PlanDecisions).failed('i1')).toBeTrue();
+    expect(TestBed.inject(PlanDecisions).deciding('i1')).toBe(false);
+    expect(TestBed.inject(PlanDecisions).failed('i1')).toBe(true);
     expect(store.error()).toBeNull();
   });
 
@@ -249,27 +249,29 @@ describe('ChatStore', () => {
     localStorage.removeItem('jb-gen-defaults');
   });
 
-  it('asks again about documents being written until they are done', fakeAsync(() => {
+  it('asks again about documents being written until they are done', () => {
+    vi.useFakeTimers();
     const running = { ...PENDING_PLAN, items: [{ ...PENDING_PLAN.items[0], kind: 'GENERATE_DOCUMENTS', state: 'RUNNING' }] };
     const written = { ...running, items: [{ ...running.items[0], state: 'DONE', resultApplicationId: 'a1' }] };
     proposeOnePlan();
     store.decide('approve', 'p1', 'i1');
     backend.expectOne(APPROVE).flush(running);
 
-    tick(5000);
+    vi.advanceTimersByTime(5000);
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/plans/p1').flush(running);
-    tick(5000);
+    vi.advanceTimersByTime(5000);
     backend.expectOne(r => r.method === 'GET' && r.url === '/api/v1/chats/plans/p1').flush(written);
-    tick(5000);
+    vi.advanceTimersByTime(5000);
 
     backend.expectNone('/api/v1/chats/plans/p1');
+    expect(vi.getTimerCount()).toBe(0);
     expect(store.plan('p1')?.items[0].resultApplicationId).toBe('a1');
-  }));
+  });
 
   it('turns the chat off when this backend has none', () => {
     store.load();
     backend.expectOne('/api/v1/chats').flush(null, { status: 404, statusText: 'Not Found' });
 
-    expect(store.available()).toBeFalse();
+    expect(store.available()).toBe(false);
   });
 });

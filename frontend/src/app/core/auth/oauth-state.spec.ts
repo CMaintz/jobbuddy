@@ -12,7 +12,7 @@ describe('OAuthState', () => {
   it('accepts the state it issued', () => {
     const issued = state.issue();
 
-    expect(state.consume(issued)).toBeTrue();
+    expect(state.consume(issued)).toBe(true);
   });
 
   it('issues a different value each time', () => {
@@ -22,23 +22,23 @@ describe('OAuthState', () => {
   it('rejects a mismatched state', () => {
     state.issue();
 
-    expect(state.consume('forged')).toBeFalse();
+    expect(state.consume('forged')).toBe(false);
   });
 
   it('rejects a missing state', () => {
     state.issue();
 
-    expect(state.consume(null)).toBeFalse();
+    expect(state.consume(null)).toBe(false);
   });
 
   it('rejects a callback when no flow was started in this tab', () => {
-    expect(state.consume('anything')).toBeFalse();
+    expect(state.consume('anything')).toBe(false);
   });
 
   it('cannot be replayed', () => {
     const issued = state.issue();
     state.consume(issued);
 
-    expect(state.consume(issued)).toBeFalse();
+    expect(state.consume(issued)).toBe(false);
   });
 });

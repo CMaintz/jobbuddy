@@ -4,25 +4,27 @@ import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { AuthService, MeResponse } from '../../../core/auth/auth.service';
 import { VerifyEmailComponent } from './verify-email.component';
+import type { MockInstance, Mocked } from 'vitest';
+import { spyObj } from '../../../../testing/spy-obj';
 
 describe('VerifyEmailComponent', () => {
-  let authService: jasmine.SpyObj<AuthService>;
-  let navigate: jasmine.Spy;
+  let authService: Mocked<AuthService>;
+  let navigate: MockInstance;
 
   async function create(signedIn = true, unverified = true): Promise<VerifyEmailComponent> {
-    authService = jasmine.createSpyObj<AuthService>('AuthService', [
+    authService = spyObj<AuthService>([
       'whenAuthReady', 'isAuthenticated', 'needsEmailVerification', 'currentEmail',
       'resendVerification', 'confirmEmailVerified', 'loadCurrentUser', 'logout',
     ]);
-    authService.whenAuthReady.and.resolveTo();
-    authService.isAuthenticated.and.returnValue(signedIn);
-    authService.needsEmailVerification.and.returnValue(unverified);
-    authService.currentEmail.and.returnValue('me@example.com');
+    authService.whenAuthReady.mockResolvedValue(undefined);
+    authService.isAuthenticated.mockReturnValue(signedIn);
+    authService.needsEmailVerification.mockReturnValue(unverified);
+    authService.currentEmail.mockReturnValue('me@example.com');
     TestBed.configureTestingModule({
       imports: [VerifyEmailComponent, TranslateModule.forRoot()],
       providers: [provideRouter([]), { provide: AuthService, useValue: authService }],
     });
-    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const component = TestBed.createComponent(VerifyEmailComponent).componentInstance;
     await component.ngOnInit();
     return component;
@@ -48,7 +50,7 @@ describe('VerifyEmailComponent', () => {
 
   it('resends the verification email and then cools down', async () => {
     const component = await create();
-    authService.resendVerification.and.resolveTo();
+    authService.resendVerification.mockResolvedValue(undefined);
 
     await component.resend();
     await component.resend();
@@ -59,7 +61,7 @@ describe('VerifyEmailComponent', () => {
 
   it('explains a rate-limited resend instead of a generic failure', async () => {
     const component = await create();
-    authService.resendVerification.and.rejectWith({ code: 'auth/too-many-requests' });
+    authService.resendVerification.mockRejectedValue({ code: 'auth/too-many-requests' });
 
     await component.resend();
 
@@ -69,7 +71,7 @@ describe('VerifyEmailComponent', () => {
 
   it('resends the verification email', async () => {
     const component = await create();
-    authService.resendVerification.and.resolveTo();
+    authService.resendVerification.mockResolvedValue(undefined);
 
     await component.resend();
 
@@ -79,17 +81,17 @@ describe('VerifyEmailComponent', () => {
 
   it('reports a failed resend', async () => {
     const component = await create();
-    authService.resendVerification.and.rejectWith(new Error('quota'));
+    authService.resendVerification.mockRejectedValue(new Error('quota'));
 
     await component.resend();
 
     expect(component.status()).toBe('sendFailed');
-    expect(component.busy()).toBeFalse();
+    expect(component.busy()).toBe(false);
   });
 
   it('stays put while the email is still unverified', async () => {
     const component = await create();
-    authService.confirmEmailVerified.and.resolveTo(false);
+    authService.confirmEmailVerified.mockResolvedValue(false);
 
     await component.continue();
 
@@ -100,8 +102,8 @@ describe('VerifyEmailComponent', () => {
 
   it('continues into the app once verified', async () => {
     const component = await create();
-    authService.confirmEmailVerified.and.resolveTo(true);
-    authService.loadCurrentUser.and.returnValue(of({ onboardingComplete: false } as MeResponse));
+    authService.confirmEmailVerified.mockResolvedValue(true);
+    authService.loadCurrentUser.mockReturnValue(of({ onboardingComplete: false } as MeResponse));
 
     await component.continue();
 

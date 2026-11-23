@@ -18,13 +18,13 @@ describe('onboardingGuard', () => {
   }
 
   it('allows onboarding while it is still unfinished', () => {
-    expect(runGuard(false)).toBeTrue();
+    expect(runGuard(false)).toBe(true);
   });
 
   it('redirects to the dashboard once onboarding is complete', () => {
     const result = runGuard(true);
 
-    expect(result instanceof UrlTree).toBeTrue();
+    expect(result instanceof UrlTree).toBe(true);
     expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/dashboard');
   });
 });

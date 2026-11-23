@@ -49,12 +49,12 @@ describe('CareerProfileComponent likely-held questions', () => {
   it('adds the skill on yes', () => {
     (card().querySelector('[data-testid="likely-held-yes"]') as HTMLButtonElement).click();
 
-    expect(answerSent()).toEqual(jasmine.objectContaining({ name: 'Content marketing', decision: 'YES' }));
+    expect(answerSent()).toEqual(expect.objectContaining({ name: 'Content marketing', decision: 'YES' }));
   });
 
   it('dismisses the skill on no', () => {
     (card().querySelector('[data-testid="likely-held-no"]') as HTMLButtonElement).click();
 
-    expect(answerSent()).toEqual(jasmine.objectContaining({ name: 'Content marketing', decision: 'NO' }));
+    expect(answerSent()).toEqual(expect.objectContaining({ name: 'Content marketing', decision: 'NO' }));
   });
 });

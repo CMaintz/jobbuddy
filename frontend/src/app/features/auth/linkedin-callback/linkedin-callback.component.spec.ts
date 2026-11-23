@@ -5,16 +5,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { AuthService, MeResponse } from '../../../core/auth/auth.service';
 import { LinkedInCallbackComponent } from './linkedin-callback.component';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../../testing/spy-obj';
 
 describe('LinkedInCallbackComponent', () => {
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: Mocked<AuthService>;
 
   function run(
     query: Record<string, string>, stateMatches: boolean, failStatus?: number, failCode?: string,
   ): LinkedInCallbackComponent {
-    authService = jasmine.createSpyObj<AuthService>('AuthService', ['linkedinCallback', 'consumeLinkedInState']);
-    authService.consumeLinkedInState.and.returnValue(stateMatches);
-    authService.linkedinCallback.and.returnValue(failStatus
+    authService = spyObj<AuthService>(['linkedinCallback', 'consumeLinkedInState']);
+    authService.consumeLinkedInState.mockReturnValue(stateMatches);
+    authService.linkedinCallback.mockReturnValue(failStatus
       ? throwError(() => new HttpErrorResponse({ status: failStatus, error: { code: failCode } }))
       : of({ onboardingComplete: true } as MeResponse));
     TestBed.configureTestingModule({
@@ -25,7 +27,7 @@ describe('LinkedInCallbackComponent', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(query) } } },
       ],
     });
-    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const component = TestBed.createComponent(LinkedInCallbackComponent).componentInstance;
     component.ngOnInit();
     return component;

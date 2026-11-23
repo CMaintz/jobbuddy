@@ -23,11 +23,11 @@ describe('Buddy sprites', () => {
   });
 
   it('draws atlas clips from the atlas row and others from their own sheet', () => {
-    expect(resolveClip('wave', MANIFEST)).toEqual(jasmine.objectContaining({
+    expect(resolveClip('wave', MANIFEST)).toEqual(expect.objectContaining({
       src: 'assets/buddy/front-atlas.png', y: 98, sheetWidth: 72 * 2, sheetHeight: 147 + 72,
     }));
     const own = { 'front-idle': entry(undefined) };
-    expect(resolveClip('idle', own)).toEqual(jasmine.objectContaining({
+    expect(resolveClip('idle', own)).toEqual(expect.objectContaining({
       src: 'assets/buddy/own-sheet.png', y: 0, sheetWidth: 37 * 2, sheetHeight: 49,
     }));
   });

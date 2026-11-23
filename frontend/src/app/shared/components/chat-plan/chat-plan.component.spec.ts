@@ -58,7 +58,7 @@ describe('ChatPlanComponent', () => {
   });
 
   it('opens written documents in the application review, not anywhere else', () => {
-    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const card = render({ id: 'p1', createdAt: '2026-11-22T10:00:00Z', items: [
       { ...ITEM, kind: 'GENERATE_DOCUMENTS', state: 'DONE', resultApplicationId: 'a1' }] });
 

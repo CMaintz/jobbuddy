@@ -2,6 +2,8 @@ import { of } from 'rxjs';
 import { inUseTemplate, makeDefault } from './cv-section-templates-panel.component';
 import { PromptApiService } from '../../core/api/prompt.api';
 import { PromptTemplate } from '../../core/models/prompt-template.model';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
 
 function template(overrides: Partial<PromptTemplate>): PromptTemplate {
   return {
@@ -12,12 +14,12 @@ function template(overrides: Partial<PromptTemplate>): PromptTemplate {
 }
 
 describe('cv section templates panel', () => {
-  let api: jasmine.SpyObj<PromptApiService>;
+  let api: Mocked<PromptApiService>;
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<PromptApiService>('PromptApiService', ['selectDefault', 'resetDefault']);
-    api.selectDefault.and.returnValue(of(undefined));
-    api.resetDefault.and.returnValue(of(undefined));
+    api = spyObj<PromptApiService>(['selectDefault', 'resetDefault']);
+    api.selectDefault.mockReturnValue(of(undefined));
+    api.resetDefault.mockReturnValue(of(undefined));
   });
 
   it("clears the user's choice when the app default is picked", () => {
