@@ -295,9 +295,10 @@
   })
 }
 
-// minimal: light type, a date gutter and a ruled summary.
+// minimal: light type, a date gutter and a ruled summary. Headings keep the 0.1em tracking of
+// the other layouts: wider letter-spacing makes PDF text extraction read them as single letters.
 #let minimal() = {
-  let h2(t, k: 1) = block(below: px(16), text(size: fs(12, k: k), fill: tone(48), tracking: 0.15em, upper(t)))
+  let h2(t, k: 1) = block(below: px(16), text(size: fs(12, k: k), fill: tone(48), tracking: 0.1em, upper(t)))
   let sec(id) = {
     let k = k-of(id)
     if id == "experience" and doc.experience.len() > 0 { styled(id, { h2(labels.experience, k: k); stack(spacing: px(16), ..doc.experience.map(e => block(breakable: false,
@@ -320,7 +321,7 @@
     })
     if doc.summary.len() > 0 { block(below: px(28), stroke: (left: 1.5pt + accent), inset: (left: px(16)), text(size: fs(14), weight: "light", fill: tone(78), rich(doc.summary))) }
     stack(spacing: px(28), ..arrange(("experience", "education", "skills")).map(sec).filter(b => b != none))
-    custom-sections(t => block(below: px(12), text(size: fs(12), fill: tone(48), tracking: 0.15em, upper(t))))
+    custom-sections(t => block(below: px(12), text(size: fs(12), fill: tone(48), tracking: 0.1em, upper(t))))
   })
 }
 

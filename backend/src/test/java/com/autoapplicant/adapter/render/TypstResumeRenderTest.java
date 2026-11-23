@@ -44,7 +44,7 @@ class TypstResumeRenderTest {
     void everyLayoutIsATextPdfOfTheWholeCv(String layout) throws IOException {
         RenderedPdf pdf = TypstFixtures.adapter().renderPdf(ResumeDesigns.danish(layout));
 
-        String text = TypstFixtures.text(pdf.bytes());
+        String text = flowed(TypstFixtures.text(pdf.bytes()));
         assertThat(text).contains(NAME, TITLE, EXPERIENCE_HEADING.toUpperCase(Locale.ROOT), ROLE, BULLET,
                 BOLD_PHRASE, SKILL);
         assertThat(pdf.pageCount()).isEqualTo(1);
@@ -63,18 +63,19 @@ class TypstResumeRenderTest {
     }
 
     /**
-     * Bug caught: user text reaches Typst as markup, so a name containing Typst code runs it
+     * Bug caught: user text reaches Typst as markup, so a name or summary containing Typst code runs it
      * (here, a read of a file outside the content) instead of printing it.
      */
     @Test
     void typstMarkupInUserTextIsPrintedNotRun() throws IOException {
         String hostile = "#read(\"/etc/passwd\") *bold* $x$";
-        ResumeDesign design = ResumeDesigns.withPerson("classic",
+        ResumeDesign base = ResumeDesigns.withPerson("classic",
                 new ResumeDesign.Person(hostile, TITLE, null, null, null), null, null);
+        ResumeDesign design = withSummary(base, "<p>" + hostile + " #panic()</p>");
 
-        String text = TypstFixtures.text(TypstFixtures.adapter().renderPdf(design).bytes());
+        String text = flowed(TypstFixtures.text(TypstFixtures.adapter().renderPdf(design).bytes()));
 
-        assertThat(text).contains("#read(\"/etc/passwd\")", "*bold*", "$x$");
+        assertThat(text).contains(hostile, hostile + " #panic()");
     }
 
     /**
@@ -90,7 +91,7 @@ class TypstResumeRenderTest {
 
         RenderedPdf pdf = TypstFixtures.adapter().renderPdf(design);
 
-        assertThat(TypstFixtures.text(pdf.bytes())).contains(NAME);
+        assertThat(flowed(TypstFixtures.text(pdf.bytes()))).contains(NAME);
     }
 
     /** Bug caught: the builder's photo is never staged, so a designed CV loses it. */
@@ -132,6 +133,18 @@ class TypstResumeRenderTest {
 
         assertThat(TypstFixtures.fontsOnFirstPage(editorial)).anyMatch(font -> font.contains("Inter"));
         assertThat(TypstFixtures.fontsOnFirstPage(plain)).noneMatch(font -> font.contains("Inter"));
+    }
+
+    /** The text as a parser reads it across line breaks; narrow columns wrap long names. */
+    private static String flowed(String text) {
+        return text.replaceAll("\\s+", " ");
+    }
+
+    private static ResumeDesign withSummary(ResumeDesign d, String summary) {
+        return new ResumeDesign(d.layout(), d.pageSize(), d.theme(), d.photo(), d.showSkillLevel(), d.labels(),
+                d.person(), summary, d.experience(), d.education(), d.projects(), d.skillGroups(), d.languages(),
+                d.certifications(), d.strengths(), d.socials(), d.customSections(), d.mainOrder(), d.sideOrder(),
+                d.hidden(), d.sectionStyles());
     }
 
     private static StructuredDocument letter(String templateId) {
