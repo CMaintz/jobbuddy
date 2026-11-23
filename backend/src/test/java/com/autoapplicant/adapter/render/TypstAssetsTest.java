@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.render;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.autoapplicant.config.AppDataDirectory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,5 +47,21 @@ class TypstAssetsTest {
 
         assertThat(fontDir).isDirectory();
         assertThat(home.resolve(".installed")).isRegularFile();
+    }
+
+    /**
+     * Bug caught: a data directory the backend cannot write (the Docker image's /app belongs to
+     * root) makes the font install throw, and the app fails to start.
+     */
+    @Test
+    void anUnwritableDataDirectoryFallsBackToTheTempDirectory(@TempDir Path dataDir) throws IOException {
+        Files.writeString(dataDir.resolve("typst-assets"), "a file where the directory should be");
+
+        TypstAssets assets = new TypstAssets(new AppDataDirectory(dataDir.toString()));
+
+        assertThat(assets.fontDir()).startsWith(Path.of(System.getProperty("java.io.tmpdir")).toAbsolutePath());
+        try (Stream<Path> fonts = Files.walk(assets.fontDir())) {
+            assertThat(fonts.filter(f -> f.toString().endsWith(".ttf"))).isNotEmpty();
+        }
     }
 }

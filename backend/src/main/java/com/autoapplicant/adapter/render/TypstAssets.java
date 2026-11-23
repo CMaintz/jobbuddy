@@ -15,6 +15,8 @@ import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -33,6 +35,8 @@ import org.springframework.stereotype.Component;
 @Component
 public final class TypstAssets {
 
+    private static final Logger log = LoggerFactory.getLogger(TypstAssets.class);
+
     private static final String BASE = "typst/";
     private static final String FONTS = BASE + "fonts/";
     private static final String FONT_PATTERN = "classpath*:" + FONTS + "**/*.*";
@@ -48,7 +52,7 @@ public final class TypstAssets {
 
     @Autowired
     public TypstAssets(AppDataDirectory dataDirectory) throws IOException {
-        this(dataDirectory.root().resolve("typst-assets"));
+        this(usableOrTemp(dataDirectory.root().resolve("typst-assets")));
     }
 
     /** @param parent where each set of fonts gets its own directory, named by its content */
@@ -84,6 +88,21 @@ public final class TypstAssets {
     /** The source of the resume builder's layouts. */
     String resumeTemplate() {
         return resumeTemplate;
+    }
+
+    /**
+     * The data directory when the backend can write there, else the temp directory. A container
+     * whose working directory belongs to another user would otherwise fail to start; the temp
+     * copy is content-addressed too, so it is still shared and reused.
+     */
+    private static Path usableOrTemp(Path preferred) {
+        try {
+            Files.createDirectories(preferred);
+            if (Files.isWritable(preferred)) return preferred;
+        } catch (IOException e) {
+            log.warn("Cannot install Typst fonts under {}: {}", preferred, e.getMessage());
+        }
+        return Path.of(System.getProperty("java.io.tmpdir"), "jobbuddy-typst-assets");
     }
 
     /**

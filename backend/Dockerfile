@@ -20,7 +20,8 @@ RUN apk add --no-cache curl xz \
 
 FROM eclipse-temurin:21.0.12.1_1-jre-alpine@sha256:51ab5e3302e7141ce665ca3ea85e8b5cd648eafbc3c0c90dd79d6537684e4555
 WORKDIR /app
-RUN addgroup -S spring && adduser -S spring -G spring
+# The backend writes uploads and its installed Typst fonts under app.data-dir, which is /app here.
+RUN addgroup -S spring && adduser -S spring -G spring && chown spring:spring /app
 COPY --from=build /app/backend/build/libs/*.jar app.jar
 COPY --from=typst /tmp/typst/typst /usr/local/bin/typst
 USER spring
