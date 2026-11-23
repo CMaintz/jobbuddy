@@ -6,7 +6,8 @@ COPY backend ./backend
 RUN chmod +x gradlew && ./gradlew :backend:bootJar --no-daemon -q
 
 # The document renderer shells out to Typst. Pinned and checksum-verified; keep the version
-# equal to backend/mise.toml so the image compiles templates exactly like local dev and CI.
+# equal to backend/mise.toml (and desktop/scripts/fetch-typst.mjs) so the image compiles
+# templates exactly like local dev, CI and the desktop app.
 FROM eclipse-temurin:21.0.12.1_1-jre-alpine@sha256:51ab5e3302e7141ce665ca3ea85e8b5cd648eafbc3c0c90dd79d6537684e4555 AS typst
 ARG TYPST_VERSION=0.15.1
 ARG TYPST_SHA256=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c
