@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.render;
 
 import com.autoapplicant.adapter.render.TypstCommand.Format;
+import com.autoapplicant.domain.document.design.ResumeDesign;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.port.out.document.DocumentRenderException;
 import com.autoapplicant.port.out.document.DocumentRendererPort;
@@ -19,9 +20,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Renders structured documents with the Typst CLI and the built-in template. Each render gets
- * its own workspace holding the template, the document as JSON and any staged image, and the
- * workspace is deleted afterwards.
+ * Renders structured documents and resume-builder designs with the Typst CLI and the built-in
+ * templates. Each render gets its own workspace holding the template, the document as JSON and
+ * any staged image, and the workspace is deleted afterwards.
  */
 @Component
 public class TypstRendererAdapter implements DocumentRendererPort {
@@ -45,12 +46,44 @@ public class TypstRendererAdapter implements DocumentRendererPort {
 
     @Override
     public RenderedPdf renderPdf(StructuredDocument document) {
-        return withPhotoFallback(document, photo -> pdf(document, photo));
+        return withPhotoFallback(source(document), this::pdf);
     }
 
     @Override
     public List<byte[]> renderSvgPages(StructuredDocument document) {
-        return withPhotoFallback(document, photo -> svgPages(document, photo));
+        return withPhotoFallback(source(document), this::svgPages);
+    }
+
+    @Override
+    public RenderedPdf renderPdf(ResumeDesign design) {
+        return withPhotoFallback(source(design), this::pdf);
+    }
+
+    @Override
+    public List<byte[]> renderSvgPages(ResumeDesign design) {
+        return withPhotoFallback(source(design), this::svgPages);
+    }
+
+    /** What one compile needs: the template and how to build its data once the photo is staged. */
+    private record Source(String template, String photoReference, Function<String, Object> data) {
+
+        Source withoutPhoto() {
+            return new Source(template, null, data);
+        }
+    }
+
+    private Source source(StructuredDocument document) {
+        boolean shown = TypstDocumentData.isDesigned(document)
+                && document.options() != null
+                && document.options().showProfileImage()
+                && document.identity() != null;
+        String photo = shown ? document.identity().profileImageUrl() : null;
+        return new Source(assets.template(), photo, staged -> TypstDocumentData.from(document, staged));
+    }
+
+    private Source source(ResumeDesign design) {
+        String photo = design.photo() != null ? design.photo().url() : null;
+        return new Source(assets.resumeTemplate(), photo, staged -> TypstResumeData.from(design, staged));
     }
 
     /**
@@ -58,18 +91,18 @@ public class TypstRendererAdapter implements DocumentRendererPort {
      * fails the whole compile. The photo is the one input the user cannot see is broken, so
      * the document is rendered again without it rather than not at all.
      */
-    private <T> T withPhotoFallback(StructuredDocument document, Function<Boolean, T> render) {
+    private <T> T withPhotoFallback(Source source, Function<Source, T> render) {
         try {
-            return render.apply(true);
+            return render.apply(source);
         } catch (DocumentRenderException e) {
-            if (!photoShown(document)) throw e;
+            if (source.photoReference() == null) throw e;
             log.warn("Typst could not render the document with its photo; rendering it without");
-            return render.apply(false);
+            return render.apply(source.withoutPhoto());
         }
     }
 
-    private RenderedPdf pdf(StructuredDocument document, boolean withPhoto) {
-        try (TypstWorkspace workspace = prepare(document, withPhoto)) {
+    private RenderedPdf pdf(Source source) {
+        try (TypstWorkspace workspace = prepare(source)) {
             Path output = workspace.outputDir().resolve(PDF_FILE);
             compiler.compile(workspace, Format.PDF, output);
             byte[] pdf = Files.readAllBytes(output);
@@ -79,8 +112,8 @@ public class TypstRendererAdapter implements DocumentRendererPort {
         }
     }
 
-    private List<byte[]> svgPages(StructuredDocument document, boolean withPhoto) {
-        try (TypstWorkspace workspace = prepare(document, withPhoto)) {
+    private List<byte[]> svgPages(Source source) {
+        try (TypstWorkspace workspace = prepare(source)) {
             compiler.compile(workspace, Format.SVG, workspace.outputDir().resolve(SVG_PAGE_PATTERN));
             return readPages(workspace.outputDir());
         } catch (IOException e) {
@@ -88,27 +121,20 @@ public class TypstRendererAdapter implements DocumentRendererPort {
         }
     }
 
-    /** A workspace with the template, the document data and its image (when shown) in place. */
-    private TypstWorkspace prepare(StructuredDocument document, boolean withPhoto) throws IOException {
+    /** A workspace with the template, the data and its image (when shown) in place. */
+    private TypstWorkspace prepare(Source source) throws IOException {
         TypstWorkspace workspace = TypstWorkspace.create();
         try {
-            Files.writeString(workspace.mainFile(), assets.template(), StandardCharsets.UTF_8);
-            String photo = withPhoto && photoShown(document)
-                    ? images.stage(document.identity().profileImageUrl(), workspace.root()).orElse(null)
-                    : null;
-            json.writeValue(workspace.dataFile().toFile(), TypstDocumentData.from(document, photo));
+            Files.writeString(workspace.mainFile(), source.template(), StandardCharsets.UTF_8);
+            String photo = source.photoReference() == null
+                    ? null
+                    : images.stage(source.photoReference(), workspace.root()).orElse(null);
+            json.writeValue(workspace.dataFile().toFile(), source.data().apply(photo));
             return workspace;
         } catch (IOException | RuntimeException e) {
             workspace.close();
             throw e;
         }
-    }
-
-    private static boolean photoShown(StructuredDocument document) {
-        return TypstDocumentData.isDesigned(document)
-                && document.options() != null
-                && document.options().showProfileImage()
-                && document.identity() != null;
     }
 
     private static List<byte[]> readPages(Path outputDir) throws IOException {

@@ -4,11 +4,13 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.pdf.StructuredApplicationRequest;
 import com.autoapplicant.adapter.web.dto.pdf.StructuredDocumentExportRequest;
 import com.autoapplicant.domain.document.ExportedPdf;
+import com.autoapplicant.domain.document.design.ResumeDesign;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
 import com.autoapplicant.port.in.document.ExportStructuredDocumentUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +36,25 @@ public class PdfExportController {
     @Operation(summary = "Export structured document as PDF")
     @PostMapping("/export-structured-pdf")
     public ResponseEntity<byte[]> exportStructuredPdf(@RequestBody StructuredDocumentExportRequest req) {
-        ExportedPdf pdf = exportStructuredDocument.exportPdf(req.document());
+        return pdfResponse(exportStructuredDocument.exportPdf(req.document()));
+    }
 
+    @Operation(summary = "Export a resume-builder design as PDF")
+    @PostMapping("/export-resume-pdf")
+    public ResponseEntity<byte[]> exportResumePdf(@RequestBody ResumeDesign design) {
+        return pdfResponse(exportStructuredDocument.exportPdf(design));
+    }
+
+    /** The builder previews these pages, so what it shows is the PDF the export produces. */
+    @Operation(summary = "Render a resume-builder design as SVG pages")
+    @PostMapping("/preview-resume")
+    public ResumePreview previewResume(@RequestBody ResumeDesign design) {
+        return new ResumePreview(exportStructuredDocument.previewPages(design));
+    }
+
+    public record ResumePreview(List<String> pages) {}
+
+    private static ResponseEntity<byte[]> pdfResponse(ExportedPdf pdf) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document.pdf\"")

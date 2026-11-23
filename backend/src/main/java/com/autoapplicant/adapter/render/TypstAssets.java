@@ -37,12 +37,14 @@ public final class TypstAssets {
     private static final String FONTS = BASE + "fonts/";
     private static final String FONT_PATTERN = "classpath*:" + FONTS + "**/*.*";
     static final String TEMPLATE = BASE + "structured-document.typ";
+    static final String RESUME_TEMPLATE = BASE + "resume.typ";
 
     private static final String INSTALLED_MARKER = ".installed";
     private static final int FINGERPRINT_HEX_CHARS = 16;
 
     private final Path home;
     private final String template;
+    private final String resumeTemplate;
 
     @Autowired
     public TypstAssets(AppDataDirectory dataDirectory) throws IOException {
@@ -58,7 +60,8 @@ public final class TypstAssets {
         if (!Files.isRegularFile(home.resolve(INSTALLED_MARKER))) install(fonts, parent);
         Files.createDirectories(packageDir());
         Files.createDirectories(packageCacheDir());
-        this.template = readTemplate();
+        this.template = readTemplate(TEMPLATE);
+        this.resumeTemplate = readTemplate(RESUME_TEMPLATE);
     }
 
     Path fontDir() {
@@ -76,6 +79,11 @@ public final class TypstAssets {
     /** The source of the built-in structured-document template. */
     String template() {
         return template;
+    }
+
+    /** The source of the resume builder's layouts. */
+    String resumeTemplate() {
+        return resumeTemplate;
     }
 
     /**
@@ -169,9 +177,9 @@ public final class TypstAssets {
         }
     }
 
-    private static String readTemplate() {
-        try (InputStream in = TypstAssets.class.getClassLoader().getResourceAsStream(TEMPLATE)) {
-            if (in == null) throw new IllegalStateException("Missing Typst template " + TEMPLATE);
+    private static String readTemplate(String name) {
+        try (InputStream in = TypstAssets.class.getClassLoader().getResourceAsStream(name)) {
+            if (in == null) throw new IllegalStateException("Missing Typst template " + name);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

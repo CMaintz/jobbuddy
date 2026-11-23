@@ -1,11 +1,15 @@
 package com.autoapplicant.usecase.document;
 
+import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.ExportedPdf;
 import com.autoapplicant.domain.document.PageBudget;
+import com.autoapplicant.domain.document.design.ResumeDesign;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.port.in.document.ExportStructuredDocumentUseCase;
 import com.autoapplicant.port.out.document.DocumentRendererPort;
 import com.autoapplicant.port.out.document.DocumentRendererPort.RenderedPdf;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +33,23 @@ public class StructuredDocumentExportService implements ExportStructuredDocument
 
     @Override
     public ExportedPdf exportPdf(StructuredDocument document) {
-        RenderedPdf pdf = renderer.renderPdf(document);
-        PageBudget budget = PageBudget.of(document.documentType(), pdf.pageCount());
+        return budgeted(renderer.renderPdf(document), document.documentType());
+    }
+
+    @Override
+    public ExportedPdf exportPdf(ResumeDesign design) {
+        return budgeted(renderer.renderPdf(design), DocumentType.CV);
+    }
+
+    @Override
+    public List<String> previewPages(ResumeDesign design) {
+        return renderer.renderSvgPages(design).stream()
+                .map(page -> new String(page, StandardCharsets.UTF_8))
+                .toList();
+    }
+
+    private ExportedPdf budgeted(RenderedPdf pdf, DocumentType type) {
+        PageBudget budget = PageBudget.of(type, pdf.pageCount());
         enforce(budget);
         return new ExportedPdf(pdf.bytes(), Optional.of(budget));
     }
