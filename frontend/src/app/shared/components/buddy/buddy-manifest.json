@@ -1,7 +1,7 @@
 {
   "front-idle": {
     "sheet": "front-idle-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 48,
     "durations_ms": [
@@ -108,7 +108,7 @@
   },
   "front-blink": {
     "sheet": "front-blink-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 1,
     "durations_ms": [
@@ -118,7 +118,7 @@
   },
   "front-tail-wag": {
     "sheet": "front-tail-wag-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 11,
     "durations_ms": [
@@ -138,7 +138,7 @@
   },
   "front-look-around": {
     "sheet": "front-look-around-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 11,
     "durations_ms": [
@@ -158,7 +158,7 @@
   },
   "front-scratch-belly": {
     "sheet": "front-scratch-belly-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 9,
     "durations_ms": [
@@ -176,7 +176,7 @@
   },
   "front-head-shake": {
     "sheet": "front-head-shake-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 10,
     "durations_ms": [
@@ -195,17 +195,17 @@
   },
   "front-twirl": {
     "sheet": "front-twirl-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 9,
     "durations_ms": [
       90,
       55,
+      65,
       55,
+      70,
       55,
-      55,
-      55,
-      55,
+      65,
       55,
       90
     ],
@@ -213,10 +213,13 @@
   },
   "front-loop": {
     "sheet": "front-loop-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
-    "frames": 9,
+    "frames": 12,
     "durations_ms": [
+      70,
+      70,
+      70,
       70,
       70,
       70,
@@ -231,9 +234,9 @@
   },
   "front-hop": {
     "sheet": "front-hop-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
-    "frames": 7,
+    "frames": 10,
     "durations_ms": [
       90,
       80,
@@ -241,13 +244,16 @@
       100,
       80,
       80,
-      90
+      90,
+      70,
+      70,
+      70
     ],
     "atlas_y": 392
   },
   "front-wave": {
     "sheet": "front-wave-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 8,
     "durations_ms": [
@@ -320,7 +326,7 @@
       70
     ],
     "offset": [
-      35,
+      34,
       7
     ],
     "atlas_y": 490
@@ -343,7 +349,7 @@
   },
   "front-idle-smooth": {
     "sheet": "front-idle-smooth-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 96,
     "durations_ms": [
@@ -546,7 +552,7 @@
   },
   "front-blink-smooth": {
     "sheet": "front-blink-smooth-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 3,
     "durations_ms": [
@@ -558,7 +564,7 @@
   },
   "front-look-around-smooth": {
     "sheet": "front-look-around-smooth-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 50,
     "durations_ms": [
@@ -617,7 +623,7 @@
   },
   "front-read-in": {
     "sheet": "front-read-in-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 3,
     "durations_ms": [
@@ -629,7 +635,7 @@
   },
   "front-read": {
     "sheet": "front-read-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 13,
     "durations_ms": [
@@ -652,7 +658,7 @@
   },
   "front-read-out": {
     "sheet": "front-read-out-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 3,
     "durations_ms": [
@@ -664,7 +670,7 @@
   },
   "front-write-in": {
     "sheet": "front-write-in-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 2,
     "durations_ms": [
@@ -675,7 +681,7 @@
   },
   "front-write": {
     "sheet": "front-write-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 27,
     "durations_ms": [
@@ -712,7 +718,7 @@
   },
   "front-write-out": {
     "sheet": "front-write-out-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 2,
     "durations_ms": [
@@ -723,7 +729,7 @@
   },
   "front-think-in": {
     "sheet": "front-think-in-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 2,
     "durations_ms": [
@@ -734,7 +740,7 @@
   },
   "front-think": {
     "sheet": "front-think-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 52,
     "frames": 24,
     "durations_ms": [
@@ -772,7 +778,7 @@
   },
   "front-think-out": {
     "sheet": "front-think-out-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 2,
     "durations_ms": [
@@ -783,9 +789,9 @@
   },
   "front-celebrate": {
     "sheet": "front-celebrate-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 59,
-    "frames": 12,
+    "frames": 14,
     "durations_ms": [
       100,
       80,
@@ -798,7 +804,9 @@
       60,
       100,
       160,
-      90
+      90,
+      80,
+      80
     ],
     "offset": [
       0,
@@ -808,7 +816,7 @@
   },
   "front-oops": {
     "sheet": "front-oops-sheet.png",
-    "frame_width": 37,
+    "frame_width": 38,
     "frame_height": 49,
     "frames": 9,
     "durations_ms": [
