@@ -150,6 +150,15 @@ final class SkillFitScorer {
         return asks.stream().map(credits::get).mapToDouble(part).sum();
     }
 
+    /**
+     * How close this profile comes to holding {@code label}, from 0 when nothing vouches for it
+     * to 1 when it is held or related in full: the same reading that decides how much of a
+     * required ask is missing.
+     */
+    double closenessTo(String label) {
+        return answered(creditFor(label));
+    }
+
     private Credit creditFor(String ask) {
         Double exact = held.get(canonicalizer.canonical(ask));
         if (exact != null) return new Credit(exact, 0);
@@ -164,9 +173,12 @@ final class SkillFitScorer {
     private static double missingShare(List<String> required, Map<String, Credit> credits) {
         if (required.isEmpty()) return 0;
         double missing = required.stream().map(credits::get)
-                .mapToDouble(c -> 1 - Math.min(1, Math.max(c.exact(), c.related()) / ANSWERED))
-                .sum();
+                .mapToDouble(c -> 1 - answered(c)).sum();
         return missing / required.size();
+    }
+
+    private static double answered(Credit credit) {
+        return Math.min(1, Math.max(credit.exact(), credit.related()) / ANSWERED);
     }
 
     /**

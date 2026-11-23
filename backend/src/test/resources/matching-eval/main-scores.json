@@ -1,5 +1,5 @@
 {
- "source": "Each posting's total score on main after #372 (commit 3894ff52, English taxonomy names), from MatchScoreEvalTest with these fixtures. A score only moves when the scorer changes on purpose; rewrite this file then, and say why in the commit.",
+ "source": "Each posting's total score on main after #394 (lacked experience areas cost points by closeness), from MatchScoreEvalTest with these fixtures. A score only moves when the scorer changes on purpose; rewrite this file then, and say why in the commit.",
  "scores": {
   "comms-grc": {
    "kommunikationsmedarbejder": 76,
@@ -14,7 +14,7 @@
    "grc-konsulent-med-fokus-paa-informations": 68,
    "compliancespecialist-med-ansvar-for-gdpr": 48,
    "karriere-og-ledige-stillinger-i-greve-ko": 47,
-   "vil-du-vaere-med-til-at-saette-retningen": 76,
+   "vil-du-vaere-med-til-at-saette-retningen": 65,
    "cybersikkerhedsspecialist-til-kritisk-in": 43,
    "jurist-med-fokus-paa-informationssikkerh": 25,
    "java-architect-twoday-denmark": 25,

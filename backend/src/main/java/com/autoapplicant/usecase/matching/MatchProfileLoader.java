@@ -79,6 +79,9 @@ public class MatchProfileLoader {
         List<String> labels = new ArrayList<>(LooseCredit.comparedForms(held, canonicalizer));
         labels.addAll(LooseCredit.comparedForms(loaded.suggested(), canonicalizer));
         jobs.forEach(job -> asksOf(job).forEach(labels::add));
+        // A lacked experience area costs less the closer the profile's skills come to it, which
+        // only a label compared by meaning can tell.
+        labels.addAll(RequiredExperience.areaLabels());
         SkillSimilarity known = similarity.among(labels.stream().filter(Objects::nonNull).toList());
         return new MatchProfile(loaded.profile(), loaded.skills(), loaded.suggested(),
                 SkillFitScorer.forProfile(canonicalizer, loaded.profile(), loaded.skills(),
