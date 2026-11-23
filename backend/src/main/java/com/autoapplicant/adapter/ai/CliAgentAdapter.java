@@ -31,18 +31,45 @@ public class CliAgentAdapter implements ChatProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(CliAgentAdapter.class);
 
+    /** Label for a run whose model the app does not choose (Codex, or an operator override). */
+    private static final String GENERIC_MODEL_LABEL = "cli-agent";
+
     private final AppProperties props;
     private final String provider;
     private final String command;
+    private final String modelLabel;
+    /** Null means {@code app.ai.cli.timeout-seconds}. */
+    private final Duration timeout;
 
     /**
      * {@code provider} picks the default command line when {@code app.ai.cli.command} is blank,
      * and which CLI's auth variables the agent inherits.
      */
     public CliAgentAdapter(AppProperties props, String provider) {
+        this(props, provider, null);
+    }
+
+    /**
+     * As {@link #CliAgentAdapter(AppProperties, String)}, with a timeout of its own instead of
+     * {@code app.ai.cli.timeout-seconds}: a batch of postings takes far longer than the single
+     * generation call the shared value is sized for. Null keeps the shared value.
+     */
+    public CliAgentAdapter(AppProperties props, String provider, Duration timeout) {
+        this.timeout = timeout;
         this.props = props;
         this.provider = provider;
-        this.command = CliAgentCommands.resolve(provider, props.getAi().getCli().getCommand());
+        AppProperties.Cli cli = props.getAi().getCli();
+        this.command = CliAgentCommands.resolve(provider, cli.getCommand(), cli.getModel());
+        this.modelLabel = modelLabel(cli,
+                CliAgentCommands.pinnedModel(provider, cli.getCommand(), cli.getModel()));
+    }
+
+    /** An explicit label wins; otherwise the usage log records the model the CLI was told to run. */
+    private static String modelLabel(AppProperties.Cli cli, String pinnedModel) {
+        if (cli.getModelLabel() != null && !cli.getModelLabel().isBlank()) {
+            return cli.getModelLabel();
+        }
+        return pinnedModel != null ? pinnedModel : GENERIC_MODEL_LABEL;
     }
 
     /**
@@ -55,7 +82,7 @@ public class CliAgentAdapter implements ChatProviderPort {
     }
 
     private String run(PromptComposition composition, boolean jsonObject) {
-        int timeoutSeconds = props.getAi().getCli().getTimeoutSeconds();
+        long timeoutSeconds = timeout != null ? timeout.toSeconds() : props.getAi().getCli().getTimeoutSeconds();
         String prompt = buildPrompt(composition, jsonObject);
         Path workDir = newWorkDir();
         try {
@@ -123,6 +150,6 @@ public class CliAgentAdapter implements ChatProviderPort {
 
     @Override
     public String chatModelName() {
-        return props.getAi().getCli().getModelLabel();
+        return modelLabel;
     }
 }

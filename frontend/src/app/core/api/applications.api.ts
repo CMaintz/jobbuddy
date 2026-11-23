@@ -29,6 +29,11 @@ export interface ApplicationTimelineEntry {
   notes: string | null;
 }
 
+export interface ApplicationDates {
+  deadline: string | null;
+  interviewAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApplicationsApiService {
   private http = inject(HttpClient);
@@ -60,6 +65,11 @@ export class ApplicationsApiService {
 
   updateStatus(id: string, status: ApplicationStatus, notes?: string): Observable<Application> {
     return this.http.patch<Application>(`${this.base}/${id}/status`, { status, notes });
+  }
+
+  /** Replaces both dates; null clears one. */
+  updateDates(id: string, dates: ApplicationDates): Observable<Application> {
+    return this.http.put<Application>(`${this.base}/${id}/dates`, dates);
   }
 
   updateRecruiterInfo(

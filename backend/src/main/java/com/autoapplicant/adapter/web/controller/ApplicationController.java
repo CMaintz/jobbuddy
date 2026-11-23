@@ -2,9 +2,10 @@ package com.autoapplicant.adapter.web.controller;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.application.*;
+import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
-import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.application.ApplicationTimelineEntry;
+import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.application.*;
 import com.autoapplicant.port.in.job.GetJobByIdUseCase;
@@ -13,16 +14,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/applications")
@@ -77,7 +77,7 @@ public class ApplicationController {
     @PostMapping
     public ResponseEntity<ApplicationResponse> create(@Valid @RequestBody CreateApplicationRequest req) {
         UUID userId = secCtx.getCurrentUserId();
-        var app = create.createApplication(new CreateApplicationCommand(
+        Application app = create.createApplication(new CreateApplicationCommand(
                 userId,
                 req.jobId(),
                 req.cvVersionId(),
@@ -99,7 +99,7 @@ public class ApplicationController {
             @PathVariable UUID documentId,
             @RequestBody(required = false) AttachGeneratedDocumentRequest req) {
         UUID userId = secCtx.getCurrentUserId();
-        var updated = create.attachGeneratedDocument(
+        Application updated = create.attachGeneratedDocument(
                 id,
                 userId,
                 documentId,
@@ -128,8 +128,8 @@ public class ApplicationController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateApplicationStatusRequest req) {
         UUID userId = secCtx.getCurrentUserId();
-        var updated = updateStatus.updateStatus(id, userId, req.status(), req.notes());
-        return ResponseEntity.ok(ApplicationResponse.from(updated));
+        Application updated = updateStatus.updateStatus(id, userId, req.status(), req.notes());
+        return ResponseEntity.ok(withJob(updated));
     }
 
     @Operation(summary = "Update recruiter contact details and reply")
@@ -138,10 +138,10 @@ public class ApplicationController {
             @PathVariable UUID id,
             @RequestBody UpdateRecruiterInfoRequest req) {
         UUID userId = secCtx.getCurrentUserId();
-        var updated = updateRecruiter.updateRecruiterInfo(id, userId,
+        Application updated = updateRecruiter.updateRecruiterInfo(id, userId,
                 req.recruiterName(), req.recruiterEmail(),
                 req.recruiterMessage(), req.recruiterReply());
-        return ResponseEntity.ok(ApplicationResponse.from(updated));
+        return ResponseEntity.ok(withJob(updated));
     }
 
     @Operation(summary = "Record application outcome (feedback received, lessons for next time)")
@@ -150,14 +150,23 @@ public class ApplicationController {
             @PathVariable UUID id,
             @RequestBody UpdateOutcomeRequest req) {
         UUID userId = secCtx.getCurrentUserId();
-        var updated = updateOutcome.updateOutcome(id, userId, req.outcomeFeedback(), req.outcomeLessons());
-        return ResponseEntity.ok(ApplicationResponse.from(updated));
+        Application updated = updateOutcome.updateOutcome(id, userId, req.outcomeFeedback(), req.outcomeLessons());
+        return ResponseEntity.ok(withJob(updated));
     }
 
     @Operation(summary = "Get the application's progress timeline")
     @GetMapping("/{id}/timeline")
     public ResponseEntity<List<ApplicationTimelineEntry>> getTimeline(@PathVariable UUID id) {
         return ResponseEntity.ok(timeline.getTimeline(id, secCtx.getCurrentUserId()));
+    }
+
+    /**
+     * Updates answer with the job attached, like the reads do. Without it the client swaps in a
+     * row with no title or company, and the list shows it blank until the next reload.
+     */
+    private ApplicationResponse withJob(Application a) {
+        Job job = a.jobId() != null ? getJobById.getJobById(a.jobId()).orElse(null) : null;
+        return ApplicationResponse.from(a, job);
     }
 
     private static ApplicationStatus parseStatus(String value, ApplicationStatus fallback) {

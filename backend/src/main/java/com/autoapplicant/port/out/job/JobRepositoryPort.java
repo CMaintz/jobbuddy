@@ -14,7 +14,8 @@ public interface JobRepositoryPort {
     /** Active (not expired/taken-down) jobs only — the user-facing feed. */
     List<Job> findActive(int page, int size);
     /** The feed for one user: active jobs minus the ones they have ignored. */
-    List<Job> findActiveNotIgnoredBy(UUID userId, int page, int size);
+    List<Job> findActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories,
+                                     int page, int size);
     Optional<Job> findBySourceAndSourceJobId(JobSource source, String sourceJobId);
     boolean existsBySourceAndSourceJobId(JobSource source, String sourceJobId);
     Optional<Job> findByUrl(String url);
@@ -26,10 +27,19 @@ public interface JobRepositoryPort {
      * up on after {@code maxAttempts}, and ones tried since {@code retryBefore}, are
      * left out.
      */
-    List<Job> findForEnrichment(int limit, int maxAttempts, java.time.Instant retryBefore);
+    List<Job> findForEnrichment(int limit, int maxAttempts, java.time.Instant retryBefore,
+                                com.autoapplicant.domain.job.EnrichmentScope scope);
 
     /** Enrichment produced a usable result; stop asking about this one. */
     void markEnriched(UUID jobId);
+
+    /**
+     * Writes what enrichment produced (description, summary, skills, requirements, category and
+     * the other extracted fields) and nothing else, so crawl-owned columns such as is_active and
+     * last_seen_at keep whatever the crawl wrote while the AI call ran. Re-queues the embedding
+     * when the embedded text changed.
+     */
+    void saveEnrichment(Job enriched);
 
     /**
      * An attempt failed. Increments the attempt count and gives up on the job once it
@@ -39,14 +49,41 @@ public interface JobRepositoryPort {
     boolean markEnrichmentFailed(UUID jobId, String reason, int maxAttempts);
 
     // ── Embedding queue (same shape as enrichment: state on the job, vectors elsewhere) ──
-    /** Postings enriched but not yet embedded, never-attempted first. */
-    List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore);
+    /**
+     * Postings not yet embedded, never-attempted first.
+     *
+     * @param requireEnriched true to wait for enrichment to trim the text first; false to
+     *     embed what ingest stored, for a run that does not enrich
+     */
+    List<Job> findForEmbedding(int limit, int maxAttempts, java.time.Instant retryBefore,
+                               boolean requireEnriched);
 
-    /** A vector was stored; stop asking about this one. */
-    void markEmbedded(UUID jobId);
+    /** What {@link #markEmbedded} did. */
+    enum EmbeddedMark {
+        /** The posting counts as embedded. */
+        MARKED,
+        /** Its text changed since it was read; that save re-queued it, and the vector is stale. */
+        TEXT_CHANGED,
+        /** The stored embedding model is no longer the vector's: it stays queued for the new one. */
+        MODEL_CHANGED
+    }
+
+    /**
+     * A vector of {@code model} was stored for {@code embeddedText}; stop asking about this one,
+     * unless the text changed since or {@code model} is no longer the stored embedding model.
+     * Both are checked in the same statement as the write.
+     */
+    EmbeddedMark markEmbedded(UUID jobId, String embeddedText, String model);
 
     /** Returns true when this was the attempt that gave up on the posting. */
     boolean markEmbeddingFailed(UUID jobId, String reason, int maxAttempts);
+
+    /**
+     * Queues every posting that has no vector for {@code model}, with fresh attempts, after the
+     * install switched embedding model. Vectors of other models are kept: switching back finds
+     * them again. Returns how many postings were queued.
+     */
+    int requeueEmbeddingsForModel(String model);
 
     /** How many jobs sit in each embedding state. */
     java.util.Map<com.autoapplicant.domain.job.EmbeddingStatus, Long> countByEmbeddingStatus();
@@ -58,7 +95,7 @@ public interface JobRepositoryPort {
     long count();
     long countActive();
     /** How many jobs {@link #findActiveNotIgnoredBy} pages over in total. */
-    long countActiveNotIgnoredBy(UUID userId);
+    long countActiveNotIgnoredBy(UUID userId, java.util.Collection<String> excludedCategories);
 
     /**
      * How often each skill label appears across every posting we hold, most-named first.
