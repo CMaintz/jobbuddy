@@ -113,10 +113,15 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     /**
      * Posts inside the comms profile's own field that require hands-on security experience
      * (security architecture, incident response) with no year count. Asking for experience is
-     * normal, so only a senior ask may rule a post out; these score on their labels.
+     * normal, so only a senior ask may rule a post out; these score on their labels, less a few
+     * points for an area she lacks.
      */
     private static final Set<String> JUNIOR_SECURITY_ASK_POSTS = Set.of(
             "vil-du-vaere-med-til-at-saette-retningen", "cybersikkerhedsspecialist-til-kritisk-in");
+    private static final String SECURITY_ARCHITECT_POST =
+            "vil-du-vaere-med-til-at-saette-retningen";
+    /** Room the security architect post keeps under the mismatch ceiling for later changes. */
+    private static final int ROOM_UNDER_CEILING = 5;
 
     /** The day the eval scores on, so the profiles' current roles don't grow with the calendar. */
     private static final Clock SCORED_ON = Clock.fixed(
@@ -196,6 +201,21 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
                 .noneMatch(reason -> reason.startsWith(OUT_OF_REACH)));
     }
 
+    /**
+     * The security architect post shares most of a GRC profile's labels, so only the experience
+     * it asks for keeps it below the mismatch ceiling, with room for skill-fit changes to come.
+     */
+    @Test
+    void a_security_post_asking_experience_without_years_costs_the_comms_profile_points()
+            throws IOException {
+        MatchResult result = resultsFor(COMMS).get(SECURITY_ARCHITECT_POST);
+
+        assertThat(result.matchReasons()).first()
+                .isEqualTo("Beder om erfaring med sikkerhedsarkitektur, som du ikke har endnu");
+        assertThat(result.totalScore())
+                .isLessThanOrEqualTo(HIGHEST_MISMATCH_SCORE - ROOM_UNDER_CEILING);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {COMMS, ENGINEER})
     void the_best_good_fit_reaches_the_top_band(String profile) throws IOException {
@@ -271,9 +291,10 @@ class MatchScoreEvalTest extends PostgresIntegrationTest {
     /**
      * A posting outside the profile's own field and labelled a mismatch. Mismatches inside the
      * field are left out: they share a GRC profile's skill labels and differ in the experience
-     * they ask for, which the scorer weighs only for senior asks in catalogued specialist areas
-     * (a GDPR post asking three years of legal advice, or a security post asking architecture
-     * experience with no year count, still scores on its labels).
+     * they ask for, which the scorer weighs only in catalogued specialist areas, and lightly
+     * below senior asks (a GDPR post asking three years of legal advice still scores on its
+     * labels, and a security post asking architecture experience with no year count loses only
+     * a few points).
      */
     private Predicate<JsonNode> clearMismatches(String profile) {
         Set<String> ownField = profile.equals(COMMS) ? COMMS_FIELD : ENGINEER_FIELD;

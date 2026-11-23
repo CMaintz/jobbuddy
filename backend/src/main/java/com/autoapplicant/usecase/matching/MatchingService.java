@@ -423,6 +423,15 @@ public class MatchingService implements GetRecommendationsUseCase {
             total = Math.min(total, OUT_OF_REACH_CEILING);
             // First, because the feed shows only the first two reasons.
             reasons.add(0, outOfReach.get());
+        } else {
+            Optional<RequiredExperience.Shortfall> shortfall = matchProfile.requiredExperience()
+                    .shortfall(job, matchProfile.skillFit()::closenessTo);
+            if (shortfall.isPresent()) {
+                // A post within reach never drops below one that is out of reach.
+                total = Math.max(total - shortfall.get().penalty(),
+                        Math.min(total, OUT_OF_REACH_CEILING));
+                reasons.add(0, shortfall.get().reason());
+            }
         }
 
         double semanticScore  = skillScore / (double) SkillFitScorer.MAX_SCORE;

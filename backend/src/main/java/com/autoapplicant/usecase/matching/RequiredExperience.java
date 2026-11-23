@@ -8,20 +8,20 @@ import com.autoapplicant.domain.user.WorkExperience;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.regex.Matcher;
+import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Senior specialist experience a posting demands that a work history clearly cannot meet: four
- * or more years of security architecture, SOC work, penetration testing or software development.
+ * Specialist experience a posting demands that a work history clearly cannot meet: security
+ * architecture, SOC work, penetration testing or software development. Four or more years of it
+ * put a post out of reach ({@link #unmet}); a shorter ask only costs it some points
+ * ({@link #shortfall}).
  *
  * <p>Skill labels cannot see this either. A comms profile with a GRC course shares most of a
  * technical security post's labels ("Sikkerhedsarkitektur", "Risikovurdering", "NIS2"), so
@@ -31,8 +31,9 @@ import java.util.stream.Stream;
  * <ul>
  *   <li>Only REQUIRED asks the enrichment kinds as EXPERIENCE and that say "erfaring",
  *       "experience" or similar count. "Kendskab til" is knowledge, which a course can give.
- *   <li>Only asks for {@link #SENIOR_YEARS} years or more count. Plain "erfaring med" or "2 års
- *       erfaring" is a normal ask that a graduate applies to on education alone.
+ *   <li>Only asks for {@link #SENIOR_YEARS} years or more rule a post out. Plain "erfaring med"
+ *       or "2 års erfaring" is a normal ask that a graduate applies to on education alone, so
+ *       it only costs a few points, fewer the closer the profile's skills come to the area.
  *   <li>Only areas in {@link #AREAS} count. "Erfaring med intern kommunikation" names nothing
  *       a work history can be checked against with any confidence. Incident response is left
  *       out like generic IT-sikkerhed: it is part of a GRC and crisis-comms field, learnt on
@@ -51,6 +52,23 @@ final class RequiredExperience {
 
     /** The fewest years asked that make an ask senior enough to put a post out of reach. */
     private static final int SENIOR_YEARS = 4;
+
+    /**
+     * What a shorter ask in a lacked area costs when the profile's skills come as close to the
+     * area as they can without the experience, and when nothing comes close. Asking for
+     * experience is normal and a graduate applies on education alone, so this only reorders:
+     * the security architect post must fall clearly below the mismatch ceiling for the comms
+     * profile in {@code MatchScoreEvalTest}, and no good fit there may fall at all.
+     *
+     * <p>Closeness is read from skill labels only, the way adjacent skills are credited. A course
+     * or role that names the area outright already meets the ask; one that only names something
+     * nearby has no label to compare by meaning.
+     */
+    static final int NEAR_SHORTFALL_PENALTY = 5;
+    static final int FAR_SHORTFALL_PENALTY = 12;
+
+    /** Closeness from which the reason calls the profile's nearest skill related. */
+    private static final double RELATED_FROM = 0.5;
 
     private static final int FLAGS = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
             | Pattern.UNICODE_CHARACTER_CLASS;
@@ -101,47 +119,26 @@ final class RequiredExperience {
                     + "|department))"
                     + "|at udvikle software|developing software";
 
-    private static final Map<String, Integer> NUMBER_WORDS = Map.ofEntries(
-            Map.entry("en", 1), Map.entry("et", 1), Map.entry("one", 1),
-            Map.entry("to", 2), Map.entry("two", 2), Map.entry("tre", 3), Map.entry("three", 3),
-            Map.entry("fire", 4), Map.entry("four", 4), Map.entry("fem", 5),
-            Map.entry("five", 5), Map.entry("seks", 6), Map.entry("six", 6),
-            Map.entry("syv", 7), Map.entry("seven", 7), Map.entry("otte", 8),
-            Map.entry("eight", 8), Map.entry("ni", 9), Map.entry("nine", 9),
-            Map.entry("ti", 10), Map.entry("ten", 10));
-
-    /** A year count in digits or words. */
-    private static final String NUMBER =
-            "(?:\\d{1,2}|(?:" + String.join("|", NUMBER_WORDS.keySet()) + ")\\b)";
-
     /**
-     * The lowest number of years asked: "3 års", "3+ years", "fem års", "4-årig", "four (4)
-     * years", "4 or more years", and a range written with a hyphen, an en or em dash, "til" or
-     * "to" ("5-8 års", "3 til 5 års"). The range must be read whole: matching from its upper
-     * bound would let a 3 to 5 years ask cap as a senior one.
+     * One specialist area: how an ask names it, what a role that did it mentions, the skill
+     * label a profile's skills are compared with to see how close they come, and the experience
+     * phrase in its reasons.
      */
-    private static final Pattern YEARS = Pattern.compile(
-            "\\b(" + NUMBER + ")\\s*(?:\\(\\s*\\d{1,2}\\s*\\)\\s*)?\\+?\\s*"
-                    + "(?:(?:[-\\u2013\\u2014]|\\btil\\b|\\bto\\b)\\s*" + NUMBER + "\\s*\\+?\\s*"
-                    + "|(?:or more|eller flere|eller mere)\\s+)?"
-                    + "(?:-?årig|års|år|years?)\\b",
-            FLAGS);
-
-    /**
-     * One specialist area: how an ask names it, what a role that did it mentions, and the
-     * experience phrase in its reason.
-     */
-    private record Area(Pattern named, Pattern held, String phrase) {}
+    private record Area(Pattern named, Pattern held, String label, String phrase) {}
 
     private static final List<Area> AREAS = List.of(
-            area("sikkerhedsarkitektur|security architecture",
+            area("sikkerhedsarkitektur|security architecture", "Sikkerhedsarkitektur",
                     "erfaring med sikkerhedsarkitektur"),
-            area(SOC + "|security operations cent", "erfaring fra et SOC"),
-            area("penetrationstest|penetration test|\\bpentest", "erfaring med penetrationstest"),
+            area(SOC + "|security operations cent", "SOC", "erfaring fra et SOC"),
+            area("penetrationstest|penetration test|\\bpentest", "Penetrationstest",
+                    "erfaring med penetrationstest"),
             new Area(Pattern.compile(DEVELOPED_SOFTWARE, FLAGS),
                     Pattern.compile("softwareudvikl|software(-| )?(udvikl|develop|engineer)"
                             + "|(backend|frontend|full-?stack|web)(-| )?(udvikl|develop)", FLAGS),
-                    "erfaring som softwareudvikler"));
+                    "Softwareudvikling", "erfaring som softwareudvikler"));
+
+    /** What a shorter experience ask the history lacks costs, and the reason that says so. */
+    record Shortfall(int penalty, String reason) {}
 
     private final List<WorkExperience> history;
     private final LocalDate today;
@@ -155,43 +152,96 @@ final class RequiredExperience {
         return new RequiredExperience(List.copyOf(history), today);
     }
 
+    /** The labels {@link #shortfall} asks closeness for, to be compared by meaning up front. */
+    static List<String> areaLabels() {
+        return AREAS.stream().map(Area::label).toList();
+    }
+
     /** Why {@code job} is out of reach for this work history, or empty when nothing clearly is. */
     Optional<String> unmet(Job job) {
-        if (job.requirements() == null || history.isEmpty()) return Optional.empty();
-        return job.requirements().stream()
-                .filter(JobRequirement::isRequired)
-                // Degree and skill asks are judged elsewhere. Read against a work history, a
-                // degree in software would cap every graduate who has not worked as a developer.
-                .filter(ask -> ask.kind() == RequirementKind.EXPERIENCE)
-                .map(JobRequirement::text)
-                .filter(Objects::nonNull)
-                .filter(text -> EXPERIENCE_WORDING.matcher(text).find())
-                .filter(text -> !HardRequirements.leavesAWayIn(text))
-                .filter(text -> yearsAsked(text).orElse(0) >= SENIOR_YEARS)
-                .map(this::unmetBy)
+        return experienceAsks(job)
+                .filter(RequiredExperience::isSenior)
+                .map(ask -> lackedAreas(ask).map(areas -> "Kræver "
+                        + YearsAsked.in(ask).orElseThrow() + " års " + areas.get(0).phrase()))
                 .flatMap(Optional::stream)
                 .findFirst();
     }
 
     /**
-     * The reason {@code ask}, a senior ask, is out of reach: every alternative it names is an
-     * area lacked.
+     * What the shorter asks of {@code job} in areas this history lacks cost, empty when none
+     * does. The penalty slides from {@link #FAR_SHORTFALL_PENALTY} down to
+     * {@link #NEAR_SHORTFALL_PENALTY} as the profile comes closer to the area. A senior ask is
+     * left to {@link #unmet}, which rules the post out instead.
+     *
+     * @param closeness how close the profile comes to a skill label, from 0 (nothing related)
+     *                  to 1 (held, or related in full)
      */
-    private Optional<String> unmetBy(String ask) {
-        int years = yearsAsked(ask).orElseThrow();
+    Optional<Shortfall> shortfall(Job job, ToDoubleFunction<String> closeness) {
+        return experienceAsks(job)
+                .filter(ask -> !isSenior(ask))
+                .map(ask -> lackedAreas(ask).map(areas -> shortfallOf(areas, closeness)))
+                .flatMap(Optional::stream)
+                .max(Comparator.comparingInt(Shortfall::penalty));
+    }
+
+    private static Shortfall shortfallOf(List<Area> areas, ToDoubleFunction<String> closeness) {
+        // Any of the alternatives would do, so the closest one counts.
+        Area closest = areas.stream()
+                .max(Comparator.comparingDouble(area -> closeness.applyAsDouble(area.label())))
+                .orElseThrow();
+        double close = Math.clamp(closeness.applyAsDouble(closest.label()), 0, 1);
+        int penalty = (int) Math.round(FAR_SHORTFALL_PENALTY
+                - (FAR_SHORTFALL_PENALTY - NEAR_SHORTFALL_PENALTY) * close);
+        // A faint likeness, such as an unconfirmed suggestion, costs almost the full penalty and
+        // must not be sold to her as related experience.
+        String reason = close >= RELATED_FROM
+                ? "Beder om " + closest.phrase() + "; du har noget beslægtet"
+                : "Beder om " + closest.phrase() + ", som du ikke har endnu";
+        return new Shortfall(penalty, reason);
+    }
+
+    /**
+     * Required experience asks that offer no way in. Degree and skill asks are judged elsewhere:
+     * read against a work history, a degree in software would cap every graduate who has not
+     * worked as a developer.
+     */
+    private Stream<String> experienceAsks(Job job) {
+        if (job.requirements() == null || history.isEmpty()) return Stream.empty();
+        return job.requirements().stream()
+                .filter(JobRequirement::isRequired)
+                .filter(ask -> ask.kind() == RequirementKind.EXPERIENCE)
+                .map(JobRequirement::text)
+                .filter(Objects::nonNull)
+                .filter(text -> EXPERIENCE_WORDING.matcher(text).find())
+                .filter(text -> !HardRequirements.leavesAWayIn(text));
+    }
+
+    private static boolean isSenior(String ask) {
+        return YearsAsked.in(ask).orElse(0) >= SENIOR_YEARS;
+    }
+
+    /**
+     * The catalogued areas {@code ask} names, when this history meets none of them. Empty when
+     * it meets one, or when an alternative outside the catalogue leaves a way in.
+     */
+    private Optional<List<Area>> lackedAreas(String ask) {
+        // Below senior asks any related role meets the ask: a short stint in the area is closer
+        // than a skill label, which never costs more than the near penalty.
+        int years = isSenior(ask) ? YearsAsked.in(ask).orElseThrow() : 0;
         List<Optional<Area>> named = alternativesIn(ask);
-        // An alternative outside the catalogue leaves a way in.
-        if (named.stream().anyMatch(Optional::isEmpty)) return Optional.empty();
+        if (named.isEmpty() || named.stream().anyMatch(Optional::isEmpty)) {
+            return Optional.empty();
+        }
         List<Area> areas = named.stream().flatMap(Optional::stream).distinct().toList();
         if (areas.stream().anyMatch(area -> meets(area, years))) return Optional.empty();
-        return Optional.of("Kræver " + years + " års " + areas.get(0).phrase());
+        return Optional.of(areas);
     }
 
     /** The area each alternative in {@code ask} names, empty for one outside the catalogue. */
     private static List<Optional<Area>> alternativesIn(String ask) {
         // The year count goes first: "4 or more years" and "4 eller flere års" offer no
         // alternative, but would split into a part naming nothing and leave a way in.
-        String areasAsked = YEARS.matcher(ask).replaceFirst(" ");
+        String areasAsked = YearsAsked.withoutCount(ask);
         return Arrays.stream(ALTERNATIVES.split(areasAsked))
                 .filter(part -> !part.isBlank())
                 .map(RequiredExperience::areaNamedIn)
@@ -231,16 +281,8 @@ final class RequiredExperience {
         return AREAS.stream().filter(area -> area.named().matcher(part).find()).findFirst();
     }
 
-    private static OptionalInt yearsAsked(String ask) {
-        Matcher m = YEARS.matcher(ask);
-        if (!m.find()) return OptionalInt.empty();
-        String n = m.group(1).toLowerCase(Locale.ROOT);
-        Integer word = NUMBER_WORDS.get(n);
-        return OptionalInt.of(word != null ? word : Integer.parseInt(n));
-    }
-
-    private static Area area(String named, String phrase) {
+    private static Area area(String named, String label, String phrase) {
         Pattern pattern = Pattern.compile(named, FLAGS);
-        return new Area(pattern, pattern, phrase);
+        return new Area(pattern, pattern, label, phrase);
     }
 }
