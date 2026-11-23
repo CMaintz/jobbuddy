@@ -13,7 +13,9 @@ import java.util.Set;
  * fit; the cover letter is where it belongs.
  *
  * <p>The list is explicit and matched on the whole label, never on part of a word:
- * "Bureausamarbejde" and "Forældresamarbejde" are skills of their own. The taxonomy's
+ * "Bureausamarbejde" and "Forældresamarbejde" are skills of their own. A label that is also a
+ * skill stays off the list ("Engagement" is a social media metric, "Ownership" a product role):
+ * a stray trait costs less than a held skill no longer counting. The taxonomy's
  * {@code Soft Skill} category is no substitute, because it also holds Communication, Stakeholder
  * Management and Negotiation, which are the core of a communications profile.
  */
@@ -29,7 +31,7 @@ final class PersonalTraits {
             "selvstændig", "selvstændighed", "selvstændigt", "selvstændig opgaveløsning",
             "selvstændigt ansvar",
             "fleksibel", "fleksibilitet", "omstillingsparat", "omstillingsparathed",
-            "engageret", "engagement", "motiveret", "gåpåmod",
+            "engageret", "motiveret", "gåpåmod",
             "ansvarsbevidst", "ansvarsbevidsthed", "ansvarlig", "ansvarlighed",
             "pålidelig", "pålidelighed", "mødestabil", "loyal", "loyalitet",
             "servicemindet", "serviceminded", "servicemindedhed", "serviceorienteret",
@@ -45,7 +47,7 @@ final class PersonalTraits {
             "self-motivation", "independent", "independence",
             "flexible", "flexibility", "adaptable", "adaptability",
             "engaged", "motivated", "dedicated",
-            "responsible", "accountability", "ownership", "reliable", "reliability",
+            "responsible", "accountability", "reliable", "reliability",
             "dependable",
             "service-minded", "service minded",
             "attention to detail", "detail-oriented", "detail oriented",

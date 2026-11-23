@@ -41,11 +41,13 @@ class PersonalTraitAsksTest {
                 .isEqualTo(scorer.score(required("Bogholderi"), new ArrayList<>()));
     }
 
-    @Test
-    void a_skill_named_after_a_trait_still_counts_as_missing() {
+    /** "Engagement" and "Ownership" are skills in marketing and product postings, not traits. */
+    @ParameterizedTest
+    @ValueSource(strings = {"Forældresamarbejde", "Engagement", "Ownership"})
+    void a_skill_named_like_a_trait_still_counts_as_missing(String skill) {
         SkillFitScorer scorer = scorer(HELD);
 
-        assertThat(scorer.score(required(HELD, "Forældresamarbejde"), new ArrayList<>()))
+        assertThat(scorer.score(required(HELD, skill), new ArrayList<>()))
                 .isEqualTo(scorer.score(required(HELD, "Bogholderi"), new ArrayList<>()));
     }
 
