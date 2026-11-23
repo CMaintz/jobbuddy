@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AtsPdfService } from '../../../shared/services/ats-pdf.service';
 import { DocumentRenderApiService } from '../../../core/api/document-render.api';
 import { ResumeDesign } from '../../../core/models/resume-design.model';
@@ -108,5 +108,22 @@ describe('ResumePreviewComponent page budget', () => {
     fixture.detectChanges();
 
     expect(warning()).toContain('pageBudget.cv.over');
+  });
+
+  it('exports headings in the language she switched to, not the one the design was first built in', async () => {
+    // Bug: the design only recomputes when CV data changes, so after switching DA to EN the PDF
+    // (and the preview) keep the Danish headings until she edits something.
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('da', { resumeBuilder: { cv: { experience: 'Erfaring' } } });
+    translate.setTranslation('en', { resumeBuilder: { cv: { experience: 'Experience' } } });
+    translate.use('da');
+    fixture.componentInstance.design();
+    spyOn(HTMLAnchorElement.prototype, 'click');
+
+    translate.use('en');
+    await fixture.componentInstance.downloadPdf();
+
+    const exported: ResumeDesign = render.exportResumePdf.calls.mostRecent().args[0];
+    expect(exported.labels['experience']).toBe('Experience');
   });
 });

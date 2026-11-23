@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { catchError, debounceTime, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, merge, of, scan, switchMap } from 'rxjs';
 import { ResumeStateService } from '../services/resume-state.service';
 import { toResumeDesign } from '../services/resume-design';
 import { AtsPdfService, resumeDataToAts } from '../../../shared/services/ats-pdf.service';
@@ -10,6 +10,7 @@ import { DocumentRenderApiService, savePdf } from '../../../core/api/document-re
 import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
 import { PageBudgetWarningComponent } from '../../../shared/components/page-budget-warning/page-budget-warning.component';
 import { ExportedPageBudget } from '../../../shared/page-budget';
+import { NotifyService } from '../../../shared/services/notify.service';
 
 /** How long typing pauses before the preview is re-rendered: one render per pause, not per key. */
 const PREVIEW_DEBOUNCE_MS = 350;
@@ -29,23 +30,35 @@ export class ResumePreviewComponent {
   private atsPdf = inject(AtsPdfService);
   private renderApi = inject(DocumentRenderApiService);
   private translate = inject(TranslateService);
+  private notify = inject(NotifyService);
+
+  /**
+   * Ticks on every language switch or translation load. translate.instant creates no signal
+   * dependency, so without this the headings stay in the language the design was first built in.
+   */
+  private readonly translations = toSignal(
+    merge(this.translate.onLangChange, this.translate.onTranslationChange, this.translate.onDefaultLangChange)
+      .pipe(scan(count => count + 1, 0)),
+    { initialValue: 0 });
 
   /** Page count of the last PDF the user downloaded, against the two-page CV budget. */
   readonly exportedPages = new ExportedPageBudget('cv', computed(() => [
     this.state.resumeData(), this.state.settings(), this.state.displayPersonalInfo(),
   ]));
 
-  /**
-   * The design both the preview and the export render. It reads the display variants, which
-   * recompute on a language change, so the translated headings follow the language too.
-   */
-  readonly design = computed(() => toResumeDesign({
-    personalInfo: this.state.displayPersonalInfo(),
-    socials: this.state.displaySocials(),
-    data: this.state.resumeData(),
-    settings: this.state.settings(),
-    skillGroups: this.state.skillGroups(),
-  }, key => this.translate.instant(key)));
+  /** The design both the preview and the export render, with headings in the current language. */
+  readonly design = computed(() => {
+    this.translations();
+    return toResumeDesign({
+      personalInfo: this.state.displayPersonalInfo(),
+      socials: this.state.displaySocials(),
+      data: this.state.resumeData(),
+      settings: this.state.settings(),
+      skillGroups: this.state.skillGroups(),
+    }, key => this.translate.instant(key));
+  });
+
+  readonly downloading = signal(false);
 
   /** Object URLs of the current preview pages; null until the first render arrives. */
   readonly pages = signal<string[] | null>(null);
@@ -69,9 +82,18 @@ export class ResumePreviewComponent {
 
   /** The designed CV as a real text PDF, laid out exactly as the preview shows it. */
   async downloadPdf(): Promise<void> {
+    // A render takes a moment; a second click would start a second one.
+    if (this.downloading()) return;
+    this.downloading.set(true);
     // Display variant: an anonymised export must not carry the real name in its filename
     const name = this.state.displayPersonalInfo().fullName || 'resume';
-    await this.exportedPages.track(this.renderApi.exportResumePdf(this.design()).then(pdf => savePdf(pdf, name)));
+    try {
+      await this.exportedPages.track(this.renderApi.exportResumePdf(this.design()).then(pdf => savePdf(pdf, name)));
+    } catch {
+      this.notify.error('notify.actionFailed');
+    } finally {
+      this.downloading.set(false);
+    }
   }
 
   /** Text-based single-column PDF: selectable text, safe for ATS parsers. */
