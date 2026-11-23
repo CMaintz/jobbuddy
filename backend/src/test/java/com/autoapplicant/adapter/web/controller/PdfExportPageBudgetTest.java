@@ -16,7 +16,6 @@ import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.document.BuildApplicationDocumentUseCase;
-import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
 import com.autoapplicant.port.in.user.GetUserProfileUseCase;
 import com.autoapplicant.port.in.user.ManageProfilePrivateInfoUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,7 +56,6 @@ class PdfExportPageBudgetTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
 
-    @MockitoBean ManagePdfTemplatesUseCase       pdfTemplates;
     @MockitoBean GetUserProfileUseCase           getUserProfile;
     @MockitoBean ManageProfilePrivateInfoUseCase privateInfo;
     @MockitoBean BuildApplicationDocumentUseCase buildAppDocument;

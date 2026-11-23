@@ -7,12 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.autoapplicant.adapter.security.SecurityContextHelper;
-import com.autoapplicant.adapter.web.controller.PdfTemplateController;
+import com.autoapplicant.adapter.web.controller.SpokenLanguageController;
 import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
-import com.autoapplicant.port.in.document.ManagePdfTemplatesUseCase;
+import com.autoapplicant.port.in.user.ManageSpokenLanguagesUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,15 +26,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Client mistakes are 4xx, not "Internal server error". */
-@WebMvcTest(controllers = PdfTemplateController.class)
+@WebMvcTest(controllers = SpokenLanguageController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class GlobalExceptionHandlerTest {
 
-    private static final String BASE = "/api/v1/pdf-templates";
+    private static final String BASE = "/api/v1/profile/languages";
+    private static final String LANGUAGE = "{\"language\":\"Danish\",\"proficiency\":\"FLUENT\"}";
 
     @Autowired MockMvc mvc;
 
-    @MockitoBean ManagePdfTemplatesUseCase    service;
+    @MockitoBean ManageSpokenLanguagesUseCase service;
     @MockitoBean SecurityContextHelper        secCtx;
     @MockitoBean ProvisionFirebaseUserUseCase provisionUser;
     @MockitoBean ResolveLinkedInUserUseCase   resolveLinkedInUser;
@@ -57,7 +58,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void a_path_id_that_is_not_a_uuid_is_400() throws Exception {
-        mvc.perform(get(BASE + "/not-a-uuid"))
+        mvc.perform(delete(BASE + "/not-a-uuid"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }
@@ -84,16 +85,16 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void a_record_the_caller_does_not_own_is_404() throws Exception {
-        when(service.update(any())).thenThrow(new NotFoundException("Template not found"));
+        when(service.save(any())).thenThrow(new NotFoundException("Language not found"));
 
-        mvc.perform(put(BASE + "/" + id).contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"x\"}"))
+        mvc.perform(put(BASE + "/" + id).contentType(MediaType.APPLICATION_JSON).content(LANGUAGE))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Template not found"));
+                .andExpect(jsonPath("$.message").value("Language not found"));
     }
 
     @Test
     void an_email_held_by_another_account_is_409_with_a_code_the_client_can_match() throws Exception {
-        when(service.getTemplates(eq(userId))).thenThrow(new AccountExistsException());
+        when(service.getLanguages(eq(userId))).thenThrow(new AccountExistsException());
 
         mvc.perform(get(BASE))
                 .andExpect(status().isConflict())
@@ -102,7 +103,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void other_conflicts_carry_no_code() throws Exception {
-        when(service.getTemplates(eq(userId))).thenThrow(new IllegalStateException("collided"));
+        when(service.getLanguages(eq(userId))).thenThrow(new IllegalStateException("collided"));
 
         mvc.perform(get(BASE))
                 .andExpect(status().isConflict())
@@ -111,14 +112,14 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void access_denied_is_403() throws Exception {
-        when(service.getTemplates(eq(userId))).thenThrow(new AccessDeniedException("Access Denied"));
+        when(service.getLanguages(eq(userId))).thenThrow(new AccessDeniedException("Access Denied"));
 
         mvc.perform(get(BASE)).andExpect(status().isForbidden());
     }
 
     @Test
     void a_genuine_failure_is_still_a_500_without_details() throws Exception {
-        when(service.getTemplates(eq(userId))).thenThrow(new RuntimeException("db password is hunter2"));
+        when(service.getLanguages(eq(userId))).thenThrow(new RuntimeException("db password is hunter2"));
 
         mvc.perform(get(BASE))
                 .andExpect(status().isInternalServerError())
