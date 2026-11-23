@@ -208,7 +208,7 @@ class ApplicationPromptAssemblerTest {
 
     private static GenerateDocumentCommand command(UUID jobId, String pasted, UUID templateId) {
         return new GenerateDocumentCommand(USER, "COVER_LETTER", jobId, pasted, null, templateId,
-                null, null, "English", false, null, "STANDARD");
+                null, null, "English", false, null, "STANDARD", null);
     }
 
     private static PromptTemplate styleTemplate(UUID owner, String userPrompt) {
