@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject, signal, OnInit, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,6 +8,7 @@ import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.c
 import { JbDropdownComponent } from '../../shared/components/jb-dropdown/jb-dropdown.component';
 import { DiffViewerComponent } from '../../shared/components/diff-viewer/diff-viewer.component';
 import { LetterPaperComponent } from './letter-paper.component';
+import { letterBodyHtml } from './letter-body';
 import { LetterGateReportComponent } from './letter-gate-report.component';
 import { LetterExportWarningComponent } from './letter-export-warning.component';
 import { ExportKind, LetterExportGuard } from './letter-export-guard';
@@ -15,7 +16,7 @@ import { LetterCheckState, letterCheckState } from './letter-export-check';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
-import { PdfExportService } from '../resume-builder/services/pdf-export.service';
+import { DocumentRenderApiService, savePdf } from '../../core/api/document-render.api';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { ExportedPageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
@@ -66,7 +67,6 @@ function recheckErrorKey(err: unknown): string {
   templateUrl: './application-output.component.html',
 })
 export class ApplicationOutputComponent implements OnInit {
-  @ViewChild(LetterPaperComponent) paper?: LetterPaperComponent;
 
   private translate = inject(TranslateService);
 
@@ -77,7 +77,7 @@ export class ApplicationOutputComponent implements OnInit {
   private aiApi = inject(AiApiService);
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
-  private pdfExport = inject(PdfExportService);
+  private renderApi = inject(DocumentRenderApiService);
   private atsPdf = inject(AtsPdfService);
 
   loading = signal(true);
@@ -513,17 +513,31 @@ export class ApplicationOutputComponent implements OnInit {
     }));
   }
 
-  /** Pixel-perfect capture of the styled letter (image-based). */
+  /** The letter in its chosen design, as a real text PDF. */
   downloadPdf(): void {
     this.exportGuard.request('designed');
   }
 
   private exportDesigned(): void {
-    const paperEl = this.paper?.el.nativeElement;
-    if (!paperEl || this.downloading() || this.editing()) return;
+    const doc = this.activeDoc();
+    if (!doc || this.downloading() || this.editing()) return;
     this.downloading.set(true);
-    this.exportedPages.track(this.pdfExport.download(paperEl, this.exportFilename()))
+    this.exportedPages.track(this.renderApi.exportStructuredPdf(this.designedLetter(doc))
+      .then(pdf => savePdf(pdf, this.exportFilename())))
+      .catch(() => this.notify.error('notify.actionFailed'))
       .finally(() => this.downloading.set(false));
+  }
+
+  /** The letter as the backend renders it: the paper's template, identity and text. */
+  private designedLetter(doc: GeneratedDocument): StructuredDocument {
+    return {
+      documentType: (doc.documentType as StructuredDocument['documentType']) ?? 'APPLICATION_TEXT',
+      exportMode: 'DESIGNED',
+      templateId: `letter-${this.activeTemplate().key}`,
+      identity: this.identity(),
+      sections: [],
+      bodyContent: letterBodyHtml(doc.content),
+    };
   }
 
   /** Text-based letter PDF — selectable text, safe for ATS parsers. */

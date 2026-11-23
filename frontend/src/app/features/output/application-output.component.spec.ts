@@ -9,7 +9,7 @@ import { DocumentApiService } from '../../core/api/document.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
-import { PdfExportService } from '../resume-builder/services/pdf-export.service';
+import { DocumentRenderApiService } from '../../core/api/document-render.api';
 import { ApplicationOutputComponent } from './application-output.component';
 import { LetterPaperComponent } from './letter-paper.component';
 import { LetterExportWarningComponent } from './letter-export-warning.component';
@@ -34,7 +34,8 @@ describe('ApplicationOutputComponent page budget', () => {
           getById: () => of({ id: 'j1' }), getDocumentsForJob: () => of([letter]) } },
         { provide: DocumentApiService, useValue: { getQualityScores: () => of([]) } },
         { provide: AiApiService, useValue: {} },
-        { provide: PdfExportService, useValue: { download: () => Promise.resolve(2) } },
+        { provide: DocumentRenderApiService, useValue: {
+          exportStructuredPdf: () => Promise.resolve({ blob: new Blob(), pageCount: 2 }) } },
         { provide: AtsPdfService, useValue: { downloadLetter: () => Promise.resolve(2) } },
       ],
     });

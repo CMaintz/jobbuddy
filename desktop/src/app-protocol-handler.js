@@ -19,8 +19,8 @@ function isFile(file) {
 /**
  * Serves the Angular build at app://jobbuddy, the origin the backend's CORS admits, and forwards
  * /uploads to the backend. The forwarded request goes through the default session, so the token
- * is added by token-header.js like every other backend request, and the photo stays same-origin
- * for the PDF export's canvas. Every file it serves carries the app's Content-Security-Policy.
+ * is added by token-header.js like every other backend request, and a stored /uploads/... photo
+ * URL works as-is in the app. Every file it serves carries the app's Content-Security-Policy.
  *
  * @param {object} p
  * @param {Electron.Protocol} p.protocol

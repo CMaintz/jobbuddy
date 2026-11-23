@@ -521,7 +521,8 @@
       "pdfAts": "PDF - simple (for job portals)",
       "print": "Print",
       "atsTitle": "Simple one-column PDF with plain text that job portals and recruiting systems can read",
-      "dragToResize": "Drag to resize"
+      "unavailable": "The preview could not be shown right now. Try again in a moment.",
+      "pageAlt": "Page {{page}}"
     },
     "cv": {
       "summary": "Summary",

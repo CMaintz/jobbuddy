@@ -8,66 +8,17 @@
         <jb-button icon="copy" (clicked)="printResume()">{{ 'resumeBuilder.preview.print' | translate }}</jb-button>
       </div>
       <jb-page-budget-warning class="w-full max-w-[794px]" [budget]="exportedPages.current()" />
+      @if (previewFailed()) {
+        <p role="status" class="w-full max-w-[794px] text-sm text-jb-text-dim">{{ 'resumeBuilder.preview.unavailable' | translate }}</p>
+      }
 
-      <!-- Preview container -->
-      <div
-        #previewContainer
-        id="previewContainer"
-        [style]="'background:#fff;box-shadow:0 18px 60px rgba(0,0,0,0.45);overflow:hidden;' + typographyVars"
-        [style.width.px]="docWidth"
-        [style.min-height.px]="docHeight"
-        [style.font-family]="state.settings().fontFamily"
-      >
-        @switch (state.settings().template) {
-          @case ('classic') {
-            @defer (on idle) {
-              <app-classic-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
-          @case ('modern') {
-            @defer (on idle) {
-              <app-modern-1col-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
-          @case ('modern-2col') {
-            @defer (on idle) {
-              <app-modern-2col-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
-          @case ('minimal') {
-            @defer (on idle) {
-              <app-minimal-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
-          @case ('executive') {
-            @defer (on idle) {
-              <app-executive-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
-          @case ('creative') {
-            @defer (on idle) {
-              <app-creative-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
-          @default {
-            @defer (on idle) {
-              <app-classic-layout />
-            } @placeholder {
-              <div class="animate-pulse bg-gray-50" [style.height.px]="docHeight"></div>
-            }
-          }
+      <!-- The pages of the PDF itself, rendered by the backend -->
+      <div id="previewContainer" class="flex flex-col gap-6" [style.width.px]="docWidth">
+        @for (page of pages(); track $index) {
+          <img [src]="page" [alt]="'resumeBuilder.preview.pageAlt' | translate:{ page: $index + 1 }"
+            class="block w-full bg-white shadow-[0_18px_60px_rgba(0,0,0,0.45)]" />
+        } @empty {
+          <div class="animate-pulse bg-gray-50" [style.height.px]="docWidth * 1.414"></div>
         }
       </div>
     </div>

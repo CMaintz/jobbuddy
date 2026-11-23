@@ -15,7 +15,7 @@ const TEMPLATES: { type: TemplateType; label: string; description: string }[] = 
   { type: 'creative', label: 'resumeBuilder.layout.tpl.creative.label', description: 'resumeBuilder.layout.tpl.creative.description' },
 ];
 
-/** Sections that can carry typography overrides (matches rbSection tags in the layouts). */
+/** Sections that can carry typography overrides (resume.typ styles each one on its own). */
 const TYPOGRAPHY_SECTIONS: { id: string; label: string }[] = [
   { id: 'header', label: 'resumeBuilder.layout.typoSection.header' },
   { id: 'summary', label: 'resumeBuilder.layout.typoSection.summary' },

@@ -8,13 +8,13 @@ import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { DocumentApiService } from '../../core/api/document.api';
-import { PdfExportService } from '../resume-builder/services/pdf-export.service';
+import { DocumentRenderApiService } from '../../core/api/document-render.api';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { NotifyService } from '../../shared/services/notify.service';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { Job } from '../../core/models/job.model';
 import { Application } from '../../core/models/application.model';
-import { LetterReview } from '../../core/models/structured-document.model';
+import { LetterReview, StructuredDocument } from '../../core/models/structured-document.model';
 
 /**
  * The export warning as the output page drives it: which text counts as checked, and what a
@@ -24,6 +24,7 @@ describe('ApplicationOutputComponent export check', () => {
   const POSTING = 'Vi søger en compliance-specialist.';
   let ai: jasmine.SpyObj<AiApiService>;
   let ats: jasmine.SpyObj<AtsPdfService>;
+  let render: jasmine.SpyObj<DocumentRenderApiService>;
 
   const passed: LetterReview = { needs: [], gate: { verdict: 'PASSED', points: [], rounds: 0 }, stale: false };
   const failed: LetterReview = {
@@ -58,7 +59,7 @@ describe('ApplicationOutputComponent export check', () => {
         { provide: ApplicationsApiService, useValue: apps },
         { provide: JobsApiService, useValue: jobs },
         { provide: DocumentApiService, useValue: documents },
-        { provide: PdfExportService, useValue: jasmine.createSpyObj('PdfExportService', ['download']) },
+        { provide: DocumentRenderApiService, useValue: render },
         { provide: AtsPdfService, useValue: ats },
       ],
     });
@@ -72,6 +73,34 @@ describe('ApplicationOutputComponent export check', () => {
     ai = jasmine.createSpyObj<AiApiService>('AiApiService', ['saveStructuredDocument', 'recheckLetter']);
     ats = jasmine.createSpyObj<AtsPdfService>('AtsPdfService', ['downloadLetter']);
     ats.downloadLetter.and.returnValue(Promise.resolve(1));
+    render = jasmine.createSpyObj<DocumentRenderApiService>('DocumentRenderApiService', ['exportStructuredPdf']);
+    render.exportStructuredPdf.and.returnValue(Promise.resolve({ blob: new Blob(), pageCount: 1 }));
+    spyOn(HTMLAnchorElement.prototype, 'click');
+  });
+
+  it('exports a passed letter as a designed text PDF in the chosen paper', () => {
+    // Bug: the designed export goes back to a screenshot of the paper, or loses the template the
+    // user picked, or sends the plain text so its paragraphs run together.
+    const page = open(letter(passed));
+    page.template.set('classic');
+
+    page.downloadPdf();
+
+    expect(render.exportStructuredPdf).toHaveBeenCalledTimes(1);
+    const sent: StructuredDocument = render.exportStructuredPdf.calls.mostRecent().args[0];
+    expect(sent.exportMode).toBe('DESIGNED');
+    expect(sent.templateId).toBe('letter-classic');
+    expect(sent.bodyContent).toBe('<p>Jeres behov.</p>');
+  });
+
+  it('holds the designed export of a letter the gate failed', () => {
+    // Bug: the designed button bypasses the letter gate that holds the plain export.
+    const page = open(letter(failed));
+
+    page.downloadPdf();
+
+    expect(render.exportStructuredPdf).not.toHaveBeenCalled();
+    expect(page.exportGuard.pending()).toBe('designed');
   });
 
   it('holds the download of a passed letter once an AI refinement replaced its text', () => {

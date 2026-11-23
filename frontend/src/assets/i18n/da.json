@@ -521,7 +521,8 @@
       "pdfAts": "PDF - enkel (til jobportaler)",
       "print": "Udskriv",
       "atsTitle": "Enkel PDF i én kolonne med ren tekst, som jobportaler og rekrutteringssystemer kan læse",
-      "dragToResize": "Træk for at ændre størrelse"
+      "unavailable": "Forhåndsvisningen kunne ikke vises lige nu. Prøv igen om lidt.",
+      "pageAlt": "Side {{page}}"
     },
     "cv": {
       "summary": "Resumé",
