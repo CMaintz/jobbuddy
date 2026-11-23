@@ -24,7 +24,7 @@ class DocumentReviewerTest {
 
     private static final ReviewContext CTX = new ReviewContext(
             UUID.fromString("00000000-0000-0000-0000-000000000001"),
-            "COVER_LETTER", "We need a Java developer.", "English", "DK");
+            "COVER_LETTER", "We need a Java developer.", "English", "DK", List.of());
 
     private final ChatProviderPort ai = mock(ChatProviderPort.class);
     private final DocumentReviewer reviewer = new DocumentReviewer(ai,

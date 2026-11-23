@@ -17,6 +17,7 @@ import com.autoapplicant.usecase.document.ApplicationDocumentAssembler;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.CvSectionTemplates;
 import com.autoapplicant.usecase.document.DocumentReviewer;
+import com.autoapplicant.usecase.document.EmployerPosting;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
 import com.autoapplicant.usecase.document.GeneratedDocumentWriter;
 import java.util.List;
@@ -79,10 +80,10 @@ class GuardedPathsTest {
         GeneratedDocumentFinalizer finalizer = new GeneratedDocumentFinalizer(
                 guards, mock(ApplicationDocumentAssembler.class), writer);
         GenerateDocumentCommand cmd = new GenerateDocumentCommand(USER, "COVER_LETTER", null,
-                "the posting", null, null, null, null, "English", false, null, null);
+                "the posting", null, null, null, null, "English", false, null, "STANDARD", null);
         GenerationInputs inputs = new GenerationInputs(null, null, PROFILE_JSON, "the posting");
 
-        assertThatThrownBy(() -> finalizer.finalizeDocument(cmd, inputs, PRODUCED, "model"))
+        assertThatThrownBy(() -> finalizer.finalizeDocument(cmd, inputs, PRODUCED, null, "model"))
                 .isSameAs(blocked);
         verifyNoInteractions(writer);
     }
@@ -90,6 +91,9 @@ class GuardedPathsTest {
     /** Blocks only on the produced text checked against the profile, so guarding anything else passes. */
     private void blockOn(String text) {
         when(guards.verify(eq(USER), eq(text), eq(PROFILE_JSON), anyString()))
+                .thenThrow(blocked);
+        // Generation guards with the posting too, which a mock does not route through the overload.
+        when(guards.verify(eq(USER), eq(text), eq(PROFILE_JSON), any(EmployerPosting.class), anyString()))
                 .thenThrow(blocked);
     }
 
