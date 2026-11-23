@@ -13,7 +13,7 @@ import { getStrengthIcon } from '../../data/strength-icons';
     FormsModule, LucideDynamicIcon, TranslateModule, IconPickerComponent,
     DebouncedTextareaComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './strengths-form.component.html',
 })
 export class StrengthsFormComponent {

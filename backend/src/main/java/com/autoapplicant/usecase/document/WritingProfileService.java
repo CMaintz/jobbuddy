@@ -8,20 +8,19 @@ import com.autoapplicant.port.in.document.ManageWritingProfileUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
+import com.autoapplicant.usecase.ai.AiOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import com.autoapplicant.usecase.ai.AiOperations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 @Service
 public class WritingProfileService implements ManageWritingProfileUseCase, AnalyzeWritingStyleUseCase {
@@ -65,7 +64,16 @@ public class WritingProfileService implements ManageWritingProfileUseCase, Analy
 
     @Override
     public WritingProfile save(WritingProfile profile) {
-        return repo.save(profile);
+        // The row is found by its owner, never by the id the client echoes back: a body carrying
+        // another user's id would otherwise overwrite their profile and reassign it to the caller.
+        Optional<WritingProfile> existing = repo.findByUserId(profile.userId());
+        return repo.save(new WritingProfile(
+                existing.map(WritingProfile::id).orElse(null), profile.userId(),
+                profile.tone(), profile.vocabularyNotes(),
+                profile.phrasingPatterns(), profile.exampleExcerpts(),
+                profile.dos(), profile.donts(), profile.structureNotes(),
+                profile.lastAnalyzedAt(),
+                existing.map(WritingProfile::createdAt).orElse(null), null));
     }
 
     @Override

@@ -25,7 +25,7 @@ interface JobOption {
     CommonModule, JbTopbarComponent, FormsModule, RouterLink, TranslateModule, JbIconComponent,
     JbButtonComponent, GoalRingComponent, JbPillComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cv-analysis.component.html'
 })
 export class CvAnalysisComponent implements OnInit {
@@ -40,9 +40,9 @@ export class CvAnalysisComponent implements OnInit {
 
   /** 'general' judges the master CV on its own; a job id or pasted JD makes it job-aware. */
   target = signal<'general' | 'job' | 'paste' | 'pipeline'>('general');
-  selectedJobId = '';
+  selectedJobId = signal('');
   pastedJd = '';
-  jobOptions: JobOption[] = [];
+  jobOptions = signal<JobOption[]>([]);
 
   targets = [
     { key: 'general' as const, label: 'analysis.target.general.label', hint: 'analysis.target.general.hint' },
@@ -67,8 +67,8 @@ export class CvAnalysisComponent implements OnInit {
           seen.add(app.jobId);
           options.push({ id: app.jobId, label: `${app.jobCompanyName ?? '?'} — ${app.jobTitle ?? ''}` });
         }
-        this.jobOptions = options;
-        if (options.length > 0) this.selectedJobId = options[0].id;
+        this.jobOptions.set(options);
+        if (options.length > 0) this.selectedJobId.set(options[0].id);
       },
       error: this.notify.onError('notify.loadFailed')
     });
@@ -76,7 +76,7 @@ export class CvAnalysisComponent implements OnInit {
 
   canAnalyze(): boolean {
     if (this.analyzing()) return false;
-    if (this.target() === 'job') return !!this.selectedJobId;
+    if (this.target() === 'job') return !!this.selectedJobId();
     if (this.target() === 'paste') return this.pastedJd.trim().length > 40;
     return true;
   }
@@ -102,7 +102,7 @@ export class CvAnalysisComponent implements OnInit {
     }
 
     this.aiApi.analyze({
-      jobId: this.target() === 'job' ? this.selectedJobId : undefined,
+      jobId: this.target() === 'job' ? this.selectedJobId() : undefined,
       jobDescription: this.target() === 'paste' ? this.pastedJd.trim() : undefined,
     }).subscribe({
       next: res => {
