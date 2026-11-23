@@ -1,17 +1,16 @@
 package com.autoapplicant.usecase.document;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.document.structured.JobKeywords;
 import com.autoapplicant.domain.document.structured.KeywordCoverage;
 import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 class KeywordCoverageCalculatorTest {
 
@@ -83,10 +82,12 @@ class KeywordCoverageCalculatorTest {
 
     @Test
     void required_keywords_are_reported_before_preferred_ones() {
+        // Terraform is required but appears after Kubernetes in the CV and alphabetically, so
+        // only a required-first ordering puts it at the front.
         KeywordCoverage coverage = calculator.measure(CV,
-                new JobKeywords(List.of("Kubernetes"), List.of("Terraform")));
+                new JobKeywords(List.of("Terraform"), List.of("Kubernetes")));
 
-        assertThat(coverage.matched()).containsExactly("Kubernetes", "Terraform");
+        assertThat(coverage.matched()).containsExactly("Terraform", "Kubernetes");
     }
 
     @Test
