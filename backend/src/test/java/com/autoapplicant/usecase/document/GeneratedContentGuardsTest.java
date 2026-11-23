@@ -135,7 +135,8 @@ class GeneratedContentGuardsTest {
     }
 
     private void facts(List<String> invented, List<String> unverified) {
-        when(factGuard.audit(BODY, PROFILE)).thenReturn(new DocumentFactGuard.FactAudit(invented, unverified));
+        when(factGuard.audit(BODY, PROFILE, EmployerPosting.NONE))
+                .thenReturn(new DocumentFactGuard.FactAudit(invented, unverified));
     }
 
     private void cliches(List<String> phrases) {
