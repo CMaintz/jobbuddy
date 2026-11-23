@@ -1,0 +1,110 @@
+{
+  "jobs": [
+    {
+      "absolute_url": "https://corporate.trustpilot.com/careers/job/7588014?gh_jid=7588014",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "internal_job_id": 3354353,
+      "location": {
+        "name": "Amsterdam"
+      },
+      "metadata": null,
+      "id": 7588014,
+      "updated_at": "2026-09-15T01:38:19-04:00",
+      "requisition_id": "3011",
+      "title": "Account Executive - Belgium market (Flemish speaking)",
+      "company_name": "Trustpilot ",
+      "first_published": "2026-03-12T05:36:00-04:00",
+      "language": "en",
+      "application_deadline": null,
+      "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;At Trustpilot, we&#39;re on an incredible journey. We&#39;re a profitable, high-growth FTSE-250 company with a big vision: to become the universal symbol of trust. We run the world&#39;s largest open customer review platform, and while we&#39;ve come a long way, there&#39;s still so much exciting work to do. Come join us at the heart of trust!&lt;/p&gt;&lt;/div&gt;",
+      "departments": [
+        {
+          "id": 11201,
+          "name": "New Biz",
+          "child_ids": [],
+          "parent_id": 77561
+        }
+      ],
+      "offices": [
+        {
+          "id": 79981,
+          "name": "Amsterdam",
+          "location": "Amsterdam, North Holland, Netherlands",
+          "child_ids": [],
+          "parent_id": null
+        }
+      ],
+      "ai_disclaimer": null,
+      "include_ai_disclaimer": null,
+      "ai_opt_out_request_url": null
+    },
+    {
+      "absolute_url": "https://corporate.trustpilot.com/careers/job/8095990?gh_jid=8095990",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "internal_job_id": 3507302,
+      "location": {
+        "name": "Amsterdam"
+      },
+      "metadata": null,
+      "id": 8095990,
+      "updated_at": "2026-10-01T03:44:01-04:00",
+      "requisition_id": "3239",
+      "title": "Account Executive Benelux",
+      "company_name": "Trustpilot ",
+      "first_published": "2026-08-19T01:47:55-04:00",
+      "language": "en",
+      "application_deadline": null,
+      "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;At Trustpilot, we&#39;re on an incredible journey. We&#39;re a profitable, high-growth FTSE-250 company with a big vision: to become the universal symbol of trust. We run the world&#39;s largest open customer review platform, and while we&#39;ve come a long way, there&#39;s still so much exciting work to do. Come join us at the heart of trust!&lt;/p&gt;&lt;/div&gt;",
+      "departments": [
+        {
+          "id": 77561,
+          "name": "Commercial",
+          "child_ids": [
+            87117,
+            377181,
+            377182,
+            11201,
+            13160,
+            45934,
+            272797,
+            11976
+          ],
+          "parent_id": null
+        }
+      ],
+      "offices": [
+        {
+          "id": 79981,
+          "name": "Amsterdam",
+          "location": "Amsterdam, North Holland, Netherlands",
+          "child_ids": [],
+          "parent_id": null
+        }
+      ],
+      "ai_disclaimer": null,
+      "include_ai_disclaimer": null,
+      "ai_opt_out_request_url": null
+    }
+  ],
+  "meta": {
+    "total": 2
+  }
+}

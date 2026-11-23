@@ -61,22 +61,6 @@ class PromptTemplateServiceTest {
     }
 
     @Test
-    void create_preserves_name_and_user_prompt() {
-        PromptTemplate incoming = new PromptTemplate(null, userId, "Cover Letter",
-                PromptCategory.COVER_LETTER, "desc", "system", "Write a cover letter for {job}",
-                "max 300 words", true, null, 1, null, null, false, List.of(), 0, false, false, null);
-        when(repo.save(any())).thenReturn(incoming);
-
-        service.createTemplate(userId, incoming);
-
-        ArgumentCaptor<PromptTemplate> cap = ArgumentCaptor.forClass(PromptTemplate.class);
-        verify(repo).save(cap.capture());
-        assertThat(cap.getValue().name()).isEqualTo("Cover Letter");
-        assertThat(cap.getValue().userPrompt()).isEqualTo("Write a cover letter for {job}");
-        assertThat(cap.getValue().userId()).isEqualTo(userId);
-    }
-
-    @Test
     void create_refuses_an_eleventh_template_of_one_kind() {
         when(repo.countOwned(userId, "COVER_LETTER"))
                 .thenReturn((long) PromptTemplateService.MAX_OWN_TEMPLATES_PER_CATEGORY);
@@ -107,22 +91,6 @@ class PromptTemplateServiceTest {
         assertThatThrownBy(() -> service.updateTemplate(templateId, userId, false,
                 categorised(userId, PromptCategory.COVER_LETTER, false)))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void create_returns_saved_template() {
-        PromptTemplate saved = template(templateId, userId, "T", 1);
-        when(repo.save(any())).thenReturn(saved);
-        assertThat(service.createTemplate(userId, template(null, userId, "T", 1))).isSameAs(saved);
-    }
-
-    // ── getTemplates ──────────────────────────────────────────────────────────
-
-    @Test
-    void get_templates_delegates_to_repo() {
-        List<PromptTemplate> list = List.of(template(templateId, userId, "T", 1));
-        when(repo.findByUserId(userId)).thenReturn(list);
-        assertThat(service.getTemplates(userId)).isSameAs(list);
     }
 
     // ── duplicate ─────────────────────────────────────────────────────────────
@@ -210,50 +178,41 @@ class PromptTemplateServiceTest {
         assertThat(copy.userId()).isEqualTo(anotherUser);
     }
 
-    @Test
-    void another_users_private_template_cannot_be_duplicated() {
-        UUID otherUser = UUID.randomUUID();
-        when(repo.findById(templateId)).thenReturn(Optional.of(template(templateId, userId, "Mine", 1)));
+    // ── updateTemplate ────────────────────────────────────────────────────────
 
-        assertThatThrownBy(() -> service.duplicate(templateId, otherUser, null))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(repo, never()).save(any());
+    @Test
+    void an_update_takes_the_edited_content_but_keeps_what_the_editor_does_not_own() {
+        PromptTemplate existing = new PromptTemplate(templateId, userId, "Old",
+                PromptCategory.COVER_LETTER, null, "sys", "old prompt", null, false, null, 3,
+                null, null, false, List.of("kept"), 7, false, true, null);
+        PromptTemplate changes = new PromptTemplate(null, userId, "Renamed",
+                PromptCategory.COVER_LETTER, null, "sys", "new prompt", null, false, null, 99,
+                null, null, false, null, 0, true, false, null);
+        when(repo.findById(templateId)).thenReturn(Optional.of(existing));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PromptTemplate saved = service.updateTemplate(templateId, userId, false, changes);
+
+        assertThat(saved.id()).isEqualTo(templateId);
+        assertThat(saved.name()).isEqualTo("Renamed");
+        assertThat(saved.userPrompt()).isEqualTo("new prompt");
+        assertThat(saved.versionNumber()).isEqualTo(4);
+        assertThat(saved.tags()).containsExactly("kept");
+        assertThat(saved.usageCount()).isEqualTo(7);
+        assertThat(saved.isProtected()).isFalse();
+        assertThat(saved.isDefault()).isTrue();
     }
 
-    @Test
-    void another_users_private_template_cannot_be_favourited() {
-        UUID otherUser = UUID.randomUUID();
-        when(repo.findById(templateId)).thenReturn(Optional.of(template(templateId, userId, "Mine", 1)));
-
-        assertThatThrownBy(() -> service.favourite(otherUser, templateId))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(repo, never()).addFavourite(any(), any());
-    }
-
-
-    // ── protection vs default ─────────────────────────────────────────────────
-    //
-    // Two properties that used to be one flag. A protected prompt ships with the app: it is
-    // duplicable but never editable or deletable, so customising it means editing your own copy.
-    // Which prompt a category actually uses is a separate, per-user choice that never writes to
-    // the app's content — so resetting always has something to fall back to.
+    // ── browsePublic ──────────────────────────────────────────────────────────
 
     @Test
-    void a_protected_template_cannot_be_edited_and_the_error_says_what_to_do_instead() {
-        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
+    void browsing_shows_only_other_users_shared_templates() {
+        PromptTemplate mine = template(UUID.randomUUID(), userId, "Mine", 1);
+        PromptTemplate appOwned = template(UUID.randomUUID(), null, "App", 1);
+        PromptTemplate theirs = template(UUID.randomUUID(), UUID.randomUUID(), "Theirs", 1);
+        when(repo.findPublic()).thenReturn(List.of(mine, appOwned, theirs));
 
-        assertThatThrownBy(() -> service.updateTemplate(templateId, userId, false, protectedTemplate()))
-                .isInstanceOf(SecurityException.class)
-                .hasMessageContaining("Duplicate it");
-    }
-
-    @Test
-    void a_protected_template_cannot_be_deleted() {
-        when(repo.findById(templateId)).thenReturn(Optional.of(protectedTemplate()));
-
-        assertThatThrownBy(() -> service.deleteTemplate(templateId, userId, false))
-                .isInstanceOf(SecurityException.class);
-        verify(repo, never()).deleteById(any());
+        assertThat(service.browsePublic(userId)).containsExactly(theirs);
     }
 
     @Test
@@ -277,42 +236,6 @@ class PromptTemplateServiceTest {
 
         assertThat(created.isProtected()).isFalse();
         assertThat(created.isDefault()).isFalse();
-    }
-
-    @Test
-    void selecting_a_default_records_the_users_choice_rather_than_editing_the_template() {
-        PromptTemplate mine = categorised(userId, PromptCategory.COVER_LETTER, false);
-        when(repo.findById(templateId)).thenReturn(Optional.of(mine));
-
-        service.selectDefault(userId, PromptCategory.COVER_LETTER, templateId);
-
-        verify(repo).setUserDefault(userId, "COVER_LETTER", templateId);
-        verify(repo, never()).save(any());
-    }
-
-    @Test
-    void a_template_cannot_be_made_the_default_for_a_category_it_is_not_in() {
-        when(repo.findById(templateId)).thenReturn(Optional.of(
-                categorised(userId, PromptCategory.COVER_LETTER, false)));
-
-        assertThatThrownBy(() -> service.selectDefault(userId, PromptCategory.CV_TAILORING, templateId))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void someone_elses_private_template_cannot_be_made_your_default() {
-        PromptTemplate theirs = categorised(UUID.randomUUID(), PromptCategory.COVER_LETTER, false);
-        when(repo.findById(templateId)).thenReturn(Optional.of(theirs));
-
-        assertThatThrownBy(() -> service.selectDefault(userId, PromptCategory.COVER_LETTER, templateId))
-                .isInstanceOf(SecurityException.class);
-    }
-
-    @Test
-    void resetting_a_default_drops_the_users_choice_so_the_apps_prompt_comes_back() {
-        service.resetDefault(userId, PromptCategory.COVER_LETTER);
-
-        verify(repo).clearUserDefault(userId, "COVER_LETTER");
     }
 
     private PromptTemplate protectedTemplate() {

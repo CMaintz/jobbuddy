@@ -17,6 +17,7 @@ import { structuredDocToResumeData, structuredDocToLayout } from '../resume-buil
 import { INITIAL_SETTINGS, ResumeDraft } from '../resume-builder/models/resume-builder.models';
 import { loadGenDefaults } from '../settings/settings.component';
 import { NotifyService } from '../../shared/services/notify.service';
+import { BuddyWaitComponent } from '../../shared/components/buddy/buddy-wait.component';
 
 const TAILOR_PROMPTS = [
   'tailoredCv.tailor.depth',
@@ -33,8 +34,9 @@ const TAILOR_PROMPTS = [
  */
 @Component({
   selector: 'app-tailored-cv',
-  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, TranslateModule, JbIconComponent, JbButtonComponent, PromptExplainerComponent,
+    BuddyWaitComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tailored-cv.component.html',
 })
 export class TailoredCvComponent implements OnInit {
@@ -60,11 +62,11 @@ export class TailoredCvComponent implements OnInit {
   latestDoc = signal<StructuredDocument | null>(null);
   versionCount = signal(0);
 
-  promptTemplates: PromptTemplate[] = [];
+  promptTemplates = signal<PromptTemplate[]>([]);
   selectedPromptId = signal<string | null>(null);
 
   get explainedPrompt(): PromptTemplate | undefined {
-    return chosenPrompt(this.promptTemplates, this.selectedPromptId(), 'CV_TAILORING');
+    return chosenPrompt(this.promptTemplates(), this.selectedPromptId(), 'CV_TAILORING');
   }
   selectedLanguage = signal(loadGenDefaults().lang);
   languages = ['English', 'Dansk'];
@@ -79,8 +81,8 @@ export class TailoredCvComponent implements OnInit {
     if (qp.get('instructions')) this.customInstructions = qp.get('instructions')!;
 
     this.promptApi.getAll().subscribe({
-      next: templates => this.promptTemplates = templates.filter(t =>
-        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference),
+      next: templates => this.promptTemplates.set(templates.filter(t =>
+        !t.category || t.category === 'GENERAL' || t.category === 'CV_TAILORING').sort(byPreference)),
       error: this.notify.onError('notify.loadFailed')
     });
 

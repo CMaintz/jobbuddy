@@ -1,5 +1,8 @@
 package com.autoapplicant.usecase.document;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 import com.autoapplicant.domain.document.structured.AtsCheck;
 import com.autoapplicant.domain.document.structured.AtsReport;
 import com.autoapplicant.domain.document.structured.ContentGuardFindings;
@@ -7,12 +10,9 @@ import com.autoapplicant.domain.document.structured.KeywordCoverage;
 import com.autoapplicant.domain.job.JobRequirement;
 import com.autoapplicant.domain.job.RequirementKind;
 import com.autoapplicant.domain.job.RequirementTier;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class AtsReportBuilderTest {
 
@@ -156,6 +156,56 @@ class AtsReportBuilderTest {
                 .get().extracting(AtsCheck::status).isEqualTo("PASS");
     }
 
+    @Test
+    void aDesignedTemplateWarnsThatItMayParseLessReliably() {
+        AtsReport designed = builder.basic("body", "DESIGNED", ContentGuardFindings.NONE, null);
+        AtsReport ats = builder.basic("body", "ATS", ContentGuardFindings.NONE, null);
+
+        assertThat(check(designed, "layout_complexity")).get()
+                .extracting(AtsCheck::status).isEqualTo("WARN");
+        assertThat(check(ats, "layout_complexity")).isEmpty();
+    }
+
+    @Test
+    void eachModelNoteBecomesItsOwnInfoLine() {
+        List<AtsCheck> checks = builder.checks("ATS",
+                List.of("Moved Kubernetes up", "Dropped the 2015 role"), ContentGuardFindings.NONE, null);
+
+        assertThat(checks).filteredOn(c -> c.code().equals("ai_note"))
+                .extracting(AtsCheck::status, AtsCheck::detail)
+                .containsExactly(
+                        tuple("INFO", "Moved Kubernetes up"),
+                        tuple("INFO", "Dropped the 2015 role"));
+    }
+
+    @Test
+    void anUnmeasuredDocumentScoresHigherWithTextThanWithout() {
+        assertThat(builder.basic("Two words", "ATS", ContentGuardFindings.NONE, null).score())
+                .isEqualTo(60);
+        assertThat(builder.basic("   ", "ATS", ContentGuardFindings.NONE, null).score()).isEqualTo(50);
+        assertThat(builder.basic(null, "ATS", ContentGuardFindings.NONE, null).score()).isEqualTo(50);
+    }
+
+    @Test
+    void theCoverageScoreStaysBetweenThreeAndNinetyEight() {
+        // A zero match must not read as a hard zero, and a full match must not read as perfect.
+        assertThat(AtsReportBuilder.scoreFromCoverage(0)).isEqualTo(3);
+        assertThat(AtsReportBuilder.scoreFromCoverage(-10)).isEqualTo(3);
+        assertThat(AtsReportBuilder.scoreFromCoverage(null)).isEqualTo(3);
+        assertThat(AtsReportBuilder.scoreFromCoverage(40)).isEqualTo(41);
+        assertThat(AtsReportBuilder.scoreFromCoverage(100)).isEqualTo(98);
+        assertThat(AtsReportBuilder.scoreFromCoverage(250)).isEqualTo(98);
+    }
+
+    @Test
+    void aMissingCoverageIsReportedAsNotMeasured() {
+        AtsReport report = builder.forCoverage(null, "ATS", ContentGuardFindings.NONE, null);
+
+        assertThat(report.score()).isEqualTo(50);
+        assertThat(report.keywordCoverage()).isZero();
+        assertThat(check(report, "keyword_coverage")).isEmpty();
+    }
+
     // ── Asks a keyword count cannot settle ────────────────────────────────────────────────
 
     private static final List<JobRequirement> UNMEASURABLE = List.of(
@@ -174,8 +224,8 @@ class AtsReportBuilderTest {
             assertThat(c.status()).isEqualTo("INFO");
             assertThat(c.detail()).contains("Mindst 5 års erfaring med backend", "Kandidatgrad i datalogi");
         });
-        // The score is the keyword figure, untouched by the listed asks.
-        assertThat(report.score()).isEqualTo(AtsReportBuilder.scoreFromCoverage(80));
+        // The score is the keyword figure, untouched by the listed asks: 3 + 80 * 0.95.
+        assertThat(report.score()).isEqualTo(79);
         assertThat(report.keywordCoverage()).isEqualTo(80);
     }
 

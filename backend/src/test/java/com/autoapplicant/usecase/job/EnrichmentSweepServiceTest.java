@@ -32,16 +32,36 @@ class EnrichmentSweepServiceTest {
         enrichJob = mock(JobEnrichmentService.class);
         // No delay and no concurrency in tests: the behaviour under test is the bookkeeping,
         // not the pacing.
-        service = new EnrichmentSweepService(jobRepo, enrichJob, MAX_ATTEMPTS, Duration.ofHours(6),
-                Duration.ofMinutes(5), 0L, 1);
+        service = new EnrichmentSweepService(jobRepo, enrichJob,
+                org.mockito.Mockito.mock(BatchedEnrichment.class),
+                org.mockito.Mockito.mock(com.autoapplicant.port.out.user.PreferencesRepositoryPort.class),
+                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMinutes(5), 0L, 1, 1));
     }
 
     private static Job job(String summary) {
-        return Job.builder().id(JOB_ID).title("Platform Engineer").aiSummary(summary).build();
+        return job(JOB_ID, summary);
+    }
+
+    private static Job job(UUID id, String summary) {
+        return Job.builder().id(id).title("Platform Engineer").aiSummary(summary).build();
+    }
+
+    /** A provider call that never answers, as when the pool is saturated or the call hangs. */
+    private static CompletableFuture<Job> hung() {
+        return new CompletableFuture<>();
+    }
+
+    /** Short enough that a hung call ends the test quickly instead of after the real 5 minutes. */
+    private EnrichmentSweepService serviceWith(int concurrency) {
+        return new EnrichmentSweepService(jobRepo, enrichJob,
+                org.mockito.Mockito.mock(BatchedEnrichment.class),
+                org.mockito.Mockito.mock(com.autoapplicant.port.out.user.PreferencesRepositoryPort.class),
+                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMillis(50), 0L,
+                        concurrency, 1));
     }
 
     private void queue(Job... jobs) {
-        when(jobRepo.findForEnrichment(anyInt(), eq(MAX_ATTEMPTS), any())).thenReturn(List.of(jobs));
+        when(jobRepo.findForEnrichment(anyInt(), eq(MAX_ATTEMPTS), any(), any())).thenReturn(List.of(jobs));
     }
 
     @Test
@@ -108,6 +128,70 @@ class EnrichmentSweepServiceTest {
 
         verify(jobRepo).findForEnrichment(eq(25), eq(MAX_ATTEMPTS),
                 argThat(cutoff -> !cutoff.isBefore(before.minusSeconds(5))
-                        && !cutoff.isAfter(before.plusSeconds(5))));
+                        && !cutoff.isAfter(before.plusSeconds(5))), any());
+    }
+
+    @Test
+    void a_provider_error_in_batched_mode_reports_the_batch_as_attempted_not_as_an_empty_queue() {
+        // Bug: the stopped batch counts as zero postings, so the caller reads "queue empty",
+        // stops cleanly and the enrich CLI exits 0 while the provider is down.
+        BatchedEnrichment batched = mock(BatchedEnrichment.class);
+        when(batched.enrich(any(), anyInt(), anyInt())).thenReturn(new BatchedEnrichment.Result(3, 0, 0, 0, true));
+        EnrichmentSweepService batching = new EnrichmentSweepService(jobRepo, enrichJob, batched,
+                mock(com.autoapplicant.port.out.user.PreferencesRepositoryPort.class),
+                new EnrichmentSweepSettings(MAX_ATTEMPTS, Duration.ofHours(6), Duration.ofMinutes(5), 0L, 1, 10));
+        queue(job(null), job(null), job(null));
+
+        SweepResult result = batching.sweep(10);
+
+        assertThat(result.total()).isEqualTo(3);
+        assertThat(result.succeeded()).isZero();
+    }
+
+    @Test
+    void a_timed_out_call_keeps_the_jobs_attempts_and_ends_the_batch() {
+        // A timeout says the provider is not keeping up, not that the posting is bad. Charging
+        // it an attempt would retire good postings during an outage, and carrying on would
+        // just time out on every remaining one.
+        Job first = job(UUID.randomUUID(), null);
+        Job second = job(UUID.randomUUID(), null);
+        queue(first, second);
+        when(enrichJob.enrich(any())).thenReturn(hung());
+
+        SweepResult result = serviceWith(1).sweep(10);
+
+        assertThat(result).isEqualTo(new SweepResult(2, 0, 0, 0));
+        verify(jobRepo, never()).markEnrichmentFailed(any(), any(), anyInt());
+        verify(enrichJob, never()).enrich(second);
+    }
+
+    @Test
+    void a_spent_time_budget_hands_back_before_starting_another_window() {
+        // Already spent rather than zero: the deadline check is a strict isAfter, so a zero
+        // budget passes or fails depending on whether the clock ticked in between.
+        queue(job(null));
+
+        SweepResult result = serviceWith(1).sweep(10, Duration.ofSeconds(-1));
+
+        assertThat(result).isEqualTo(new SweepResult(1, 0, 0, 0));
+        verifyNoInteractions(enrichJob);
+    }
+
+    @Test
+    void a_window_puts_concurrency_postings_in_flight_and_no_more() {
+        // The first call hangs, so whatever was submitted before the batch gave up shows how
+        // much was in flight at once: one means no concurrency, three means no bound.
+        Job first = job(UUID.randomUUID(), null);
+        Job second = job(UUID.randomUUID(), null);
+        Job third = job(UUID.randomUUID(), null);
+        queue(first, second, third);
+        when(enrichJob.enrich(first)).thenReturn(hung());
+        when(enrichJob.enrich(second)).thenReturn(CompletableFuture.completedFuture(job("a summary")));
+
+        serviceWith(2).sweep(10);
+
+        verify(enrichJob).enrich(first);
+        verify(enrichJob).enrich(second);
+        verify(enrichJob, never()).enrich(third);
     }
 }

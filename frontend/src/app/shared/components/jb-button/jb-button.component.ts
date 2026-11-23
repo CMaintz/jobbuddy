@@ -5,7 +5,7 @@ import { JbIconComponent } from '../jb-icon/jb-icon.component';
   selector: 'jb-button',
   imports: [JbIconComponent],
   templateUrl: './jb-button.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./jb-button.component.css']
 })
 export class JbButtonComponent {

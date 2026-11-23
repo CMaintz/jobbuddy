@@ -6,7 +6,7 @@ package com.autoapplicant.config;
  */
 public final class UploadsLocation {
 
-    /** Local directory holding uploads, relative to the working directory. */
+    /** Directory holding uploads, relative to {@link AppDataDirectory}. */
     public static final String DIRECTORY = "uploads";
 
     /** URL path prefix uploads are served under, with its trailing slash. */

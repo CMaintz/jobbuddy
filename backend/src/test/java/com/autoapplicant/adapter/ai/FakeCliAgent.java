@@ -8,11 +8,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-/** A stand-in agent launched as a real child JVM by {@link CliAgentProcessRunnerTest}. */
+/** A stand-in agent launched as a real child JVM by the CLI-agent runner and adapter tests. */
 public final class FakeCliAgent {
 
     static final String ECHO = "echo";
     static final String FAIL = "fail";
+    static final String BLANK = "blank";
     static final String HANG = "hang";
     static final String SPAWN_AND_HANG = "spawn-and-hang";
     static final String ANSWER_AND_ORPHAN = "answer-and-orphan";
@@ -35,6 +36,7 @@ public final class FakeCliAgent {
                 System.err.print("bad prompt");
                 System.exit(FAIL_EXIT_CODE);
             }
+            case BLANK -> System.out.print("  \n");
             case HANG -> Thread.sleep(HANG_MILLIS);
             case SPAWN_AND_HANG -> {
                 Process child = new ProcessBuilder(command(HANG)).inheritIO().start();

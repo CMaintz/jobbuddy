@@ -5,12 +5,11 @@ import com.autoapplicant.domain.job.RawJobData;
 import com.autoapplicant.port.out.crawler.CrawlConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
 
 /**
  * Fetches job listings from Jobdanmark.dk.
@@ -67,8 +66,7 @@ public class JobdanmarkConnector extends AbstractJobSourceConnector {
 
             int newOnPage = 0;
             for (JsonNode item : items) {
-                String relativeUrl = item.path("url").asText("");
-                String slug = relativeUrl.replaceFirst("^/job/", "");
+                String slug = slugOf(item);
                 if (slug.isBlank()) continue;
                 if (config.isKnownGuid().test(slug)) {
                     config.onKnownJobSeen().accept(slug);
@@ -77,7 +75,7 @@ public class JobdanmarkConnector extends AbstractJobSourceConnector {
 
                 try {
                     Thread.sleep(config.delayMs());
-                    ingestItem(slug, relativeUrl, item, config);
+                    ingestItem(item, config);
                     newOnPage++;
                     totalCount++;
                 } catch (InterruptedException ie) {
@@ -107,8 +105,8 @@ public class JobdanmarkConnector extends AbstractJobSourceConnector {
         log.info("Jobdanmark crawl complete: {} jobs collected", totalCount);
     }
 
-    private void ingestItem(String slug, String relativeUrl, JsonNode item, CrawlConfig config) {
-        String url = relativeUrl.startsWith("http") ? relativeUrl : BASE_URL + relativeUrl;
+    private void ingestItem(JsonNode item, CrawlConfig config) {
+        String url = urlOf(item);
 
         // Full page HTML — TextCleaningService/enrichment consume it as usual.
         String detailHtml;
@@ -121,16 +119,30 @@ public class JobdanmarkConnector extends AbstractJobSourceConnector {
                     + "</p></body></html>";
         }
 
+        config.onJobFound().accept(toRawJobData(item, detailHtml));
+    }
+
+    /** Maps one search hit plus its already-fetched detail page HTML. */
+    RawJobData toRawJobData(JsonNode item, String detailHtml) {
         String companyName = item.path("companyName").asText(null);
         String address = item.path("companyAddress").asText(null);
 
-        config.onJobFound().accept(new RawJobData(
-                JobSource.JOBDANMARK, slug, url, detailHtml, item.toString(), Instant.now(),
+        return new RawJobData(
+                JobSource.JOBDANMARK, slugOf(item), urlOf(item), detailHtml, item.toString(), Instant.now(),
                 jobTypes(item), null,
                 parseDate(item.path("applicationDeadline").asText(null)),
                 companyName, null,
                 address,
-                parseInstant(item.path("publishedDate").asText(null))));
+                parseInstant(item.path("publishedDate").asText(null)));
+    }
+
+    private static String slugOf(JsonNode item) {
+        return item.path("url").asText("").replaceFirst("^/job/", "");
+    }
+
+    private static String urlOf(JsonNode item) {
+        String relativeUrl = item.path("url").asText("");
+        return relativeUrl.startsWith("http") ? relativeUrl : BASE_URL + relativeUrl;
     }
 
     private static List<String> jobTypes(JsonNode item) {

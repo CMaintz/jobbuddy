@@ -1,16 +1,25 @@
 package com.autoapplicant.usecase.document;
 
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.CONTACT_EMAIL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.CREDENTIAL_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.FULL_NAME;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.GITHUB_PROFILE_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.IDENTITY_VALUES;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.LINKEDIN_URL;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.PHONE;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.PHOTO_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_GITHUB_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_ID;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_LIVE_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_NAME;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.USER_ID;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.WEBSITE_URL;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -18,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
@@ -40,7 +50,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * End to end through tailored-CV generation: a user with every identity field filled in gets a
  * CV whose prompts (drafting and review) carry none of it, while the finished document still
- * shows their name and their own project and credential links.
+ * carries their full contact identity and their own project and credential links. The tailored
+ * text also passes through the content guards, so a blocking guard stops the CV.
  */
 class TailoredCvAiPrivacyTest {
 
@@ -50,9 +61,10 @@ class TailoredCvAiPrivacyTest {
             + FABRICATED_LINK + "\"]}]}";
 
     private final ChatProviderPort ai = mock(ChatProviderPort.class);
+    private final GeneratedContentGuards guards = mock(GeneratedContentGuards.class);
 
     @Test
-    void promptsCarryNoIdentityAndTheDocumentGetsTheLinksBack() {
+    void promptsCarryNoIdentityAndTheDocumentGetsItBack() {
         when(ai.generateJson(any(PromptComposition.class), anyString())).thenReturn(AI_RESPONSE);
 
         StructuredDocument cv = service().generateTailoredCv(USER_ID, null, "Java and Kafka.",
@@ -64,10 +76,26 @@ class TailoredCvAiPrivacyTest {
         assertThat(prompts).contains(PROJECT_NAME);
         IDENTITY_VALUES.forEach(value -> assertThat(prompts).doesNotContain(value));
 
-        assertThat(cv.identity().name()).isEqualTo(FULL_NAME);
+        // Contact email, not the login email: the user chose it for documents.
+        assertThat(cv.identity()).isEqualTo(new DocumentIdentity(FULL_NAME,
+                IdentityLadenProfile.profile().headline(), CONTACT_EMAIL, PHONE,
+                IdentityLadenProfile.privateInfo().location(), LINKEDIN_URL, GITHUB_PROFILE_URL,
+                WEBSITE_URL, PHOTO_URL));
         assertThat(onlyItem(cv, "projects").links())
                 .containsExactly(PROJECT_GITHUB_URL, PROJECT_LIVE_URL);
         assertThat(onlyItem(cv, "certifications").links()).containsExactly(CREDENTIAL_URL);
+    }
+
+    @Test
+    void aBlockingContentGuardOnTheTailoredTextStopsTheCv() {
+        when(ai.generateJson(any(PromptComposition.class), anyString())).thenReturn(AI_RESPONSE);
+        when(guards.verify(eq(USER_ID), contains("Tailored."), anyString(), eq("CV")))
+                .thenThrow(new IllegalStateException("generation blocked"));
+
+        assertThatThrownBy(() -> service().generateTailoredCv(USER_ID, null, "Java and Kafka.",
+                null, "English", null, null, false, DocumentTheme.defaults(), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("generation blocked");
     }
 
     private static StructuredDocumentItem onlyItem(StructuredDocument cv, String sectionId) {
@@ -91,7 +119,7 @@ class TailoredCvAiPrivacyTest {
                 mock(WritingProfileRepositoryPort.class), IdentityLadenProfile.contextService(),
                 cvAssembler, new TailoredCvGenerator(ai, mapper, promptBuilder), reviewer,
                 mock(ApplicationDocumentAssembler.class),
-                mock(ApplicationRepositoryPort.class), mock(GeneratedContentGuards.class),
+                mock(ApplicationRepositoryPort.class), guards,
                 sectionTemplates());
     }
 

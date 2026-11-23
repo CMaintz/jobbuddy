@@ -17,9 +17,19 @@ final class CliAgentCommands {
     /**
      * Claude Code: {@code --tools=} removes every built-in tool, {@code --strict-mcp-config} drops
      * configured MCP servers, {@code --no-session-persistence} skips the per-cwd transcript.
+     * {@code --setting-sources=} stops the user's own settings (global CLAUDE.md, hooks, plugins)
+     * from steering the generated text while keeping their login; {@code --bare} would also do
+     * that but refuses OAuth, so it cannot run on a subscription.
      */
-    static final String CLAUDE_DEFAULT =
-            "claude -p --tools= --strict-mcp-config --no-session-persistence";
+    static final String CLAUDE_DEFAULT = "claude -p --tools= --strict-mcp-config"
+            + " --no-session-persistence --setting-sources=";
+
+    /**
+     * Without {@code --model} the child runs the user's own default, often the model that uses up
+     * a subscription's quota fastest. An alias rather than a dated id, so a CLI update cannot
+     * leave it pointing at a retired model.
+     */
+    static final String CLAUDE_DEFAULT_MODEL = "sonnet";
 
     /**
      * Codex has no switch that removes its tools, so its shell runs under a read-only sandbox.
@@ -37,13 +47,32 @@ final class CliAgentCommands {
 
     private CliAgentCommands() {}
 
-    /** The operator's {@code override} when set, else the sandboxed default for {@code provider}. */
-    static String resolve(String provider, String override) {
-        if (override != null && !override.isBlank()) {
+    /**
+     * The operator's {@code override} when set, else the sandboxed default for {@code provider}.
+     * The Claude default also gets {@code --model}; an override and Codex are left as they are.
+     */
+    static String resolve(String provider, String override, String model) {
+        if (isSet(override)) {
             warnOnceAboutOverride(override);
             return override;
         }
-        return CODEX_PROVIDER.equalsIgnoreCase(provider) ? CODEX_DEFAULT : CLAUDE_DEFAULT;
+        String pinned = pinnedModel(provider, override, model);
+        return pinned == null ? CODEX_DEFAULT : CLAUDE_DEFAULT + " --model " + pinned;
+    }
+
+    /**
+     * The model {@link #resolve} passes with {@code --model}, or {@code null} when it passes none.
+     * {@code model} names a Claude model, so Codex never gets it, and an override is taken as is.
+     */
+    static String pinnedModel(String provider, String override, String model) {
+        if (isSet(override) || CODEX_PROVIDER.equalsIgnoreCase(provider)) {
+            return null;
+        }
+        return isSet(model) ? model.strip() : CLAUDE_DEFAULT_MODEL;
+    }
+
+    private static boolean isSet(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static void warnOnceAboutOverride(String override) {

@@ -1,0 +1,48 @@
+# Must equal APP_ID in src/main.js, or Windows drops the installed app's notifications.
+appId: dk.maintz.jobbuddy
+productName: JobBuddy
+copyright: Copyright (c) 2026 Christoffer Maintz
+directories:
+  output: dist
+  buildResources: assets
+files:
+  - src/**
+  - ui/**
+  - assets/icon.png
+  - package.json
+# Staged by `mise run build` in `desktop/`: the bundled JRE, the backend jar and the Angular build.
+# Outside the asar, since java.exe and the jar must be real files on disk.
+extraResources:
+  - from: stage/jre
+    to: jre
+  - from: stage/backend
+    to: backend
+  - from: stage/ui
+    to: ui
+asar: true
+# Fuses are compiled into the packaged exe, so no command line or environment can turn these back
+# on. scripts/check-fuses.mjs reads them back after every package build. --remote-debugging-port
+# is a Chromium switch no fuse covers; src/debug-guard.js refuses it in the installed app.
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  onlyLoadAppFromAsar: true
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: assets/icon.png
+# One-click and per-user: no pages, no "all users" choice, so never a UAC prompt. It installs
+# under her own local app data (Programs\jobbuddy-desktop, from package.json's name) and starts
+# the app when done.
+nsis:
+  oneClick: true
+  perMachine: false
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: JobBuddy
+  # Her connection and data stay when she uninstalls to reinstall a newer version.
+  deleteAppDataOnUninstall: false
+  artifactName: JobBuddy-Setup-${version}.${ext}
+publish: null

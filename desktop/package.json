@@ -1,0 +1,26 @@
+{
+  "name": "jobbuddy-desktop",
+  "productName": "JobBuddy",
+  "version": "0.1.0",
+  "description": "JobBuddy for Windows: the desktop shell around the JobBuddy backend",
+  "author": "Christoffer Maintz",
+  "license": "MIT",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "lint": "eslint .",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "@electron/fuses": "1.8.0",
+    "@eslint/js": "9.39.5",
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0",
+    "eslint": "9.39.5",
+    "globals": "17.13.0"
+  },
+  "allowScripts": {
+    "electron-winstaller": false
+  }
+}
