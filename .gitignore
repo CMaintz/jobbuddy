@@ -40,6 +40,8 @@ application-*.local.yml
 # Claude Code internal state
 .claude/
 logs/
+# Fonts the Typst renderer installs under app.data-dir, the working directory outside the desktop app.
+typst-assets/
 settings-gradle.lockfile
 
 # Generated on demand for osv-scanner audits; resolution is not committed.
