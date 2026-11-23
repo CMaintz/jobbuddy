@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.autoapplicant.adapter.persistence.FixedEmbeddingModel;
 import com.autoapplicant.adapter.persistence.JobRows;
 import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
 import com.autoapplicant.domain.job.JobEmbedding;
@@ -14,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@Import(JobEmbeddingPersistenceAdapter.class)
+@Import({JobEmbeddingPersistenceAdapter.class, FixedEmbeddingModel.class})
 class JobEmbeddingPersistenceAdapterTest extends PostgresIntegrationTest {
 
     private static final int DIMENSIONS = 1536;

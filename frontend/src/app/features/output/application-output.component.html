@@ -122,6 +122,7 @@
               </jb-dropdown>
             </div>
           </div>
+          <jb-page-budget-warning class="block px-4 pt-2.5 bg-jb-surface" [budget]="exportedPages.current()" />
 
           <!-- Paper scroll area -->
           <div class="flex-1 overflow-auto flex justify-center jb-scroll p-[32px_32px_60px] bg-[radial-gradient(ellipse_at_top,#1a1e25_0%,var(--jb-bg)_60%)]">
@@ -277,6 +278,8 @@
         </div>
       }
 
+      <app-letter-gate-report [structuredContent]="activeDoc()?.structuredContent" />
+
       <!-- Deterministic guard findings (unsupported metrics, filler phrases, retracted claims) -->
       @if (guardFindings().length) {
         <div class="p-4 border-b border-jb-border">
@@ -358,3 +361,10 @@
         }
       </div>
     </ng-template>
+
+    @if (exportGuard.pending()) {
+      <app-letter-export-warning [state]="exportCheck()" [structuredContent]="activeDoc()?.structuredContent"
+        [canRecheck]="canRecheck()" [rechecking]="exportGuard.rechecking()"
+        (recheck)="exportGuard.recheck()" (exportAnyway)="exportGuard.exportAnyway()"
+        (cancelled)="exportGuard.cancel()" />
+    }

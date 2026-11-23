@@ -4,6 +4,7 @@ import com.autoapplicant.domain.document.QualityScore;
 import com.autoapplicant.usecase.common.KeywordMatcher;
 import com.autoapplicant.usecase.document.ClicheGuard;
 import com.autoapplicant.usecase.document.DocumentFactGuard;
+import com.autoapplicant.usecase.document.EmployerPosting;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -63,13 +64,22 @@ public class DocumentQualityEvaluator {
      */
     public QualityScore evaluate(String document, String profileJson,
                                  List<String> postingKeywords, int targetWords) {
+        return evaluate(document, profileJson, postingKeywords, targetWords, EmployerPosting.NONE);
+    }
+
+    /**
+     * As {@link #evaluate(String, String, List, int)} for a letter written from {@code posting}:
+     * the posting's own figures, said of the employer, cost nothing on the facts dimension.
+     */
+    public QualityScore evaluate(String document, String profileJson, List<String> postingKeywords,
+                                 int targetWords, EmployerPosting posting) {
         String text = document != null ? document : "";
         List<QualityScore.Dimension> dimensions = new ArrayList<>();
         dimensions.add(filler(text));
         dimensions.add(evidence(text, profileJson));
         dimensions.add(keywords(text, postingKeywords));
         dimensions.add(cvEcho(text, profileJson));
-        dimensions.add(facts(text, profileJson));
+        dimensions.add(facts(text, profileJson, posting));
         dimensions.add(length(text, targetWords));
 
         int weighted = dimensions.stream().mapToInt(d -> d.score() * d.weight()).sum();
@@ -155,11 +165,12 @@ public class DocumentQualityEvaluator {
     }
 
     /** Numbers the profile does not support — the one dimension where a single hit is severe. */
-    private QualityScore.Dimension facts(String text, String profileJson) {
+    private QualityScore.Dimension facts(String text, String profileJson, EmployerPosting posting) {
         if (!judgeable(text)) {
             return new QualityScore.Dimension(FACTS, 0, 0, "Nothing to judge.");
         }
-        DocumentFactGuard.FactAudit audit = factGuard.audit(text, profileJson != null ? profileJson : "");
+        DocumentFactGuard.FactAudit audit =
+                factGuard.audit(text, profileJson != null ? profileJson : "", posting);
         List<String> invented = audit.inventedMetrics();
         List<String> unverified = audit.unverifiedMetrics();
         // A number the profile does not contain at all is a different failure from one it contains

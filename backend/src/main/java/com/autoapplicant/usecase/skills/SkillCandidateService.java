@@ -54,6 +54,11 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
     /** Candidates with no market signal at all are only worth offering when there is room. */
     private static final int MAX_UNDEMANDED_CANDIDATES = 5;
 
+    /** Sources whose candidates carry their own reason, so market demand is not needed. */
+    private static final Set<SkillCandidate.SkillCandidateSource> EXPLAINED = Set.of(
+            SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
+            SkillCandidate.SkillCandidateSource.LIKELY_HELD);
+
     private final ProfileSkillRepositoryPort profileSkillRepo;
     private final SkillTaxonomyRepositoryPort taxonomyRepo;
     private final SkillCandidateDismissalRepositoryPort dismissalRepo;
@@ -94,12 +99,9 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
             String normalized = suggestion.normalizedName();
             if (normalized == null || claimed.containsKey(resolver.key(suggestion.skillName()))
                     || dismissed.contains(normalized)) continue;
-            candidates.put(normalized, new SkillCandidate(
-                    suggestion.skillName(), null,
+            candidates.put(normalized, queued(suggestion,
                     market.containsKey(normalized) ? market.get(normalized).count() : 0,
-                    adjacency.getOrDefault(normalized, List.of()),
-                    SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
-                    suggestion.evidence()));
+                    adjacency.getOrDefault(normalized, List.of())));
         }
 
         market.forEach((normalized, mention) -> {
@@ -137,13 +139,30 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         for (SkillCandidate candidate : ranked) {
             if (result.size() >= Math.max(1, limit)) break;
             // The no-demand cap exists to stop a tail of unexplained rows; a document inference
-            // always carries its own explanation, so it is never part of that tail.
-            if (candidate.source() != SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED
+            // or a likely-held question always carries its own explanation, so it is never part
+            // of that tail.
+            if (!EXPLAINED.contains(candidate.source())
                     && candidate.marketFrequency() == 0
                     && ++undemanded > MAX_UNDEMANDED_CANDIDATES) continue;
             result.add(candidate);
         }
         return result;
+    }
+
+    /**
+     * A queued suggestion as a candidate. An AI-proposed one carries the held skill it follows
+     * from as its evidence, which the question quotes as the related skill; a document inference
+     * carries the CV's own line.
+     */
+    private static SkillCandidate queued(ParsedSkillSuggestion suggestion, int marketFrequency,
+                                         List<String> taxonomyNeighbours) {
+        if (suggestion.source() == ParsedSkillSuggestion.Source.ADJACENT) {
+            return new SkillCandidate(suggestion.skillName(), null, marketFrequency,
+                    List.of(suggestion.evidence()), SkillCandidate.SkillCandidateSource.LIKELY_HELD);
+        }
+        return new SkillCandidate(suggestion.skillName(), null, marketFrequency,
+                taxonomyNeighbours, SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
+                suggestion.evidence());
     }
 
     @Override

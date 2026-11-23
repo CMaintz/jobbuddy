@@ -2,14 +2,16 @@ package com.autoapplicant.adapter.persistence.adapter;
 
 import com.autoapplicant.adapter.persistence.mapper.UserMapper;
 import com.autoapplicant.adapter.persistence.repository.UserJpaRepository;
+import com.autoapplicant.domain.user.UiLanguage;
 import com.autoapplicant.domain.user.User;
+import com.autoapplicant.port.out.user.UserLanguagePort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserPersistenceAdapter implements UserRepositoryPort {
+public class UserPersistenceAdapter implements UserRepositoryPort, UserLanguagePort {
 
     private final UserJpaRepository repo;
 
@@ -50,5 +52,15 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
     @Override
     public void deleteById(UUID id) {
         repo.deleteById(id);
+    }
+
+    @Override
+    public Optional<UiLanguage> findLanguage(UUID userId) {
+        return repo.findLanguageById(userId).flatMap(UiLanguage::fromCode);
+    }
+
+    @Override
+    public void saveLanguage(UUID userId, UiLanguage language) {
+        repo.updateLanguage(userId, language.code());
     }
 }
