@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.job.JobCategory;
 import com.autoapplicant.domain.job.JobEmbedding;
 import com.autoapplicant.domain.matching.FeedbackType;
 import com.autoapplicant.domain.matching.MatchResult;
@@ -19,12 +20,17 @@ import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
 import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
+import com.autoapplicant.port.out.user.CertificationRepositoryPort;
+import com.autoapplicant.port.out.user.EducationRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
+import com.autoapplicant.port.out.user.WorkExperienceRepositoryPort;
 import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +56,10 @@ class MatchingServiceTest {
     @Mock ProfileSkillRepositoryPort profileSkillRepo;
     @Mock ApplicationRepositoryPort applicationRepo;
     @Mock SkillTaxonomyRepositoryPort taxonomyRepo;
+    @Mock EducationRepositoryPort educationRepo;
+    @Mock CertificationRepositoryPort certificationRepo;
+    @Mock WorkExperienceRepositoryPort workExperienceRepo;
+    @Mock ParsedSkillSuggestionRepositoryPort suggestionRepo;
 
     MatchingService service;
     UUID userId = UUID.randomUUID();
@@ -59,8 +69,11 @@ class MatchingServiceTest {
         // Empty taxonomy: canonicalisation falls back to plain normalisation, so these cases match
         // exactly as before. Alias folding has its own dedicated test.
         service = new MatchingService(embeddingRepo, jobRepo, profileRepo, prefsRepo,
-                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, profileSkillRepo,
-                applicationRepo, new SkillCanonicalizer(taxonomyRepo));
+                aiProvider, ignoredJobRepo, feedbackRepo, profileEmbeddingRepo, applicationRepo,
+                new MatchProfileLoader(new SkillCanonicalizer(taxonomyRepo),
+                        new MatchProfileLoader.Sources(profileSkillRepo, suggestionRepo,
+                                educationRepo, certificationRepo, workExperienceRepo),
+                        labels -> SkillSimilarity.NONE, Clock.systemUTC()));
     }
 
     // ── empty / missing profile ───────────────────────────────────────────────
@@ -327,6 +340,25 @@ class MatchingServiceTest {
         verify(embeddingRepo).findNearestNeighborJobIds(any(), eq(150));
     }
 
+    @Test
+    void a_category_she_skips_is_not_recommended() {
+        // Bug: matching ignores the skip list, so the postings she said she never wants to see
+        // come back as recommendations.
+        Profile p = profile(userId, "Dev", "Java", List.of(), List.of("Java"));
+        UUID sales = UUID.randomUUID();
+        UUID software = UUID.randomUUID();
+        stubFeed(p, List.of(
+                minimalJob(sales).toBuilder().jobCategory(JobCategory.SALES).build(),
+                minimalJob(software).toBuilder().jobCategory(JobCategory.SOFTWARE_IT).build()));
+        UserPreferences skipsSales = new UserPreferences(UUID.randomUUID(), userId, List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
+                null, null, null, false, null, null, null, null, List.of("SALES"), null);
+        when(prefsRepo.findByUserId(userId)).thenReturn(Optional.of(skipsSales));
+
+        assertThat(service.getRecommendations(userId, 10)).extracting(MatchResult::jobId)
+                .containsExactly(software);
+    }
+
     // ── already-applied exclusion ─────────────────────────────────────────────
 
     @Test
@@ -533,7 +565,7 @@ class MatchingServiceTest {
     private UserPreferences prefsWithRadius(int km) {
         return new UserPreferences(UUID.randomUUID(), userId, List.of(), List.of("K\u00f8benhavn"),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                null, null, km, false, null, null, null, null);
+                null, null, km, false, null, null, null, null, List.of(), null);
     }
 
     private RecommendationFeedback feedback(UUID jobId, FeedbackType type) {

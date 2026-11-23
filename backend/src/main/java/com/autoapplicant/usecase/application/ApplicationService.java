@@ -10,6 +10,8 @@ import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
 import com.autoapplicant.port.out.document.GeneratedDocumentRepositoryPort;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,7 +22,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ApplicationService implements
         CreateApplicationUseCase, UpdateApplicationStatusUseCase,
-        UpdateRecruiterInfoUseCase, UpdateOutcomeUseCase,
+        UpdateRecruiterInfoUseCase, UpdateOutcomeUseCase, UpdateApplicationDatesUseCase,
         GetApplicationsUseCase, GetApplicationByIdUseCase {
 
     private final ApplicationRepositoryPort repo;
@@ -53,7 +55,7 @@ public class ApplicationService implements
                 status == ApplicationStatus.APPLIED ? now : null,
                 null, null, command.coverLetterText(), command.applicationText(), command.recruiterMessage(),
                 null, command.cvVersionId(), command.promptTemplateId(), command.matchScore(), command.notes(), null, null,
-                null, null);
+                null, null, null, null);
         Application saved = repo.save(app);
         // The opening move belongs in the ledger too, or the timeline starts mid-story and
         // funnel velocity never sees how long the first stage took.
@@ -175,6 +177,21 @@ public class ApplicationService implements
                 .updatedAt(Instant.now())
                 .build();
         return repo.save(updated);
+    }
+
+    /**
+     * Replaces both dates. Unlike the other updates, null clears rather than keeps: a deadline
+     * the user removed must go, and both fields are always sent together.
+     */
+    @Override
+    public Application updateDates(UUID applicationId, UUID userId, LocalDate deadline, LocalDateTime interviewAt) {
+        Application existing = repo.findByIdAndUserId(applicationId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        return repo.save(existing.toBuilder()
+                .deadline(deadline)
+                .interviewAt(interviewAt)
+                .updatedAt(Instant.now())
+                .build());
     }
 
     @Override

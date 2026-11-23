@@ -36,7 +36,7 @@ public class PostgresJobSearchAdapter implements JobSearchPort {
 
     @Override
     @Transactional(readOnly = true)
-    public JobSearchResult search(JobSearchQuery query) {
+    public JobSearchResult search(JobSearchQuery query, java.util.Collection<String> excludedCategories) {
         String text = query.text() == null ? "" : query.text().trim();
         boolean hasText = !text.isBlank();
 
@@ -46,6 +46,10 @@ public class PostgresJobSearchAdapter implements JobSearchPort {
             where.append(" AND j.search_vector @@ " + TSQUERY);
         }
         appendCategoryFilter(query.filters(), where);
+        boolean skipsCategories = excludedCategories != null && !excludedCategories.isEmpty();
+        if (skipsCategories) {
+            where.append(" AND (j.job_category IS NULL OR j.job_category NOT IN (:excluded))");
+        }
 
         String order = hasText
                 ? " ORDER BY ts_rank_cd(j.search_vector, " + TSQUERY + ") DESC, j.posted_at DESC NULLS LAST"
@@ -58,6 +62,10 @@ public class PostgresJobSearchAdapter implements JobSearchPort {
         Query count = em.createNativeQuery("SELECT count(*) FROM jobs j" + where);
         bind(rows, query, hasText, text);
         bind(count, query, hasText, text);
+        if (skipsCategories) {
+            rows.setParameter("excluded", excludedCategories);
+            count.setParameter("excluded", excludedCategories);
+        }
 
         rows.setFirstResult(page * size);
         rows.setMaxResults(size);

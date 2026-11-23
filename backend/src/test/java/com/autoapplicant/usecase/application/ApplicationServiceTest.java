@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 
 import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
+import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.CreateApplicationCommand;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.GeneratedDocument;
@@ -111,6 +112,22 @@ class ApplicationServiceTest {
 
         assertThat(result.appliedAt()).isNotNull();
         assertThat(result.appliedAt()).isBetween(before, after);
+    }
+
+    @Test
+    void update_status_records_a_saved_application_as_applied_in_one_move() {
+        Application existing = application(appId, userId, jobId, SAVED, null);
+        when(repo.findByIdAndUserId(appId, userId)).thenReturn(Optional.of(existing));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Application result = service.updateStatus(appId, userId, APPLIED, null);
+
+        assertThat(result.status()).isEqualTo(APPLIED);
+        assertThat(result.appliedAt()).isNotNull();
+        ArgumentCaptor<ApplicationStatusEvent> event = ArgumentCaptor.forClass(ApplicationStatusEvent.class);
+        verify(statusEventRepo).save(event.capture());
+        assertThat(event.getValue().fromStatus()).isEqualTo(SAVED);
+        assertThat(event.getValue().toStatus()).isEqualTo(APPLIED);
     }
 
     @Test
@@ -259,7 +276,7 @@ class ApplicationServiceTest {
         return new Application(id, userId, jobId, status, appliedAt,
                 null, null, null, null, null,
                 null, null, null, null, null,
-                Instant.now(), Instant.now(), null, null);
+                Instant.now(), Instant.now(), null, null, null, null);
     }
 
     private Application applicationWithNotes(UUID id, UUID userId, UUID jobId,
@@ -267,6 +284,6 @@ class ApplicationServiceTest {
         return new Application(id, userId, jobId, status, null,
                 null, null, null, null, null,
                 null, null, null, null, notes,
-                Instant.now(), Instant.now(), null, null);
+                Instant.now(), Instant.now(), null, null, null, null);
     }
 }

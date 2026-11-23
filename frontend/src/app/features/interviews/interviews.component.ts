@@ -15,6 +15,7 @@ import { RemindersApiService } from '../../core/api/reminders.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
 import { NotifyService } from '../../shared/services/notify.service';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
 const INTERVIEW_STAGES: ApplicationStatus[] = ['RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'];
 
 const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> = {
@@ -25,7 +26,7 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
   selector: 'app-interviews',
   imports: [
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, CompanyMarkComponent, JbModalComponent,
+    JbPillComponent, CompanyMarkComponent, JbModalComponent, BuddyComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interviews.component.html'

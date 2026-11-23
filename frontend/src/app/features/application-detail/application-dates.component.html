@@ -1,0 +1,15 @@
+<div class="card p-[18px] mb-4">
+  <div class="text-xs text-jb-text-dim tracking-widest uppercase mb-1">{{ 'applicationDetail.dates.title' | translate }}</div>
+  <div class="text-xs text-jb-text-dim mb-3">{{ 'applicationDetail.dates.hint' | translate }}</div>
+  <div class="flex flex-wrap items-end gap-3">
+    <div>
+      <label class="label" for="application-deadline">{{ 'applicationDetail.dates.deadline' | translate }}</label>
+      <input id="application-deadline" type="date" class="input" [(ngModel)]="deadline" />
+    </div>
+    <div>
+      <label class="label" for="application-interview">{{ 'applicationDetail.dates.interview' | translate }}</label>
+      <input id="application-interview" type="datetime-local" class="input" [(ngModel)]="interviewAt" />
+    </div>
+    <jb-button small icon="check" [disabled]="saving()" (clicked)="save()">{{ 'common.save' | translate }}</jb-button>
+  </div>
+</div>

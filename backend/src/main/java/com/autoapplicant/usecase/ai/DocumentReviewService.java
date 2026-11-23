@@ -6,7 +6,9 @@ import com.autoapplicant.port.in.ai.ReviewDocumentUseCase;
 import com.autoapplicant.port.out.ai.ChatProviderPort;
 import com.autoapplicant.usecase.document.CareerProfileContextService;
 import com.autoapplicant.usecase.document.DocumentReviewer;
+import com.autoapplicant.usecase.document.EmployerPosting;
 import com.autoapplicant.usecase.document.GeneratedContentGuards;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,12 +47,13 @@ public class DocumentReviewService implements ReviewDocumentUseCase {
         try {
             DocumentReviewer.ReviewOutcome outcome = reviewer.review(
                     new DocumentReviewer.ReviewContext(request.userId(), request.documentType(),
-                            request.jobDescription(), request.targetLanguage(), null),
+                            request.jobDescription(), request.targetLanguage(), null, List.of()),
                     request.currentContent());
             // The reviewer rewrites the whole document, so its output needs the same backstops as a
             // first draft — it was previously handed back unchecked.
             contentGuards.verify(request.userId(), outcome.revised(),
-                    careerProfileContext.buildJson(request.userId()), request.documentType());
+                    careerProfileContext.buildJson(request.userId()),
+                    EmployerPosting.of(request.jobDescription()), request.documentType());
             return CompletableFuture.completedFuture(
                     new ReviewDocumentResult(outcome.revised(), outcome.critique(), aiProvider.chatModelName()));
         } catch (Exception e) {

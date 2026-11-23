@@ -5,6 +5,7 @@ import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.adapter.web.dto.pdf.PdfExportRequest;
 import com.autoapplicant.adapter.web.dto.pdf.StructuredApplicationRequest;
 import com.autoapplicant.adapter.web.dto.pdf.StructuredDocumentExportRequest;
+import com.autoapplicant.domain.document.ExportedPdf;
 import com.autoapplicant.domain.document.PdfTemplate;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.user.Profile;
@@ -98,12 +99,13 @@ public class PdfExportController {
     @Operation(summary = "Export structured document as PDF")
     @PostMapping("/export-structured-pdf")
     public ResponseEntity<byte[]> exportStructuredPdf(@RequestBody StructuredDocumentExportRequest req) {
-        byte[] pdf = pdfRenderer.renderStructured(req.document());
+        ExportedPdf pdf = pdfRenderer.renderStructured(req.document());
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document.pdf\"")
-                .body(pdf);
+                .headers(headers -> pdf.pageBudget().ifPresent(budget -> PageBudgetHeaders.write(budget, headers)))
+                .body(pdf.bytes());
     }
 
     @Operation(summary = "Build structured application document model")

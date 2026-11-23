@@ -53,6 +53,16 @@ public class GeneratedContentGuards {
      * a finding the user never sees is a finding that never gets fixed.
      */
     public ContentGuardFindings verify(UUID userId, String body, String sourceProfileJson, String documentType) {
+        return verify(userId, body, sourceProfileJson, EmployerPosting.NONE, documentType);
+    }
+
+    /**
+     * As {@link #verify(UUID, String, String, String)} for a letter written from {@code posting}:
+     * the posting's own figures, said of the employer, are not checked against the profile. A CV's
+     * posting is ignored: its bullets name no subject, and "Ledede teamet på 12" reads as the employer.
+     */
+    public ContentGuardFindings verify(UUID userId, String body, String sourceProfileJson,
+                                       EmployerPosting posting, String documentType) {
         // Applicability comes from the same medium mapping the prompt envelope uses: a reading surface
         // (a JSON verdict, never delivered text) is a no-op here rather than depending on each caller
         // to remember not to guard it — the one decision that a surface writes a delivered document
@@ -60,7 +70,7 @@ public class GeneratedContentGuards {
         if (!GenerationGuardrails.Medium.forDocumentType(documentType).writesDeliveredDocument()) {
             return ContentGuardFindings.NONE;
         }
-        DocumentFactGuard.FactAudit factAudit = auditFacts(body, sourceProfileJson, documentType);
+        DocumentFactGuard.FactAudit factAudit = auditFacts(body, sourceProfileJson, posting, documentType);
         return new ContentGuardFindings(
                 factAudit.inventedMetrics(),
                 applyRetractedClaimsGuard(userId, body, documentType),
@@ -73,9 +83,13 @@ public class GeneratedContentGuards {
      * different noun is nearly always a rewording, and failing generation on one would make the
      * strict mode unusable.
      */
-    private DocumentFactGuard.FactAudit auditFacts(String body, String sourceProfileJson, String documentType) {
+    private DocumentFactGuard.FactAudit auditFacts(String body, String sourceProfileJson,
+                                                   EmployerPosting posting, String documentType) {
         if (!factGuardEnabled) return new DocumentFactGuard.FactAudit(List.of(), List.of());
-        DocumentFactGuard.FactAudit audit = factGuard.audit(body, sourceProfileJson);
+        EmployerPosting quotable =
+                GenerationGuardrails.Medium.forDocumentType(documentType) == GenerationGuardrails.Medium.CV
+                        ? EmployerPosting.NONE : posting;
+        DocumentFactGuard.FactAudit audit = factGuard.audit(body, sourceProfileJson, quotable);
         if (!audit.unverifiedMetrics().isEmpty()) {
             log.info("Fact guard: figure(s) in {} counting something the profile attaches elsewhere: {}",
                     label(documentType), audit.unverifiedMetrics());

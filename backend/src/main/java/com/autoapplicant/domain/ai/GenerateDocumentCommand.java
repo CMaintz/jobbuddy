@@ -1,6 +1,7 @@
 package com.autoapplicant.domain.ai;
 
 import com.autoapplicant.domain.document.structured.DocumentTheme;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -8,6 +9,10 @@ import java.util.UUID;
  * {@link com.autoapplicant.port.in.ai.GenerateDocumentUseCase}: the operation genuinely needs all of
  * these, but a twelve-argument method is one nobody can read or extend, and it forces every
  * collaborator in the pipeline to re-list the same arguments.
+ *
+ * <p>{@code deadline} is when the caller stops waiting for the answer. Work that would run past it
+ * is skipped, since a letter finished after it is saved behind the user's back; null means no
+ * deadline.
  */
 public record GenerateDocumentCommand(
         UUID userId,
@@ -21,4 +26,5 @@ public record GenerateDocumentCommand(
         String targetLanguage,
         boolean showProfileImage,
         DocumentTheme theme,
-        String lengthPreference) {}
+        String lengthPreference,
+        Instant deadline) {}

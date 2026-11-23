@@ -96,6 +96,9 @@
                   {{ (generating() ? 'tailoredCv.generatingLong' : 'tailoredCv.generateOpen') | translate }}
                 </jb-button>
               </div>
+              @if (generating()) {
+                <jb-buddy-wait class="mt-4" heading="buddy.wait.cvTitle" detail="buddy.wait.cvDetail" />
+              }
             </div>
 
             <!-- Reuse the latest generation without burning another AI call -->

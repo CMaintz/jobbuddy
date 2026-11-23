@@ -10,16 +10,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
+@Profile("!desktop")
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseTokenFilter.class);
@@ -63,10 +61,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
             // Authorities come from the DB role only. The token's "role" custom claim can be
             // stale (a demoted admin keeps it until the token refreshes), so it is ignored.
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    user.id(), null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + user.role().name())));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            RequestSignIn.signIn(user, request, response);
 
         } catch (FirebaseAuthException e) {
             log.debug("Firebase token verification failed: {}", e.getMessage());
