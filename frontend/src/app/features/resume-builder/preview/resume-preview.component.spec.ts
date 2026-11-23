@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { AtsPdfService } from '../../../shared/services/ats-pdf.service';
@@ -7,6 +7,9 @@ import { ResumeDesign } from '../../../core/models/resume-design.model';
 import { ResumeDraftApiService } from '../services/resume-draft-api.service';
 import { ResumeStateService } from '../services/resume-state.service';
 import { ResumePreviewComponent } from './resume-preview.component';
+
+/** Longer than the preview's debounce, so the render it waits for has been requested. */
+const PREVIEW_SETTLE_MS = 500;
 
 describe('ResumePreviewComponent page budget', () => {
   let fixture: ComponentFixture<ResumePreviewComponent>;
@@ -69,18 +72,18 @@ describe('ResumePreviewComponent page budget', () => {
     expect(warning()).toContain('pageBudget.cv.over');
   });
 
-  it('previews the pages the backend rendered for the current design', fakeAsync(() => {
+  it('previews the pages the backend rendered for the current design', async () => {
     // Bug: the preview goes back to an HTML layout, so the PDF no longer looks like what she saw.
     state.updatePersonalInfo({ fullName: 'Mette Højgaard' });
-    TestBed.tick();
-    tick(1000);
+    fixture.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, PREVIEW_SETTLE_MS));
     fixture.detectChanges();
 
     const imgs = (fixture.nativeElement as HTMLElement).querySelectorAll('#previewContainer img');
     expect(imgs.length).toBe(1);
     const previewed: ResumeDesign = render.previewResume.calls.mostRecent().args[0];
     expect(previewed.person.name).toBe('Mette Højgaard');
-  }));
+  });
 
   it('sends the anonymised design to the PDF export', async () => {
     // Bug: the export reads the raw personal info, so an anonymised CV carries her real name,
