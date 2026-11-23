@@ -15,14 +15,16 @@
         </button>
       </div>
 
-      <!-- Stage filter chips -->
+      <!-- Column filter chips mirror the board columns, so a chip's count matches its column. A picked
+           chip turns accent rather than its column's tone: two columns are neutral, and a picked
+           neutral chip would look unpicked. -->
       <div class="hidden sm:flex gap-1 ml-3 overflow-x-auto">
-        @for (stage of stages; track stage.key) {
-          <button (click)="toggleStageFilter(stage.key)"
-            [class]="'pill pill-' + (activeFilters().has(stage.key) ? stage.tone : 'neutral')"
+        @for (column of kanbanColumns; track column.key) {
+          <button (click)="toggleColumnFilter(column.key)" [attr.aria-pressed]="activeFilters().has(column.key)"
+            [class]="pillClass[activeFilters().has(column.key) ? 'accent' : 'neutral']"
             class="cursor-pointer">
-            {{ stage.label | translate }}
-            <span class="mono text-[9.5px]">{{ countByStage(stage.key) }}</span>
+            {{ column.label | translate }}
+            <span class="mono text-[9.5px]">{{ appsForColumn(column.key).length }}</span>
           </button>
         }
       </div>
@@ -52,7 +54,7 @@
         <div class="py-3 px-4 overflow-x-auto min-w-0">
           <div class="min-w-[600px]">
           <!-- Column headers -->
-          <div class="grid gap-3 py-2 px-3 text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint grid-cols-[1fr_100px_90px_60px_70px]">
+          <div class="grid gap-3 py-2 px-3 text-2xs text-jb-text-dim uppercase tracking-widest font-medium border-b border-jb-border-faint grid-cols-[1fr_130px_90px_60px_70px]">
             <span>{{ 'pipeline.colRole' | translate }}</span>
             <span>{{ 'pipeline.colStage' | translate }}</span>
             <span>{{ 'pipeline.colFit' | translate }}</span>
@@ -62,9 +64,12 @@
 
           <!-- Rows -->
           @for (app of filteredApplications(); track app.id) {
-            <a [routerLink]="['/applications', app.id]"
+            <!-- A div, not a link: the status control sits in the row, and a control inside an
+                 anchor would open the application on every click. -->
+            <div data-testid="pipeline-row" role="link" tabindex="0"
+              (click)="open(app)" (keydown.enter)="open(app)"
               class="jb-row grid gap-3 py-2.5 px-3 items-center border-b border-jb-border-faint cursor-pointer no-underline text-inherit"
-              style="grid-template-columns:1fr 100px 90px 60px 70px;">
+              style="grid-template-columns:1fr 130px 90px 60px 70px;">
               <!-- Role + company -->
               <div class="flex items-center gap-2.5 min-w-0">
                 <jb-company-mark [name]="app.jobCompanyName || '?'" [size]="28" />
@@ -75,7 +80,8 @@
               </div>
 
               <!-- Stage -->
-              <app-status-chip [status]="app.status" />
+              <app-status-picker [status]="app.status" [nextStatuses]="app.nextStatuses ?? []"
+                [pending]="pendingIds().has(app.id)" (changed)="changeStatus(app, $event)" />
 
               <!-- Fit -->
               <jb-fit-bar [value]="app.matchScore ?? 0" />
@@ -87,7 +93,7 @@
               <div class="flex gap-1">
                 <jb-icon name="more" [size]="14" class="text-jb-text-dim cursor-pointer" />
               </div>
-            </a>
+            </div>
           }
 
           @if (filteredApplications().length === 0) {
@@ -100,16 +106,16 @@
       } @else {
         <!-- ═══ KANBAN VIEW ═══ -->
         <div class="flex gap-2.5 p-4 h-full items-start overflow-x-auto jb-scroll">
-          @for (stage of kanbanStages; track stage.key) {
-            <div class="min-w-[240px] w-[240px] flex flex-col gap-2">
+          @for (column of shownColumns(); track column.key) {
+            <div data-testid="kanban-column" class="min-w-[240px] w-[240px] flex flex-col gap-2">
               <!-- Column header -->
               <div class="flex items-center gap-2 py-2 px-2.5">
-                <jb-pill [tone]="stage.tone">{{ stage.label | translate }}</jb-pill>
-                <span class="mono text-2xs text-jb-text-dim">{{ appsForStage(stage.key).length }}</span>
+                <jb-pill [tone]="column.tone">{{ column.label | translate }}</jb-pill>
+                <span class="mono text-2xs text-jb-text-dim">{{ appsForColumn(column.key).length }}</span>
               </div>
 
               <!-- Cards -->
-              @for (app of appsForStage(stage.key); track app.id) {
+              @for (app of appsForColumn(column.key); track app.id) {
                 <a [routerLink]="['/applications', app.id]"
                   class="card jb-liftcard p-3 cursor-pointer no-underline text-inherit">
                   <div class="flex items-center gap-2 mb-2">
@@ -123,6 +129,9 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <jb-fit-bar [value]="app.matchScore ?? 0" />
+                    @if (column.grouped) {
+                      <app-status-chip class="ml-auto" [status]="app.status" />
+                    }
                   </div>
                 </a>
               }

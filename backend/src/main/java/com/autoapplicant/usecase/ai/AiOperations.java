@@ -13,6 +13,8 @@ public final class AiOperations {
     public static final String DOCUMENT_GENERATION = "DOCUMENT_GENERATION";
     public static final String DOCUMENT_REFINE = "DOCUMENT_REFINE";
     public static final String DOCUMENT_REVIEW = "DOCUMENT_REVIEW";
+    public static final String LETTER_GATE = "LETTER_GATE";
+    public static final String LETTER_REWRITE = "LETTER_REWRITE";
     public static final String TAILORED_CV = "TAILORED_CV";
     public static final String TAILORED_CV_REVIEW = "TAILORED_CV_REVIEW";
     public static final String INTERVIEW_QUESTIONS = "INTERVIEW_QUESTIONS";
@@ -21,6 +23,7 @@ public final class AiOperations {
     public static final String COMPANY_GROUNDING = "COMPANY_GROUNDING";
     public static final String SKILL_GAP = "SKILL_GAP";
     public static final String SKILL_EVIDENCE = "SKILL_EVIDENCE";
+    public static final String ADJACENT_SKILLS = "ADJACENT_SKILLS";
     public static final String WRITING_PROFILE = "WRITING_PROFILE";
 
     private AiOperations() {}

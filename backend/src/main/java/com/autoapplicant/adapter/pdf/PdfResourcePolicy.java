@@ -45,10 +45,6 @@ public final class PdfResourcePolicy implements FSUriResolver, FSStreamFactory {
 
     private final Path uploadsRoot;
 
-    public PdfResourcePolicy() {
-        this(Path.of(UploadsLocation.DIRECTORY));
-    }
-
     PdfResourcePolicy(Path uploadsRoot) {
         this.uploadsRoot = uploadsRoot.toAbsolutePath().normalize();
     }

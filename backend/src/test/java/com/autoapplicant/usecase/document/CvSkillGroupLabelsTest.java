@@ -1,8 +1,8 @@
 package com.autoapplicant.usecase.document;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * The seam between the skill taxonomy and the finished CV.
@@ -60,6 +60,14 @@ class CvSkillGroupLabelsTest {
         assertThat(labels.labelFor("Programming Language")).isEqualTo("Programmeringssprog");
         assertThat(labels.labelFor("Tool")).isEqualTo("Værktøjer");
         assertThat(labels.labelFor("Database")).isEqualTo("Databaser");
+    }
+
+    @Test
+    void a_language_category_on_a_danish_cv_means_spoken_languages() {
+        // Nothing in the taxonomy is filed under plain "Language"; it reaches here when a person
+        // files Engelsk or Tysk under it themselves. Calling that group "Programmeringssprog"
+        // puts a programming heading over spoken languages on a non-engineer's CV.
+        assertThat(CvSkillGroupLabels.forLanguage("da").labelFor("Language")).isEqualTo("Sprog");
     }
 
     @Test

@@ -77,7 +77,7 @@
           <!-- Library group -->
           <nav class="flex flex-col gap-0.5">
             <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'nav.group.library' | translate }}</div>
-            @for (item of libraryNav; track item.id) {
+            @for (item of libraryNav(); track item.id) {
               <a [routerLink]="item.route"
                  routerLinkActive="jb-nav-active"
                  class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"
@@ -141,11 +141,13 @@
                 <div class="text-sm font-medium truncate">{{ userName() }}</div>
                 <div class="font-mono text-2xs text-jb-text-dim">{{ userEmail() }}</div>
               </div>
-              <button (click)="logout()"
-                      class="ml-auto p-1 rounded cursor-pointer bg-transparent border-none text-jb-text-dim"
-                      [title]="'common.logout' | translate">
-                <jb-icon name="arrow-right" [size]="12" />
-              </button>
+              @if (auth.canSignOut()) {
+                <button (click)="logout()"
+                        class="ml-auto p-1 rounded cursor-pointer bg-transparent border-none text-jb-text-dim"
+                        [title]="'common.logout' | translate">
+                  <jb-icon name="arrow-right" [size]="12" />
+                </button>
+              }
             </div>
           </div>
         </aside>
@@ -163,5 +165,7 @@
           <router-outlet />
         </div>
       </div>
+      <jb-posting-queue-bar />
+      <jb-chat-panel />
     }
     <jb-toast [message]="notify.notice()?.message ?? ''" [tone]="notify.notice()?.tone ?? 'success'" (dismissed)="notify.dismiss()" />
