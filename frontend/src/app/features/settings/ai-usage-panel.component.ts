@@ -10,7 +10,7 @@ import { AiApiService, AiUsageSummary } from '../../core/api/ai.api';
 @Component({
   selector: 'app-ai-usage-panel',
   imports: [CommonModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ai-usage-panel.component.html'
 })
 export class AiUsagePanelComponent implements OnInit {
