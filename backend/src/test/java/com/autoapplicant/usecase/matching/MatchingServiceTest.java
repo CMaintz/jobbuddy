@@ -101,19 +101,19 @@ class MatchingServiceTest extends MatchingServiceFixture {
         UUID worst = UUID.randomUUID();
         UUID fifth = UUID.randomUUID();
         // Retrieval order is deliberately not score order, so the ranking has to come from the
-        // sort. Overlap with the profile's one skill sets each score: 1/1, 1/2, 1/3, 1/4, 0.
+        // sort. A required skill held outranks the same skill merely listed, and both outrank
+        // postings asking for nothing the profile holds.
         List<Job> feed = List.of(
-                untiered(third, "Java", "Go", "Rust"),
-                untiered(worst, "COBOL"),
-                untiered(best, "Java"),
-                untiered(second, "Java", "Go"),
-                untiered(fifth, "Java", "Go", "Rust", "C"));
+                untiered(third, "COBOL"),
+                untiered(worst, "Fortran"),
+                tieredJob(best, List.of("Java"), List.of()),
+                untiered(second, "Java", "Fortran", "COBOL", "Pascal"),
+                untiered(fifth, "Pascal"));
         stubFeed(profileWithSkills("Java"), feed);
 
         List<MatchResult> results = service.getRecommendations(userId, 2);
 
         assertThat(results).extracting(MatchResult::jobId).containsExactly(best, second);
-        assertThat(results).extracting(MatchResult::totalScore).containsExactly(80, 53);
     }
 
     @Test

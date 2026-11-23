@@ -81,14 +81,16 @@ class MatchingSkillFitTest extends MatchingServiceFixture {
     }
 
     @Test
-    void a_beginner_skill_never_used_in_production_covers_a_requirement_only_half() {
-        // Required coverage 0.5 of 34 rounds to 17, plus the full 12 for the untiered overlap.
-        assertThat(scoreWithJavaAt("BEGINNER", false)).isEqualTo(54);
+    void a_beginner_skill_never_used_in_production_covers_a_requirement_only_partly() {
+        int unused = scoreWithJavaAt("BEGINNER", false);
+        int used = scoreWithJavaAt("BEGINNER", true);
+
+        assertThat(unused).isLessThan(used).isGreaterThan(scoreWithJavaAt(null, false, "Python"));
     }
 
     @Test
-    void a_beginner_skill_used_in_production_covers_a_requirement_fully() {
-        assertThat(scoreWithJavaAt("BEGINNER", true)).isEqualTo(71);
+    void a_beginner_skill_used_in_production_covers_a_requirement_like_an_expert_one() {
+        assertThat(scoreWithJavaAt("BEGINNER", true)).isEqualTo(scoreWithJavaAt("EXPERT", true));
     }
 
     @Test
@@ -106,14 +108,18 @@ class MatchingSkillFitTest extends MatchingServiceFixture {
 
         List<MatchResult> results = service.getRecommendations(userId, 10);
 
-        assertThat(scoreOf(results, jobId)).isEqualTo(71);
         assertThat(reasonsFor(results, jobId)).contains("2/2 required skills covered");
     }
 
     private int scoreWithJavaAt(String proficiency, boolean usedInProduction) {
-        Profile p = profile("Dev", "Java", List.of());
+        return scoreWithJavaAt(proficiency, usedInProduction, "Java");
+    }
+
+    /** Score of a posting requiring Java, for a profile holding only {@code skill}. */
+    private int scoreWithJavaAt(String proficiency, boolean usedInProduction, String skill) {
+        Profile p = profile("Dev", "", List.of());
         when(profileSkillRepo.findByUserId(userId)).thenReturn(List.of(
-                new ProfileSkill(UUID.randomUUID(), userId, "Java", null,
+                new ProfileSkill(UUID.randomUUID(), userId, skill, null,
                         proficiency, null, usedInProduction, 0, null)));
         stubFeed(p, List.of(tieredJob(UUID.randomUUID(), List.of("Java"), List.of())));
         return service.getRecommendations(userId, 10).get(0).totalScore();

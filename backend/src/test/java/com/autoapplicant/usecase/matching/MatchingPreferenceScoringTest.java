@@ -125,13 +125,15 @@ class MatchingPreferenceScoringTest extends MatchingServiceFixture {
     @Test
     void total_score_is_capped_at_one_hundred() {
         UUID jobId = UUID.randomUUID();
-        // 25 base + 55 full skill overlap + 12 capped signals + 10 like = 102 before the cap.
-        Job job = described(jobId, "Kotlin, Scala and Groovy.").toBuilder()
-                .technologies(List.of("Java")).build();
+        // Three held requirements earn the whole skill scale; with every boost signal and a like
+        // on top, the uncapped sum is well past 100.
+        Job job = tieredJob(jobId, List.of("Java", "Spring", "SQL"), List.of()).toBuilder()
+                .descriptionClean("Kotlin, Scala and Groovy.").build();
         stubFeedback(feedback(jobId, FeedbackType.LIKE));
+        stubPrefs(prefs().positiveSignals("kotlin", "scala", "groovy").build());
+        stubFeed(profileWithSkills("Java", "Spring", "SQL"), List.of(job));
 
-        MatchResult result = feedFor(
-                prefs().positiveSignals("kotlin", "scala", "groovy").build(), job).get(0);
+        MatchResult result = service.getRecommendations(userId, 10).get(0);
 
         assertThat(result.totalScore()).isEqualTo(100);
         assertThat(result.matchLabel()).isEqualTo(MatchLabel.EXCELLENT);
