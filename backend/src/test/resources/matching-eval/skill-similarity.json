@@ -1,0 +1,569 @@
+{
+ "source": "Cosine similarity between each posting ask (any tier) and each skill or suggested skill of the eval profiles, labels lowercased and stripped as SkillLabelEmbeddings keys them, embedded with OpenAI text-embedding-3-small in one request (423 labels, 1508 tokens). Pairs below 0.5 are left out: the scorer ignores anything that far apart.",
+ "model": "text-embedding-3-small",
+ "floor": 0.5,
+ "pairs": {
+  "abap": {
+   "api design": 0.535
+  },
+  "abap cloud": {
+   "api design": 0.515
+  },
+  "abap objects": {
+   "api design": 0.509
+  },
+  "account management": {
+   "content marketing": 0.512
+  },
+  "agil softwareudvikling": {
+   "agile development": 0.642
+  },
+  "agile": {
+   "agile development": 0.801,
+   "scrum": 0.553
+  },
+  "ai": {
+   "aws": 0.535
+  },
+  "analytisk tilgang": {
+   "målgruppeanalyse": 0.537,
+   "søgeordsanalyse": 0.551
+  },
+  "analytisk tæft": {
+   "målgruppeanalyse": 0.507,
+   "søgeordsanalyse": 0.561
+  },
+  "analytisk tænkning": {
+   "målgruppeanalyse": 0.506,
+   "søgeordsanalyse": 0.577
+  },
+  "analytiske evner": {
+   "søgeordsanalyse": 0.515
+  },
+  "ansvarlighed": {
+   "informationssikkerhed": 0.534
+  },
+  "apache kafka": {
+   "kafka": 0.577,
+   "kubernetes": 0.516
+  },
+  "api-design": {
+   "api design": 0.865
+  },
+  "api-first design": {
+   "api design": 0.73
+  },
+  "apis": {
+   "aws": 0.54,
+   "azure": 0.528
+  },
+  "astro": {
+   "angular": 0.511
+  },
+  "automated testing": {
+   "unit testing": 0.675
+  },
+  "automation": {
+   "typescript": 0.508
+  },
+  "awareness": {
+   "security awareness": 0.593
+  },
+  "azure": {
+   "terraform": 0.571
+  },
+  "azure api management": {
+   "api design": 0.534,
+   "azure": 0.532,
+   "rest apis": 0.595
+  },
+  "azure devops": {
+   "azure": 0.55
+  },
+  "azure monitor": {
+   "azure": 0.64
+  },
+  "azure policy": {
+   "azure": 0.671
+  },
+  "beredskab": {
+   "beredskabsplanlægning": 0.634
+  },
+  "beredskabsplaner": {
+   "beredskabsplanlægning": 0.894,
+   "kampagneplanlægning": 0.567,
+   "kommunikationsplanlægning": 0.566
+  },
+  "beredskabsøvelser": {
+   "beredskabsplanlægning": 0.676
+  },
+  "brandsikkerhed": {
+   "informationssikkerhed": 0.648
+  },
+  "bureausamarbejde": {
+   "pressearbejde": 0.596,
+   "projektkoordinering": 0.505
+  },
+  "c#": {
+   "java": 0.504
+  },
+  "cis 18": {
+   "ci/cd": 0.51
+  },
+  "clean code": {
+   "code review": 0.689
+  },
+  "cloud architecture": {
+   "azure": 0.53
+  },
+  "cloud infrastructure": {
+   "azure": 0.552
+  },
+  "cloud security": {
+   "azure": 0.511,
+   "security awareness": 0.565
+  },
+  "code quality": {
+   "code review": 0.757
+  },
+  "communication": {
+   "intern kommunikation": 0.534
+  },
+  "css": {
+   "javascript": 0.582
+  },
+  "customer success": {
+   "kundesucces": 0.74
+  },
+  "cybersikkerhed": {
+   "informationssikkerhed": 0.708
+  },
+  "dansk skriftlig formulering": {
+   "tekstforfatning": 0.595
+  },
+  "data engineering": {
+   "database design": 0.5
+  },
+  "databeskyttelse": {
+   "informationssikkerhed": 0.573
+  },
+  "debatindlæg og pressemeddelelser": {
+   "pressearbejde": 0.597,
+   "pressemeddelelser": 0.674
+  },
+  "debitor- og kreditorhåndtering": {
+   "stakeholderhåndtering": 0.601
+  },
+  "devops": {
+   "kubernetes": 0.524
+  },
+  "digital kommunikation": {
+   "intern kommunikation": 0.703,
+   "kundekommunikation": 0.634
+  },
+  "digital markedsføring": {
+   "content marketing": 0.536,
+   "kampagneplanlægning": 0.51
+  },
+  "docker": {
+   "postgresql": 0.509
+  },
+  "e-mailmarketing": {
+   "content marketing": 0.53,
+   "mailchimp": 0.567
+  },
+  "endpoint-sikkerhed": {
+   "informationssikkerhed": 0.645
+  },
+  "eventkoordinering": {
+   "projektkoordinering": 0.693
+  },
+  "excel": {
+   "sql": 0.556
+  },
+  "fejlsøgning": {
+   "søgeordsanalyse": 0.616
+  },
+  "frontend architecture": {
+   "api design": 0.514
+  },
+  "fysisk sikring": {
+   "informationssikkerhed": 0.521
+  },
+  "gatewayapi": {
+   "api design": 0.528
+  },
+  "git": {
+   "postgresql": 0.512,
+   "typescript": 0.518,
+   "version control": 0.559
+  },
+  "github": {
+   "code review": 0.517,
+   "github actions": 0.542,
+   "wordpress": 0.513
+  },
+  "google ads": {
+   "seo": 0.513
+  },
+  "grafisk arbejde": {
+   "pressearbejde": 0.538
+  },
+  "icdp": {
+   "ci/cd": 0.581
+  },
+  "identitets- og adgangsstyring": {
+   "informationssikkerhed": 0.515
+  },
+  "information security governance": {
+   "iso 27001": 0.5
+  },
+  "interessenthåndtering": {
+   "stakeholderhåndtering": 0.643
+  },
+  "intern kommunikation": {
+   "kommunikationsplanlægning": 0.544,
+   "kundekommunikation": 0.718
+  },
+  "iso 27001/27002": {
+   "iso 27001": 0.949
+  },
+  "iso 27004/27005": {
+   "iso 27001": 0.865
+  },
+  "iso-standarder": {
+   "iso 27001": 0.513
+  },
+  "it risk": {
+   "risikovurdering": 0.604
+  },
+  "it security": {
+   "security awareness": 0.64
+  },
+  "it-sikkerhed": {
+   "informationssikkerhed": 0.79
+  },
+  "java": {
+   "java 21": 0.58,
+   "javascript": 0.612,
+   "postgresql": 0.514,
+   "python": 0.521,
+   "typescript": 0.523
+  },
+  "javascript": {
+   "java": 0.612,
+   "node.js": 0.577,
+   "typescript": 0.578
+  },
+  "kalenderstyring": {
+   "stakeholderhåndtering": 0.502
+  },
+  "kampagneoptimering": {
+   "kampagneplanlægning": 0.724,
+   "målgruppeanalyse": 0.505
+  },
+  "kampagnestyring": {
+   "kampagneplanlægning": 0.71,
+   "stakeholderhåndtering": 0.554
+  },
+  "kodegennemgang": {
+   "søgeordsanalyse": 0.542
+  },
+  "kommunikation": {
+   "intern kommunikation": 0.747,
+   "kommunikationsplanlægning": 0.555,
+   "kundekommunikation": 0.738
+  },
+  "kommunikationsstrategi": {
+   "intern kommunikation": 0.662,
+   "kommunikationsplanlægning": 0.63,
+   "kundekommunikation": 0.612
+  },
+  "konsekvensanalyser": {
+   "målgruppeanalyse": 0.59,
+   "risikovurdering": 0.59,
+   "søgeordsanalyse": 0.546
+  },
+  "konsultativ vejledning": {
+   "kampagneplanlægning": 0.506
+  },
+  "koordinering": {
+   "projektkoordinering": 0.751
+  },
+  "kreditvurdering": {
+   "risikovurdering": 0.675
+  },
+  "kundekommunikation": {
+   "intern kommunikation": 0.718,
+   "kundesucces": 0.539
+  },
+  "kundekontakt": {
+   "kundekommunikation": 0.662,
+   "kundesucces": 0.578,
+   "mediekontakt": 0.503
+  },
+  "kundeservice": {
+   "kundekommunikation": 0.627,
+   "kundesucces": 0.688
+  },
+  "ledelseskommunikation": {
+   "intern kommunikation": 0.598,
+   "kundekommunikation": 0.583
+  },
+  "leverandørvurdering": {
+   "risikovurdering": 0.716
+  },
+  "linux": {
+   "java": 0.513,
+   "postgresql": 0.505,
+   "python": 0.528,
+   "wordpress": 0.511
+  },
+  "llm api'er": {
+   "rest apis": 0.506
+  },
+  "markedsføring": {
+   "kampagneplanlægning": 0.536
+  },
+  "marketing automation": {
+   "content marketing": 0.569,
+   "mailchimp": 0.604
+  },
+  "marketingkoordinering": {
+   "kampagneplanlægning": 0.547,
+   "projektkoordinering": 0.686
+  },
+  "microsoft azure": {
+   "azure": 0.59
+  },
+  "ms sql server": {
+   "postgresql": 0.548,
+   "sql": 0.629
+  },
+  "mundtlig kommunikation": {
+   "intern kommunikation": 0.641,
+   "kommunikationsplanlægning": 0.567,
+   "kundekommunikation": 0.583
+  },
+  "målgruppeforståelse": {
+   "målgruppeanalyse": 0.793
+  },
+  "mødeplanlægning": {
+   "beredskabsplanlægning": 0.641,
+   "kampagneplanlægning": 0.669,
+   "kommunikationsplanlægning": 0.701,
+   "projektkoordinering": 0.552
+  },
+  "nis 2": {
+   "nis2": 0.774
+  },
+  "node.js": {
+   "javascript": 0.577
+  },
+  "nyhedsbrevsværktøjer": {
+   "nyhedsbreve": 0.686,
+   "pressearbejde": 0.546,
+   "pressemeddelelser": 0.612
+  },
+  "oauth": {
+   "azure": 0.563
+  },
+  "offentlig forvaltning": {
+   "stakeholderhåndtering": 0.56
+  },
+  "openapi": {
+   "api design": 0.545,
+   "rest apis": 0.649
+  },
+  "organisatorisk forståelse": {
+   "stakeholderhåndtering": 0.513
+  },
+  "ot-sikkerhed": {
+   "informationssikkerhed": 0.704
+  },
+  "patientkontakt": {
+   "intern kommunikation": 0.519,
+   "kundekommunikation": 0.525,
+   "mediekontakt": 0.523
+  },
+  "planlægning": {
+   "beredskabsplanlægning": 0.677,
+   "kampagneplanlægning": 0.67,
+   "kommunikationsplanlægning": 0.664,
+   "projektkoordinering": 0.546
+  },
+  "postgresql": {
+   "docker": 0.509,
+   "java": 0.514,
+   "sql": 0.679
+  },
+  "pressearbejde": {
+   "pressemeddelelser": 0.725
+  },
+  "procesoptimering": {
+   "risikovurdering": 0.5
+  },
+  "projektkoordinering": {
+   "beredskabsplanlægning": 0.519,
+   "kommunikationsplanlægning": 0.528
+  },
+  "projektledelse": {
+   "projektkoordinering": 0.713,
+   "stakeholderhåndtering": 0.53
+  },
+  "projektstyring": {
+   "projektkoordinering": 0.727,
+   "stakeholderhåndtering": 0.616
+  },
+  "python": {
+   "java": 0.521
+  },
+  "rag": {
+   "react": 0.502
+  },
+  "rap/cds": {
+   "ci/cd": 0.563
+  },
+  "rapportering": {
+   "risikovurdering": 0.503
+  },
+  "react": {
+   "typescript": 0.505
+  },
+  "relationsopbygning": {
+   "beredskabsplanlægning": 0.547,
+   "projektkoordinering": 0.558,
+   "søgeordsanalyse": 0.524
+  },
+  "risikostyring": {
+   "informationssikkerhed": 0.505,
+   "risikovurdering": 0.776,
+   "stakeholderhåndtering": 0.576
+  },
+  "rådgivning": {
+   "risikovurdering": 0.501
+  },
+  "salgsvurdering": {
+   "risikovurdering": 0.664
+  },
+  "samarbejde": {
+   "pressearbejde": 0.551
+  },
+  "sap": {
+   "aws": 0.557
+  },
+  "sass": {
+   "aws": 0.538
+  },
+  "scrum": {
+   "agile development": 0.585
+  },
+  "scss": {
+   "javascript": 0.55,
+   "seo": 0.533,
+   "typescript": 0.617
+  },
+  "security": {
+   "security awareness": 0.642
+  },
+  "sem": {
+   "seo": 0.511
+  },
+  "seo": {
+   "wordpress": 0.511
+  },
+  "sikkerhed": {
+   "informationssikkerhed": 0.772
+  },
+  "sikkerhedsarkitektur": {
+   "informationssikkerhed": 0.663
+  },
+  "skimmelhåndtering": {
+   "stakeholderhåndtering": 0.504
+  },
+  "skriftlig formidling": {
+   "pressemeddelelser": 0.503
+  },
+  "skriftlig kommunikation": {
+   "intern kommunikation": 0.619,
+   "kommunikationsplanlægning": 0.563,
+   "kundekommunikation": 0.59
+  },
+  "skriftlig og mundtlig kommunikation": {
+   "intern kommunikation": 0.569,
+   "kommunikationsplanlægning": 0.565,
+   "kundekommunikation": 0.521
+  },
+  "soc": {
+   "seo": 0.563
+  },
+  "sociale medier": {
+   "mediekontakt": 0.512,
+   "pressemeddelelser": 0.552
+  },
+  "sproglig vurdering": {
+   "risikovurdering": 0.64
+  },
+  "sql": {
+   "postgresql": 0.679
+  },
+  "stakeholder management": {
+   "stakeholderhåndtering": 0.805
+  },
+  "strategisk kommunikation": {
+   "intern kommunikation": 0.591,
+   "kampagneplanlægning": 0.535,
+   "kommunikationsplanlægning": 0.628,
+   "kundekommunikation": 0.516,
+   "stakeholderhåndtering": 0.518
+  },
+  "struktureret arbejdsform": {
+   "pressearbejde": 0.511
+  },
+  "sårbarhedsanalyse": {
+   "informationssikkerhed": 0.538,
+   "målgruppeanalyse": 0.55,
+   "risikovurdering": 0.645,
+   "søgeordsanalyse": 0.535
+  },
+  "sårbarhedsscanning": {
+   "informationssikkerhed": 0.565,
+   "risikovurdering": 0.509
+  },
+  "søgeordsanalyse": {
+   "målgruppeanalyse": 0.608
+  },
+  "teknisk dokumentation": {
+   "dokumentation": 0.647
+  },
+  "template engines": {
+   "typescript": 0.517
+  },
+  "terraform": {
+   "azure": 0.571,
+   "typescript": 0.544
+  },
+  "test": {
+   "unit testing": 0.596
+  },
+  "test automation": {
+   "unit testing": 0.718
+  },
+  "typescript": {
+   "java": 0.523,
+   "javascript": 0.578,
+   "react": 0.505,
+   "terraform": 0.544
+  },
+  "versionsstyring": {
+   "stakeholderhåndtering": 0.519
+  },
+  "visuel kommunikation": {
+   "intern kommunikation": 0.694,
+   "kundekommunikation": 0.602
+  },
+  "web apis": {
+   "rest apis": 0.534
+  }
+ }
+}

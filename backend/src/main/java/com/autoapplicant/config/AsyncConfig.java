@@ -1,17 +1,20 @@
 package com.autoapplicant.config;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
-
 @Configuration
 public class AsyncConfig implements AsyncConfigurer {
+
+    /** Far more postings than she approves at once; a fuller queue refuses the next one. */
+    private static final int CHAT_PLAN_QUEUE = 100;
 
     /**
      * The pool itself, kept as its own bean so Spring still runs its shutdown handling.
@@ -95,12 +98,41 @@ public class AsyncConfig implements AsyncConfigurer {
      */
     @Bean(name = "taskScheduler")
     public org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler taskScheduler() {
-        var scheduler = new org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler();
+        org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler scheduler =
+                new org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler();
         scheduler.setPoolSize(4);
         scheduler.setThreadNamePrefix("sched-");
         scheduler.setWaitForTasksToCompleteOnShutdown(false);
         scheduler.setAwaitTerminationSeconds(20);
         return scheduler;
+    }
+
+    /**
+     * Documents she approved in the chat, written one at a time on their own thread so a batch
+     * never holds a request open or crowds out the app's other AI work. Not waited for at
+     * shutdown: an item cut off then is marked interrupted at the next start.
+     */
+    @Bean(name = "chatPlanPool")
+    @Profile("desktop")
+    public ThreadPoolTaskExecutor chatPlanPool() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(CHAT_PLAN_QUEUE);
+        executor.setThreadNamePrefix("chat-plan-");
+        executor.setWaitForTasksToCompleteOnShutdown(false);
+        executor.initialize();
+        return executor;
+    }
+
+    /**
+     * Carries her security context to the writing thread: generation finds her own API key and
+     * logs her usage through it, like the request she approved from.
+     */
+    @Bean(name = "chatPlanExecutor")
+    @Profile("desktop")
+    public Executor chatPlanExecutor(@Qualifier("chatPlanPool") ThreadPoolTaskExecutor pool) {
+        return new DelegatingSecurityContextAsyncTaskExecutor(pool);
     }
 
     /**

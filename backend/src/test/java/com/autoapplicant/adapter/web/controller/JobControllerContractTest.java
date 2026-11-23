@@ -110,6 +110,20 @@ class JobControllerContractTest {
     }
 
     @Test
+    void search_runs_as_the_signed_in_user_so_her_skip_list_applies() throws Exception {
+        // Bug: the controller builds the query without a user, so the service has no skip list
+        // to apply and a skipped category comes back in search.
+        when(searchJobs.searchJobs(any(JobSearchQuery.class)))
+                .thenReturn(new JobSearchResult(List.of(), 0, 0, 20, null));
+
+        mvc.perform(get("/api/v1/jobs/search").param("q", "java")).andExpect(status().isOk());
+
+        ArgumentCaptor<JobSearchQuery> captor = ArgumentCaptor.forClass(JobSearchQuery.class);
+        verify(searchJobs).searchJobs(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo(userId);
+    }
+
+    @Test
     void search_clamps_an_oversized_page() throws Exception {
         when(searchJobs.searchJobs(any(JobSearchQuery.class)))
                 .thenReturn(new JobSearchResult(List.of(), 0, 0, PageLimits.MAX_PAGE_SIZE, null));

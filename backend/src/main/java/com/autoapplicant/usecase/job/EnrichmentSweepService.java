@@ -1,9 +1,12 @@
 package com.autoapplicant.usecase.job;
 
+import com.autoapplicant.domain.job.DanishPlaces;
+import com.autoapplicant.domain.job.EnrichmentScope;
 import com.autoapplicant.domain.job.EnrichmentStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.port.in.job.SweepUnenrichedJobsUseCase;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
+import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -12,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -46,25 +48,28 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
 
     private final JobRepositoryPort jobRepo;
     private final JobEnrichmentService enrichJob;
+    private final BatchedEnrichment batched;
+    private final int batchSize;
+    private final PreferencesRepositoryPort prefsRepo;
     private final int maxAttempts;
     private final Duration retryDelay;
     private final Duration callTimeout;
 
     public EnrichmentSweepService(JobRepositoryPort jobRepo,
                                   JobEnrichmentService enrichJob,
-                                  @Value("${app.enrichment.max-attempts:4}") int maxAttempts,
-                                  @Value("${app.enrichment.retry-delay:PT6H}") Duration retryDelay,
-                                  @Value("${app.enrichment.call-timeout:PT5M}") Duration callTimeout,
-                                  @Value("${app.enrichment.sweep.delay-ms:250}") long delayMs,
-                                  @Value("${app.enrichment.sweep.concurrency:2}") int concurrency) {
+                                  BatchedEnrichment batched,
+                                  PreferencesRepositoryPort prefsRepo,
+                                  EnrichmentSweepSettings settings) {
         this.jobRepo = jobRepo;
         this.enrichJob = enrichJob;
-        this.maxAttempts = maxAttempts;
-        this.retryDelay = retryDelay;
-        this.callTimeout = callTimeout;
-        this.delayMs = Math.max(0, delayMs);
-        // Capped: the provider pool is two threads deep, and asking for more just queues.
-        this.concurrency = Math.max(1, Math.min(concurrency, 8));
+        this.batched = batched;
+        this.batchSize = settings.batchSize();
+        this.prefsRepo = prefsRepo;
+        this.maxAttempts = settings.maxAttempts();
+        this.retryDelay = settings.retryDelay();
+        this.callTimeout = settings.callTimeout();
+        this.delayMs = settings.delayMs();
+        this.concurrency = settings.concurrency();
     }
 
     @Override
@@ -83,7 +88,8 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
     public SweepResult sweep(int limit, Duration budget) {
         Instant deadline = Instant.now().plus(budget);
         Instant retryBefore = Instant.now().minus(retryDelay);
-        List<Job> queue = jobRepo.findForEnrichment(limit, maxAttempts, retryBefore);
+        List<Job> queue = jobRepo.findForEnrichment(limit, maxAttempts, retryBefore,
+                EnrichmentScope.of(prefsRepo.findAll(), DanishPlaces.shared()));
         int total = queue.size();
         if (total == 0) return new SweepResult(0, 0, 0, 0);
 
@@ -97,6 +103,10 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
         int gaveUp = 0;
 
         log.info("Enrichment: starting batch of {} ({} pending overall)", total, pending);
+
+        if (batchSize > 1) {
+            return sweepInBatches(queue, deadline);
+        }
 
         // Windowed: `concurrency` postings are submitted together and awaited together, so the
         // provider is kept busy without an unbounded number of calls in flight.
@@ -119,7 +129,7 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
                     // nobody will ever complete, and the thread waits on it forever.
                     Job enriched = entry.getValue().get(callTimeout.toMillis(), TimeUnit.MILLISECONDS);
                     if (enriched.aiSummary() != null) {
-                        jobRepo.save(enriched);
+                        jobRepo.saveEnrichment(enriched);
                         jobRepo.markEnriched(job.id());
                         succeeded++;
                     } else {
@@ -165,6 +175,37 @@ public class EnrichmentSweepService implements SweepUnenrichedJobsUseCase {
         SweepResult result = new SweepResult(total, succeeded, failed, gaveUp);
         logProgress(succeeded, failed, succeeded + failed, total, pending, startedAt);
         return result;
+    }
+
+    /**
+     * Many postings per call, for a provider where the call is the cost. Batches run one after
+     * another: each is already a long call, and two at once would only queue on the same login.
+     */
+    private SweepResult sweepInBatches(List<Job> queue, Instant deadline) {
+        int attempted = 0;
+        int succeeded = 0;
+        int failed = 0;
+        int gaveUp = 0;
+        for (int start = 0; start < queue.size(); start += batchSize) {
+            if (Instant.now().isAfter(deadline)) {
+                log.info("Enrichment: time budget spent after {} of {}", start, queue.size());
+                break;
+            }
+            BatchedEnrichment.Result result = batched.enrich(
+                    queue.subList(start, Math.min(start + batchSize, queue.size())), batchSize, maxAttempts);
+            // A batch the provider failed on counts as attempted although no posting in it is
+            // marked failed; counting only the outcomes reports an empty queue and hides the
+            // outage from the caller.
+            attempted += result.total();
+            succeeded += result.succeeded();
+            failed += result.failed();
+            gaveUp += result.gaveUp();
+            if (result.stopped()) {
+                break;
+            }
+        }
+        log.info("Enrichment batches done: {} enriched, {} failed, {} given up on", succeeded, failed, gaveUp);
+        return new SweepResult(attempted, succeeded, failed, gaveUp);
     }
 
     /** Postings still waiting — the number that makes a progress line mean something. */

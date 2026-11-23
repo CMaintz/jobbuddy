@@ -1,20 +1,18 @@
 package com.autoapplicant.usecase.skills;
 
 import com.autoapplicant.domain.job.Job;
+import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.ProfileSkill;
 import com.autoapplicant.domain.skill.SkillCandidate;
-import com.autoapplicant.domain.skill.SkillTaxonomy;
 import com.autoapplicant.domain.skill.SkillConfirmation;
-import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
-import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
-import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
-import com.autoapplicant.domain.skill.ParsedSkillSuggestion;
 import com.autoapplicant.domain.skill.SkillNames;
+import com.autoapplicant.domain.skill.SkillTaxonomy;
+import com.autoapplicant.port.in.skills.SuggestSkillCandidatesUseCase;
+import com.autoapplicant.port.out.skills.ParsedSkillSuggestionRepositoryPort;
+import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
+import com.autoapplicant.port.out.skills.SkillCandidateDismissalRepositoryPort;
 import com.autoapplicant.port.out.skills.SkillTaxonomyRepositoryPort;
 import com.autoapplicant.usecase.job.MarketCorpusService;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,11 +20,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 /**
  * Suggests skills the user has not claimed — passes 1 and 2 of the elicitation design, with no AI
@@ -55,6 +53,11 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
 
     /** Candidates with no market signal at all are only worth offering when there is room. */
     private static final int MAX_UNDEMANDED_CANDIDATES = 5;
+
+    /** Sources whose candidates carry their own reason, so market demand is not needed. */
+    private static final Set<SkillCandidate.SkillCandidateSource> EXPLAINED = Set.of(
+            SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
+            SkillCandidate.SkillCandidateSource.LIKELY_HELD);
 
     private final ProfileSkillRepositoryPort profileSkillRepo;
     private final SkillTaxonomyRepositoryPort taxonomyRepo;
@@ -96,12 +99,9 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
             String normalized = suggestion.normalizedName();
             if (normalized == null || claimed.containsKey(resolver.key(suggestion.skillName()))
                     || dismissed.contains(normalized)) continue;
-            candidates.put(normalized, new SkillCandidate(
-                    suggestion.skillName(), null,
+            candidates.put(normalized, queued(suggestion,
                     market.containsKey(normalized) ? market.get(normalized).count() : 0,
-                    adjacency.getOrDefault(normalized, List.of()),
-                    SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
-                    suggestion.evidence()));
+                    adjacency.getOrDefault(normalized, List.of())));
         }
 
         market.forEach((normalized, mention) -> {
@@ -139,13 +139,30 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         for (SkillCandidate candidate : ranked) {
             if (result.size() >= Math.max(1, limit)) break;
             // The no-demand cap exists to stop a tail of unexplained rows; a document inference
-            // always carries its own explanation, so it is never part of that tail.
-            if (candidate.source() != SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED
+            // or a likely-held question always carries its own explanation, so it is never part
+            // of that tail.
+            if (!EXPLAINED.contains(candidate.source())
                     && candidate.marketFrequency() == 0
                     && ++undemanded > MAX_UNDEMANDED_CANDIDATES) continue;
             result.add(candidate);
         }
         return result;
+    }
+
+    /**
+     * A queued suggestion as a candidate. An AI-proposed one carries the held skill it follows
+     * from as its evidence, which the question quotes as the related skill; a document inference
+     * carries the CV's own line.
+     */
+    private static SkillCandidate queued(ParsedSkillSuggestion suggestion, int marketFrequency,
+                                         List<String> taxonomyNeighbours) {
+        if (suggestion.source() == ParsedSkillSuggestion.Source.ADJACENT) {
+            return new SkillCandidate(suggestion.skillName(), null, marketFrequency,
+                    List.of(suggestion.evidence()), SkillCandidate.SkillCandidateSource.LIKELY_HELD);
+        }
+        return new SkillCandidate(suggestion.skillName(), null, marketFrequency,
+                taxonomyNeighbours, SkillCandidate.SkillCandidateSource.DOCUMENT_INFERRED,
+                suggestion.evidence());
     }
 
     @Override
@@ -254,13 +271,13 @@ public class SkillCandidateService implements SuggestSkillCandidatesUseCase {
         Map<String, List<String>> adjacency = new LinkedHashMap<>();
         Map<String, String> displayNames = new HashMap<>();
         for (Map.Entry<String, String> entry : claimed.entrySet()) {
-            var node = taxonomyRepo.findByNormalizedName(entry.getKey()).orElse(null);
+            SkillTaxonomy node = taxonomyRepo.findByNormalizedName(entry.getKey()).orElse(null);
             if (node == null) continue;
 
             List<UUID> parents = new ArrayList<>();
             parents.add(node.id());                                   // children of this skill
             if (node.parentId() != null) parents.add(node.parentId()); // and its siblings
-            for (var neighbour : taxonomyRepo.findByParentIds(parents)) {
+            for (SkillTaxonomy neighbour : taxonomyRepo.findByParentIds(parents)) {
                 String normalized = neighbour.normalizedName() != null
                         ? neighbour.normalizedName() : normalize(neighbour.name());
                 if (normalized.equals(entry.getKey())) continue;
