@@ -14,9 +14,6 @@ import com.autoapplicant.domain.document.PromptCategory;
 import com.autoapplicant.domain.document.PromptTemplate;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.job.JobContact;
-import com.autoapplicant.domain.job.JobRequirement;
-import com.autoapplicant.domain.job.RequirementKind;
-import com.autoapplicant.domain.job.RequirementTier;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.document.PromptTemplateRepositoryPort;
 import com.autoapplicant.port.out.document.WritingProfileRepositoryPort;
@@ -133,14 +130,12 @@ class ApplicationPromptAssemblerTest {
     }
 
     @Test
-    void theJobsCountryContactAndRequirementsReachThePrompt() {
+    void theJobsCountryAndContactReachThePrompt() {
         stubDefaults();
         UUID jobId = givenJob(Job.builder()
                 .descriptionClean("We are hiring.")
                 .country("Denmark")
                 .contact(new JobContact("Mette Hansen", "afdelingsleder", null, null))
-                .requirements(List.of(new JobRequirement("Mindst 5 års erfaring med backend",
-                        RequirementTier.REQUIRED, RequirementKind.EXPERIENCE, null)))
                 .build());
 
         String prompt = assembler.assemble(command(jobId, null, null))
@@ -148,8 +143,7 @@ class ApplicationPromptAssemblerTest {
 
         // English language, Danish country: only the threaded country can select these rules.
         assertThat(prompt).contains("## Danish Market Conventions")
-                .contains("The posting names Mette Hansen, afdelingsleder as the person to contact")
-                .contains("Mindst 5 års erfaring med backend");
+                .contains("The posting names Mette Hansen, afdelingsleder as the person to contact");
     }
 
     @Test
