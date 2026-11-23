@@ -112,7 +112,7 @@ final class TypstFixtures {
 
     private static TypstAssets createAssets() {
         try {
-            return new TypstAssets();
+            return new TypstAssets(Path.of("build", "typst-assets"));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
