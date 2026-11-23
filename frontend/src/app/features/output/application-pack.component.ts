@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JbTopbarComponent } from '../../shared/components/jb-topbar/jb-topbar.component';
 import { JbButtonComponent } from '../../shared/components/jb-button/jb-button.component';
+import { LetterGateReportComponent } from './letter-gate-report.component';
 import { JobsApiService } from '../../core/api/jobs.api';
 import { GeneratedDocument } from '../../core/models/generated-document.model';
 
@@ -13,7 +14,7 @@ import { NotifyService } from '../../shared/services/notify.service';
  */
 @Component({
   selector: 'app-application-pack',
-  imports: [RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent],
+  imports: [RouterLink, TranslateModule, JbTopbarComponent, JbButtonComponent, LetterGateReportComponent],
   host: { class: 'flex flex-col h-full min-h-0' },
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './application-pack.component.html'

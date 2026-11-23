@@ -160,17 +160,7 @@
                     <div class="text-xs text-jb-text-dim py-3 text-center">{{ 'dashboard.nothingDue' | translate }}</div>
                   }
                   @for (item of todayQueue; track $index) {
-                    <div class="grid gap-3 rounded-md items-center grid-cols-[46px_1fr_auto] p-[9px_10px]"
-                      [style.background]="item.hot ? 'rgba(248,113,113,0.06)' : 'transparent'"
-                      [style.border]="item.hot ? '1px solid rgba(248,113,113,0.18)' : '1px solid transparent'">
-                      <div class="mono text-xs"
-                        [style.color]="item.hot ? 'var(--jb-danger)' : 'var(--jb-text-dim)'">{{ item.time | translate }}</div>
-                      <div class="flex flex-col gap-px">
-                        <div class="text-base">{{ item.what | translate }}</div>
-                        <div class="text-xs text-jb-text-dim">{{ item.detail }}</div>
-                      </div>
-                      <jb-pill [tone]="item.tone">{{ item.tag | translate }}</jb-pill>
-                    </div>
+                    <app-nudge-queue-row [item]="item" />
                   }
                 </div>
               </div>

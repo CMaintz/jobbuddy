@@ -101,7 +101,7 @@ public class JobController {
             @RequestParam(defaultValue = "20") int size) {
         JobSearchQuery query = new JobSearchQuery(q, new JobSearchFilters(null, null, null,
                 null, null, null, null, null, null, null, categories), page,
-                PageLimits.clampSize(size), "postedAt");
+                PageLimits.clampSize(size), "postedAt", secCtx.getCurrentUserId());
         return ResponseEntity.ok(searchJobs.searchJobs(query));
     }
 
@@ -207,7 +207,7 @@ public class JobController {
     @GetMapping("/search/semantic")
     public ResponseEntity<List<JobResponse>> searchSemantic(@RequestParam String q,
                                                             @RequestParam(defaultValue = "30") int limit) {
-        List<JobResponse> result = semanticSearch.semanticSearch(q, PageLimits.clampSize(limit))
+        List<JobResponse> result = semanticSearch.semanticSearch(secCtx.getCurrentUserId(), q, PageLimits.clampSize(limit))
                 .stream().map(JobResponse::preview).toList();
         return ResponseEntity.ok(result);
     }

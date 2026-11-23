@@ -196,6 +196,11 @@ export class AiApiService {
     return this.http.post<StructuredDocument>('/api/v1/ai/documents/structured', { document, jobId });
   }
 
+  /** Runs the letter gate again on a saved letter; answers the letter with its new verdict. */
+  recheckLetter(generatedDocumentId: string): Observable<StructuredDocument> {
+    return this.http.post<StructuredDocument>(`/api/v1/ai/documents/${generatedDocumentId}/letter-gate`, {});
+  }
+
   refine(req: RefineRequest): Observable<RefineResponse> {
     return this.http.post<RefineResponse>('/api/v1/ai/refine', req);
   }

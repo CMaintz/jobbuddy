@@ -1,5 +1,6 @@
 package com.autoapplicant.port.out.crawler;
 
+import com.autoapplicant.domain.crawler.CrawlRunReport;
 import com.autoapplicant.domain.job.JobSource;
 
 /**
@@ -11,8 +12,8 @@ public interface CrawlOrchestrationPort {
     void runSource(JobSource source);
     void runAllForce();
     void runSourceForce(JobSource source);
-    void runAllSync();
-    void runAllSyncForce();
-    void runSourceSync(JobSource source);
-    void runSourceSyncForce(JobSource source);
+    CrawlRunReport runAllSync();
+    CrawlRunReport runAllSyncForce();
+    CrawlRunReport runSourceSync(JobSource source);
+    CrawlRunReport runSourceSyncForce(JobSource source);
 }
