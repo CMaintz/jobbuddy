@@ -53,7 +53,7 @@ function kanbanColumn(key: KanbanColumnKey, label: string, tone: PillTone): Kanb
     JbPillComponent, StatusPickerComponent, StatusChipComponent, CompanyMarkComponent, FitBarComponent,
     JbTopbarComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pipeline.component.html'
 })
 export class PipelineComponent implements OnInit {
@@ -64,8 +64,8 @@ export class PipelineComponent implements OnInit {
   private chatChanges = inject(ChatChanges);
   private destroyRef = inject(DestroyRef);
 
-  applications: Application[] = [];
-  loading = true;
+  applications = signal<Application[]>([]);
+  loading = signal(true);
   view = signal<'table' | 'kanban'>('table');
   /**
    * Columns picked in the chips above the board. Both the table and the board filter on them, by
@@ -90,8 +90,8 @@ export class PipelineComponent implements OnInit {
 
   private load(): void {
     this.api.getAll().subscribe({
-      next: (apps) => { this.applications = apps; this.loading = false; },
-      error: () => this.loading = false
+      next: (apps) => { this.applications.set(apps); this.loading.set(false); },
+      error: () => this.loading.set(false)
     });
   }
 
@@ -107,7 +107,7 @@ export class PipelineComponent implements OnInit {
     this.setPending(app.id, true);
     this.api.updateStatus(app.id, status).subscribe({
       next: updated => {
-        this.applications = this.applications.map(a => a.id === updated.id ? updated : a);
+        this.applications.update(apps => apps.map(a => a.id === updated.id ? updated : a));
         this.setPending(app.id, false);
       },
       error: () => {
@@ -148,8 +148,8 @@ export class PipelineComponent implements OnInit {
 
   private searchedApplications(): Application[] {
     const q = this.search().trim().toLowerCase();
-    if (!q) return this.applications;
-    return this.applications.filter(a =>
+    if (!q) return this.applications();
+    return this.applications().filter(a =>
       (a.jobCompanyName ?? '').toLowerCase().includes(q) ||
       (a.jobTitle ?? '').toLowerCase().includes(q) ||
       (a.notes ?? '').toLowerCase().includes(q));

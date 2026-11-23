@@ -1,13 +1,19 @@
 package com.autoapplicant.usecase.document;
 
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.CONTACT_EMAIL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.CREDENTIAL_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.FULL_NAME;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.GITHUB_PROFILE_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.IDENTITY_VALUES;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.LINKEDIN_URL;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.PHONE;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.PHOTO_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_GITHUB_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_ID;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_LIVE_URL;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.PROJECT_NAME;
 import static com.autoapplicant.usecase.document.IdentityLadenProfile.USER_ID;
+import static com.autoapplicant.usecase.document.IdentityLadenProfile.WEBSITE_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -18,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import com.autoapplicant.domain.document.CvSectionPrompts;
 import com.autoapplicant.domain.document.PromptComposition;
+import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentTheme;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
@@ -40,7 +47,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * End to end through tailored-CV generation: a user with every identity field filled in gets a
  * CV whose prompts (drafting and review) carry none of it, while the finished document still
- * shows their name and their own project and credential links.
+ * carries their full contact identity and their own project and credential links.
  */
 class TailoredCvAiPrivacyTest {
 
@@ -52,7 +59,7 @@ class TailoredCvAiPrivacyTest {
     private final ChatProviderPort ai = mock(ChatProviderPort.class);
 
     @Test
-    void promptsCarryNoIdentityAndTheDocumentGetsTheLinksBack() {
+    void promptsCarryNoIdentityAndTheDocumentGetsItBack() {
         when(ai.generateJson(any(PromptComposition.class), anyString())).thenReturn(AI_RESPONSE);
 
         StructuredDocument cv = service().generateTailoredCv(USER_ID, null, "Java and Kafka.",
@@ -64,7 +71,11 @@ class TailoredCvAiPrivacyTest {
         assertThat(prompts).contains(PROJECT_NAME);
         IDENTITY_VALUES.forEach(value -> assertThat(prompts).doesNotContain(value));
 
-        assertThat(cv.identity().name()).isEqualTo(FULL_NAME);
+        // Contact email, not the login email: the user chose it for documents.
+        assertThat(cv.identity()).isEqualTo(new DocumentIdentity(FULL_NAME,
+                IdentityLadenProfile.profile().headline(), CONTACT_EMAIL, PHONE,
+                IdentityLadenProfile.privateInfo().location(), LINKEDIN_URL, GITHUB_PROFILE_URL,
+                WEBSITE_URL, PHOTO_URL));
         assertThat(onlyItem(cv, "projects").links())
                 .containsExactly(PROJECT_GITHUB_URL, PROJECT_LIVE_URL);
         assertThat(onlyItem(cv, "certifications").links()).containsExactly(CREDENTIAL_URL);

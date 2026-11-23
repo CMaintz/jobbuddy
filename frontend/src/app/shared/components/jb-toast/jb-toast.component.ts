@@ -5,7 +5,7 @@ import { NoticeTone } from '../../services/notify.service';
 @Component({
   selector: 'jb-toast',
   imports: [JbIconComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './jb-toast.component.html'
 })
 export class JbToastComponent implements OnChanges {
@@ -17,10 +17,9 @@ export class JbToastComponent implements OnChanges {
   ngOnChanges(): void {
     clearTimeout(this.timer);
     if (this.message) {
-      this.timer = setTimeout(() => {
-        this.message = '';
-        this.dismissed.emit();
-      }, 2800);
+      // The host hides the toast by clearing `message`; a write to the input from here
+      // would not render under OnPush.
+      this.timer = setTimeout(() => this.dismissed.emit(), 2800);
     }
   }
 }

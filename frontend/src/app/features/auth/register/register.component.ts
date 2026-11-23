@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ function strongPassword(c: AbstractControl) {
 @Component({
   selector: 'app-register',
   imports: [ReactiveFormsModule, RouterLink, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './register.component.html'
 })
 export class RegisterComponent {
@@ -34,23 +34,23 @@ export class RegisterComponent {
     confirmPassword: ['', Validators.required]
   }, { validators: passwordsMatch });
 
-  error = '';
-  loading = false;
-  success = false;
-  registeredEmail = '';
+  error = signal('');
+  loading = signal(false);
+  success = signal(false);
+  registeredEmail = signal('');
 
   submit(): void {
     if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
     const { email, password } = this.form.value;
     this.authService.register(email!, password!).then(() => {
-      this.registeredEmail = email!;
-      this.success = true;
+      this.registeredEmail.set(email!);
+      this.success.set(true);
     }).catch((e: { code?: string }) => {
-      this.error = this.friendlyError(e.code);
+      this.error.set(this.friendlyError(e.code));
     }).finally(() => {
-      this.loading = false;
+      this.loading.set(false);
     });
   }
 

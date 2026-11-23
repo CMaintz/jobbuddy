@@ -14,7 +14,7 @@ import { Component, Input, signal, ChangeDetectionStrategy } from '@angular/core
 @Component({
   selector: 'jb-dropdown',
   imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="relative">
       <div (click)="toggle()">
