@@ -24,10 +24,6 @@ public final class UploadsFiles {
 
     private final Path uploadsRoot;
 
-    public UploadsFiles() {
-        this(Path.of(UploadsLocation.DIRECTORY));
-    }
-
     public UploadsFiles(Path uploadsRoot) {
         this.uploadsRoot = uploadsRoot.toAbsolutePath().normalize();
     }

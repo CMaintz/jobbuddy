@@ -51,12 +51,16 @@ final class TypstFixtures {
     }
 
     static TypstRendererAdapter adapter(Path uploads) {
-        return new TypstRendererAdapter(ASSETS, compiler(TIMEOUT),
-                new TypstImageStager(new UploadsFiles(uploads)));
+        return adapter(new TypstImageStager(new UploadsFiles(uploads)));
     }
 
+    static TypstRendererAdapter adapter(TypstImageStager images) {
+        return new TypstRendererAdapter(ASSETS, compiler(TIMEOUT), images);
+    }
+
+    /** An adapter whose uploads directory is empty, for tests that render no uploaded image. */
     static TypstRendererAdapter adapter() {
-        return new TypstRendererAdapter(ASSETS, compiler(TIMEOUT), new TypstImageStager());
+        return adapter(Path.of("build", "no-uploads"));
     }
 
     static StructuredDocument cv(String name, DocumentTheme theme) {

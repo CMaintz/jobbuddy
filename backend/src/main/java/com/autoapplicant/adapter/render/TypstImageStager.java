@@ -1,10 +1,12 @@
 package com.autoapplicant.adapter.render;
 
+import com.autoapplicant.config.AppDataDirectory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,8 +25,9 @@ public class TypstImageStager {
 
     private final UploadsFiles uploads;
 
-    public TypstImageStager() {
-        this(new UploadsFiles());
+    @Autowired
+    public TypstImageStager(AppDataDirectory dataDirectory) {
+        this(new UploadsFiles(dataDirectory.uploads()));
     }
 
     TypstImageStager(UploadsFiles uploads) {

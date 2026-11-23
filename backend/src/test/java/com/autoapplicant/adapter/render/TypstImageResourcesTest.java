@@ -2,6 +2,8 @@ package com.autoapplicant.adapter.render;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.autoapplicant.config.AppDataDirectory;
+import com.autoapplicant.config.UploadsLocation;
 import com.autoapplicant.port.out.document.DocumentRendererPort.RenderedPdf;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
@@ -93,6 +95,23 @@ class TypstImageResourcesTest {
         Files.write(uploads.resolve("photo.jpg"), "ftypheic not really a jpeg".getBytes(StandardCharsets.US_ASCII));
 
         assertThat(PdfTestImages.imagesOnFirstPage(render("/uploads/photo.jpg").bytes())).isZero();
+    }
+
+    /**
+     * Bug caught: the stager looks for uploads under the working directory instead of the app
+     * data directory, so on the desktop app (data under the user's local app data) every photo
+     * silently drops out of the export.
+     */
+    @Test
+    void photoIsReadFromTheAppDataDirectorysUploads(@TempDir Path dataDir) throws IOException {
+        Path appUploads = Files.createDirectories(dataDir.resolve(UploadsLocation.DIRECTORY));
+        PdfTestImages.writePng(appUploads.resolve("photo.png"));
+        TypstImageStager stager = new TypstImageStager(new AppDataDirectory(dataDir.toString()));
+
+        RenderedPdf pdf = TypstFixtures.adapter(stager)
+                .renderPdf(TypstFixtures.designedCvWithPhoto("/uploads/photo.png"));
+
+        assertThat(PdfTestImages.imagesOnFirstPage(pdf.bytes())).isPositive();
     }
 
     private RenderedPdf render(String photoUrl) {
