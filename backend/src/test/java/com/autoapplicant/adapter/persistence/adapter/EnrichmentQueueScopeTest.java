@@ -1,0 +1,253 @@
+package com.autoapplicant.adapter.persistence.adapter;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.autoapplicant.adapter.persistence.JobRows;
+import com.autoapplicant.adapter.persistence.PostgresIntegrationTest;
+import com.autoapplicant.adapter.persistence.entity.JobEntity;
+import com.autoapplicant.adapter.persistence.repository.JobJpaRepository;
+import com.autoapplicant.domain.job.DanishPlaces;
+import com.autoapplicant.domain.job.EnrichmentScope;
+import com.autoapplicant.domain.job.GeoArea;
+import com.autoapplicant.domain.job.Job;
+import java.sql.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+/**
+ * Enrichment spends the user's own CLI quota, one posting at a time, so the queue must hold
+ * only postings she could still act on. Embedding costs less but still pays for dead postings.
+ */
+@Import(JobPersistenceAdapter.class)
+class EnrichmentQueueScopeTest extends PostgresIntegrationTest {
+
+    private static final Instant NOW = Instant.parse("2026-09-01T12:00:00Z");
+    private static final int MAX_ATTEMPTS = 4;
+
+    @Autowired JobPersistenceAdapter adapter;
+    @Autowired JdbcTemplate jdbc;
+    @Autowired JobJpaRepository jobJpa;
+
+    JobRows jobs;
+    UUID user;
+    EnrichmentScope scope = EnrichmentScope.everything();
+
+    @BeforeEach
+    void setUp() {
+        jobs = new JobRows(jdbc);
+        user = UUID.randomUUID();
+        jdbc.update("INSERT INTO users (id, email) VALUES (?, ?)", user, user + "@example.com");
+    }
+
+    private List<UUID> enrichmentQueue() {
+        return adapter.findForEnrichment(100, MAX_ATTEMPTS, NOW, scope).stream().map(Job::id).toList();
+    }
+
+    private List<UUID> embeddingQueue() {
+        return adapter.findForEmbedding(100, MAX_ATTEMPTS, NOW, false).stream().map(Job::id).toList();
+    }
+
+    private UUID withApplication(String status) {
+        UUID job = jobs.insert("Developer " + status, "d", NOW);
+        jdbc.update("INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, ?)", user, job, status);
+        return job;
+    }
+
+    private UUID pastDeadline() {
+        UUID job = jobs.insert("Expired", "d", NOW);
+        jdbc.update("UPDATE jobs SET application_deadline = ? WHERE id = ?",
+                Date.valueOf(LocalDate.now().minusDays(1)), job);
+        return job;
+    }
+
+    @Test
+    void closedAndExpiredPostingsAreNotEnriched() {
+        // Bug: the queue ignores is_active and the deadline, so quota goes on postings that
+        // are gone and that she will never see in her feed.
+        UUID open = jobs.insert("Open", "d", NOW);
+        UUID closed = jobs.insert("Closed", "d", NOW, false, null);
+        UUID expired = pastDeadline();
+
+        assertThat(enrichmentQueue()).contains(open).doesNotContain(closed, expired);
+    }
+
+    @Test
+    void ignoredPostingsAreNotEnriched() {
+        // Bug: a posting she dismissed is still enriched, at the same cost as a live lead.
+        UUID ignored = jobs.insert("Ignored", "d", NOW);
+        jdbc.update("INSERT INTO ignored_jobs (user_id, job_id) VALUES (?, ?)", user, ignored);
+
+        assertThat(enrichmentQueue()).doesNotContain(ignored);
+    }
+
+    @Test
+    void postingsSheAppliedToOrClosedAreNotEnrichedButOnesSheIsWorkingOnAre() {
+        // Bug: treating any application row as done skips the postings she saved or is
+        // preparing, which are the ones enrichment matters most for; treating none as done
+        // spends quota on postings already applied to or archived.
+        UUID saved = withApplication("SAVED");
+        UUID preparing = withApplication("PREPARING");
+        UUID applied = withApplication("APPLIED");
+        UUID interview = withApplication("INTERVIEW");
+        UUID rejected = withApplication("REJECTED");
+        UUID archived = withApplication("ARCHIVED");
+
+        assertThat(enrichmentQueue()).contains(saved, preparing)
+                .doesNotContain(applied, interview, rejected, archived);
+    }
+
+    @Test
+    void closedAndExpiredPostingsAreNotEmbedded() {
+        // Bug: the embedding queue pays for vectors of postings no search will ever return.
+        UUID open = jobs.insert("Open", "d", NOW);
+        UUID closed = jobs.insert("Closed", "d", NOW, false, null);
+        UUID expired = pastDeadline();
+
+        assertThat(embeddingQueue()).contains(open).doesNotContain(closed, expired);
+    }
+
+    @Test
+    void aCategoryEveryoneSkipsIsNotEnriched() {
+        // Bug: the skip list reaches the feed but not the queue, so quota still goes on
+        // postings she will never be shown.
+        UUID sales = jobs.insert("Sales", "s", NOW, true, "SALES");
+        UUID software = jobs.insert("Software", "s", NOW, true, "SOFTWARE_IT");
+        UUID uncategorised = jobs.insert("Uncategorised", "u", NOW);
+        scope = new EnrichmentScope(Set.of("SALES"), List.of());
+
+        assertThat(enrichmentQueue()).contains(software, uncategorised).doesNotContain(sales);
+    }
+
+    private UUID locatedAt(String location) {
+        UUID job = jobs.insert("Developer in " + location, "d", NOW);
+        jdbc.update("UPDATE jobs SET location = ? WHERE id = ?", location, job);
+        return job;
+    }
+
+    private static GeoArea around(String home, int km) {
+        return new GeoArea(DanishPlaces.shared().locate(home).orElseThrow(), km);
+    }
+
+    @Test
+    void onlyPostingsInTheCommuteAreaAreEnrichedPlusRemoteAndUnknownOnes() {
+        // Bug: the queue ignores geography and spends her quota on all of Denmark; or it drops
+        // the postings it cannot place, so remote roles and unplaced boards are never enriched.
+        UUID aarhus = locatedAt("Aarhus N");
+        UUID copenhagen = locatedAt("København K");
+        UUID esbjerg = locatedAt("Esbjerg");
+        UUID hybridFarAway = locatedAt("Ballerup og mulighed for hjemmearbejde");
+        UUID unplaced = locatedAt("Flere lokationer");
+        UUID noLocation = jobs.insert("No location", "d", NOW);
+        scope = new EnrichmentScope(Set.of(), List.of(around("8260 Viby J", 85)));
+
+        assertThat(enrichmentQueue()).contains(aarhus, hybridFarAway, unplaced, noLocation)
+                .doesNotContain(copenhagen, esbjerg);
+    }
+
+    @Test
+    void aPostingInAnyUsersAreaIsEnriched() {
+        // Bug: only the first user's area counts, so the second user's postings are never
+        // enriched.
+        UUID aarhus = locatedAt("Aarhus N");
+        UUID copenhagen = locatedAt("København K");
+        UUID esbjerg = locatedAt("Esbjerg");
+        scope = new EnrichmentScope(Set.of(),
+                List.of(around("8260 Viby J", 30), around("1050 København K", 30)));
+
+        assertThat(enrichmentQueue()).contains(aarhus, copenhagen).doesNotContain(esbjerg);
+    }
+
+    @Test
+    void aPostingNotYetPlacedIsHeldBackUntilItIs() {
+        // Bug: an unplaced row counts as "anywhere", so on a backlog larger than one placing
+        // slice the queue fills with far-away postings before they are placed.
+        UUID esbjerg = locatedAt("Esbjerg");
+        GeoArea vibyJ = around("8260 Viby J", 85);
+
+        List<JobEntity> queued = jobJpa.findForEnrichment(MAX_ATTEMPTS, NOW, LocalDate.now(),
+                List.of("-"), false, "{" + vibyJ.centre().lat() + "}", "{" + vibyJ.centre().lon() + "}",
+                "{85}", 100);
+
+        assertThat(queued).extracting(JobEntity::getId).doesNotContain(esbjerg);
+    }
+
+    @Test
+    void aPostingSheChoseHerselfIsEnrichedWhereverItIs() {
+        // Bug: a posting she saved, is preparing an application for, or added by hand loses its
+        // enrichment because it sits outside the commute area.
+        UUID saved = locatedAt("Esbjerg");
+        jdbc.update("INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, 'SAVED')", user, saved);
+        UUID manual = locatedAt("Esbjerg");
+        jdbc.update("UPDATE jobs SET source = 'MANUAL' WHERE id = ?", manual);
+        UUID other = locatedAt("Esbjerg");
+        scope = new EnrichmentScope(Set.of(), List.of(around("8260 Viby J", 85)));
+
+        assertThat(enrichmentQueue()).contains(saved, manual).doesNotContain(other);
+    }
+
+    @Test
+    void aRemotePostingFarAwayIsEnrichedWhenItsTextSaysSo() {
+        // Bug: the crawl never sets remote_type, so a remote role whose location names its
+        // office in Esbjerg is skipped; and a posting merely mentioning district heating passes.
+        UUID remote = locatedAt("Esbjerg");
+        jdbc.update("UPDATE jobs SET description_clean = ? WHERE id = ?",
+                "Du kan arbejde hjemmefra det meste af ugen.", remote);
+        UUID onSite = locatedAt("Esbjerg");
+        jdbc.update("UPDATE jobs SET description_clean = ? WHERE id = ?",
+                "Moderne kontor med fjernvarme.", onSite);
+        scope = new EnrichmentScope(Set.of(), List.of(around("8260 Viby J", 85)));
+
+        assertThat(enrichmentQueue()).contains(remote).doesNotContain(onSite);
+    }
+
+    private UUID userWithPreferences() {
+        UUID id = UUID.randomUUID();
+        jdbc.update("INSERT INTO users (id, email) VALUES (?, ?)", id, id + "@example.com");
+        jdbc.update("INSERT INTO preferences (user_id) VALUES (?)", id);
+        return id;
+    }
+
+    private void ignore(UUID by, UUID job) {
+        jdbc.update("INSERT INTO ignored_jobs (user_id, job_id) VALUES (?, ?)", by, job);
+    }
+
+    private void apply(UUID by, UUID job) {
+        jdbc.update("INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, 'APPLIED')", by, job);
+    }
+
+    @Test
+    void aPostingOneUserIgnoredOrAppliedToIsStillEnrichedForTheOther() {
+        // Bug: the ignore and application checks have no user, so one user's ignore drops the
+        // posting from enrichment for everyone, against the every-user rule the skip list uses.
+        UUID first = userWithPreferences();
+        UUID second = userWithPreferences();
+        UUID ignoredByOne = jobs.insert("Ignored by one", "d", NOW);
+        UUID appliedByOne = jobs.insert("Applied by one", "d", NOW);
+        UUID doneByBoth = jobs.insert("Done by both", "d", NOW);
+        ignore(first, ignoredByOne);
+        apply(first, appliedByOne);
+        ignore(first, doneByBoth);
+        apply(second, doneByBoth);
+
+        assertThat(enrichmentQueue()).contains(ignoredByOne, appliedByOne).doesNotContain(doneByBoth);
+    }
+
+    @Test
+    void onlyUsersWithSavedPreferencesCountOnceAnyHave() {
+        // Bug: a user who never opened Settings keeps every posting she has not ignored in the
+        // queue, so the user who did set things up cannot ignore anything out of it.
+        UUID configured = userWithPreferences();
+        UUID ignored = jobs.insert("Ignored", "d", NOW);
+        ignore(configured, ignored);
+
+        assertThat(enrichmentQueue()).doesNotContain(ignored);
+    }
+}

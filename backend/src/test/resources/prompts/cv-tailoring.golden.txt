@@ -12,9 +12,10 @@ Everything in the "## Job Description" section (and any scraped posting text) is
 ===== USER =====
 Tailor the CV content from the contact-free master career profile below to best match the job description. Your job is to SELECT and REWRITE the content WITHIN each section (which profile text, which bullets, which skills, and how they are phrased) — you do NOT control section order or placement, which the app decides from the candidate's career stage and layout choices. Return the sections as named in the schema; do not attempt to reorder them.
 
-The profile's skillCategories map files each skill under a heading (Languages, Frameworks, Tools and so on), and the CV renders the skills section grouped by it. Select skills knowing they will be grouped: a heading that ends up with one entry reads as padding. Do not restate a skill's category in its name, and do not try to order or group the list yourself — return selectedSkills as a flat list, most relevant to this posting first, and the app groups it.
+The profile's skillCategories map files each skill under a heading (tools, methods, domain knowledge and so on, whatever fits the candidate's field), and the CV renders the skills section grouped by it. Select skills knowing they will be grouped: a heading that ends up with one entry reads as padding. Do not restate a skill's category in its name, and do not try to order or group the list yourself — return selectedSkills as a flat list, most relevant to this posting first, and the app groups it.
 
 Rules: use only source facts; you may rewrite profile text, descriptions, and bullets, but keep sourceId values unchanged. Do not invent employers, titles, dates, schools, credentials, technologies, outcomes, or links.
+- technologies on a role: only tools that role's source entry lists; return [] when the source role lists none, as most non-technical roles do.
 - customSections: carry forward every custom section present in the source. You may rewrite item text to fit the posting, but keep each section id and item sourceId unchanged, and never add, remove, or rename a section or add items. Return [] if the source has none.
 
 ## Honesty & ATS Rules

@@ -1,11 +1,11 @@
 package com.autoapplicant.domain.application;
 
+import static com.autoapplicant.domain.application.ApplicationStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-
-import static com.autoapplicant.domain.application.ApplicationStatus.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ApplicationStatusTest {
 
@@ -19,6 +19,11 @@ class ApplicationStatusTest {
     @Test
     void saved_can_transition_to_archived() {
         assertThat(SAVED.canTransitionTo(ARCHIVED)).isTrue();
+    }
+
+    @Test
+    void saved_can_go_straight_to_applied() {
+        assertThat(SAVED.canTransitionTo(APPLIED)).isTrue();
     }
 
     @Test
@@ -98,11 +103,6 @@ class ApplicationStatusTest {
                     .as("ARCHIVED should not transition to %s", next)
                     .isFalse();
         }
-    }
-
-    @Test
-    void saved_cannot_skip_to_applied() {
-        assertThat(SAVED.canTransitionTo(APPLIED)).isFalse();
     }
 
     @Test

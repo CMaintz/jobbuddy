@@ -23,6 +23,13 @@ server:
   port: 8080
 
 app:
+  # Writable directory for uploads and logs. The working directory by default; the desktop
+  # profile moves it out of the install folder (see application-desktop.yml).
+  data-dir: ${APP_DATA_DIR:.}
+  firebase:
+    # Service-account file for Firebase Admin. Blank falls back to the classpath. Unused by the
+    # crawler profile, which has no users to authenticate.
+    credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
   security:
     # Base64 AES key (16/24/32 bytes) used to encrypt users' own API keys at rest.
     # Unset means the app refuses to store them rather than keeping them in the clear.
@@ -35,6 +42,8 @@ app:
     # Extraction (summary, skills, requirements) is chat-only, so it may run on the local CLI
     # agent even though embeddings cannot. This is the high-volume half — one call per posting,
     # thousands per crawl — so pointing it at a flat-fee CLI is what keeps a backfill cheap.
+    # Company grounding for cover letters runs here too, so with a CLI value the only API key an
+    # install needs is the embeddings one.
     # Blank = same as enrichment-provider. Values: openai | gemini | claude-cli | codex | cli
     enrichment-chat-provider: ${ENRICHMENT_CHAT_AI_PROVIDER:}
     # generation-provider: openai | gemini | claude-cli | codex | cli
@@ -49,8 +58,27 @@ app:
       # servers, or Codex under a read-only sandbox (see CliAgentCommands). Prompts carry crawled
       # posting text, so an override replaces those sandbox flags and must carry its own.
       command: ${AI_CLI_COMMAND:}
-      timeout-seconds: 120
-      model-label: ${AI_CLI_MODEL_LABEL:cli-agent}
+      # Claude model for the default command (--model). Blank = sonnet. Not applied to codex or to
+      # an AI_CLI_COMMAND override, which carry their own.
+      model: ${AI_CLI_MODEL:}
+      # Per agent call. Observed calls take 15-35 s; the slack covers a slow model or a cold start.
+      timeout-seconds: ${AI_CLI_TIMEOUT_SECONDS:120}
+      # Blank = the pinned model's name, or cli-agent when the app does not choose the model.
+      model-label: ${AI_CLI_MODEL_LABEL:}
+    # How long an AI request waits for its answer before the client gets 504. A cover letter on
+    # the CLI provider is company research, generate and review, then a first gate verdict of up
+    # to two calls (one retry of an unreadable answer): five calls before any rewrite. Each of up
+    # to max-rounds rounds is up to three more (rewrite, gate, retry). The default fits those five
+    # plus one full round with every call at the CLI timeout, and margin for the save
+    # (5 x 120 + 3 x 120 + 120 = 1080); at the observed 15-35 s per call all three rounds fit. The
+    # gate starts a round only if it can finish before this deadline, so a slow provider shows the
+    # remaining fails instead of a 504. Raise it with AI_CLI_TIMEOUT_SECONDS, and keep nginx
+    # proxy_read_timeout above it.
+    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:1080}
+    letter-gate:
+      # Rewrites of a letter the gate (writing guide KORREKTUR points 1, 8, 13, 14) fails, each
+      # followed by a fresh gate; after the last one the remaining fails are shown to the user.
+      max-rounds: ${LETTER_GATE_MAX_ROUNDS:3}
     auto-review:
       # Automatic reviewer critique/revise pass after document generation.
       # Each pass is one extra LLM call — disable to halve generation cost.
@@ -124,7 +152,8 @@ app:
       batch-size: ${JOB_URL_CHECK_BATCH:150}
       # Ceiling, so a runaway corpus count cannot turn into a runaway crawl.
       max-batch-size: ${JOB_URL_CHECK_MAX_BATCH:3000}
-      # Must match the cron above; the batch maths needs to know how often it runs.
+      # Must match the cron above; the batch maths needs to know how often it runs. A crawl
+      # run that probes states its own cadence with --crawler.runs-per-day instead.
       runs-per-day: ${JOB_URL_CHECK_RUNS_PER_DAY:4}
       politeness-delay-ms: ${JOB_URL_CHECK_DELAY_MS:300}
   enrichment:
@@ -135,6 +164,13 @@ app:
     retry-delay: ${ENRICHMENT_RETRY_DELAY:PT6H}
     # How long to wait on one AI call before deciding the provider is not keeping up.
     call-timeout: ${ENRICHMENT_CALL_TIMEOUT:PT5M}
+    batch:
+      # Postings per enrichment call. 0 picks by provider: 25 on a CLI agent, where the call
+      # is the cost (15-25 s of a subscription whatever it holds), 1 on an API, where tokens are.
+      size: ${ENRICHMENT_BATCH_SIZE:0}
+      # How long one enrichment call to a CLI agent may run. Separate from
+      # app.ai.cli.timeout-seconds, which is sized for one generation call; a batch takes minutes.
+      timeout: ${ENRICHMENT_BATCH_TIMEOUT:PT10M}
     sweep:
       # The enrichment worker. Postings are saved PENDING by the crawler and only become
       # enriched when this runs, so it is a worker rather than a clean-up pass: it ticks
@@ -162,6 +198,14 @@ app:
   # mode: extraction can succeed while embedding never runs, leaving a posting that looks
   # complete and is invisible to search and matching.
   embedding:
+    # The embedding provider the desktop setup chose (openai | gemini). Blank everywhere but the
+    # desktop app: other processes follow the stored choice, and app.ai.enrichment-provider only
+    # when nothing is stored yet.
+    setup-provider: ${EMBEDDING_SETUP_PROVIDER:}
+    # true: embed a posting only once enrichment has trimmed its text. false: embed the text
+    # ingest stored, for a crawl that does not enrich (the scheduled crawl); a later enrichment
+    # that changes the text re-queues the posting for embedding.
+    require-enriched: ${EMBEDDING_REQUIRE_ENRICHED:true}
     sweep:
       enabled: ${EMBEDDING_SWEEP_ENABLED:true}
       interval-ms: ${EMBEDDING_SWEEP_INTERVAL_MS:60000}
@@ -207,9 +251,10 @@ app:
     companies:
       # Copenhagen
       - veo               # Veo Technologies, Copenhagen — sports cameras
-      - dixa              # Dixa, Copenhagen — customer service platform
-      - vivino            # Vivino, Copenhagen — wine marketplace
-      - contractbook      # Contractbook, Copenhagen — contract management
+    # The name each board's employer is filed under. Without one the slug is used, and "veo"
+    # never lines up with "Veo Technologies" from Jobindex.
+    display-names:
+      veo: Veo Technologies
   teamtailor:
     # Format: {company}.teamtailor.com — verify at https://{slug}.teamtailor.com/jobs before adding.
     career-page-urls:
