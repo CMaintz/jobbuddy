@@ -434,7 +434,6 @@
       },
       "photoSize": "Photo Size",
       "templateDefault": "template default",
-      "photoSizeTip": "Tip: you can also drag the photo in the preview to resize it.",
       "photoPlacement": "Photo Placement",
       "left": "Left",
       "template": "Template",

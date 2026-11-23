@@ -434,7 +434,6 @@
       },
       "photoSize": "Fotostørrelse",
       "templateDefault": "skabelonstandard",
-      "photoSizeTip": "Tip: du kan også trække i fotoet i forhåndsvisningen for at ændre størrelsen.",
       "photoPlacement": "Fotoplacering",
       "left": "Venstre",
       "template": "Skabelon",
