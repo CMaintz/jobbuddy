@@ -1,0 +1,87 @@
+<div class="self-start flex flex-col gap-1.5 max-w-[88%] w-full" data-chat-plan>
+  @if (pendingCount() > 1) {
+    <div class="flex items-center gap-2 text-sm">
+      <span class="text-jb-text-mid">{{ 'chat.plan.waitingCount' | translate: { count: pendingCount() } }}</span>
+      <button type="button" (click)="store.decide('approve', plan().id, null)" [disabled]="decisions.deciding(plan().id)"
+              data-plan-approve-all
+              class="ml-auto rounded-md px-3 py-1 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer disabled:opacity-50">
+        {{ 'chat.plan.approveAll' | translate }}
+      </button>
+      <button type="button" (click)="store.decide('reject', plan().id, null)" [disabled]="decisions.deciding(plan().id)"
+              class="rounded-md px-3 py-1 text-sm font-semibold border border-jb-border-strong bg-jb-surface-3 text-jb-text cursor-pointer disabled:opacity-50">
+        {{ 'chat.plan.rejectAll' | translate }}
+      </button>
+    </div>
+    @if (decisions.failed(plan().id)) {
+      <span class="text-xs font-medium" role="alert">{{ 'chat.plan.notSent' | translate }}</span>
+    }
+  }
+  @for (item of plan().items; track item.id) {
+    <div class="rounded-md border border-jb-border-strong bg-jb-surface px-3 py-2 text-sm flex flex-col gap-1"
+         [attr.data-plan-item]="item.state">
+      <span class="font-semibold">{{ 'chat.plan.kinds.' + item.kind | translate }}</span>
+      @if (item.details.title) {
+        <span class="text-xs text-jb-text-mid">{{ item.details.title }}@if (item.details.company) { · {{ item.details.company }}}</span>
+      }
+      @if (item.kind === 'UPDATE_STATUS' && item.details.fromStatus && item.details.toStatus) {
+        <span class="text-xs">{{ 'chat.plan.statusMove' | translate: {
+          from: (stageLabelKey(item.details.fromStatus) | translate),
+          to: (stageLabelKey(item.details.toStatus) | translate) } }}</span>
+      }
+      @if (item.kind === 'LOG_INTERVIEW' && item.details.interviewAt) {
+        <span class="text-xs">{{ 'chat.plan.interviewAt' | translate: { when: (item.details.interviewAt | date: 'dd.MM.y HH:mm') } }}</span>
+        @if (item.details.interviewBefore) {
+          <span class="text-xs">{{ 'chat.plan.replaces' | translate: { when: (item.details.interviewBefore | date: 'dd.MM.y HH:mm') } }}</span>
+        }
+      }
+      @if (item.kind === 'IGNORE_POSTING' && item.state === 'PENDING') {
+        <span class="text-xs">{{ 'chat.plan.ignoreNote' | translate }}</span>
+      }
+      @switch (item.state) {
+        @case ('PENDING') {
+          <span class="text-xs text-jb-text-dim">{{ 'chat.plan.waiting' | translate }}</span>
+          @if (decisions.failed(item.id)) {
+            <span class="text-xs font-medium" role="alert">{{ 'chat.plan.notSent' | translate }}</span>
+          }
+          <div class="flex gap-2 pt-1">
+            <button type="button" (click)="store.decide('approve', plan().id, item.id)" [disabled]="decisions.deciding(item.id)"
+                    data-plan-approve
+                    class="rounded-md px-3 py-1 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer disabled:opacity-50">
+              {{ 'chat.plan.approve' | translate }}
+            </button>
+            <button type="button" (click)="store.decide('reject', plan().id, item.id)" [disabled]="decisions.deciding(item.id)"
+                    data-plan-reject
+                    class="rounded-md px-3 py-1 text-sm font-semibold border border-jb-border-strong bg-jb-surface-3 text-jb-text cursor-pointer disabled:opacity-50">
+              {{ 'chat.plan.reject' | translate }}
+            </button>
+          </div>
+        }
+        @case ('RUNNING') {
+          <span class="text-xs font-medium" role="status">{{ (item.kind === 'GENERATE_DOCUMENTS' ? 'chat.plan.writing' : 'chat.plan.states.RUNNING') | translate }}</span>
+        }
+        @case ('DONE') {
+          <span class="text-xs font-medium" role="status">{{ 'chat.plan.states.DONE' | translate }}</span>
+          @if (item.kind === 'GENERATE_DOCUMENTS' && item.resultApplicationId) {
+            <button type="button" (click)="openDocuments(item)" data-plan-open-documents
+                    class="self-start rounded-md px-3 py-1 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer">
+              {{ 'chat.plan.openDocuments' | translate }}
+            </button>
+          }
+        }
+        @case ('FAILED') {
+          <span class="text-xs font-medium" role="status">{{ (item.kind === 'GENERATE_DOCUMENTS' && item.failure === 'FAILED'
+            ? 'chat.plan.writeFailed' : 'chat.plan.failures.' + (item.failure ?? 'FAILED')) | translate }}</span>
+          @if (item.kind === 'GENERATE_DOCUMENTS' && item.resultApplicationId) {
+            <button type="button" (click)="openDocuments(item)" data-plan-open-documents
+                    class="self-start rounded-md px-3 py-1 text-sm font-semibold jb-btn-primary bg-jb-accent border cursor-pointer">
+              {{ 'chat.plan.openDocuments' | translate }}
+            </button>
+          }
+        }
+        @default {
+          <span class="text-xs font-medium" role="status">{{ 'chat.plan.states.' + item.state | translate }}</span>
+        }
+      }
+    </div>
+  }
+</div>

@@ -7,16 +7,16 @@ import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.port.out.user.UserRepositoryPort;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 @Service
+@org.springframework.context.annotation.Profile("!desktop")
 public class FirebaseUserProvisioningService implements ProvisionFirebaseUserUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseUserProvisioningService.class);

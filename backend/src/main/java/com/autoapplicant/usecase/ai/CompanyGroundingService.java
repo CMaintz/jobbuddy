@@ -45,7 +45,9 @@ public class CompanyGroundingService {
     public CompanyGroundingService(CompanyRepositoryPort companyRepo,
                                    CompanyResearchRepositoryPort researchRepo,
                                    WebPageFetchPort webFetch,
-                                   @Qualifier("enrichmentAiProvider") ChatProviderPort ai) {
+                                   // Chat-only work, so it runs where enrichment's extraction
+                                   // runs (possibly the CLI agent) and needs no API key.
+                                   @Qualifier("enrichmentChatProvider") ChatProviderPort ai) {
         this.companyRepo = companyRepo;
         this.researchRepo = researchRepo;
         this.webFetch = webFetch;
