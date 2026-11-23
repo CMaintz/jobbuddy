@@ -234,6 +234,7 @@
       </div>
       <div class="flex-1 overflow-auto p-[40px_60px] flex flex-col items-center gap-7 jb-scroll">
         @if (generateError()) {
+          <jb-buddy mood="error" />
           <div class="flex items-center gap-3 max-w-[640px] w-full p-4 rounded-md bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.35)]">
             <jb-icon name="x-circle" [size]="18" class="text-jb-danger" />
             <div class="flex-1">
@@ -243,16 +244,7 @@
             <jb-button small [primary]="true" (clicked)="generate()">{{ 'common.retry' | translate }}</jb-button>
           </div>
         } @else {
-          <div class="flex items-center gap-3">
-            <div class="relative w-[56px] h-[56px]">
-              <div class="absolute inset-0 rounded-full border-[3px] border-jb-surface-3 border-t-jb-accent animate-[jb-spin_1.1s_linear_infinite]"></div>
-              <jb-icon name="sparkle" [size]="22" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-jb-accent" />
-            </div>
-            <div>
-              <div class="text-[15px] font-medium">{{ 'apply.drafting' | translate }}</div>
-              <div class="text-sm text-jb-text-dim">{{ 'apply.draftingSub' | translate }}</div>
-            </div>
-          </div>
+          <jb-buddy-wait class="max-w-[640px]" heading="apply.drafting" detail="apply.draftingSub" />
         }
 
         <div class="card w-full max-w-[640px] p-[18px]">

@@ -124,3 +124,10 @@
   background: var(--jb-accent-soft);
   border-color: var(--jb-accent-border);
 }
+
+/* The boot screen in index.html: Buddy (assets/buddy/buddy.css) in the middle until Angular renders. */
+.jb-boot {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
