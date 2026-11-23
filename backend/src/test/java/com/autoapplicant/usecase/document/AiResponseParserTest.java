@@ -1,13 +1,14 @@
 package com.autoapplicant.usecase.document;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * The one code-fence stripper.
  *
- * <p>Five callers each carried their own copy of this, and they were not equivalent — some used
+ * <p>Five callers each carried their own copy of this, and they were not equivalent: some used
  * replace, others replaceAll, and they disagreed about unterminated fences. The same malformed
  * model response was therefore cleaned differently depending on which feature received it. These
  * tests give the surviving implementation the contract the copies never had.
@@ -46,5 +47,20 @@ class AiResponseParserTest {
     void extracting_an_object_tolerates_prose_around_it() {
         assertThat(AiResponseParser.extractJsonObject("Sure! ```json\n{\"a\":1}\n``` hope that helps"))
                 .isEqualTo("{\"a\":1}");
+    }
+
+    @Test
+    void a_response_without_an_object_is_rejected_rather_than_passed_on() {
+        assertThatThrownBy(() -> AiResponseParser.extractJsonObject("Sorry, I cannot help with that."))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AiResponseParser.extractJsonObject("} backwards {"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void sanitizing_turns_em_and_en_dashes_into_hyphens() {
+        assertThat(AiResponseParser.sanitize("Java \u2014 Spring, 2019\u20132021"))
+                .isEqualTo("Java - Spring, 2019-2021");
+        assertThat(AiResponseParser.sanitize(null)).isNull();
     }
 }

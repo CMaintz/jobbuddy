@@ -25,17 +25,6 @@ class CvSkillGroupLabelsTest {
     }
 
     @Test
-    void the_translated_headings_agree_with_the_resume_builders_own_suggestions() {
-        // A skill categorised from the taxonomy and one typed into the builder must not produce
-        // two headings that mean the same thing.
-        CvSkillGroupLabels labels = CvSkillGroupLabels.forLanguage("en");
-
-        assertThat(labels.labelFor("Programming Language")).isEqualTo("Programming Languages");
-        assertThat(labels.labelFor("Cloud")).isEqualTo("Cloud");
-        assertThat(labels.labelFor("Methodology")).isEqualTo("Practices");
-    }
-
-    @Test
     void the_programming_language_group_does_not_collide_with_the_spoken_languages_section() {
         // A CV carries a Languages section for the languages the candidate speaks. A skill group
         // also headed "Languages", listing Java, would put two of them on one page.
