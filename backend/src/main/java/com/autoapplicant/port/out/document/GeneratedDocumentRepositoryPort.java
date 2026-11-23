@@ -12,4 +12,13 @@ public interface GeneratedDocumentRepositoryPort {
     List<GeneratedDocument> findByJobIdAndUserId(UUID jobId, UUID userId);
     Optional<GeneratedDocument> findByIdAndUserId(UUID id, UUID userId);
     List<GeneratedDocument> findRecentByUserIdAndType(UUID userId, String documentType, int limit);
+
+    /**
+     * Sets the user's document's structured content to {@code replacement}, touching no other
+     * column, but only while it still equals {@code expected}.
+     *
+     * @return false when no row matched: the document is gone, belongs to someone else, or its
+     *     structured content is no longer {@code expected}
+     */
+    boolean replaceStructuredContent(UUID id, UUID userId, String expected, String replacement);
 }

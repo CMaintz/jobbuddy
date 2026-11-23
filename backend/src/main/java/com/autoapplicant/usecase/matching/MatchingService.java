@@ -14,18 +14,17 @@ import com.autoapplicant.domain.user.Profile;
 import com.autoapplicant.domain.user.ProfileEmbedding;
 import com.autoapplicant.domain.user.UserPreferences;
 import com.autoapplicant.port.in.job.GetRecommendationsUseCase;
-import com.autoapplicant.port.out.ai.AiProviderPort;
+import com.autoapplicant.port.out.ai.EmbeddingProviderPort;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.IgnoredJobRepositoryPort;
 import com.autoapplicant.port.out.job.JobEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import com.autoapplicant.port.out.matching.RecommendationFeedbackRepositoryPort;
-import com.autoapplicant.port.out.skills.ProfileSkillRepositoryPort;
 import com.autoapplicant.port.out.user.PreferencesRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileEmbeddingRepositoryPort;
 import com.autoapplicant.port.out.user.ProfileRepositoryPort;
 import com.autoapplicant.usecase.common.KeywordMatcher;
-import com.autoapplicant.usecase.skills.SkillCanonicalizer;
+import com.autoapplicant.usecase.matching.MatchProfileLoader.MatchProfile;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,16 +71,14 @@ public class MatchingService implements GetRecommendationsUseCase {
     // that already acted as a hard filter no longer earns a bonus — every surviving job would
     // score it identically, which shifts the whole list rather than ordering it.
     private static final int BASE_SCORE          = 25;
-    private static final int MAX_SKILL_SCORE     = 55;
-    private static final int REQUIRED_BUDGET     = 34;  // coverage of what the posting demands
-    private static final int PREFERRED_BUDGET    = 9;   // coverage of what it merely welcomes
-    private static final int TECH_OVERLAP_BUDGET = 12;  // overlap the posting did not tier
-    private static final int MAX_MISSING_REQUIRED_PENALTY = -22;
-    private static final int MISSING_REQUIRED_PENALTY_EACH = -6;
 
-    // A partially-held required skill still counts, just not fully: a skill listed at BEGINNER
-    // and never used in production is not the same evidence as one used in production for years.
-    private static final double WEAK_PROFICIENCY_CREDIT = 0.5;
+    /**
+     * The most a posting can score when it demands a credential or specialist experience the
+     * profile clearly lacks: no better than one that shares nothing with the profile, whatever its
+     * skills or boosts say. A ceiling rather than a deduction, because the skill score it would
+     * deduct from is the label overlap that made the posting look like a fit in the first place.
+     */
+    private static final int OUT_OF_REACH_CEILING = BASE_SCORE;
 
     /** Retrieval multiplier. Raised when a hard filter will discard most of what comes back. */
     private static final int CANDIDATE_MULTIPLIER          = 5;
@@ -91,25 +88,23 @@ public class MatchingService implements GetRecommendationsUseCase {
     private final JobRepositoryPort jobRepo;
     private final ProfileRepositoryPort profileRepo;
     private final PreferencesRepositoryPort prefsRepo;
-    private final AiProviderPort aiProvider;
+    private final EmbeddingProviderPort aiProvider;
     private final IgnoredJobRepositoryPort ignoredJobRepo;
     private final RecommendationFeedbackRepositoryPort feedbackRepo;
     private final ProfileEmbeddingRepositoryPort profileEmbeddingRepo;
-    private final ProfileSkillRepositoryPort profileSkillRepo;
     private final ApplicationRepositoryPort applicationRepo;
-    private final SkillCanonicalizer skillCanonicalizer;
+    private final MatchProfileLoader matchProfileLoader;
 
     public MatchingService(JobEmbeddingRepositoryPort embeddingRepo,
                            JobRepositoryPort jobRepo,
                            ProfileRepositoryPort profileRepo,
                            PreferencesRepositoryPort prefsRepo,
-                           @Qualifier("enrichmentAiProvider") AiProviderPort aiProvider,
+                           @Qualifier("embeddingProvider") EmbeddingProviderPort aiProvider,
                            IgnoredJobRepositoryPort ignoredJobRepo,
                            RecommendationFeedbackRepositoryPort feedbackRepo,
                            ProfileEmbeddingRepositoryPort profileEmbeddingRepo,
-                           ProfileSkillRepositoryPort profileSkillRepo,
                            ApplicationRepositoryPort applicationRepo,
-                           SkillCanonicalizer skillCanonicalizer) {
+                           MatchProfileLoader matchProfileLoader) {
         this.embeddingRepo = embeddingRepo;
         this.jobRepo = jobRepo;
         this.profileRepo = profileRepo;
@@ -118,9 +113,8 @@ public class MatchingService implements GetRecommendationsUseCase {
         this.ignoredJobRepo = ignoredJobRepo;
         this.feedbackRepo = feedbackRepo;
         this.profileEmbeddingRepo = profileEmbeddingRepo;
-        this.profileSkillRepo = profileSkillRepo;
         this.applicationRepo = applicationRepo;
-        this.skillCanonicalizer = skillCanonicalizer;
+        this.matchProfileLoader = matchProfileLoader;
     }
 
     @Override
@@ -131,8 +125,8 @@ public class MatchingService implements GetRecommendationsUseCase {
 
             // One load of the profile's skills, feeding the embedding text, the fit scoring and
             // the proficiency weighting alike — they are the same skills.
-            List<ProfileSkill> profileSkillRows = profileSkillRepo.findByUserId(userId);
-            String profileText = buildProfileText(profile, profileSkillRows);
+            MatchProfile matchProfile = matchProfileLoader.load(profile);
+            String profileText = buildProfileText(profile, matchProfile.skills());
             if (profileText.isBlank()) return List.of();
 
             UserPreferences prefs = prefsRepo.findByUserId(userId).orElse(null);
@@ -163,26 +157,20 @@ public class MatchingService implements GetRecommendationsUseCase {
             Map<UUID, Job> jobMap = jobRepo.findByIds(candidateIds).stream()
                     .collect(Collectors.toMap(Job::id, j -> j));
 
-            // Canonicalised so "Kubernetes" here answers a posting that asks for "k8s". The asked
-            // labels are canonicalised the same way at comparison time (see creditFor/scoreUntiered).
-            Set<String> held = profileSkillRows.stream()
-                    .map(ProfileSkill::skillName)
-                    .filter(Objects::nonNull)
-                    .map(skillCanonicalizer::canonical)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toSet());
-            Map<String, Double> proficiencyCredit = buildProficiencyCredit(profileSkillRows);
             // "More like this" is a statement about a kind of job, so it has to reach jobs the
             // user has not seen. This resolves each steer signal to its neighbours once, rather
             // than per candidate.
             Map<UUID, Integer> steerAdjustments = buildSteerAdjustments(feedback);
 
-            return candidateIds.stream()
+            List<Job> eligible = candidateIds.stream()
                     .map(jobMap::get)
                     .filter(Objects::nonNull)
                     .filter(job -> passesHardConstraints(job, prefs))
                     .limit(limit * 2L)
-                    .map(job -> buildMatchResult(job, userId, held, proficiencyCredit, feedbackMap,
+                    .toList();
+            MatchProfile scored = matchProfileLoader.againstPostings(matchProfile, eligible);
+            return eligible.stream()
+                    .map(job -> buildMatchResult(job, userId, scored, feedbackMap,
                             steerAdjustments, prefs))
                     .sorted(Comparator.comparingInt(MatchResult::totalScore).reversed())
                     .limit(limit)
@@ -234,6 +222,12 @@ public class MatchingService implements GetRecommendationsUseCase {
             }
         }
 
+        // Categories she never wants to see are out, whatever else matches.
+        if (job.jobCategory() != null
+                && prefs.excludedCategoriesOrEmpty().contains(job.jobCategory().name())) {
+            return false;
+        }
+
         // Industry hard constraint — jobs with null/OTHER category are never filtered out
         if (notEmpty(prefs.preferredIndustries())
                 && job.jobCategory() != null
@@ -257,7 +251,7 @@ public class MatchingService implements GetRecommendationsUseCase {
 
     /**
      * Returns true if the job is within maxCommuteKm of any of the user's preferred
-     * municipalities or preferred locations.
+     * municipalities or preferred locations, or if none of them has known coordinates.
      */
     private boolean isWithinCommuteDistance(UserPreferences prefs, double[] jobCoords, int maxKm) {
         // Try preferred municipalities first (more specific), then fallback to locations
@@ -265,31 +259,32 @@ public class MatchingService implements GetRecommendationsUseCase {
                 ? prefs.preferredMunicipalities()
                 : (notEmpty(prefs.preferredLocations()) ? prefs.preferredLocations() : List.of());
 
-        if (homePoints.isEmpty()) return true; // no reference point configured — skip filter
-
+        boolean anyHomePlaced = false;
         for (String home : homePoints) {
             double[] homeCoords = DanishMunicipalityCoordinates.get(home);
             if (homeCoords != null) {
+                anyHomePlaced = true;
                 double km = DanishMunicipalityCoordinates.haversineKm(
                         homeCoords[0], homeCoords[1], jobCoords[0], jobCoords[1]);
                 if (km <= maxKm) return true;
             }
         }
-        return false;
+        // No home point we can place, configured or not, means no distance to judge by: skip the
+        // filter rather than reject every posting that has coordinates.
+        return !anyHomePlaced;
     }
 
     // ── Score building ────────────────────────────────────────────────────────
 
     private MatchResult buildMatchResult(Job job, UUID userId,
-                                         Set<String> held,
-                                         Map<String, Double> proficiencyCredit,
+                                         MatchProfile matchProfile,
                                          Map<UUID, FeedbackType> feedbackMap,
                                          Map<UUID, Integer> steerAdjustments,
                                          UserPreferences prefs) {
         List<String> reasons = new ArrayList<>();
 
-        // ── Skill fit (0-55) ─────────────────────────────────────────────────
-        int skillScore = scoreSkillFit(job, held, proficiencyCredit, reasons);
+        // ── Skill fit (0-65) ─────────────────────────────────────────────────
+        int skillScore = matchProfile.skillFit().score(job, reasons);
 
         // ── Preference bonuses ───────────────────────────────────────────────
         int prefScore = 0;
@@ -349,14 +344,15 @@ public class MatchingService implements GetRecommendationsUseCase {
                 }
             }
 
-            // Salary in range (only if job has salary data)
-            if (job.salaryMin() != null || job.salaryMax() != null) {
-                boolean inRange = isSalaryInRange(job, prefs);
-                if (inRange) {
+            // Scored only when both sides state a salary. Without a range of the user's there is
+            // nothing to be "within", and a bonus would just lift every posting that lists pay.
+            boolean jobStatesSalary = job.salaryMin() != null || job.salaryMax() != null;
+            boolean userSetRange = prefs.salaryMin() != null || prefs.salaryMax() != null;
+            if (jobStatesSalary && userSetRange) {
+                if (isSalaryInRange(job, prefs)) {
                     prefScore += SALARY_IN_RANGE_BONUS;
                     reasons.add("Salary within your range");
-                } else if (prefs.salaryMin() != null || prefs.salaryMax() != null) {
-                    // Job has salary data but it's outside range — soft penalty
+                } else {
                     prefScore -= SALARY_IN_RANGE_BONUS;
                     reasons.add("Salary may be outside your range");
                 }
@@ -422,141 +418,30 @@ public class MatchingService implements GetRecommendationsUseCase {
         }
 
         // ── Final score ──────────────────────────────────────────────────────
-        // Base 25 + skill fit (0-55) + pref bonuses (variable) + behavioral
+        // Base 25 + skill fit (0-65) + pref bonuses (variable) + behavioral
         int total = Math.min(Math.max(BASE_SCORE + skillScore + prefScore + behavioralBoost, 0), 100);
+        Optional<String> outOfReach = matchProfile.hardRequirements().unmet(job)
+                .or(() -> matchProfile.requiredExperience().unmet(job));
+        if (outOfReach.isPresent()) {
+            total = Math.min(total, OUT_OF_REACH_CEILING);
+            // First, because the feed shows only the first two reasons.
+            reasons.add(0, outOfReach.get());
+        } else {
+            Optional<RequiredExperience.Shortfall> shortfall = matchProfile.requiredExperience()
+                    .shortfall(job, matchProfile.skillFit()::closenessTo);
+            if (shortfall.isPresent()) {
+                // A post within reach never drops below one that is out of reach.
+                total = Math.max(total - shortfall.get().penalty(),
+                        Math.min(total, OUT_OF_REACH_CEILING));
+                reasons.add(0, shortfall.get().reason());
+            }
+        }
 
-        double semanticScore  = skillScore / (double) MAX_SKILL_SCORE;
+        double semanticScore  = skillScore / (double) SkillFitScorer.MAX_SCORE;
         double behavioralScore = (behavioralBoost + 20) / 40.0; // normalise to 0-1
 
         return new MatchResult(job.id(), userId, job, true,
                 semanticScore, behavioralScore, total, MatchLabel.fromScore(total), reasons);
-    }
-
-    // ── Skill fit ─────────────────────────────────────────────────────────────
-
-    /**
-     * How well the profile covers what the posting asks for, on a 0-{@value #MAX_SKILL_SCORE}
-     * scale, appending its findings to {@code reasons}.
-     *
-     * <p>The posting's asks come in two tiers because Danish postings write them in two tiers:
-     * "du skal have" is a demand, "det er en fordel" is a wish. Scoring them alike is what made
-     * a nice-to-have you happen to hold worth as much as a must-have you lack — and made lacking
-     * a must-have cost nothing at all, since a missing skill simply scored zero.
-     *
-     * <p>So: required coverage carries most of the budget AND a shortfall penalty, preferred
-     * coverage carries a small bonus and no penalty, and untiered technology overlap carries the
-     * rest. A job enriched before the tiers existed has neither list, and falls back to that
-     * untiered overlap alone — scaled up so old rows are not silently buried under new ones.
-     */
-    private int scoreSkillFit(Job job, Set<String> held,
-                              Map<String, Double> proficiencyCredit, List<String> reasons) {
-        List<String> required  = job.requiredSkills()  != null ? job.requiredSkills()  : List.of();
-        List<String> preferred = job.preferredSkills() != null ? job.preferredSkills() : List.of();
-
-        if (required.isEmpty() && preferred.isEmpty()) {
-            return scoreUntiered(job, held, reasons, MAX_SKILL_SCORE);
-        }
-
-        int score = 0;
-
-        if (!required.isEmpty()) {
-            List<String> missing = new ArrayList<>();
-            double credit = 0;
-            for (String ask : required) {
-                double c = creditFor(ask, held, proficiencyCredit);
-                credit += c;
-                if (c == 0) missing.add(ask);
-            }
-            double coverage = credit / required.size();
-            score += (int) Math.round(coverage * REQUIRED_BUDGET);
-
-            int covered = required.size() - missing.size();
-            reasons.add(covered + "/" + required.size() + " required skill"
-                    + (required.size() > 1 ? "s" : "") + " covered");
-            if (!missing.isEmpty()) {
-                score += Math.max(missing.size() * MISSING_REQUIRED_PENALTY_EACH,
-                                  MAX_MISSING_REQUIRED_PENALTY);
-                reasons.add("Missing required: " + String.join(", ", missing.stream().limit(4).toList()));
-            }
-        }
-
-        if (!preferred.isEmpty()) {
-            double credit = 0;
-            List<String> hits = new ArrayList<>();
-            for (String ask : preferred) {
-                double c = creditFor(ask, held, proficiencyCredit);
-                credit += c;
-                if (c > 0) hits.add(ask);
-            }
-            score += (int) Math.round((credit / preferred.size()) * PREFERRED_BUDGET);
-            if (!hits.isEmpty()) {
-                reasons.add("Nice-to-have you already have: "
-                        + String.join(", ", hits.stream().limit(4).toList()));
-            }
-        }
-
-        // Everything the posting lists but did not tier still says something about fit.
-        score += scoreUntiered(job, held, reasons, TECH_OVERLAP_BUDGET);
-
-        return Math.max(0, Math.min(score, MAX_SKILL_SCORE));
-    }
-
-    /**
-     * Flat overlap between the profile and the posting's untiered skill/technology lists,
-     * scaled into {@code budget}. This is the whole score for a job enriched before the
-     * requirement tiers existed, and a small top-up for one enriched after.
-     */
-    private int scoreUntiered(Job job, Set<String> held, List<String> reasons, int budget) {
-        Set<String> asks = new HashSet<>(canonicalSet(job.technologies()));
-        asks.addAll(canonicalSet(job.skills()));
-        if (asks.isEmpty()) return 0;
-
-        List<String> matched = held.stream().filter(asks::contains).sorted().toList();
-        if (matched.isEmpty()) return 0;
-
-        if (budget == MAX_SKILL_SCORE) {   // untiered posting — this overlap is all we know
-            reasons.add("Overlaps on: " + String.join(", ", matched.stream().limit(5).toList()));
-        }
-        double coverage = matched.size() / (double) asks.size();
-        return (int) Math.round(Math.min(coverage, 1.0) * budget);
-    }
-
-    /**
-     * 1.0 when the profile clearly holds the asked-for skill, {@value #WEAK_PROFICIENCY_CREDIT}
-     * when it holds it only weakly, 0 when it does not hold it at all.
-     *
-     * <p>The partial tier is why we do not parse "5 års erfaring" out of the posting: the honest
-     * signal is on our side of the comparison, in what the user recorded about their own depth,
-     * not in a number the posting picked loosely.
-     */
-    private double creditFor(String ask, Set<String> held, Map<String, Double> proficiencyCredit) {
-        if (ask == null || ask.isBlank()) return 0;
-        String key = skillCanonicalizer.canonical(ask);
-        if (!held.contains(key)) return 0;
-        return proficiencyCredit.getOrDefault(key, 1.0);
-    }
-
-    /**
-     * Per-skill credit keyed by normalised skill name, for skills the user recorded depth on.
-     * Skills with no recorded depth are absent and default to full credit — an unrecorded
-     * proficiency is missing data, not evidence of weakness.
-     */
-    private Map<String, Double> buildProficiencyCredit(List<ProfileSkill> profileSkills) {
-        try {
-            Map<String, Double> credit = new HashMap<>();
-            for (ProfileSkill s : profileSkills) {
-                if (s.skillName() == null) continue;
-                boolean weak = "BEGINNER".equalsIgnoreCase(s.proficiencyLevel())
-                        && !s.usedInProduction();
-                // Keyed on the canonical form so creditFor's canonical lookup finds it.
-                credit.put(skillCanonicalizer.canonical(s.skillName()),
-                        weak ? WEAK_PROFICIENCY_CREDIT : 1.0);
-            }
-            return credit;
-        } catch (Exception e) {
-            log.debug("Could not read skill proficiency: {}", e.getMessage());
-            return Map.of();
-        }
     }
 
     /** Kilometres from the job to the nearest preferred municipality, or MAX_VALUE if unknown. */
@@ -590,8 +475,6 @@ public class MatchingService implements GetRecommendationsUseCase {
         Integer jobMax = job.salaryMax();
         Integer prefMin = prefs.salaryMin();
         Integer prefMax = prefs.salaryMax();
-
-        if (prefMin == null && prefMax == null) return true;
 
         // Use the midpoint of the job's range if both ends available, else whichever end exists
         int jobPoint = jobMin != null && jobMax != null ? (jobMin + jobMax) / 2
@@ -637,20 +520,24 @@ public class MatchingService implements GetRecommendationsUseCase {
                 .limit(STEER_SIGNALS_HONOURED)
                 .toList();
 
+        // A set, so a job reached by several signals in this direction is adjusted once: five
+        // steers toward similar postings must not add up to more than a direct like.
+        Set<UUID> reached = new HashSet<>();
         for (RecommendationFeedback signal : signals) {
             try {
                 embeddingRepo.findByJobId(signal.jobId())
                         .map(JobEmbedding::embedding)
                         .map(vector -> embeddingRepo.findNearestNeighborJobIds(vector, STEER_NEIGHBOURS))
-                        .ifPresent(neighbours -> neighbours.forEach(id -> {
-                            // Steering the same way twice does not double the effect; steering both
-                            // ways cancels, which is the honest reading of contradictory signals.
-                            if (!id.equals(signal.jobId())) into.merge(id, adjustment, Integer::sum);
-                        }));
+                        .ifPresent(neighbours -> neighbours.stream()
+                                .filter(id -> !id.equals(signal.jobId()))
+                                .forEach(reached::add));
             } catch (Exception e) {
                 log.debug("Could not expand steer signal for job {}: {}", signal.jobId(), e.getMessage());
             }
         }
+        // Summed across directions: a job steered both toward and away from gets both, so the
+        // larger penalty outweighs the boost and contradictory signals lean towards hiding it.
+        reached.forEach(id -> into.merge(id, adjustment, Integer::sum));
     }
 
     /**
@@ -678,15 +565,6 @@ public class MatchingService implements GetRecommendationsUseCase {
         skills.stream().map(ProfileSkill::skillName).filter(Objects::nonNull)
                 .forEach(name -> sb.append(name).append(' '));
         return sb.toString().trim();
-    }
-
-    private Set<String> canonicalSet(List<String> list) {
-        if (list == null) return Set.of();
-        return list.stream()
-                .filter(Objects::nonNull)
-                .map(skillCanonicalizer::canonical)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toSet());
     }
 
     private static boolean notEmpty(List<String> list) {

@@ -15,6 +15,7 @@ import { RemindersApiService } from '../../core/api/reminders.api';
 import { Application, ApplicationStatus } from '../../core/models/application.model';
 
 import { NotifyService } from '../../shared/services/notify.service';
+import { BuddyComponent } from '../../shared/components/buddy/buddy.component';
 const INTERVIEW_STAGES: ApplicationStatus[] = ['RECRUITER_CONTACT', 'INTERVIEW', 'TECHNICAL_TEST', 'FINAL_ROUND'];
 
 const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> = {
@@ -25,9 +26,9 @@ const CATEGORY_TONES: Record<string, 'accent' | 'info' | 'violet' | 'neutral'> =
   selector: 'app-interviews',
   imports: [
     JbTopbarComponent, FormsModule, TranslateModule, JbIconComponent, JbButtonComponent,
-    JbPillComponent, CompanyMarkComponent, JbModalComponent,
+    JbPillComponent, CompanyMarkComponent, JbModalComponent, BuddyComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interviews.component.html'
 })
 export class InterviewsComponent implements OnInit {
@@ -52,7 +53,7 @@ export class InterviewsComponent implements OnInit {
   // Log-interview modal
   logOpen = signal(false);
   logSaving = signal(false);
-  allApps: Application[] = [];
+  allApps = signal<Application[]>([]);
   logAppId = '';
   logStage: ApplicationStatus = 'INTERVIEW';
   logWhen = '';
@@ -80,7 +81,7 @@ export class InterviewsComponent implements OnInit {
   ngOnInit(): void {
     this.appsApi.getAll().subscribe({
       next: apps => {
-        this.allApps = apps.filter(a => !['REJECTED', 'ARCHIVED'].includes(a.status));
+        this.allApps.set(apps.filter(a => !['REJECTED', 'ARCHIVED'].includes(a.status)));
         const inInterview = apps.filter(a => INTERVIEW_STAGES.includes(a.status));
         this.interviews.set(inInterview);
         this.loading.set(false);
@@ -96,7 +97,7 @@ export class InterviewsComponent implements OnInit {
   // ── Log interview ─────────────────────────────────────────────
 
   openLog(): void {
-    this.logAppId = this.selected()?.id ?? this.allApps[0]?.id ?? '';
+    this.logAppId = this.selected()?.id ?? this.allApps()[0]?.id ?? '';
     this.logStage = 'INTERVIEW';
     const inTwoDays = new Date(Date.now() + 2 * 86400000);
     inTwoDays.setMinutes(0, 0, 0);
@@ -109,7 +110,7 @@ export class InterviewsComponent implements OnInit {
     if (!this.logAppId || !this.logWhen || this.logSaving()) return;
     this.logSaving.set(true);
     const dueAt = new Date(this.logWhen).toISOString();
-    const app = this.allApps.find(a => a.id === this.logAppId);
+    const app = this.allApps().find(a => a.id === this.logAppId);
     const stageLabel = this.translate.instant(this.logStages.find(s => s.key === this.logStage)?.label ?? 'interviews.logStage.interview');
     const note = `${this.translate.instant('interviews.reminderPrefix')} ${stageLabel}`
       + (this.logNote.trim() ? `: ${this.logNote.trim()}` : '');
@@ -139,8 +140,8 @@ export class InterviewsComponent implements OnInit {
   }
 
   private refreshInterviews(updated: Application): void {
-    this.allApps = this.allApps.map(a => a.id === updated.id ? updated : a);
-    const inInterview = this.allApps.filter(a => INTERVIEW_STAGES.includes(a.status));
+    this.allApps.update(apps => apps.map(a => a.id === updated.id ? updated : a));
+    const inInterview = this.allApps().filter(a => INTERVIEW_STAGES.includes(a.status));
     this.interviews.set(inInterview);
     if (!this.selected() || this.selected()!.id === updated.id) {
       const match = inInterview.find(a => a.id === updated.id);
@@ -162,7 +163,7 @@ export class InterviewsComponent implements OnInit {
           this.notify.error('interviews.toast.noExport');
           return;
         }
-        const appById = new Map(this.allApps.map(a => [a.id, a]));
+        const appById = new Map(this.allApps().map(a => [a.id, a]));
         const events = upcoming.map(r => {
           const app = appById.get(r.applicationId);
           const where = app ? `${app.jobCompanyName ?? ''} — ${app.jobTitle ?? ''}` : '';

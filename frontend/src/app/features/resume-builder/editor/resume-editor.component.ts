@@ -40,7 +40,7 @@ interface EditorSection {
     LayoutFormComponent,
     CustomSectionsFormComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './resume-editor.component.html',
 })
 export class ResumeEditorComponent {

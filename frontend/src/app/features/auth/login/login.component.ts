@@ -1,13 +1,15 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService, EMAIL_NOT_VERIFIED } from '../../../core/auth/auth.service';
 
+export type ResetStatus = 'idle' | 'sending' | 'sent' | 'needEmail' | 'tooManyRequests' | 'failed';
+
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
@@ -20,13 +22,13 @@ export class LoginComponent {
     password: ['', Validators.required]
   });
 
-  error = '';
-  loading = false;
+  error = signal('');
+  loading = signal(false);
 
   submit(): void {
     if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
     const { email, password } = this.form.value;
     this.authService.login(email!, password!).subscribe({
       next: (res) => this.router.navigate([res.onboardingComplete ? '/dashboard' : '/onboarding']),
@@ -35,10 +37,27 @@ export class LoginComponent {
           this.router.navigate(['/verify-email']);
           return;
         }
-        this.error = this.friendlyError(e?.code);
-        this.loading = false;
+        this.error.set(this.friendlyError(e?.code));
+        this.loading.set(false);
       }
     });
+  }
+
+  resetStatus = signal<ResetStatus>('idle');
+
+  async sendPasswordReset(): Promise<void> {
+    const email = this.form.controls.email;
+    if (email.invalid) {
+      this.resetStatus.set('needEmail');
+      return;
+    }
+    this.resetStatus.set('sending');
+    try {
+      await this.authService.sendPasswordReset(email.value!);
+      this.resetStatus.set('sent');
+    } catch (e) {
+      this.resetStatus.set(resetFailure((e as { code?: string })?.code));
+    }
   }
 
   signInWithLinkedIn(): void {
@@ -55,5 +74,17 @@ export class LoginComponent {
       case 'auth/too-many-requests': return 'auth.error.tooManyRequests';
       default: return 'auth.error.signInFailed';
     }
+  }
+}
+
+/**
+ * An unknown address gets the same "sent" answer as a known one. Saying "no such account"
+ * would let anyone probe which emails are registered.
+ */
+function resetFailure(code: string | undefined): ResetStatus {
+  switch (code) {
+    case 'auth/user-not-found': return 'sent';
+    case 'auth/too-many-requests': return 'tooManyRequests';
+    default: return 'failed';
   }
 }

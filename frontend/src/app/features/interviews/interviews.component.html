@@ -18,7 +18,7 @@
         <label class="flex flex-col gap-[5px]">
           <span class="label">{{ 'interviews.application' | translate }}</span>
           <select class="input" [(ngModel)]="logAppId">
-            @for (app of allApps; track app.id) {
+            @for (app of allApps(); track app.id) {
               <option [value]="app.id">{{ app.jobCompanyName }} — {{ app.jobTitle }}</option>
             }
           </select>
@@ -117,7 +117,7 @@
     } @else if (interviews().length === 0) {
       <div class="flex-1 flex items-center justify-center">
         <div class="p-10 text-center max-w-[420px]">
-          <jb-icon name="briefcase" [size]="24" class="text-jb-text-dim" />
+          <jb-buddy />
           <div class="text-md font-medium mt-3 mb-1">{{ 'interviews.emptyTitle' | translate }}</div>
           <div class="text-sm text-jb-text-dim">
             {{ 'interviews.emptyDesc' | translate }}

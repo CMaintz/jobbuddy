@@ -18,6 +18,9 @@
       "usedIt": "Used it",
       "notMine": "Not mine",
       "later": "Later",
+      "likelyHeld": "You have {{held}}. Do you also have {{skill}}?",
+      "yesAdd": "Yes, add it",
+      "no": "No",
       "added": "{{name}} added to your profile",
       "failed": "Could not save that — try again"
     },
@@ -209,10 +212,10 @@
       "saved": "Saved to pipeline",
       "preparing": "Preparing application",
       "applied": "Applied",
-      "recruiterContact": "Recruiter contact",
+      "recruiterContact": "First contact",
       "interview": "Interview stage",
-      "technicalTest": "Technical test",
-      "finalRound": "Final round",
+      "technicalTest": "Task/test",
+      "finalRound": "Final interview",
       "offer": "Offer received",
       "rejected": "Rejected",
       "archived": "Archived"
@@ -220,6 +223,9 @@
     "queue": {
       "now": "now",
       "today": "today",
+      "tomorrow": "tomorrow",
+      "interview": "Job interview",
+      "interviewAt": "Job interview at {{time}}",
       "followUp": "Follow up",
       "applyDeadline": "Apply before the deadline",
       "noReply": "No reply yet — send a follow-up",
@@ -227,6 +233,7 @@
     },
     "tag": {
       "followUp": "follow-up",
+      "interview": "interview",
       "deadline": "deadline",
       "noReply": "no reply",
       "outreach": "Outreach"
@@ -260,7 +267,7 @@
     "techCount": "Technologies ({{n}})",
     "discard": "Discard",
     "applying": "Applying…",
-    "applyToCv": "Apply to Master CV",
+    "applyToCv": "Add to my CV",
     "mergesInfo": "Merges into your existing profile — nothing is overwritten with blanks.",
     "pdf": {
       "label": "Upload PDF",
@@ -285,6 +292,16 @@
       }
     }
   },
+  "pageBudget": {
+    "letter": {
+      "over": "The application runs to {{pages}} pages. Keep it to 1 page.",
+      "shorten": "Cut repetition and whatever matters least for this job, then export again."
+    },
+    "cv": {
+      "over": "The CV runs to {{pages}} pages. Keep it to 2 pages at most.",
+      "shorten": "Trim older or less relevant experience, then export again."
+    }
+  },
   "resumeBuilder": {
     "wizardStep": "Step 2 of 4 — Review and edit your tailored CV",
     "continueCover": "Continue to Cover Letter",
@@ -292,7 +309,7 @@
     "editorTab": "Editor",
     "previewTab": "Preview",
     "section": {
-      "aiTailor": "AI Tailoring & ATS",
+      "aiTailor": "Tailor to the job",
       "personal": "Personal Info",
       "experience": "Work Experience",
       "education": "Education",
@@ -383,19 +400,19 @@
       }
     },
     "aiTailor": {
-      "atsScore": "ATS score",
+      "atsScore": "Keyword match",
       "keywordCoverage": "{{pct}}% keyword coverage",
       "missing": "Missing",
       "instrPlaceholder": "e.g. emphasise leadership, drop anything older than 2018…",
       "retailoring": "Re-tailoring… (up to a minute)",
       "retailorCta": "Re-tailor this CV",
-      "retailorHint": "Regenerates the content from your master CV for this job. Your template, layout and styling stay as they are.",
+      "retailorHint": "Rewrites the content from your CV for this job. Your template, layout and styling stay as they are.",
       "summaryChanged": "Profile summary — what changed",
       "summaryUnchanged": "The summary is unchanged — experience and skill selections may still differ.",
       "discard": "Discard",
       "applyToDraft": "Apply to draft",
       "applyHint": "Applying replaces the draft's content with the regenerated version. Layout & styling are kept.",
-      "genFailed": "Generation failed — check your master CV and try again."
+      "genFailed": "Generation failed. Check your CV and try again."
     },
     "settings": {
       "themeColor": "Theme Color",
@@ -501,9 +518,9 @@
     },
     "preview": {
       "pdfDesigned": "PDF — Designed",
-      "pdfAts": "PDF — ATS",
+      "pdfAts": "PDF - simple (for job portals)",
       "print": "Print",
-      "atsTitle": "Text-based single-column PDF — selectable text, parseable by applicant tracking systems",
+      "atsTitle": "Simple one-column PDF with plain text that job portals and recruiting systems can read",
       "dragToResize": "Drag to resize"
     },
     "cv": {
@@ -670,7 +687,7 @@
       "shorter": "Shorter — aim for one page"
     },
     "toast": {
-      "genFailed": "CV generation failed — check your master CV and try again.",
+      "genFailed": "The CV could not be written. Check your CV and try again.",
       "draftFailed": "Generated, but the draft could not be created — try again"
     }
   },
@@ -679,15 +696,15 @@
     "pdfDesigned": "PDF — Designed",
     "finishEditing": "Finish editing first",
     "pdfDesignedDesc": "Pixel-perfect capture of this template",
-    "pdfAts": "PDF — ATS text",
-    "pdfAtsDesc": "Selectable text, parseable by tracking systems",
+    "pdfAts": "PDF - simple text",
+    "pdfAtsDesc": "Plain text that job portals and recruiting systems can read",
     "loadingApp": "Loading application…",
     "wordsGenerated": "{{words}} words · generated {{age}}",
     "notGenerated": "not generated yet",
     "editText": "Edit text",
     "templateLabel": "Template",
     "noFormatYet": "No {{format}} yet",
-    "generateHint": "Generate one from your master CV and this job's description.",
+    "generateHint": "Make one from your CV and this job ad.",
     "generating": "Generating…",
     "generateFormat": "Generate {{format}}",
     "reviseFab": "Revise",
@@ -702,6 +719,40 @@
     "refinementDiff": "Refinement diff",
     "accept": "Accept",
     "guardFindings": "Guard findings",
+    "gate": {
+      "title": "Letter gate",
+      "passed": "Passed",
+      "failed": "Failed",
+      "noVerdict": "No verdict",
+      "rounds": "After {{n}} rewrite(s)",
+      "stale": "You edited the letter after the gate checked it. The result applies to the earlier text.",
+      "needs": "Employer needs",
+      "point": {
+        "1": "Colour test (mostly about the employer)",
+        "8": "Forward, not backward",
+        "13": "Posting echo",
+        "14": "CV recap"
+      },
+      "stop": {
+        "OUT_OF_ROUNDS": "The letter still fails after the last rewrite. Fix the quoted sentences yourself.",
+        "OUT_OF_TIME": "There was no time for more rewrites. Fix the quoted sentences yourself.",
+        "REWRITE_FAILED": "The rewrite failed, so the letter is as the gate last saw it.",
+        "NO_VERDICT": "The gate could not give a verdict. Read the letter through yourself.",
+        "REWRITE_NOT_JUDGED": "The gate gave no verdict on the last rewrite, so the version before it is kept."
+      }
+    },
+    "exportCheck": {
+      "title": "Before you download the letter",
+      "failed": "The letter failed the gate. Fix the points below, or download it anyway.",
+      "noVerdict": "The gate has not given a verdict on this letter, so you don't know whether it holds up.",
+      "stale": "You edited the letter after the gate checked it, so the result does not apply to the text you are downloading.",
+      "recheck": "Check again",
+      "rechecking": "Checking...",
+      "exportAnyway": "Download anyway",
+      "recheckFailed": "The check could not run. Try again in a moment.",
+      "cannotRecheck": "This letter can't be checked again, because it isn't tied to a posting with text.",
+      "changedDuringCheck": "The letter was edited while the gate checked it, so the result was not saved. Check it again."
+    },
     "evidence": {
       "heading": "Thin on evidence",
       "body": "This letter scored {{score}}/100 on concrete proof — it argues without citing much of your actual work. Two questions about a project would give the next one something to point at.",
@@ -750,7 +801,7 @@
   "masterCv": {
     "import": "Import",
     "importTitle": "Import your CV",
-    "importDesc": "Upload a PDF, paste text, or use your LinkedIn PDF export. We'll parse it into your master CV.",
+    "importDesc": "Upload a PDF, paste text, or use your LinkedIn PDF export. We read it into your CV.",
     "yourName": "Your Name",
     "yourTitle": "Your Title",
     "present": "Present",
@@ -758,9 +809,9 @@
     "candidate": "Candidate",
     "exporting": "Exporting…",
     "export": "Export",
-    "pdfFull": "PDF — full (ATS-safe)",
+    "pdfFull": "PDF - full (readable by job portals)",
     "pdfFullDesc": "Selectable text, with your contact details",
-    "pdfAnon": "PDF — anonymised (ATS-safe)",
+    "pdfAnon": "PDF - anonymised (readable by job portals)",
     "pdfAnonDesc": "Initials only, no contact/photo/links",
     "openInBuilder": "Open in CV Builder",
     "openInBuilderDesc": "Style it first — templates, fonts, layout",
@@ -900,13 +951,13 @@
     "toast": {
       "loadFailed": "Failed to load profile",
       "pdfFailed": "PDF export failed — try again",
-      "renderFailed": "Could not build the CV render — check your master CV content",
+      "renderFailed": "Could not show the CV. Check what you have filled in.",
       "photoUpdated": "Photo updated",
       "photoFailed": "Photo upload failed",
       "photoRemoveFailed": "Could not remove the photo",
       "deleteFailed": "Delete failed",
       "certFailed": "Failed to add certification",
-      "saved": "Master CV saved",
+      "saved": "Your CV is saved",
       "saveFailed": "Save failed — check your entries and try again"
     }
   },
@@ -928,6 +979,14 @@
     "notFound": "Application not found.",
     "timeline": {
       "heading": "Progress"
+    },
+    "dates": {
+      "title": "Dates",
+      "hint": "Your own application deadline and interview time. We remind you by email a couple of days before.",
+      "deadline": "Application deadline",
+      "interview": "Interview",
+      "saved": "Dates saved",
+      "saveFailed": "Could not save the dates. Please try again."
     }
   },
   "jobDetails": {
@@ -991,13 +1050,13 @@
     }
   },
   "analysis": {
-    "editMasterCv": "Edit master CV",
+    "editMasterCv": "Edit my CV",
     "step1": "1 · What to judge against",
     "noJobs": "No saved roles or applications yet — save a role first, or paste a JD instead.",
-    "pastePlaceholder": "Paste the job description to judge your master CV against…",
+    "pastePlaceholder": "Paste the job ad to compare your CV with...",
     "analyzingLong": "Analyzing… (up to a minute)",
     "findGaps": "Find my skill gaps",
-    "analyzeCta": "Analyze my master CV",
+    "analyzeCta": "Check my CV",
     "skillGaps": "Skill gaps",
     "postingsAnalyzed": "{{count}} postings analyzed",
     "noGaps": "No meaningful gaps found — your profile covers what these roles ask for.",
@@ -1016,13 +1075,13 @@
       "suspicious": "Legit: suspicious"
     },
     "suggestions": "Suggested improvements",
-    "applyInCv": "Apply in Master CV",
-    "emptyTitle": "Get an honest score on your master CV",
+    "applyInCv": "Add to my CV",
+    "emptyTitle": "Get an honest score on your CV",
     "emptyDesc": "Strengths, gaps, and concrete fixes — generally or against a specific role.",
     "target": {
       "general": {
         "label": "General strength",
-        "hint": "Clarity, achievements, ATS readiness"
+        "hint": "Clarity, results, readable by job portals"
       },
       "job": {
         "label": "Against a job",
@@ -1038,7 +1097,7 @@
       }
     },
     "dim": {
-      "technical": "Technical skills",
+      "technical": "Skills match",
       "experience": "Experience",
       "culture": "Culture fit",
       "career": "Career alignment"
@@ -1050,7 +1109,7 @@
     },
     "toast": {
       "gapFailed": "Skill-gap analysis failed — try again",
-      "analyzeFailed": "Analysis failed — make sure your master CV has content, then try again"
+      "analyzeFailed": "The check failed. Make sure your CV has content, then try again."
     }
   },
   "analytics": {
@@ -1163,8 +1222,8 @@
       "applicationTextStandard": "The app's built-in voice for application texts: personal but professional, focused on concrete results, with soft skills shown through what you did rather than listed. A safe starting point when you have no strong preference.",
       "applicationTextFormField": "For the free-text box in an online application form. Max 200 words, no headings: who you are, one concrete example that proves it, why this workplace, and a calm close. Pick it when space is tight and you want to prove one thing well.",
       "applicationTextCompact": "A compact form-field text (max 200 words) with a fixed four-step structure ending in an invitation to talk. Slightly more conventional than the form-field prompt; good when the form asks for motivation as well as experience.",
-      "cvPlaintextTailoredEn": "An older plain-text CV prompt in English: groups technical skills by subcategory, gives spoken languages their own section and weaves soft skills into the experience text. Mainly useful as a reference when writing your own CV prompt.",
-      "cvPlaintextTailoredDa": "The Danish version of the plain-text CV prompt: technical skills grouped by subcategory, spoken languages as their own section, soft skills shown in the descriptions. Mainly useful as a reference when writing your own CV prompt.",
+      "cvPlaintextTailoredEn": "An older plain-text CV prompt in English: groups skills by tools, methods and domain knowledge, gives spoken languages their own section and weaves soft skills into the experience text. Mainly useful as a reference when writing your own CV prompt.",
+      "cvPlaintextTailoredDa": "The Danish version of the plain-text CV prompt: skills grouped by tools, methods and domain knowledge, spoken languages as their own section, soft skills shown in the descriptions. Mainly useful as a reference when writing your own CV prompt.",
       "cvPlaintextAngled": "A short, general plain-text CV prompt: reorder for relevance, use the posting's keywords, quantify where the facts allow. Mainly useful as a minimal starting point for your own CV prompt.",
       "coverLetterDanishMarket": "The default for Danish cover letters. Written as a Danish employer reads: short, plain Danish, informal 'du', one example thought through instead of three mentioned, and numbers only when your profile has them. Pick this unless you have a reason not to.",
       "coverLetterDanishClassic": "A more traditional Danish cover letter: a catchy opening, 2-3 experiences mapped to the main requirements and a clear call to action, under 350 words. Pick it for more formal employers or when you want a conventional structure.",
@@ -1321,7 +1380,7 @@
     },
     "cv": {
       "title": "Import your CV",
-      "subtitle": "Upload your CV, paste it, or use your LinkedIn PDF export — we'll pre-fill your master CV.",
+      "subtitle": "Upload your CV, paste it, or use your LinkedIn PDF export. We fill in your CV here from it.",
       "skip": "Skip for now"
     },
     "prefs": {
@@ -1353,8 +1412,8 @@
       "headline": "headline \"{{value}}\"",
       "skills": "{{n}} skills",
       "technologies": "{{n}} technologies",
-      "summary": "Imported {{items}} into your master CV.",
-      "applied": "Import applied to your master CV."
+      "summary": "Added {{items}} to your CV.",
+      "applied": "Added to your CV."
     },
     "error": {
       "profile": "Failed to save profile. Please try again.",
@@ -1370,7 +1429,7 @@
     "targets": {
       "intro": "Companies that hire people with your skills. Around half of Danish vacancies are never advertised — these are the ones worth an unsolicited application.",
       "includeHiringNow": "Include companies hiring right now",
-      "empty": "No targets yet. Add skills and technologies to your profile, and let the crawler build up some hiring history.",
+      "empty": "No suggestions yet. Add your skills to your profile, and give us a little time to collect job ads.",
       "write": "Write unsolicited",
       "reason": {
         "skillOverlap": "Hires for {{skills}}",
@@ -1402,7 +1461,7 @@
     "searchPlaceholder": "Search companies…",
     "count": "{{count}} companies",
     "loading": "Loading companies…",
-    "empty": "No companies yet — they appear as jobs get crawled and enriched.",
+    "empty": "No companies yet. They show up as we find new job ads.",
     "consulting": "consulting",
     "agency": "agency",
     "size": "Size",
@@ -1509,14 +1568,19 @@
       "saved": "Saved",
       "preparing": "Preparing",
       "applied": "Applied",
-      "screen": "Screen",
+      "screen": "First contact",
       "interview": "Interview",
-      "technical": "Technical",
-      "final": "Final",
+      "technical": "Task/test",
+      "final": "Final interview",
       "offer": "Offer",
       "rejected": "Rejected",
       "archived": "Archived"
-    }
+    },
+    "column": {
+      "inProgress": "In progress",
+      "closed": "Closed"
+    },
+    "changeStatus": "Change status"
   },
   "jobFeed": {
     "results": "results",
@@ -1535,7 +1599,7 @@
     "source": "Source",
     "loadingRoles": "Loading roles…",
     "noSearchResults": "No roles match your search.",
-    "noRecommendations": "No recommendations yet. Fill in your master CV skills & technologies — matching runs on those — or search the whole index above.",
+    "noRecommendations": "No suggestions yet. Add your skills to your CV, since that is what we match jobs on, or search all jobs above.",
     "backToFeed": "Back to feed",
     "matchScore": "match score",
     "salary": "Salary",
@@ -1628,7 +1692,15 @@
       "finance": "Finance",
       "marketing": "Marketing",
       "management": "Management",
-      "creativeMedia": "Creative & Media"
+      "creativeMedia": "Creative & Media",
+      "grcCompliance": "GRC, compliance & information security",
+      "legal": "Legal",
+      "sales": "Sales",
+      "hr": "HR",
+      "operationsLogistics": "Operations & logistics",
+      "customerService": "Customer service",
+      "healthcare": "Healthcare",
+      "education": "Education"
     },
     "docType": {
       "coverLetter": "Cover letter",
@@ -1643,7 +1715,7 @@
       "linkedin": "LinkedIn"
     },
     "match": {
-      "intro": "What Jobbuddy uses to score and recommend roles in your feed. Skills themselves come from your master CV.",
+      "intro": "What Jobbuddy uses to pick and rank jobs for you. Your skills themselves come from your CV.",
       "boost": "Boost keywords",
       "boostDesc": "Roles whose description mentions these score higher.",
       "boostPlaceholder": "e.g. design systems, greenfield…",
@@ -1652,6 +1724,13 @@
       "avoidPlaceholder": "e.g. on-call, gambling…",
       "industries": "Industries",
       "industriesDesc": "We prioritise roles in these sectors. Nothing selected = everything.",
+      "area": "Where should we look for jobs?",
+      "areaDesc": "We only prepare jobs within this distance of your home. Remote jobs and jobs with no known address are always included. 85 km is about an hour's drive.",
+      "areaHome": "Home (postcode or town)",
+      "areaHomePlaceholder": "e.g. 8260 Viby J",
+      "areaRadius": "Distance in km",
+      "excluded": "Categories I don't want to see",
+      "excludedDesc": "Jobs in these categories stay out of your feed and your matches, and we don't spend time preparing them. Nothing selected = show everything.",
       "seniority": "Seniority",
       "seniorityDesc": "The level you want surfaced",
       "remote": "Open to remote",
@@ -1673,7 +1752,7 @@
       "cvTemplateDefault": "System default"
     },
     "sectionPrompts": {
-      "heading": "CV section prompts",
+      "heading": "How each part of the CV is written",
       "intro": "Choose how each CV section is written. The chosen prompt is used every time a CV is tailored and when you refine a field, and it never overrides the honesty rules.",
       "saving": "Saving…",
       "saved": "Saved",
@@ -1721,7 +1800,7 @@
       "verified": "verified",
       "unverified": "unverified",
       "detailsPre": "Name, photo & contact details live in your",
-      "masterCvHeader": "Master CV header",
+      "masterCvHeader": "CV header",
       "verifyEmail": "Verify your email",
       "verifyDesc": "We'll send a fresh verification link to {{email}}",
       "sending": "Sending…",
@@ -1817,7 +1896,10 @@
       "provider": {
         "openai": "OpenAI",
         "gemini": "Google Gemini"
-      }
+      },
+      "storedTitle": "You have a saved API key",
+      "storedDesc": "You added it earlier, and Jobbuddy uses it when it writes for you. You can remove it here.",
+      "storedRemove": "Remove it"
     }
   },
   "apply": {
@@ -1843,7 +1925,7 @@
     "step3Unsolicited": "3 · About the company & what you're after (optional)",
     "charsWords": "{{chars}} chars · ~{{words}} words",
     "jdPlaceholder": "Paste the full job description here...\n\nMost roles work best with the whole listing — responsibilities, requirements, and the nice-to-haves. We'll pull out the keywords and tailor your CV around them.",
-    "unsolicitedPlaceholder": "What does the company do, why them, and what kind of role are you after?\n\nAnything you know about their stack, products, or plans makes the letter sharper — but you can leave this empty and let your master CV carry it.",
+    "unsolicitedPlaceholder": "What does the company do, why them, and what kind of job are you after?\n\nAnything you know about their products or plans makes the letter sharper, but you can leave this empty and let your CV carry it.",
     "tooShort": "That looks a bit short — paste the full listing for better tailoring.",
     "generateFromJd": "Generate from this JD",
     "format": "Format",
@@ -1868,7 +1950,7 @@
     "quickApplyHint": "Generates a tailored CV and a cover letter together, then shows them side by side.",
     "generationFailed": "Generation failed",
     "drafting": "Drafting your application...",
-    "draftingSub": "Reading the JD and matching it against your master CV.",
+    "draftingSub": "Reading the job ad and comparing it with your CV. A letter is checked afterwards and rewritten if it fails, so this usually takes a few minutes and at most 18 minutes.",
     "writing": "Writing...",
     "source": {
       "paste": {
@@ -1907,7 +1989,7 @@
     },
     "error": {
       "loadJob": "Could not load the selected job — you can still paste the description.",
-      "generateFailed": "Generation failed. Check that your master CV has content and try again."
+      "generateFailed": "Generation failed. Check that your CV has content and try again."
     }
   },
   "auth": {
@@ -1924,7 +2006,13 @@
       "signingIn": "Signing in…",
       "withLinkedIn": "Sign in with LinkedIn",
       "noAccount": "Don't have an account?",
-      "registerLink": "Register"
+      "registerLink": "Register",
+      "forgotPassword": "Forgot password?"
+    },
+    "reset": {
+      "sent": "If {{email}} has an account, we have sent it a link to choose a new password. Check your inbox.",
+      "needEmail": "Type your email above, then click \"Forgot password?\" again.",
+      "failed": "We could not send the email. Please try again in a moment."
     },
     "register": {
       "title": "Create your account",
@@ -1982,7 +2070,7 @@
     "newApplication": "New application",
     "tasks": "Tasks",
     "interviews": "Interviews",
-    "masterCv": "Master CV",
+    "masterCv": "My CV",
     "applications": "Applications",
     "documents": "Documents",
     "savedRoles": "Saved roles",
@@ -2020,5 +2108,95 @@
     "searchFailed": "Search failed. Try again in a moment.",
     "autosaveFailed": "Autosave failed. It will retry on your next edit.",
     "draftLoadFailed": "This draft could not be opened."
+  },
+  "chat": {
+    "launcher": "Ask JobBuddy",
+    "open": "Open the chat",
+    "title": "Chat with JobBuddy",
+    "close": "Close the chat",
+    "back": "All chats",
+    "newChat": "New chat",
+    "untitled": "New chat",
+    "yourChats": "Your chats",
+    "noChats": "You have no chats yet. Start one and ask anything about your job search.",
+    "lastActivity": "Last",
+    "rename": "Rename",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this chat? It cannot be recovered.",
+    "emptyChat": "What can I help with? You could ask how to sharpen an application, or what to prepare for an interview.",
+    "placeholder": "Write a message",
+    "send": "Send",
+    "stop": "Stop",
+    "thinking": "Thinking ...",
+    "errors": {
+      "CLAUDE_MISSING": "Claude Code was not found on this computer. Install Claude Code and try again.",
+      "NOT_LOGGED_IN": "You are not logged in to Claude Code. Open Claude Code, log in with your account and try again.",
+      "USAGE_LIMIT": "You have used what your Claude plan allows for now. Try again once the limit resets.",
+      "TIMEOUT": "The answer took too long, so it was stopped. Try again, perhaps with a shorter question.",
+      "CHAT_BUSY": "Wait for the answer to finish before you write again.",
+      "TOO_MANY_CHATS": "Other chats are already answering. Wait a moment and try again.",
+      "FAILED": "Something went wrong and no answer came. Try again.",
+      "NETWORK": "The connection to JobBuddy was lost. Try again."
+    },
+    "contextLost": "The earlier conversation is no longer stored in Claude Code. Your messages are still here, and the chat continues from a short summary of them, without the finer details.",
+    "actions": {
+      "OPEN_POSTING": "Open the posting",
+      "START_APPLICATION": "Start an application",
+      "SHOW_PIPELINE": "Show the pipeline",
+      "STEP_THROUGH": "Go through the {{count}} postings one at a time"
+    },
+    "plan": {
+      "kinds": {
+        "SAVE_POSTING": "Save the posting",
+        "IGNORE_POSTING": "Hide the posting",
+        "UPDATE_STATUS": "Change the application status",
+        "LOG_INTERVIEW": "Note an interview",
+        "GENERATE_DOCUMENTS": "Write a CV and cover letter"
+      },
+      "statusMove": "From {{from}} to {{to}}",
+      "interviewAt": "Interview {{when}}",
+      "waiting": "Nothing changes until you approve.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "states": {
+        "RUNNING": "Working ...",
+        "DONE": "Approved and done",
+        "REJECTED": "Rejected. Nothing changed."
+      },
+      "failures": {
+        "POSTING_GONE": "Could not be done: the posting no longer exists.",
+        "APPLICATION_GONE": "Could not be done: the application no longer exists.",
+        "CHANGED_SINCE": "Could not be done: the application changed after this was proposed. Ask the chat for a new proposal.",
+        "NOT_ALLOWED": "Could not be done: the app no longer allows that change.",
+        "INTERRUPTED": "The app closed while this ran. Check in the app whether it happened.",
+        "FAILED": "Something went wrong. Check in the app whether it happened, and otherwise try again from the chat."
+      },
+      "replaces": "Instead of {{when}}",
+      "ignoreNote": "It is also removed from your saved postings.",
+      "notSent": "Your decision did not reach the app. Try again.",
+      "waitingCount": "{{count}} proposals waiting",
+      "approveAll": "Approve all",
+      "rejectAll": "Reject all",
+      "writing": "Queued or being written now. Each posting takes a few minutes.",
+      "openDocuments": "Open and review",
+      "writeFailed": "The CV and cover letter could not be finished. A CV may already be on the application, so check it in the app, or try again from the chat."
+    }
+  },
+  "queue": {
+    "label": "Going through postings",
+    "position": "Posting {{n}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "apply": "Start an application",
+    "end": "End the walk-through"
+  },
+  "buddy": {
+    "alt": "Buddy, the JobBuddy axolotl",
+    "wait": {
+      "cvTitle": "Buddy is tailoring your CV",
+      "cvDetail": "He reads the posting and picks what fits it best from your profile.",
+      "import": "Buddy is reading your CV and sorting it into sections."
+    }
   }
 }

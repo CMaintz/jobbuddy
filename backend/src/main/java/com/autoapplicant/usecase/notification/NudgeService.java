@@ -4,11 +4,11 @@ import com.autoapplicant.domain.application.Application;
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.job.Job;
 import com.autoapplicant.domain.notification.Nudge;
+import com.autoapplicant.domain.notification.UpcomingDate;
 import com.autoapplicant.port.in.notification.GetNudgesUseCase;
 import com.autoapplicant.port.out.application.ApplicationRepositoryPort;
 import com.autoapplicant.port.out.job.JobRepositoryPort;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -53,18 +53,19 @@ public class NudgeService implements GetNudgesUseCase {
             Job job = jobs.get(app.jobId());
             if (job == null) continue;
 
+            LocalDate deadline = deadlineOf(app, job);
             if ((app.status() == ApplicationStatus.SAVED || app.status() == ApplicationStatus.PREPARING)
-                    && job.applicationDeadline() != null
-                    && !job.applicationDeadline().isBefore(today)
-                    && !job.applicationDeadline().isAfter(today.plusDays(DEADLINE_WINDOW_DAYS))) {
+                    && deadline != null
+                    && !deadline.isBefore(today)
+                    && !deadline.isAfter(today.plusDays(DEADLINE_WINDOW_DAYS))) {
                 deadlineNudges.add(Nudge.forApplication(Nudge.NudgeType.DEADLINE_SOON, app.id(),
-                        job.id(), job.title(), job.companyName(), job.applicationDeadline(), null));
+                        job.id(), job.title(), job.companyName(), deadline, null));
             }
 
             if (app.status() == ApplicationStatus.APPLIED
                     && app.appliedAt() != null
                     && (app.recruiterReply() == null || app.recruiterReply().isBlank())) {
-                long days = ChronoUnit.DAYS.between(app.appliedAt(), Instant.now());
+                long days = ChronoUnit.DAYS.between(app.appliedAt(), clock.instant());
                 if (days >= FOLLOW_UP_AFTER_DAYS) {
                     followUpNudges.add(Nudge.forApplication(Nudge.NudgeType.FOLLOW_UP, app.id(),
                             job.id(), job.title(), job.companyName(), null, (int) days));
@@ -78,8 +79,28 @@ public class NudgeService implements GetNudgesUseCase {
         // Things the user explicitly asked to be reminded of come first: they chose the date, so
         // it outranks anything the app inferred.
         List<Nudge> result = new ArrayList<>(dueNudges.findDueToday(userId));
+        // An interview is a date the user set and the one not to miss, so it goes ahead of
+        // deadlines: the dashboard shows only the first few nudges.
+        result.addAll(interviewNudges(userId));
         result.addAll(deadlineNudges);
         result.addAll(followUpNudges);
         return result;
+    }
+
+    /**
+     * The deadline the user entered wins over the crawled posting's: the user typed it because the
+     * posting had none, or had it wrong.
+     */
+    private static LocalDate deadlineOf(Application app, Job job) {
+        return app.deadline() != null ? app.deadline() : job.applicationDeadline();
+    }
+
+    /** Same rule as the reminder email, so the feed and the mail never disagree on an interview. */
+    private List<Nudge> interviewNudges(UUID userId) {
+        return dueNudges.findUpcoming(userId).stream()
+                .filter(upcoming -> upcoming.kind() == UpcomingDate.Kind.INTERVIEW)
+                .map(upcoming -> Nudge.forInterview(upcoming.applicationId(), upcoming.jobTitle(),
+                        upcoming.companyName(), upcoming.date(), upcoming.time()))
+                .toList();
     }
 }

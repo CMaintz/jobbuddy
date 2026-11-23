@@ -33,7 +33,7 @@ export function matchLabelKey(label: MatchLabel | undefined): string {
 @Component({
   selector: 'app-match-badge',
   imports: [TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './match-badge.component.html'
 })
 export class MatchBadgeComponent {

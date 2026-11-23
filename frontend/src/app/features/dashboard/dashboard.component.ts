@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -22,6 +22,8 @@ import { FunnelComponent } from '../../shared/components/funnel/funnel.component
 import { GoalRingComponent } from '../../shared/components/goal-ring/goal-ring.component';
 import { buildFunnelStages, buildHeatmapData, FunnelStage } from '../../shared/utils/application-insights';
 import { NotifyService } from '../../shared/services/notify.service';
+import { QueueItem, nudgeQueueItem } from './nudge-queue-item';
+import { NudgeQueueRowComponent } from './nudge-queue-row.component';
 
 const HEATMAP_WEEKS = 14;
 
@@ -55,15 +57,6 @@ const STATUS_FEED: Record<string, { what: string; color: string }> = {
   ARCHIVED: { what: 'dashboard.status.archived', color: 'var(--jb-text-dim)' },
 };
 
-interface QueueItem {
-  time: string;
-  what: string;
-  detail: string;
-  tag: string;
-  tone: 'accent' | 'info' | 'danger' | 'neutral' | 'violet' | 'success';
-  hot: boolean;
-}
-
 interface FeedItem {
   time: string;
   what: string;
@@ -82,8 +75,9 @@ interface SavedPreview {
   imports: [
     RouterLink, TranslateModule, JbIconComponent, JbButtonComponent, JbPillComponent, JbTopbarComponent,
     StatCardComponent, SparklineComponent, HeatmapComponent, FunnelComponent, GoalRingComponent,
+    NudgeQueueRowComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -95,6 +89,7 @@ export class DashboardComponent implements OnInit {
   private appsApi = inject(ApplicationsApiService);
   private jobsApi = inject(JobsApiService);
   private translate = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
   private activityStreak = inject(ActivityStreakService);
 
   get streak(): number {
@@ -162,6 +157,8 @@ export class DashboardComponent implements OnInit {
           hot: false,
         }));
         this.buildQueue(reminders, apps, nudges);
+        // Everything above lands in plain fields; this one load is the only async writer.
+        this.cdr.markForCheck();
       },
       error: this.notify.onError('notify.loadFailed')
     });
@@ -255,47 +252,7 @@ export class DashboardComponent implements OnInit {
     const app = n.applicationId ? appMap?.get(n.applicationId) : undefined;
     const detail = `${n.companyName ?? app?.jobCompanyName ?? ''}`
       + `${n.jobTitle || app?.jobTitle ? ' · ' + (n.jobTitle ?? app?.jobTitle) : ''}` || '—';
-    const overdue = !!n.deadline && new Date(n.deadline).getTime() < Date.now();
-
-    if (n.type === 'REMINDER_DUE') {
-      return {
-        time: overdue ? 'dashboard.queue.now' : 'dashboard.queue.today',
-        what: n.note || 'dashboard.queue.followUp',
-        detail,
-        tag: 'dashboard.tag.followUp',
-        tone: overdue ? 'danger' : 'info',
-        hot: overdue,
-      };
-    }
-    if (n.type === 'OUTREACH_FOLLOW_UP') {
-      return {
-        time: overdue ? 'dashboard.queue.now' : 'dashboard.queue.today',
-        what: 'dashboard.queue.outreachFollowUp',
-        detail: n.note ? `${n.companyName ?? ''} · ${n.note}` : (n.companyName ?? '—'),
-        tag: 'dashboard.tag.outreach',
-        tone: overdue ? 'danger' : 'info',
-        hot: overdue,
-      };
-    }
-    if (n.type === 'DEADLINE_SOON') {
-      const daysLeft = Math.max(0, Math.ceil((new Date(n.deadline ?? '').getTime() - Date.now()) / 86400000));
-      return {
-        time: daysLeft === 0 ? 'dashboard.queue.today' : `${daysLeft}d`,
-        what: 'dashboard.queue.applyDeadline',
-        detail,
-        tag: 'dashboard.tag.deadline',
-        tone: daysLeft <= 2 ? 'danger' : 'info',
-        hot: daysLeft <= 2,
-      };
-    }
-    return {
-      time: `${n.daysSinceApplied}d`,
-      what: 'dashboard.queue.noReply',
-      detail,
-      tag: 'dashboard.tag.noReply',
-      tone: 'violet',
-      hot: false,
-    };
+    return nudgeQueueItem(n, detail);
   }
 
   ageLabel(iso?: string): string {

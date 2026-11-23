@@ -1,15 +1,15 @@
 package com.autoapplicant.adapter.security;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Base64;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.Base64;
+import org.junit.jupiter.api.Test;
 
 class AesGcmSecretCipherTest {
 
     private static final String KEY = Base64.getEncoder().encodeToString(new byte[32]);
+    private static final int IV_BYTES = 12;
     private static final String API_KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789";
 
     @Test
@@ -34,7 +34,10 @@ class AesGcmSecretCipherTest {
     void a_tampered_ciphertext_fails_rather_than_yielding_garbage() {
         AesGcmSecretCipher cipher = new AesGcmSecretCipher(KEY);
         String stored = cipher.encrypt(API_KEY);
-        String tampered = stored.substring(0, stored.length() - 2) + (stored.endsWith("A=") ? "B=" : "A=");
+        byte[] raw = Base64.getDecoder().decode(stored);
+        // Past the 12-byte IV, so the flip lands in the ciphertext the GCM tag authenticates.
+        raw[IV_BYTES] ^= 1;
+        String tampered = Base64.getEncoder().encodeToString(raw);
         assertThatThrownBy(() -> cipher.decrypt(tampered)).isInstanceOf(IllegalStateException.class);
     }
 

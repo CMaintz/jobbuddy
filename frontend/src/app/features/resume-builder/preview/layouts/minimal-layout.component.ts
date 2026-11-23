@@ -9,7 +9,7 @@ import { CONTACT_ICONS } from '../../data/social-platforms';
 @Component({
   selector: 'app-minimal-layout',
   imports: [TranslateModule, SkillChipListComponent, RichTextPipe, SectionTypographyDirective],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './minimal-layout.component.html',
 })
 export class MinimalLayoutComponent {

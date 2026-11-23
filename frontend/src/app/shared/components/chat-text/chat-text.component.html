@@ -1,0 +1,25 @@
+<ng-template #line let-spans>@for (span of spans; track $index) {@switch (span.style) {@case ('bold') {<strong>{{ span.text }}</strong>}@case ('italic') {<em>{{ span.text }}</em>}@case ('code') {<code class="rounded bg-jb-bg px-1 font-mono text-[0.9em]">{{ span.text }}</code>}@default {{{ span.text }}}}}</ng-template>
+
+<div class="flex flex-col gap-2 whitespace-normal">
+  @for (block of blocks(); track $index) {
+    @switch (block.kind) {
+      @case ('paragraph') {
+        <p class="m-0 whitespace-pre-wrap"><ng-container *ngTemplateOutlet="line; context: { $implicit: block.spans }" /></p>
+      }
+      @case ('bullets') {
+        <ul class="m-0 pl-5 list-disc flex flex-col gap-0.5">
+          @for (item of block.items; track $index) {
+            <li><ng-container *ngTemplateOutlet="line; context: { $implicit: item }" /></li>
+          }
+        </ul>
+      }
+      @case ('numbers') {
+        <ol class="m-0 pl-5 list-decimal flex flex-col gap-0.5">
+          @for (item of block.items; track $index) {
+            <li><ng-container *ngTemplateOutlet="line; context: { $implicit: item }" /></li>
+          }
+        </ol>
+      }
+    }
+  }
+</div>
