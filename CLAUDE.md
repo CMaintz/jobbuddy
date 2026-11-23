@@ -291,7 +291,8 @@ Flyway manages all schema changes. Migration files live in `backend/src/main/res
 
 Required:
 - `OPENAI_API_KEY` — OpenAI key with access to `gpt-4o` and `text-embedding-3-small`
-- Firebase service account JSON at `.secrets/firebase-service-account.json`
+- Firebase service account JSON at `.secrets/firebase-service-account.json` (not in the `desktop`
+  profile, below)
 
 Optional (all have local defaults):
 - `SECRET_ENCRYPTION_KEY` — base64 AES key (16/24/32 bytes) encrypting users' own API keys at
@@ -302,6 +303,29 @@ Optional (all have local defaults):
   `POSTGRES_PASSWORD`; `.env.example` supplies one)
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (OAuth — separate from the job connector)
 - `ALLOWED_ORIGINS` (CORS)
+- `APP_DATA_DIR` - writable directory for uploads and logs (default: the working directory).
+  `LOG_DIR` still overrides the log location on its own.
+
+Desktop profile (`--spring.profiles.active=desktop`, `application-desktop.yml`): the backend on
+the user's own PC for one user, with no Firebase. `SecurityConfig` swaps the Firebase chain for
+`desktopFilterChain`: a fixed local user (`USER` role), the server bound to `127.0.0.1`, and every
+request, uploads and health included, must come from loopback with the shell's token in
+`X-JobBuddy-Token`. The one exception is `/mcp`, the chat's MCP server: its own chain
+(`mcpFilterChain`, ordered first) takes only a bearer token minted for one running chat turn
+(`McpGrants`), from loopback, revoked when the turn ends. `X-JobBuddy-Token` does not open `/mcp`,
+and the turn token opens nothing else. Firebase beans are `@Profile("!desktop")`; anything new
+that needs `FirebaseAuth` must be too, or the desktop app stops booting (`DesktopProfileBootTest`).
+- `JOBBUDDY_DESKTOP_TOKEN` (required) - per-launch secret from the shell, at least 32 characters.
+  Passed in the environment, so it never touches disk; `CliAgentEnvironment`'s allowlist keeps it
+  out of the agent CLI's environment.
+- `DESKTOP_SHELL_ORIGIN` - the only CORS origin (default `app://jobbuddy`).
+- `APP_DATA_DIR` defaults to `%LOCALAPPDATA%\JobBuddy` here.
+- `GENERATION_AI_PROVIDER` / `ENRICHMENT_CHAT_AI_PROVIDER` default to `claude-cli`; embeddings
+  still need an API key.
+- Off here, because the GitHub Actions crawl run owns them: `app.crawler.cron` (every source but
+  LinkedIn), the URL check and expiry. On here: LinkedIn planning and crawl (plans need the
+  user's Claude login; a residential IP suits LinkedIn), the enrichment and embedding sweeps,
+  and the reminder schedulers.
 
 AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app.linkedin.*`):
 - `GENERATION_AI_PROVIDER` — `openai` (default) | `gemini` | `claude-cli` | `codex` | `cli`. The
@@ -309,10 +333,17 @@ AI provider selection & feature toggles (see `application.yml` `app.ai.*` / `app
 - `ENRICHMENT_AI_PROVIDER` — must stay a real API (`openai`/`gemini`); it produces search embeddings.
 - `AI_CLI_COMMAND` - optional override of the local-agent command line (prompt on stdin). Blank
   picks a sandboxed default per provider: `claude -p --tools= --strict-mcp-config
-  --no-session-persistence` (no tools, no MCP, no transcript), or for `codex` `codex exec --sandbox
+  --no-session-persistence --setting-sources= --model <AI_CLI_MODEL>` (no tools, no MCP, no
+  transcript, none of the user's own Claude Code settings, pinned model), or for `codex` `codex exec --sandbox
   read-only --skip-git-repo-check --ignore-user-config --ephemeral -` (Codex cannot drop its tools,
   so its shell is read-only instead). Prompts carry crawled posting text, so an override replaces
   those flags and must carry its own. See `CliAgentCommands`.
+- `AI_CLI_MODEL` - Claude model for the default command (default `sonnet`); `AI_CLI_MODEL_LABEL`
+  overrides the name in the usage log. `AI_CLI_TIMEOUT_SECONDS` limits each CLI call (default
+  `120`); `AI_REQUEST_TIMEOUT_SECONDS` is the DeferredResult deadline (default `1080`: a letter's
+  five calls up to its first gate verdict, one retry included, plus one full gate round of three
+  calls, all at the per-call limit, plus margin). Raise both
+  together, and keep nginx `proxy_read_timeout` above the request deadline.
 - `AUTO_REVIEW_ENABLED` — automatic reviewer critique/revise pass after generation (default `true`).
 - `EVIDENCE_ELICITATION_ENABLED` — AI assist for skill-evidence capture (tailored questions +
   restructuring a free-text answer). Off = template questions and the user's raw text; the feature

@@ -27,11 +27,14 @@ class ActiveCrawlsTest {
     }
 
     @Test
-    void startupClearsRunningFlagsLeftByThePreviousProcess() {
-        // A fresh JVM has no crawl in progress, so any flag still set was left by a crash.
+    void startupClearsAStaleRunningFlagButKeepsAFreshOne() {
+        // The database is shared with crawls in other processes (the scheduled crawl), so a
+        // fresh flag at startup can belong to a live crawl elsewhere.
+        Instant longAgo = Instant.now().minus(STALE_AFTER).minusSeconds(60);
         when(repo.findAll()).thenReturn(List.of(
-                state("TEAMTAILOR", true, Instant.now()),
-                state("GREENHOUSE", false, Instant.now())));
+                state("JOBINDEX", true, Instant.now().minusSeconds(60)),
+                state("TEAMTAILOR", true, longAgo),
+                state("GREENHOUSE", false, longAgo)));
 
         activeCrawls.clearLeftoverRunningFlags();
 

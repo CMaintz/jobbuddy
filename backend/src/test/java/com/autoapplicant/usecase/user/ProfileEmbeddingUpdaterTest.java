@@ -26,10 +26,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,7 +42,6 @@ import org.springframework.transaction.event.TransactionalEventListenerFactory;
 class ProfileEmbeddingUpdaterTest {
 
     private static final long ASYNC_WAIT_MS = 5_000;
-    private static final long OVERLAP_WINDOW_MS = 200;
     private static final int BURST = 5;
     private static final float[] VECTOR = {0.1f, 0.2f};
     private static final String MODEL = "text-embedding-3-small";
@@ -115,25 +114,31 @@ class ProfileEmbeddingUpdaterTest {
     @Test
     void refreshes_for_one_user_never_overlap() throws Exception {
         storedProfile("Backend engineer");
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        AtomicInteger started = new AtomicInteger();
         AtomicInteger inFlight = new AtomicInteger();
         AtomicInteger maxInFlight = new AtomicInteger();
         when(aiProvider.embed(anyString())).thenAnswer(inv -> {
             maxInFlight.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
-            Thread.sleep(OVERLAP_WINDOW_MS);
+            if (started.incrementAndGet() == 1) {
+                firstStarted.countDown();
+                assertThat(releaseFirst.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS)).isTrue();
+            }
             inFlight.decrementAndGet();
             return VECTOR;
         });
         when(aiProvider.embeddingModelName()).thenReturn(MODEL);
         ProfileEmbeddingUpdater updater = updater();
-        ExecutorService pool = Executors.newFixedThreadPool(2);
-        try {
-            Future<?> first = pool.submit(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
-            Future<?> second = pool.submit(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
-            first.get(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
-            second.get(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
-        } finally {
-            pool.shutdownNow();
-        }
+
+        Thread first = saveOnNewThread(updater);
+        assertThat(firstStarted.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        Thread second = saveOnNewThread(updater);
+        // Without the lock the second refresh reaches embed instead of parking, so stop on either.
+        awaitUntil(() -> second.getState() == Thread.State.WAITING || started.get() > 1);
+        assertThat(started.get()).isEqualTo(1);
+        releaseFirst.countDown();
+        joinAll(first, second);
 
         assertThat(maxInFlight.get()).isEqualTo(1);
     }
@@ -148,27 +153,24 @@ class ProfileEmbeddingUpdaterTest {
         when(aiProvider.embed(anyString())).thenAnswer(inv -> {
             if (calls.incrementAndGet() == 1) {
                 firstStarted.countDown();
-                releaseFirst.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
+                assertThat(releaseFirst.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS)).isTrue();
             }
             return VECTOR;
         });
         when(aiProvider.embeddingModelName()).thenReturn(MODEL);
         ProfileEmbeddingUpdater updater = updater();
-        ExecutorService pool = Executors.newFixedThreadPool(2);
-        try {
-            Future<?> running = pool.submit(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
-            firstStarted.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
-            Future<?> queued = pool.submit(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
-            Thread.sleep(OVERLAP_WINDOW_MS);
-            for (int i = 0; i < BURST; i++) {
-                updater.onProfileSaved(new ProfileSavedEvent(userId));
-            }
-            releaseFirst.countDown();
-            running.get(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
-            queued.get(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS);
-        } finally {
-            pool.shutdownNow();
+
+        Thread running = saveOnNewThread(updater);
+        assertThat(firstStarted.await(ASYNC_WAIT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        Thread queued = saveOnNewThread(updater);
+        // The queued save registers as waiting before it parks on the user lock, so once it is
+        // parked every later save must see it and be dropped.
+        awaitUntil(() -> queued.getState() == Thread.State.WAITING);
+        for (int i = 0; i < BURST; i++) {
+            updater.onProfileSaved(new ProfileSavedEvent(userId));
         }
+        releaseFirst.countDown();
+        joinAll(running, queued);
 
         assertThat(calls.get()).isEqualTo(2);
     }
@@ -193,6 +195,29 @@ class ProfileEmbeddingUpdaterTest {
 
             verify(embeddingRepo, timeout(ASYNC_WAIT_MS)).save(any());
             assertThat(embeddingThread.get()).isNotSameAs(Thread.currentThread());
+        }
+    }
+
+    // A dedicated thread, not a pool worker: an idle pool worker is also WAITING, so its state
+    // could not tell "parked on the user lock" apart from "not started yet".
+    private Thread saveOnNewThread(ProfileEmbeddingUpdater updater) {
+        Thread thread = new Thread(() -> updater.onProfileSaved(new ProfileSavedEvent(userId)));
+        thread.start();
+        return thread;
+    }
+
+    private static void awaitUntil(BooleanSupplier condition) {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(ASYNC_WAIT_MS);
+        while (!condition.getAsBoolean()) {
+            assertThat(System.nanoTime()).as("condition not met in time").isLessThan(deadline);
+            Thread.onSpinWait();
+        }
+    }
+
+    private static void joinAll(Thread... threads) throws InterruptedException {
+        for (Thread thread : threads) {
+            thread.join(ASYNC_WAIT_MS);
+            assertThat(thread.isAlive()).as("save still running").isFalse();
         }
     }
 

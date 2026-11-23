@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService, EMAIL_NOT_VERIFIED } from '../../../core/auth/auth.service';
 
+export type ResetStatus = 'idle' | 'sending' | 'sent' | 'needEmail' | 'tooManyRequests' | 'failed';
+
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink, TranslateModule],
@@ -41,6 +43,23 @@ export class LoginComponent {
     });
   }
 
+  resetStatus = signal<ResetStatus>('idle');
+
+  async sendPasswordReset(): Promise<void> {
+    const email = this.form.controls.email;
+    if (email.invalid) {
+      this.resetStatus.set('needEmail');
+      return;
+    }
+    this.resetStatus.set('sending');
+    try {
+      await this.authService.sendPasswordReset(email.value!);
+      this.resetStatus.set('sent');
+    } catch (e) {
+      this.resetStatus.set(resetFailure((e as { code?: string })?.code));
+    }
+  }
+
   signInWithLinkedIn(): void {
     const redirectUri = window.location.origin + '/auth/linkedin/callback';
     window.location.href = this.authService.buildLinkedInAuthUrl(redirectUri);
@@ -55,5 +74,17 @@ export class LoginComponent {
       case 'auth/too-many-requests': return 'auth.error.tooManyRequests';
       default: return 'auth.error.signInFailed';
     }
+  }
+}
+
+/**
+ * An unknown address gets the same "sent" answer as a known one. Saying "no such account"
+ * would let anyone probe which emails are registered.
+ */
+function resetFailure(code: string | undefined): ResetStatus {
+  switch (code) {
+    case 'auth/user-not-found': return 'sent';
+    case 'auth/too-many-requests': return 'tooManyRequests';
+    default: return 'failed';
   }
 }

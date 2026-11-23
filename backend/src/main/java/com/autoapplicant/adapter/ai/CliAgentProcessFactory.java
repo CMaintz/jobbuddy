@@ -45,11 +45,21 @@ final class CliAgentProcessFactory {
      * {@code provider} and the program resolved against that env's PATH.
      */
     static ProcessBuilder create(String command, Path workDir, String provider) {
+        return create(parseCommand(command), workDir, provider);
+    }
+
+    /**
+     * As {@link #create(String, Path, String)}, for an argv the caller built itself, so an
+     * argument may contain spaces (a file path under the user's profile, say).
+     *
+     * @throws IllegalArgumentException the program is a batch file and an argument holds a
+     *     character cmd.exe would interpret
+     */
+    static ProcessBuilder create(List<String> argv, Path workDir, String provider) {
         ProcessBuilder pb = new ProcessBuilder();
         pb.directory(workDir.toFile());
         CliAgentEnvironment.restrict(pb.environment(), provider);
-        pb.command(CliAgentExecutable.resolve(
-                parseCommand(command), pb.environment(), CliAgentExecutable.isWindows()));
+        pb.command(CliAgentExecutable.resolve(argv, pb.environment(), CliAgentExecutable.isWindows()));
         return pb;
     }
 
