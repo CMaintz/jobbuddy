@@ -1,183 +1,124 @@
 package com.autoapplicant.adapter.persistence.mapper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.autoapplicant.adapter.persistence.entity.*;
 import com.autoapplicant.domain.user.*;
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class ProfileSectionMapperTest {
 
-    // ── WorkExperience ────────────────────────────────────────────────────────
+    private static final UUID ID = UUID.fromString("00000000-0000-0000-0000-00000000000a");
+    private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-00000000000b");
+
+    // Each round trip sets every persisted field to a distinct value, so a setter dropped from
+    // toEntity or a getter swapped in toDomain shows up as a field mismatch. createdAt/updatedAt
+    // are stamped by the entity lifecycle callbacks, never copied from the domain.
 
     @Test
-    void work_experience_null_arrays_map_to_empty_list() {
-        WorkExperienceEntity e = workExperienceEntity(null, null);
+    void work_experience_round_trip_preserves_every_field() {
+        WorkExperience original = new WorkExperience(ID, USER_ID, "Acme Corp", "Engineer",
+                "Copenhagen", "Built the billing platform",
+                LocalDate.of(2020, 1, 1), LocalDate.of(2023, 6, 30), true,
+                List.of("Java", "Spring"), List.of("Led team"), 3, null, null, List.of());
 
-        WorkExperience d = ProfileSectionMapper.toDomain(e);
+        WorkExperience roundTripped = ProfileSectionMapper.toDomain(ProfileSectionMapper.toEntity(original));
 
-        assertThat(d.technologies()).isEmpty();
-        assertThat(d.achievements()).isEmpty();
+        assertThat(roundTripped).usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt").isEqualTo(original);
     }
 
     @Test
-    void work_experience_arrays_map_to_lists() {
-        WorkExperienceEntity e = workExperienceEntity(
-                new String[]{"Java", "Spring"}, new String[]{"Led team"});
+    void project_round_trip_preserves_every_field() {
+        Project original = new Project(ID, USER_ID, "My Project", "A side project",
+                List.of("React", "Node"), "https://github.com/me/proj", "https://proj.example.com",
+                "Event-sourced core", "Cut p99 latency by 40%", "Saved 2 FTE",
+                LocalDate.of(2021, 3, 1), LocalDate.of(2022, 4, 1), true, 5, null, null, List.of());
 
-        WorkExperience d = ProfileSectionMapper.toDomain(e);
+        Project roundTripped = ProfileSectionMapper.toDomain(ProfileSectionMapper.toEntity(original));
 
-        assertThat(d.technologies()).containsExactly("Java", "Spring");
-        assertThat(d.achievements()).containsExactly("Led team");
+        assertThat(roundTripped).usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt").isEqualTo(original);
     }
 
     @Test
-    void work_experience_toEntity_round_trip() {
-        WorkExperienceEntity e = workExperienceEntity(new String[]{"Kotlin"}, new String[]{});
-        WorkExperience domain = ProfileSectionMapper.toDomain(e);
+    void education_round_trip_preserves_every_field() {
+        Education original = new Education(ID, USER_ID, "DTU", "BSc", "Computer Science",
+                LocalDate.of(2015, 9, 1), LocalDate.of(2018, 6, 30), "Thesis on compilers",
+                "12.0", 2, null, null, List.of());
 
-        WorkExperienceEntity back = ProfileSectionMapper.toEntity(domain);
+        Education roundTripped = ProfileSectionMapper.toDomain(ProfileSectionMapper.toEntity(original));
 
-        assertThat(back.getTechnologies()).containsExactly("Kotlin");
-        assertThat(back.getCompanyName()).isEqualTo("Acme Corp");
-        assertThat(back.getTitle()).isEqualTo("Engineer");
-    }
-
-    // ── Project ───────────────────────────────────────────────────────────────
-
-    @Test
-    void project_null_technologies_map_to_empty_list() {
-        ProjectEntity e = projectEntity(null);
-
-        Project d = ProfileSectionMapper.toDomain(e);
-
-        assertThat(d.technologies()).isEmpty();
+        assertThat(roundTripped).usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt").isEqualTo(original);
     }
 
     @Test
-    void project_technologies_map_to_list() {
-        ProjectEntity e = projectEntity(new String[]{"React", "Node"});
+    void certification_round_trip_preserves_every_field() {
+        Certification original = new Certification(ID, USER_ID, "AWS Solutions Architect", "Amazon",
+                LocalDate.of(2023, 1, 1), LocalDate.of(2026, 1, 1), "https://example.com/cred", null);
 
-        Project d = ProfileSectionMapper.toDomain(e);
+        Certification roundTripped = ProfileSectionMapper.toDomain(ProfileSectionMapper.toEntity(original));
 
-        assertThat(d.technologies()).containsExactly("React", "Node");
+        assertThat(roundTripped).usingRecursiveComparison()
+                .ignoringFields("createdAt").isEqualTo(original);
     }
 
-    @Test
-    void project_toEntity_preserves_fields() {
-        ProjectEntity e = projectEntity(new String[]{"Go"});
-        Project domain = ProfileSectionMapper.toDomain(e);
-
-        ProjectEntity back = ProfileSectionMapper.toEntity(domain);
-
-        assertThat(back.getName()).isEqualTo("My Project");
-        assertThat(back.getTechnologies()).containsExactly("Go");
+    // Rows written before a column existed come back with null arrays; callers iterate these
+    // lists without null checks.
+    static Stream<Named<Supplier<List<String>>>> nullArrayColumns() {
+        return Stream.of(
+                Named.of("work experience technologies", () -> {
+                    WorkExperienceEntity e = workExperienceEntity();
+                    e.setTechnologies(null);
+                    return ProfileSectionMapper.toDomain(e).technologies();
+                }),
+                Named.of("work experience achievements", () -> {
+                    WorkExperienceEntity e = workExperienceEntity();
+                    e.setAchievements(null);
+                    return ProfileSectionMapper.toDomain(e).achievements();
+                }),
+                Named.of("project technologies", () -> {
+                    ProjectEntity e = projectEntity();
+                    e.setTechnologies(null);
+                    return ProfileSectionMapper.toDomain(e).technologies();
+                }));
     }
 
-    // ── Education ─────────────────────────────────────────────────────────────
-
-    @Test
-    void education_toDomain_maps_all_fields() {
-        EducationEntity e = educationEntity();
-
-        Education d = ProfileSectionMapper.toDomain(e);
-
-        assertThat(d.institution()).isEqualTo("DTU");
-        assertThat(d.degree()).isEqualTo("BSc");
-        assertThat(d.fieldOfStudy()).isEqualTo("Computer Science");
-        assertThat(d.skills()).isEmpty();
-    }
-
-    @Test
-    void education_toEntity_round_trip() {
-        EducationEntity e = educationEntity();
-        Education domain = ProfileSectionMapper.toDomain(e);
-
-        EducationEntity back = ProfileSectionMapper.toEntity(domain);
-
-        assertThat(back.getInstitution()).isEqualTo("DTU");
-        assertThat(back.getDegree()).isEqualTo("BSc");
-    }
-
-    // ── Certification ─────────────────────────────────────────────────────────
-
-    @Test
-    void certification_toDomain_maps_all_fields() {
-        UUID id = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        CertificationEntity e = new CertificationEntity();
-        e.setId(id);
-        e.setUserId(userId);
-        e.setName("AWS Solutions Architect");
-        e.setIssuer("Amazon");
-        e.setIssuedAt(LocalDate.of(2023, 1, 1));
-        e.setCredentialUrl("https://example.com");
-
-        Certification d = ProfileSectionMapper.toDomain(e);
-
-        assertThat(d.id()).isEqualTo(id);
-        assertThat(d.userId()).isEqualTo(userId);
-        assertThat(d.name()).isEqualTo("AWS Solutions Architect");
-        assertThat(d.issuer()).isEqualTo("Amazon");
-        assertThat(d.credentialUrl()).isEqualTo("https://example.com");
-    }
-
-    @Test
-    void certification_toEntity_round_trip() {
-        CertificationEntity e = new CertificationEntity();
-        e.setId(UUID.randomUUID());
-        e.setUserId(UUID.randomUUID());
-        e.setName("GCP Associate");
-        e.setIssuer("Google");
-        Certification domain = ProfileSectionMapper.toDomain(e);
-
-        CertificationEntity back = ProfileSectionMapper.toEntity(domain);
-
-        assertThat(back.getName()).isEqualTo("GCP Associate");
-        assertThat(back.getIssuer()).isEqualTo("Google");
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("nullArrayColumns")
+    void null_array_column_maps_to_empty_list(Supplier<List<String>> mappedList) {
+        assertThat(mappedList.get()).isNotNull().isEmpty();
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
-    private WorkExperienceEntity workExperienceEntity(String[] technologies, String[] achievements) {
+    private static WorkExperienceEntity workExperienceEntity() {
         WorkExperienceEntity e = new WorkExperienceEntity();
-        e.setId(UUID.randomUUID());
-        e.setUserId(UUID.randomUUID());
+        e.setId(ID);
+        e.setUserId(USER_ID);
         e.setCompanyName("Acme Corp");
         e.setTitle("Engineer");
         e.setStartDate(LocalDate.of(2020, 1, 1));
-        e.setCurrent(false);
-        e.setDisplayOrder(0);
-        e.setTechnologies(technologies);
-        e.setAchievements(achievements);
+        e.setTechnologies(new String[]{"Java"});
+        e.setAchievements(new String[]{"Led team"});
         return e;
     }
 
-    private ProjectEntity projectEntity(String[] technologies) {
+    private static ProjectEntity projectEntity() {
         ProjectEntity e = new ProjectEntity();
-        e.setId(UUID.randomUUID());
-        e.setUserId(UUID.randomUUID());
+        e.setId(ID);
+        e.setUserId(USER_ID);
         e.setName("My Project");
-        e.setFeatured(false);
-        e.setDisplayOrder(0);
-        e.setTechnologies(technologies);
-        return e;
-    }
-
-    private EducationEntity educationEntity() {
-        EducationEntity e = new EducationEntity();
-        e.setId(UUID.randomUUID());
-        e.setUserId(UUID.randomUUID());
-        e.setInstitution("DTU");
-        e.setDegree("BSc");
-        e.setFieldOfStudy("Computer Science");
-        e.setStartDate(LocalDate.of(2015, 9, 1));
-        e.setDisplayOrder(0);
+        e.setTechnologies(new String[]{"Go"});
         return e;
     }
 }
