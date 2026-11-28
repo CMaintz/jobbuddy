@@ -9,7 +9,7 @@
       </div>
       <jb-page-budget-warning class="w-full max-w-[794px]" [budget]="exportedPages.current()" />
       @if (previewFailed()) {
-        <p role="status" class="w-full max-w-[794px] text-sm text-jb-text-dim">{{ 'resumeBuilder.preview.unavailable' | translate }}</p>
+        <p role="status" class="w-full max-w-[794px] text-sm text-jb-text-dim">{{ (previewBusy() ? 'resumeBuilder.preview.busy' : 'resumeBuilder.preview.unavailable') | translate }}</p>
       }
 
       <!-- The pages of the PDF itself, rendered by the backend -->

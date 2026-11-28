@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AtsPdfService } from '../../../shared/services/ats-pdf.service';
-import { DocumentRenderApiService } from '../../../core/api/document-render.api';
+import { DocumentRenderApiService, RendererBusyError } from '../../../core/api/document-render.api';
+import { NotifyService } from '../../../shared/services/notify.service';
 import { ResumeDesign } from '../../../core/models/resume-design.model';
 import { ResumeDraftApiService } from '../services/resume-draft-api.service';
 import { ResumeStateService } from '../services/resume-state.service';
@@ -126,5 +127,26 @@ describe('ResumePreviewComponent page budget', () => {
 
     const exported: ResumeDesign = render.exportResumePdf.mock.lastCall![0];
     expect(exported.labels['experience']).toBe('Experience');
+  });
+
+  it('says the renderer is busy, not that the export failed, when every slot is taken', async () => {
+    // Bug: a busy renderer reads "something went wrong", so she thinks the CV is broken.
+    render.exportResumePdf.mockReturnValue(Promise.reject(new RendererBusyError()));
+    const error = vi.spyOn(TestBed.inject(NotifyService), 'error');
+
+    await fixture.componentInstance.downloadPdf();
+
+    expect(error).toHaveBeenCalledWith('notify.rendererBusy');
+  });
+
+  it('says the preview is waiting for the renderer when every slot is taken', async () => {
+    render.previewResume.mockReturnValue(throwError(() => new RendererBusyError()));
+    state.updatePersonalInfo({ fullName: 'Mette Højgaard' });
+    fixture.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, PREVIEW_SETTLE_MS));
+    fixture.detectChanges();
+
+    const status = (fixture.nativeElement as HTMLElement).querySelector('[role="status"]');
+    expect(status?.textContent).toContain('resumeBuilder.preview.busy');
   });
 });

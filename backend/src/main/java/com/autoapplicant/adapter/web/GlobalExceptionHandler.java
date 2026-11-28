@@ -6,6 +6,7 @@ import com.autoapplicant.domain.common.AccountExistsException;
 import com.autoapplicant.domain.common.CvParseException;
 import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.domain.document.structured.LetterChangedDuringCheckException;
+import com.autoapplicant.port.out.document.DocumentRendererBusyException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -77,6 +78,12 @@ public class GlobalExceptionHandler {
                 ? HttpStatus.TOO_MANY_REQUESTS
                 : HttpStatus.CONFLICT;
         return error(status, ex.failure().name(), ex.getMessage(), req);
+    }
+
+    /** Like too many chats: nothing is wrong with the request, so the client offers a retry. */
+    @ExceptionHandler(DocumentRendererBusyException.class)
+    public ResponseEntity<ApiError> handleRendererBusy(DocumentRendererBusyException ex, WebRequest req) {
+        return error(HttpStatus.TOO_MANY_REQUESTS, DocumentRendererBusyException.CODE, ex.getMessage(), req);
     }
 
     @ExceptionHandler({SecurityException.class, AccessDeniedException.class})

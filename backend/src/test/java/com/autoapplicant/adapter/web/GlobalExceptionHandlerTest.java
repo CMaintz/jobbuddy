@@ -13,6 +13,7 @@ import com.autoapplicant.domain.common.NotFoundException;
 import com.autoapplicant.port.in.auth.ProvisionFirebaseUserUseCase;
 import com.autoapplicant.port.in.auth.ResolveLinkedInUserUseCase;
 import com.autoapplicant.port.in.user.ManageSpokenLanguagesUseCase;
+import com.autoapplicant.port.out.document.DocumentRendererBusyException;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,6 +109,16 @@ class GlobalExceptionHandlerTest {
         mvc.perform(get(BASE))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").doesNotExist());
+    }
+
+    /** Bug caught: a busy renderer surfaces as a 500, so the client shows a failure, not "try again". */
+    @Test
+    void a_busy_renderer_is_429_with_a_code_the_client_can_match() throws Exception {
+        when(service.getLanguages(eq(userId))).thenThrow(new DocumentRendererBusyException("busy"));
+
+        mvc.perform(get(BASE))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value(DocumentRendererBusyException.CODE));
     }
 
     @Test
