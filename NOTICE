@@ -16,3 +16,10 @@ Fonts for the document renderer
   Licence: SIL Open Font License 1.1; each family's licence file sits beside its fonts.
   Changes: Noto Sans (notosans/) subset to Latin, Greek and Cyrillic; variable font files
            renamed without their axis tags.
+
+Icons in the CV layouts
+  File:    backend/src/main/resources/typst/resume.typ (the line-icons table)
+  Source:  Lucide 1.51.0, https://github.com/lucide-icons/lucide; brand marks from Lucide 0.400.0
+  Licence: ISC, with the Feather-derived icons under MIT; full text in
+           backend/src/main/resources/typst/LICENSE-lucide.txt
+  Changes: SVG path data copied into a Typst dictionary; no shapes altered.
