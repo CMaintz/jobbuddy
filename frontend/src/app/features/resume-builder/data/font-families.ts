@@ -1,3 +1,5 @@
+import { ResumeSettings } from '../models/resume-builder.models';
+
 export interface FontOption {
   label: string;
   value: string;
@@ -28,3 +30,28 @@ export const FONT_FAMILIES: FontOption[] = [
   { label: 'Courier New', value: 'Courier New', category: 'mono' },
   { label: 'JetBrains Mono', value: 'JetBrains Mono', category: 'mono' },
 ];
+
+/**
+ * Fonts the picker no longer offers, and the offered font each prints as (TypstFonts maps
+ * Helvetica to the Arial clone). Saved drafts may still name them, and the picker would show
+ * nothing selected.
+ */
+const REMOVED_FONTS: ReadonlyMap<string, string> = new Map([
+  ['Helvetica', 'Arial'],
+  ['Khand', 'Inter'],
+]);
+
+function offeredFont(font: string): string {
+  return REMOVED_FONTS.get(font) ?? font;
+}
+
+/** The settings with every removed font replaced by the offered font that prints in its place. */
+export function withOfferedFonts(settings: ResumeSettings): ResumeSettings {
+  const sectionTypography = Object.fromEntries(
+    Object.entries(settings.sectionTypography ?? {}).map(([id, typo]) => [
+      id,
+      typo.fontFamily ? { ...typo, fontFamily: offeredFont(typo.fontFamily) } : typo,
+    ]),
+  );
+  return { ...settings, fontFamily: offeredFont(settings.fontFamily), sectionTypography };
+}
