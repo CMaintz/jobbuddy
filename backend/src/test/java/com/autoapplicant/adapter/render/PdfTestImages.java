@@ -1,4 +1,4 @@
-package com.autoapplicant.adapter.pdf;
+package com.autoapplicant.adapter.render;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
