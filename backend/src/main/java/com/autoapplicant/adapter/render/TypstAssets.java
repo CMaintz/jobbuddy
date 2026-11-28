@@ -27,7 +27,8 @@ import org.springframework.stereotype.Component;
  * directories. Typst reads fonts and packages from disk, and inside the boot jar they are not
  * files, so they are copied out into the app data directory, once per set of fonts. A start
  * reuses what an earlier one installed: the desktop shell stops the backend with a forced kill,
- * so nothing installed per start would ever be cleaned up.
+ * so nothing installed per start would ever be cleaned up. Each start instead removes the copies
+ * an earlier font set left behind; see {@link TypstAssetsPruner}.
  *
  * <p>Both package directories are bundled and start empty. A template can only import a package
  * someone placed there; Typst would download anything else, which {@link TypstCommand} prevents.
@@ -61,6 +62,9 @@ public final class TypstAssets {
         // Typst runs inside each render's workspace, so a relative path would point nowhere and
         // it would silently fall back to its own built-in fonts.
         this.home = parent.toAbsolutePath().normalize().resolve(fingerprint(fonts));
+        // Pruning first frees the space an install may need: on a disk filled by old copies, an
+        // install that ran first would fail on every start and the copies would never go.
+        TypstAssetsPruner.pruneOtherCopies(home.getParent(), home);
         if (!Files.isRegularFile(home.resolve(INSTALLED_MARKER))) install(fonts, parent);
         Files.createDirectories(packageDir());
         Files.createDirectories(packageCacheDir());
