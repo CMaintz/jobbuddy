@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
@@ -65,14 +66,18 @@ final class TypstAssetsPruner {
     }
 
     /**
-     * Renames before deleting so a copy is either whole or no longer looks installed. On Windows
-     * the rename fails while a render has one of its fonts open, which leaves that copy intact for
-     * the next start.
+     * Renames before deleting so a copy is either whole or no longer looks installed. Nothing in
+     * this process renders yet, since this runs while the assets are being set up, and the desktop
+     * app runs one backend at a time, so an older copy is normally unused. If another backend does
+     * have it open, Windows usually refuses the rename and the copy stays for the next start; that
+     * is not guaranteed for every way a file can be open.
      */
     private static void moveAsideAndDelete(Path copy) {
         Path doomed = copy.resolveSibling(DOOMED_PREFIX + name(copy));
         try {
             Files.move(copy, doomed, StandardCopyOption.ATOMIC_MOVE);
+        } catch (NoSuchFileException e) {
+            return; // another backend starting at the same time removed it first
         } catch (IOException e) {
             log.warn("Keeping old Typst font copy {} for now, it may be in use: {}", copy, e.getMessage());
             return;
@@ -84,7 +89,10 @@ final class TypstAssetsPruner {
         try {
             Files.walkFileTree(dir, new LinkSafeDeleter());
         } catch (IOException | UncheckedIOException e) {
-            log.warn("Could not fully delete old Typst font copy {}: {}", dir, e.getMessage());
+            // Gone already means another backend starting at the same time removed it first.
+            if (!(e instanceof NoSuchFileException)) {
+                log.warn("Could not fully delete old Typst font copy {}: {}", dir, e.getMessage());
+            }
         }
     }
 
@@ -103,14 +111,20 @@ final class TypstAssetsPruner {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            Files.delete(file);
+            Files.deleteIfExists(file);
             return FileVisitResult.CONTINUE;
         }
 
         @Override
+        public FileVisitResult visitFileFailed(Path file, IOException failure) throws IOException {
+            if (failure instanceof NoSuchFileException) return FileVisitResult.CONTINUE;
+            throw failure;
+        }
+
+        @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException failure) throws IOException {
-            if (failure != null) throw failure;
-            Files.delete(dir);
+            if (failure != null && !(failure instanceof NoSuchFileException)) throw failure;
+            Files.deleteIfExists(dir);
             return FileVisitResult.CONTINUE;
         }
     }

@@ -1,6 +1,7 @@
 package com.autoapplicant.adapter.render;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.autoapplicant.config.AppDataDirectory;
 import java.io.FileInputStream;
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.io.TempDir;
 class TypstAssetsTest {
 
     private static final String OLD_COPY = "0123456789abcdef";
+    private static final boolean IS_WINDOWS =
+            System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
 
     /**
      * Bug caught: each start copies the fonts (about 16 MB) into a new directory that only a
@@ -122,15 +125,35 @@ class TypstAssetsTest {
             new TypstAssets(parent);
         }
 
-        if (Files.exists(old)) {
+        // Elsewhere an open file does not block the delete, so the copy may go; it must not be
+        // left half deleted while still marked installed.
+        if (IS_WINDOWS || Files.exists(old)) {
             assertThat(old.resolve(".installed")).isRegularFile();
             assertThat(old.resolve("fonts/Old.ttf")).isRegularFile();
         }
     }
 
     /**
-     * Bug caught: removing an older copy follows a link or Windows junction inside it and deletes
-     * files outside the asset folder.
+     * Bug caught: pruning runs only after a successful install, so a disk filled by old copies
+     * makes the install fail on every start and the copies that would free the space stay.
+     */
+    @Test
+    void anInstallThatFailsStillRemovesOlderCopies(@TempDir Path root) throws Exception {
+        Path current = new TypstAssets(root.resolve("probe")).fontDir().getParent().getFileName();
+        Path parent = Files.createDirectories(root.resolve("typst-assets"));
+        Path old = olderCopy(parent);
+        // A dangling link where the current copy belongs makes moving the new copy into place fail.
+        link(parent.resolve(current), root.resolve("missing"));
+
+        assertThatThrownBy(() -> new TypstAssets(parent)).isInstanceOf(IOException.class);
+
+        assertThat(old).doesNotExist();
+    }
+
+    /**
+     * Bug caught: removing an older copy follows a Windows junction inside it and deletes files
+     * outside the asset folder. Only Windows exercises the protection: elsewhere the link is a
+     * symlink, which Files.walk does not follow anyway.
      */
     @Test
     void removingAnOlderCopyNeverDeletesThroughALink(@TempDir Path root) throws Exception {
@@ -155,7 +178,7 @@ class TypstAssetsTest {
 
     /** A junction on Windows, which needs no admin rights and is what Files.walk descends into. */
     private static void link(Path link, Path target) throws IOException, InterruptedException {
-        if (!System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+        if (!IS_WINDOWS) {
             Files.createSymbolicLink(link, target);
             return;
         }

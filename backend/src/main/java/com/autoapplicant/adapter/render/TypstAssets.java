@@ -62,8 +62,10 @@ public final class TypstAssets {
         // Typst runs inside each render's workspace, so a relative path would point nowhere and
         // it would silently fall back to its own built-in fonts.
         this.home = parent.toAbsolutePath().normalize().resolve(fingerprint(fonts));
-        if (!Files.isRegularFile(home.resolve(INSTALLED_MARKER))) install(fonts, parent);
+        // Pruning first frees the space an install may need: on a disk filled by old copies, an
+        // install that ran first would fail on every start and the copies would never go.
         TypstAssetsPruner.pruneOtherCopies(home.getParent(), home);
+        if (!Files.isRegularFile(home.resolve(INSTALLED_MARKER))) install(fonts, parent);
         Files.createDirectories(packageDir());
         Files.createDirectories(packageCacheDir());
         this.template = readTemplate(TEMPLATE);
