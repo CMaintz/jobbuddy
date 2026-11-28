@@ -80,6 +80,11 @@
                 },
                 "fonts": true
               }
+            },
+            "testing": {
+              "optimization": false,
+              "extractLicenses": false,
+              "aot": false
             }
           },
           "defaultConfiguration": "production"
@@ -103,26 +108,19 @@
           }
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "runner": "vitest",
+            "buildTarget": ":build:testing",
             "tsConfig": "tsconfig.spec.json",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
+            "runnerConfig": "vitest-base.config.mts",
+            "setupFiles": [
+              "src/testing/setup.ts"
             ],
-            "styles": [
-              "src/styles/fonts.css",
-              "src/styles.css",
-              "src/styles/effects.css",
-              "src/styles/document-render.css",
-              "src/styles/resume-forms.css"
-            ],
-            "scripts": [],
-            "karmaConfig": "karma.conf.cjs"
+            "coverageReporters": [
+              "text-summary",
+              "lcovonly"
+            ]
           }
         },
         "lint": {

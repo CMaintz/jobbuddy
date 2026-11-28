@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { BuddyWaitComponent } from './buddy-wait.component';
 import { BUDDY_REDUCED_MOTION } from './buddy.component';
 
 describe('BuddyWaitComponent', () => {
-  it('mounts an empty live region first, then announces by changing the text inside it', fakeAsync(() => {
+  it('mounts an empty live region first, then announces by changing the text inside it', () => {
+    vi.useFakeTimers();
     TestBed.configureTestingModule({
       imports: [BuddyWaitComponent, TranslateModule.forRoot()],
       providers: [{ provide: BUDDY_REDUCED_MOTION, useValue: () => true }],
@@ -18,7 +19,7 @@ describe('BuddyWaitComponent', () => {
     expect(region).not.toBeNull();
     expect(region.textContent?.trim()).toBe('');
 
-    tick(1000);
+    vi.advanceTimersByTime(1000);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="status"]')).toBe(region);
     expect(region.textContent).toContain('apply.drafting');
@@ -29,7 +30,8 @@ describe('BuddyWaitComponent', () => {
     expect(fixture.nativeElement.querySelector('[role="status"]')).toBe(region);
     expect(region.textContent).toContain('cvImport.parsingCv');
     fixture.destroy();
-  }));
+    expect(vi.getTimerCount()).toBe(0);
+  });
 
   it('lays out as a block, so a width class on it reaches its content', () => {
     // TestBed hosts a component in a div; only a real <jb-buddy-wait> tag shows the default inline display.
@@ -42,7 +44,8 @@ describe('BuddyWaitComponent', () => {
     expect(getComputedStyle(wait).display).toBe('block');
   });
 
-  it('shows its text from the first frame, so Buddy does not jump when the announcement lands', fakeAsync(() => {
+  it('shows its text from the first frame, so Buddy does not jump when the announcement lands', () => {
+    vi.useFakeTimers();
     // Centred like the apply screen, where the host shrinks to its content.
     @Component({
       imports: [BuddyWaitComponent],
@@ -57,9 +60,10 @@ describe('BuddyWaitComponent', () => {
     fixture.detectChanges();
     const buddy = (fixture.nativeElement as HTMLElement).querySelector('jb-buddy') as HTMLElement;
     const before = buddy.getBoundingClientRect().left;
-    tick(1000);
+    vi.advanceTimersByTime(1000);
     fixture.detectChanges();
     expect(buddy.getBoundingClientRect().left).toBe(before);
     fixture.destroy();
-  }));
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });

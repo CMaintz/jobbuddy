@@ -2,10 +2,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": ["jasmine"]
+    "types": ["vitest/globals"]
   },
   "include": [
     "src/**/*.spec.ts",
+    "src/testing/setup.ts",
     "src/**/*.d.ts"
   ],
   "angularCompilerOptions": {

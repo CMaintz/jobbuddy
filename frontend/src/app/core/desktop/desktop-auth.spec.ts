@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
@@ -6,6 +6,9 @@ import { authInterceptor } from '../auth/auth.interceptor';
 import { authGuard } from '../auth/auth.guard';
 import { AuthService, MeResponse } from '../auth/auth.service';
 import { DESKTOP_BACKEND_ORIGIN } from './desktop-shell';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
+import { nextMacrotask } from '../../../testing/next-macrotask';
 
 /**
  * Inside the Windows app the page is served from app://jobbuddy and there is no Firebase: the
@@ -29,9 +32,9 @@ describe('AuthService in desktop mode', () => {
     });
 
     const authService = TestBed.inject(AuthService);
-    expect(authService.isAuthenticated()).toBeTrue();
+    expect(authService.isAuthenticated()).toBe(true);
     // The app shell picks its layout from this signal, and there is no Firebase session here.
-    expect(authService.signedIn()).toBeTrue();
+    expect(authService.signedIn()).toBe(true);
   });
 
   it('offers no sign-out, which would only strand her on a login page', () => {
@@ -43,19 +46,18 @@ describe('AuthService in desktop mode', () => {
       ],
     });
 
-    expect(TestBed.inject(AuthService).canSignOut()).toBeFalse();
+    expect(TestBed.inject(AuthService).canSignOut()).toBe(false);
   });
 });
 
 describe('desktop mode', () => {
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: Mocked<AuthService>;
 
   beforeEach(() => {
-    authService = jasmine.createSpyObj<AuthService>(
-      'AuthService', ['getIdToken', 'whenAuthReady', 'isAuthenticated', 'ensureCurrentUser', 'isOnboardingComplete']);
-    authService.getIdToken.and.resolveTo('firebase-token');
-    authService.ensureCurrentUser.and.resolveTo(me(true));
-    authService.isOnboardingComplete.and.returnValue(true);
+    authService = spyObj<AuthService>(['getIdToken', 'whenAuthReady', 'isAuthenticated', 'ensureCurrentUser', 'isOnboardingComplete']);
+    authService.getIdToken.mockResolvedValue('firebase-token');
+    authService.ensureCurrentUser.mockResolvedValue(me(true));
+    authService.isOnboardingComplete.mockReturnValue(true);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -68,28 +70,28 @@ describe('desktop mode', () => {
   });
 
   describe('authInterceptor', () => {
-    it('sends API calls to the backend, with no Firebase token', fakeAsync(() => {
+    it('sends API calls to the backend, with no Firebase token', async () => {
       const http = TestBed.inject(HttpClient);
       const backend = TestBed.inject(HttpTestingController);
       http.get('/api/v1/jobs').subscribe();
-      flushMicrotasks();
+      await nextMacrotask();
 
       const req = backend.expectOne(`${BACKEND}/api/v1/jobs`);
-      expect(req.request.headers.has('Authorization')).toBeFalse();
+      expect(req.request.headers.has('Authorization')).toBe(false);
       expect(authService.getIdToken).not.toHaveBeenCalled();
       req.flush([]);
       backend.verify();
-    }));
+    });
 
-    it('leaves the app\'s own files where they are', fakeAsync(() => {
+    it('leaves the app\'s own files where they are', async () => {
       const http = TestBed.inject(HttpClient);
       const backend = TestBed.inject(HttpTestingController);
       http.get('./assets/i18n/da.json').subscribe();
-      flushMicrotasks();
+      await nextMacrotask();
 
       backend.expectOne('./assets/i18n/da.json').flush({});
       backend.verify();
-    }));
+    });
   });
 
   describe('authGuard', () => {
@@ -100,28 +102,28 @@ describe('desktop mode', () => {
     }
 
     it('lets her in without a Firebase session', async () => {
-      authService.isAuthenticated.and.returnValue(false);
+      authService.isAuthenticated.mockReturnValue(false);
 
-      expect(await runGuard('/dashboard')).toBeTrue();
+      expect(await runGuard('/dashboard')).toBe(true);
       expect(authService.whenAuthReady).not.toHaveBeenCalled();
     });
 
     it('starts a first-time user in onboarding, as signing in does', async () => {
-      authService.ensureCurrentUser.and.resolveTo(me(false));
-      authService.isOnboardingComplete.and.returnValue(false);
+      authService.ensureCurrentUser.mockResolvedValue(me(false));
+      authService.isOnboardingComplete.mockReturnValue(false);
 
       const tree = await runGuard('/dashboard');
       expect(TestBed.inject(Router).serializeUrl(tree as UrlTree)).toBe('/onboarding');
-      expect(await runGuard('/onboarding')).toBeTrue();
+      expect(await runGuard('/onboarding')).toBe(true);
     });
 
     it('lets her out of onboarding once she has finished it, without a restart', async () => {
       // The record loaded at start still says "not done"; finishing onboarding updates the user
       // AuthService holds, and that is what counts.
-      authService.ensureCurrentUser.and.resolveTo(me(false));
-      authService.isOnboardingComplete.and.returnValue(true);
+      authService.ensureCurrentUser.mockResolvedValue(me(false));
+      authService.isOnboardingComplete.mockReturnValue(true);
 
-      expect(await runGuard('/dashboard')).toBeTrue();
+      expect(await runGuard('/dashboard')).toBe(true);
     });
   });
 });

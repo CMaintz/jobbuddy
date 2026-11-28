@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { BuddyComponent, BUDDY_REDUCED_MOTION } from './buddy.component';
 import { resolveClip } from './buddy-sprites';
@@ -22,19 +22,23 @@ function render(reduced: boolean) {
 const row = (sprite: HTMLElement) => Math.abs(parseFloat(sprite.style.backgroundPosition.split(' ')[1])) / SCALE;
 
 describe('BuddyComponent', () => {
-  it('animates the mood when motion is allowed', fakeAsync(() => {
+  it('animates the mood when motion is allowed', () => {
+    vi.useFakeTimers();
     const { fixture, sprite } = render(false);
-    tick(1000);
+    vi.advanceTimersByTime(1000);
     expect(row(sprite)).toBe(resolveClip(['think', 'look-around']).y);
     fixture.destroy();
-  }));
+    expect(vi.getTimerCount()).toBe(0);
+  });
 
-  it('holds the neutral frame and runs no timer under reduced motion', fakeAsync(() => {
+  it('holds the neutral frame and runs no timer under reduced motion', () => {
+    vi.useFakeTimers();
     const { sprite } = render(true);
-    tick(5000);
+    vi.advanceTimersByTime(5000);
     expect(row(sprite)).toBe(resolveClip('idle').y);
     expect(sprite.style.backgroundPosition.split(' ')[0]).toBe('0px');
-  }));
+    expect(vi.getTimerCount()).toBe(0);
+  });
 
   it('keeps its box at the idle frame size, so nothing moves when he loads', () => {
     const { fixture } = render(true);

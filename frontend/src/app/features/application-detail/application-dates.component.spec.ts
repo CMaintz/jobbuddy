@@ -4,13 +4,15 @@ import { of } from 'rxjs';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { Application } from '../../core/models/application.model';
 import { ApplicationDatesComponent } from './application-dates.component';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
 
 describe('ApplicationDatesComponent', () => {
-  let api: jasmine.SpyObj<ApplicationsApiService>;
+  let api: Mocked<ApplicationsApiService>;
 
   function create(app: Partial<Application>): ApplicationDatesComponent {
-    api = jasmine.createSpyObj<ApplicationsApiService>('ApplicationsApiService', ['updateDates']);
-    api.updateDates.and.callFake((_id, dates) => of({ ...app, ...dates } as Application));
+    api = spyObj<ApplicationsApiService>(['updateDates']);
+    api.updateDates.mockImplementation((_id, dates) => of({ ...app, ...dates } as Application));
     TestBed.configureTestingModule({
       imports: [ApplicationDatesComponent, TranslateModule.forRoot()],
       providers: [{ provide: ApplicationsApiService, useValue: api }],

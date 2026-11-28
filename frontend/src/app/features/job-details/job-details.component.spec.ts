@@ -7,20 +7,20 @@ import { JobsApiService } from '../../core/api/jobs.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { NotesApiService } from '../../core/api/notes.api';
 import { Job } from '../../core/models/job.model';
+import { spyObj } from '../../../testing/spy-obj';
 
 describe('JobDetailsComponent', () => {
   it('shows the new posting when only the id in the URL changes, as stepping through does', () => {
     const params = new BehaviorSubject(convertToParamMap({ id: 'a' }));
-    const jobs = jasmine.createSpyObj<JobsApiService>('JobsApiService',
-      ['getById', 'getSaved', 'getSimilar', 'getDocumentsForJob']);
-    jobs.getById.and.callFake((id: string) => of({ id, title: 'Opslag ' + id } as Job));
-    jobs.getSaved.and.returnValue(of([]));
-    jobs.getSimilar.and.returnValue(of([]));
-    jobs.getDocumentsForJob.and.returnValue(of([]));
-    const apps = jasmine.createSpyObj<ApplicationsApiService>('ApplicationsApiService', ['getAll']);
-    apps.getAll.and.returnValue(of([]));
-    const notes = jasmine.createSpyObj<NotesApiService>('NotesApiService', ['getForJob']);
-    notes.getForJob.and.returnValue(of([]));
+    const jobs = spyObj<JobsApiService>(['getById', 'getSaved', 'getSimilar', 'getDocumentsForJob']);
+    jobs.getById.mockImplementation((id: string) => of({ id, title: 'Opslag ' + id } as Job));
+    jobs.getSaved.mockReturnValue(of([]));
+    jobs.getSimilar.mockReturnValue(of([]));
+    jobs.getDocumentsForJob.mockReturnValue(of([]));
+    const apps = spyObj<ApplicationsApiService>(['getAll']);
+    apps.getAll.mockReturnValue(of([]));
+    const notes = spyObj<NotesApiService>(['getForJob']);
+    notes.getForJob.mockReturnValue(of([]));
     TestBed.configureTestingModule({
       imports: [JobDetailsComponent, TranslateModule.forRoot()],
       providers: [

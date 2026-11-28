@@ -11,6 +11,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { UserPreferences } from '../../core/models/user.model';
 import { NotifyService } from '../../shared/services/notify.service';
 import { SettingsComponent } from './settings.component';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
 
 const PREFERENCES_URL = '/api/v1/users/me/preferences';
 
@@ -26,11 +28,11 @@ const SAVED: UserPreferences = {
 describe('SettingsComponent preferences', () => {
   let http: HttpTestingController;
   let component: SettingsComponent;
-  let notify: jasmine.SpyObj<NotifyService>;
+  let notify: Mocked<NotifyService>;
 
   beforeEach(() => {
-    notify = jasmine.createSpyObj<NotifyService>('NotifyService', ['success', 'error', 'errorText', 'onError']);
-    notify.onError.and.returnValue(() => undefined);
+    notify = spyObj<NotifyService>(['success', 'error', 'errorText', 'onError']);
+    notify.onError.mockReturnValue(() => undefined);
     TestBed.configureTestingModule({
       imports: [SettingsComponent, TranslateModule.forRoot()],
       providers: [

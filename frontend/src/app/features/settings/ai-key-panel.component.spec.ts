@@ -4,18 +4,20 @@ import { of } from 'rxjs';
 import { AiApiService } from '../../core/api/ai.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { AiKeyPanelComponent } from './ai-key-panel.component';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
 
 describe('AiKeyPanelComponent', () => {
-  let api: jasmine.SpyObj<AiApiService>;
+  let api: Mocked<AiApiService>;
   let fixture: ComponentFixture<AiKeyPanelComponent>;
 
   function render(isAdmin: boolean, hasStoredKey = false): HTMLElement {
-    api = jasmine.createSpyObj<AiApiService>('AiApiService', ['getCredentialStatus', 'clearCredential']);
-    api.getCredentialStatus.and.returnValue(of({
+    api = spyObj<AiApiService>(['getCredentialStatus', 'clearCredential']);
+    api.getCredentialStatus.mockReturnValue(of({
       configured: hasStoredKey, provider: hasStoredKey ? 'OPENAI' : null, hint: hasStoredKey ? 'sk-...abcd' : null,
       model: null, updatedAt: null, storageAvailable: true,
     }));
-    api.clearCredential.and.returnValue(of(undefined));
+    api.clearCredential.mockReturnValue(of(undefined));
     TestBed.configureTestingModule({
       imports: [AiKeyPanelComponent, TranslateModule.forRoot()],
       providers: [
