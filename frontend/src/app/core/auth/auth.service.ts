@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, firstValueFrom, from, switchMap, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import {
   signInWithPopup,
   signInWithCustomToken,
   signOut,
+  onAuthStateChanged,
   reload,
   GoogleAuthProvider
 } from 'firebase/auth';
@@ -40,6 +41,18 @@ export class AuthService {
 
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUser());
   currentUser$ = this.currentUserSubject.asObservable();
+
+  private readonly firebaseSignedIn = signal(this.desktop || !!auth.currentUser);
+  /**
+   * isAuthenticated() as a signal for templates. isAuthenticated() reads the SDK directly, which
+   * an OnPush view cannot see change, notably when a persisted session is restored after page
+   * load. Always true in the desktop app, which has no Firebase session.
+   */
+  readonly signedIn = this.firebaseSignedIn.asReadonly();
+
+  constructor() {
+    onAuthStateChanged(auth, user => this.firebaseSignedIn.set(this.desktop || !!user));
+  }
 
   /**
    * Email/password sign-in. Returns internal user record from /me, or fails with
