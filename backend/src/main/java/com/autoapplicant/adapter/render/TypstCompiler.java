@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 /**
  * Runs one {@code typst compile} and waits at most the configured wall-clock time. Output goes
  * to files and diagnostics to a file, so no pipe has to be drained while the process runs.
+ * Only a few compiles run at once: each is a native process with unbounded memory, so a burst of
+ * exports could otherwise run the hosted container out of memory. The rest wait for a slot.
  */
 @Component
 class TypstCompiler {
@@ -28,29 +31,63 @@ class TypstCompiler {
 
     private final TypstCommand command;
     private final Duration timeout;
+    private final Launcher launcher;
+    private final Semaphore slots;
 
     @Autowired
     TypstCompiler(
             TypstAssets assets,
             @Value("${app.render.typst-path:typst}") String typstPath,
-            @Value("${app.render.typst-timeout:PT10S}") Duration timeout) {
-        this(new TypstCommand(typstPath, assets), timeout);
+            @Value("${app.render.typst-timeout:PT10S}") Duration timeout,
+            @Value("${app.render.typst-max-concurrent:2}") int maxConcurrent,
+            @Value("${app.render.typst-jobs:2}") int jobs) {
+        this(new TypstCommand(typstPath, assets, jobs, System.getenv()), timeout, maxConcurrent,
+                ProcessBuilder::start);
     }
 
-    TypstCompiler(TypstCommand command, Duration timeout) {
+    /** Starts the process a command describes; the seam tests use to stand in for Typst. */
+    interface Launcher {
+        Process start(ProcessBuilder pb) throws IOException;
+    }
+
+    TypstCompiler(TypstCommand command, Duration timeout, int maxConcurrent, Launcher launcher) {
         this.command = command;
         this.timeout = timeout;
+        this.launcher = launcher;
+        this.slots = new Semaphore(maxConcurrent);
     }
 
     /**
-     * Compiles the workspace's main file to {@code output}.
+     * Compiles the workspace's main file to {@code output}, waiting for a free slot first. The
+     * timeout counts from the start of the process, so time spent queued does not eat into it.
      *
-     * @throws DocumentRenderException Typst could not start, outran the timeout (and was killed)
-     *     or exited non-zero; in the last case the exception carries its diagnostics
+     * @throws DocumentRenderException interrupted while waiting for a slot, Typst could not
+     *     start, outran the timeout (and was killed) or exited non-zero; in the last case the
+     *     exception carries its diagnostics
      */
     void compile(TypstWorkspace workspace, Format format, Path output) {
-        Process process = start(command.build(workspace, format, output));
-        awaitExit(process);
+        acquireSlot();
+        try {
+            // Released only once the process has exited or been killed, so the limit counts live
+            // processes rather than requests that gave up on them.
+            Process process = start(command.build(workspace, format, output));
+            awaitExit(process);
+            checkExit(process, workspace);
+        } finally {
+            slots.release();
+        }
+    }
+
+    private void acquireSlot() {
+        try {
+            slots.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DocumentRenderException("Typst render was interrupted", e);
+        }
+    }
+
+    private static void checkExit(Process process, TypstWorkspace workspace) {
         if (process.exitValue() != 0) {
             String diagnostics = diagnostics(workspace);
             // Typst quotes the offending source line, which for the data file is the whole CV;
@@ -75,9 +112,9 @@ class TypstCompiler {
         }
     }
 
-    private static Process start(ProcessBuilder pb) {
+    private Process start(ProcessBuilder pb) {
         try {
-            return pb.start();
+            return launcher.start(pb);
         } catch (IOException e) {
             throw new DocumentRenderException("Could not start Typst (" + pb.command().get(0) + ")", e);
         }

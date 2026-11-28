@@ -129,6 +129,10 @@ app:
     typst-path: ${TYPST_PATH:typst}
     # Wall-clock limit per compile; the process is killed when it runs over.
     typst-timeout: ${TYPST_TIMEOUT:PT10S}
+    # Each compile is a native process with unbounded memory, so only this many run at once and
+    # further renders wait for a slot. Each gets this many worker threads (`typst --jobs`).
+    typst-max-concurrent: ${TYPST_MAX_CONCURRENT:2}
+    typst-jobs: ${TYPST_JOBS:2}
   reminders:
     # Daily "due today" email: reminders the user set and outreach follow-ups that have arrived.
     # Users with nothing due are not mailed — a usually-empty daily email gets filtered, and then
