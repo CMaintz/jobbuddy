@@ -31,7 +31,10 @@ describe('AuthService in desktop mode', () => {
       ],
     });
 
-    expect(TestBed.inject(AuthService).isAuthenticated()).toBe(true);
+    const authService = TestBed.inject(AuthService);
+    expect(authService.isAuthenticated()).toBe(true);
+    // The app shell picks its layout from this signal, and there is no Firebase session here.
+    expect(authService.signedIn()).toBe(true);
   });
 
   it('offers no sign-out, which would only strand her on a login page', () => {

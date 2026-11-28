@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NotifyService } from '../../../shared/services/notify.service';
 import { ResumeDraft } from '../models/resume-builder.models';
@@ -15,9 +15,11 @@ describe('ResumeStateService', () => {
   let notify: Mocked<NotifyService>;
   let state: ResumeStateService;
 
+  afterEach(() => vi.useRealTimers());
+
   // Called inside each test rather than in beforeEach so a test can install fake timers before
   // the service's effect and autosave debounce create theirs.
-  function setup(): void {
+  function setup(withDraft = true): void {
     draftApi = spyObj<ResumeDraftApiService>(['getDraft', 'saveDraft']);
     notify = spyObj<NotifyService>(['error']);
     TestBed.configureTestingModule({
@@ -30,15 +32,90 @@ describe('ResumeStateService', () => {
     state = TestBed.inject(ResumeStateService);
     draftApi.getDraft.mockReturnValue(of({ id: 'd1', jobId: null } as unknown as ResumeDraft));
     draftApi.saveDraft.mockReturnValue(of({ id: 'd1' } as ResumeDraft));
-    state.loadDraft('d1').subscribe();
+    if (withDraft) state.loadDraft('d1').subscribe();
+    TestBed.tick();
+  }
+
+  function edit(fullName: string): void {
+    state.updatePersonalInfo({ fullName });
     TestBed.tick();
   }
 
   function editAndWait(): void {
-    state.updatePersonalInfo({ fullName: 'Ada' });
-    TestBed.tick();
+    edit('Ada');
     vi.advanceTimersByTime(AUTOSAVE_DEBOUNCE_MS);
   }
+
+  it('saves once, a full debounce after the last edit of a burst', () => {
+    vi.useFakeTimers();
+    setup();
+    edit('A');
+    vi.advanceTimersByTime(1000);
+    edit('Ad');
+    vi.advanceTimersByTime(1000);
+    edit('Ada');
+    vi.advanceTimersByTime(AUTOSAVE_DEBOUNCE_MS - 1);
+
+    expect(draftApi.saveDraft).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+
+    expect(draftApi.saveDraft).toHaveBeenCalledTimes(1);
+    const [id, body] = draftApi.saveDraft.mock.lastCall!;
+    expect(id).toBe('d1');
+    expect(body.resumeData?.personalInfo.fullName).toBe('Ada');
+  });
+
+  it('does not autosave a freshly loaded draft', () => {
+    vi.useFakeTimers();
+    setup();
+    vi.advanceTimersByTime(AUTOSAVE_DEBOUNCE_MS);
+
+    expect(state.isDirty()).toBe(false);
+    expect(draftApi.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('does not autosave while no draft is open', () => {
+    vi.useFakeTimers();
+    setup(false);
+    editAndWait();
+
+    expect(draftApi.saveDraft).not.toHaveBeenCalled();
+    expect(state.isDirty()).toBe(true);
+  });
+
+  it('reports saving while the request is in flight and clears dirty once it lands', () => {
+    vi.useFakeTimers();
+    setup();
+    const response = new Subject<ResumeDraft>();
+    draftApi.saveDraft.mockReturnValue(response);
+    editAndWait();
+
+    expect(state.isSaving()).toBe(true);
+    expect(state.isDirty()).toBe(true);
+
+    response.next({ id: 'd1' } as ResumeDraft);
+
+    expect(state.isSaving()).toBe(false);
+    expect(state.isDirty()).toBe(false);
+  });
+
+  it('groups skills by trimmed category in first-seen order, uncategorised last', () => {
+    setup();
+    state.addSkill({ name: 'Git' });
+    state.addSkill({ name: 'Java', category: 'Backend' });
+    state.addSkill({ name: 'Jira', category: '   ' });
+    state.addSkill({ name: 'Angular', category: 'Frontend' });
+    state.addSkill({ name: 'Spring', category: ' Backend ' });
+
+    const groups = state.skillGroups().map(g => [g.category, g.skills.map(s => s.name)]);
+
+    expect(groups).toEqual([
+      ['Backend', ['Java', 'Spring']],
+      ['Frontend', ['Angular']],
+      [null, ['Git', 'Jira']],
+    ]);
+  });
 
   it('keeps autosaving after a failed save', () => {
     vi.useFakeTimers();

@@ -1,6 +1,6 @@
 
     <!-- Auth screens: no shell -->
-    @if (!auth.isAuthenticated()) {
+    @if (!auth.signedIn()) {
       <router-outlet />
     } @else if (isFullscreenRoute()) {
       <router-outlet />
@@ -77,7 +77,7 @@
           <!-- Library group -->
           <nav class="flex flex-col gap-0.5">
             <div class="px-2 pt-1.5 pb-0.5 text-2xs font-medium uppercase tracking-widest text-jb-text-dim">{{ 'nav.group.library' | translate }}</div>
-            @for (item of libraryNav; track item.id) {
+            @for (item of libraryNav(); track item.id) {
               <a [routerLink]="item.route"
                  routerLinkActive="jb-nav-active"
                  class="jb-nav flex items-center gap-2.5 rounded-md cursor-pointer select-none py-1.5 px-2 text-base"

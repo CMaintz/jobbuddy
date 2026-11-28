@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/auth/auth.service';
@@ -13,7 +13,7 @@ import { PostingQueueBarComponent } from './shared/components/posting-queue-bar/
 import { NotifyService } from './shared/services/notify.service';
 import { ActivityStreakService } from './core/activity-streak.service';
 import { UiLanguageSyncService } from './core/ui-language-sync.service';
-import { filter } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { NavItem, visibleNav } from './app-nav';
 
 /** Routes rendered without the app shell. An unverified user on /verify-email cannot use the app yet. */
@@ -25,7 +25,7 @@ const FULLSCREEN_ROUTES = ['/onboarding', '/verify-email'];
     RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, JbIconComponent, StreakBadgeComponent,
     JbToastComponent, ChatPanelComponent, PostingQueueBarComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {
@@ -40,9 +40,16 @@ export class AppComponent implements OnInit {
   private translate = inject(TranslateService);
 
   sidebarOpen = signal(false);
-  private currentUserEmail = '';
-  private currentUserName = '';
+  private currentUserEmail = signal('');
+  private currentUserName = signal('');
   private signedIn = false;
+  private url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
 
   // ── Navigation definitions ──────────────────────────
   mainNav: NavItem[] = [
@@ -69,15 +76,15 @@ export class AppComponent implements OnInit {
     { id: 'companies',    label: 'nav.companies',   icon: 'building',  route: '/companies' },
   ];
 
-  libraryNav: NavItem[] = visibleNav(this.allLibraryNav, undefined);
+  libraryNav = signal<NavItem[]>(visibleNav(this.allLibraryNav, undefined));
 
   ngOnInit(): void {
     this.languageSync.start();
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
-      this.currentUserEmail = user?.email || '';
-      this.currentUserName = user?.email?.split('@')[0] ?? '';
+      this.currentUserEmail.set(user?.email || '');
+      this.currentUserName.set(user?.email?.split('@')[0] ?? '');
       this.signedIn = !!user;
-      this.libraryNav = visibleNav(this.allLibraryNav, user?.role);
+      this.libraryNav.set(visibleNav(this.allLibraryNav, user?.role));
       if (user) this.streak.refresh();
       else this.streak.clear();
       if (user && !user.onboardingComplete && !this.router.url.startsWith('/onboarding')) {
@@ -94,19 +101,21 @@ export class AppComponent implements OnInit {
   }
 
   isActive(route: string): boolean {
-    return this.router.url === route || this.router.url.startsWith(route + '/');
+    const url = this.url();
+    return url === route || url.startsWith(route + '/');
   }
 
   isFullscreenRoute(): boolean {
-    return FULLSCREEN_ROUTES.some(route => this.router.url.startsWith(route));
+    const url = this.url();
+    return FULLSCREEN_ROUTES.some(route => url.startsWith(route));
   }
 
   userName(): string {
-    return this.currentUserName || this.translate.instant('nav.userFallback');
+    return this.currentUserName() || this.translate.instant('nav.userFallback');
   }
 
   userEmail(): string {
-    return this.currentUserEmail;
+    return this.currentUserEmail();
   }
 
   userInitials(): string {
