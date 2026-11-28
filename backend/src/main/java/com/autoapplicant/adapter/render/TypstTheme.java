@@ -12,15 +12,6 @@ record TypstTheme(String primary, String accent, String font, double baseSize, d
 
     private static final Pattern HEX_COLOR = Pattern.compile("#[0-9a-fA-F]{6}");
 
-    /** The whitelisted theme fonts, each mapped to the bundled family that stands in for it. */
-    private static final Map<String, String> BUNDLED_FAMILIES = Map.of(
-            "Arial", "Liberation Sans",
-            "Inter", "Inter",
-            "Calibri", "Carlito",
-            "Georgia", "Liberation Serif",
-            "Times New Roman", "Liberation Serif");
-    private static final String DEFAULT_FAMILY = "Liberation Sans";
-
     private static final Map<String, FontSizes> SCALES = Map.of(
             "small", new FontSizes(9.8, 21),
             "normal", new FontSizes(10.5, 24),
@@ -36,9 +27,7 @@ record TypstTheme(String primary, String accent, String font, double baseSize, d
         return new TypstTheme(
                 colorOr(given.primaryColor(), defaults.primaryColor()),
                 colorOr(given.accentColor(), defaults.accentColor()),
-                given.fontFamily() == null
-                        ? DEFAULT_FAMILY
-                        : BUNDLED_FAMILIES.getOrDefault(given.fontFamily(), DEFAULT_FAMILY),
+                TypstFonts.bundled(given.fontFamily(), TypstFonts.SANS),
                 sizes.base(),
                 sizes.h1());
     }

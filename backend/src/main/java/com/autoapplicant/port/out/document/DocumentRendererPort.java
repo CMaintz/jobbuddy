@@ -1,5 +1,6 @@
 package com.autoapplicant.port.out.document;
 
+import com.autoapplicant.domain.document.design.ResumeDesign;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
 import java.util.List;
 
@@ -22,6 +23,21 @@ public interface DocumentRendererPort {
      * @throws DocumentRenderException the layout engine failed, timed out or could not start
      */
     List<byte[]> renderSvgPages(StructuredDocument document);
+
+    /**
+     * Renders a resume-builder design to a text PDF, in the layout the user picked.
+     *
+     * @throws DocumentRenderException the layout engine failed, timed out or could not start
+     */
+    RenderedPdf renderPdf(ResumeDesign design);
+
+    /**
+     * Renders a resume-builder design to one SVG image per page, from the same layout as
+     * {@link #renderPdf(ResumeDesign)}, so the builder's preview is the PDF.
+     *
+     * @throws DocumentRenderException the layout engine failed, timed out or could not start
+     */
+    List<byte[]> renderSvgPages(ResumeDesign design);
 
     /** A rendered PDF and the number of pages it has. */
     record RenderedPdf(byte[] bytes, int pageCount) {}

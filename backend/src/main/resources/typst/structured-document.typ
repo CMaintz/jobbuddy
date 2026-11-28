@@ -22,6 +22,63 @@
 
 #let present(value) = value != none and value != ""
 
+// Rich text (editor HTML parsed by the backend into paragraphs and lists of styled runs).
+#let run(r) = {
+  if r.at("br", default: false) { return linebreak() }
+  let body = r.at("text", default: "")
+  if r.at("underline", default: false) { body = underline(body) }
+  if r.at("strike", default: false) { body = strike(body) }
+  let args = (:)
+  if r.at("bold", default: false) { args.insert("weight", "bold") }
+  if r.at("italic", default: false) { args.insert("style", "italic") }
+  if r.at("color", default: none) != none { args.insert("fill", rgb(r.color)) }
+  if r.at("size", default: none) != none { args.insert("size", r.size * 0.75pt) }
+  text(..args, body)
+}
+#let runs(rs) = for r in rs { run(r) }
+#let rich(blocks) = for b in blocks {
+  if b.kind == "list" {
+    if b.ordered { enum(..b.items.map(runs)) } else { list(..b.items.map(runs)) }
+  } else { par(runs(b.runs)) }
+}
+
+// The letter screen's three sheets, in its CSS pixels (an A4 page is 794px wide, 1px = 0.75pt).
+#let letter-styles = (
+  editorial: (bg: "#f6f3ec", fg: "#1a1714", muted: "#6b6660", divider: "#d9d2c4", font: "Inter",
+    size: 12.5, line: 1.65, header: "columns", rail: false),
+  classic: (bg: "#fbfaf6", fg: "#1c1a16", muted: "#5a554e", divider: "#cfc8b9", font: "Liberation Serif",
+    size: 13, line: 1.78, header: "centered", rail: false),
+  bold: (bg: "#ffffff", fg: "#0e0e0e", muted: "#5a5a5a", divider: "#e5e0d4", font: "Inter",
+    size: 12.5, line: 1.62, header: "rail", rail: true),
+)
+
+#let designed-letter(style) = {
+  let px(n) = n * 0.75pt
+  let s = letter-styles.at(style)
+  let muted = rgb(s.muted)
+  set page(fill: rgb(s.bg), margin: (x: px(64), y: px(56)),
+    background: if s.rail { place(left + top, dy: px(56), rect(width: px(4), height: 100% - px(112), fill: rgb("#f5a623"))) })
+  set text(font: (s.font, "Noto Sans SC"), size: px(s.size), fill: rgb(s.fg), top-edge: "ascender", bottom-edge: "descender")
+  set par(leading: (s.line - 1.2) * 1em, spacing: px(14))
+  set list(spacing: (s.line - 1.2) * 1em)
+  let id = doc.identity
+  let sub = (id.headline, id.email).filter(present).join(" - ")
+  if present(id.name) {
+    if s.header == "centered" {
+      block(width: 100%, below: px(32), inset: (bottom: px(16)), stroke: (bottom: 0.75pt + rgb(s.divider)), align(center, {
+        text(size: px(22), weight: "semibold", tracking: -0.01em, id.name)
+        if present(sub) { linebreak(); text(size: px(11.5), fill: muted, sub) }
+      }))
+    } else {
+      block(below: px(32), {
+        text(size: px(18), weight: "medium", tracking: -0.01em, id.name)
+        if present(sub) { linebreak(); text(size: px(11.5), fill: muted, sub) }
+      })
+    }
+  }
+  rich(doc.body)
+}
+
 #let photo(identity) = {
   if present(identity.photo) {
     box(clip: true, radius: 50%, width: 22mm, height: 22mm,
@@ -83,9 +140,13 @@
   }
 }
 
-#header(doc.identity)
-#if doc.kind == "cv" {
-  for s in doc.sections { section(s) }
+#if doc.kind == "letter" and doc.letterStyle != none {
+  designed-letter(doc.letterStyle)
 } else {
-  for p in doc.paragraphs { par(p) }
+  header(doc.identity)
+  if doc.kind == "cv" {
+    for s in doc.sections { section(s) }
+  } else {
+    rich(doc.body)
+  }
 }

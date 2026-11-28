@@ -1,13 +1,16 @@
 package com.autoapplicant.adapter.web.controller;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.autoapplicant.adapter.render.TypstRendererAdapter;
 import com.autoapplicant.adapter.security.SecurityContextHelper;
 import com.autoapplicant.config.AppDataDirectory;
 import com.autoapplicant.domain.document.DocumentType;
+import com.autoapplicant.domain.document.design.ResumeDesigns;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentRenderOptions;
 import com.autoapplicant.domain.document.structured.StructuredDocument;
@@ -101,6 +104,25 @@ class PdfExportPageBudgetTest {
                 .andExpect(header().string("X-Page-Over-Budget", "true"));
     }
 
+    /** Bug caught: the builder's designed CV export drops the page headers, so no warning shows. */
+    @Test
+    void a_designed_cv_from_the_builder_reports_its_page_count() throws Exception {
+        mvc.perform(post("/api/v1/documents/export-resume-pdf").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(ResumeDesigns.danish("classic"))))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Page-Count", "1"))
+                .andExpect(header().string("X-Page-Budget", "2"));
+    }
+
+    /** Bug caught: the preview endpoint returns no pages, or something other than SVG documents. */
+    @Test
+    void the_builder_preview_is_one_svg_per_page() throws Exception {
+        mvc.perform(post("/api/v1/documents/preview-resume").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(ResumeDesigns.danish("modern-2col"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pages.length()").value(1))
+                .andExpect(jsonPath("$.pages[0]").value(startsWith("<svg")));
+    }
 
     private ResultActions export(StructuredDocument document) throws Exception {
         String body = json.writeValueAsString(Map.of("document", document));

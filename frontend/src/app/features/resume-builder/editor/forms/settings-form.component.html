@@ -98,7 +98,6 @@
         <input type="range" min="40" max="200" step="4" class="w-full" style="accent-color:var(--jb-accent);"
           [value]="settings.photoSize ?? 96"
           (input)="update('photoSize', +$any($event.target).value)" />
-        <div class="text-[10px] text-jb-text-dim mt-[2px]">{{ 'resumeBuilder.settings.photoSizeTip' | translate }}</div>
       </div>
 
       <div>

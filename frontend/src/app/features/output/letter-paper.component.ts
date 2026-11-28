@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { RichTextEditorComponent } from '../resume-builder/shared/rich-text-editor.component';
 import { RichTextPipe } from '../resume-builder/shared/rich-text.pipe';
 import { DocumentIdentity } from '../../core/models/structured-document.model';
@@ -7,7 +7,6 @@ import { LetterTemplate } from './letter-templates';
 /**
  * The rendered letter sheet: template styling, identity header, and the body
  * (read-only with optional JD-keyword highlighting, or the in-place editor).
- * The host element is what PDF capture targets — grab it via `el`.
  */
 @Component({
   selector: 'app-letter-paper',
@@ -16,8 +15,6 @@ import { LetterTemplate } from './letter-templates';
   templateUrl: './letter-paper.component.html',
 })
 export class LetterPaperComponent {
-  readonly el = inject(ElementRef<HTMLElement>);
-
   @Input({ required: true }) tpl!: LetterTemplate;
   @Input() identity: DocumentIdentity = {};
   @Input() content = '';
