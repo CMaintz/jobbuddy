@@ -50,6 +50,10 @@ final class TypstCommand {
     private final Map<String, String> parentEnv;
 
     TypstCommand(String typstPath, TypstAssets assets, int jobs, Map<String, String> parentEnv) {
+        // Typst accepts --jobs 0 and lets its thread pool pick every core, the opposite of a cap.
+        if (jobs < 1) {
+            throw new IllegalArgumentException("app.render.typst-jobs must be at least 1, was " + jobs);
+        }
         this.typstPath = typstPath;
         this.assets = assets;
         this.jobs = jobs;

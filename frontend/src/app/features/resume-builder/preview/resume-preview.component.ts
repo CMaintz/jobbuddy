@@ -6,7 +6,7 @@ import { ResumeStateService } from '../services/resume-state.service';
 import { toResumeDesign } from '../services/resume-design';
 import { AtsPdfService, resumeDataToAts } from '../../../shared/services/ats-pdf.service';
 import { translatedAtsHeadings } from '../../../shared/services/ats-headings';
-import { DocumentRenderApiService, savePdf } from '../../../core/api/document-render.api';
+import { DocumentRenderApiService, RendererBusyError, renderFailureKey, savePdf } from '../../../core/api/document-render.api';
 import { JbButtonComponent } from '../../../shared/components/jb-button/jb-button.component';
 import { PageBudgetWarningComponent } from '../../../shared/components/page-budget-warning/page-budget-warning.component';
 import { ExportedPageBudget } from '../../../shared/page-budget';
@@ -63,6 +63,8 @@ export class ResumePreviewComponent {
   /** Object URLs of the current preview pages; null until the first render arrives. */
   readonly pages = signal<string[] | null>(null);
   readonly previewFailed = signal(false);
+  /** The last preview was refused because every renderer was taken, not because it failed. */
+  readonly previewBusy = signal(false);
 
   get docWidth(): number {
     return this.state.settings().documentSize === 'A4' ? 794 : 816;
@@ -71,7 +73,11 @@ export class ResumePreviewComponent {
   constructor() {
     toObservable(this.design).pipe(
       debounceTime(PREVIEW_DEBOUNCE_MS),
-      switchMap(design => this.renderApi.previewResume(design).pipe(catchError(() => of(null)))),
+      switchMap(design => this.renderApi.previewResume(design).pipe(
+        catchError((err: unknown) => {
+          this.previewBusy.set(err instanceof RendererBusyError);
+          return of(null);
+        }))),
       takeUntilDestroyed(),
     ).subscribe(svgs => {
       this.previewFailed.set(svgs === null);
@@ -89,8 +95,8 @@ export class ResumePreviewComponent {
     const name = this.state.displayPersonalInfo().fullName || 'resume';
     try {
       await this.exportedPages.track(this.renderApi.exportResumePdf(this.design()).then(pdf => savePdf(pdf, name)));
-    } catch {
-      this.notify.error('notify.actionFailed');
+    } catch (err) {
+      this.notify.error(renderFailureKey(err));
     } finally {
       this.downloading.set(false);
     }

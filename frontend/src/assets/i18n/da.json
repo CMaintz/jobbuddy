@@ -521,6 +521,7 @@
       "print": "Udskriv",
       "atsTitle": "Enkel PDF i én kolonne med ren tekst, som jobportaler og rekrutteringssystemer kan læse",
       "unavailable": "Forhåndsvisningen kunne ikke vises lige nu. Prøv igen om lidt.",
+      "busy": "Der laves mange dokumenter lige nu. Forhåndsvisningen opdateres igen ved din næste ændring.",
       "pageAlt": "Side {{page}}"
     },
     "cv": {
@@ -2105,6 +2106,7 @@
     "saveFailed": "Dine ændringer kunne ikke gemmes. Prøv igen.",
     "deleteFailed": "Det kunne ikke slettes. Prøv igen.",
     "actionFailed": "Noget gik galt. Prøv igen.",
+    "rendererBusy": "Der laves mange dokumenter lige nu. Prøv igen om et øjeblik.",
     "searchFailed": "Søgningen mislykkedes. Prøv igen om lidt.",
     "autosaveFailed": "Automatisk gemning mislykkedes. Den prøver igen ved din næste ændring.",
     "draftLoadFailed": "Kladden kunne ikke åbnes."

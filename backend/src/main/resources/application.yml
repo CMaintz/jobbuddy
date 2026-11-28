@@ -133,6 +133,9 @@ app:
     # further renders wait for a slot. Each gets this many worker threads (`typst --jobs`).
     typst-max-concurrent: ${TYPST_MAX_CONCURRENT:2}
     typst-jobs: ${TYPST_JOBS:2}
+    # How long a render waits for a slot before it is refused as busy (429 RENDERER_BUSY). Kept
+    # short so a burst of exports cannot park every request thread behind the renderer.
+    typst-queue-wait: ${TYPST_QUEUE_WAIT:PT10S}
   reminders:
     # Daily "due today" email: reminders the user set and outreach follow-ups that have arrived.
     # Users with nothing due are not mailed — a usually-empty daily email gets filtered, and then

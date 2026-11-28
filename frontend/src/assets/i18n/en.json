@@ -521,6 +521,7 @@
       "print": "Print",
       "atsTitle": "Simple one-column PDF with plain text that job portals and recruiting systems can read",
       "unavailable": "The preview could not be shown right now. Try again in a moment.",
+      "busy": "Too many documents are being rendered right now. The preview updates again on your next change.",
       "pageAlt": "Page {{page}}"
     },
     "cv": {
@@ -2105,6 +2106,7 @@
     "saveFailed": "Your changes could not be saved. Please try again.",
     "deleteFailed": "That could not be deleted. Please try again.",
     "actionFailed": "Something went wrong. Please try again.",
+    "rendererBusy": "Too many documents are being rendered right now. Try again in a moment.",
     "searchFailed": "Search failed. Try again in a moment.",
     "autosaveFailed": "Autosave failed. It will retry on your next edit.",
     "draftLoadFailed": "This draft could not be opened."

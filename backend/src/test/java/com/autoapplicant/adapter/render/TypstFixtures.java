@@ -48,7 +48,7 @@ final class TypstFixtures {
 
     static TypstCompiler compiler(Duration timeout) {
         return new TypstCompiler(new TypstCommand(typstPath(), ASSETS, 2, System.getenv()), timeout, 2,
-                ProcessBuilder::start);
+                timeout, ProcessBuilder::start);
     }
 
     static TypstRendererAdapter adapter(Path uploads) {

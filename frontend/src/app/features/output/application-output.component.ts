@@ -16,7 +16,7 @@ import { LetterCheckState, letterCheckState } from './letter-export-check';
 import { AiApiService } from '../../core/api/ai.api';
 import { ApplicationsApiService } from '../../core/api/applications.api';
 import { JobsApiService } from '../../core/api/jobs.api';
-import { DocumentRenderApiService, savePdf } from '../../core/api/document-render.api';
+import { DocumentRenderApiService, savePdf, renderFailureKey } from '../../core/api/document-render.api';
 import { AtsPdfService } from '../../shared/services/ats-pdf.service';
 import { ExportedPageBudget } from '../../shared/page-budget';
 import { PageBudgetWarningComponent } from '../../shared/components/page-budget-warning/page-budget-warning.component';
@@ -524,7 +524,7 @@ export class ApplicationOutputComponent implements OnInit {
     this.downloading.set(true);
     this.exportedPages.track(this.renderApi.exportStructuredPdf(this.designedLetter(doc))
       .then(pdf => savePdf(pdf, this.exportFilename())))
-      .catch(() => this.notify.error('notify.actionFailed'))
+      .catch((err: unknown) => this.notify.error(renderFailureKey(err)))
       .finally(() => this.downloading.set(false));
   }
 

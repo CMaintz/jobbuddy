@@ -2,6 +2,7 @@ package com.autoapplicant.adapter.render;
 
 import com.autoapplicant.adapter.render.TypstCommand.Format;
 import com.autoapplicant.port.out.document.DocumentRenderException;
+import com.autoapplicant.port.out.document.DocumentRendererBusyException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,10 +20,12 @@ import org.springframework.stereotype.Component;
  * Runs one {@code typst compile} and waits at most the configured wall-clock time. Output goes
  * to files and diagnostics to a file, so no pipe has to be drained while the process runs.
  * Only a few compiles run at once: each is a native process with unbounded memory, so a burst of
- * exports could otherwise run the hosted container out of memory. The rest wait for a slot.
+ * exports could otherwise run the hosted container out of memory. The rest wait for a slot, but
+ * only briefly: an unbounded wait would park every request thread behind the renderer and stop
+ * the whole backend from answering.
  */
 @Component
-class TypstCompiler {
+final class TypstCompiler {
 
     private static final Logger log = LoggerFactory.getLogger(TypstCompiler.class);
 
@@ -33,6 +36,7 @@ class TypstCompiler {
     private final Duration timeout;
     private final Launcher launcher;
     private final Semaphore slots;
+    private final Duration queueWait;
 
     @Autowired
     TypstCompiler(
@@ -40,9 +44,10 @@ class TypstCompiler {
             @Value("${app.render.typst-path:typst}") String typstPath,
             @Value("${app.render.typst-timeout:PT10S}") Duration timeout,
             @Value("${app.render.typst-max-concurrent:2}") int maxConcurrent,
-            @Value("${app.render.typst-jobs:2}") int jobs) {
+            @Value("${app.render.typst-jobs:2}") int jobs,
+            @Value("${app.render.typst-queue-wait:PT10S}") Duration queueWait) {
         this(new TypstCommand(typstPath, assets, jobs, System.getenv()), timeout, maxConcurrent,
-                ProcessBuilder::start);
+                queueWait, ProcessBuilder::start);
     }
 
     /** Starts the process a command describes; the seam tests use to stand in for Typst. */
@@ -50,26 +55,36 @@ class TypstCompiler {
         Process start(ProcessBuilder pb) throws IOException;
     }
 
-    TypstCompiler(TypstCommand command, Duration timeout, int maxConcurrent, Launcher launcher) {
+    TypstCompiler(TypstCommand command, Duration timeout, int maxConcurrent, Duration queueWait,
+                  Launcher launcher) {
+        // A limit of 0 would refuse every render, so it fails startup instead.
+        if (maxConcurrent < 1) {
+            throw new IllegalArgumentException(
+                    "app.render.typst-max-concurrent must be at least 1, was " + maxConcurrent);
+        }
         this.command = command;
         this.timeout = timeout;
         this.launcher = launcher;
         this.slots = new Semaphore(maxConcurrent);
+        this.queueWait = queueWait;
     }
 
     /**
-     * Compiles the workspace's main file to {@code output}, waiting for a free slot first. The
-     * timeout counts from the start of the process, so time spent queued does not eat into it.
+     * Compiles the workspace's main file to {@code output}, waiting up to the queue wait for a
+     * free slot first. The timeout counts from the start of the process, so time spent queued
+     * does not eat into it.
      *
+     * @throws DocumentRendererBusyException no slot freed up within the queue wait
      * @throws DocumentRenderException interrupted while waiting for a slot, Typst could not
      *     start, outran the timeout (and was killed) or exited non-zero; in the last case the
      *     exception carries its diagnostics
      */
     void compile(TypstWorkspace workspace, Format format, Path output) {
+        // Outside the try: a render that never got a slot must not release one.
         acquireSlot();
         try {
-            // Released only once the process has exited or been killed, so the limit counts live
-            // processes rather than requests that gave up on them.
+            // Released after the exit wait, or after the kill and its bounded wait, so a slot is
+            // not handed on while this request is still waiting on its own process.
             Process process = start(command.build(workspace, format, output));
             awaitExit(process);
             checkExit(process, workspace);
@@ -80,7 +95,9 @@ class TypstCompiler {
 
     private void acquireSlot() {
         try {
-            slots.acquire();
+            if (!slots.tryAcquire(queueWait.toMillis(), TimeUnit.MILLISECONDS)) {
+                throw new DocumentRendererBusyException("All Typst renderers are busy; try again shortly");
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new DocumentRenderException("Typst render was interrupted", e);
