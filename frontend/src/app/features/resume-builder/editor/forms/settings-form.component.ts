@@ -6,6 +6,9 @@ import { ResumeSettings } from '../../models/resume-builder.models';
 import { FONT_FAMILIES } from '../../data/font-families';
 import { JbToggleComponent } from '../../../../shared/components/jb-toggle/jb-toggle.component';
 
+/** Layouts that print no photo, so the photo settings would change nothing she can see. */
+const LAYOUTS_WITHOUT_PHOTO = new Set(['minimal']);
+
 @Component({
   selector: 'app-settings-form',
   imports: [FormsModule, TranslateModule, JbToggleComponent],
@@ -18,6 +21,7 @@ export class SettingsFormComponent {
   presetColors = ['#18324a', '#2563eb', '#16a34a', '#9333ea', '#dc2626', '#ea580c', '#0891b2', '#374151'];
   presetTextColors = ['#111827', '#1f2937', '#374151', '#0f172a', '#292524', '#1e3a5f'];
   get settings() { return this.state.settings(); }
+  get showsPhoto(): boolean { return !LAYOUTS_WITHOUT_PHOTO.has(this.settings.template); }
   update(field: string, value: unknown): void {
     this.state.updateSettings({ [field]: value } as Partial<ResumeSettings>);
   }

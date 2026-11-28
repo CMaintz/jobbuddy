@@ -47,13 +47,25 @@ public final class ResumeDesigns {
                 List.of(new ResumeDesign.SkillGroup(null, List.of(new ResumeDesign.Skill(SKILL, 5)))),
                 List.of(new ResumeDesign.Language("Dansk", "Modersmål")),
                 List.of(new ResumeDesign.Certification("Prince2 Foundation", "Axelos", "2021")),
-                List.of(new ResumeDesign.Strength("Overblik", "Holder styr på mange bolde.")),
-                List.of("linkedin.com/in/mette"),
+                List.of(new ResumeDesign.Strength("Overblik", "Holder styr på mange bolde.", "zap")),
+                List.of(new ResumeDesign.Social("linkedin.com/in/mette", "linkedin")),
                 List.of(new ResumeDesign.CustomSection("Frivilligt arbejde", null, List.of(CUSTOM_ITEM))),
                 List.of("summary", "experience", "education", "projects"),
                 List.of("skills", "languages", "certifications", "strengths", "socials"),
                 List.of(),
                 Map.of());
+    }
+
+    /** {@code base} with its summary, photo, icons and section styles replaced; the rest is kept. */
+    public static ResumeDesign with(ResumeDesign base, String summary, ResumeDesign.Photo photo, String strengthIcon,
+                                    String socialIcon, Map<String, ResumeDesign.SectionStyle> sectionStyles) {
+        ResumeDesign d = base;
+        return new ResumeDesign(d.layout(), d.pageSize(), d.theme(), photo, d.showSkillLevel(), d.labels(), d.person(),
+                summary, d.experience(), d.education(), d.projects(), d.skillGroups(), d.languages(),
+                d.certifications(),
+                List.of(new ResumeDesign.Strength("Overblik", "Holder styr på mange bolde.", strengthIcon)),
+                List.of(new ResumeDesign.Social("linkedin.com/in/mette", socialIcon)),
+                d.customSections(), d.mainOrder(), d.sideOrder(), d.hidden(), sectionStyles);
     }
 
     public static ResumeDesign empty() {

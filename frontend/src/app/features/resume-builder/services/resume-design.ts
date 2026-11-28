@@ -64,8 +64,8 @@ export function toResumeDesign(src: ResumeDesignSource, t: (key: string) => stri
     })),
     languages: data.languages.map(l => ({ name: l.name, proficiency: l.proficiency })),
     certifications: data.certifications.map(c => ({ name: c.name, issuer: c.issuer, date: c.date })),
-    strengths: data.strengths.map(s => ({ title: s.title, description: s.description })),
-    socials: src.socials.map(s => s.username || s.url).filter(Boolean),
+    strengths: data.strengths.map(s => ({ title: s.title, description: s.description, icon: s.iconKey })),
+    socials: src.socials.map(s => ({ label: s.username || s.url, icon: s.iconKey })).filter(s => s.label),
     customSections: (data.customSections ?? []).map(c => ({
       heading: c.heading, body: c.body, items: (c.items ?? []).map(i => i.text),
     })),

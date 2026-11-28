@@ -14,6 +14,7 @@ import java.util.function.Function;
  * here before it reaches Typst: an unknown layout falls back to classic, a malformed colour to
  * the default, an unbundled font to its stand-in, and numbers are clamped to what the builder's
  * own controls can produce. Text is ATS-normalized because the PDF text layer is what parsers read.
+ * Icon keys pass as they come: resume.typ only looks them up in its own icon set.
  */
 record TypstResumeData(
         String layout,
@@ -77,9 +78,9 @@ record TypstResumeData(
 
     record Certification(String name, String issuer, String date) {}
 
-    record Strength(String title, String description) {}
+    record Strength(String title, String description, String icon) {}
 
-    record Social(String label) {}
+    record Social(String label, String icon) {}
 
     record Custom(String heading, List<Block> body, List<String> items) {}
 
@@ -127,8 +128,9 @@ record TypstResumeData(
                         map(g.skills(), s -> new Skill(text(s.name()), level(s.level()))))),
                 map(design.languages(), l -> new Language(text(l.name()), text(l.proficiency()))),
                 map(design.certifications(), c -> new Certification(text(c.name()), text(c.issuer()), text(c.date()))),
-                map(design.strengths(), s -> new Strength(text(s.title()), text(s.description()))),
-                texts(design.socials()).stream().map(Social::new).toList(),
+                map(design.strengths(), s -> new Strength(text(s.title()), text(s.description()), s.icon())),
+                map(design.socials(), s -> new Social(text(s.label()), s.icon())).stream()
+                        .filter(s -> !s.label().isEmpty()).toList(),
                 map(design.customSections(), c -> new Custom(text(c.heading()), TypstRichText.parse(c.body()),
                         texts(c.items()))),
                 texts(design.mainOrder()),

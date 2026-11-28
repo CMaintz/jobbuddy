@@ -25,8 +25,9 @@ export interface ResumeDesign {
   skillGroups: { category: string | null; skills: { name: string; level?: number }[] }[];
   languages: { name: string; proficiency: string }[];
   certifications: { name: string; issuer: string; date: string }[];
-  strengths: { title: string; description: string }[];
-  socials: string[];
+  /** `icon` is the builder's icon key; the backend draws its default for a key it lacks. */
+  strengths: { title: string; description: string; icon: string }[];
+  socials: { label: string; icon: string }[];
   customSections: { heading: string; body?: string; items: string[] }[];
   mainOrder: string[];
   sideOrder: string[];

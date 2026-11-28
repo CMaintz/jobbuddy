@@ -44,13 +44,22 @@ describe('toResumeDesign', () => {
     expect(design({}, { fontSize: 'sm' }).theme.scale).toBe(0.85);
   });
 
-  it('uses a social\'s username when it has one, else its URL', () => {
-    // Bug: the raw URL is always printed, so "linkedin.com/in/x" becomes a long tracking URL.
+  it('uses a social\'s username when it has one, else its URL, with the icon she picked', () => {
+    // Bug: the raw URL is always printed, so "linkedin.com/in/x" becomes a long tracking URL; or
+    // the icon key is dropped, so the PDF draws the default link icon for every profile.
     const d = design({ socials: [
       { id: 's1', platform: 'LinkedIn', url: 'https://linkedin.com/in/mette?trk=x', username: 'mette', iconKey: 'linkedin' },
-      { id: 's2', platform: 'Website', url: 'maintz.dev', iconKey: 'globe' },
+      { id: 's2', platform: 'Website', url: 'example.dk', iconKey: 'globe' },
+      { id: 's3', platform: 'Other', url: '', iconKey: 'link' },
     ] });
 
-    expect(d.socials).toEqual(['mette', 'maintz.dev']);
+    expect(d.socials).toEqual([{ label: 'mette', icon: 'linkedin' }, { label: 'example.dk', icon: 'globe' }]);
+  });
+
+  it('sends each strength with the icon she picked for it', () => {
+    // Bug: the icon key is not mapped, so every strength prints with the same default icon.
+    const d = design({ strengths: [{ id: 'st1', title: 'Overblik', description: 'Holder styr.', iconKey: 'zap' }] });
+
+    expect(d.strengths).toEqual([{ title: 'Overblik', description: 'Holder styr.', icon: 'zap' }]);
   });
 });
