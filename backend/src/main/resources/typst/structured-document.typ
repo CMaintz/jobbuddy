@@ -33,13 +33,22 @@
   if r.at("italic", default: false) { args.insert("style", "italic") }
   if r.at("color", default: none) != none { args.insert("fill", rgb(r.color)) }
   if r.at("size", default: none) != none { args.insert("size", r.size * 0.75pt) }
+  if r.at("font", default: none) != none { args.insert("font", (r.font, "Noto Sans SC")) }
   text(..args, body)
 }
 #let runs(rs) = for r in rs { run(r) }
+#let alignments = (left: left, center: center, right: right)
+#let paragraph(b) = {
+  let a = b.at("align", default: none)
+  if a == "justify" { par(justify: true, runs(b.runs)) }
+  // Full width, or a block sized to its text has nothing to align in.
+  else if type(a) == str and a in alignments { block(width: 100%, align(alignments.at(a), par(runs(b.runs)))) }
+  else { par(runs(b.runs)) }
+}
 #let rich(blocks) = for b in blocks {
   if b.kind == "list" {
     if b.ordered { enum(..b.items.map(runs)) } else { list(..b.items.map(runs)) }
-  } else { par(runs(b.runs)) }
+  } else { paragraph(b) }
 }
 
 // The letter screen's three sheets, in its CSS pixels (an A4 page is 794px wide, 1px = 0.75pt).

@@ -51,6 +51,29 @@ class TypstRichTextTest {
         assertThat(TypstRichText.color("red\") + read(\"x")).isNull();
     }
 
+    /** Bug caught: the editor's text alignment is dropped, so centred or right-aligned text prints left. */
+    @Test
+    void keepsEachParagraphsAlignment() {
+        List<Block> blocks = TypstRichText.parse(
+                "<p style=\"text-align: center\">Midt</p><p>Venstre</p><p style=\"text-align: Right\">Højre</p>");
+
+        assertThat(blocks).extracting(b -> ((Paragraph) b).align()).containsExactly("center", null, "right");
+    }
+
+    /**
+     * Bug caught: the font mark is dropped, or its quoted, comma-listed CSS value is passed on
+     * unmatched, so the phrase prints in the CV's font; or an unbundled or crafted family reaches Typst.
+     */
+    @Test
+    void keepsBundledFontMarksAndDropsTheRest() {
+        List<Block> blocks = TypstRichText.parse("<p><span style=\"font-family: &quot;Times New Roman&quot;, serif\">"
+                + "Serif</span><span style=\"font-family: Comic Sans MS\">Comic</span>"
+                + "<span style=\"font-family: Arial&quot; + read(&quot;x\">Injected</span></p>");
+
+        assertThat(((Paragraph) blocks.get(0)).runs()).extracting(Run::font)
+                .containsExactly(TypstFonts.SERIF, null, null);
+    }
+
     /** Bug caught: a script's source ends up printed in the CV. */
     @Test
     void scriptsContributeNoText() {

@@ -16,7 +16,8 @@ import org.jsoup.nodes.TextNode;
  * Turns the builder's rich text (the editor's HTML, or plain text from generation) into
  * paragraphs and lists of styled runs, which the Typst templates lay out as data. User text never
  * becomes Typst source, and anything the editor cannot produce (links, images, scripts, unknown
- * tags) contributes only its text. A colour or size outside the allowed form is dropped.
+ * tags) contributes only its text. A colour or size outside the allowed form is dropped, and a
+ * font only survives when it names a bundled family.
  */
 final class TypstRichText {
 
@@ -25,6 +26,10 @@ final class TypstRichText {
     private static final Pattern RGB = Pattern.compile("rgba?\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})[^)]*\\)");
     private static final Pattern STYLE_COLOR = Pattern.compile("(?:^|;)\\s*color\\s*:\\s*([^;]+)");
     private static final Pattern STYLE_SIZE = Pattern.compile("(?:^|;)\\s*font-size\\s*:\\s*([0-9.]+)px");
+    private static final Pattern STYLE_FONT =
+            Pattern.compile("(?:^|;)\\s*font-family\\s*:\\s*([^;,]+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern STYLE_ALIGN =
+            Pattern.compile("(?:^|;)\\s*text-align\\s*:\\s*(left|center|right|justify)\\b");
     /** Editor font sizes outside this range are typing mistakes, not design. */
     private static final double MIN_SIZE = 6;
     private static final double MAX_SIZE = 48;
@@ -40,9 +45,14 @@ final class TypstRichText {
 
     sealed interface Block permits Paragraph, ListBlock {}
 
-    record Paragraph(String kind, List<Run> runs) implements Block {
+    /** @param align left, center, right or justify as the editor set it, or null for the default */
+    record Paragraph(String kind, String align, List<Run> runs) implements Block {
+        Paragraph(String align, List<Run> runs) {
+            this("par", align, runs);
+        }
+
         Paragraph(List<Run> runs) {
-            this("par", runs);
+            this(null, runs);
         }
     }
 
@@ -52,33 +62,42 @@ final class TypstRichText {
         }
     }
 
-    /** One stretch of text with one style; a line break is a run of its own. */
+    /**
+     * One stretch of text with one style; a line break is a run of its own.
+     *
+     * @param font a bundled Typst family, or null for the surrounding one
+     */
     @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     record Run(String text, boolean bold, boolean italic, boolean underline, boolean strike, boolean br,
-               String color, Double size) {
+               String color, Double size, String font) {
 
         static Run lineBreak() {
-            return new Run("", false, false, false, false, true, null, null);
+            return new Run("", false, false, false, false, true, null, null, null);
         }
     }
 
-    private record Style(boolean bold, boolean italic, boolean underline, boolean strike, String color, Double size) {
+    private record Style(boolean bold, boolean italic, boolean underline, boolean strike, String color, Double size,
+                         String font) {
 
-        static final Style PLAIN = new Style(false, false, false, false, null, null);
+        static final Style PLAIN = new Style(false, false, false, false, null, null, null);
 
         Run run(String text) {
-            return new Run(text, bold, italic, underline, strike, false, color, size);
+            return new Run(text, bold, italic, underline, strike, false, color, size, font);
         }
 
         /** This style with what {@code element}'s tag and inline CSS add to it. */
         Style inside(Element element) {
             String tag = element.normalName();
-            String css = element.attr("style").toLowerCase(Locale.ROOT);
+            String style = element.attr("style");
+            String css = style.toLowerCase(Locale.ROOT);
             String ownColor = colorFrom(css);
             Double ownSize = sizeFrom(css);
+            // Read from the original: font names are matched case-sensitively against the bundle.
+            String ownFont = fontFrom(style);
             return new Style(bold || BOLD.contains(tag), italic || ITALIC.contains(tag),
                     underline || "u".equals(tag), strike || STRIKE.contains(tag),
-                    ownColor != null ? ownColor : color, ownSize != null ? ownSize : size);
+                    ownColor != null ? ownColor : color, ownSize != null ? ownSize : size,
+                    ownFont != null ? ownFont : font);
         }
     }
 
@@ -100,6 +119,7 @@ final class TypstRichText {
 
         private final List<Block> blocks = new ArrayList<>();
         private final List<Run> runs = new ArrayList<>();
+        private String align;
 
         List<Block> collect(List<Node> nodes) {
             nodes.forEach(this::visit);
@@ -112,12 +132,21 @@ final class TypstRichText {
                 flush();
                 addList((Element) node);
             } else if (node instanceof Element element && BLOCKS.contains(element.normalName())) {
-                flush();
-                element.childNodes().forEach(this::visit);
-                flush();
+                addBlock(element);
             } else {
                 inline(node, Style.PLAIN, runs);
             }
+        }
+
+        /** A block's paragraphs take its alignment, or the enclosing block's when it sets none. */
+        private void addBlock(Element block) {
+            flush();
+            String outer = align;
+            String own = alignFrom(block);
+            align = own != null ? own : outer;
+            block.childNodes().forEach(this::visit);
+            flush();
+            align = outer;
         }
 
         private void addList(Element list) {
@@ -127,12 +156,15 @@ final class TypstRichText {
         }
 
         private void flush() {
-            if (hasText(runs)) blocks.add(new Paragraph(List.copyOf(runs)));
+            if (hasText(runs)) blocks.add(new Paragraph(align, List.copyOf(runs)));
             runs.clear();
         }
     }
 
-    /** Nested lists flatten into the outer one: the layouts have one bullet depth. */
+    /**
+     * Nested lists flatten into the outer one: the layouts have one bullet depth. A list item's
+     * alignment is not kept, so the bullets stay in line down the left edge.
+     */
     private static void listItems(Element list, List<List<Run>> items) {
         for (Element li : list.children()) {
             items.addAll(item(li));
@@ -231,6 +263,17 @@ final class TypstRichText {
 
     private static String hex(String r, String g, String b) {
         return ("#" + r + g + b).toLowerCase(Locale.ROOT);
+    }
+
+    /** The first family the style names, when it is one Typst has; anything else is dropped. */
+    private static String fontFrom(String style) {
+        Matcher m = STYLE_FONT.matcher(style);
+        return m.find() ? TypstFonts.bundled(m.group(1).replace("\"", "").replace("'", ""), null) : null;
+    }
+
+    private static String alignFrom(Element element) {
+        Matcher m = STYLE_ALIGN.matcher(element.attr("style").toLowerCase(Locale.ROOT));
+        return m.find() ? m.group(1) : null;
     }
 
     private static Double sizeFrom(String css) {

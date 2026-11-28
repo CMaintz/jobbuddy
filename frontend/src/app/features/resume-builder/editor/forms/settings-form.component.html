@@ -83,31 +83,33 @@
         </div>
       </div>
 
-      <div>
-        <label class="label">{{ 'resumeBuilder.settings.photoStyle' | translate }}</label>
-        <div class="flex gap-2">
-          @for (style of ['square', 'rounded', 'circle']; track style) {
-            <button class="rb-toggle" [class.active]="settings.photoStyle === style"
-              (click)="update('photoStyle', style)">{{ ('resumeBuilder.settings.shape.' + style) | translate }}</button>
-          }
+      @if (showsPhoto) {
+        <div>
+          <label class="label">{{ 'resumeBuilder.settings.photoStyle' | translate }}</label>
+          <div class="flex gap-2">
+            @for (style of ['square', 'rounded', 'circle']; track style) {
+              <button class="rb-toggle" [class.active]="settings.photoStyle === style"
+                (click)="update('photoStyle', style)">{{ ('resumeBuilder.settings.shape.' + style) | translate }}</button>
+            }
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label class="label">{{ 'resumeBuilder.settings.photoSize' | translate }} — {{ settings.photoSize ? settings.photoSize + 'px' : ('resumeBuilder.settings.templateDefault' | translate) }}</label>
-        <input type="range" min="40" max="200" step="4" class="w-full" style="accent-color:var(--jb-accent);"
-          [value]="settings.photoSize ?? 96"
-          (input)="update('photoSize', +$any($event.target).value)" />
-      </div>
-
-      <div>
-        <label class="label">{{ 'resumeBuilder.settings.photoPlacement' | translate }}</label>
-        <div class="flex gap-2">
-          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'left'" (click)="update('photoPlacement', 'left')">{{ 'resumeBuilder.settings.left' | translate }}</button>
-          <button class="rb-toggle" [class.active]="!settings.photoPlacement" (click)="update('photoPlacement', undefined)">{{ 'resumeBuilder.settings.template' | translate }}</button>
-          <button class="rb-toggle" [class.active]="settings.photoPlacement === 'right'" (click)="update('photoPlacement', 'right')">{{ 'resumeBuilder.settings.right' | translate }}</button>
+        <div>
+          <label class="label">{{ 'resumeBuilder.settings.photoSize' | translate }} - {{ settings.photoSize ? settings.photoSize + 'px' : ('resumeBuilder.settings.templateDefault' | translate) }}</label>
+          <input type="range" min="40" max="200" step="4" class="w-full" style="accent-color:var(--jb-accent);"
+            [value]="settings.photoSize ?? 96"
+            (input)="update('photoSize', +$any($event.target).value)" />
         </div>
-      </div>
+
+        <div>
+          <label class="label">{{ 'resumeBuilder.settings.photoPlacement' | translate }}</label>
+          <div class="flex gap-2">
+            <button class="rb-toggle" [class.active]="settings.photoPlacement === 'left'" (click)="update('photoPlacement', 'left')">{{ 'resumeBuilder.settings.left' | translate }}</button>
+            <button class="rb-toggle" [class.active]="!settings.photoPlacement" (click)="update('photoPlacement', undefined)">{{ 'resumeBuilder.settings.template' | translate }}</button>
+            <button class="rb-toggle" [class.active]="settings.photoPlacement === 'right'" (click)="update('photoPlacement', 'right')">{{ 'resumeBuilder.settings.right' | translate }}</button>
+          </div>
+        </div>
+      }
 
       <div class="flex items-center justify-between">
         <label class="label" style="margin-bottom:0;">{{ 'resumeBuilder.settings.showSkillLevel' | translate }}</label>

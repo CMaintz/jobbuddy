@@ -37,7 +37,7 @@ public record ResumeDesign(
         List<Language> languages,
         List<Certification> certifications,
         List<Strength> strengths,
-        List<String> socials,
+        List<Social> socials,
         List<CustomSection> customSections,
         List<String> mainOrder,
         List<String> sideOrder,
@@ -76,7 +76,16 @@ public record ResumeDesign(
 
     public record Certification(String name, String issuer, String date) {}
 
-    public record Strength(String title, String description) {}
+    /** @param icon the builder's icon key; one the layouts lack draws their default */
+    public record Strength(String title, String description, String icon) {}
+
+    /**
+     * A profile link as the CV prints it.
+     *
+     * @param label the username or address shown
+     * @param icon the builder's icon key; one the layouts lack draws their default
+     */
+    public record Social(String label, String icon) {}
 
     public record CustomSection(String heading, String body, List<String> items) {}
 
