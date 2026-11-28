@@ -15,6 +15,8 @@ import { GeneratedDocument } from '../../core/models/generated-document.model';
 import { Job } from '../../core/models/job.model';
 import { Application } from '../../core/models/application.model';
 import { LetterReview, StructuredDocument } from '../../core/models/structured-document.model';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../testing/spy-obj';
 
 /**
  * The export warning as the output page drives it: which text counts as checked, and what a
@@ -22,9 +24,9 @@ import { LetterReview, StructuredDocument } from '../../core/models/structured-d
  */
 describe('ApplicationOutputComponent export check', () => {
   const POSTING = 'Vi søger en compliance-specialist.';
-  let ai: jasmine.SpyObj<AiApiService>;
-  let ats: jasmine.SpyObj<AtsPdfService>;
-  let render: jasmine.SpyObj<DocumentRenderApiService>;
+  let ai: Mocked<AiApiService>;
+  let ats: Mocked<AtsPdfService>;
+  let render: Mocked<DocumentRenderApiService>;
 
   const passed: LetterReview = { needs: [], gate: { verdict: 'PASSED', points: [], rounds: 0 }, stale: false };
   const failed: LetterReview = {
@@ -42,19 +44,19 @@ describe('ApplicationOutputComponent export check', () => {
   }
 
   function open(doc: GeneratedDocument, description: string | null = POSTING): ApplicationOutputComponent {
-    const jobs = jasmine.createSpyObj<JobsApiService>('JobsApiService', ['getDocumentsForJob', 'getById']);
-    jobs.getDocumentsForJob.and.returnValue(of([doc]));
-    jobs.getById.and.returnValue(of({ id: 'job-1', descriptionClean: description } as unknown as Job));
-    const apps = jasmine.createSpyObj<ApplicationsApiService>('ApplicationsApiService', ['getById']);
-    apps.getById.and.returnValue(of({ id: 'app-1', jobId: 'job-1' } as unknown as Application));
-    const documents = jasmine.createSpyObj<DocumentApiService>('DocumentApiService', ['getQualityScores']);
-    documents.getQualityScores.and.returnValue(of([]));
+    const jobs = spyObj<JobsApiService>(['getDocumentsForJob', 'getById']);
+    jobs.getDocumentsForJob.mockReturnValue(of([doc]));
+    jobs.getById.mockReturnValue(of({ id: 'job-1', descriptionClean: description } as unknown as Job));
+    const apps = spyObj<ApplicationsApiService>(['getById']);
+    apps.getById.mockReturnValue(of({ id: 'app-1', jobId: 'job-1' } as unknown as Application));
+    const documents = spyObj<DocumentApiService>(['getQualityScores']);
+    documents.getQualityScores.mockReturnValue(of([]));
     TestBed.configureTestingModule({
       imports: [ApplicationOutputComponent, TranslateModule.forRoot()],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: {
           paramMap: convertToParamMap({ id: 'app-1' }), queryParamMap: convertToParamMap({}) } } },
-        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        { provide: Router, useValue: spyObj<Router>(['navigate']) },
         { provide: AiApiService, useValue: ai },
         { provide: ApplicationsApiService, useValue: apps },
         { provide: JobsApiService, useValue: jobs },
@@ -70,12 +72,12 @@ describe('ApplicationOutputComponent export check', () => {
   }
 
   beforeEach(() => {
-    ai = jasmine.createSpyObj<AiApiService>('AiApiService', ['saveStructuredDocument', 'recheckLetter']);
-    ats = jasmine.createSpyObj<AtsPdfService>('AtsPdfService', ['downloadLetter']);
-    ats.downloadLetter.and.returnValue(Promise.resolve(1));
-    render = jasmine.createSpyObj<DocumentRenderApiService>('DocumentRenderApiService', ['exportStructuredPdf']);
-    render.exportStructuredPdf.and.returnValue(Promise.resolve({ blob: new Blob(), pageCount: 1 }));
-    spyOn(HTMLAnchorElement.prototype, 'click');
+    ai = spyObj<AiApiService>(['saveStructuredDocument', 'recheckLetter']);
+    ats = spyObj<AtsPdfService>(['downloadLetter']);
+    ats.downloadLetter.mockReturnValue(Promise.resolve(1));
+    render = spyObj<DocumentRenderApiService>(['exportStructuredPdf']);
+    render.exportStructuredPdf.mockReturnValue(Promise.resolve({ blob: new Blob(), pageCount: 1 }));
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
   });
 
   it('exports a passed letter as a designed text PDF in the chosen paper', () => {
@@ -87,7 +89,7 @@ describe('ApplicationOutputComponent export check', () => {
     page.downloadPdf();
 
     expect(render.exportStructuredPdf).toHaveBeenCalledTimes(1);
-    const sent: StructuredDocument = render.exportStructuredPdf.calls.mostRecent().args[0];
+    const sent: StructuredDocument = render.exportStructuredPdf.mock.lastCall![0];
     expect(sent.exportMode).toBe('DESIGNED');
     expect(sent.templateId).toBe('letter-classic');
     expect(sent.bodyContent).toBe('<p>Jeres behov.</p>');
@@ -106,7 +108,7 @@ describe('ApplicationOutputComponent export check', () => {
   it('holds the download of a passed letter once an AI refinement replaced its text', () => {
     // Bug: the refined text is only local, the stored review still says passed, so it exports
     // unchecked; and when the save fails that lasts for the rest of the visit.
-    ai.saveStructuredDocument.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    ai.saveStructuredDocument.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     const page = open(letter(passed));
     page.refinedText.set('En helt ny tekst, som porten aldrig har set.');
 
@@ -121,7 +123,7 @@ describe('ApplicationOutputComponent export check', () => {
   it('keeps the failed points and says the check failed when a re-check gets no verdict', () => {
     // Bug: a provider outage replaces the failed verdict with "no verdict" and the user loses the
     // quotes she was fixing, or sees no sign that the re-check did nothing.
-    ai.recheckLetter.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    ai.recheckLetter.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
     const page = open(letter(failed));
     page.downloadAtsPdf();
 
@@ -134,16 +136,16 @@ describe('ApplicationOutputComponent export check', () => {
 
   it('offers no re-check for a legacy letter without structure, or a job without a description', () => {
     // Bug: the button is offered on the job id alone, and the server can only answer 409.
-    expect(open(letter(null)).canRecheck()).toBeFalse();
+    expect(open(letter(null)).canRecheck()).toBe(false);
     TestBed.resetTestingModule();
-    expect(open(letter(failed), null).canRecheck()).toBeFalse();
+    expect(open(letter(failed), null).canRecheck()).toBe(false);
     TestBed.resetTestingModule();
-    expect(open(letter(failed)).canRecheck()).toBeTrue();
+    expect(open(letter(failed)).canRecheck()).toBe(true);
   });
 
   it('explains a re-check the server cannot run instead of asking to try again', () => {
     // Bug: a 409 shows "try again in a moment" for a letter that can never be checked.
-    ai.recheckLetter.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+    ai.recheckLetter.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
     const page = open(letter(failed));
     page.downloadAtsPdf();
 
@@ -155,7 +157,7 @@ describe('ApplicationOutputComponent export check', () => {
   it('says the letter changed during the check instead of calling it uncheckable', () => {
     // Bug: every 409 reads as "not tied to a posting", so a letter edited while the gate ran
     // tells the user it can never be checked when checking again would work.
-    ai.recheckLetter.and.returnValue(throwError(() => new HttpErrorResponse({
+    ai.recheckLetter.mockReturnValue(throwError(() => new HttpErrorResponse({
       status: 409, error: { status: 409, code: 'LETTER_CHANGED_DURING_CHECK' },
     })));
     const page = open(letter(failed));

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ChatApiService, ApproveSettings } from '../api/chat.api';
 import { ChatPlan } from '../models/chat.model';
-import { loadGenDefaults } from '../../features/settings/settings.component';
+import { loadGenDefaults } from '../gen-defaults';
 
 export type Decision = 'approve' | 'reject';
 

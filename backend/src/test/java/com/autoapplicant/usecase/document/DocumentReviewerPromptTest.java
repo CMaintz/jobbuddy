@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Pins the reviewer prompt assembly — section order and the exact whitespace between sections — so a
+ * Pins the reviewer prompt assembly (section order and the blank line between sections) so a
  * future edit to the builder cannot silently shift the delivered prompt. Uses small synthetic
  * guardrail blocks rather than the real (large) constants: the concern here is how the sections are
  * joined, not the text of each guardrail, which lives in {@link GenerationGuardrails}/{@link ClicheGuard}.

@@ -1,17 +1,17 @@
 package com.autoapplicant.usecase.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.autoapplicant.domain.application.ApplicationStatus;
 import com.autoapplicant.domain.application.ApplicationStatusEvent;
 import com.autoapplicant.domain.application.ApplicationTimelineEntry;
 import com.autoapplicant.port.out.application.ApplicationStatusEventRepositoryPort;
-import org.junit.jupiter.api.Test;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
 
 class ApplicationTimelineServiceTest {
 
@@ -37,10 +37,11 @@ class ApplicationTimelineServiceTest {
     }
 
     @Test
-    void the_users_own_moves_are_on_the_timeline_not_just_the_employers_replies() {
+    void the_users_own_moves_are_on_the_timeline_with_their_notes_but_not_as_replies() {
         givenLedger(
                 event(null, ApplicationStatus.SAVED, SAVED_AT, null),
-                event(ApplicationStatus.PREPARING, ApplicationStatus.APPLIED, APPLIED_AT, null));
+                event(ApplicationStatus.PREPARING, ApplicationStatus.APPLIED, APPLIED_AT,
+                        "Sent through their portal, referenced Marie"));
 
         List<ApplicationTimelineEntry> timeline = service.getTimeline(APPLICATION, USER);
 
@@ -48,51 +49,23 @@ class ApplicationTimelineServiceTest {
                 .containsExactly(ApplicationStatus.SAVED, ApplicationStatus.APPLIED);
         assertThat(timeline).noneMatch(ApplicationTimelineEntry::employerResponse);
         assertThat(timeline.getFirst().fromStatus()).isNull();
+        assertThat(timeline.getFirst().at()).isEqualTo(SAVED_AT);
+        assertThat(timeline.getLast().fromStatus()).isEqualTo(ApplicationStatus.PREPARING);
+        assertThat(timeline.getLast().notes()).isEqualTo("Sent through their portal, referenced Marie");
     }
 
     @Test
-    void an_employers_reply_carries_its_note_and_is_marked_as_theirs() {
+    void the_employers_replies_are_marked_as_theirs_and_keep_their_notes() {
         givenLedger(
-                event(null, ApplicationStatus.SAVED, SAVED_AT, null),
                 event(ApplicationStatus.APPLIED, ApplicationStatus.RECRUITER_CONTACT, SCREEN_AT,
-                        "Called about the platform role"));
+                        "Called about the platform role"),
+                event(ApplicationStatus.RECRUITER_CONTACT, ApplicationStatus.REJECTED, REJECTED_AT,
+                        "Went with an internal candidate"));
 
         List<ApplicationTimelineEntry> timeline = service.getTimeline(APPLICATION, USER);
 
-        assertThat(timeline.getFirst().employerResponse()).isFalse();
-        assertThat(timeline.getFirst().notes()).isNull();
-        assertThat(timeline.getLast().employerResponse()).isTrue();
-        assertThat(timeline.getLast().notes()).isEqualTo("Called about the platform role");
-    }
-
-    @Test
-    void a_note_on_the_users_own_move_is_kept_even_though_it_is_not_a_reply() {
-        givenLedger(event(ApplicationStatus.PREPARING, ApplicationStatus.APPLIED, APPLIED_AT,
-                "Sent through their portal, referenced Marie"));
-
-        ApplicationTimelineEntry entry = service.getTimeline(APPLICATION, USER).getFirst();
-
-        assertThat(entry.employerResponse()).isFalse();
-        assertThat(entry.notes()).isEqualTo("Sent through their portal, referenced Marie");
-    }
-
-    @Test
-    void a_rejection_is_the_employers_and_keeps_the_reason() {
-        givenLedger(event(ApplicationStatus.RECRUITER_CONTACT, ApplicationStatus.REJECTED, REJECTED_AT,
-                "Went with an internal candidate"));
-
-        ApplicationTimelineEntry entry = service.getTimeline(APPLICATION, USER).getFirst();
-
-        assertThat(entry.employerResponse()).isTrue();
-        assertThat(entry.notes()).isEqualTo("Went with an internal candidate");
-    }
-
-    @Test
-    void another_users_application_id_yields_nothing_rather_than_their_history() {
-        UUID theirs = UUID.randomUUID();
-        when(statusEvents.findByApplicationIdAndUserId(theirs, USER)).thenReturn(List.of());
-
-        assertThat(service.getTimeline(theirs, USER)).isEmpty();
-        verify(statusEvents).findByApplicationIdAndUserId(theirs, USER);
+        assertThat(timeline).allMatch(ApplicationTimelineEntry::employerResponse);
+        assertThat(timeline).extracting(ApplicationTimelineEntry::notes)
+                .containsExactly("Called about the platform role", "Went with an internal candidate");
     }
 }

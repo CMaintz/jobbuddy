@@ -57,7 +57,8 @@ function createBackendSession({ session, fetch, paths, dataDir, environment, onC
 
     const token = generateToken();
     const launch = backendLaunch({
-      javaExe: paths.java, jarPath: paths.jar, token, dataDir, settings, baseEnv: await environment(),
+      javaExe: paths.java, jarPath: paths.jar, typstExe: paths.typst, token, dataDir, settings,
+      baseEnv: await environment(),
     });
     const { child, ready } = startBackend({ spawn, launch, log });
     const run = { child, token, origin: null, stopping: false };

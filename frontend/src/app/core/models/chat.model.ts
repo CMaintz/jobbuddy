@@ -20,8 +20,6 @@ export interface ChatAction {
   postings: ChatActionPosting[];
 }
 
-type PlanItemKind = 'SAVE_POSTING' | 'IGNORE_POSTING' | 'UPDATE_STATUS' | 'LOG_INTERVIEW' | 'GENERATE_DOCUMENTS';
-
 type PlanItemState = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | 'REJECTED';
 
 type PlanFailure =
@@ -33,28 +31,39 @@ type PlanFailure =
   | 'FAILED';
 
 /** What a proposed change does, from the database: never the model's own words. */
-interface PlanItemDetails {
-  postingId: string | null;
-  applicationId: string | null;
+interface PostingDetails {
+  postingId: string;
   title: string | null;
   company: string | null;
-  fromStatus: ApplicationStatus | null;
-  toStatus: ApplicationStatus | null;
-  interviewBefore: string | null;
-  interviewAt: string | null;
 }
 
-export interface PlanItem {
+interface StatusMoveDetails extends PostingDetails {
+  applicationId: string;
+  fromStatus: ApplicationStatus;
+  toStatus: ApplicationStatus;
+}
+
+interface InterviewDetails extends PostingDetails {
+  applicationId: string;
+  interviewBefore: string | null;
+  interviewAt: string;
+}
+
+/** The server sends the details type the kind takes, so checking the kind types the details. */
+type PlanItemChange =
+  | { kind: 'SAVE_POSTING' | 'IGNORE_POSTING' | 'GENERATE_DOCUMENTS'; details: PostingDetails }
+  | { kind: 'UPDATE_STATUS'; details: StatusMoveDetails }
+  | { kind: 'LOG_INTERVIEW'; details: InterviewDetails };
+
+export type PlanItem = PlanItemChange & {
   id: string;
-  kind: PlanItemKind;
-  details: PlanItemDetails;
   state: PlanItemState;
   failure: PlanFailure | null;
   /** Where its CV and letter were written, once a GENERATE_DOCUMENTS item is done. */
   resultApplicationId: string | null;
   decidedAt: string | null;
   finishedAt: string | null;
-}
+};
 
 /** Changes the chat proposed; nothing runs until she approves an item. */
 export interface ChatPlan {

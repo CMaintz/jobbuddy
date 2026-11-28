@@ -3,12 +3,14 @@ import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LoginComponent } from './login.component';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../../testing/spy-obj';
 
 describe('LoginComponent password reset', () => {
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: Mocked<AuthService>;
 
   function create(email: string): LoginComponent {
-    authService = jasmine.createSpyObj<AuthService>('AuthService', [
+    authService = spyObj<AuthService>([
       'login', 'sendPasswordReset', 'buildLinkedInAuthUrl',
     ]);
     TestBed.configureTestingModule({
@@ -22,7 +24,7 @@ describe('LoginComponent password reset', () => {
 
   it('sends the reset link to the address typed on the login page', async () => {
     const component = create('me@example.com');
-    authService.sendPasswordReset.and.resolveTo();
+    authService.sendPasswordReset.mockResolvedValue(undefined);
 
     await component.sendPasswordReset();
 
@@ -42,7 +44,7 @@ describe('LoginComponent password reset', () => {
   it('answers an unknown address like a known one, so it does not reveal who has an account',
     async () => {
       const component = create('nobody@example.com');
-      authService.sendPasswordReset.and.rejectWith({ code: 'auth/user-not-found' });
+      authService.sendPasswordReset.mockRejectedValue({ code: 'auth/user-not-found' });
 
       await component.sendPasswordReset();
 

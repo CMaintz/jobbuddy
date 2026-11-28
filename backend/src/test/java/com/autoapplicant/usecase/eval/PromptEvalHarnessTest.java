@@ -1,5 +1,7 @@
 package com.autoapplicant.usecase.eval;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.autoapplicant.domain.document.PostingContext;
 import com.autoapplicant.domain.document.PromptComposition;
 import com.autoapplicant.domain.document.QualityScore;
@@ -8,28 +10,23 @@ import com.autoapplicant.usecase.document.DocumentFactGuard;
 import com.autoapplicant.usecase.document.PromptCompositionBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 /**
  * The prompt evaluation harness: fixtures of (profile, posting, sample outputs) scored by
  * {@link DocumentQualityEvaluator}, so a prompt change can be judged by a number rather than by
  * reading one output and forming an impression.
  *
- * <p>Two things are checked per fixture. First, the composed prompt actually carries the blocks
- * this fixture needs (a Danish posting must get Danish conventions) — a prompt regression is
- * caught here rather than in a bad letter weeks later. Second, the evaluator separates a good
- * output from a weak one by a wide margin, which is what makes its score trustworthy as a
- * regression metric.
+ * <p>Per fixture, the evaluator must separate a good output from a weak one by a wide margin,
+ * which is what makes its score trustworthy as a regression metric. What the composed prompt
+ * carries is pinned by {@code PromptCompositionBuilderGoldenTest}.
  *
  * <p>Everything runs offline. To score real generations, run the app's generation path and feed
  * the body to the same evaluator — the fixture scores below are the baseline to compare against.
@@ -58,9 +55,8 @@ class PromptEvalHarnessTest {
             new DocumentQualityEvaluator(new ClicheGuard(), new DocumentFactGuard());
     private final PromptCompositionBuilder promptBuilder = new PromptCompositionBuilder();
 
-    private record Fixture(String name, String language, String country, int targetWords,
-                           List<String> postingKeywords, String posting, String profileJson,
-                           String good, String weak) {}
+    private record Fixture(String name, int targetWords, List<String> postingKeywords,
+                           String profileJson, String good, String weak) {}
 
     private static List<Fixture> load(ObjectMapper mapper) throws IOException {
         List<Fixture> fixtures = new ArrayList<>();
@@ -72,9 +68,8 @@ class PromptEvalHarnessTest {
                 List<String> keywords = new ArrayList<>();
                 n.path("postingKeywords").forEach(k -> keywords.add(k.asText()));
                 fixtures.add(new Fixture(
-                        n.path("name").asText(), n.path("language").asText(),
-                        n.path("country").asText(), n.path("targetWords").asInt(),
-                        keywords, n.path("posting").asText(), n.path("profileJson").asText(),
+                        n.path("name").asText(), n.path("targetWords").asInt(),
+                        keywords, n.path("profileJson").asText(),
                         n.path("outputs").path("good").asText(),
                         n.path("outputs").path("weak").asText()));
             }
@@ -125,37 +120,25 @@ class PromptEvalHarnessTest {
         }));
     }
 
-    @TestFactory
-    Stream<DynamicTest> composedPromptCarriesWhatTheFixtureNeeds() throws IOException {
-        return load(mapper).stream().map(f -> DynamicTest.dynamicTest(f.name(), () -> {
-            PromptComposition c = promptBuilder.composeStructuredApplicationPrompt(
-                    "COVER_LETTER", f.profileJson(),
-                    new PostingContext(f.posting(), f.country(), null),
-                    null, null, null, null, null, List.of(), null, "STANDARD");
-
-            assertThat(c.systemPrompt())
-                    .contains("Write the document body in " + f.language())
-                    .contains("## Untrusted Input");
-            assertThat(c.userPromptTemplate())
-                    .contains("## Honesty & ATS Rules", "## Targeting & Proof Rules", "## Banned Phrases")
-                    // Every fixture posts into Denmark, whatever language it is written in.
-                    .contains("## Danish Market Conventions");
-        }));
+    @Test
+    void thePromptAsksForTheWordCountTheScorerMeasures() {
+        // Live scoring measures length against letterWordTarget; the prompt states its own number
+        // in prose. If the two ever drift, a letter could follow its instructions exactly and still
+        // be marked down for length.
+        assertPromptAndTargetAgree("SHORT", 200);
+        assertPromptAndTargetAgree("STANDARD", 300);
+        assertPromptAndTargetAgree("DETAILED", 380);
+        assertThat(PromptCompositionBuilder.letterWordTarget(null)).isEqualTo(300);
     }
 
-    @Test
-    void theHarnessScoresAgainstTheSameTargetThePromptAsksFor() {
-        // The prompt's word target and the evaluator's are one value; if they ever drift, a letter
-        // could follow its instructions exactly and still be marked down for length.
-        assertThat(PromptCompositionBuilder.letterWordTarget("SHORT")).isEqualTo(200);
-        assertThat(PromptCompositionBuilder.letterWordTarget("STANDARD")).isEqualTo(300);
-        assertThat(PromptCompositionBuilder.letterWordTarget("DETAILED")).isEqualTo(380);
-        assertThat(PromptCompositionBuilder.letterWordTarget(null)).isEqualTo(300);
-
+    private void assertPromptAndTargetAgree(String lengthPreference, int words) {
+        assertThat(PromptCompositionBuilder.letterWordTarget(lengthPreference))
+                .as("scoring target for %s", lengthPreference).isEqualTo(words);
         PromptComposition c = promptBuilder.composeStructuredApplicationPrompt(
                 "COVER_LETTER", "{}", PostingContext.ofDescription("posting text"), null, null,
-                null, null, null, List.of(), null, "SHORT");
-        assertThat(c.userPromptTemplate()).contains("about 200 words");
+                null, null, null, List.of(), null, lengthPreference);
+        assertThat(c.userPromptTemplate()).as("prompt for %s", lengthPreference)
+                .contains("about " + words + " words");
     }
 
     @Test

@@ -33,7 +33,7 @@ describe('CvImportPanelComponent parse errors', () => {
     failWith(422, 'NO_TEXT');
 
     expect(emitted).toEqual(['cvImport.error.reason.NO_TEXT']);
-    expect(panel.parsing()).toBeFalse();
+    expect(panel.parsing()).toBe(false);
   });
 
   it('translates the reason code of a 503', () => {

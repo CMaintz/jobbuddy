@@ -57,23 +57,22 @@ final class PlanChecks {
 
     /** Why the approved item can no longer run as proposed, or empty when it can. */
     Optional<PlanFailure> staleness(UUID userId, PlanItem item) {
-        Details d = item.details();
-        return switch (item.kind()) {
-            case SAVE_POSTING, IGNORE_POSTING -> jobs.findById(d.postingId()).isPresent()
+        return switch (item.details()) {
+            case Details.Posting p -> jobs.findById(p.postingId()).isPresent()
                     ? Optional.empty() : Optional.of(PlanFailure.POSTING_GONE);
-            case GENERATE_DOCUMENTS -> jobs.findById(d.postingId())
+            case Details.Documents d -> jobs.findById(d.postingId())
                     .map(job -> documents.staleness(userId, job))
                     .orElse(Optional.of(PlanFailure.POSTING_GONE));
-            case UPDATE_STATUS -> applicationStaleness(userId, d,
-                    app -> app.status() == d.fromStatus());
-            case LOG_INTERVIEW -> applicationStaleness(userId, d,
-                    app -> Objects.equals(app.interviewAt(), d.interviewBefore()));
+            case Details.StatusMove s -> applicationStaleness(userId, s.applicationId(),
+                    app -> app.status() == s.fromStatus());
+            case Details.Interview i -> applicationStaleness(userId, i.applicationId(),
+                    app -> Objects.equals(app.interviewAt(), i.interviewBefore()));
         };
     }
 
-    private Optional<PlanFailure> applicationStaleness(UUID userId, Details d,
+    private Optional<PlanFailure> applicationStaleness(UUID userId, UUID applicationId,
                                                        Predicate<Application> unchanged) {
-        Optional<Application> app = applications.findByIdAndUserId(d.applicationId(), userId);
+        Optional<Application> app = applications.findByIdAndUserId(applicationId, userId);
         if (app.isEmpty()) {
             return Optional.of(PlanFailure.APPLICATION_GONE);
         }
@@ -82,7 +81,7 @@ final class PlanChecks {
 
     private Details postingDetails(UUID postingId) {
         Job job = posting(postingId);
-        return Details.posting(job.id(), job.title(), job.companyName());
+        return new Details.Posting(job.id(), job.title(), job.companyName());
     }
 
     private Details documentDetails(UUID userId, UUID postingId) {
@@ -90,7 +89,7 @@ final class PlanChecks {
         documents.refusal(userId, job).ifPresent(why -> {
             throw new ProposalRefusedException(why);
         });
-        return Details.posting(job.id(), job.title(), job.companyName());
+        return new Details.Documents(job.id(), job.title(), job.companyName());
     }
 
     private Job posting(UUID postingId) {
@@ -108,8 +107,8 @@ final class PlanChecks {
                     + " and can only move to " + app.status().nextStatuses());
         }
         Job job = posting(app);
-        return new Details(job.id(), app.id(), job.title(), job.companyName(), app.status(), to,
-                null, null);
+        return new Details.StatusMove(job.id(), app.id(), job.title(), job.companyName(),
+                app.status(), to);
     }
 
     private Details interviewDetails(UUID userId, ProposedChange change) {
@@ -121,7 +120,7 @@ final class PlanChecks {
             throw new ProposalRefusedException("interview_at must be a date within a year of today");
         }
         Job job = posting(app);
-        return new Details(job.id(), app.id(), job.title(), job.companyName(), null, null,
+        return new Details.Interview(job.id(), app.id(), job.title(), job.companyName(),
                 app.interviewAt(), change.interviewAt());
     }
 

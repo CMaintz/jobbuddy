@@ -16,7 +16,7 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
             "outputPath": "dist/frontend",
             "index": "src/index.html",
@@ -80,12 +80,17 @@
                 },
                 "fonts": true
               }
+            },
+            "testing": {
+              "optimization": false,
+              "extractLicenses": false,
+              "aot": false
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "autoapplicant:build:production"
@@ -103,26 +108,19 @@
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "runner": "vitest",
+            "buildTarget": ":build:testing",
             "tsConfig": "tsconfig.spec.json",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
+            "runnerConfig": "vitest-base.config.mts",
+            "setupFiles": [
+              "src/testing/setup.ts"
             ],
-            "styles": [
-              "src/styles/fonts.css",
-              "src/styles.css",
-              "src/styles/effects.css",
-              "src/styles/document-render.css",
-              "src/styles/resume-forms.css"
-            ],
-            "scripts": [],
-            "karmaConfig": "karma.conf.cjs"
+            "coverageReporters": [
+              "text-summary",
+              "lcovonly"
+            ]
           }
         },
         "lint": {

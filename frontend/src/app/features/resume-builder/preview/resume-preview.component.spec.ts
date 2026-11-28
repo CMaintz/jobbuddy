@@ -7,6 +7,8 @@ import { ResumeDesign } from '../../../core/models/resume-design.model';
 import { ResumeDraftApiService } from '../services/resume-draft-api.service';
 import { ResumeStateService } from '../services/resume-state.service';
 import { ResumePreviewComponent } from './resume-preview.component';
+import type { Mocked } from 'vitest';
+import { spyObj } from '../../../../testing/spy-obj';
 
 /** Longer than the preview's debounce, so the render it waits for has been requested. */
 const PREVIEW_SETTLE_MS = 500;
@@ -14,13 +16,12 @@ const PREVIEW_SETTLE_MS = 500;
 describe('ResumePreviewComponent page budget', () => {
   let fixture: ComponentFixture<ResumePreviewComponent>;
   let state: ResumeStateService;
-  let render: jasmine.SpyObj<DocumentRenderApiService>;
+  let render: Mocked<DocumentRenderApiService>;
 
   beforeEach(() => {
-    render = jasmine.createSpyObj<DocumentRenderApiService>('DocumentRenderApiService',
-      ['previewResume', 'exportResumePdf']);
-    render.previewResume.and.returnValue(of(['<svg xmlns="http://www.w3.org/2000/svg"/>']));
-    render.exportResumePdf.and.returnValue(Promise.resolve({ blob: new Blob(), pageCount: 3 }));
+    render = spyObj<DocumentRenderApiService>(['previewResume', 'exportResumePdf']);
+    render.previewResume.mockReturnValue(of(['<svg xmlns="http://www.w3.org/2000/svg"/>']));
+    render.exportResumePdf.mockReturnValue(Promise.resolve({ blob: new Blob(), pageCount: 3 }));
     TestBed.configureTestingModule({
       imports: [ResumePreviewComponent, TranslateModule.forRoot()],
       providers: [
@@ -81,7 +82,7 @@ describe('ResumePreviewComponent page budget', () => {
 
     const imgs = (fixture.nativeElement as HTMLElement).querySelectorAll('#previewContainer img');
     expect(imgs.length).toBe(1);
-    const previewed: ResumeDesign = render.previewResume.calls.mostRecent().args[0];
+    const previewed: ResumeDesign = render.previewResume.mock.lastCall![0];
     expect(previewed.person.name).toBe('Mette Højgaard');
   });
 
@@ -90,11 +91,11 @@ describe('ResumePreviewComponent page budget', () => {
     // e-mail and links into the PDF.
     state.updatePersonalInfo({ fullName: 'Mette Højgaard', email: 'mette@example.dk' });
     state.updateSettings({ anonymise: true });
-    spyOn(HTMLAnchorElement.prototype, 'click');
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     await fixture.componentInstance.downloadPdf();
 
-    const exported: ResumeDesign = render.exportResumePdf.calls.mostRecent().args[0];
+    const exported: ResumeDesign = render.exportResumePdf.mock.lastCall![0];
     expect(exported.person.name).not.toContain('Mette');
     expect(exported.person.email).toBe('');
     expect(exported.socials).toEqual([]);
@@ -102,7 +103,7 @@ describe('ResumePreviewComponent page budget', () => {
 
   it('warns when the designed PDF the backend measured runs over two pages', async () => {
     // Bug: the page count header is not read, so an overlong designed CV goes out unwarned.
-    spyOn(HTMLAnchorElement.prototype, 'click');
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     await fixture.componentInstance.downloadPdf();
     fixture.detectChanges();
@@ -118,12 +119,12 @@ describe('ResumePreviewComponent page budget', () => {
     translate.setTranslation('en', { resumeBuilder: { cv: { experience: 'Experience' } } });
     translate.use('da');
     fixture.componentInstance.design();
-    spyOn(HTMLAnchorElement.prototype, 'click');
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     translate.use('en');
     await fixture.componentInstance.downloadPdf();
 
-    const exported: ResumeDesign = render.exportResumePdf.calls.mostRecent().args[0];
+    const exported: ResumeDesign = render.exportResumePdf.mock.lastCall![0];
     expect(exported.labels['experience']).toBe('Experience');
   });
 });

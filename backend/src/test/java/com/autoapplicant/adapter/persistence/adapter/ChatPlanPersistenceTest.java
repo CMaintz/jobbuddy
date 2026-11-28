@@ -62,25 +62,57 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
 
     @Test
     void a_plan_comes_back_with_what_its_card_promised() {
-        PlanItem.Details details = new PlanItem.Details(UUID.randomUUID(), UUID.randomUUID(),
-                "Rådgiver", "Kommunen", null, null, LocalDateTime.of(2026, 12, 1, 9, 0),
+        PlanItem.Details interview = new PlanItem.Details.Interview(UUID.randomUUID(),
+                UUID.randomUUID(), "Rådgiver", "Kommunen", LocalDateTime.of(2026, 12, 1, 9, 0),
                 LocalDateTime.of(2026, 12, 3, 10, 30));
-        PlanItem.Details status = new PlanItem.Details(UUID.randomUUID(), UUID.randomUUID(),
-                "Konsulent", "Arla", ApplicationStatus.APPLIED, ApplicationStatus.REJECTED, null, null);
+        PlanItem.Details status = new PlanItem.Details.StatusMove(UUID.randomUUID(),
+                UUID.randomUUID(), "Konsulent", "Arla", ApplicationStatus.APPLIED,
+                ApplicationStatus.REJECTED);
+        PlanItem.Details posting = new PlanItem.Details.Posting(UUID.randomUUID(), "Udvikler", null);
+        PlanItem.Details documents = new PlanItem.Details.Documents(UUID.randomUUID(), "Analytiker",
+                "Vestas");
 
         ChatPlan stored = plans.create(plan(
-                PlanItem.proposed(null, PlanItem.Kind.LOG_INTERVIEW, details),
-                PlanItem.proposed(null, PlanItem.Kind.UPDATE_STATUS, status)));
+                PlanItem.proposed(null, PlanItem.Kind.LOG_INTERVIEW, interview),
+                PlanItem.proposed(null, PlanItem.Kind.UPDATE_STATUS, status),
+                PlanItem.proposed(null, PlanItem.Kind.IGNORE_POSTING, posting),
+                PlanItem.proposed(null, PlanItem.Kind.GENERATE_DOCUMENTS, documents)));
 
         ChatPlan read = plans.findById(stored.id()).orElseThrow();
-        assertThat(read.items()).extracting(PlanItem::details).containsExactly(details, status);
+        assertThat(read.items()).extracting(PlanItem::details)
+                .containsExactly(interview, status, posting, documents);
         assertThat(read.items()).extracting(PlanItem::state).containsOnly(State.PENDING);
+    }
+
+    /**
+     * The column holds every kind's fields in one flat object with no type tag, as rows written
+     * before details had a type per kind do; the kind column says which type it reads back as.
+     */
+    @Test
+    void details_keep_the_flat_shape_rows_already_have() {
+        UUID posting = UUID.randomUUID();
+        UUID application = UUID.randomUUID();
+        UUID planId = plans.create(plan(savePosting())).id();
+        jdbc.update("INSERT INTO chat_plan_items (plan_id, position, kind, details, state)"
+                + " VALUES (?, 1, 'UPDATE_STATUS', ?::jsonb, 'PENDING')", planId,
+                "{\"postingId\":\"" + posting + "\",\"applicationId\":\"" + application + "\","
+                + "\"title\":\"Konsulent\",\"company\":\"Arla\",\"fromStatus\":\"APPLIED\","
+                + "\"toStatus\":\"INTERVIEW\",\"interviewBefore\":null,\"interviewAt\":null}");
+
+        PlanItem read = plans.findById(planId).orElseThrow().items().get(1);
+
+        assertThat(read.details()).isEqualTo(new PlanItem.Details.StatusMove(posting, application,
+                "Konsulent", "Arla", ApplicationStatus.APPLIED, ApplicationStatus.INTERVIEW));
+        assertThat(jdbc.queryForList("SELECT jsonb_object_keys(details) FROM chat_plan_items"
+                + " WHERE plan_id = ? AND position = 0", String.class, planId))
+                .containsExactlyInAnyOrder("postingId", "applicationId", "title", "company",
+                        "fromStatus", "toStatus", "interviewBefore", "interviewAt");
     }
 
     @Test
     void written_documents_keep_the_application_they_landed_on() {
         ChatPlan plan = plans.create(plan(PlanItem.proposed(null, PlanItem.Kind.GENERATE_DOCUMENTS,
-                PlanItem.Details.posting(UUID.randomUUID(), "Rådgiver", "Kommunen"))));
+                new PlanItem.Details.Documents(UUID.randomUUID(), "Rådgiver", "Kommunen"))));
         UUID item = plan.items().get(0).id();
         UUID application = herApplication();
 
@@ -185,6 +217,6 @@ class ChatPlanPersistenceTest extends PostgresIntegrationTest {
 
     private static PlanItem savePosting() {
         return PlanItem.proposed(null, PlanItem.Kind.SAVE_POSTING,
-                PlanItem.Details.posting(UUID.randomUUID(), "Rådgiver", "Kommunen"));
+                new PlanItem.Details.Posting(UUID.randomUUID(), "Rådgiver", "Kommunen"));
     }
 }

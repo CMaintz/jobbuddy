@@ -19,7 +19,7 @@ describe('toResumeDesign', () => {
       current: true, description: '<p>Ledte</p>',
     }] });
 
-    expect(d.experience[0]).toEqual(jasmine.objectContaining({
+    expect(d.experience[0]).toEqual(expect.objectContaining({
       title: 'Konsulent', subtitle: 'Firma', start: '2019', end: '[resumeBuilder.cv.present]',
       description: '<p>Ledte</p>',
     }));

@@ -2,14 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from './language.service';
 import { DESKTOP_BACKEND_ORIGIN } from './desktop/desktop-shell';
+import type { MockInstance } from 'vitest';
 
 describe('LanguageService', () => {
   const STORAGE_KEY = 'jb_lang_choice';
   const LEGACY_KEY = 'jb_lang';
-  let languages: jasmine.Spy;
+  let languages: MockInstance;
 
   function start(browserLanguages: string[], desktopOrigin: string | null = null): LanguageService {
-    languages.and.returnValue(browserLanguages);
+    languages.mockReturnValue(browserLanguages);
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
       providers: [{ provide: DESKTOP_BACKEND_ORIGIN, useValue: desktopOrigin }],
@@ -20,7 +21,7 @@ describe('LanguageService', () => {
   beforeEach(() => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LEGACY_KEY);
-    languages = spyOnProperty(navigator, 'languages');
+    languages = vi.spyOn(navigator, 'languages', 'get');
   });
   afterEach(() => {
     localStorage.removeItem(STORAGE_KEY);

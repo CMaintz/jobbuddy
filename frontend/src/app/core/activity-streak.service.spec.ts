@@ -49,7 +49,7 @@ describe('ActivityStreakService', () => {
     service.refresh();
 
     const [stale, fresh] = http.match(r => r.url === '/api/v1/analytics/streak');
-    expect(stale.cancelled).toBeTrue();
+    expect(stale.cancelled).toBe(true);
     fresh.flush({ days: 2, lastWeek: [0, 0, 0, 0, 0, 1, 1] });
 
     expect(service.days()).toBe(2);
@@ -60,7 +60,7 @@ describe('ActivityStreakService', () => {
     const req = http.expectOne(r => r.url === '/api/v1/analytics/streak');
     service.clear();
 
-    expect(req.cancelled).toBeTrue();
+    expect(req.cancelled).toBe(true);
     expect(service.days()).toBe(0);
   });
 });

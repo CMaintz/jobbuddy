@@ -134,7 +134,7 @@ Environment:
 
 ### Desktop app (Windows)
 
-`desktop/` is the Electron shell around the desktop profile: one installer with a bundled Temurin JRE, the backend jar and the Angular build.
+`desktop/` is the Electron shell around the desktop profile: one installer with a bundled Temurin JRE, the pinned Typst CLI the PDF export renders with, the backend jar and the Angular build.
 
 - **Starting:** it checks that `claude` is installed and logged in and that Git for Windows is there, and shows each fix in plain Danish. On first run it asks for the database connection and the embeddings key, and stores them encrypted with Electron `safeStorage` (Windows DPAPI) in `%APPDATA%\JobBuddy`. Then it starts the backend with a fresh token and loads the UI from `app://jobbuddy`. The shell adds `X-JobBuddy-Token` to requests for the backend's exact origin only.
 - **Running:** closing the window keeps JobBuddy in the tray ("Åbn", "Start med Windows", "Afslut"), so enrichment, LinkedIn and reminders keep running. Due reminders appear as Windows notifications. "Afslut" kills the backend's whole process tree, and the backend also stops by itself when its stdin closes, so a crashed shell leaves no JVM behind. A start at Windows login runs the backend even when a check fails, and says so from the tray.

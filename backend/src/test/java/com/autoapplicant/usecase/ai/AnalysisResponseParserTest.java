@@ -1,11 +1,11 @@
 package com.autoapplicant.usecase.ai;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.autoapplicant.domain.ai.AiAnalysisResult;
 import com.autoapplicant.domain.ai.RiskAssessment;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Golden-set regression harness for the AI analysis response parser. Fixtures are recorded-style
@@ -45,8 +45,9 @@ class AnalysisResponseParserTest {
         AiAnalysisResult r = parser.parse(JOB_TARGETED);
         assertThat(r.dimensions()).isNotNull();
         assertThat(r.dimensions().isComplete()).isTrue();
-        // The model said 50; the server recomputes from weighted dimensions and ignores it.
-        assertThat(r.score()).isEqualTo(r.dimensions().weightedScore());
+        // The model said 50; the server weights the dimensions instead:
+        // 82 * 0.30 + 78 * 0.25 + 70 * 0.15 + 75 * 0.30 = 77.1.
+        assertThat(r.score()).isEqualTo(77);
         assertThat(r.strengths()).hasSize(2);
         assertThat(r.dimensions().location()).isEqualTo("FLAG");
     }
@@ -72,6 +73,22 @@ class AnalysisResponseParserTest {
         assertThat(r.score()).isEqualTo(71);
         assertThat(r.dimensions()).isNull();
         assertThat(r.risk()).isNull();
+    }
+
+    @Test
+    void incompleteDimensions_fallBackToTheModelsScore() {
+        // Weighting a partial set would treat each missing dimension as a zero.
+        String partial = """
+                {"score": 64, "dimensions": {"technicalSkills": 90, "experience": 80}}""";
+        AiAnalysisResult r = parser.parse(partial);
+        assertThat(r.dimensions().isComplete()).isFalse();
+        assertThat(r.score()).isEqualTo(64);
+    }
+
+    @Test
+    void modelScore_isClampedToZeroToHundred() {
+        assertThat(parser.parse("{\"score\": 140}").score()).isEqualTo(100);
+        assertThat(parser.parse("{\"score\": -5}").score()).isZero();
     }
 
     @Test

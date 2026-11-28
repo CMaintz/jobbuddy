@@ -22,7 +22,7 @@ describe('nudgeQueueItem', () => {
 
     expect(item.what).toBe('dashboard.queue.interview');
     expect(item.time).toBe('dashboard.queue.today');
-    expect(item.hot).toBeTrue();
+    expect(item.hot).toBe(true);
   });
 
   it('shows an interview tomorrow as tomorrow, not as a missing reply', () => {
@@ -30,7 +30,7 @@ describe('nudgeQueueItem', () => {
 
     expect(item.what).toBe('dashboard.queue.interview');
     expect(item.time).toBe('dashboard.queue.tomorrow');
-    expect(item.hot).toBeFalse();
+    expect(item.hot).toBe(false);
   });
 
   it('puts the interview time on an interview today, to the minute', () => {

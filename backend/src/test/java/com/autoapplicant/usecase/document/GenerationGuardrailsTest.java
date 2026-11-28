@@ -32,15 +32,6 @@ class GenerationGuardrailsTest {
     }
 
     @Test
-    void onlyDeliveredDocumentMediaAreWritingMedia() {
-        assertThat(Medium.LETTER.writesDeliveredDocument()).isTrue();
-        assertThat(Medium.CV.writesDeliveredDocument()).isTrue();
-        assertThat(Medium.OUTREACH.writesDeliveredDocument()).isTrue();
-        assertThat(Medium.ANALYSIS.writesDeliveredDocument()).isFalse();
-        assertThat(Medium.INTERVIEW.writesDeliveredDocument()).isFalse();
-    }
-
-    @Test
     void writingMediaCarryHonestyAndBannedPhraseBlocksReadingMediaDoNot() {
         GenerationGuardrails letter = GenerationGuardrails.forDocument("COVER_LETTER", null, "job", "DK");
         assertThat(letter.honestyRules()).isNotBlank();

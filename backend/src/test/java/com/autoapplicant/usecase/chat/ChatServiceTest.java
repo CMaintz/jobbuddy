@@ -74,7 +74,7 @@ class ChatServiceTest {
         Chat chat = service.create(her);
         ChatPlan plan = plans.create(new ChatPlan(null, her, chat.id(), NOW, List.of(
                 PlanItem.proposed(null, PlanItem.Kind.SAVE_POSTING,
-                        PlanItem.Details.posting(UUID.randomUUID(), "Rådgiver", "Kommunen")))));
+                        new PlanItem.Details.Posting(UUID.randomUUID(), "Rådgiver", "Kommunen")))));
         chats.appendMessage(chat.id(), new ChatMessage(ChatMessage.Role.ASSISTANT, "Skal jeg gemme det?",
                 NOW, List.of(), List.of(plan.id())));
         plans.move(plan.items().get(0).id(), PlanItem.State.PENDING, PlanItem.State.REJECTED, NOW);
