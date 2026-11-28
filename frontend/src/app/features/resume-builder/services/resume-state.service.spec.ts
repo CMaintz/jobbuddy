@@ -169,10 +169,15 @@ describe('ResumeStateService', () => {
     state.loadDraft('d1').subscribe();
   }
 
-  it('opens a draft naming Helvetica with Arial selected', () => {
+  it('opens a draft naming Helvetica with Arial selected, without saving it unasked', () => {
+    vi.useFakeTimers();
     loadOldDraft({ fontFamily: 'Helvetica' });
+    TestBed.tick();
+    vi.advanceTimersByTime(AUTOSAVE_DEBOUNCE_MS);
 
     expect(state.settings().fontFamily).toBe('Arial');
+    expect(state.isDirty()).toBe(false);
+    expect(draftApi.saveDraft).not.toHaveBeenCalled();
   });
 
   it('opens a draft naming Khand with Inter selected', () => {
