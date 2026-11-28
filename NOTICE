@@ -7,3 +7,12 @@ Danish postal codes and their coordinates
   Licence: Creative Commons Attribution 4.0, https://creativecommons.org/licenses/by/4.0/
   Changes: postcodes below 1000 (PO boxes, abroad) removed; columns reduced to postcode,
            place, municipality, latitude and longitude.
+
+Fonts for the document renderer
+  Files:   backend/src/main/resources/typst/fonts/
+  Source:  Google Fonts, https://github.com/google/fonts; Inter 4.1, https://github.com/rsms/inter;
+           Liberation 2.1.5, https://github.com/liberationfonts/liberation-fonts; Merriweather,
+           https://github.com/SorkinType/Merriweather
+  Licence: SIL Open Font License 1.1; each family's licence file sits beside its fonts.
+  Changes: Noto Sans (notosans/) subset to Latin, Greek and Cyrillic; variable font files
+           renamed without their axis tags.
