@@ -12,7 +12,8 @@
 [tools]
 # The document renderer shells out to this CLI (app.render.typst-path, default `typst` on
 # PATH). Keep it equal to the version the backend Dockerfile installs: stored templates are
-# Typst source, so local, CI and production must compile with the same compiler.
+# Typst source, so local, CI and production must compile with the same compiler. The desktop
+# app ships its own copy (desktop/scripts/fetch-typst.mjs); a desktop test checks they match.
 typst = "0.15.1"
 
 [env]

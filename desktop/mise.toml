@@ -25,12 +25,13 @@ description = "Copy Buddy's sprites from brand/buddy-sprites/out (or the path gi
 run = "node scripts/sync-buddy.mjs"
 
 [tasks.build]
-description = "Backend jar, Angular build, pinned JRE and Electron binary, staged for the app"
+description = "Backend jar, Angular build, pinned JRE, Typst and Electron binary, staged for the app"
 depends = ["install"]
 run = [
     "cd .. && ./gradlew :backend:bootJar",
     "cd ../frontend && npx ng build --configuration production,desktop",
     "node scripts/fetch-jre.mjs",
+    "node scripts/fetch-typst.mjs",
     "node scripts/stage.mjs",
     "npx install-electron",
 ]
