@@ -3,7 +3,8 @@
 # One root config pins both toolchains and exposes the six verbs per package
 # (backend:*, frontend:*) plus aggregates. CI path-filters call the per-package
 # gate; `mise run gate` locally runs everything. The extension is static JS/HTML
-# with no build, so it has no verbs — its only check is the CI max-file gate.
+# with no build, so it has no gate verbs: CI checks only its file size, and its unit
+# tests run locally through `extension:test` (node's built-in runner, no npm install).
 # The desktop shell (desktop:*) has only lint and test: it is plain CommonJS with
 # no type step, and its packaging verbs run on Windows only.
 
@@ -164,6 +165,13 @@ run = [
     "mise run frontend:test",
     "mise run frontend:audit",
 ]
+
+# ---- extension (plain JS, no build) ------------------------------------------
+
+[tasks."extension:test"]
+description = "Extension unit tests on node's built-in test runner"
+dir = "extension"
+run = 'node --test "test/*.test.js"'
 
 # ---- desktop (Electron shell, plain Node) ----------------------------------
 # desktop/mise.toml is the source of truth (it's what CI runs), so these delegate to it
