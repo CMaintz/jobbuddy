@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NotifyService } from '../../../shared/services/notify.service';
-import { ResumeDraft } from '../models/resume-builder.models';
+import { INITIAL_SETTINGS, ResumeDraft, ResumeSettings } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
 import { ResumeStateService } from './resume-state.service';
 import type { Mocked } from 'vitest';
@@ -159,5 +159,45 @@ describe('ResumeStateService', () => {
     expect(failed).toBe(true);
     expect(state.draftId()).toBeNull();
     expect(state.personalInfo().fullName).not.toBe('Ada');
+  });
+
+  // A draft saved while Helvetica and Khand were in the picker. Bug caught: the picker shows no
+  // font selected, so she cannot see that it prints in Arial or Inter.
+  function loadOldDraft(settings: Partial<ResumeSettings>): void {
+    setup(false);
+    draftApi.getDraft.mockReturnValue(of({ id: 'd1', settings: { ...INITIAL_SETTINGS, ...settings } } as ResumeDraft));
+    state.loadDraft('d1').subscribe();
+  }
+
+  it('opens a draft naming Helvetica with Arial selected, without saving it unasked', () => {
+    vi.useFakeTimers();
+    loadOldDraft({ fontFamily: 'Helvetica' });
+    TestBed.tick();
+    vi.advanceTimersByTime(AUTOSAVE_DEBOUNCE_MS);
+
+    expect(state.settings().fontFamily).toBe('Arial');
+    expect(state.isDirty()).toBe(false);
+    expect(draftApi.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('opens a draft naming Khand with Inter selected', () => {
+    loadOldDraft({ fontFamily: 'Khand' });
+
+    expect(state.settings().fontFamily).toBe('Inter');
+  });
+
+  it('shows the printed font for a section that names a removed one, keeping its other styling', () => {
+    loadOldDraft({ sectionTypography: { summary: { fontFamily: 'Khand', bold: true }, skills: { italic: true } } });
+
+    expect(state.settings().sectionTypography).toEqual({
+      summary: { fontFamily: 'Inter', bold: true },
+      skills: { italic: true },
+    });
+  });
+
+  it('keeps a font the picker still offers', () => {
+    loadOldDraft({ fontFamily: 'Lora' });
+
+    expect(state.settings().fontFamily).toBe('Lora');
   });
 });

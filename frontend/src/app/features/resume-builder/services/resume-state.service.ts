@@ -20,6 +20,7 @@ import {
   SectionConfig,
 } from '../models/resume-builder.models';
 import { ResumeDraftApiService } from './resume-draft-api.service';
+import { withOfferedFonts } from '../data/font-families';
 import { ResumeDraft } from '../models/resume-builder.models';
 import { NotifyService } from '../../../shared/services/notify.service';
 import { Profile, ProfilePrivateInfo } from '../../../core/models/user.model';
@@ -183,7 +184,7 @@ export class ResumeStateService {
       this._resumeData.set(draft.resumeData as ResumeData);
     }
     if (draft.settings && Object.keys(draft.settings).length > 0) {
-      this._settings.set(draft.settings as ResumeSettings);
+      this._settings.set(withOfferedFonts(draft.settings as ResumeSettings));
     }
     this._draftId.set(draft.id ?? null);
     this._draftJobId.set(draft.jobId ?? null);
