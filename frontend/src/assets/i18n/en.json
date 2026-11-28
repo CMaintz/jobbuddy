@@ -434,7 +434,6 @@
       },
       "photoSize": "Photo Size",
       "templateDefault": "template default",
-      "photoSizeTip": "Tip: you can also drag the photo in the preview to resize it.",
       "photoPlacement": "Photo Placement",
       "left": "Left",
       "template": "Template",
@@ -521,7 +520,8 @@
       "pdfAts": "PDF - simple (for job portals)",
       "print": "Print",
       "atsTitle": "Simple one-column PDF with plain text that job portals and recruiting systems can read",
-      "dragToResize": "Drag to resize"
+      "unavailable": "The preview could not be shown right now. Try again in a moment.",
+      "pageAlt": "Page {{page}}"
     },
     "cv": {
       "summary": "Summary",

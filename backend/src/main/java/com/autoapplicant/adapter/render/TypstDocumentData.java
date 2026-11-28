@@ -1,5 +1,6 @@
 package com.autoapplicant.adapter.render;
 
+import com.autoapplicant.adapter.render.TypstRichText.Block;
 import com.autoapplicant.domain.document.DocumentType;
 import com.autoapplicant.domain.document.structured.DocumentIdentity;
 import com.autoapplicant.domain.document.structured.DocumentRenderOptions;
@@ -7,10 +8,10 @@ import com.autoapplicant.domain.document.structured.StructuredDocument;
 import com.autoapplicant.domain.document.structured.StructuredDocumentItem;
 import com.autoapplicant.domain.document.structured.StructuredDocumentSection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -24,15 +25,20 @@ record TypstDocumentData(
         TypstTheme theme,
         Identity identity,
         List<Section> sections,
-        List<String> paragraphs) {
+        List<Block> body,
+        String letterStyle) {
 
     private static final String KIND_CV = "cv";
     private static final String KIND_LETTER = "letter";
     private static final String DESIGNED = "DESIGNED";
     private static final String SKILLS = "skills";
     private static final int MAX_INITIALS = 2;
+    /** Designed letters name their look in the template id, as the letter screen offers them. */
+    private static final String LETTER_TEMPLATE_PREFIX = "letter-";
+    private static final Set<String> LETTER_STYLES = Set.of("editorial", "classic", "bold");
 
-    record Identity(String name, String headline, List<String> contacts, String photo, String initials) {}
+    /** @param email shown on its own in a designed letter's header line */
+    record Identity(String name, String headline, String email, List<String> contacts, String photo, String initials) {}
 
     record Section(String type, String heading, String body, boolean compact, List<Item> items) {}
 
@@ -55,7 +61,16 @@ record TypstDocumentData(
                 TypstTheme.from(options != null ? options.theme() : null),
                 identity(document.identity(), photo),
                 cv ? sections(document.sections()) : List.of(),
-                cv ? List.of() : paragraphs(document.bodyContent()));
+                cv ? List.of() : TypstRichText.parse(document.bodyContent()),
+                cv ? null : letterStyle(document));
+    }
+
+    /** The letter screen's template, or null for the plain layout (ATS letters, older documents). */
+    private static String letterStyle(StructuredDocument document) {
+        String id = document.templateId();
+        if (!isDesigned(document) || id == null || !id.startsWith(LETTER_TEMPLATE_PREFIX)) return null;
+        String style = id.substring(LETTER_TEMPLATE_PREFIX.length());
+        return LETTER_STYLES.contains(style) ? style : null;
     }
 
     /**
@@ -67,14 +82,15 @@ record TypstDocumentData(
     }
 
     private static Identity identity(DocumentIdentity identity, String photo) {
-        if (identity == null) return new Identity("", null, List.of(), null, "");
+        if (identity == null) return new Identity("", null, null, List.of(), null, "");
         List<String> contacts = Stream.of(identity.email(), identity.phone(), identity.location(),
                         identity.linkedinUrl(), identity.githubUrl(), identity.websiteUrl())
                 .filter(TypstDocumentData::present)
                 .map(AtsText::normalize)
                 .toList();
         String name = text(identity.name());
-        return new Identity(name, AtsText.normalize(identity.headline()), contacts, photo, initials(name));
+        return new Identity(name, AtsText.normalize(identity.headline()), AtsText.normalize(identity.email()), contacts,
+                photo, initials(name));
     }
 
     private static List<Section> sections(List<StructuredDocumentSection> sections) {
@@ -97,14 +113,6 @@ record TypstDocumentData(
                 AtsText.normalize(item.description()),
                 normalized(item.bullets()),
                 normalized(item.technologies()));
-    }
-
-    private static List<String> paragraphs(String content) {
-        if (content == null || content.isBlank()) return List.of();
-        return Arrays.stream(content.split("\\R\\s*\\R|\\R"))
-                .filter(part -> !part.isBlank())
-                .map(part -> AtsText.normalize(part.trim()))
-                .toList();
     }
 
     /** Normalized text for a field the template always prints, so it is never null. */
