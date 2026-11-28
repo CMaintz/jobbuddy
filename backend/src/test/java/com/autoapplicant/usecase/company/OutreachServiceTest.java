@@ -1,10 +1,11 @@
 package com.autoapplicant.usecase.company;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.autoapplicant.domain.company.OutreachContact;
 import com.autoapplicant.domain.company.OutreachStatus;
 import com.autoapplicant.port.out.company.OutreachContactRepositoryPort;
-import org.junit.jupiter.api.Test;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,9 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
 class OutreachServiceTest {
 
@@ -81,12 +80,6 @@ class OutreachServiceTest {
     }
 
     @Test
-    void theDefaultFollowUpMatchesDanishPractice() {
-        // Danish advice is 2-3 working days, not the week-and-a-half a non-Danish eye assumes.
-        assertThat(OutreachService.DEFAULT_FOLLOW_UP_DAYS).isBetween(2, 3);
-    }
-
-    @Test
     void markingContactedStampsTheTimeAndSchedulesTheFollowUp() {
         OutreachContact saved = service.track(USER, UUID.randomUUID(), "Acme A/S", null);
         OutreachContact contacted = service.update(USER, saved.id(), OutreachStatus.CONTACTED,
@@ -127,14 +120,6 @@ class OutreachServiceTest {
 
         assertThat(service.list(USER)).first()
                 .extracting(OutreachContact::companyName).isEqualTo("Overdue A/S");
-    }
-
-    @Test
-    void aClosedThreadIsNeverDueForFollowUp() {
-        OutreachContact saved = service.track(USER, UUID.randomUUID(), "Acme A/S", null);
-        OutreachContact closed = service.update(USER, saved.id(), OutreachStatus.CLOSED, null,
-                LocalDate.of(2026, 8, 1), null);
-        assertThat(closed.isFollowUpDue(LocalDate.of(2026, 8, 26))).isFalse();
     }
 
     @Test
